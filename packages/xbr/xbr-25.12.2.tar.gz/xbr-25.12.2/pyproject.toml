@@ -1,0 +1,261 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "xbr"
+version = "25.12.2"
+description = "XBR smart contracts and ABIs"
+readme = "README.md"
+license = "MIT"
+authors = [
+    {name = "typedef int GmbH", email = "autobahnws@googlegroups.com"}
+]
+keywords = ["autobahn", "crossbar", "wamp", "xbr", "ethereum", "abi"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
+requires-python = ">=3.11"
+dependencies = [
+    # WAMP client library - core dependency for XBR protocol
+    "autobahn>=25.12.2",
+    # Async compatibility layer (Twisted/asyncio)
+    "txaio>=25.12.2",
+    # Object-relational database layer (flatbuffers reflection for schema handling)
+    "zlmdb>=25.12.3",
+    # bitarray is required by eth-account, but on pypy
+    # see discussion/links on https://github.com/crossbario/autobahn-python/pull/1617
+    "bitarray>=2.7.5",
+    # CLI handling and color terminal output
+    "click>=8.1.2",
+    # the following is needed for XBR basics and XBR IDL code generation
+    "cbor2>=5.2.0",
+    "twisted>=20.3.0",
+    # ImportError: cannot import name 'getargspec' from 'inspect'
+    # https://github.com/ethereum/web3.py/issues/2704#issuecomment-1369041219
+    "web3[ipfs]>=6.0.0",
+    # the following is needed for EIP712 ("signed typed data"):
+    "rlp>=2.0.1",
+    "py-eth-sig-utils>=0.4.0",
+    "py-ecc>=5.1.0",
+    "eth-abi>=4.0.0",
+    # the following is needed (at least) for BIP32/39 mnemonic processing
+    "mnemonic>=0.19",
+    "base58>=2.1.0",
+    "ecdsa>=0.16.1",
+    "py-multihash>=2.0.1",
+    # the following is needed for the WAMP/XBR IDL code generator
+    "jinja2>=2.11.3",
+    "yapf==0.29.0",
+    # the following is needed for XBR account synch and device pairing
+    "spake2>=0.8",
+    "hkdf>=0.0.3",
+    # Cryptographic operations (NaCl bindings)
+    "pynacl>=1.5.0",
+    # Password hashing (Argon2)
+    "argon2-cffi>=21.3.0",
+    # Human-readable time/size formatting
+    "humanize>=4.0.0",
+    # Numerical operations (used in some XBR calculations)
+    "numpy>=1.21.0",
+]
+
+[project.optional-dependencies]
+# UI based tools, e.g. xbrnetwork-ui (autobahn.xbr._gui:_main)
+ui = [
+    # the following is needed for the graphical XBR onboarding UI
+    #
+    # On PyPy, even pygobject-3.52.3 does not work, because they use a pythoncapi-compat which is too old
+    #
+    # See:
+    #   - https://github.com/pypy/pypy/issues/5248
+    #   - https://gitlab.gnome.org/GNOME/pygobject/-/issues/684
+    #
+    # This was fixed here:
+    #   - https://gitlab.gnome.org/GNOME/pygobject/-/merge_requests/419
+    #
+    # IMPORTANT: because of above, you will need to
+    #
+    #  pip3 install git+https://gitlab.gnome.org/GNOME/pygobject
+    #
+    # FIXME: reactivate here once pygobject-3.52.4 is released!
+    #
+    # "PyGObject>=3.52.4",
+]
+
+# Development dependencies
+dev = [
+    # Build tools
+    "build>=1.0.0",
+    "wheel>=0.36.2",
+    "twine>=3.3.0",
+
+    # Testing
+    "pytest>=7.0.0",
+    "pytest-runner>=2.11.1",
+    "coverage>=5.0.0",
+
+    # Code quality
+    "ruff>=0.1.0",
+    # Note: ty (type checker) installed via 'uv tool install ty'
+
+    # Documentation
+    "scour>=0.38",  # SVG optimizer for documentation logos
+    "sphinx>=8.0.0",
+    "sphinx-rtd-theme>=3.0.0",
+    "pygments-lexer-solidity>=0.7.0",
+    "sphinxcontrib-images>=1.0.1",
+    # sphinxcontrib-soliditydomain loaded from git submodule (see docs/conf.py)
+    "antlr4-python3-runtime>=4.9.0",
+    "peewee>=3.0.0",  # Required by sphinxcontrib-soliditydomain
+]
+
+# Documentation tools (used by RTD via .readthedocs.yaml)
+docs = [
+    # Core Sphinx + MyST
+    "sphinx>=8.2.3",
+    "myst-parser>=2.0",
+
+    # Theme
+    "furo>=2024.7.0",
+
+    # API docs (no-import parsing)
+    "sphinx-autoapi>=2.1.0",
+
+    # UX Enhancements
+    "sphinx-copybutton>=0.5",
+    "sphinx-design>=0.5",
+    "sphinxcontrib-images>=0.9",
+
+    # Spell checking
+    "sphinxcontrib-spelling>=8.0",
+    "pyenchant>=3.2",
+
+    # Static asset optimization
+    "scour>=0.38",
+
+    # Social previews
+    "sphinxext-opengraph>=0.9",
+
+    # MyST auto-linking
+    "linkify-it-py>=2.0.0",
+
+    # Solidity syntax highlighting (for Solidity code blocks in docs)
+    "pygments-lexer-solidity>=0.7.0",
+
+    # sphinxcontrib-soliditydomain dependencies (loaded from git submodule)
+    "antlr4-python3-runtime>=4.9.0",
+    "peewee>=3.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/wamp-proto/wamp-xbr"
+Repository = "https://github.com/wamp-proto/wamp-xbr"
+Documentation = "https://xbr.readthedocs.io/"
+Changelog = "https://github.com/wamp-proto/wamp-xbr/blob/master/CHANGELOG.md"
+Issues = "https://github.com/wamp-proto/wamp-xbr/issues"
+
+# Hatchling build configuration
+[tool.hatch.build.targets.wheel]
+packages = ["src/xbr"]
+# IMPORTANT: Exclude symlinks from src/xbr/ that point to abi and contract directories.
+# We use force-include below to include the actual directories. Without this exclusion,
+# hatchling may include files twice (once via symlink, once via force-include) causing
+# "Duplicate filename in local headers" errors that PyPI rejects.
+exclude = [
+    "src/xbr/abi",
+    "src/xbr/contract",
+]
+
+# IMPORTANT: Hatchling does NOT follow symlinks by default for security reasons.
+# We must use force-include to explicitly copy non-Python resources into the wheel.
+#
+# The src/xbr directory contains symlinks to these resources:
+#   src/xbr/abi -> ../../build/contracts (compiled Solidity ABIs)
+#   src/xbr/contract -> ../../contracts (Solidity source files)
+#   src/xbr/templates -> templates directory
+#
+# For wheel builds, compile contracts first with: just compile-contracts
+# This creates build/contracts/ which contains the ABI JSON files.
+
+[tool.hatch.build.targets.wheel.force-include]
+# Include compiled Solidity ABI files (from build/contracts/ after truffle compile)
+"build/contracts" = "xbr/abi"
+# Include Solidity source contracts (at repo root)
+"contracts" = "xbr/contract"
+# Note: templates are already in src/xbr/templates and included automatically
+
+[tool.hatch.build.targets.sdist]
+# By default, hatchling includes all git-tracked files
+# Exclude build artifacts from sdist
+exclude = [
+    "/.github",
+    "/docs/_build",
+    "/.venvs",
+    "/.uv-cache",
+    "/.coverage",
+    "/.pytest_cache",
+    "/.mypy_cache",
+    "/.ruff_cache",
+    "/node_modules",
+]
+
+# Force include build/contracts in sdist so wheel can be built from sdist
+[tool.hatch.build.targets.sdist.force-include]
+"build/contracts" = "build/contracts"
+
+# Ruff configuration (replaces flake8, black, yapf)
+[tool.ruff]
+line-length = 119
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "F",  # pyflakes
+    "I",  # isort
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "E721",  # type() comparison instead of isinstance() - deliberate style choice
+    "E402",  # module level import not at top (intentional in some files)
+]
+
+# Note: mypy configuration removed - using ty (Astral type checker) instead
+# ty is installed via 'uv tool install ty' and doesn't require pyproject.toml config
+
+# Pytest configuration
+[tool.pytest.ini_options]
+testpaths = ["src/xbr/test"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["src/xbr"]
+omit = ["*/test/*", "*/test_*.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]

@@ -1,0 +1,931 @@
+{
+  "contractName": "XBRNetworkProxy",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "MaintainerAdded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "MaintainerRemoved",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "previousAdminRole",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "newAdminRole",
+          "type": "bytes32"
+        }
+      ],
+      "name": "RoleAdminChanged",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        }
+      ],
+      "name": "RoleGranted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "sender",
+          "type": "address"
+        }
+      ],
+      "name": "RoleRevoked",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "DEFAULT_ADMIN_ROLE",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MAINTAINER_ROLE",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "addMaintainer",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getRoleAdmin",
+      "outputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "index",
+          "type": "uint256"
+        }
+      ],
+      "name": "getRoleMember",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        }
+      ],
+      "name": "getRoleMemberCount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "grantRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "hasRole",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "isMaintainer",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "renounceMaintainer",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "renounceRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "role",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "revokeRole",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "networkContract",
+          "type": "address"
+        }
+      ],
+      "name": "setNetworkContract",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "metadata": "{\"compiler\":{\"version\":\"0.6.12+commit.27d51765\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"MaintainerAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"MaintainerRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"previousAdminRole\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"newAdminRole\",\"type\":\"bytes32\"}],\"name\":\"RoleAdminChanged\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleGranted\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"sender\",\"type\":\"address\"}],\"name\":\"RoleRevoked\",\"type\":\"event\"},{\"inputs\":[],\"name\":\"DEFAULT_ADMIN_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"MAINTAINER_ROLE\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"addMaintainer\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"}],\"name\":\"getRoleAdmin\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"uint256\",\"name\":\"index\",\"type\":\"uint256\"}],\"name\":\"getRoleMember\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"}],\"name\":\"getRoleMemberCount\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"grantRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"hasRole\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"isMaintainer\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceMaintainer\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"renounceRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"role\",\"type\":\"bytes32\"},{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"revokeRole\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"networkContract\",\"type\":\"address\"}],\"name\":\"setNetworkContract\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"author\":\"The XBR Project\",\"kind\":\"dev\",\"methods\":{\"addMaintainer(address)\":{\"params\":{\"account\":\"The account to grant maintainer rights to.\"}},\"getRoleAdmin(bytes32)\":{\"details\":\"Returns the admin role that controls `role`. See {grantRole} and {revokeRole}. To change a role's admin, use {_setRoleAdmin}.\"},\"getRoleMember(bytes32,uint256)\":{\"details\":\"Returns one of the accounts that have `role`. `index` must be a value between 0 and {getRoleMemberCount}, non-inclusive. Role bearers are not sorted in any particular way, and their ordering may change at any point. WARNING: When using {getRoleMember} and {getRoleMemberCount}, make sure you perform all queries on the same block. See the following https://forum.openzeppelin.com/t/iterating-over-elements-on-enumerableset-in-openzeppelin-contracts/2296[forum post] for more information.\"},\"getRoleMemberCount(bytes32)\":{\"details\":\"Returns the number of accounts that have `role`. Can be used together with {getRoleMember} to enumerate all bearers of a role.\"},\"grantRole(bytes32,address)\":{\"details\":\"Grants `role` to `account`. If `account` had not been already granted `role`, emits a {RoleGranted} event. Requirements: - the caller must have ``role``'s admin role.\"},\"hasRole(bytes32,address)\":{\"details\":\"Returns `true` if `account` has been granted `role`.\"},\"isMaintainer(address)\":{\"params\":{\"account\":\"The account to check.\"},\"returns\":{\"_0\":\"`true` if the account is maintainer, otherwise `false`.\"}},\"renounceRole(bytes32,address)\":{\"details\":\"Revokes `role` from the calling account. Roles are often managed via {grantRole} and {revokeRole}: this function's purpose is to provide a mechanism for accounts to lose their privileges if they are compromised (such as when a trusted device is misplaced). If the calling account had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must be `account`.\"},\"revokeRole(bytes32,address)\":{\"details\":\"Revokes `role` from `account`. If `account` had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must have ``role``'s admin role.\"}},\"title\":\"XBR Network root SC\",\"version\":1},\"userdoc\":{\"events\":{\"MaintainerAdded(address)\":{\"notice\":\"Event fired when a maintainer was added.\"},\"MaintainerRemoved(address)\":{\"notice\":\"Event fired when a maintainer was removed.\"}},\"kind\":\"user\",\"methods\":{\"addMaintainer(address)\":{\"notice\":\"Add a new maintainer to the list of maintainers.\"},\"isMaintainer(address)\":{\"notice\":\"Check if the given address is currently a maintainer.\"},\"renounceMaintainer()\":{\"notice\":\"Give away maintainer rights.\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"project:/contracts/XBRNetworkProxy.sol\":\"XBRNetworkProxy\"},\"evmVersion\":\"istanbul\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[]},\"sources\":{\"@openzeppelin/contracts/access/AccessControl.sol\":{\"keccak256\":\"0x4fc155a2f7837603d69a13cfa481eb5e7f5e02cb77e2ec9edbac30986db37988\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://0855147e38b5e36288a8df73b8da49132f14ec7abb19041b0c98872263643aaa\",\"dweb:/ipfs/QmSrSysyFUYQq7hbJaJXG7EyZW6ezDBzEJx3SABp6eiJSS\"]},\"@openzeppelin/contracts/utils/Address.sol\":{\"keccak256\":\"0x28911e614500ae7c607a432a709d35da25f3bc5ddc8bd12b278b66358070c0ea\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://256c8c8af5eb072bc473226ab2b2187149b8fc04f5f4a4820db22527f5ce8e3c\",\"dweb:/ipfs/QmRvi5BhnL7Rxf85KrJhwM6RRhukm4tzoctRdgQEheNyiN\"]},\"@openzeppelin/contracts/utils/Context.sol\":{\"keccak256\":\"0x8d3cb350f04ff49cfb10aef08d87f19dcbaecc8027b0bed12f3275cd12f38cf0\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://ded47ec7c96750f9bd04bbbc84f659992d4ba901cb7b532a52cd468272cf378f\",\"dweb:/ipfs/QmfBrGtQP7rZEqEg6Wz6jh2N2Kukpj1z5v3CGWmAqrzm96\"]},\"@openzeppelin/contracts/utils/EnumerableSet.sol\":{\"keccak256\":\"0x1562cd9922fbf739edfb979f506809e2743789cbde3177515542161c3d04b164\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://4580d57781513d98870d9738c7d39094336e0a70cdb90d68dad549c6ced466ec\",\"dweb:/ipfs/Qmf9YZzzRFuvMnav9dgmeRUpdYMMECiZX8w25sHWVbA18V\"]},\"project:/contracts/XBRMaintained.sol\":{\"keccak256\":\"0xf08c7b490e41875484b32cc7fa2674eee059484d874ec1026e258ef7d7bdc5e7\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://b0f0e3891fd3d1d248cdff6c94e309268b36470f18dcd9a4177aa628213d4d62\",\"dweb:/ipfs/QmZeAMpapqxqbNhr3hmbBqfB5dqh8qUtprRBsi4F9xfA3M\"]},\"project:/contracts/XBRNetworkProxy.sol\":{\"keccak256\":\"0xc3dbebab141a23422943fd22d2f9b2774948d914d30b73072f087f258ac7db79\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://a8e3f559189c40e5b8b474f6e438d13d7fa7d1dec37b9aae470098411f2d9453\",\"dweb:/ipfs/QmbKwGgXxLJjA9NDtwZzjFBBNYHyqppxwuK4SZkxMweGzw\"]}},\"version\":1}",
+  "bytecode": "0x608060405234801561001057600080fd5b5061003b7f339759585899103d2ace64958e37e18ccb0504652c81d4a1b8aa80fe2126ab9533610040565b610145565b61004a828261004e565b5050565b6000828152602081815260409091206100709183906104c86100c1821b17901c565b1561004a5761007d6100df565b6001600160a01b0316816001600160a01b0316837f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d60405160405180910390a45050565b60006100d6836001600160a01b0384166100e3565b90505b92915050565b3390565b60006100ef838361012d565b610125575081546001818101845560008481526020808220909301849055845484825282860190935260409020919091556100d9565b5060006100d9565b60009081526001919091016020526040902054151590565b610928806101546000396000f3fe608060405234801561001057600080fd5b50600436106100cf5760003560e01c80639010d07c1161008c578063ca15c87311610066578063ca15c87314610238578063d547741f14610255578063dd57366a14610281578063f8742254146102a7576100cf565b80639010d07c146101b157806391d14854146101f0578063a217fddf14610230576100cf565b8063248a9ca3146100d45780632f2ff15d14610103578063314db06b1461013157806336568abe14610139578063599b9348146101655780636b453c1f1461018b575b600080fd5b6100f1600480360360208110156100ea57600080fd5b50356102af565b60408051918252519081900360200190f35b61012f6004803603604081101561011957600080fd5b50803590602001356001600160a01b03166102c4565b005b61012f610330565b61012f6004803603604081101561014f57600080fd5b50803590602001356001600160a01b031661033b565b61012f6004803603602081101561017b57600080fd5b50356001600160a01b031661039c565b61012f600480360360208110156101a157600080fd5b50356001600160a01b03166103d0565b6101d4600480360360408110156101c757600080fd5b50803590602001356103ee565b604080516001600160a01b039092168252519081900360200190f35b61021c6004803603604081101561020657600080fd5b50803590602001356001600160a01b031661040f565b604080519115158252519081900360200190f35b6100f1610427565b6100f16004803603602081101561024e57600080fd5b503561042c565b61012f6004803603604081101561026b57600080fd5b50803590602001356001600160a01b0316610443565b61021c6004803603602081101561029757600080fd5b50356001600160a01b031661049c565b6100f16104b6565b60009081526020819052604090206002015490565b6000828152602081905260409020600201546102e7906102e26104dd565b61040f565b6103225760405162461bcd60e51b815260040180806020018281038252602f815260200180610845602f913960400191505060405180910390fd5b61032c82826104e1565b5050565b6103393361054a565b565b6103436104dd565b6001600160a01b0316816001600160a01b0316146103925760405162461bcd60e51b815260040180806020018281038252602f8152602001806108c4602f913960400191505060405180910390fd5b61032c8282610599565b6103a53361049c565b6103ae57600080fd5b600180546001600160a01b0319166001600160a01b0392909216919091179055565b6103d93361049c565b6103e257600080fd5b6103eb81610602565b50565b60008281526020819052604081206104069083610651565b90505b92915050565b6000828152602081905260408120610406908361065d565b600081565b600081815260208190526040812061040990610672565b600082815260208190526040902060020154610461906102e26104dd565b6103925760405162461bcd60e51b81526004018080602001828103825260308152602001806108746030913960400191505060405180910390fd5b60006104096000805160206108a48339815191528361040f565b6000805160206108a483398151915281565b6000610406836001600160a01b03841661067d565b3390565b60008281526020819052604090206104f990826104c8565b1561032c576105066104dd565b6001600160a01b0316816001600160a01b0316837f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d60405160405180910390a45050565b6105626000805160206108a483398151915282610443565b6040516001600160a01b038216907fa7b36d52bea726c3aa90d876d0e52a1089a347b3e3408a03f08eae32f96fdbb490600090a250565b60008281526020819052604090206105b190826106c7565b1561032c576105be6104dd565b6001600160a01b0316816001600160a01b0316837ff6391f5c32d9c69d2a47ea670b442974b53935d1edc7fd64eb21e047a839171b60405160405180910390a45050565b61061a6000805160206108a4833981519152826102c4565b6040516001600160a01b038216907f1390a149489c82e9e2e89927bdb17ad1ea3f0cc314fce06c96369721d3afb8f090600090a250565b600061040683836106dc565b6000610406836001600160a01b038416610740565b600061040982610758565b60006106898383610740565b6106bf57508154600181810184556000848152602080822090930184905584548482528286019093526040902091909155610409565b506000610409565b6000610406836001600160a01b03841661075c565b8154600090821061071e5760405162461bcd60e51b81526004018080602001828103825260228152602001806108236022913960400191505060405180910390fd5b82600001828154811061072d57fe5b9060005260206000200154905092915050565b60009081526001919091016020526040902054151590565b5490565b60008181526001830160205260408120548015610818578354600019808301919081019060009087908390811061078f57fe5b90600052602060002001549050808760000184815481106107ac57fe5b6000918252602080832090910192909255828152600189810190925260409020908401905586548790806107dc57fe5b60019003818190600052602060002001600090559055866001016000878152602001908152602001600020600090556001945050505050610409565b600091505061040956fe456e756d657261626c655365743a20696e646578206f7574206f6620626f756e6473416363657373436f6e74726f6c3a2073656e646572206d75737420626520616e2061646d696e20746f206772616e74416363657373436f6e74726f6c3a2073656e646572206d75737420626520616e2061646d696e20746f207265766f6b65339759585899103d2ace64958e37e18ccb0504652c81d4a1b8aa80fe2126ab95416363657373436f6e74726f6c3a2063616e206f6e6c792072656e6f756e636520726f6c657320666f722073656c66a2646970667358221220a06ccf2e27eeda0c7c7664a0b35f31a09036deab61a716151d76795f6dbd09a164736f6c634300060c0033",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106100cf5760003560e01c80639010d07c1161008c578063ca15c87311610066578063ca15c87314610238578063d547741f14610255578063dd57366a14610281578063f8742254146102a7576100cf565b80639010d07c146101b157806391d14854146101f0578063a217fddf14610230576100cf565b8063248a9ca3146100d45780632f2ff15d14610103578063314db06b1461013157806336568abe14610139578063599b9348146101655780636b453c1f1461018b575b600080fd5b6100f1600480360360208110156100ea57600080fd5b50356102af565b60408051918252519081900360200190f35b61012f6004803603604081101561011957600080fd5b50803590602001356001600160a01b03166102c4565b005b61012f610330565b61012f6004803603604081101561014f57600080fd5b50803590602001356001600160a01b031661033b565b61012f6004803603602081101561017b57600080fd5b50356001600160a01b031661039c565b61012f600480360360208110156101a157600080fd5b50356001600160a01b03166103d0565b6101d4600480360360408110156101c757600080fd5b50803590602001356103ee565b604080516001600160a01b039092168252519081900360200190f35b61021c6004803603604081101561020657600080fd5b50803590602001356001600160a01b031661040f565b604080519115158252519081900360200190f35b6100f1610427565b6100f16004803603602081101561024e57600080fd5b503561042c565b61012f6004803603604081101561026b57600080fd5b50803590602001356001600160a01b0316610443565b61021c6004803603602081101561029757600080fd5b50356001600160a01b031661049c565b6100f16104b6565b60009081526020819052604090206002015490565b6000828152602081905260409020600201546102e7906102e26104dd565b61040f565b6103225760405162461bcd60e51b815260040180806020018281038252602f815260200180610845602f913960400191505060405180910390fd5b61032c82826104e1565b5050565b6103393361054a565b565b6103436104dd565b6001600160a01b0316816001600160a01b0316146103925760405162461bcd60e51b815260040180806020018281038252602f8152602001806108c4602f913960400191505060405180910390fd5b61032c8282610599565b6103a53361049c565b6103ae57600080fd5b600180546001600160a01b0319166001600160a01b0392909216919091179055565b6103d93361049c565b6103e257600080fd5b6103eb81610602565b50565b60008281526020819052604081206104069083610651565b90505b92915050565b6000828152602081905260408120610406908361065d565b600081565b600081815260208190526040812061040990610672565b600082815260208190526040902060020154610461906102e26104dd565b6103925760405162461bcd60e51b81526004018080602001828103825260308152602001806108746030913960400191505060405180910390fd5b60006104096000805160206108a48339815191528361040f565b6000805160206108a483398151915281565b6000610406836001600160a01b03841661067d565b3390565b60008281526020819052604090206104f990826104c8565b1561032c576105066104dd565b6001600160a01b0316816001600160a01b0316837f2f8788117e7eff1d82e926ec794901d17c78024a50270940304540a733656f0d60405160405180910390a45050565b6105626000805160206108a483398151915282610443565b6040516001600160a01b038216907fa7b36d52bea726c3aa90d876d0e52a1089a347b3e3408a03f08eae32f96fdbb490600090a250565b60008281526020819052604090206105b190826106c7565b1561032c576105be6104dd565b6001600160a01b0316816001600160a01b0316837ff6391f5c32d9c69d2a47ea670b442974b53935d1edc7fd64eb21e047a839171b60405160405180910390a45050565b61061a6000805160206108a4833981519152826102c4565b6040516001600160a01b038216907f1390a149489c82e9e2e89927bdb17ad1ea3f0cc314fce06c96369721d3afb8f090600090a250565b600061040683836106dc565b6000610406836001600160a01b038416610740565b600061040982610758565b60006106898383610740565b6106bf57508154600181810184556000848152602080822090930184905584548482528286019093526040902091909155610409565b506000610409565b6000610406836001600160a01b03841661075c565b8154600090821061071e5760405162461bcd60e51b81526004018080602001828103825260228152602001806108236022913960400191505060405180910390fd5b82600001828154811061072d57fe5b9060005260206000200154905092915050565b60009081526001919091016020526040902054151590565b5490565b60008181526001830160205260408120548015610818578354600019808301919081019060009087908390811061078f57fe5b90600052602060002001549050808760000184815481106107ac57fe5b6000918252602080832090910192909255828152600189810190925260409020908401905586548790806107dc57fe5b60019003818190600052602060002001600090559055866001016000878152602001908152602001600020600090556001945050505050610409565b600091505061040956fe456e756d657261626c655365743a20696e646578206f7574206f6620626f756e6473416363657373436f6e74726f6c3a2073656e646572206d75737420626520616e2061646d696e20746f206772616e74416363657373436f6e74726f6c3a2073656e646572206d75737420626520616e2061646d696e20746f207265766f6b65339759585899103d2ace64958e37e18ccb0504652c81d4a1b8aa80fe2126ab95416363657373436f6e74726f6c3a2063616e206f6e6c792072656e6f756e636520726f6c657320666f722073656c66a2646970667358221220a06ccf2e27eeda0c7c7664a0b35f31a09036deab61a716151d76795f6dbd09a164736f6c634300060c0033",
+  "immutableReferences": {},
+  "sourceMap": "980:218:15:-:0;;;;;;;;;;;;-1:-1:-1;1992:39:12;1449:28;2020:10;1992;:39::i;:::-;980:218:15;;6588:110:0;6666:25;6677:4;6683:7;6666:10;:25::i;:::-;6588:110;;:::o;7025:184::-;7098:6;:12;;;;;;;;;;;:33;;7123:7;;7098:24;;;;;:33;;:::i;:::-;7094:109;;;7179:12;:10;:12::i;:::-;-1:-1:-1;;;;;7152:40:0;7170:7;-1:-1:-1;;;;;7152:40:0;7164:4;7152:40;;;;;;;;;;7025:184;;:::o;6429:150:7:-;6499:4;6522:50;6527:3;-1:-1:-1;;;;;6547:23:7;;6522:4;:50::i;:::-;6515:57;;6429:150;;;;;:::o;598:104:6:-;685:10;598:104;:::o;1640:404:7:-;1703:4;1724:21;1734:3;1739:5;1724:9;:21::i;:::-;1719:319;;-1:-1:-1;1761:23:7;;;;;;;;:11;:23;;;;;;;;;;;;;1941:18;;1919:19;;;:12;;;:19;;;;;;:40;;;;1973:11;;1719:319;-1:-1:-1;2022:5:7;2015:12;;3805:127;3878:4;3901:19;;;:12;;;;;:19;;;;;;:24;;;3805:127::o;980:218:15:-;;;;;;;",
+  "deployedSourceMap": "980:218:15:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;4282:112:0;;;;;;;;;;;;;;;;-1:-1:-1;4282:112:0;;:::i;:::-;;;;;;;;;;;;;;;;4644:223;;;;;;;;;;;;;;;;-1:-1:-1;4644:223:0;;;;;;-1:-1:-1;;;;;4644:223:0;;:::i;:::-;;2865:84:12;;;:::i;5818:205:0:-;;;;;;;;;;;;;;;;-1:-1:-1;5818:205:0;;;;;;-1:-1:-1;;;;;5818:205:0;;:::i;1069:127:15:-;;;;;;;;;;;;;;;;-1:-1:-1;1069:127:15;-1:-1:-1;;;;;1069:127:15;;:::i;2704:103:12:-;;;;;;;;;;;;;;;;-1:-1:-1;2704:103:12;-1:-1:-1;;;;;2704:103:12;;:::i;3965:136:0:-;;;;;;;;;;;;;;;;-1:-1:-1;3965:136:0;;;;;;;:::i;:::-;;;;-1:-1:-1;;;;;3965:136:0;;;;;;;;;;;;;;2950:137;;;;;;;;;;;;;;;;-1:-1:-1;2950:137:0;;;;;;-1:-1:-1;;;;;2950:137:0;;:::i;:::-;;;;;;;;;;;;;;;;;;1727:49;;;:::i;3255:125::-;;;;;;;;;;;;;;;;-1:-1:-1;3255:125:0;;:::i;5101:226::-;;;;;;;;;;;;;;;;-1:-1:-1;5101:226:0;;;;;;-1:-1:-1;;;;;5101:226:0;;:::i;2430:124:12:-;;;;;;;;;;;;;;;;-1:-1:-1;2430:124:12;-1:-1:-1;;;;;2430:124:12;;:::i;1407:70::-;;;:::i;4282:112:0:-;4339:7;4365:12;;;;;;;;;;:22;;;;4282:112::o;4644:223::-;4735:6;:12;;;;;;;;;;:22;;;4727:45;;4759:12;:10;:12::i;:::-;4727:7;:45::i;:::-;4719:105;;;;-1:-1:-1;;;4719:105:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;4835:25;4846:4;4852:7;4835:10;:25::i;:::-;4644:223;;:::o;2865:84:12:-;2913:29;2931:10;2913:17;:29::i;:::-;2865:84::o;5818:205:0:-;5915:12;:10;:12::i;:::-;-1:-1:-1;;;;;5904:23:0;:7;-1:-1:-1;;;;;5904:23:0;;5896:83;;;;-1:-1:-1;;;5896:83:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;5990:26;6002:4;6008:7;5990:11;:26::i;1069:127:15:-;2182:24:12;2195:10;2182:12;:24::i;:::-;2174:33;;;;;;1155:16:15::1;:34:::0;;-1:-1:-1;;;;;;1155:34:15::1;-1:-1:-1::0;;;;;1155:34:15;;;::::1;::::0;;;::::1;::::0;;1069:127::o;2704:103:12:-;2182:24;2195:10;2182:12;:24::i;:::-;2174:33;;;;;;2777:23:::1;2792:7;2777:14;:23::i;:::-;2704:103:::0;:::o;3965:136:0:-;4038:7;4064:12;;;;;;;;;;:30;;4088:5;4064:23;:30::i;:::-;4057:37;;3965:136;;;;;:::o;2950:137::-;3019:4;3042:12;;;;;;;;;;:38;;3072:7;3042:29;:38::i;1727:49::-;1772:4;1727:49;:::o;3255:125::-;3318:7;3344:12;;;;;;;;;;:29;;:27;:29::i;5101:226::-;5193:6;:12;;;;;;;;;;:22;;;5185:45;;5217:12;:10;:12::i;5185:45::-;5177:106;;;;-1:-1:-1;;;5177:106:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;2430:124:12;2491:4;2514:33;-1:-1:-1;;;;;;;;;;;2539:7:12;2514;:33::i;1407:70::-;-1:-1:-1;;;;;;;;;;;1407:70:12;:::o;6429:150:7:-;6499:4;6522:50;6527:3;-1:-1:-1;;;;;6547:23:7;;6522:4;:50::i;598:104:6:-;685:10;598:104;:::o;7025:184:0:-;7098:6;:12;;;;;;;;;;:33;;7123:7;7098:24;:33::i;:::-;7094:109;;;7179:12;:10;:12::i;:::-;-1:-1:-1;;;;;7152:40:0;7170:7;-1:-1:-1;;;;;7152:40:0;7164:4;7152:40;;;;;;;;;;7025:184;;:::o;3103:148:12:-;3167:36;-1:-1:-1;;;;;;;;;;;3195:7:12;3167:10;:36::i;:::-;3218:26;;-1:-1:-1;;;;;3218:26:12;;;;;;;;3103:148;:::o;7215:188:0:-;7289:6;:12;;;;;;;;;;:36;;7317:7;7289:27;:36::i;:::-;7285:112;;;7373:12;:10;:12::i;:::-;-1:-1:-1;;;;;7346:40:0;7364:7;-1:-1:-1;;;;;7346:40:0;7358:4;7346:40;;;;;;;;;;7215:188;;:::o;2955:142:12:-;3016:35;-1:-1:-1;;;;;;;;;;;3043:7:12;3016:9;:35::i;:::-;3066:24;;-1:-1:-1;;;;;3066:24:12;;;;;;;;2955:142;:::o;7677:156:7:-;7751:7;7801:22;7805:3;7817:5;7801:3;:22::i;6984:165::-;7064:4;7087:55;7097:3;-1:-1:-1;;;;;7117:23:7;;7087:9;:55::i;7230:115::-;7293:7;7319:19;7327:3;7319:7;:19::i;1640:404::-;1703:4;1724:21;1734:3;1739:5;1724:9;:21::i;:::-;1719:319;;-1:-1:-1;1761:23:7;;;;;;;;:11;:23;;;;;;;;;;;;;1941:18;;1919:19;;;:12;;;:19;;;;;;:40;;;;1973:11;;1719:319;-1:-1:-1;2022:5:7;2015:12;;6747:156;6820:4;6843:53;6851:3;-1:-1:-1;;;;;6871:23:7;;6843:7;:53::i;4452:201::-;4546:18;;4519:7;;4546:26;-1:-1:-1;4538:73:7;;;;-1:-1:-1;;;4538:73:7;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;4628:3;:11;;4640:5;4628:18;;;;;;;;;;;;;;;;4621:25;;4452:201;;;;:::o;3805:127::-;3878:4;3901:19;;;:12;;;;;:19;;;;;;:24;;;3805:127::o;4013:107::-;4095:18;;4013:107::o;2212:1512::-;2278:4;2415:19;;;:12;;;:19;;;;;;2449:15;;2445:1273;;2878:18;;-1:-1:-1;;2830:14:7;;;;2878:22;;;;2806:21;;2878:3;;:22;;3160;;;;;;;;;;;;;;3140:42;;3303:9;3274:3;:11;;3286:13;3274:26;;;;;;;;;;;;;;;;;;;:38;;;;3378:23;;;3420:1;3378:12;;;:23;;;;;;3404:17;;;3378:43;;3527:17;;3378:3;;3527:17;;;;;;;;;;;;;;;;;;;;;;3619:3;:12;;:19;3632:5;3619:19;;;;;;;;;;;3612:26;;;3660:4;3653:11;;;;;;;;2445:1273;3702:5;3695:12;;;;",
+  "source": "// SPDX-License-Identifier: Apache-2.0\n\n///////////////////////////////////////////////////////////////////////////////\n//\n//  Copyright (C) 2018-2021 Crossbar.io Technologies GmbH and contributors.\n//\n//  Licensed under the Apache License, Version 2.0 (the \"License\");\n//  you may not use this file except in compliance with the License.\n//  You may obtain a copy of the License at\n//\n//      http://www.apache.org/licenses/LICENSE-2.0\n//\n//  Unless required by applicable law or agreed to in writing, software\n//  distributed under the License is distributed on an \"AS IS\" BASIS,\n//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n//  See the License for the specific language governing permissions and\n//  limitations under the License.\n//\n///////////////////////////////////////////////////////////////////////////////\n\npragma solidity >=0.6.0 <0.8.0;\n\nimport \"./XBRMaintained.sol\";\n\n\n/**\n * @title XBR Network root SC\n * @author The XBR Project\n */\ncontract XBRNetworkProxy is XBRMaintained {\n\n    address internal _networkContract;\n\n    function setNetworkContract (address networkContract) public onlyMaintainer {\n        _networkContract = networkContract;\n    }\n}\n",
+  "sourcePath": "/home/runner/work/wamp-xbr/wamp-xbr/contracts/XBRNetworkProxy.sol",
+  "ast": {
+    "absolutePath": "project:/contracts/XBRNetworkProxy.sol",
+    "exportedSymbols": {
+      "XBRNetworkProxy": [
+        7649
+      ]
+    },
+    "id": 7650,
+    "license": "Apache-2.0",
+    "nodeType": "SourceUnit",
+    "nodes": [
+      {
+        "id": 7630,
+        "literals": [
+          "solidity",
+          ">=",
+          "0.6",
+          ".0",
+          "<",
+          "0.8",
+          ".0"
+        ],
+        "nodeType": "PragmaDirective",
+        "src": "850:31:15"
+      },
+      {
+        "absolutePath": "project:/contracts/XBRMaintained.sol",
+        "file": "./XBRMaintained.sol",
+        "id": 7631,
+        "nodeType": "ImportDirective",
+        "scope": 7650,
+        "sourceUnit": 4797,
+        "src": "883:29:15",
+        "symbolAliases": [],
+        "unitAlias": ""
+      },
+      {
+        "abstract": false,
+        "baseContracts": [
+          {
+            "arguments": null,
+            "baseName": {
+              "contractScope": null,
+              "id": 7633,
+              "name": "XBRMaintained",
+              "nodeType": "UserDefinedTypeName",
+              "referencedDeclaration": 4796,
+              "src": "1008:13:15",
+              "typeDescriptions": {
+                "typeIdentifier": "t_contract$_XBRMaintained_$4796",
+                "typeString": "contract XBRMaintained"
+              }
+            },
+            "id": 7634,
+            "nodeType": "InheritanceSpecifier",
+            "src": "1008:13:15"
+          }
+        ],
+        "contractDependencies": [
+          282,
+          1653,
+          4796
+        ],
+        "contractKind": "contract",
+        "documentation": {
+          "id": 7632,
+          "nodeType": "StructuredDocumentation",
+          "src": "915:64:15",
+          "text": " @title XBR Network root SC\n @author The XBR Project"
+        },
+        "fullyImplemented": true,
+        "id": 7649,
+        "linearizedBaseContracts": [
+          7649,
+          4796,
+          282,
+          1653
+        ],
+        "name": "XBRNetworkProxy",
+        "nodeType": "ContractDefinition",
+        "nodes": [
+          {
+            "constant": false,
+            "id": 7636,
+            "mutability": "mutable",
+            "name": "_networkContract",
+            "nodeType": "VariableDeclaration",
+            "overrides": null,
+            "scope": 7649,
+            "src": "1029:33:15",
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_address",
+              "typeString": "address"
+            },
+            "typeName": {
+              "id": 7635,
+              "name": "address",
+              "nodeType": "ElementaryTypeName",
+              "src": "1029:7:15",
+              "stateMutability": "nonpayable",
+              "typeDescriptions": {
+                "typeIdentifier": "t_address",
+                "typeString": "address"
+              }
+            },
+            "value": null,
+            "visibility": "internal"
+          },
+          {
+            "body": {
+              "id": 7647,
+              "nodeType": "Block",
+              "src": "1145:51:15",
+              "statements": [
+                {
+                  "expression": {
+                    "argumentTypes": null,
+                    "id": 7645,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "argumentTypes": null,
+                      "id": 7643,
+                      "name": "_networkContract",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 7636,
+                      "src": "1155:16:15",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "argumentTypes": null,
+                      "id": 7644,
+                      "name": "networkContract",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 7638,
+                      "src": "1174:15:15",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "src": "1155:34:15",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "id": 7646,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1155:34:15"
+                }
+              ]
+            },
+            "documentation": null,
+            "functionSelector": "599b9348",
+            "id": 7648,
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [
+              {
+                "arguments": null,
+                "id": 7641,
+                "modifierName": {
+                  "argumentTypes": null,
+                  "id": 7640,
+                  "name": "onlyMaintainer",
+                  "nodeType": "Identifier",
+                  "overloadedDeclarations": [],
+                  "referencedDeclaration": 4728,
+                  "src": "1130:14:15",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_modifier$__$",
+                    "typeString": "modifier ()"
+                  }
+                },
+                "nodeType": "ModifierInvocation",
+                "src": "1130:14:15"
+              }
+            ],
+            "name": "setNetworkContract",
+            "nodeType": "FunctionDefinition",
+            "overrides": null,
+            "parameters": {
+              "id": 7639,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 7638,
+                  "mutability": "mutable",
+                  "name": "networkContract",
+                  "nodeType": "VariableDeclaration",
+                  "overrides": null,
+                  "scope": 7648,
+                  "src": "1098:23:15",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 7637,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1098:7:15",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "value": null,
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1097:25:15"
+            },
+            "returnParameters": {
+              "id": 7642,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1145:0:15"
+            },
+            "scope": 7649,
+            "src": "1069:127:15",
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "public"
+          }
+        ],
+        "scope": 7650,
+        "src": "980:218:15"
+      }
+    ],
+    "src": "850:349:15"
+  },
+  "legacyAST": {
+    "attributes": {
+      "absolutePath": "project:/contracts/XBRNetworkProxy.sol",
+      "exportedSymbols": {
+        "XBRNetworkProxy": [
+          7649
+        ]
+      },
+      "license": "Apache-2.0"
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            ">=",
+            "0.6",
+            ".0",
+            "<",
+            "0.8",
+            ".0"
+          ]
+        },
+        "id": 7630,
+        "name": "PragmaDirective",
+        "src": "850:31:15"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 4797,
+          "absolutePath": "project:/contracts/XBRMaintained.sol",
+          "file": "./XBRMaintained.sol",
+          "scope": 7650,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 7631,
+        "name": "ImportDirective",
+        "src": "883:29:15"
+      },
+      {
+        "attributes": {
+          "abstract": false,
+          "contractDependencies": [
+            282,
+            1653,
+            4796
+          ],
+          "contractKind": "contract",
+          "fullyImplemented": true,
+          "linearizedBaseContracts": [
+            7649,
+            4796,
+            282,
+            1653
+          ],
+          "name": "XBRNetworkProxy",
+          "scope": 7650
+        },
+        "children": [
+          {
+            "attributes": {
+              "text": " @title XBR Network root SC\n @author The XBR Project"
+            },
+            "id": 7632,
+            "name": "StructuredDocumentation",
+            "src": "915:64:15"
+          },
+          {
+            "attributes": {
+              "arguments": null
+            },
+            "children": [
+              {
+                "attributes": {
+                  "contractScope": null,
+                  "name": "XBRMaintained",
+                  "referencedDeclaration": 4796,
+                  "type": "contract XBRMaintained"
+                },
+                "id": 7633,
+                "name": "UserDefinedTypeName",
+                "src": "1008:13:15"
+              }
+            ],
+            "id": 7634,
+            "name": "InheritanceSpecifier",
+            "src": "1008:13:15"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "mutability": "mutable",
+              "name": "_networkContract",
+              "overrides": null,
+              "scope": 7649,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "address",
+              "value": null,
+              "visibility": "internal"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "name": "address",
+                  "stateMutability": "nonpayable",
+                  "type": "address"
+                },
+                "id": 7635,
+                "name": "ElementaryTypeName",
+                "src": "1029:7:15"
+              }
+            ],
+            "id": 7636,
+            "name": "VariableDeclaration",
+            "src": "1029:33:15"
+          },
+          {
+            "attributes": {
+              "documentation": null,
+              "functionSelector": "599b9348",
+              "implemented": true,
+              "isConstructor": false,
+              "kind": "function",
+              "name": "setNetworkContract",
+              "overrides": null,
+              "scope": 7649,
+              "stateMutability": "nonpayable",
+              "virtual": false,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "mutability": "mutable",
+                      "name": "networkContract",
+                      "overrides": null,
+                      "scope": 7648,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "stateMutability": "nonpayable",
+                          "type": "address"
+                        },
+                        "id": 7637,
+                        "name": "ElementaryTypeName",
+                        "src": "1098:7:15"
+                      }
+                    ],
+                    "id": 7638,
+                    "name": "VariableDeclaration",
+                    "src": "1098:23:15"
+                  }
+                ],
+                "id": 7639,
+                "name": "ParameterList",
+                "src": "1097:25:15"
+              },
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 7642,
+                "name": "ParameterList",
+                "src": "1145:0:15"
+              },
+              {
+                "attributes": {
+                  "arguments": null
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "argumentTypes": null,
+                      "overloadedDeclarations": [
+                        null
+                      ],
+                      "referencedDeclaration": 4728,
+                      "type": "modifier ()",
+                      "value": "onlyMaintainer"
+                    },
+                    "id": 7640,
+                    "name": "Identifier",
+                    "src": "1130:14:15"
+                  }
+                ],
+                "id": 7641,
+                "name": "ModifierInvocation",
+                "src": "1130:14:15"
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "operator": "=",
+                          "type": "address"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 7636,
+                              "type": "address",
+                              "value": "_networkContract"
+                            },
+                            "id": 7643,
+                            "name": "Identifier",
+                            "src": "1155:16:15"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 7638,
+                              "type": "address",
+                              "value": "networkContract"
+                            },
+                            "id": 7644,
+                            "name": "Identifier",
+                            "src": "1174:15:15"
+                          }
+                        ],
+                        "id": 7645,
+                        "name": "Assignment",
+                        "src": "1155:34:15"
+                      }
+                    ],
+                    "id": 7646,
+                    "name": "ExpressionStatement",
+                    "src": "1155:34:15"
+                  }
+                ],
+                "id": 7647,
+                "name": "Block",
+                "src": "1145:51:15"
+              }
+            ],
+            "id": 7648,
+            "name": "FunctionDefinition",
+            "src": "1069:127:15"
+          }
+        ],
+        "id": 7649,
+        "name": "ContractDefinition",
+        "src": "980:218:15"
+      }
+    ],
+    "id": 7650,
+    "name": "SourceUnit",
+    "src": "850:349:15"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.6.12+commit.27d51765.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "3.4.16",
+  "updatedAt": "2025-12-17T07:24:38.702Z",
+  "devdoc": {
+    "author": "The XBR Project",
+    "kind": "dev",
+    "methods": {
+      "addMaintainer(address)": {
+        "params": {
+          "account": "The account to grant maintainer rights to."
+        }
+      },
+      "getRoleAdmin(bytes32)": {
+        "details": "Returns the admin role that controls `role`. See {grantRole} and {revokeRole}. To change a role's admin, use {_setRoleAdmin}."
+      },
+      "getRoleMember(bytes32,uint256)": {
+        "details": "Returns one of the accounts that have `role`. `index` must be a value between 0 and {getRoleMemberCount}, non-inclusive. Role bearers are not sorted in any particular way, and their ordering may change at any point. WARNING: When using {getRoleMember} and {getRoleMemberCount}, make sure you perform all queries on the same block. See the following https://forum.openzeppelin.com/t/iterating-over-elements-on-enumerableset-in-openzeppelin-contracts/2296[forum post] for more information."
+      },
+      "getRoleMemberCount(bytes32)": {
+        "details": "Returns the number of accounts that have `role`. Can be used together with {getRoleMember} to enumerate all bearers of a role."
+      },
+      "grantRole(bytes32,address)": {
+        "details": "Grants `role` to `account`. If `account` had not been already granted `role`, emits a {RoleGranted} event. Requirements: - the caller must have ``role``'s admin role."
+      },
+      "hasRole(bytes32,address)": {
+        "details": "Returns `true` if `account` has been granted `role`."
+      },
+      "isMaintainer(address)": {
+        "params": {
+          "account": "The account to check."
+        },
+        "returns": {
+          "_0": "`true` if the account is maintainer, otherwise `false`."
+        }
+      },
+      "renounceRole(bytes32,address)": {
+        "details": "Revokes `role` from the calling account. Roles are often managed via {grantRole} and {revokeRole}: this function's purpose is to provide a mechanism for accounts to lose their privileges if they are compromised (such as when a trusted device is misplaced). If the calling account had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must be `account`."
+      },
+      "revokeRole(bytes32,address)": {
+        "details": "Revokes `role` from `account`. If `account` had been granted `role`, emits a {RoleRevoked} event. Requirements: - the caller must have ``role``'s admin role."
+      }
+    },
+    "title": "XBR Network root SC",
+    "version": 1
+  },
+  "userdoc": {
+    "events": {
+      "MaintainerAdded(address)": {
+        "notice": "Event fired when a maintainer was added."
+      },
+      "MaintainerRemoved(address)": {
+        "notice": "Event fired when a maintainer was removed."
+      }
+    },
+    "kind": "user",
+    "methods": {
+      "addMaintainer(address)": {
+        "notice": "Add a new maintainer to the list of maintainers."
+      },
+      "isMaintainer(address)": {
+        "notice": "Check if the given address is currently a maintainer."
+      },
+      "renounceMaintainer()": {
+        "notice": "Give away maintainer rights."
+      }
+    },
+    "version": 1
+  }
+}
