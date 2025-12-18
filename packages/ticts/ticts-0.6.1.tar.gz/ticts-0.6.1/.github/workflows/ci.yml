@@ -1,0 +1,207 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "**"
+  pull_request: {}
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: pyproject.toml
+
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: |
+            ${{ env.pythonLocation }}
+            .mypy_cache
+          key: lint-${{ runner.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
+
+      - name: Install Dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: pip install -e .[all]
+
+      - name: List deps
+        run: pip freeze
+
+      - uses: pre-commit/action@v3.0.1
+        with:
+          extra_args: --all-files --verbose
+
+  test:
+    name: pytest - py${{ matrix.python-version }} - pd${{ matrix.pandas-version }} - ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Python 3.10: test old pandas versions
+          - os: ubuntu
+            python-version: "3.10"
+            pandas-version: "1.5"
+          - os: ubuntu
+            python-version: "3.10"
+            pandas-version: "2.0"
+
+          # Python 3.11+: test recent pandas only
+          - os: ubuntu
+            python-version: "3.11"
+            pandas-version: "2.2"
+          - os: ubuntu
+            python-version: "3.12"
+            pandas-version: "2.2"
+          - os: ubuntu
+            python-version: "3.13"
+            pandas-version: "2.3"
+
+          # Cross-platform on latest
+          - os: windows
+            python-version: "3.12"
+            pandas-version: "2.2"
+          - os: macos
+            python-version: "3.13"
+            pandas-version: "2.2"
+
+    env:
+      PYTHON: ${{ matrix.python-version }}
+      OS: ${{ matrix.os }}
+      DEPS: yes
+
+    runs-on: ${{ matrix.os }}-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+          cache-dependency-path: pyproject.toml
+
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: |
+            ${{ env.pythonLocation }}
+          key: pytest-${{ runner.os }}-python-${{ matrix.python-version }}-pandas-${{ matrix.pandas-version }}-${{ hashFiles('pyproject.toml') }}
+
+      - name: Install Dependencies
+        if: ${{ matrix.os == 'macos' }} || (steps.cache.outputs.cache-hit != 'true')
+        run: |
+          pip install --editable .[dev]
+          pip install pandas==${{ matrix.pandas-version }}
+          if [[ "${{ matrix.pandas-version }}" == "1.5" || "${{ matrix.pandas-version }}" == "2.0" ]]; then
+            pip install "numpy<2"
+          fi
+        shell: bash
+
+      - name: List deps
+        run: pip freeze
+
+      - name: Test
+        run: coverage run -m pytest -vv
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          fail_ci_if_error: false
+
+  docs:
+    name: docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: pyproject.toml
+
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: ${{ env.pythonLocation }}
+          key: docs-build-${{ runner.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
+
+      - name: Install Dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: pip install -e .[doc]
+
+      - name: Build docs site
+        run: mkdocs build
+
+  publish-pypi:
+    name: publish pypi
+    needs: [lint, test, docs]
+    if: "success() && startsWith(github.ref, 'refs/tags/')"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: install
+        run: pip install -U twine build packaging
+
+      - name: build
+        run: python -m build
+
+      - run: ls -lh dist
+
+      - run: twine check dist/*
+
+      - name: Upload to Pypi
+        run: twine upload dist/*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+
+  deploy-docs:
+    name: deploy docs on github pages
+    needs: [lint, test, docs]
+    if: "success() && startsWith(github.ref, 'refs/tags/')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: pyproject.toml
+
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: ${{ env.pythonLocation }}
+          key: mkdocs-${{ runner.os }}-python-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
+
+      - name: Install Dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: pip install -e .[doc]
+
+      - name: Deploy docs site
+        run: >
+          mkdocs gh-deploy --force
+          --message "upt(doc): ${{ github.sha }}"
+          --remote-branch=gh-pages
