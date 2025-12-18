@@ -1,0 +1,82 @@
+# SPDX-FileCopyrightText: 2020 EACG GmbH
+#
+# SPDX-License-Identifier: Apache-2.0
+
+import typing as t
+from pathlib import Path
+
+from . import SourceCodeAnalyser, AnalysisResult
+from .Dataset import Dataset
+from .textutils import analyse_text, analyse_license_text
+
+from ..commentparser import Comment, extract_comments
+from ..commentparser.language import Lang, classify
+
+
+class CommentAnalyser(SourceCodeAnalyser):
+    def __init__(self, dataset: Dataset, include_copyright=False, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.dataset = dataset
+        self.include_copyright = include_copyright
+
+    @property
+    def category(self) -> str:
+        return 'comments'
+
+    @property
+    def options(self) -> dict:
+        # TODO: add categorization of options: 'include_copyright' -> 'comments.include_copyright'
+        # TODO: rename 'includeCopyright' -> 'include_copyright'
+        return {
+            'includeCopyright': self.include_copyright
+        }
+
+    def apply(self, path: Path, root: t.Optional[Path] = None) -> t.Optional[AnalysisResult]:
+        with path.open(errors="surrogateescape") as fp:
+            content = fp.read()
+            comments = extract_comments(content, classify(path))
+
+            # Merge comments
+            if comments:
+                merged = []
+                cur, *tail = comments
+
+                for c in tail:
+                    if c.startLine == cur.endLine + 1:
+                        cur = Comment(cur.startLine, c.endLine, cur.text + '\n' + c.text)
+                    else:
+                        merged.append(cur)
+                        cur = c
+
+                merged.append(cur)
+                results = []
+                for res in self.__analyse_comments(merged):
+                    results.append(res)
+
+                if len(results) > 0:
+                    return AnalysisResult(self.category, results)
+
+        return None
+
+    def __analyse_comments(self, comments) -> t.Iterable[dict]:
+        if len(comments) > 0:
+            head, *tail = comments
+            res = analyse_license_text(head.text, self.dataset,
+                                       search_copyright=self.include_copyright)
+            if res:
+                res['line'] = head.startLine
+                res['endLine'] = head.endLine
+                comments = tail
+
+                yield res
+
+        for c in comments:
+            res = analyse_text(c.text, self.dataset,
+                               timeout=self.timeout,
+                               search_copyright=self.include_copyright)
+            if res:
+                res['line'] = c.startLine
+                res['endLine'] = c.endLine
+
+                yield res
