@@ -1,0 +1,54 @@
+Metadata-Version: 2.4
+Name: kestrel-llm
+Version: 0.1.0
+Summary: Utilities to verify and maintain LLM.txt files (coverage, sorting, symbols blocks).
+Author: kestrel-llm contributors
+License: MIT
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Software Development :: Documentation
+Classifier: Topic :: Software Development :: Quality Assurance
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Provides-Extra: dev
+Requires-Dist: ty>=0.0.2; extra == "dev"
+Requires-Dist: pytest>=8; extra == "dev"
+Requires-Dist: ruff>=0.5; extra == "dev"
+Dynamic: license-file
+
+# Kestrel-llm
+
+Small, dependency-free utilities for maintaining an `LLM.txt` file in a repo.
+
+## Install
+
+From this repo:
+
+```bash
+python -m pip install -e .
+```
+
+From PyPI:
+
+```bash
+python -m pip install kestrel-llm
+```
+
+## Commands
+
+Run these from **any directory inside** a repo that contains `LLM.txt` (or `llm.txt`)
+somewhere above your current working directory.
+
+- **`llm-check`**: verify `LLM.txt` covers all `.py` files, enforces exactly two-sentence
+  summaries, and enforces per-section alphabetical sorting.
+- **`llm-fix`**: sort sections/entries in `LLM.txt` and refresh `Symbols:` blocks.
+- **`llm-sync`**: sort, strictly verify, refresh `Symbols:` blocks, then strictly verify again.
+
+## Common options
+
+- **`--repo-root PATH`**: override the repo root used for scanning.
+- **`--llm-file PATH`**: override the `LLM.txt` path.
+- **`--exclude-dir NAME`**: exclude additional directory names when scanning (repeatable).
+- **`--log-level LEVEL`**: set logging level (or use `LOG_LEVEL` env var).
