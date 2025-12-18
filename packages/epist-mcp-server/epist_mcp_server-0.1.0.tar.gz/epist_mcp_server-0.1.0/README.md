@@ -1,0 +1,33 @@
+# Epist MCP Server
+
+This is the official Model Context Protocol (MCP) server for Epist.ai, allowing you to connect Claude Desktop to your Audio Knowledge Base.
+
+## Installation
+
+```bash
+pip install epist-mcp-server
+```
+
+## Configuration
+
+Configure your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "epist": {
+      "command": "epist-mcp",
+      "env": {
+        "EPIST_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+## Features
+
+- **Ingest Audio**: Submit audio URLs for transcription and indexing directly from Claude.
+- **Search Knowledge Base**: Semantically search your audio transcripts.
+- **Check Status**: Monitor the status of your transcription jobs.
+- **Access Transcripts**: Use `transcript://{id}` resources to read full transcripts.
