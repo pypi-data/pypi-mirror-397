@@ -1,0 +1,70 @@
+Metadata-Version: 2.3
+Name: avanak
+Version: 0.1.1
+Summary: Python client library for Avanak voice message REST API
+Keywords: avanak,voice,api,sms,telephony,communication,persian,farsi,ivr,text-to-speech,tts
+Author: Hassan Pouralijan
+Author-email: Hassan Pouralijan <pouralijan@gmail.com>
+License: MIT
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Classifier: Topic :: Communications :: Telephony
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Internet :: WWW/HTTP
+Requires-Dist: requests>=2.25.0
+Requires-Dist: pydantic>=2.0.0
+Maintainer: Hassan Pouralijan
+Maintainer-email: Hassan Pouralijan <pouralijan@gmail.com>
+Requires-Python: >=3.8
+Project-URL: Changelog, https://github.com/pouralijan/avanak-python/blob/main/CHANGELOG.md
+Project-URL: Documentation, https://github.com/pouralijan/avanak-python#readme
+Project-URL: Homepage, https://github.com/pouralijan/avanak-python
+Project-URL: Issues, https://github.com/pouralijan/avanak-python/issues
+Project-URL: Repository, https://github.com/pouralijan/avanak-python
+Description-Content-Type: text/markdown
+
+# Avanak
+
+Python client library for Avanak voice message REST API.
+
+## Installation
+
+```bash
+pip install avanak
+```
+
+## Usage
+
+```python
+from avanak import AvanakClient
+
+client = AvanakClient(token="your_token")
+
+# Get account status
+status = client.account_status()
+print(status.account_name)
+
+# Send OTP
+response = client.send_otp(length=4, number="09120000000")
+print(response.generated_code)
+```
+
+## Development
+
+This project uses uv for dependency management, ruff for linting and formatting.
+
+```bash
+uv sync
+uv run ruff check .
+uv run ruff format .
+```
