@@ -1,0 +1,173 @@
+
+__all__ = ['logger', 'LeapSeconds', 'gps2utc', 'utc2gps']
+
+
+"""Copyright 2020 The Aerospace Corporation"""
+
+
+import datetime
+
+from typing import List, Union, Optional, Tuple
+from logging import getLogger
+
+from .core import GPSTime
+
+
+logger = getLogger(__name__)
+
+
+class LeapSeconds:
+    """Determine the number of leap seconds.
+
+    The purpose of this class is to provide a place to store leap second
+    information. It has two methods: one to get the number of leap seconds at
+    a given time and one to get the next leap second.
+
+
+    """
+
+    _leap_seconds: List[List[Union[GPSTime, int]]] = [
+        [GPSTime.from_datetime(time=datetime.datetime(year=1981, month=6, day=30, hour=23, minute=59, second=59, tzinfo=datetime.timezone.utc)) + 1, 1],
+        [GPSTime.from_datetime(time=datetime.datetime(year=1982, month=6, day=30, hour=23, minute=59, second=59, tzinfo=datetime.timezone.utc)) + 1, 2],
+        [GPSTime.from_datetime(time=datetime.datetime(year=1983, month=6, day=30, hour=23, minute=59, second=59, tzinfo=datetime.timezone.utc)) + 1, 3],
+        [GPSTime.from_datetime(time=datetime.datetime(year=1985, month=6, day=30, hour=23, minute=59, second=59, tzinfo=datetime.timezone.utc)) + 1, 4],
+        [GPSTime.from_datetime(time=datetime.datetime(year=1987, month=12, day=31, hour=23, minute=59, second=59, tzinfo=datetime.timezone.utc)) + 1, 5],
+        [GPSTime.from_datetime(time=datetime.datetime(year=1989, month=12, day=31, hour=23, minute=59, second=59, tzinfo=datetime.timezone.utc)) + 1, 6],
+        [GPSTime.from_datetime(time=datetime.datetime(year=1990, month=12, day=31, hour=23, minute=59, second=59, tzinfo=datetime.timezone.utc)) + 1, 7],
+        [GPSTime.from_datetime(time=datetime.datetime(year=1992, month=6, day=30, hour=23, minute=59, second=59, tzinfo=datetime.timezone.utc)) + 1, 8],
+        [GPSTime.from_datetime(time=datetime.datetime(year=1993, month=6, day=30, hour=23, minute=59, second=59, tzinfo=datetime.timezone.utc)) + 1, 9],
+        [GPSTime.from_datetime(time=datetime.datetime(year=1994, month=6, day=30, hour=23, minute=59, second=59, tzinfo=datetime.timezone.utc)) + 1, 10],
+        [GPSTime.from_datetime(time=datetime.datetime(year=1995, month=12, day=31, hour=23, minute=59, second=59, tzinfo=datetime.timezone.utc)) + 1, 11],
+        [GPSTime.from_datetime(time=datetime.datetime(year=1997, month=6, day=30, hour=23, minute=59, second=59, tzinfo=datetime.timezone.utc)) + 1, 12],
+        [GPSTime.from_datetime(time=datetime.datetime(year=1998, month=12, day=31, hour=23, minute=59, second=59, tzinfo=datetime.timezone.utc)) + 1, 13],
+        [GPSTime.from_datetime(time=datetime.datetime(year=2005, month=12, day=31, hour=23, minute=59, second=59, tzinfo=datetime.timezone.utc)) + 1, 14],
+        [GPSTime.from_datetime(time=datetime.datetime(year=2008, month=12, day=31, hour=23, minute=59, second=59, tzinfo=datetime.timezone.utc)) + 1, 15],
+        [GPSTime.from_datetime(time=datetime.datetime(year=2012, month=6, day=30, hour=23, minute=59, second=59, tzinfo=datetime.timezone.utc)) + 1, 16],
+        [GPSTime.from_datetime(time=datetime.datetime(year=2015, month=6, day=30, hour=23, minute=59, second=59, tzinfo=datetime.timezone.utc)) + 1, 17],
+        [GPSTime.from_datetime(time=datetime.datetime(year=2016, month=12, day=31, hour=23, minute=59, second=59, tzinfo=datetime.timezone.utc)) + 1, 18],
+    ]
+    """Table of Leap Seconds, note that the leap second occues at midnight, but before the next day."""
+
+    @classmethod
+    def get_leap_seconds(cls, time: GPSTime) -> int:
+        """Get the current number of leap seconds.
+
+        Parameters
+        ----------
+        time : GPSTime
+            The time at which to find the number of leap seconds
+
+        Returns
+        -------
+        int
+            The number of leap seconds at time
+
+        """
+        if time > datetime.datetime(2025, 12, 31, 23, 59, 59):
+            logger.warning(
+                "Leap seconds only current through 31 Dec 2025. Any future "
+                "leap seconds not included. Update when available."
+            )
+
+        if time < cls._leap_seconds[0][0]:
+            return 0
+        else:
+            for _ls in cls._leap_seconds[::-1]:
+                if time >= _ls[0]:
+                    return _ls[1]
+
+    @classmethod
+    def get_next_leap_second(cls, time: GPSTime) -> Optional[Tuple[GPSTime, int]]:
+        """Get the next leap second.
+
+        This method is used to compute the next leap second from the given
+        time. If the time is after the most recent leap second update and
+        there is no planned future leap second, this will return a None
+        indicating no planned update.
+
+
+        Parameters
+        ----------
+        time : GPSTime
+            The time for which the next leap second is desired
+
+        Returns
+        -------
+        Optional[Tuple[GPSTime, int]]
+            A tuple containing the GPSTime of the next leap second and the
+            number of leap seconds at that time. If the next leap second from
+            the desired time is not known, than None is returned.
+
+        """
+        if time > datetime.datetime(2025, 12, 31, 23, 59, 59):
+            logger.warning(
+                "Leap seconds only current through 31 Dec 2025. Any future "
+                "leap seconds not included. Update when available."
+            )
+
+        if time < cls._leap_seconds[0][0]:
+            return cls._leap_seconds[0]
+        elif time > cls._leap_seconds[-1][0]:
+            return None
+        else:
+            for _ls in cls._leap_seconds:
+                if time < _ls[0]:
+                    return _ls
+
+
+def gps2utc(gps_time: Union[GPSTime, datetime.datetime]) -> datetime.datetime:
+    """Convert GPS Time to UTC Time
+
+    This function adjust the GPS Time using the number of leap seconds to get
+    the UTC time.
+
+    Parameters
+    ----------
+    gps_time : Union[GPSTime, datetime.datetime]
+        The current GPS Time
+
+    Returns
+    -------
+    datetime.datetime
+        The UTC Time
+
+    """
+    if isinstance(gps_time, datetime.datetime):
+        if gps_time.tzinfo is None:
+            gps_time = gps_time.replace(tzinfo=datetime.timezone.utc)
+        gps_time = GPSTime.from_datetime(gps_time)
+
+    assert isinstance(gps_time, GPSTime), "gps_time must be a GPSTime or datetime"
+
+    leap_seconds = LeapSeconds.get_leap_seconds(gps_time)
+    utc_time = gps_time - leap_seconds
+
+    return utc_time.to_datetime()
+
+
+def utc2gps(utc_time: datetime.datetime) -> GPSTime:
+    """Convert UTC Time to GPS Time
+
+    This function adjust the UTC Time using the number of leap seconds to get
+    the GPS time.
+
+    Parameters
+    ----------
+    utc_time : datetime.datetime
+        The current UTC Time
+
+    Returns
+    -------
+    GPSTime
+        The GPS Time
+
+    """
+    assert isinstance(utc_time, datetime.datetime), "utc_time must be a datetime"
+
+    if utc_time.tzinfo != datetime.timezone.utc:
+        logger.warning("utc2gps() was passed a datetime object not in the UTC time zone. May cause unintended behavior")
+
+    leap_seconds = LeapSeconds.get_leap_seconds(GPSTime.from_datetime(utc_time))
+    gps_time = GPSTime.from_datetime(utc_time) + leap_seconds
+
+    return gps_time
