@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # Nexus RPC Server (Backend for MCP server or direct API access)
+  # ============================================================================
+  nexus-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nexus-server:latest
+    container_name: nexus-server
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      - NEXUS_HOST=0.0.0.0
+      - NEXUS_PORT=8080
+      - NEXUS_DATA_DIR=/app/data
+      - NEXUS_DATABASE_URL=${NEXUS_DATABASE_URL:-postgresql://postgres:nexus@postgres:5432/nexus}
+      - NEXUS_API_KEY=${NEXUS_API_KEY:-}
+      - NEXUS_BACKEND=${NEXUS_BACKEND:-local}
+      # GCS Backend (if using)
+      - NEXUS_GCS_BUCKET_NAME=${NEXUS_GCS_BUCKET_NAME:-}
+      - NEXUS_GCS_PROJECT_ID=${NEXUS_GCS_PROJECT_ID:-}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS:-}
+      # OAuth Configuration
+      - NEXUS_OAUTH_ENCRYPTION_KEY=${NEXUS_OAUTH_ENCRYPTION_KEY:-}
+      - NEXUS_OAUTH_GOOGLE_CLIENT_ID=${NEXUS_OAUTH_GOOGLE_CLIENT_ID:-}
+      - NEXUS_OAUTH_GOOGLE_CLIENT_SECRET=${NEXUS_OAUTH_GOOGLE_CLIENT_SECRET:-}
+    volumes:
+      # Persistent data directory
+      - nexus-data:/app/data
+      # Docker socket for sandbox container management
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Optional: Mount GCS credentials
+      - ${GCS_CREDENTIALS_PATH:-./gcs-credentials.json}:/app/gcs-credentials.json:ro
+    # Run as root to access Docker socket (required for sandbox provider)
+    # The nexus user inside the container doesn't have socket permissions
+    user: root
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - nexus-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    profiles:
+      - server  # Only run when explicitly requested
+
+  # ============================================================================
+  # MCP Server - HTTP Mode (Model Context Protocol for AI agents)
+  # ============================================================================
+  # Exposes Nexus functionality via MCP protocol for remote AI agent access
+  # Connects to nexus-server as backend
+  mcp-server:
+    image: nexus-server:latest  # Reuse same image
+    container_name: nexus-mcp-server
+    restart: unless-stopped
+    ports:
+      - "${MCP_PORT:-8081}:8081"
+    environment:
+      # MCP Transport Configuration
+      - MCP_TRANSPORT=${MCP_TRANSPORT:-http}
+      - MCP_HOST=0.0.0.0
+      - MCP_PORT=8081
+
+      # Backend Connection (connect to nexus-server)
+      - NEXUS_URL=${NEXUS_URL:-http://nexus-server:8080}
+      - NEXUS_API_KEY=${NEXUS_API_KEY:-}
+
+      # Alternative: Local mode (comment out NEXUS_URL, uncomment below)
+      # - NEXUS_BACKEND=${NEXUS_BACKEND:-local}
+      # - NEXUS_DATA_DIR=/app/data
+    volumes:
+      # Only needed for local mode
+      # - mcp-data:/app/data
+      - ./logs:/app/logs:rw
+    entrypoint: []  # Override entrypoint to skip database initialization
+    command: ["nexus", "mcp", "serve", "--transport", "http", "--host", "0.0.0.0", "--port", "8081"]
+    depends_on:
+      nexus-server:
+        condition: service_healthy
+    networks:
+      - nexus-network
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    profiles:
+      - mcp  # Only run when explicitly requested
+
+volumes:
+  nexus-data:
+    driver: local
+
+networks:
+  nexus-network:
+    driver: bridge
