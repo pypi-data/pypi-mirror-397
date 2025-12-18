@@ -1,0 +1,320 @@
+"""
+Tampere University WiFi Dataset Implementation
+
+Large-scale WiFi fingerprinting dataset collected at Tampere University
+covering multiple buildings and floors with high spatial resolution.
+
+Reference:
+    Lohan, E. S., et al. (2017). Wi-Fi Crowdsourced Fingerprinting Dataset
+    for Indoor Positioning. Data, 2(4), 32.
+
+Dataset URL: https://zenodo.org/record/889798
+"""
+from pathlib import Path
+from typing import Optional, Any, Dict, List, Union
+import numpy as np
+
+from .base import WiFiDataset
+from ..signals.wifi import WiFiSignal
+from ..locations.location import Location
+from ..locations.coordinate import Coordinate
+from ..registry import DATASETS
+from ..utils.download import download_from_zenodo
+
+
+@DATASETS.register_module()
+class TampereDataset(WiFiDataset):
+    """Tampere University WiFi Fingerprinting Dataset.
+
+    Large-scale WiFi dataset with crowdsourced fingerprints collected
+    across multiple buildings at Tampere University.
+
+    Args:
+        data_root: Root directory containing the dataset files. If None,
+            uses the default cache directory (~/.cache/indoorloc/datasets/tampere).
+        split: Dataset split ('train' or 'test').
+        download: Whether to download the dataset if not found.
+        transform: Optional transform to apply to signals.
+        normalize: Whether to normalize RSSI values.
+        normalize_method: Normalization method ('minmax', 'positive', 'standard').
+
+    Example:
+        >>> import indoorloc as iloc
+        >>> # Download from Zenodo
+        >>> dataset = iloc.Tampere(download=True, split='train')
+
+    Dataset structure:
+        data_root/
+        ├── train.csv
+        └── test.csv
+
+    CSV format:
+        - Columns: timestamp, x, y, floor, building, WAP1_RSSI, WAP2_RSSI, ...
+        - RSSI values in dBm, missing values represented as 100
+    """
+
+    # Zenodo record ID for Tampere dataset
+    ZENODO_RECORD_ID = '1066041'
+
+    # Dataset constants
+    NOT_DETECTED_VALUE = 100
+
+    # Required files
+    FILE_MAPPING = {
+        'train': 'train.csv',
+        'test': 'test.csv',
+    }
+
+    def __init__(
+        self,
+        data_root: Optional[str] = None,
+        split: str = 'train',
+        download: bool = False,
+        building: Union[str, List[str]] = 'all',
+        transform: Optional[Any] = None,
+        normalize: bool = True,
+        normalize_method: str = 'minmax',
+        **kwargs
+    ):
+        self._num_aps = None  # Will be determined from data
+        self._building_param = building
+        self._available_buildings: List[str] = []
+
+        super().__init__(
+            data_root=data_root,
+            split=split,
+            download=download,
+            transform=transform,
+            normalize=normalize,
+            normalize_method=normalize_method,
+            **kwargs
+        )
+
+    @property
+    def dataset_name(self) -> str:
+        return 'Tampere'
+
+    @property
+    def num_aps(self) -> int:
+        if self._num_aps is None:
+            return 0
+        return self._num_aps
+
+    @classmethod
+    def list_buildings(cls, data_root: Optional[str] = None) -> List[str]:
+        """List all available buildings in the dataset.
+
+        Args:
+            data_root: Root directory containing the dataset files.
+
+        Returns:
+            List of building identifiers.
+        """
+        from ..utils.download import get_data_home
+
+        if data_root is None:
+            root = get_data_home() / 'tampere'
+        else:
+            root = Path(data_root)
+
+        train_file = root / 'train.csv'
+        if not train_file.exists():
+            return []
+
+        try:
+            import pandas as pd
+            df = pd.read_csv(train_file, usecols=['building'])
+            return sorted(df['building'].astype(str).unique().tolist())
+        except Exception:
+            return []
+
+    def _check_exists(self) -> bool:
+        """Check if dataset files exist."""
+        filename = self.FILE_MAPPING.get(self.split)
+        if filename is None:
+            return False
+        return (self.data_root / filename).exists()
+
+    def _download(self) -> None:
+        """Download Tampere dataset from Zenodo."""
+        if self._check_exists():
+            print(f"Dataset already exists at {self.data_root}")
+            return
+
+        print(f"Downloading Tampere dataset from Zenodo...")
+
+        try:
+            # Download specific files from Zenodo
+            filenames = list(self.FILE_MAPPING.values())
+            download_from_zenodo(
+                record_id=self.ZENODO_RECORD_ID,
+                root=self.data_root,
+                filenames=filenames,
+            )
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to download Tampere dataset: {e}\n"
+                f"Please download manually from: https://zenodo.org/record/{self.ZENODO_RECORD_ID}"
+            )
+
+    def _load_data(self) -> None:
+        """Load Tampere dataset from CSV file."""
+        filename = self.FILE_MAPPING[self.split]
+        filepath = self.data_root / filename
+
+        if not filepath.exists():
+            raise FileNotFoundError(f"Data file not found: {filepath}")
+
+        # Load CSV file
+        # Expected format: timestamp,x,y,floor,building,WAP1,WAP2,...
+        try:
+            import pandas as pd
+            df = pd.read_csv(filepath)
+        except ImportError:
+            raise ImportError(
+                "pandas is required to load Tampere dataset.\n"
+                "Install with: pip install pandas"
+            )
+
+        # Identify coordinate columns
+        coord_cols = ['x', 'y', 'floor', 'building']
+        if 'timestamp' in df.columns:
+            coord_cols.insert(0, 'timestamp')
+
+        # Check which columns exist
+        existing_coord_cols = [col for col in coord_cols if col in df.columns]
+
+        # Remaining columns are WAP RSSI values
+        wap_cols = [col for col in df.columns if col not in existing_coord_cols]
+
+        if len(wap_cols) == 0:
+            raise ValueError("No WAP columns found in dataset")
+
+        # Store available buildings
+        if 'building' in df.columns:
+            self._available_buildings = sorted(df['building'].astype(str).unique().tolist())
+        else:
+            self._available_buildings = ['0']
+
+        # Filter by building parameter
+        if self._building_param != 'all' and 'building' in df.columns:
+            if isinstance(self._building_param, list):
+                selected_buildings = [str(b) for b in self._building_param]
+            else:
+                selected_buildings = [str(self._building_param)]
+            df = df[df['building'].astype(str).isin(selected_buildings)]
+
+        if len(df) == 0:
+            raise ValueError(f"No data found for building(s): {self._building_param}")
+
+        # Store number of APs
+        self._num_aps = len(wap_cols)
+
+        # Extract data
+        rssi_data = df[wap_cols].values.astype(np.float32)
+        x_vals = df['x'].values if 'x' in df.columns else np.zeros(len(df))
+        y_vals = df['y'].values if 'y' in df.columns else np.zeros(len(df))
+        floors = df['floor'].values.astype(int) if 'floor' in df.columns else np.zeros(len(df), dtype=int)
+        buildings = df['building'].values.astype(str) if 'building' in df.columns else ['0'] * len(df)
+
+        # Process each sample
+        for i in range(len(df)):
+            # Create WiFi signal
+            signal = WiFiSignal(rssi_values=rssi_data[i])
+
+            # Create location
+            location = Location(
+                coordinate=Coordinate(x=float(x_vals[i]), y=float(y_vals[i])),
+                floor=int(floors[i]),
+                building_id=str(buildings[i])
+            )
+
+            self._signals.append(signal)
+            self._locations.append(location)
+
+        building_info = f" (building: {self._building_param})" if self._building_param != 'all' else ""
+        print(f"Loaded {len(self._signals)} samples from Tampere dataset{building_info}")
+
+
+
+def Tampere(data_root=None, split=None, download=False, building='all', **kwargs):
+    """
+    Convenience function for loading Tampere dataset.
+
+    Args:
+        data_root: Root directory for dataset storage
+        split: Dataset split ('train', 'test', 'all', or None for tuple)
+        download: Whether to download if not found
+        building: Building(s) to load. Can be:
+            - 'all': Load all buildings (default)
+            - Single building: '1', '2', etc.
+            - List of buildings: ['1', '2', '3']
+        **kwargs: Additional arguments passed to TampereDataset
+
+    Returns:
+        - If split is 'train' or 'test': Returns single dataset
+        - If split is 'all': Returns merged train+test dataset
+        - If split is None: Returns tuple (train_dataset, test_dataset)
+
+    Examples:
+        >>> # Load train and test separately (tuple unpacking)
+        >>> train, test = Tampere(download=True)
+
+        >>> # Load entire dataset (train + test merged)
+        >>> dataset = Tampere(split='all', download=True)
+
+        >>> # Load specific building(s)
+        >>> train = Tampere(building=['1', '2'], split='train')
+
+        >>> # List available buildings
+        >>> Tampere.list_buildings()
+    """
+    if split is None:
+        # Return both train and test as tuple
+        train_dataset = TampereDataset(
+            data_root=data_root,
+            split='train',
+            download=download,
+            building=building,
+            **kwargs
+        )
+        test_dataset = TampereDataset(
+            data_root=data_root,
+            split='test',
+            download=download,
+            building=building,
+            **kwargs
+        )
+        return train_dataset, test_dataset
+    elif split == 'all':
+        # Return merged train + test dataset
+        from torch.utils.data import ConcatDataset
+        train_dataset = TampereDataset(
+            data_root=data_root,
+            split='train',
+            download=download,
+            building=building,
+            **kwargs
+        )
+        test_dataset = TampereDataset(
+            data_root=data_root,
+            split='test',
+            download=download,
+            building=building,
+            **kwargs
+        )
+        return ConcatDataset([train_dataset, test_dataset])
+    else:
+        # Return single split
+        return TampereDataset(
+            data_root=data_root,
+            split=split,
+            download=download,
+            building=building,
+            **kwargs
+        )
+
+
+# Attach class method to convenience function
+Tampere.list_buildings = TampereDataset.list_buildings
+
