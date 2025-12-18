@@ -1,0 +1,476 @@
+Metadata-Version: 2.4
+Name: fastapi-intelligent-cache
+Version: 0.1.4
+Summary: Intelligent caching library for FastAPI with automatic invalidation
+License-File: LICENSE
+Author: Cloud11 Team
+Requires-Python: >=3.8,<4.0
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Provides-Extra: redis
+Requires-Dist: fastapi (>=0.109.0)
+Requires-Dist: pydantic (>=2.5.0,<3.0.0)
+Requires-Dist: pydantic-settings (>=2.1.0,<3.0.0)
+Requires-Dist: redis (>=5.0.0,<6.0.0) ; extra == "redis"
+Description-Content-Type: text/markdown
+
+# FastAPI Intelligent Cache
+
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+A production-ready, intelligent caching library for FastAPI applications with automatic invalidation, Redis support, and hierarchical cache management.
+
+## Features
+
+- **🚀 Zero-Config Caching**: Simple `@cache_config` decorator
+- **🧠 Intelligent Invalidation**: Automatic hierarchical cache clearing on writes
+- **🔄 Non-Blocking**: Redis failures don't crash your app
+- **📊 Admin Dashboard**: Built-in cache management API
+- **🎯 Deterministic Keys**: Query parameter order doesn't matter
+- **⚡ High Performance**: <5ms cache hit latency
+- **🔧 Flexible Backends**: Redis, In-Memory, or custom backends
+- **📈 Metrics**: Built-in hit/miss rate tracking
+- **🛡️ Production-Ready**: Comprehensive error handling and logging
+
+## Installation
+
+```bash
+pip install fastapi-intelligent-cache
+```
+
+For Redis support:
+```bash
+pip install fastapi-intelligent-cache[redis]
+```
+
+## Quick Start
+
+```python
+from fastapi import FastAPI
+from fastapi_intelligent_cache import CacheManager, cache_config
+from fastapi_intelligent_cache.backends import RedisBackend
+
+app = FastAPI()
+
+# Initialize cache
+cache_manager = CacheManager(
+    backend=RedisBackend(url="redis://localhost:6379"),
+    default_ttl=60,
+    include_admin_routes=True,
+    max_response_size=10 * 1024 * 1024, # 10MB limit (default)
+)
+cache_manager.init_app(app)
+
+# Cache a GET endpoint
+@app.get("/items")
+@cache_config(ttl_seconds=3600)  # Cache for 1 hour
+async def list_items(page: int = 1, limit: int = 10):
+    # Expensive operation here
+    return {"items": [...]}
+
+# Automatically invalidates related caches
+@app.post("/items")
+async def create_item(item: dict):
+    # After creation, GET /items cache is automatically cleared
+    return {"item": item}
+```
+
+## How It Works
+
+### 1. Declarative Caching
+
+Use the `@cache_config` decorator to cache any GET endpoint:
+
+```python
+@app.get("/spaces/{space_id}")
+@cache_config(ttl_seconds=86400)  # 24 hours
+async def get_space(space_id: str):
+    return {"space": fetch_space(space_id)}
+```
+
+### 2. Automatic Invalidation
+
+Write operations (POST, PUT, PATCH, DELETE) automatically clear related caches:
+
+```python
+# This endpoint is cached
+@app.get("/spaces")
+@cache_config(ttl_seconds=3600)
+async def list_spaces():
+    return {"spaces": [...]}
+
+# This automatically clears the list cache above
+@app.post("/spaces")
+async def create_space(space: dict):
+    return {"space": space}
+```
+
+### 3. Hierarchical Invalidation
+
+Nested resources are intelligently invalidated:
+
+```python
+# PATCH /spaces/123/items/456
+# Automatically clears:
+# - GET:spaces:123:items:456*  (current resource)
+# - GET:spaces:123:items:*     (parent list)
+# - GET:spaces:123:*           (grandparent)
+# - GET:spaces:*               (base collection)
+```
+
+### 4. Cache Key Generation
+
+Keys are deterministic and order-independent:
+
+```python
+# These generate the SAME cache key:
+GET /items?page=1&limit=10&sort=name
+GET /items?sort=name&page=1&limit=10
+
+# Key format: METHOD:path:sorted_params
+# Result: GET:items:limit=10:page=1:sort=name
+```
+
+## Configuration
+
+### Backend Options
+
+#### Redis Backend (Recommended for Production)
+
+```python
+from fastapi_intelligent_cache.backends import RedisBackend
+
+backend = RedisBackend(
+    url="redis://localhost:6379",
+    db=0,
+    password=None,
+    max_connections=50,
+    socket_timeout=5,
+    key_prefix="myapp",  # Namespace for keys
+)
+```
+
+#### Memory Backend (Development/Testing)
+
+```python
+from fastapi_intelligent_cache.backends import MemoryBackend
+
+backend = MemoryBackend()
+```
+
+### Advanced Configuration
+
+```python
+from fastapi_intelligent_cache import CacheManager
+
+cache_manager = CacheManager(
+    backend=backend,
+    default_ttl=60,              # Default cache duration
+    enabled=True,                # Global enable/disable
+    include_admin_routes=True,   # Mount admin API
+    max_response_size=10 * 1024 * 1024, # 10MB limit (default)
+)
+```
+
+> [!IMPORTANT]
+> **Memory Safety**: If a response exceeds `max_response_size`, the library will automatically abort caching and stream the response to the client to prevent memory exhaustion. These large responses will not be stored in the cache.
+## Admin API
+
+When `include_admin_routes=True`, you get these endpoints:
+
+```
+GET    /api/cache/keys                # List cache keys (paginated)
+GET    /api/cache/keys?pattern=...    # List keys matching pattern (paginated)
+DELETE /api/cache/keys/{key}          # Delete specific key
+POST   /api/cache/clear               # Clear all cache
+POST   /api/cache/clear?pattern=...   # Clear by pattern
+GET    /api/cache/stats               # Get hit/miss statistics
+GET    /api/cache/health              # Health check
+```
+
+`GET /api/cache/keys` returns:
+
+```json
+{
+  "keys": [{"key": "GET:items:page=1", "ttl": 42}],
+  "cursor": 0   // use cursor for pagination; 0 means done
+}
+```
+
+### Example Usage
+
+```bash
+# List all keys
+curl http://localhost:8000/api/cache/keys
+
+# Clear all space-related caches
+curl -X POST "http://localhost:8000/api/cache/clear?pattern=GET:spaces:*"
+
+# View cache statistics
+curl http://localhost:8000/api/cache/stats
+# {"hits": 1234, "misses": 56, "hit_rate": 0.957}
+```
+
+## Advanced Usage
+
+### Manual Cache Control
+
+```python
+from fastapi import Depends
+from fastapi_intelligent_cache import get_cache_service, CacheService
+
+@app.post("/admin/warm-cache")
+async def warm_cache(cache: CacheService = Depends(get_cache_service)):
+    # Manually set cache
+    await cache.set("custom:key", {"data": "value"}, ttl=300)
+    return {"status": "cache warmed"}
+
+@app.post("/admin/invalidate/{resource}")
+async def invalidate_resource(
+    resource: str,
+    cache: CacheService = Depends(get_cache_service)
+):
+    # Clear specific pattern
+    count = await cache.clear_pattern(f"GET:{resource}:*")
+    return {"cleared": count}
+```
+
+### Custom Cache Keys (vary_by)
+
+```python
+@app.get("/user/profile")
+@cache_config(ttl_seconds=300, vary_by=["user_id"])
+async def get_profile(request: Request):
+    # `request.state.user_id` must be set by your auth middleware
+    # The generated cache key will include `user_id=...` so different users
+    # get separate cached responses.
+    return {"profile": {...}}
+```
+
+### Conditional Caching
+
+```python
+# Bypass cache with header
+curl -H "Cache-Control: no-cache" http://localhost:8000/items
+```
+
+### Response Headers
+
+Every response includes cache status:
+
+```
+X-Cache: HIT   # Served from cache
+X-Cache: MISS  # Generated fresh
+X-Cache: SKIP  # Explicitly bypassed (no-cache header or size limit)
+```
+
+### Caching Constraints (read this)
+
+- Only GET requests are cached.
+- `Cache-Control: no-cache` forces a bypass.
+- Bodies larger than the configured `max_response_size` (default 10MB) are not cached.
+- Streaming responses are not cached; bodies are buffered up to the size cap.
+- Cached headers are replayed as-is — avoid caching responses that set cookies or per-user headers unless you strip them first.
+
+See `docs/CACHING_LIMITS.md` and `docs/SECURITY.md` for deeper guidance.
+
+## Architecture
+
+```
+┌─────────────────────────────────────────┐
+│   @cache_config Decorator (metadata)     │
+└─────────────────────────────────────────┘
+                  ↓
+┌─────────────────────────────────────────┐
+│  Middleware (read/write interception)   │
+│  - CacheMiddleware                      │
+│  - InvalidationMiddleware               │
+└─────────────────────────────────────────┘
+                  ↓
+┌─────────────────────────────────────────┐
+│  CacheService (business logic)          │
+└─────────────────────────────────────────┘
+                  ↓
+┌─────────────────────────────────────────┐
+│  Backend (Redis/Memory)                 │
+└─────────────────────────────────────────┘
+```
+
+## Performance
+
+- **Cache Hit Latency**: <5ms (p99)
+- **Cache Miss Overhead**: <10ms (p99)
+- **Invalidation**: <50ms for 1000 keys (p99)
+- **Memory Overhead**: <100MB for 10K cached responses
+
+## Testing
+
+```bash
+# Install dev dependencies
+poetry install
+
+# Run tests
+pytest
+
+# Run with coverage
+pytest --cov=fastapi_intelligent_cache --cov-report=html
+
+# Type checking
+mypy src/
+
+# Linting
+ruff check src/
+black --check src/
+```
+
+## Examples
+
+See the [examples/](examples/) directory for complete working examples:
+
+- [`basic_usage.py`](examples/basic_usage.py) - Simple cache setup
+- [`with_redis.py`](examples/with_redis.py) - Redis backend configuration
+- [`with_auth.py`](examples/with_auth.py) - Secured admin routes
+- [`vary_by_user.py`](examples/vary_by_user.py) - Per-user caching with `vary_by`
+- [`custom_backend.py`](examples/custom_backend.py) - Custom backend implementation
+
+## Best Practices
+
+### 1. Choose Appropriate TTLs
+
+```python
+# Frequently changing data
+@cache_config(ttl_seconds=60)  # 1 minute
+
+# Stable data
+@cache_config(ttl_seconds=3600)  # 1 hour
+
+# Nearly static data
+@cache_config(ttl_seconds=86400)  # 24 hours
+```
+
+### 2. Use Key Prefixes for Namespacing
+
+```python
+backend = RedisBackend(
+    url="redis://localhost:6379",
+    key_prefix="myapp"  # All keys: myapp:GET:...
+)
+```
+
+### 3. Monitor Cache Performance
+
+```python
+@app.get("/metrics")
+async def metrics(cache: CacheService = Depends(get_cache_service)):
+    stats = cache.get_stats()
+    # Monitor hit_rate - aim for >80%
+    return stats
+```
+
+### 4. Handle Cache Failures Gracefully
+
+The library automatically handles Redis failures - your app continues without caching. Monitor logs for connection errors.
+
+### 5. Secure Admin Routes
+
+```python
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPBearer
+
+security = HTTPBearer()
+
+async def verify_admin(token = Depends(security)):
+    if not is_valid_admin(token):
+        raise HTTPException(403)
+    return token
+
+from fastapi import Depends
+
+# Protect admin routes with a single dependency applied to all endpoints
+cache_manager = CacheManager(
+    backend=backend,
+    include_admin_routes=True,
+    admin_auth_dependency=Depends(verify_admin),  # or admin_dependencies=[Depends(verify_admin)]
+)
+
+# NOTE: By default, admin routes have no authentication. You *must* provide
+# appropriate dependencies if these endpoints are exposed in production.
+```
+
+## Troubleshooting
+
+### Cache Not Working
+
+1. Check if caching is enabled globally
+2. Verify `@cache_config` decorator is present
+3. Ensure only GET requests (POST/PUT/etc. are not cached)
+4. Check for `Cache-Control: no-cache` headers
+
+### Cache Not Invalidating
+
+1. Verify write operation returns 2xx status
+2. Check logs for invalidation patterns
+3. Ensure path structure follows REST conventions
+
+### Redis Connection Issues
+
+1. Check Redis URL and credentials
+2. Verify network connectivity
+3. Check Redis server logs
+4. App will continue without caching on Redis failure
+
+## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+### Development Setup
+
+```bash
+# Clone repository
+git clone https://github.com/your-org/fastapi-intelligent-cache.git
+cd fastapi-intelligent-cache
+
+# Install with dev dependencies
+poetry install
+
+# Setup pre-commit hooks
+pre-commit install
+
+# Run tests
+pytest
+
+# Format code
+black src/ tests/
+ruff check --fix src/ tests/
+```
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## Credits
+
+Inspired by the caching implementation in the [Cloud11 Platform](https://github.com/cloud11).
+
+## Support
+
+- **Documentation**: [https://fastapi-intelligent-cache.readthedocs.io](https://fastapi-intelligent-cache.readthedocs.io)
+- **Issues**: [GitHub Issues](https://github.com/your-org/fastapi-intelligent-cache/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/fastapi-intelligent-cache/discussions)
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for version history.
+
+---
+
+**Made with ❤️ by the Cloud11 Team**
+
