@@ -1,0 +1,29 @@
+[project]
+name = "vercel-functions"
+version = "0.1.0"
+description = "Pythonic Python SDK for Vercel Functions"
+authors = [
+    { name = "AlphaKR93", email = "dev@alpha93.kr" }
+]
+requires-python = ">=3.12"
+
+[project.optional-dependencies]
+cache = [
+    "vercel-functions-cache",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.2,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "vercel"
+namespace = true
+
+[tool.uv.workspace]
+members = [
+    "packages/cache",
+]
+
+[tool.uv.sources]
+vercel-functions-cache = { workspace = true }
