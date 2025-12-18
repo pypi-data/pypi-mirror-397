@@ -1,0 +1,39 @@
+"""Operations module for PyGPUkit."""
+
+from pygpukit.ops.basic import (
+    add,
+    bias_add_inplace,
+    div,
+    exp,
+    gelu,
+    layernorm,
+    linear_bias_gelu,
+    log,
+    matmul,
+    max,
+    mean,
+    mul,
+    relu,
+    sub,
+    sum,
+    transpose,
+)
+
+__all__ = [
+    "add",
+    "sub",
+    "mul",
+    "div",
+    "exp",
+    "log",
+    "relu",
+    "gelu",
+    "layernorm",
+    "matmul",
+    "sum",
+    "mean",
+    "max",
+    "transpose",
+    "bias_add_inplace",
+    "linear_bias_gelu",
+]
