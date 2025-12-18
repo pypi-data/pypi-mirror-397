@@ -1,0 +1,36 @@
+[project]
+authors = [
+  {name = "pritam-dey3", email = "pritam.pritamdey.984@gmail.com"},
+]
+dependencies = [
+  "fastmcp>=2.13.0.2",
+  "jinja2>=3.1.6",
+  "json-schema-to-pydantic>=0.4.7",
+  "openai>=2.6.0",
+  "partialjson>=1.0.0",
+  "pydantic>=2.12.3",
+  "pydantic-settings>=2.11.0",
+]
+description = "Orchestrate AI agents with ease."
+name = "wingmate"
+readme = "README.md"
+requires-python = ">=3.13"
+version = "0.3.0"
+
+[project.scripts]
+wingmate = "wingmate:main"
+
+[build-system]
+build-backend = "uv_build"
+requires = ["uv_build>=0.9.5,<0.10.0"]
+
+[dependency-groups]
+dev = [
+  "pre-commit>=4.2.0",
+]
+
+[tool.poe.tasks]
+precmt = "pre-commit run --all-files"
+
+[tool.pyright]
+enableExperimentalFeatures = true
