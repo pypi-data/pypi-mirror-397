@@ -1,0 +1,257 @@
+Metadata-Version: 2.4
+Name: x402-python-client
+Version: 0.1.0
+Summary: Python client for the x402 Payment Protocol (v2) - HTTP 402 payments made easy
+Project-URL: Homepage, https://github.com/agentokratia/x402-python-client
+Project-URL: Documentation, https://github.com/agentokratia/x402-python-client#readme
+Project-URL: Repository, https://github.com/agentokratia/x402-python-client
+Project-URL: Issues, https://github.com/agentokratia/x402-python-client/issues
+Project-URL: Changelog, https://github.com/agentokratia/x402-python-client/blob/main/CHANGELOG.md
+Author-email: Agentokratia <dev@agentokratia.com>
+License-Expression: MIT
+License-File: LICENSE
+Keywords: blockchain,eip-3009,ethereum,http-402,micropayments,payments,usdc,web3,x402
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Internet :: WWW/HTTP
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Typing :: Typed
+Requires-Python: >=3.10
+Requires-Dist: eth-account>=0.11.0
+Requires-Dist: httpx>=0.27.0
+Provides-Extra: dev
+Requires-Dist: mypy>=1.0.0; extra == 'dev'
+Requires-Dist: pytest-asyncio>=0.23.0; extra == 'dev'
+Requires-Dist: pytest>=8.0.0; extra == 'dev'
+Requires-Dist: ruff>=0.1.0; extra == 'dev'
+Description-Content-Type: text/markdown
+
+# x402-python-client
+
+[![PyPI version](https://badge.fury.io/py/x402-python-client.svg)](https://badge.fury.io/py/x402-python-client)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A Python client for the [x402 Payment Protocol](https://www.x402.org/) (v2) that enables seamless HTTP 402 payments using EIP-3009 gasless USDC transfers.
+
+## Why this client?
+
+The x402 protocol v2 sends payment requirements in the `payment-required` HTTP header (base64 encoded), not in the response body. This client correctly implements the v2 specification:
+
+- Reads payment requirements from the `payment-required` header
+- Signs EIP-712 typed data for TransferWithAuthorization (EIP-3009)
+- Sends payment via the `payment-signature` header
+- Supports both async and sync HTTP clients
+
+## Installation
+
+```bash
+pip install x402-python-client
+```
+
+## Quick Start
+
+### Async Client
+
+```python
+import asyncio
+from eth_account import Account
+from x402_client import X402AsyncClient
+
+account = Account.from_key("0xYOUR_PRIVATE_KEY")
+
+async def main():
+    async with X402AsyncClient(account=account) as client:
+        response = await client.post(
+            "https://api.example.com/paid-endpoint",
+            json={"your": "params"}
+        )
+        data = response.json()
+        print(data)
+
+asyncio.run(main())
+```
+
+### Sync Client
+
+```python
+from eth_account import Account
+from x402_client import X402Client
+
+account = Account.from_key("0xYOUR_PRIVATE_KEY")
+
+with X402Client(account=account) as client:
+    response = client.post(
+        "https://api.example.com/paid-endpoint",
+        json={"your": "params"}
+    )
+    data = response.json()
+    print(data)
+```
+
+## How It Works
+
+1. **Initial Request**: Client makes a request to a paid endpoint
+2. **402 Response**: Server responds with HTTP 402 and a `payment-required` header containing payment options
+3. **Payment Signing**: Client signs an EIP-3009 TransferWithAuthorization message
+4. **Retry with Payment**: Client retries the request with the `payment-signature` header
+5. **Success**: Server verifies the payment and returns the requested resource
+
+```
+Client                                Server
+  |                                     |
+  |  POST /api/resource                 |
+  | ----------------------------------> |
+  |                                     |
+  |  402 Payment Required               |
+  |  payment-required: <base64>         |
+  | <---------------------------------- |
+  |                                     |
+  |  POST /api/resource                 |
+  |  payment-signature: <base64>        |
+  | ----------------------------------> |
+  |                                     |
+  |  200 OK                             |
+  |  { "data": ... }                    |
+  | <---------------------------------- |
+```
+
+## Configuration
+
+Both clients accept standard `httpx` client options:
+
+```python
+async with X402AsyncClient(
+    account=account,
+    timeout=60.0,           # Request timeout in seconds
+    debug=True,             # Enable debug logging
+    headers={"X-Custom": "header"},
+) as client:
+    ...
+```
+
+## Supported Networks
+
+The client supports any EVM chain with USDC and EIP-3009 support. Network is specified using CAIP-2 format:
+
+- `eip155:1` - Ethereum Mainnet
+- `eip155:8453` - Base Mainnet
+- `eip155:84532` - Base Sepolia (testnet)
+- `eip155:137` - Polygon
+- `eip155:42161` - Arbitrum One
+
+## API Reference
+
+### X402AsyncClient
+
+```python
+class X402AsyncClient:
+    def __init__(self, account: Account, **kwargs):
+        """
+        Initialize async x402 client.
+
+        Args:
+            account: eth_account.Account instance for signing
+            debug: Enable debug logging (default: False)
+            **kwargs: Passed to httpx.AsyncClient
+        """
+
+    async def get(self, url: str, **kwargs) -> httpx.Response:
+        """Make GET request with automatic x402 payment handling."""
+
+    async def post(self, url: str, **kwargs) -> httpx.Response:
+        """Make POST request with automatic x402 payment handling."""
+```
+
+### X402Client
+
+```python
+class X402Client:
+    def __init__(self, account: Account, **kwargs):
+        """
+        Initialize sync x402 client.
+
+        Args:
+            account: eth_account.Account instance for signing
+            debug: Enable debug logging (default: False)
+            **kwargs: Passed to httpx.Client
+        """
+
+    def get(self, url: str, **kwargs) -> httpx.Response:
+        """Make GET request with automatic x402 payment handling."""
+
+    def post(self, url: str, **kwargs) -> httpx.Response:
+        """Make POST request with automatic x402 payment handling."""
+```
+
+## Protocol Details
+
+This client implements the [x402 Payment Protocol v2](https://www.x402.org/):
+
+- **Payment Scheme**: `exact` (exact amount transfers)
+- **Authorization**: EIP-3009 TransferWithAuthorization
+- **Signing**: EIP-712 typed data signatures
+- **Asset**: USDC (or any EIP-3009 compatible token)
+
+### Payment Payload Structure
+
+```json
+{
+  "x402Version": 2,
+  "resource": { "url": "..." },
+  "accepted": { "...PaymentRequirements..." },
+  "payload": {
+    "signature": "0x...",
+    "authorization": {
+      "from": "0x...",
+      "to": "0x...",
+      "value": "10000",
+      "validAfter": "0",
+      "validBefore": "1234567890",
+      "nonce": "0x..."
+    }
+  }
+}
+```
+
+## Development
+
+```bash
+# Clone the repository
+git clone https://github.com/agentokratia/x402-python-client.git
+cd x402-python-client
+
+# Install development dependencies
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+
+# Run linter
+ruff check .
+
+# Run type checker
+mypy src/
+```
+
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## Links
+
+- [x402 Protocol Specification](https://www.x402.org/)
+- [EIP-3009: Transfer With Authorization](https://eips.ethereum.org/EIPS/eip-3009)
+- [EIP-712: Typed Data Signing](https://eips.ethereum.org/EIPS/eip-712)
+- [Agentokratia](https://agentokratia.com/)
