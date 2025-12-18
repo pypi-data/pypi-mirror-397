@@ -1,0 +1,174 @@
+# Scripts Registry
+# This file provides human-readable names, descriptions, and parameter definitions for scripts
+# Scripts are located in the scripts/ folder (project_dir/scripts)
+
+scripts:
+  - filename: "generate_math_problems.py"
+    name: "Generate Math Problems"
+    description: "Generates a set of math problems for testing"
+    category: "Data Generation"
+    parameters:
+      - name: "count"
+        description: "Number of problems to generate"
+        type: "integer"
+        default: "10"
+        required: false
+      - name: "difficulty"
+        description: "Difficulty level (easy, medium, hard)"
+        type: "string"
+        default: "medium"
+        required: false
+
+  - filename: "generate_rfp_mock_data.py"
+    name: "Generate RFP Mock Data"
+    description: "Generates mock RFP data for testing"
+    category: "Data Generation"
+    parameters: []
+
+  - filename: "setup_ag_database.py"
+    name: "Setup AG Database"
+    description: "Initializes the Appeal & Grievance database"
+    category: "Setup"
+    parameters:
+      - name: "db-path"
+        description: "Database file path"
+        type: "string"
+        default: "projects/ensemble/data/ag/ag_database.db"
+        required: false
+      - name: "reset"
+        description: "Reset database (drop existing tables)"
+        type: "flag"
+        default: "true"
+        required: false
+      - name: "email-count"
+        description: "Number of mock emails to generate"
+        type: "integer"
+        default: "5"
+        required: false
+      - name: "skip-emails"
+        description: "Skip email generation"
+        type: "flag"
+        default: "false"
+        required: false
+
+  - filename: "setup_eci_database.py"
+    name: "Setup ECI Database"
+    description: "Initializes the ECI database"
+    category: "Setup"
+    parameters:
+      - name: "db-path"
+        description: "Database file path"
+        type: "string"
+        default: "projects/ensemble/data/eci/eci_database.db"
+        required: false
+      - name: "output-dir"
+        description: "Output directory for generated documents"
+        type: "string"
+        default: "projects/ensemble/data/eci/documents"
+        required: false
+      - name: "reset"
+        description: "Reset database (drop existing tables)"
+        type: "flag"
+        default: "true"
+        required: false
+      - name: "approve-count"
+        description: "Number of approve claims to generate"
+        type: "integer"
+        default: "1"
+        required: false
+      - name: "request-docs-count"
+        description: "Number of request-docs claims to generate"
+        type: "integer"
+        default: "1"
+        required: false
+      - name: "escalate-count"
+        description: "Number of escalate claims to generate"
+        type: "integer"
+        default: "1"
+        required: false
+
+  - filename: "setup_tci_database.py"
+    name: "Setup TCI Database"
+    description: "Initializes the TCI Policy Risk Assessor database"
+    category: "Setup"
+    parameters:
+      - name: "db-path"
+        description: "Database file path"
+        type: "string"
+        default: "projects/ensemble/data/tci/tci_database.db"
+        required: false
+      - name: "output-dir"
+        description: "Output directory for generated documents"
+        type: "string"
+        default: "projects/ensemble/data/tci/documents"
+        required: false
+      - name: "reset"
+        description: "Reset database (drop existing tables)"
+        type: "flag"
+        default: "true"
+        required: false
+      - name: "low-risk-count"
+        description: "Number of low-risk applications to generate"
+        type: "integer"
+        default: "1"
+        required: false
+      - name: "moderate-risk-count"
+        description: "Number of moderate-risk applications to generate"
+        type: "integer"
+        default: "1"
+        required: false
+      - name: "high-risk-count"
+        description: "Number of high-risk applications to generate"
+        type: "integer"
+        default: "1"
+        required: false
+      - name: "buyer-count"
+        description: "Number of buyers to generate news for"
+        type: "integer"
+        default: "3"
+        required: false
+      - name: "insurance-company-name"
+        description: "Name of the insurance company"
+        type: "string"
+        default: "Export Credit Guarantee Corporation of India"
+        required: false
+
+  - filename: "setup_invoice_match_db.py"
+    name: "Setup Invoice Match Database"
+    description: "Initializes the invoice matching database"
+    category: "Setup"
+    parameters: []
+
+  - filename: "manual_mcp_filter_check.py"
+    name: "Manual MCP Filter Check"
+    description: "Manually checks MCP filter configuration"
+    category: "Debugging"
+    parameters: []
+
+  - filename: "windows/install_services.ps1"
+    name: "Install Windows Services"
+    description: "Installs and configures Windows services for the project"
+    category: "Setup"
+    parameters:
+      - name: "ProjectDir"
+        description: "Project directory path"
+        type: "string"
+        default: ""
+        required: true
+      - name: "PythonPath"
+        description: "Path to Python executable"
+        type: "string"
+        default: "python"
+        required: false
+
+  - filename: "windows/uninstall_services.ps1"
+    name: "Uninstall Windows Services"
+    description: "Uninstalls Windows services for the project"
+    category: "Setup"
+    parameters:
+      - name: "ProjectDir"
+        description: "Project directory path"
+        type: "string"
+        default: ""
+        required: true
+
