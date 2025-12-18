@@ -1,0 +1,124 @@
+Metadata-Version: 2.4
+Name: akto-llm-guard
+Version: 0.3.17
+Summary: LLM-Guard is a comprehensive tool designed to fortify the security of Large Language Models (LLMs). By offering sanitization, detection of harmful language, prevention of data leakage, and resistance against prompt injection attacks, LLM-Guard ensures that your interactions with LLMs remain safe and secure.
+Author-email: TangoBee <help@akto.io>
+License: The MIT License (MIT)
+        
+        Copyright (c) Akto. All rights reserved.
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Project-URL: repository, https://github.com/akto-api-security/llm-guard
+Keywords: llm,language model,security,adversarial attacks,prompt injection,prompt leakage,PII detection,self-hardening,firewall
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Requires-Python: <3.14,>=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: bc-detect-secrets==1.5.43
+Requires-Dist: faker<38,>=37
+Requires-Dist: fuzzysearch<0.9,>=0.7
+Requires-Dist: json-repair==0.44.1
+Requires-Dist: nltk<4,>=3.9.1
+Requires-Dist: presidio-analyzer==2.2.358
+Requires-Dist: presidio-anonymizer==2.2.358
+Requires-Dist: regex==2024.11.6
+Requires-Dist: tiktoken<1.0,>=0.9
+Requires-Dist: torch>=2.4.0
+Requires-Dist: transformers==4.51.3
+Requires-Dist: structlog>=24
+Provides-Extra: onnxruntime
+Requires-Dist: optimum[onnxruntime]==1.25.2; extra == "onnxruntime"
+Provides-Extra: onnxruntime-gpu
+Requires-Dist: optimum[onnxruntime-gpu]==1.25.2; extra == "onnxruntime-gpu"
+Provides-Extra: docs-dev
+Requires-Dist: mkdocs<2,>=1.6; extra == "docs-dev"
+Requires-Dist: mkdocs-autorefs==1.4.1; extra == "docs-dev"
+Requires-Dist: mkdocs-git-revision-date-localized-plugin>=1.4.0; extra == "docs-dev"
+Requires-Dist: mkdocs-jupyter>=0.25.1; extra == "docs-dev"
+Requires-Dist: mkdocs-material>=9.6.14; extra == "docs-dev"
+Requires-Dist: mkdocs-material-extensions>=1.3.1; extra == "docs-dev"
+Requires-Dist: mkdocs-swagger-ui-tag>=0.7.1; extra == "docs-dev"
+Provides-Extra: dev
+Requires-Dist: akto-llm-guard[docs-dev]; extra == "dev"
+Requires-Dist: autoflake<3,>=2; extra == "dev"
+Requires-Dist: pytest<9,>=8.3.5; extra == "dev"
+Requires-Dist: pytest-cov<7,>=6.1.1; extra == "dev"
+Requires-Dist: pre-commit<5,>=4.2.0; extra == "dev"
+Requires-Dist: pyright~=1.1.400; extra == "dev"
+Requires-Dist: ruff==0.11.10; extra == "dev"
+
+# Akto LLM Guard
+
+LLM-Guard is a comprehensive tool designed to fortify the security of Large Language Models (LLMs).
+
+## Features
+
+- **Prompt Injection Detection**: Detect and prevent prompt injection attacks
+- **PII Detection**: Identify and handle personally identifiable information
+- **Toxicity Detection**: Filter harmful and toxic content
+- **Code Detection**: Identify and manage code in prompts
+- **Data Leakage Prevention**: Prevent sensitive information leakage
+- **URL Scanning**: Detect malicious URLs in outputs
+- **Bias Detection**: Identify biased content in model outputs
+
+## Installation
+
+```bash
+pip install akto-llm-guard
+```
+
+For ONNX runtime support:
+
+```bash
+pip install akto-llm-guard[onnxruntime]
+```
+
+For GPU support:
+
+```bash
+pip install akto-llm-guard[onnxruntime-gpu]
+```
+
+## Quick Start
+
+```python
+from llm_guard.input_scanners import PromptInjection
+
+scanner = PromptInjection()
+sanitized_prompt, is_valid, risk_score = scanner.scan("Your prompt here")
+
+if is_valid:
+    print("Prompt is safe")
+else:
+    print(f"Prompt failed security check. Risk score: {risk_score}")
+```
+
+## Repository
+
+GitHub: [https://github.com/akto-api-security/llm-guard](https://github.com/akto-api-security/llm-guard)
+
+## License
+
+MIT License
