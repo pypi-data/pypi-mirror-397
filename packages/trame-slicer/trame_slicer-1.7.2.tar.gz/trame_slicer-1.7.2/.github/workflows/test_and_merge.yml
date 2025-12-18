@@ -1,0 +1,79 @@
+name: Test and Merge
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      # Install and run pre-commit
+      - run: |
+          pip install pre-commit
+          pre-commit install
+          pre-commit run --all-files
+
+  pytest:
+    name: Pytest ${{ matrix.config.name }}
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10"]
+        config:
+          - { name: "Linux", os: ubuntu-latest }
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          submodules: recursive
+
+      - name: List workspace contents
+        run: |
+          echo "Workspace root: $GITHUB_WORKSPACE"
+          find $GITHUB_WORKSPACE -type f -print | sort
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install vtk_mrml wheel (Linux)
+        if: matrix.config.os == 'ubuntu-latest'
+        run: |
+          pip install https://github.com/KitwareMedical/trame-slicer/releases/download/v1.4.0/vtk_mrml-9.4.0-cp310-cp310-manylinux_2_35_x86_64.whl
+
+      - name: Install Mesa (Linux)
+        if: matrix.config.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mesa-utils libgl1-mesa-dev libglu1-mesa-dev libosmesa6-dev
+          echo "VTK_DEFAULT_OPENGL_WINDOW=vtkOSOpenGLRenderWindow" >> $GITHUB_ENV
+
+      - name: Install and Run Tests
+        run: |
+          pip install .[dev]
+          playwright install
+          playwright install-deps
+          pytest -s ./tests --cov=trame_slicer --cov-report=json --cov-report=term-missing
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.json
+          token: ${{ secrets.CODECOV_TOKEN }}
