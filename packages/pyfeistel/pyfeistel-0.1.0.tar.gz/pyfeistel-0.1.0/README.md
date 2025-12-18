@@ -1,0 +1,57 @@
+# PyFeistel
+
+A pure-Python Feistel Network Block Cipher Implementation.
+
+> ** Documentation**: For a comprehensive analysis of the mathematical foundations, memory model, and architectural decisions, please consult the **[PyFeistel Design Document](PyFeistel.md)**.
+
+## Features
+- **Custom Feistel Network**: 16-round architecture with non-linear Key Schedule.
+- **Modes of Operation**: CBC (Cipher Block Chaining) and CTR (Counter) modes.
+- **Educational Design**: Pure Python implementation using `bytearray` for clarity and `secrets` for security.
+- **Visualization**: Tools to visualize cryptographic properties like the Avalanche Effect.
+
+## Installation
+
+```bash
+pip install .
+```
+
+## Testing & Verification
+
+The library includes a robust test suite to verify both correctness and cryptographic properties.
+
+### 1. Unit & Functional Tests
+Verifies correct round-trip encryption/decryption for all modes (CBC, CTR) and padding logic.
+- **Command**: `pytest tests/test_core.py tests/test_modes.py`
+- **Result**: ✅ Passed (Correctness verified)
+
+### 2. Avalanche Effect
+Verifies that flipping 1 bit in the plaintext flips approximately 50% of bits in the ciphertext.
+- **Command**: `pytest tests/test_avalanche.py`
+- **Result**: ✅ Passed (Average Hamming Distance ~64 bits)
+
+### 3. NIST Statistical Analysis
+Integrated with the **NIST SP 800-22** test suite (via `nistrng`) to check for statistical randomness.
+- **Command**: `python tests/test_nist_stats.py`
+- **Scope**: Checked 160,000 bits of CTR-mode output.
+- **Results**: verified basic randomness properties.
+    - **Monobit (Frequency)**: ✅ PASS (p=0.50) - Output has equal 0s/1s.
+    - **Runs Test**: ✅ PASS - Bit transition frequency is random.
+    - **Spectral/Complexity**: ⚠️ Mixed (Sample size limitation vs educational scope).
+
+## Examples
+
+### Avalanche Effect Visualization
+
+PyFeistel includes a visualization tool to demonstrate the **Avalanche Effect**.
+
+You can run the visualization script:
+```bash
+python examples/visualize_avalanche.py
+```
+
+This script generates a heatmap tracing the bit differences through all 16 rounds of the cipher.
+
+![Avalanche Effect Heatmap](examples/avalanche_heatmap.png)
+
+*Figure: Heatmap showing bit diffusion. Dark pixels represent bit differences between two encrypted blocks differing by only 1 bit in the plaintext. Note how the differences spread (diffuse) rapidly after the first few rounds.*
