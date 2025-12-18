@@ -1,0 +1,234 @@
+{
+  "id": "multi-agent-debate",
+  "name": "Multi-Agent Debate System",
+  "description": "A sophisticated debate system where multiple AI agents argue different positions, respond to each other, and a judge synthesizes the best conclusion. Demonstrates agent-to-agent interaction, multi-round processing, and consensus building.",
+  "category": "reasoning",
+  "tags": [
+    "debate",
+    "multi-agent",
+    "reasoning",
+    "consensus",
+    "advanced",
+    "decision-making"
+  ],
+  "difficulty": "advanced",
+  "use_cases": [
+    "Complex decision-making with multiple stakeholders",
+    "Exploring controversial topics from all angles",
+    "Policy analysis and recommendation",
+    "Ethical dilemma resolution",
+    "Strategic planning with competing priorities"
+  ],
+  "stages": [
+    {
+      "id": "topic-framing",
+      "component_type": "generator",
+      "name": "Frame the Debate",
+      "config": {
+        "prompt": "Frame the following topic as a structured debate:\n\nTopic: {{input.topic}}\nContext: {{input.context}}\n\nProvide:\n1. A clear, debatable proposition\n2. Three distinct positions that could be argued\n3. Key evidence areas each side should address\n4. Criteria for evaluating arguments",
+        "system_prompt": "You are a debate moderator expert at framing complex issues into clear, arguable propositions."
+      },
+      "depends_on": [],
+      "position": {
+        "x": 100,
+        "y": 250
+      }
+    },
+    {
+      "id": "agent-advocate",
+      "component_type": "generator",
+      "name": "Agent: Advocate",
+      "config": {
+        "prompt": "You are arguing IN FAVOR of the proposition.\n\nProposition: {{upstream.topic-framing.content}}\n\nPresent your strongest arguments:\n1. Opening statement with thesis\n2. Three main arguments with evidence\n3. Anticipated counterarguments and rebuttals\n4. Concluding appeal",
+        "system_prompt": "You are a persuasive advocate. Argue passionately and logically in favor of the proposition. Use rhetoric, evidence, and emotional appeals effectively."
+      },
+      "depends_on": [
+        "topic-framing"
+      ],
+      "position": {
+        "x": 400,
+        "y": 100
+      }
+    },
+    {
+      "id": "agent-opposition",
+      "component_type": "generator",
+      "name": "Agent: Opposition",
+      "config": {
+        "prompt": "You are arguing AGAINST the proposition.\n\nProposition: {{upstream.topic-framing.content}}\n\nPresent your strongest arguments:\n1. Opening statement with counter-thesis\n2. Three main arguments against with evidence\n3. Critique of potential pro-arguments\n4. Concluding appeal",
+        "system_prompt": "You are a skilled opposition debater. Argue forcefully against the proposition. Challenge assumptions, present alternatives, and highlight risks."
+      },
+      "depends_on": [
+        "topic-framing"
+      ],
+      "position": {
+        "x": 400,
+        "y": 250
+      }
+    },
+    {
+      "id": "agent-mediator",
+      "component_type": "generator",
+      "name": "Agent: Mediator",
+      "config": {
+        "prompt": "You are seeking a MIDDLE GROUND on the proposition.\n\nProposition: {{upstream.topic-framing.content}}\n\nPresent a balanced perspective:\n1. Acknowledge valid points on both sides\n2. Propose a nuanced middle position\n3. Suggest conditions under which each side is more valid\n4. Framework for compromise or synthesis",
+        "system_prompt": "You are a diplomatic mediator. Find common ground, acknowledge complexity, and propose balanced solutions that incorporate the best of both sides."
+      },
+      "depends_on": [
+        "topic-framing"
+      ],
+      "position": {
+        "x": 400,
+        "y": 400
+      }
+    },
+    {
+      "id": "rebuttal-advocate",
+      "component_type": "generator",
+      "name": "Advocate Rebuttal",
+      "config": {
+        "prompt": "Respond to the opposition and mediator arguments:\n\nYour original argument: {{upstream.agent-advocate.content}}\n\nOpposition's argument: {{upstream.agent-opposition.content}}\n\nMediator's position: {{upstream.agent-mediator.content}}\n\nProvide a sharp rebuttal:\n1. Address the strongest opposing points\n2. Defend against their critiques\n3. Explain why the middle ground is insufficient\n4. Strengthen your original position",
+        "system_prompt": "You are defending your pro-position. Rebut counterarguments effectively while maintaining your core thesis."
+      },
+      "depends_on": [
+        "agent-advocate",
+        "agent-opposition",
+        "agent-mediator"
+      ],
+      "position": {
+        "x": 700,
+        "y": 100
+      }
+    },
+    {
+      "id": "rebuttal-opposition",
+      "component_type": "generator",
+      "name": "Opposition Rebuttal",
+      "config": {
+        "prompt": "Respond to the advocate and mediator arguments:\n\nYour original argument: {{upstream.agent-opposition.content}}\n\nAdvocate's argument: {{upstream.agent-advocate.content}}\n\nMediator's position: {{upstream.agent-mediator.content}}\n\nProvide a sharp rebuttal:\n1. Dismantle the advocate's key points\n2. Explain flaws in their evidence or logic\n3. Argue why compromise is dangerous\n4. Strengthen your opposition stance",
+        "system_prompt": "You are defending your opposition position. Counter the advocate's arguments and critique the mediator's compromise."
+      },
+      "depends_on": [
+        "agent-advocate",
+        "agent-opposition",
+        "agent-mediator"
+      ],
+      "position": {
+        "x": 700,
+        "y": 250
+      }
+    },
+    {
+      "id": "rebuttal-mediator",
+      "component_type": "generator",
+      "name": "Mediator Response",
+      "config": {
+        "prompt": "Respond to both the advocate and opposition rebuttals:\n\nAdvocate's rebuttal: {{upstream.rebuttal-advocate.content}}\n\nOpposition's rebuttal: {{upstream.rebuttal-opposition.content}}\n\nYour original mediation: {{upstream.agent-mediator.content}}\n\nRefine your middle-ground position:\n1. Acknowledge new valid points from both\n2. Identify where polarization is unhelpful\n3. Propose a more refined synthesis\n4. Practical implementation suggestions",
+        "system_prompt": "You are refining your mediated position based on the debate. Synthesize the strongest elements from all sides."
+      },
+      "depends_on": [
+        "rebuttal-advocate",
+        "rebuttal-opposition"
+      ],
+      "position": {
+        "x": 700,
+        "y": 400
+      }
+    },
+    {
+      "id": "judge-analysis",
+      "component_type": "critic",
+      "name": "Judge Analysis",
+      "config": {
+        "content": "ADVOCATE FINAL POSITION:\n{{upstream.rebuttal-advocate.content}}\n\nOPPOSITION FINAL POSITION:\n{{upstream.rebuttal-opposition.content}}\n\nMEDIATOR FINAL POSITION:\n{{upstream.rebuttal-mediator.content}}",
+        "criteria": "As an impartial judge, evaluate each position on:\n1. Logical coherence and validity of reasoning\n2. Quality and relevance of evidence\n3. Effectiveness of rebuttals\n4. Practicality and real-world applicability\n5. Acknowledgment of complexity and nuance\n\nScore each position (1-10) and explain your reasoning."
+      },
+      "depends_on": [
+        "rebuttal-mediator"
+      ],
+      "position": {
+        "x": 1000,
+        "y": 200
+      }
+    },
+    {
+      "id": "synthesize-verdict",
+      "component_type": "synthesizer",
+      "name": "Synthesize Verdict",
+      "config": {
+        "inputs": [
+          "{{upstream.rebuttal-advocate.content}}",
+          "{{upstream.rebuttal-opposition.content}}",
+          "{{upstream.rebuttal-mediator.content}}"
+        ],
+        "synthesis_strategy": "best_of",
+        "context": "Judge's analysis: {{upstream.judge-analysis.feedback}}",
+        "output_format": "structured"
+      },
+      "depends_on": [
+        "judge-analysis"
+      ],
+      "position": {
+        "x": 1000,
+        "y": 350
+      }
+    },
+    {
+      "id": "final-verdict",
+      "component_type": "generator",
+      "name": "Final Verdict",
+      "config": {
+        "prompt": "Based on the full debate and judge's analysis, deliver the final verdict:\n\nOriginal Topic: {{input.topic}}\n\nJudge's Evaluation: {{upstream.judge-analysis.feedback}}\n\nSynthesized Best Arguments: {{upstream.synthesize-verdict.synthesized}}\n\nDeliver:\n1. The winning position and why\n2. Key insights from the debate\n3. Recommended course of action\n4. Caveats and conditions\n5. Areas requiring further investigation",
+        "system_prompt": "You are delivering the final verdict as the head judge. Be fair, comprehensive, and actionable in your conclusion."
+      },
+      "depends_on": [
+        "synthesize-verdict"
+      ],
+      "position": {
+        "x": 1250,
+        "y": 250
+      }
+    },
+    {
+      "id": "format-output",
+      "component_type": "json-transform",
+      "name": "Format Output",
+      "config": {
+        "template": {
+          "topic": "{{input.topic}}",
+          "verdict": "{{upstream.final-verdict.content}}",
+          "key_themes": "{{upstream.synthesize-verdict.key_themes}}",
+          "sources_analyzed": "{{upstream.synthesize-verdict.sources_used}}"
+        }
+      },
+      "depends_on": [
+        "final-verdict"
+      ],
+      "position": {
+        "x": 1500,
+        "y": 250
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "topic": {
+        "type": "string",
+        "description": "The topic or question to debate"
+      },
+      "context": {
+        "type": "string",
+        "description": "Background context for the debate"
+      }
+    },
+    "required": [
+      "topic"
+    ]
+  },
+  "output_stage_id": "format-output",
+  "example_input": {
+    "topic": "Should companies mandate return-to-office policies?",
+    "context": "A mid-size tech company with 500 employees is deciding on their post-pandemic work policy"
+  }
+}
