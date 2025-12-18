@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=71", "wheel", "build"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "icp-py-core"
+version = "2.1.0"
+description = "Core Python SDK for the Internet Computer: agent, candid, identity, principal, certificate."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "eliezhao" }]
+requires-python = ">=3.8"
+
+dependencies = [
+  "httpx>=0.24",
+  "cbor2>=5.6.0",
+  "ecdsa>=0.18.0",         # for secp256k1
+  "PyNaCl>=1.5.0",         # for ed25519
+  "ic_candid_parser>=0.1.0",  # Rust extension for Candid parsing (pre-built wheels available)
+]
+
+[project.optional-dependencies]
+bls = ["blst"]  # optional: only needed if you enable certificate verification
+
+[project.urls]
+Homepage = "https://github.com/eliezhao/icp-py-core"
+Repository = "https://github.com/eliezhao/icp-py-core"
+Issues = "https://github.com/eliezhao/icp-py-core/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["icp_core*", "icp_*"]
+exclude = ["tests*", "examples*"]
+
+[tool.setuptools.package-data]
+icp_candid = [
+  "*.pyi",
+]
+
+[tool.pytest.ini_options]
+# Filter deprecation warnings from blst (SWIG binding) library
+# These are known issues in the third-party library and don't affect functionality
+filterwarnings = [
+    "ignore::DeprecationWarning:importlib._bootstrap",
+    "ignore:builtin type SwigPyPacked has no __module__ attribute:DeprecationWarning",
+    "ignore:builtin type SwigPyObject has no __module__ attribute:DeprecationWarning",
+    "ignore:builtin type swigvarlink has no __module__ attribute:DeprecationWarning",
+]
