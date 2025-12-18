@@ -1,0 +1,36 @@
+["build-system"]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lucidscan"
+version = "0.1.3"
+description = "LucidScan unified security scanner CLI"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+  { name = "LucidScan" }
+]
+dependencies = ["lucidscan"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+lucidscan = "lucidscan.cli:main"
+
+[project.entry-points."lucidscan.scanners"]
+trivy = "lucidscan.scanners.trivy:TrivyScanner"
+
+[project.entry-points."lucidscan.reporters"]
+json = "lucidscan.reporters.json_reporter:JSONReporter"
+table = "lucidscan.reporters.table_reporter:TableReporter"
+summary = "lucidscan.reporters.summary_reporter:SummaryReporter"
+
+# Default scanner plugin versions
+# These are the source of truth for the build process
+[tool.lucidscan.scanners]
+trivy = "0.68.1"
+opengrep = "1.12.1"
+checkov = "3.2.495"
