@@ -1,0 +1,177 @@
+boss.multiprocess
+=================
+
+.. py:module:: boss.multiprocess
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   boss.multiprocess.POLLING_INTERVAL
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   boss.multiprocess.Message
+   boss.multiprocess.MethodCallMessage
+   boss.multiprocess.AttributeGetMessage
+   boss.multiprocess.AttributeSetMessage
+   boss.multiprocess.ResultMessage
+   boss.multiprocess.ErrorMessage
+   boss.multiprocess.MultiprocessRPC
+
+
+Module Contents
+---------------
+
+.. py:data:: POLLING_INTERVAL
+   :value: 0.01
+
+
+.. py:class:: Message(*args, **kwargs)
+
+   .. py:attribute:: fields
+      :value: ['id', 'type']
+
+
+
+   .. py:method:: _decode(raw_message)
+
+
+   .. py:method:: encode()
+
+
+   .. py:method:: parse(raw_message)
+      :staticmethod:
+
+
+
+.. py:class:: MethodCallMessage(*args, **kwargs)
+
+   Bases: :py:obj:`Message`
+
+
+   .. py:attribute:: TYPE
+      :value: 'c'
+
+
+
+   .. py:attribute:: fields
+      :value: ['method', 'args', 'kwargs']
+
+
+
+.. py:class:: AttributeGetMessage(*args, **kwargs)
+
+   Bases: :py:obj:`Message`
+
+
+   .. py:attribute:: TYPE
+      :value: 'g'
+
+
+
+   .. py:attribute:: fields
+      :value: ['name']
+
+
+
+.. py:class:: AttributeSetMessage(*args, **kwargs)
+
+   Bases: :py:obj:`Message`
+
+
+   .. py:attribute:: TYPE
+      :value: 's'
+
+
+
+   .. py:attribute:: fields
+      :value: ['name', 'value']
+
+
+
+.. py:class:: ResultMessage(*args, **kwargs)
+
+   Bases: :py:obj:`Message`
+
+
+   .. py:attribute:: TYPE
+      :value: 'r'
+
+
+
+   .. py:attribute:: fields
+      :value: ['payload']
+
+
+
+.. py:class:: ErrorMessage(*args, **kwargs)
+
+   Bases: :py:obj:`Message`
+
+
+   .. py:attribute:: TYPE
+      :value: 'e'
+
+
+
+   .. py:attribute:: fields
+      :value: ['error']
+
+
+
+.. py:class:: MultiprocessRPC(loop, pipe)
+
+   Use the communication between two processes via a pipe to implement RPC.
+
+   In BOSS this is used to communicate between the BOSS object in the main process and the BOSSRemote
+   running in a separate process. This becomes necessary since zenoh/rust/pyO3 does not allow to run
+   in the main process and in dynamically generated processes.
+
+
+   .. py:attribute:: _loop
+
+
+   .. py:attribute:: _pipe
+
+
+   .. py:attribute:: _pending_results
+
+
+   .. py:attribute:: _shutdown
+      :value: False
+
+
+
+   .. py:attribute:: _communicatation_task
+
+
+   .. py:method:: _communicate()
+      :async:
+
+
+
+   .. py:method:: _send_message(message)
+
+
+   .. py:method:: _handle_message(message)
+
+
+   .. py:method:: _rpc(method_name, *args, _cb=None, **kwargs)
+
+
+   .. py:method:: _get_attribute(name: str, local_name: str | None = None)
+
+
+   .. py:method:: _set_attribute(name: str, value: object)
+
+
+   .. py:method:: _rpc_stop()
+
+
