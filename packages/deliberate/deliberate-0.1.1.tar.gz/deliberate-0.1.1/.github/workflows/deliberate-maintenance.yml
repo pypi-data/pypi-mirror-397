@@ -1,0 +1,55 @@
+name: Deliberate Maintenance
+
+on:
+  schedule:
+    # Run every Sunday at 00:00 UTC
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+    inputs:
+      test_command:
+        description: 'Command to run tests'
+        required: false
+        default: 'pytest'
+      verify_runs:
+        description: 'Number of verification runs'
+        required: false
+        default: '100'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  maintenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run Maintenance
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          TEST_CMD="${{ github.event.inputs.test_command || 'pytest' }}"
+          VERIFY_RUNS="${{ github.event.inputs.verify_runs || '100' }}"
+          
+          uv run deliberate maintain \
+            --test-command "$TEST_CMD" \
+            --verify-runs "$VERIFY_RUNS" \
+            --repo-owner "${{ github.repository_owner }}" \
+            --repo-name "${{ github.event.repository.name }}"
