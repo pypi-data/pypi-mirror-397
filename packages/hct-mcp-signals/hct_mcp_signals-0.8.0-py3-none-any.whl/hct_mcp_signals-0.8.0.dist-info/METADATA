@@ -1,0 +1,60 @@
+Metadata-Version: 2.4
+Name: hct-mcp-signals
+Version: 0.8.0
+Summary: HCT Coordination Signals Extension for MCP - Adds urgency, timing, and approval semantics
+Project-URL: Homepage, https://github.com/stefanwiest/hct-mcp-signals
+Project-URL: Documentation, https://github.com/stefanwiest/hct-mcp-signals#readme
+Project-URL: Repository, https://github.com/stefanwiest/hct-mcp-signals
+Project-URL: Changelog, https://github.com/stefanwiest/hct-mcp-signals/blob/main/CHANGELOG.md
+Project-URL: Issues, https://github.com/stefanwiest/hct-mcp-signals/issues
+Author-email: Stefan Wiest <mail@stefanwiest.de>
+License-Expression: Apache-2.0
+License-File: LICENSE
+Keywords: agents,coordination,hct,mcp,model-context-protocol,multi-agent
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Typing :: Typed
+Requires-Python: >=3.9
+Requires-Dist: pydantic>=2.0.0
+Provides-Extra: dev
+Requires-Dist: black>=23.0.0; extra == 'dev'
+Requires-Dist: mypy>=1.0.0; extra == 'dev'
+Requires-Dist: pre-commit>=3.0.0; extra == 'dev'
+Requires-Dist: pytest-asyncio>=0.21.0; extra == 'dev'
+Requires-Dist: pytest-cov>=4.0.0; extra == 'dev'
+Requires-Dist: pytest>=7.0.0; extra == 'dev'
+Requires-Dist: ruff>=0.1.0; extra == 'dev'
+Description-Content-Type: text/markdown
+
+# HCT MCP Signals (Python)
+
+Python implementation of the Harmonic Coordination Theory (HCT) Signals extension for the Model Context Protocol (MCP).
+
+## Installation
+
+```bash
+pip install hct-mcp-signals
+```
+
+## Usage
+
+```python
+from hct_mcp_signals import cue, tacet
+
+# Create a CUE signal
+signal = cue("orchestrator", ["analyst", "verifier"]).build()
+
+# Embed in MCP
+params = {"id": "task-123", "data": "..."}
+params = embed_signal(params, signal)
+```
+
+See the [main repository](https://github.com/stefanwiest/hct-mcp-signals) for full documentation.
