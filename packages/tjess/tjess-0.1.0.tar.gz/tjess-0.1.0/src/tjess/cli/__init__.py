@@ -1,0 +1,3 @@
+"""TJESS CLI - Command line interface for the TJESS platform."""
+
+__version__ = "0.1.0"
