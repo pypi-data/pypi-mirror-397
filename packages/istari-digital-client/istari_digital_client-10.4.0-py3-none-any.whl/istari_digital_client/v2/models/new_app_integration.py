@@ -1,0 +1,13 @@
+from typing import Annotated
+
+from pydantic import Field
+
+from istari_digital_client.v2.models.google_drive_integration import GoogleDriveIntegration
+from istari_digital_client.v2.models.teamwork_cloud_integration import TeamworkCloudIntegration
+from istari_digital_client.v2.models.network_drive_integration import NetworkDriveIntegration
+from istari_digital_client.v2.models.windchill_integration import WindchillIntegration
+from istari_digital_client.v2.models.microsoft365_integration import Microsoft365Integration
+from istari_digital_client.v2.models.dassault3d_experience_integration import Dassault3dExperienceIntegration
+
+
+NewAppIntegration = GoogleDriveIntegration | WindchillIntegration | Microsoft365Integration | Dassault3dExperienceIntegration | TeamworkCloudIntegration | NetworkDriveIntegration
