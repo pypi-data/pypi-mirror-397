@@ -1,0 +1,105 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "arkham-sdk-python"
+version = "0.1.2"
+description = "Python SDK for Arkham Exchange API"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE.md"}
+authors = [
+    {name = "Arkham Intelligence", email = "support@arkm.com"}
+]
+maintainers = [
+    {name = "Arkham Intelligence", email = "support@arkm.com"}
+]
+keywords = ["arkham", "exchange", "api", "sdk", "trading", "cryptocurrency"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Office/Business :: Financial",
+]
+
+dependencies = [
+    "requests>=2.25.0",
+    "websocket-client>=1.0.0",
+    "typing_extensions>=4.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=22.0.0",
+    "flake8>=5.0.0",
+    "mypy>=1.0.0",
+    "isort>=5.0.0",
+    "pre-commit>=2.20.0",
+]
+test = [
+    "responses>=0.20.0",
+]
+docs = [
+    "sphinx>=5.0.0",
+    "sphinx-rtd-theme>=1.0.0",
+    "myst-parser>=0.18.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/arkhamintelligence/arkham-sdk-python"
+Repository = "https://github.com/arkhamintelligence/arkham-sdk-python"
+"Bug Tracker" = "https://github.com/arkhamintelligence/arkham-sdk-python/issues"
+
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["arkham_sdk_python*"]
+
+[tool.black]
+line-length = 300
+target-version = ['py38']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 300
+known_first_party = ["arkham_sdk_python"]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
