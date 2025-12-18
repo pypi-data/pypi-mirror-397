@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "py-osrm-backend"
+version = "0.1.0"
+description = "A Python implementation of OSRM backend core functionality"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+authors = [
+    {name = "GalTechDev"}
+]
+keywords = ["osrm", "routing", "osm", "openstreetmap", "dijkstra", "navigation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: GIS",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "flask",
+    "osmium",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "build",
+    "twine",
+]
+
+[project.urls]
+Homepage = "https://github.com/GalTechDev/py-osrm-backend"
+Repository = "https://github.com/GalTechDev/py-osrm-backend"
+Issues = "https://github.com/GalTechDev/py-osrm-backend/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

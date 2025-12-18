@@ -1,0 +1,77 @@
+Metadata-Version: 2.4
+Name: py-osrm-backend
+Version: 0.1.0
+Summary: A Python implementation of OSRM backend core functionality
+Home-page: https://github.com/GalTechDev/py-osrm-backend
+Author: GalTechDev
+License: MIT
+Project-URL: Homepage, https://github.com/GalTechDev/py-osrm-backend
+Project-URL: Repository, https://github.com/GalTechDev/py-osrm-backend
+Project-URL: Issues, https://github.com/GalTechDev/py-osrm-backend/issues
+Keywords: osrm,routing,osm,openstreetmap,dijkstra,navigation
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Scientific/Engineering :: GIS
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: flask
+Requires-Dist: osmium
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: build; extra == "dev"
+Requires-Dist: twine; extra == "dev"
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-python
+
+# py-osrm-backend
+
+A Python implementation of core OSRM (Open Source Routing Machine) functionality.
+
+## Installation
+
+```bash
+pip install -e .
+```
+
+## Features
+
+- **OSM Parsing**: Parse `.osm` XML files to extract nodes and ways
+- **Graph Building**: Build a routable graph with haversine distance weights
+- **Routing**: Dijkstra's algorithm for shortest path computation
+- **API Server**: Flask-based REST API compatible with OSRM-like endpoints
+
+## Quick Start
+
+```python
+from osrm.extractor.graph_builder import GraphBuilder
+from osrm.engine.dijkstra import DijkstraEngine
+
+# Build graph from OSM
+builder = GraphBuilder()
+graph = builder.build_graph("your_map.osm")
+
+# Route
+engine = DijkstraEngine(graph)
+distance, path = engine.shortest_path(start_id, end_id)
+print(f"Distance: {distance} km, Path: {path}")
+```
+
+## Run Tests
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+## License
+
+MIT
