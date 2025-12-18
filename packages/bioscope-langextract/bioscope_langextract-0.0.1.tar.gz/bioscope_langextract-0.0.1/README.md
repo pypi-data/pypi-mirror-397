@@ -1,0 +1,192 @@
+# LangExtract (Lightweight Fork)
+
+[![PyPI version](https://img.shields.io/pypi/v/bioscope-langextract.svg)](https://pypi.org/project/bioscope-langextract/)
+
+A lightweight fork of [Google's langextract](https://github.com/google/langextract) optimized for serverless deployment (AWS Lambda, Cloud Functions, etc.).
+
+## What's Different in This Fork?
+
+This fork removes heavy dependencies and unused features:
+
+| Removed | Reason |
+|---------|--------|
+| numpy, pandas | Only used in visualization/benchmarks and CSV reading |
+| google-genai | Users provide their own providers |
+| google-cloud-storage | Batch processing removed |
+| absl-py | Replaced with stdlib logging |
+| tqdm | Progress bars removed |
+| requests, aiohttp | URL fetching removed |
+
+**Key changes:**
+
+- No built-in providers (Gemini, OpenAI, Ollama) - you register your own
+- No visualization module
+- No URL fetching - pass text directly
+- No progress bars
+- Stdlib logging with optional logger injection
+
+## Installation
+
+```bash
+pip install bioscope-langextract
+```
+
+Or with uv:
+
+```bash
+uv add bioscope-langextract
+```
+
+## Quick Start
+
+### 1. Create a Custom Provider
+
+Since this fork has no built-in providers, you must register your own:
+
+```python
+import langextract as lx
+from langextract.core.base_model import BaseLanguageModel
+from langextract.core.types import ScoredOutput
+from langextract.providers import router
+
+@router.register(r"^my-model", priority=100)
+class MyProvider(BaseLanguageModel):
+    """Custom provider that wraps your LLM API."""
+
+    def infer(self, batch_prompts, **kwargs):
+        # Implement your LLM call here
+        for prompt in batch_prompts:
+            response = call_your_llm(prompt)  # Your implementation
+            yield [ScoredOutput(score=1.0, output=response)]
+```
+
+### 2. Define Your Extraction Task
+
+```python
+import textwrap
+
+prompt = textwrap.dedent("""\
+    Extract characters, emotions, and relationships in order of appearance.
+    Use exact text for extractions. Do not paraphrase or overlap entities.
+    Provide meaningful attributes for each entity to add context.""")
+
+examples = [
+    lx.data.ExampleData(
+        text="ROMEO. But soft! What light through yonder window breaks?",
+        extractions=[
+            lx.data.Extraction(
+                extraction_class="character",
+                extraction_text="ROMEO",
+                attributes={"emotional_state": "wonder"}
+            ),
+        ]
+    )
+]
+```
+
+### 3. Run the Extraction
+
+```python
+input_text = "Lady Juliet gazed longingly at the stars, her heart aching for Romeo"
+
+result = lx.extract(
+    text_or_documents=input_text,
+    prompt_description=prompt,
+    examples=examples,
+    model_id="my-model",  # Matches your registered pattern
+)
+```
+
+### 4. Optional: Inject a Custom Logger
+
+For serverless environments, you can inject your own logger:
+
+```python
+import logging
+
+logger = logging.getLogger("my-app")
+
+result = lx.extract(
+    text_or_documents=input_text,
+    prompt_description=prompt,
+    examples=examples,
+    model_id="my-model",
+    logger=logger,
+)
+```
+
+## Provider Registration
+
+Register providers using regex patterns:
+
+```python
+from langextract.providers import router
+
+# Decorator style
+@router.register(r"^claude-", r"^anthropic/", priority=100)
+class ClaudeProvider(BaseLanguageModel):
+    ...
+
+# Or register after definition
+router.register(r"^gpt-")(OpenAIProvider)
+
+# Lazy registration (defers import)
+router.register_lazy(
+    r"^bedrock/",
+    target="my_package.providers:BedrockProvider",
+    priority=50
+)
+```
+
+Higher priority wins when multiple patterns match.
+
+## API Reference
+
+### `lx.extract()`
+
+Main extraction function:
+
+```python
+lx.extract(
+    text_or_documents,      # str or list of documents
+    prompt_description,     # Task description
+    examples,               # List of ExampleData
+    model_id,               # Model ID (matched against registered patterns)
+    *,
+    extraction_passes=1,    # Number of extraction passes
+    max_workers=1,          # Parallel workers for chunked processing
+    max_char_buffer=4000,   # Chunk size for long documents
+    logger=None,            # Optional custom logger
+    **kwargs
+)
+```
+
+### Data Classes
+
+```python
+# Example for few-shot prompting
+lx.data.ExampleData(
+    text="...",
+    extractions=[...]
+)
+
+# Single extraction
+lx.data.Extraction(
+    extraction_class="category",
+    extraction_text="exact text from source",
+    attributes={"key": "value"}
+)
+```
+
+## License
+
+This is a modified fork of [langextract](https://github.com/google/langextract) by Google LLC,
+licensed under the Apache License 2.0. This fork removes heavy dependencies (numpy, pandas,
+google-genai, etc.) for serverless deployment environments.
+
+See [LICENSE](LICENSE) for the full license text.
+
+## Disclaimer
+
+This is not an officially supported Google product. Use is subject to the
+[Apache 2.0 License](LICENSE).
