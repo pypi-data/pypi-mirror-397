@@ -1,0 +1,111 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "saclm"
+version = "0.1.1"
+description = "SCLM: Stateful Coherent Language Model - Persistent memory for transformers"
+readme = "README.md"
+license = {text = "BSL-1.1"}
+authors = [
+    {name = "Mike Amega", email = "contact@amewebstudio.com"}
+]
+maintainers = [
+    {name = "Mike Amega", email = "contact@amewebstudio.com"}
+]
+keywords = [
+    "nlp",
+    "transformers",
+    "language-model",
+    "memory",
+    "stateful",
+    "coherence",
+    "earcp",
+    "deep-learning",
+    "pytorch",
+    "huggingface"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "torch>=2.0.0",
+    "transformers>=4.35.0",
+    "accelerate>=0.20.0",
+    "safetensors>=0.3.0",
+    "huggingface-hub>=0.16.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+]
+quantization = [
+    "bitsandbytes>=0.41.0",
+]
+full = [
+    "bitsandbytes>=0.41.0",
+    "sentencepiece>=0.1.99",
+    "protobuf>=3.20.0",
+]
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.0.0",
+    "mkdocstrings[python]>=0.23.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/Volgat/sclm"
+Documentation = "https://sclm.readthedocs.io"
+Repository = "https://github.com/Volgat/sclm"
+Issues = "https://github.com/Volgat/sclm/issues"
+Changelog = "https://github.com/Volgat/sclm/blob/main/CHANGELOG.md"
+
+[project.scripts]
+sclm = "sclm.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["sclm*"]
+
+[tool.setuptools.package-data]
+sclm = ["py.typed"]
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --cov=sclm --cov-report=term-missing"
