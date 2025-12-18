@@ -1,0 +1,109 @@
+Metadata-Version: 2.4
+Name: pyearcal
+Version: 2025.12.0
+Summary: Year calendar creation in Python
+Author-email: Jan Pipek <jan.pipek@gmail.com>
+License: The MIT License (MIT)
+        
+        Copyright (c) 2013-2022 Jan Pipek
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy of
+        this software and associated documentation files (the "Software"), to deal in
+        the Software without restriction, including without limitation the rights to
+        use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+        the Software, and to permit persons to whom the Software is furnished to do so,
+        subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+        FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+        COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+        IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+        CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+        
+Requires-Python: <3.15,>=3.11
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: reportlab
+Requires-Dist: matplotlib
+Requires-Dist: pillow
+Requires-Dist: python-dateutil
+Requires-Dist: click
+Requires-Dist: fonttools
+Provides-Extra: flickr
+Requires-Dist: beautifulsoup4; extra == "flickr"
+Requires-Dist: requests; extra == "flickr"
+Dynamic: license-file
+
+[![Latest Version](https://img.shields.io/pypi/v/pyearcal.svg)](https://pypi.python.org/pypi/pyearcal/)
+
+pyearcal
+========
+Generate your year calendar in Python. The result is a PDF file with 12 pages containing an image and a grid of days.
+
+### Installation
+
+We recommend using [uv tool](https://uvtool.readthedocs.io/en/latest/) to use and/or install pyearcal as a tool.
+
+```
+uv tool install pyearcal
+```
+
+or you can use it without installation (via `uvx`)
+
+### Usage
+
+1. Prepare a directory with 12 images (different image providers are planned)
+2. Initialize calendar with all options.
+    * Language (locales for English, Czech, Slovak, Italian)
+    * Special days (national holidays are included + add your own)
+    * Fonts, colours
+3. Render it to PDF
+
+### Usage of the script
+
+```
+Usage: uvx pyearcal [OPTIONS] [OUTPUT]
+
+Options:
+  -s, --source PATH
+  -l, --locale [en|cs|it|sk]
+  -y, --year INTEGER
+  -f, --font TEXT
+  -d, --special-days TEXT
+  ```
+
+### Example code
+
+```python
+# Import important modules
+from pyearcal import YearCalendar
+from pyearcal.image_sources import UnsortedImageDirectory
+from datetime import date
+from pyearcal.l10n import CzechLocale
+
+year = date.today().year + 1
+
+# Use all pictures from "images" directory
+image_source = UnsortedImageDirectory("images")
+
+# Use Czech locale and holidays
+locale = CzechLocale()
+
+# Set a few special days
+special_days = [
+    date(year, 1, 31) # Guido van Rossum's birthday
+]
+
+calendar = YearCalendar(year, image_source, locale, special_days)
+calendar.render("calendar.pdf")
+```
+
+You can take **FlickrDownloader** as an inspiration for developing a more sophisticated image source.
+
+### Example with real pictures
+
+[India Faces Calendar 2014 (80 MB)](http://pyearcal.vzdusne.cz/calendar.pdf)
