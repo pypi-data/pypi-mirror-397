@@ -1,0 +1,45 @@
+Metadata-Version: 2.4
+Name: offapi
+Version: 0.1.2
+Summary: OpenAPI frontend render offline template.
+Author-Email: Keming <kemingy94@gmail.com>
+License-Expression: Apache-2.0
+Classifier: Intended Audience :: Developers
+Project-URL: Homepage, https://github.com/kemingy/offapi
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+
+# OffAPI
+
+[![PyPI](https://img.shields.io/pypi/v/offapi.svg)](https://pypi.org/project/offapi/)
+
+OpenAPI template files for offline usage.
+
+This package will download the related files during the build time, and package them into the final distribution.
+
+## Supports
+
+- Swagger
+- Redoc
+- Scalar
+
+## Installation
+
+```bash
+pip install offapi
+```
+
+## Usage
+
+```python
+from offapi import OpenAPITemplate
+
+swagger_template = OpenAPITemplate.SWAGGER.value
+swagger_template.format(spec_url="your_path_to_the_spec.json")
+```
+
+## Used by
+
+- [spectree](https://github.com/0b01001001/spectree): API spec validator and OpenAPI document generator for Python web frameworks.
+- [defspec](https://github.com/kemingy/defspec/): Create the OpenAPI spec and document from dataclass, attrs, etc.
+

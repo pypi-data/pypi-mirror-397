@@ -1,0 +1,87 @@
+[project]
+name = "offapi"
+dynamic = []
+description = "OpenAPI frontend render offline template."
+authors = [
+    { name = "Keming", email = "kemingy94@gmail.com" },
+]
+dependencies = []
+requires-python = ">=3.10"
+readme = "README.md"
+license = "Apache-2.0"
+classifiers = [
+    "Intended Audience :: Developers",
+]
+version = "0.1.2"
+
+[project.urls]
+Homepage = "https://github.com/kemingy/offapi"
+
+[build-system]
+requires = [
+    "pdm-backend",
+    "httpx",
+]
+build-backend = "pdm.backend"
+
+[dependency-groups]
+lint = [
+    "ruff>=0.8.6",
+]
+test = [
+    "pytest>=8.3.4",
+]
+
+[tool.ruff]
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "G",
+    "B",
+    "I",
+    "SIM",
+    "TID",
+    "PL",
+    "RUF",
+]
+ignore = [
+    "E501",
+]
+
+[tool.ruff.lint.isort]
+known-first-party = [
+    "offapi",
+]
+
+[tool.ruff.lint.pylint]
+max-args = 10
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.version]
+source = "scm"
+fallback_version = "0.0.0"
+write_to = "offapi/__version__.py"
+write_template = "__version__ = \"{}\"\n"
+
+[tool.pdm.scripts]
+format_code = "ruff format ."
+fix_check = "ruff check --fix ."
+lint_code = "ruff check ."
+format_check = "ruff format --check ."
+
+[tool.pdm.scripts.lint]
+composite = [
+    "lint_code",
+    "format_check",
+]
+
+[tool.pdm.scripts.format]
+composite = [
+    "format_code",
+    "fix_check",
+]
