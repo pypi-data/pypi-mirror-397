@@ -1,0 +1,151 @@
+heros.helper
+============
+
+.. py:module:: heros.helper
+
+
+Attributes
+----------
+
+.. autoapisummary::
+
+   heros.helper.SPAM
+   heros.helper.log
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   heros.helper.Logger
+   heros.helper.ColoredFormatter
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   heros.helper.object_name_from_keyexpr
+   heros.helper.full_classname
+   heros.helper.get_heros_pkg_versions
+   heros.helper.get_logger
+
+
+Module Contents
+---------------
+
+.. py:function:: object_name_from_keyexpr(key_expr, ns_objects, realm, endpoint='.*')
+
+.. py:function:: full_classname(o)
+
+   Return the fully qualified class name of an object.
+
+   :param o: object
+
+   :returns: fully qualified module and class name
+
+
+.. py:function:: get_heros_pkg_versions() -> dict
+
+   Returns the versions of the installed heros packages
+
+   :returns:
+
+             A dictionary with the package names as keys and the versions as values. If package version is not
+                 available, the value is "n.a.", if package is not installed the value is "not installed".
+   :rtype: dict
+
+
+.. py:data:: SPAM
+   :value: 5
+
+
+.. py:class:: Logger(name, level=NOTSET)
+
+   Bases: :py:obj:`logging.Logger`
+
+
+   Instances of the Logger class represent a single logging channel. A
+   "logging channel" indicates an area of an application. Exactly how an
+   "area" is defined is up to the application developer. Since an
+   application can have any number of areas, logging channels are identified
+   by a unique string. Application areas can be nested (e.g. an area
+   of "input processing" might include sub-areas "read CSV files", "read
+   XLS files" and "read Gnumeric files"). To cater for this natural nesting,
+   channel names are organized into a namespace hierarchy where levels are
+   separated by periods, much like the Java or Python package namespace. So
+   in the instance given above, channel names might be "input" for the upper
+   level, and "input.csv", "input.xls" and "input.gnu" for the sub-levels.
+   There is no arbitrary limit to the depth of nesting.
+
+
+   .. py:method:: setLevel(level, globally=False)
+
+      Set logger level; optionally propagate to all existing loggers.
+
+
+
+   .. py:method:: spam(msg, *args, **kwargs)
+
+      Log a SPAM-level message.
+
+
+
+.. py:class:: ColoredFormatter(*args, **kwargs)
+
+   Bases: :py:obj:`logging.Formatter`
+
+
+   Logging formatter that adds ANSI colors to logging output.
+
+
+   .. py:attribute:: RESET
+      :value: '\x1b[0m'
+
+
+
+   .. py:attribute:: RED
+      :value: '\x1b[31m'
+
+
+
+   .. py:attribute:: GREEN
+      :value: '\x1b[32m'
+
+
+
+   .. py:attribute:: YELLOW
+      :value: '\x1b[33m'
+
+
+
+   .. py:attribute:: supports_color
+
+
+   .. py:method:: format(record)
+
+      Format the specified record as text.
+
+      The record's attribute dictionary is used as the operand to a
+      string formatting operation which yields the returned string.
+      Before formatting the dictionary, a couple of preparatory steps
+      are carried out. The message attribute of the record is computed
+      using LogRecord.getMessage(). If the formatting string uses the
+      time (as determined by a call to usesTime(), formatTime() is
+      called to format the event time. If there is exception information,
+      it is formatted using formatException() and appended to the message.
+
+
+
+   .. py:method:: _supports_color()
+
+      Check if the current platform supports ANSI colors.
+
+
+
+.. py:function:: get_logger(name: str = 'heros') -> logging.Logger
+
+.. py:data:: log
+
