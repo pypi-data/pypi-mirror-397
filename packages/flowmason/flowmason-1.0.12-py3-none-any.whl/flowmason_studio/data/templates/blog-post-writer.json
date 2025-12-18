@@ -1,0 +1,65 @@
+{
+  "id": "blog-post-writer",
+  "name": "Blog Post Writer",
+  "description": "Generate SEO-optimized blog posts with customizable tone and style. Includes structured output with title, content, and meta description.",
+  "category": "content",
+  "tags": [
+    "content",
+    "blog",
+    "seo",
+    "writing"
+  ],
+  "difficulty": "beginner",
+  "use_cases": [
+    "Generate blog content at scale",
+    "Create SEO-friendly articles",
+    "Draft content for review and editing"
+  ],
+  "stages": [
+    {
+      "id": "write",
+      "component_type": "generator",
+      "name": "Write Blog Post",
+      "config": {
+        "prompt": "Write a blog post about: {{input.topic}}\n\nTarget audience: {{input.audience}}\nTone: {{input.tone}}\nWord count: approximately {{input.word_count}} words\n\nPlease structure your response as:\n\n## Title\n[SEO-optimized title]\n\n## Meta Description\n[155 character meta description for SEO]\n\n## Content\n[The full blog post with proper headings and formatting]",
+        "system_prompt": "You are an expert content writer and SEO specialist. Write engaging, informative blog posts that rank well in search engines. Use clear headings, short paragraphs, and include relevant keywords naturally. Always provide actionable insights for readers."
+      },
+      "depends_on": [],
+      "position": {
+        "x": 250,
+        "y": 150
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "topic": {
+        "type": "string",
+        "description": "The main topic for the blog post"
+      },
+      "audience": {
+        "type": "string",
+        "description": "Target audience (e.g., 'small business owners', 'developers')"
+      },
+      "tone": {
+        "type": "string",
+        "description": "Writing tone (e.g., 'professional', 'casual', 'authoritative')"
+      },
+      "word_count": {
+        "type": "integer",
+        "description": "Approximate word count"
+      }
+    },
+    "required": [
+      "topic"
+    ]
+  },
+  "output_stage_id": "write",
+  "example_input": {
+    "topic": "The Future of Remote Work",
+    "keywords": "remote work, productivity, work-life balance, digital nomad",
+    "tone": "professional yet conversational",
+    "word_count": 800
+  }
+}
