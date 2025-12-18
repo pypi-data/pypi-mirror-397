@@ -1,0 +1,81 @@
+
+# Inspect WandB
+Integration between [Inspect](https://inspect.aisi.org.uk/) and [Weights & Biases](https://wandb.ai/site/), including support for both the Models API for experiment tracking, and Weave for evaluation analysis and transcripts.
+
+![Docs Build](https://app.readthedocs.org/projects/inspect-wandb/badge/?version=latest)
+[![Package Build](https://github.com/DanielPolatajko/inspect_wandb/actions/workflows/test-build.yml/badge.svg)](https://github.com/DanielPolatajko/inspect_wandb/actions/workflows/test-build.yml)
+[![Publish to PyPI](https://github.com/DanielPolatajko/inspect_wandb/actions/workflows/publish-to-pypi.yml/badge.svg?event=release)](https://github.com/DanielPolatajko/inspect_wandb/actions/workflows/publish-to-pypi.yml)
+
+## Demo Video
+
+Check out this brief demo video for an overview of Inspect WandB
+
+<div>
+    <a href="https://youtu.be/djHsuT5XnX0">
+      <p>Inspect Wandb Tutorial</p>
+    </a>
+    <a href="https://youtu.be/djHsuT5XnX0">
+      <img style="max-width:300px;" src="https://img.youtube.com/vi/djHsuT5XnX0/0.jpg">
+    </a>
+  </div>
+
+If you prefer to read, you can check out a written tutorial on [the Inspect WandB docs site](https://inspect-wandb.readthedocs.io/en/latest/)
+
+You can also check out the WandB UI and navigate through some example results in our demo project, found [here](https://wandb.ai/danielpolatajko-mars/inspect-wandb-demo/weave/evaluations?view=evaluations_default)
+
+## Usage
+
+Inspect WandB can be installed with:
+
+```bash
+pip install inspect-wandb
+```
+
+To install the optional Weave extra:
+```bash
+pip install "inspect-wandb[weave]"
+```
+
+Once Inspect WandB is installed in an environment authenticated with Weights & Biases (either by running `wandb login` or setting `WANDB_API_KEY`), the integration will be enabled for future Inspect runs by default. The Inspect logger output will link to the Models dashboard where you can track runs, and also, if you have enabled the `weave` extra, to the Weave dashboard where you can visualise eval results.
+
+Some configuration options are available, including adjusting `wandb` config, settings tags, and adjusting Weave trace naming. To dive deeper with Inspect WandB, please see the documentation at [https://inspect-wandb.readthedocs.io/en/latest/](https://inspect-wandb.readthedocs.io/en/latest/)
+
+## Examples
+
+The following are some examples of the types of data that can be automatically logged to W&B when Inspect WandB is enabled:
+
+### Models
+
+The Models integration allows you to track each Inspect `eval` or `eval-set` run as a WandB run. This can be useful for having a shared source-of-truth for which evals have been run, as well as storing exact configurations for faithful reproductions in future.
+
+![Screenshot of Runs table](./docs/source/_static/runs-table.png)
+*Inspect evals tracked in W&B Runs table*
+
+![Screenshot of run overview](./docs/source/_static/run-overview.png)
+*Reproduction information tracked in a W&B Run, including Inspect metadata*
+
+### Weave
+
+The Weave integration traces Inspect evaluations, allowing you to track and analyse performance of different models on multiple tasks, visualise and compare result sets, and dig into individual transcripts.
+
+![Screenshot of Weave evals table](./docs/source/_static/weave-evals-table.png)
+*Table of Inspect evaluations with score summaries in Weave*
+
+![Screenshot of Weave traces](./docs/source/_static/weave-traces.png)
+*Trace tree of an Inspect task, with the main solver transcript selected for a given sample*
+
+![Screenshot of Weave compare](./docs/source/_static/compare-weave.png)
+*Comparison of performance on AgentHarm between Claude 4 Sonnet and GPT 4o-mini*
+
+## Contributing
+
+Please see our [contributing guidelines](./CONTRIBUTING.md) if you'd like to make contributions to Inspect WandB
+
+## Feedback
+
+We welcome all feedback; the best way to get in touch to discuss the project is the [Inspect Community #inspect_wandb Slack Channel](https://inspectcommunity.slack.com/archives/C09B5B00459)
+
+## Project notes
+
+This project was primarily developed by [DanielPolatajko](https://github.com/DanielPolatajko), [Qi Guo](https://github.com/Esther-Guo), [Matan Shtepel](https://github.com/GnarlyMshtep), and supervised by Justin Olive. It was supported through the MARS (Mentorship for Alignment Research Students) program at the [Cambridge AI Safety Hub](https://www.cambridgeaisafety.org/mars).
+
