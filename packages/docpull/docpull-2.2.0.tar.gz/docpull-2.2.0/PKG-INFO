@@ -1,0 +1,208 @@
+Metadata-Version: 2.4
+Name: docpull
+Version: 2.2.0
+Summary: Pull documentation from the web and convert to clean markdown
+Author-email: Zachary Roth <support@raintree.technology>
+Maintainer-email: Raintree Technology <support@raintree.technology>
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/raintree-technology/docpull
+Project-URL: Documentation, https://github.com/raintree-technology/docpull#readme
+Project-URL: Repository, https://github.com/raintree-technology/docpull
+Project-URL: Source Code, https://github.com/raintree-technology/docpull
+Project-URL: Bug Tracker, https://github.com/raintree-technology/docpull/issues
+Project-URL: Releases, https://github.com/raintree-technology/docpull/releases
+Keywords: python,markdown,documentation,web-scraping,developer-tools,claude,ai-training-data
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Information Technology
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Education
+Classifier: Environment :: Console
+Classifier: Topic :: Documentation
+Classifier: Topic :: Internet :: WWW/HTTP :: Indexing/Search
+Classifier: Topic :: Software Development :: Documentation
+Classifier: Topic :: Text Processing :: Markup :: HTML
+Classifier: Topic :: Text Processing :: Markup :: Markdown
+Classifier: Topic :: Utilities
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Natural Language :: English
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Typing :: Typed
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: requests>=2.31.0
+Requires-Dist: beautifulsoup4>=4.12.0
+Requires-Dist: html2text>=2020.1.16
+Requires-Dist: defusedxml>=0.7.1
+Requires-Dist: extruct>=0.15.0
+Requires-Dist: aiohttp>=3.9.0
+Requires-Dist: rich>=13.0.0
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: gitpython>=3.1.40
+Requires-Dist: pydantic>=2.0
+Provides-Extra: js
+Requires-Dist: playwright>=1.40.0; extra == "js"
+Provides-Extra: proxy
+Requires-Dist: aiohttp-socks>=0.8.0; extra == "proxy"
+Provides-Extra: normalize
+Requires-Dist: url-normalize>=1.4.0; extra == "normalize"
+Provides-Extra: all
+Requires-Dist: playwright>=1.40.0; extra == "all"
+Requires-Dist: aiohttp-socks>=0.8.0; extra == "all"
+Requires-Dist: url-normalize>=1.4.0; extra == "all"
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+Requires-Dist: bandit>=1.7.0; extra == "dev"
+Requires-Dist: pip-audit>=2.0.0; extra == "dev"
+Requires-Dist: pre-commit>=3.0.0; extra == "dev"
+Requires-Dist: types-requests>=2.31.0; extra == "dev"
+Requires-Dist: types-beautifulsoup4>=4.12.0; extra == "dev"
+Requires-Dist: types-defusedxml>=0.7.0; extra == "dev"
+Requires-Dist: types-pyyaml>=6.0.0; extra == "dev"
+Dynamic: license-file
+
+# docpull
+
+**Pull documentation from any website and convert it to clean, AI-ready Markdown.**
+
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![PyPI version](https://badge.fury.io/py/docpull.svg)](https://badge.fury.io/py/docpull)
+[![Downloads](https://pepy.tech/badge/docpull)](https://pepy.tech/project/docpull)
+[![License: MIT](https://img.shields.io/github/license/raintree-technology/docpull)](https://github.com/raintree-technology/docpull/blob/main/LICENSE)
+
+## Install
+
+```bash
+pip install docpull
+```
+
+## Usage
+
+```bash
+# Basic fetch
+docpull https://docs.example.com
+
+# With options
+docpull https://aptos.dev --max-pages 100 --output-dir ./docs
+
+# Filter paths
+docpull https://docs.example.com --include-paths "/api/*" --exclude-paths "/changelog/*"
+
+# Enable caching for incremental updates
+docpull https://docs.example.com --cache
+
+# JavaScript-heavy sites
+pip install docpull[js]
+docpull https://spa-site.com --js
+```
+
+## Profiles
+
+```bash
+docpull https://site.com --profile rag      # Optimized for RAG/LLM (default)
+docpull https://site.com --profile mirror   # Full site archive with caching
+docpull https://site.com --profile quick    # Fast sampling (50 pages, depth 2)
+```
+
+## Options
+
+```
+Crawl:
+  --max-pages N           Maximum pages to fetch
+  --max-depth N           Maximum crawl depth
+  --include-paths P       Only crawl matching URL patterns
+  --exclude-paths P       Skip matching URL patterns
+  --js                    Enable JavaScript rendering
+
+Cache:
+  --cache                 Enable caching for incremental updates
+  --cache-dir DIR         Cache directory (default: .docpull-cache)
+  --cache-ttl DAYS        Days before cache expires (default: 30)
+
+Content:
+  --streaming-dedup       Real-time duplicate detection
+  --language CODE         Filter by language (e.g., en)
+
+Output:
+  --output-dir, -o DIR    Output directory (default: ./docs)
+  --dry-run               Show what would be fetched
+  --verbose, -v           Verbose output
+```
+
+See `docpull --help` for all options.
+
+## Python API
+
+```python
+import asyncio
+from docpull import Fetcher, DocpullConfig, ProfileName, EventType
+
+async def main():
+    config = DocpullConfig(
+        url="https://docs.example.com",
+        profile=ProfileName.RAG,
+        crawl={"max_pages": 100},
+        cache={"enabled": True},
+    )
+
+    async with Fetcher(config) as fetcher:
+        async for event in fetcher.run():
+            if event.type == EventType.FETCH_PROGRESS:
+                print(f"{event.current}/{event.total}: {event.url}")
+
+        print(f"Done: {fetcher.stats.pages_fetched} pages")
+
+asyncio.run(main())
+```
+
+## Output
+
+Each page becomes a Markdown file with YAML frontmatter:
+
+```markdown
+---
+title: "Getting Started"
+source: https://docs.example.com/guide
+---
+
+# Getting Started
+...
+```
+
+## Security
+
+- HTTPS-only, mandatory robots.txt compliance
+- Blocks private/internal network IPs
+- Path traversal and XXE protection
+
+## Troubleshooting
+
+```bash
+docpull --doctor              # Check installation
+docpull URL --verbose         # Verbose output
+docpull URL --dry-run         # Test without downloading
+```
+
+## Links
+
+- [PyPI](https://pypi.org/project/docpull/)
+- [GitHub](https://github.com/raintree-technology/docpull)
+- [Changelog](https://github.com/raintree-technology/docpull/blob/main/docs/CHANGELOG.md)
+
+## License
+
+MIT
