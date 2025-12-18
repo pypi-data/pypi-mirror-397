@@ -1,0 +1,212 @@
+{
+  "id": "ai-research-assistant",
+  "name": "AI Research Assistant",
+  "description": "A comprehensive research pipeline that analyzes topics from multiple perspectives, validates facts, synthesizes findings, and produces a structured research report. Demonstrates parallel analysis, fact-checking, and synthesis patterns.",
+  "category": "research",
+  "tags": [
+    "research",
+    "analysis",
+    "synthesis",
+    "multi-perspective",
+    "fact-checking",
+    "advanced"
+  ],
+  "difficulty": "advanced",
+  "use_cases": [
+    "Deep dive research on any topic",
+    "Multi-perspective analysis for decision making",
+    "Competitive intelligence gathering",
+    "Market research and analysis",
+    "Academic literature reviews"
+  ],
+  "stages": [
+    {
+      "id": "topic-analyzer",
+      "component_type": "generator",
+      "name": "Topic Analyzer",
+      "config": {
+        "prompt": "Analyze the research topic and break it down into key aspects to investigate:\n\nTopic: {{input.topic}}\nContext: {{input.context}}\n\nProvide:\n1. Key questions to answer\n2. Important subtopics\n3. Potential data sources\n4. Known controversies or debates",
+        "system_prompt": "You are a research methodology expert. Break down complex topics into manageable research components."
+      },
+      "depends_on": [],
+      "position": {
+        "x": 100,
+        "y": 200
+      }
+    },
+    {
+      "id": "perspective-optimist",
+      "component_type": "generator",
+      "name": "Optimist Perspective",
+      "config": {
+        "prompt": "Analyze this topic from an optimistic perspective, focusing on opportunities, benefits, and positive outcomes:\n\nTopic: {{input.topic}}\nKey Aspects: {{upstream.topic-analyzer.content}}\n\nProvide evidence-based optimistic analysis with specific examples.",
+        "system_prompt": "You are an analyst who focuses on opportunities, growth potential, and positive outcomes. Be evidence-based but highlight the upside."
+      },
+      "depends_on": [
+        "topic-analyzer"
+      ],
+      "position": {
+        "x": 350,
+        "y": 50
+      }
+    },
+    {
+      "id": "perspective-skeptic",
+      "component_type": "generator",
+      "name": "Skeptic Perspective",
+      "config": {
+        "prompt": "Analyze this topic from a skeptical perspective, focusing on risks, challenges, and potential problems:\n\nTopic: {{input.topic}}\nKey Aspects: {{upstream.topic-analyzer.content}}\n\nProvide evidence-based critical analysis with specific concerns.",
+        "system_prompt": "You are a critical analyst who identifies risks, challenges, and potential problems. Be thorough in examining downsides."
+      },
+      "depends_on": [
+        "topic-analyzer"
+      ],
+      "position": {
+        "x": 350,
+        "y": 200
+      }
+    },
+    {
+      "id": "perspective-pragmatist",
+      "component_type": "generator",
+      "name": "Pragmatist Perspective",
+      "config": {
+        "prompt": "Analyze this topic from a practical, implementation-focused perspective:\n\nTopic: {{input.topic}}\nKey Aspects: {{upstream.topic-analyzer.content}}\n\nFocus on: feasibility, resource requirements, timeline, and practical next steps.",
+        "system_prompt": "You are a pragmatic analyst focused on practical implementation, costs, timelines, and actionable insights."
+      },
+      "depends_on": [
+        "topic-analyzer"
+      ],
+      "position": {
+        "x": 350,
+        "y": 350
+      }
+    },
+    {
+      "id": "fact-checker",
+      "component_type": "critic",
+      "name": "Fact Checker",
+      "config": {
+        "content": "OPTIMIST VIEW:\n{{upstream.perspective-optimist.content}}\n\nSKEPTIC VIEW:\n{{upstream.perspective-skeptic.content}}\n\nPRAGMATIST VIEW:\n{{upstream.perspective-pragmatist.content}}",
+        "criteria": "Evaluate each perspective for:\n1. Factual accuracy - flag any claims that need verification\n2. Logical consistency - identify any flawed reasoning\n3. Completeness - note missing important considerations\n4. Bias - highlight any unsubstantiated assumptions\n\nProvide specific corrections and clarifications needed."
+      },
+      "depends_on": [
+        "perspective-optimist",
+        "perspective-skeptic",
+        "perspective-pragmatist"
+      ],
+      "position": {
+        "x": 600,
+        "y": 200
+      }
+    },
+    {
+      "id": "perspective-synthesizer",
+      "component_type": "synthesizer",
+      "name": "Perspective Synthesizer",
+      "config": {
+        "inputs": [
+          "{{upstream.perspective-optimist.content}}",
+          "{{upstream.perspective-skeptic.content}}",
+          "{{upstream.perspective-pragmatist.content}}"
+        ],
+        "synthesis_strategy": "integrate",
+        "context": "Fact-checking feedback: {{upstream.fact-checker.feedback}}",
+        "output_format": "structured"
+      },
+      "depends_on": [
+        "fact-checker"
+      ],
+      "position": {
+        "x": 850,
+        "y": 200
+      }
+    },
+    {
+      "id": "recommendations-generator",
+      "component_type": "generator",
+      "name": "Generate Recommendations",
+      "config": {
+        "prompt": "Based on the synthesized research findings, generate actionable recommendations:\n\nTopic: {{input.topic}}\nSynthesized Analysis: {{upstream.perspective-synthesizer.synthesized}}\nKey Themes: {{upstream.perspective-synthesizer.key_themes}}\n\nProvide:\n1. Top 5 prioritized recommendations\n2. Implementation roadmap\n3. Risk mitigation strategies\n4. Success metrics",
+        "system_prompt": "You are a strategic advisor. Convert research insights into clear, actionable recommendations with measurable outcomes."
+      },
+      "depends_on": [
+        "perspective-synthesizer"
+      ],
+      "position": {
+        "x": 1100,
+        "y": 100
+      }
+    },
+    {
+      "id": "executive-summary",
+      "component_type": "generator",
+      "name": "Executive Summary",
+      "config": {
+        "prompt": "Create an executive summary of the research:\n\nTopic: {{input.topic}}\nSynthesized Findings: {{upstream.perspective-synthesizer.synthesized}}\nRecommendations: {{upstream.recommendations-generator.content}}\n\nFormat as:\n- One-paragraph overview\n- 5 key findings (bullet points)\n- 3 critical recommendations\n- Next steps",
+        "system_prompt": "You are an executive communications specialist. Create concise, impactful summaries for senior decision-makers."
+      },
+      "depends_on": [
+        "recommendations-generator"
+      ],
+      "position": {
+        "x": 1100,
+        "y": 300
+      }
+    },
+    {
+      "id": "report-validator",
+      "component_type": "critic",
+      "name": "Report Validator",
+      "config": {
+        "content": "{{upstream.executive-summary.content}}",
+        "criteria": "Validate the executive summary for:\n1. Clarity - is it understandable without context?\n2. Completeness - are all key points covered?\n3. Actionability - are recommendations specific enough?\n4. Consistency - does it align with the detailed findings?\n5. Tone - is it appropriate for executive audience?"
+      },
+      "depends_on": [
+        "executive-summary"
+      ],
+      "position": {
+        "x": 1350,
+        "y": 200
+      }
+    },
+    {
+      "id": "final-report",
+      "component_type": "improver",
+      "name": "Final Report",
+      "config": {
+        "content": "{{upstream.executive-summary.content}}",
+        "feedback": "{{upstream.report-validator.feedback}}",
+        "instructions": "Refine the executive summary based on the validation feedback. Ensure it's polished, professional, and ready for distribution."
+      },
+      "depends_on": [
+        "report-validator"
+      ],
+      "position": {
+        "x": 1600,
+        "y": 200
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "topic": {
+        "type": "string",
+        "description": "The research topic to analyze"
+      },
+      "context": {
+        "type": "string",
+        "description": "Additional context about why this research is needed"
+      }
+    },
+    "required": [
+      "topic"
+    ]
+  },
+  "output_stage_id": "final-report",
+  "example_input": {
+    "topic": "The Impact of Generative AI on Software Development",
+    "context": "Evaluating whether to adopt AI coding assistants for our engineering team of 50 developers"
+  }
+}

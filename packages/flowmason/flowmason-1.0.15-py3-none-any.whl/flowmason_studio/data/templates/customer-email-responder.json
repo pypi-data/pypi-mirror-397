@@ -1,0 +1,105 @@
+{
+  "id": "customer-email-responder",
+  "name": "Customer Email Responder",
+  "description": "Draft professional customer service responses with tone checking. Generates a response, reviews it for appropriate tone, and refines as needed.",
+  "category": "salesforce",
+  "tags": [
+    "salesforce",
+    "crm",
+    "email",
+    "customer-service",
+    "support"
+  ],
+  "difficulty": "intermediate",
+  "use_cases": [
+    "Speed up customer support response times",
+    "Ensure consistent brand voice",
+    "Handle difficult customer situations professionally",
+    "Train new support staff on response quality"
+  ],
+  "stages": [
+    {
+      "id": "draft",
+      "component_type": "generator",
+      "name": "Draft Response",
+      "config": {
+        "prompt": "Write a customer service email response.\n\nCustomer Name: {{input.customer_name}}\nSubject: {{input.subject}}\nCustomer Message:\n{{input.customer_message}}\n\nContext: {{input.context}}\nDesired Outcome: {{input.desired_outcome}}",
+        "system_prompt": "You are a professional customer service representative. Write helpful, empathetic, and solution-focused email responses. Always:\n- Acknowledge the customer's concern\n- Take ownership without blame\n- Provide clear next steps\n- Maintain a warm but professional tone\n- Be concise but thorough"
+      },
+      "depends_on": [],
+      "position": {
+        "x": 150,
+        "y": 150
+      }
+    },
+    {
+      "id": "tone-check",
+      "component_type": "critic",
+      "name": "Check Tone",
+      "config": {
+        "content": "{{upstream.draft.content}}",
+        "criteria": "Review this customer service email for:\n\n1. **Empathy**: Does it acknowledge the customer's feelings?\n2. **Professionalism**: Is the tone appropriate and brand-consistent?\n3. **Clarity**: Are the next steps clear?\n4. **Completeness**: Does it address all concerns raised?\n5. **Red Flags**: Any phrases that could escalate the situation?\n\nProvide specific feedback on tone adjustments needed."
+      },
+      "depends_on": [
+        "draft"
+      ],
+      "position": {
+        "x": 400,
+        "y": 150
+      }
+    },
+    {
+      "id": "refine",
+      "component_type": "improver",
+      "name": "Refine Response",
+      "config": {
+        "content": "{{upstream.draft.content}}",
+        "feedback": "{{upstream.tone-check.feedback}}",
+        "instructions": "Refine the email response based on the tone review. Ensure the final version is ready to send with no further editing needed.\n\nKeep the response professional but warm. The customer should feel heard and confident their issue will be resolved."
+      },
+      "depends_on": [
+        "tone-check"
+      ],
+      "position": {
+        "x": 650,
+        "y": 150
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "customer_name": {
+        "type": "string",
+        "description": "Customer's name"
+      },
+      "subject": {
+        "type": "string",
+        "description": "Email subject line"
+      },
+      "customer_message": {
+        "type": "string",
+        "description": "The customer's original message"
+      },
+      "context": {
+        "type": "string",
+        "description": "Additional context (e.g., account status, previous interactions)"
+      },
+      "desired_outcome": {
+        "type": "string",
+        "description": "What resolution or outcome to aim for"
+      }
+    },
+    "required": [
+      "customer_name",
+      "customer_message"
+    ]
+  },
+  "output_stage_id": "refine",
+  "example_input": {
+    "customer_name": "Sarah Johnson",
+    "customer_email": "sarah.johnson@example.com",
+    "inquiry": "I've been a customer for 3 years and I'm considering upgrading my plan. Can you tell me about the benefits of the Enterprise tier?",
+    "account_context": "Premium tier customer since 2021, 15 users, excellent payment history"
+  }
+}
