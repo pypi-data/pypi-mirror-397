@@ -1,0 +1,54 @@
+{
+  "id": "nl-interpreter",
+  "name": "nl-interpreter",
+  "version": "1.0.0",
+  "description": "Interpret a natural language pipeline description into structured context for generation.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "description": {
+        "type": "string",
+        "description": "Natural language description of the desired pipeline."
+      }
+    },
+    "required": ["description"]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "context": {
+        "type": "object",
+        "description": "Structured generation context derived from the description."
+      }
+    },
+    "required": ["context"]
+  },
+  "stages": [
+    {
+      "id": "interpret",
+      "component_type": "generator",
+      "config": {
+        "prompt": "You are FlowMason's pipeline design assistant. Analyze the following user description of a pipeline and produce a JSON object with fields: intent (string), actions (string[]), data_sources (string[]), outputs (string[]), constraints (string[]), notes (string). Focus only on understanding, do not invent extra steps.\n\nUser description:\n\"{{input.description}}\""
+      }
+    },
+    {
+      "id": "normalize",
+      "component_type": "json_transform",
+      "depends_on": ["interpret"],
+      "config": {
+        "template": {
+          "context": {
+            "intent": "{{stages.interpret.output.intent}}",
+            "actions": "{{stages.interpret.output.actions}}",
+            "data_sources": "{{stages.interpret.output.data_sources}}",
+            "outputs": "{{stages.interpret.output.outputs}}",
+            "constraints": "{{stages.interpret.output.constraints}}",
+            "notes": "{{stages.interpret.output.notes}}",
+            "raw_description": "{{input.description}}"
+          }
+        }
+      }
+    }
+  ],
+  "output_stage_id": "normalize"
+}

@@ -1,0 +1,234 @@
+{
+    "FlowMason Node": {
+        "prefix": ["fmnode", "flowmason-node"],
+        "body": [
+            "from flowmason_core import node, BaseNode, Field",
+            "from flowmason_core.context import NodeContext",
+            "",
+            "",
+            "class Input:",
+            "    ${1:text}: str = Field(description=\"${2:Input text}\")",
+            "",
+            "",
+            "class Output:",
+            "    ${3:result}: str = Field(description=\"${4:Output result}\")",
+            "",
+            "",
+            "@node(",
+            "    name=\"${5:my-node}\",",
+            "    description=\"${6:Description of the node}\",",
+            "    category=\"${7|ai,transform,analysis,integration,utility|}\",",
+            "    icon=\"${8|brain,sparkles,message-square,search,zap,database,globe,file-text|}\",",
+            "    color=\"${9:#6366f1}\"",
+            ")",
+            "class ${10:MyNode}(BaseNode[Input, Output]):",
+            "    async def execute(self, input: Input, context: NodeContext) -> Output:",
+            "        # Use context.llm to generate content",
+            "        result = await context.llm.generate(",
+            "            prompt=input.${1:text},",
+            "            system_prompt=\"${11:You are a helpful assistant.}\"",
+            "        )",
+            "        ",
+            "        return Output(${3:result}=result.content)",
+            "",
+            "",
+            "if __name__ == \"__main__\":",
+            "    import asyncio",
+            "    ",
+            "    async def test():",
+            "        node = ${10:MyNode}()",
+            "        result = await node.test(Input(${1:text}=\"${12:Test input}\"))",
+            "        print(result)",
+            "    ",
+            "    asyncio.run(test())"
+        ],
+        "description": "Create a new FlowMason Node component"
+    },
+    "FlowMason Operator": {
+        "prefix": ["fmoperator", "flowmason-operator"],
+        "body": [
+            "from flowmason_core import operator, BaseOperator, Field",
+            "from flowmason_core.context import OperatorContext",
+            "from typing import List, Dict, Any",
+            "",
+            "",
+            "class Input:",
+            "    ${1:data}: ${2:str} = Field(description=\"${3:Input data}\")",
+            "",
+            "",
+            "class Output:",
+            "    ${4:result}: ${5:str} = Field(description=\"${6:Output result}\")",
+            "",
+            "",
+            "@operator(",
+            "    name=\"${7:my-operator}\",",
+            "    description=\"${8:Description of the operator}\",",
+            "    category=\"${9|transform,filter,aggregate,utility|}\",",
+            "    icon=\"${10|filter,shuffle,merge,split,transform|}\",",
+            "    color=\"${11:#10b981}\"",
+            ")",
+            "class ${12:MyOperator}(BaseOperator[Input, Output]):",
+            "    def execute(self, input: Input, context: OperatorContext) -> Output:",
+            "        # Transform the input data",
+            "        result = input.${1:data}",
+            "        ",
+            "        return Output(${4:result}=result)",
+            "",
+            "",
+            "if __name__ == \"__main__\":",
+            "    operator = ${12:MyOperator}()",
+            "    result = operator.test(Input(${1:data}=\"${13:Test input}\"))",
+            "    print(result)"
+        ],
+        "description": "Create a new FlowMason Operator component"
+    },
+    "FlowMason Input Class": {
+        "prefix": ["fminput", "flowmason-input"],
+        "body": [
+            "class Input:",
+            "    ${1:field_name}: ${2:str} = Field(description=\"${3:Field description}\")",
+            "    $0"
+        ],
+        "description": "Create an Input class for FlowMason component"
+    },
+    "FlowMason Output Class": {
+        "prefix": ["fmoutput", "flowmason-output"],
+        "body": [
+            "class Output:",
+            "    ${1:field_name}: ${2:str} = Field(description=\"${3:Field description}\")",
+            "    $0"
+        ],
+        "description": "Create an Output class for FlowMason component"
+    },
+    "FlowMason Field": {
+        "prefix": ["fmfield", "flowmason-field"],
+        "body": [
+            "${1:field_name}: ${2:str} = Field(description=\"${3:Field description}\"${4:, default=${5:None}})"
+        ],
+        "description": "Add a field to Input or Output class"
+    },
+    "FlowMason Optional Field": {
+        "prefix": ["fmoptfield", "flowmason-optional-field"],
+        "body": [
+            "${1:field_name}: Optional[${2:str}] = Field(description=\"${3:Field description}\", default=None)"
+        ],
+        "description": "Add an optional field to Input or Output class"
+    },
+    "FlowMason List Field": {
+        "prefix": ["fmlistfield", "flowmason-list-field"],
+        "body": [
+            "${1:field_name}: List[${2:str}] = Field(description=\"${3:Field description}\", default_factory=list)"
+        ],
+        "description": "Add a list field to Input or Output class"
+    },
+    "FlowMason Dict Field": {
+        "prefix": ["fmdictfield", "flowmason-dict-field"],
+        "body": [
+            "${1:field_name}: Dict[str, ${2:Any}] = Field(description=\"${3:Field description}\", default_factory=dict)"
+        ],
+        "description": "Add a dictionary field to Input or Output class"
+    },
+    "FlowMason Node Decorator": {
+        "prefix": ["@node", "fmnodedec"],
+        "body": [
+            "@node(",
+            "    name=\"${1:my-node}\",",
+            "    description=\"${2:Description}\",",
+            "    category=\"${3|ai,transform,analysis,integration,utility|}\",",
+            "    icon=\"${4|brain,sparkles,message-square,search,zap|}\"",
+            ")"
+        ],
+        "description": "Add @node decorator"
+    },
+    "FlowMason Operator Decorator": {
+        "prefix": ["@operator", "fmoperatordec"],
+        "body": [
+            "@operator(",
+            "    name=\"${1:my-operator}\",",
+            "    description=\"${2:Description}\",",
+            "    category=\"${3|transform,filter,aggregate,utility|}\",",
+            "    icon=\"${4|filter,shuffle,merge,split,transform|}\"",
+            ")"
+        ],
+        "description": "Add @operator decorator"
+    },
+    "FlowMason LLM Generate": {
+        "prefix": ["fmgenerate", "llm-generate"],
+        "body": [
+            "result = await context.llm.generate(",
+            "    prompt=${1:prompt},",
+            "    system_prompt=\"${2:You are a helpful assistant.}\"",
+            ")",
+            "${3:content} = result.content"
+        ],
+        "description": "Generate text using LLM"
+    },
+    "FlowMason LLM Stream": {
+        "prefix": ["fmstream", "llm-stream"],
+        "body": [
+            "async for chunk in context.llm.stream(",
+            "    prompt=${1:prompt},",
+            "    system_prompt=\"${2:You are a helpful assistant.}\"",
+            "):",
+            "    ${3:# Process each chunk}",
+            "    print(chunk, end=\"\")"
+        ],
+        "description": "Stream text generation from LLM"
+    },
+    "FlowMason Upstream Access": {
+        "prefix": ["fmupstream", "upstream"],
+        "body": [
+            "${1:upstream_output} = context.upstream[\"${2:stage_id}\"]",
+            "${3:value} = ${1:upstream_output}.${4:field_name}"
+        ],
+        "description": "Access upstream stage output"
+    },
+    "FlowMason Imports": {
+        "prefix": ["fmimports", "flowmason-imports"],
+        "body": [
+            "from flowmason_core import ${1|node,operator|}, Base${2|Node,Operator|}, Field",
+            "from flowmason_core.context import ${3|NodeContext,OperatorContext|}",
+            "from typing import List, Dict, Any, Optional"
+        ],
+        "description": "Import FlowMason essentials"
+    },
+    "FlowMason Test Block": {
+        "prefix": ["fmtest", "flowmason-test"],
+        "body": [
+            "if __name__ == \"__main__\":",
+            "    import asyncio",
+            "    ",
+            "    async def test():",
+            "        component = ${1:ComponentName}()",
+            "        result = await component.test(Input(",
+            "            ${2:field}=\"${3:value}\"",
+            "        ))",
+            "        print(result)",
+            "    ",
+            "    asyncio.run(test())"
+        ],
+        "description": "Add test block for component"
+    },
+    "FlowMason Package Manifest": {
+        "prefix": ["fmpackage", "flowmason-package"],
+        "body": [
+            "{",
+            "    \"name\": \"${1:package-name}\",",
+            "    \"version\": \"${2:1.0.0}\",",
+            "    \"description\": \"${3:Package description}\",",
+            "    \"author\": \"${4:Author Name}\",",
+            "    \"license\": \"${5:MIT}\",",
+            "    \"components\": [",
+            "        {",
+            "            \"type\": \"${6|node,operator|}\",",
+            "            \"name\": \"${7:component-name}\",",
+            "            \"file\": \"${8:component.py}\",",
+            "            \"class\": \"${9:ComponentClass}\"",
+            "        }",
+            "    ],",
+            "    \"dependencies\": []",
+            "}"
+        ],
+        "description": "Create FlowMason package manifest"
+    }
+}
