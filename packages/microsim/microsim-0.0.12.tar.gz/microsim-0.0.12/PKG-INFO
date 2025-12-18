@@ -1,0 +1,157 @@
+Metadata-Version: 2.4
+Name: microsim
+Version: 0.0.12
+Summary: Light microscopy simulation in python
+Project-URL: homepage, https://github.com/tlambert03/microsim
+Project-URL: repository, https://github.com/tlambert03/microsim
+Author-email: Talley Lambert <talley.lambert@gmail.com>
+License: BSD-3-Clause
+License-File: LICENSE
+Classifier: Development Status :: 2 - Pre-Alpha
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Typing :: Typed
+Requires-Python: >=3.10
+Requires-Dist: annotated-types>=0.7.0
+Requires-Dist: fpbase
+Requires-Dist: numpy<2.0,>=1.26
+Requires-Dist: pint>=0.23
+Requires-Dist: platformdirs>=4.3.6
+Requires-Dist: pydantic-settings>2.5.0
+Requires-Dist: pydantic>=2.8
+Requires-Dist: scipy>=1.15.2
+Requires-Dist: tensorstore!=0.1.72,>=0.1.70
+Requires-Dist: tqdm>=4.67.1
+Requires-Dist: xarray>=2024.1.0
+Requires-Dist: zarr<3.0,>=2.17
+Provides-Extra: all
+Requires-Dist: boto3>=1.32; extra == 'all'
+Requires-Dist: dask>=2024.1.0; extra == 'all'
+Requires-Dist: imageio>=2.22; extra == 'all'
+Requires-Dist: imageio[ffmpeg]>=2.22; extra == 'all'
+Requires-Dist: matplotlib>=3.10.1; extra == 'all'
+Requires-Dist: ndv[pyqt,vispy]; extra == 'all'
+Requires-Dist: pyopengl-accelerate; extra == 'all'
+Requires-Dist: rich>=13; extra == 'all'
+Requires-Dist: s3fs>=0.4.2; extra == 'all'
+Requires-Dist: supabase>=2.13.0; extra == 'all'
+Requires-Dist: tifffile>=2025.2.18; extra == 'all'
+Requires-Dist: xarray-datatree>=0.0.14; extra == 'all'
+Provides-Extra: cosem
+Requires-Dist: boto3>=1.32; extra == 'cosem'
+Requires-Dist: dask>=2024.1.0; extra == 'cosem'
+Requires-Dist: imageio>=2.22; extra == 'cosem'
+Requires-Dist: s3fs>=0.4.2; extra == 'cosem'
+Requires-Dist: supabase>=2.13.0; extra == 'cosem'
+Requires-Dist: xarray-datatree>=0.0.14; extra == 'cosem'
+Provides-Extra: io
+Requires-Dist: imageio[ffmpeg]>=2.22; extra == 'io'
+Requires-Dist: tifffile>=2025.2.18; extra == 'io'
+Provides-Extra: jax
+Requires-Dist: dm-tree==0.1.8; (sys_platform == 'darwin') and extra == 'jax'
+Requires-Dist: dm-tree>=0.1.7; extra == 'jax'
+Requires-Dist: jax[cpu]>=0.5.2; extra == 'jax'
+Provides-Extra: torch
+Requires-Dist: torch>=2.6.0; extra == 'torch'
+Requires-Dist: torchaudio>=2.7.0; extra == 'torch'
+Provides-Extra: view
+Requires-Dist: matplotlib>=3.10.1; extra == 'view'
+Requires-Dist: ndv[pyqt,vispy]; extra == 'view'
+Requires-Dist: pyopengl-accelerate; extra == 'view'
+Description-Content-Type: text/markdown
+
+# microsim
+
+[![License](https://img.shields.io/pypi/l/microsim.svg?color=green)](https://github.com/tlambert03/microsim/raw/main/LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/microsim.svg?color=green)](https://pypi.org/project/microsim)
+[![Python Version](https://img.shields.io/pypi/pyversions/microsim.svg?color=green)](https://python.org)
+[![CI](https://github.com/tlambert03/microsim/actions/workflows/ci.yml/badge.svg)](https://github.com/tlambert03/microsim/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/tlambert03/microsim/branch/main/graph/badge.svg)](https://codecov.io/gh/tlambert03/microsim)
+
+Light microscopy simulation in python.
+
+The goal of this library is to generate highly realistic simulated data such as the following:
+
+![Montage2](https://github.com/tlambert03/microsim/assets/1609449/4bc9eb85-b275-4315-b60d-2cb3d003b7f1)
+
+*(this data was generated using segmentations from
+[cell jrc_hela-3 at OpenOrganelle](https://openorganelle.janelia.org/datasets/jrc_hela-3) as the ground truth)*
+
+<https://github.com/user-attachments/assets/905fa1af-c8bd-406e-87a7-7c5921de74d1>
+
+## Documentation
+
+Start with the [tutorial](https://www.talleylambert.com/microsim/tutorial/), and read about the
+[simulation stages](https://www.talleylambert.com/microsim/stages/), then see the 
+[API Reference](<https://tlambert03.github.io/microsim/api/>) for details
+on the `Simulation` object and options for all of the fields.
+
+## Installation
+
+### from PyPI
+
+```bash
+pip install "microsim[all]"
+```
+
+> [!NOTE]
+> At the moment, this library is a bit more "application" than it
+> is "library".  If you are following the docs or tutorials, its
+> probably best to install the full `[all]` extra, which brings in
+> io, visualization, and other data-fetching dependencies.  However,
+> the bare minimal install is fully functional for generating data.
+
+### Local Development
+
+```sh
+gh repo clone tlambert03/microsim
+cd microsim
+uv sync
+```
+
+### From github
+
+To get the bleeding edge version, which will change rapidly, you can install from github.
+
+```bash
+pip install "microsim[all] @ git+https://github.com/tlambert03/microsim"
+```
+
+### With GPU support
+
+If available, microsim can use either Jax or Cupy to accelerate computations.
+These are not installed by default, see the
+[jax](https://jax.readthedocs.io/en/latest/installation.html)
+or [cupy](https://docs.cupy.dev/en/stable/install.html) installation instructions,
+paying attention to your GPU requirements.  Support for torch is planned.
+
+## Usage
+
+Construct and run a
+[`microsim.Simulation`](https://www.talleylambert.com/microsim/api/#microsim.schema.simulation.Simulation)
+object.
+
+```python
+from microsim import schema as ms
+from microsim.util import ortho_plot
+
+# define the parameters of the simulation
+sim = ms.Simulation(
+    truth_space=ms.ShapeScaleSpace(shape=(128, 512, 512), scale=(0.02, 0.01, 0.01)),
+    output_space={'downscale': 8},
+    sample=ms.Sample(
+        labels=[ms.MatsLines(density=0.5, length=30, azimuth=5, max_r=1)]
+    ),
+    modality=ms.Confocal(pinhole_au=0.2),
+    output_path="au02.tiff",
+)
+
+# run it
+result = sim.run()
+
+# optionally plot the result
+ortho_plot(result)
+```
