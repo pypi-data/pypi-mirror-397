@@ -1,0 +1,44 @@
+# hey
+
+This is a fork thats made to work as the backend of the picodulce launcher, this is a work in progress and a lot of things will change
+
+this is a fork of the amazing work of [sammko](https://github.com/sammko/picomc)
+
+zucaro
+====
+
+`zucaro` is a cross-platform command-line Minecraft launcher. It supports
+all(?) officialy available Minecraft versions, account switching and
+multiple separate instances of the game. The on-disk launcher file
+structure mimics the vanilla launcher and as such most mod installers
+(such as forge, fabric or optifine) should work with zucaro just fine,
+though you will have to change the installation path.
+Don't hesitate to report any problems you run into.
+
+Usage
+---
+
+The quickest way to get started is to run
+
+```
+zucaro play
+```
+
+which, on the first launch, will ask you for your account details,
+create an instance named `default` using the latest version of Minecraft
+and launch it.
+
+Of course, more advanced features are available. Try running
+
+```
+zucaro --help
+```
+
+and you should be able to figure it out. More detailed documentation
+may appear someday in the future.
+
+Development
+---
+
+For project management and dependency tracking `zucaro` uses
+[Rye](https://rye-up.com/).
