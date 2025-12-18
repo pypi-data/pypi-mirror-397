@@ -1,0 +1,493 @@
+Metadata-Version: 2.4
+Name: mielto
+Version: 0.1.0
+Summary: Official Python client library for Mielto API
+Author-email: Mielto <hi@mielto.com>
+Project-URL: homepage, https://mielto.com
+Project-URL: documentation, https://docs.mielto.com
+Project-URL: repository, https://github.com/mieltoinc/mielto
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: httpx>=0.24.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: typing-extensions>=4.0.0
+Provides-Extra: dev
+Requires-Dist: mypy; extra == "dev"
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: pytest-asyncio; extra == "dev"
+Requires-Dist: pytest-mock; extra == "dev"
+Requires-Dist: pytest-cov; extra == "dev"
+Requires-Dist: ruff; extra == "dev"
+Dynamic: license-file
+
+# Mielto Python Client
+
+Official Python client library for the Mielto API.
+
+## Installation
+
+```bash
+pip install mielto
+```
+
+Or install from source:
+
+```bash
+cd libs/mielto_python
+pip install -e .
+```
+
+## Quick Start
+
+```python
+from mielto import Mielto
+from mielto.types import MemoryCreate, CollectionCreate, SearchRequest
+
+# Initialize the client
+client = Mielto(api_key="your-api-key")
+
+# Create a memory
+memory = client.memories.create(
+    MemoryCreate(
+        user_id="user_123",
+        memory="User prefers dark mode",
+        topics=["preferences", "ui"]
+    )
+)
+
+# Create a collection
+collection = client.collections.create(
+    CollectionCreate(
+        name="My Documents",
+        description="Personal document collection"
+    )
+)
+
+# Insert content into collection
+client.collections.insert(
+    collection_id=collection.id,
+    file_path="document.pdf"
+)
+
+# Search in collection
+results = client.collections.search(
+    SearchRequest(
+        query="artificial intelligence",
+        collection_id=collection.id,
+        max_results=10
+    )
+)
+
+# Compress text
+compressed = client.compress.compress(
+    content="This is a long text that needs compression..."
+)
+
+# Close the client
+client.close()
+```
+
+## Features
+
+### 🧠 Memories
+
+Manage user memories for contextual AI interactions:
+
+- **Create** memories from text or messages
+- **Search** memories with semantic search
+- **Update** and **delete** memories
+- **List** memories with pagination
+- **Generate** memories from conversation messages
+
+### 📚 Collections
+
+Organize and search your knowledge base:
+
+- **Create** and manage collections
+- **Insert** content (files, text, URLs)
+- **Search** with multiple search types (semantic, hybrid, fulltext)
+- **Filter** by tags, status, and metadata
+- Support for multiple vector stores (pgvector, Pinecone, Qdrant)
+
+### 🗜️ Compress
+
+AI-powered text compression:
+
+- Compress long texts while preserving meaning
+- Support for message history compression
+- Async compression with webhooks
+- Includes compression metrics
+
+## Usage Examples
+
+### Memories
+
+```python
+from mielto import Mielto
+from mielto.types import MemoryCreate, MemorySearchRequest
+
+client = Mielto(api_key="your-api-key")
+
+# Create a memory
+memory = client.memories.create(
+    MemoryCreate(
+        user_id="user_123",
+        memory="User is a software engineer specializing in Python",
+        topics=["background", "skills"]
+    )
+)
+
+# Search memories
+results = client.memories.search(
+    MemorySearchRequest(
+        query="What does the user do for work?",
+        user_id="user_123",
+        limit=5
+    )
+)
+
+for memory in results.memories:
+    print(f"Memory: {memory.memory}")
+    print(f"Topics: {memory.topics}")
+
+# Generate memories from conversation
+messages = [
+    {"role": "user", "content": "I love Python programming"},
+    {"role": "user", "content": "I work remotely from home"}
+]
+
+memories = client.memories.from_messages(
+    messages=messages,
+    user_id="user_123",
+    topics=["preferences", "work"]
+)
+```
+
+### Collections
+
+```python
+from mielto import Mielto
+from mielto.types import CollectionCreate, SearchRequest
+
+client = Mielto(api_key="your-api-key")
+
+# Create a collection
+collection = client.collections.create(
+    CollectionCreate(
+        name="Research Papers",
+        description="AI research paper collection",
+        tags=["research", "ai"]
+    )
+)
+
+# Insert a file
+result = client.collections.insert(
+    collection_id=collection.id,
+    file_path="paper.pdf",
+    label="Attention Is All You Need",
+    metadata={"year": 2017, "authors": ["Vaswani et al."]},
+    reader="native"
+)
+
+# Insert text content
+result = client.collections.insert(
+    collection_id=collection.id,
+    content="Transformers are a type of neural network architecture...",
+    label="Transformer Notes"
+)
+
+# Insert from URL
+result = client.collections.insert(
+    collection_id=collection.id,
+    urls=["https://arxiv.org/pdf/1706.03762.pdf"],
+    reader="native"
+)
+
+# Search in collection
+results = client.collections.search(
+    SearchRequest(
+        query="transformer architecture",
+        collection_id=collection.id,
+        search_type="hybrid",
+        max_results=10
+    )
+)
+
+for result in results.results:
+    print(f"Score: {result.score}")
+    print(f"Content: {result.content[:200]}...")
+```
+
+### Compress
+
+```python
+from mielto import Mielto
+
+client = Mielto(api_key="your-api-key")
+
+# Compress simple text
+result = client.compress.compress(
+    content="This is a very long piece of text that contains a lot of "
+            "information about various topics. The text goes on and on "
+            "with detailed explanations and examples..."
+)
+
+print(f"Original length: {result.original_length}")
+print(f"Compressed length: {result.compressed_length}")
+print(f"Compression time: {result.compression_time}s")
+print(f"Compressed content: {result.content}")
+
+# Compress message history
+messages = [
+    {"role": "user", "message": "What's the weather?", "created_at": "2024-01-01"},
+    {"role": "assistant", "message": "It's sunny today!", "created_at": "2024-01-01"},
+    {"role": "user", "message": "Great, thanks!", "created_at": "2024-01-01"}
+]
+
+result = client.compress.compress(
+    content=messages,
+    include_metadata=True
+)
+
+# Async compression with webhook
+result = client.compress.compress(
+    content="Long text...",
+    webhook_url="https://example.com/webhook"
+)
+print(result.message)  # "Compression response will be sent to webhook"
+```
+
+## Async Usage
+
+The library also provides async support:
+
+```python
+import asyncio
+from mielto import AsyncMielto
+from mielto.types import MemoryCreate
+
+async def main():
+    async with AsyncMielto(api_key="your-api-key") as client:
+        # All the same methods, but with await
+        memory = await client.memories.create(
+            MemoryCreate(
+                user_id="user_123",
+                memory="User prefers async operations"
+            )
+        )
+        
+        results = await client.memories.search(
+            MemorySearchRequest(
+                query="async",
+                user_id="user_123"
+            )
+        )
+
+asyncio.run(main())
+```
+
+## Configuration
+
+### API Key
+
+You can provide your API key in multiple ways:
+
+1. **Direct initialization**:
+   ```python
+   client = Mielto(api_key="your-api-key")
+   ```
+
+2. **Environment variable**:
+   ```bash
+   export MIELTO_API_KEY="your-api-key"
+   ```
+   ```python
+   import os
+   client = Mielto(api_key=os.getenv("MIELTO_API_KEY"))
+   ```
+
+### Custom Base URL
+
+For self-hosted or development environments:
+
+```python
+client = Mielto(
+    api_key="your-api-key",
+    base_url="https://your-instance.com/v1"
+)
+```
+
+### Timeout and Retries
+
+```python
+client = Mielto(
+    api_key="your-api-key",
+    timeout=60.0,  # seconds
+    max_retries=3
+)
+```
+
+## Error Handling
+
+The library provides specific exception types:
+
+```python
+from mielto import Mielto
+from mielto.client.exceptions import (
+    AuthenticationError,
+    NotFoundError,
+    ValidationError,
+    RateLimitError,
+    ServerError,
+    PaymentRequiredError,
+    CreditLimitExceededError,
+    OverageLimitExceededError,
+    MieltoError
+)
+
+client = Mielto(api_key="your-api-key")
+
+try:
+    memory = client.memories.get("invalid_id")
+except AuthenticationError:
+    print("Invalid API key")
+except NotFoundError:
+    print("Memory not found")
+except ValidationError as e:
+    print(f"Validation error: {e.message}")
+except RateLimitError:
+    print("Rate limit exceeded")
+except PaymentRequiredError:
+    print("Payment required to access this feature")
+except CreditLimitExceededError:
+    print("Credit limit exceeded - please upgrade your plan")
+except OverageLimitExceededError:
+    print("Overage limit exceeded")
+except ServerError:
+    print("Server error occurred")
+except MieltoError as e:
+    print(f"General error: {e.message}")
+```
+
+### Exception Hierarchy
+
+- **MieltoError** (base exception)
+  - **AuthenticationError** (401) - Invalid API key
+  - **PaymentRequiredError** (402) - Payment required
+  - **PermissionError** (403) - Insufficient permissions
+  - **NotFoundError** (404) - Resource not found
+  - **ValidationError** (422) - Invalid request data
+  - **RateLimitError** (429) - Too many requests
+  - **ServerError** (5xx) - Server-side errors
+  - **TimeoutError** - Request timeout
+  - **ConnectionError** - Network connection issues
+  - **CreditLimitExceededError** - Credit limit reached
+  - **OverageLimitExceededError** - Overage limit reached
+```
+
+## Advanced Features
+
+### Pagination
+
+```python
+# List memories with pagination
+result = client.memories.list(user_id="user_123", limit=50)
+
+for memory in result.memories:
+    print(memory.memory)
+
+# Get next page
+if result.has_more:
+    next_page = client.memories.list(
+        user_id="user_123",
+        cursor=result.next_cursor,
+        limit=50
+    )
+```
+
+### Filtering Collections
+
+```python
+# Filter by tags
+collections = client.collections.list(
+    tags="research,ai",
+    limit=20
+)
+
+# Search collections
+collections = client.collections.list(
+    search="machine learning",
+    status="active"
+)
+```
+
+### Custom Readers for File Processing
+
+```python
+# Use specific reader for PDF processing
+result = client.collections.insert(
+    collection_id=collection.id,
+    file_path="document.pdf",
+    reader="langchain_pdfplumber"  # Better OCR for scanned PDFs
+)
+
+# Use different readers for different file types
+result = client.collections.insert(
+    collection_id=collection.id,
+    file_path="presentation.pptx",
+    reader="markitdown"  # Good for PowerPoint files
+)
+```
+
+## Development
+
+### Setup
+
+```bash
+# Clone the repository
+git clone https://github.com/mielto/mielto.git
+cd mielto/libs/mielto_python
+
+# Install dependencies
+pip install -e ".[dev]"
+```
+
+### Running Tests
+
+```bash
+pytest
+```
+
+### Code Formatting
+
+```bash
+ruff format .
+ruff check .
+```
+
+### Type Checking
+
+```bash
+mypy mielto
+```
+
+## Requirements
+
+- Python 3.8+
+- httpx >= 0.24.0
+- pydantic >= 2.0.0
+
+## License
+
+MIT License - see LICENSE file for details.
+
+## Support
+
+- Documentation: https://docs.mielto.com
+- Issues: https://github.com/mielto/mielto/issues
+- Email: hi@mielto.com
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
