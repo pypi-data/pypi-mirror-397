@@ -1,0 +1,113 @@
+
+# CQL3DUI
+
+**A simple user-interface for the Bounce-Averaged Fokker-Planck code CQL3D.**
+
+**Author:** Matthew Poulos (CompX)  
+**Email:** poulos@compxco.com
+
+---
+
+## Overview
+
+**CQL3DUI** is a simple Python/Tkinter-based GUI for the Fortran-based code CQL3D. The interface allows users to:
+
+1.  **Import, export, view, and edit** `cqlinput` files (Fortran namelists).
+2.  **Load and run** pre-compiled CQL3D executables.
+3.  **Plot and visualize** the resulting output (NetCDF) from CQL3D.
+
+Detailed information and documentation on CQL3D can be found at:
+* [GitHub Repository](https://github.com/compxco/cql3d)
+* [CompX Website](https://www.compxco.com/cql3d.html)
+
+---
+
+## Installation
+
+To install CQL3DUI, open a terminal and run:
+
+```bash
+pip install cql3dui
+```
+
+To run CQL3DUI from within any directory, simply type:
+
+```bash
+cqlui
+```
+
+---
+
+## Running Example Tests
+
+A set of example tests are provided in the folder `cql3dtests`, available via download at:
+* [PyPI] (https://pypi.org/project/CQL3DUI/#cql3dui-0.0.5.tar.gz)
+
+Once downloaded, navigate to the folder `/cql3dtests`.
+
+### Directory Structure
+The contents of the test folder are organized as follows:
+
+```text
+cql3dtests/
+├── cqlinput_folder/                                        # Namelist files
+│   ├── test1_cqlinput_eoved_.16_multi-flux-surface_test1.0
+│   ├── test2_cqlinput_freidberg_full_eps.3_short_w_sxr_201024
+│   ├── test3_cqlinput_96143_one_ray.1_short_201024
+│   ├── test4_cqlinput_MAST-like_test.0
+│   ├── test5_cqlinput_H0.short_mmsv8_adjust.4
+│   └── test6_cqlinput_eoved_.16_multi-flux-surface0.2.11
+├── eqdsk_folder/                                           # Equilibrium files
+│   ├── eqdsk_freidberg_full_eps
+│   ├── eqdsk_MAST-like
+│   ├── g096143.01440
+│   └── g122080.03100
+└── rffile_folder/                                          # RF files
+    ├── genray_test4.nc
+    ├── genrayfw_18rays.nc
+    └── rayech
+```
+
+---
+
+## Workflow
+
+### 1. Import, View, and Edit Namelists
+
+To import a test case (e.g., Test 1.0):
+1.  Click the **Import Namelist** button in the top left.
+2.  Navigate to `cql3dtests/cqlinput_folder/`.
+3.  Select any of the test files.
+
+**Editing Features:**
+* **Navigation:** Use the GUI tabs to navigate through the file.
+* **Tooltips:** Hover the cursor over any namelist variable to see a short description.
+* **Documentation:** Click on any variable to highlight it within the `cqlinput_help` documentation (displayed in the right panel).
+* **Export:** Click **Export Namelist** to save the variables currently in the UI to a file.
+
+### 2. Load and Run CQL3D
+
+**Prerequisite:** You must have a pre-compiled CQL3D Fortran executable.
+
+1.  Click the **Select CQL3D Executable** button (lower left) and navigate to your compiled executable. The UI will remember this location for future runs.
+2.  Click the **Run CQL3D** button (lower right).
+
+**What happens next?**
+* A `runs` folder is created in the current directory (if it doesn't exist).
+* A subfolder labeled by the date and time is created inside `runs`.
+* The current namelist variables are saved to a `cqlinput` file inside that subfolder.
+* **File Linking:** The code checks if auxiliary files (`eqdsk`, `rffile`) are required.
+    * It looks for subfolders (`eqdsk_folder`, `rffile_folder`) in the original working directory.
+    * If found, it creates symbolic links (aliases) in the run folder for the required files.
+* A separate thread is launched to execute CQL3D.
+* After completion, a terminal window pops up showing the output and any errors.
+
+### 3. Plot and Visualize Output
+
+Once CQL3D has successfully completed:
+
+1.  Click the **Plot Results** button (lower right).
+2.  By default, the UI loads the NetCDF (`.nc`) file from the last successful run.
+3.  *Optional:* If no `.nc` file exists or you wish to view a different run, click **Load .nc file** (top right).
+
+Navigate through the various options to visualize the physics results.
