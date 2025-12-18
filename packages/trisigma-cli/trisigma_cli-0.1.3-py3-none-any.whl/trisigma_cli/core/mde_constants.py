@@ -1,0 +1,6 @@
+"""MDE (Minimum Detectable Effect) default constants."""
+
+MDE_DEFAULT_PARTICIPANT_COLUMN = "user_id"
+MDE_DEFAULT_ALPHA = 0.05
+MDE_DEFAULT_BETA = 0.2
+MDE_DEFAULT_TRAFFIC_PER_VARIANT = 0.5
