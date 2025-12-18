@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunk_jupyterlab_application_top=self.webpackChunk_jupyterlab_application_top||[]).push([["218"],{83073:function(e,t,p){p.d(t,{createArchitectureServices:()=>a.S});var a=p(31109);p(51905)}}]);
