@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scrapy-metrics-exporter"
+version = "0.1.0"
+description = "Real-time metrics exporter for Scrapy with automatic collection of all stats"
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+keywords = ["scrapy", "metrics", "monitoring", "observability", "prometheus", "exporter"]
+authors = [
+    {name = "Daniel Gines", email = "dangines@gmail.com"}
+]
+maintainers = [
+    {name = "Daniel Gines", email = "dangines@gmail.com"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Framework :: Scrapy",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: System :: Monitoring",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "scrapy>=2.5.0",
+    "prometheus-client>=0.12.0",  # Current metrics backend (OpenMetrics format)
+    "twisted>=21.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/danielgines/scrapy-metrics-exporter"
+Repository = "https://github.com/danielgines/scrapy-metrics-exporter"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["scrapy_metrics_exporter*"]
