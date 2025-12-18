@@ -1,0 +1,74 @@
+{% set title = gettext("Your music taste in %(year)s", year=year) %}
+{% set back_url = "/" %}
+{% set styles = ["stats_personal"] %}
+{% set script = "stats_personal" %}
+{% extends "base_static.jinja2" %}
+
+{% macro image_grid_row(list) %}
+    <section class="image-row">
+        <div class="box">
+            <img src="{{ list[0]['image'] }}">
+        </div>
+
+        <div class="image-grid box">
+            {% for item in list[1:] %}
+                <img src="{{ item['image'] }}">
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="padding marquee large">
+        <span>
+            {% for item in list %}
+                <span>{{ item['name'] }}</span>
+            {% endfor %}
+        </span>
+        <span>
+            {% for item in list %}
+                <span>{{ item['name'] }}</span>
+            {% endfor %}
+        </span>
+    </section>
+{% endmacro %}
+
+{% block content %}
+
+<h2>Your favorite artists</h2>
+
+{{ image_grid_row(artists) }}
+
+<h2>Your favorite albums</h2>
+
+{{ image_grid_row(albums) }}
+
+<h2>Your favorite songs</h2>
+
+{{ image_grid_row(tracks) }}
+
+<section class="box padding flex-vcenter flex-space-between">
+    <span>
+        {% trans %}You listened to your playlist{% endtrans %}
+    </span>
+    <span class="large">
+        {% if you_your_playlist %}
+            {{ you_your_playlist }}&percnt;
+        {% else %}
+            {% trans %}N/A{% endtrans %}
+        {% endif %}
+    </span>
+</section>
+
+<section class="box padding flex-vcenter flex-space-between">
+    <span>
+        {% trans %}Others listened to your playlist{% endtrans %}
+    </span>
+    <span class="large">
+        {% if others_your_playlist %}
+            {{ others_your_playlist }}&percnt;
+        {% else %}
+            {% trans %}N/A{% endtrans %}
+        {% endif %}
+    </span>
+</section>
+
+{% endblock content %}
