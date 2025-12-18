@@ -1,0 +1,54 @@
+[tool.poetry]
+name = "django-webpack-pages"
+version = "0.2.0"
+description = "Use webpack with your multi-page, multi-lingual django webapp"
+authors = ["MrP01 <peter@waldert.at>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/MrP01/django-webpack-pages"
+keywords = ["django", "webpack", "assets"]
+packages = [{ include = "webpack_pages" }]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+django-webpack-loader = "^3.1.1"
+Django = ">=5.2"
+Jinja2 = "^3.1.6"
+
+[tool.poetry.group.dev.dependencies]
+pylint = "^3.3.6"
+
+[tool.nitpick]
+style = ["github://MrP01/lint-me-now/nitpick-base-style.toml", "github://MrP01/lint-me-now/nitpick-python-style.toml"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+exclude = [".git", "**/__pycache__"]
+lint.select = ["ALL"]
+lint.ignore = [
+  "F403",   # undefined-local-with-import-star
+  "F405",   # undefined-local-with-import-star-usage
+  "E731",   # lambda-assignment
+  "ERA001", # commented-out-code
+  "N999",   # invalid-module-name
+  "COM812", # missing-trailing-comma
+  "TID252", # relative-imports
+  "ANN002", # missing-type-args
+  "ANN003", # missing-type-kwargs
+  "D",      # entire pydocstyle
+  "TD",     # anything todo-related
+  "FIX",    # anything fixme-related
+  "DJ001",  # django-nullable-model-string-field
+  "TRY003", # raise-vanilla-args
+  "ANN401", # any-type
+  "ARG002", # unused-method-argument
+  "T201",   # prints
+  "PYI021", # docstring-in-stub
+  "S101",   # use of assert
+  "PTH",    # pathlib, for now... might be useful later
+]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
