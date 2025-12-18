@@ -1,0 +1,68 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fastermqtt"
+version = "0.1.0"
+description = "A FastAPI-style MQTT framework with dependency injection, topic path parameters, and hierarchical routing"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+    { name = "Foxerine", email = "foxerine@users.noreply.github.com" }
+]
+keywords = [
+    "mqtt",
+    "fastapi",
+    "async",
+    "framework",
+    "iot",
+    "messaging",
+    "pubsub",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: FastAPI",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = [
+    "fastapi>=0.100.0",
+    "gmqtt>=0.6.0",
+    "pydantic>=2.0.0",
+    "orjson>=3.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "ruff>=0.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/Foxerine/fastermqtt"
+Documentation = "https://github.com/Foxerine/fastermqtt#readme"
+Repository = "https://github.com/Foxerine/fastermqtt"
+Issues = "https://github.com/Foxerine/fastermqtt/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["fastermqtt"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = ["E501"]
