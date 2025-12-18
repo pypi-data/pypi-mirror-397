@@ -1,0 +1,262 @@
+# Example ExperienceInfo Configuration
+# This file demonstrates how to configure a land cover mapping experiment using TOML
+#
+# Structure (all validated by Pydantic):
+#   - [system_config]: System paths and IO settings (optional)
+#   - [experiment]: Experiment parameters (training, model, seeds)
+#   - [raster_reader]: Input raster configuration
+#   - [mapper]: Label mapping configuration
+#   - [boundaries]: Spatial boundaries and masks (optional)
+#
+# Usage:
+#   from eoml.automation.experience import ExperienceInfo
+#
+#   # Load config and build runtime objects in one step (recommended)
+#   experience = ExperienceInfo.from_toml("config.toml")
+#
+#   # Access configuration fields
+#   gps_file = experience.experiment.gps_file
+#   map_bounds = experience.boundaries.map_bounds
+#
+#   # Access built runtime objects
+#   raster_reader = experience.raster_reader
+#   mapper = experience.mapper
+#   transformer = experience.nn_output_transformer
+
+[system_config]
+# System configuration object for paths, IO profiles, and device/mapping settings
+# This section is OPTIONAL and can be omitted if using default system configuration
+# If omitted, paths will need to be provided through other means (e.g., environment variables)
+
+# Base directory for data storage
+data_dir = "/path/to/data"
+
+# Directory containing raster files
+raster_dir = "/path/to/rasters"
+
+# Directory for shade/canopy data
+shade_dir = "/path/to/shade"
+
+# Directory for land cover data
+land_cover_dir = "/path/to/land_cover"
+
+
+# Device for neural network execution ('cpu', 'cuda', etc.)
+device = "cuda"
+
+# Mode for map generation (0=CPU, 1=GPU with pinned memory, etc.)
+mapping_mode = 1
+
+# Rasterio profile for reading rasters (IO settings)
+[system_config.raster_read_profile]
+# num_threads = 4
+# sharing = false
+
+# Rasterio profile for writing rasters (IO settings)
+[system_config.raster_write_profile]
+# compress = "lzw"
+# tiled = true
+
+
+
+
+[experiment]
+# Name of the geopackage file (without extension)
+gps_file = "CH_39_all"
+
+# Size of extracted windows from raster data
+extract_size = 47
+
+# Size of input windows for the neural network (must be <= extract_size)
+size = 31
+
+# Name of the class label column in the geopackage
+class_label = "Class"
+
+# Name of the neural network model to use
+# Options: "Resnet20", "ConvJavaSmallNorm", "ConvJavaTinyNorm", etc.
+model_name = "Resnet20"
+
+# Batch size multiplier for training (actual batch = batch_mult * 1024)
+batch_mult = 0.25
+
+# Batch size multiplier for mapping (actual batch = batch_mult_map * 1024)
+batch_mult_map = 0.5
+
+# Number of training epochs
+epoch = 1
+
+# Tag name for the mapping output (optional, defaults to "CH_2022_{gps_file}")
+# map_tag_name = "CH_2022_custom_name"
+
+# Number of folds for k-fold cross-validation
+nfold = 5
+
+# Device selection for computation
+# Options:
+#   - "auto" or "automatic": Automatically select GPU if available, otherwise CPU (default)
+#   - "cpu": Force CPU usage
+#   - "cuda" or "gpu": Use GPU (falls back to CPU if not available)
+#   - [0, 1, 2]: List of specific CUDA device IDs to use (uses first as primary)
+device = "auto"
+
+# ============================================
+# Random Seed Configuration
+# ============================================
+
+# Master random seed for reproducibility
+# When set, automatically derives INDEPENDENT seeds for each RNG:
+#   - python_seed = random_seed + 0  (e.g., 412)
+#   - numpy_seed  = random_seed + 1  (e.g., 413)
+#   - torch_seed  = random_seed + 2  (e.g., 414)
+# This prevents unwanted correlations between different random processes
+# If omitted or null, a timestamp-based random seed will be generated
+random_seed = 412
+
+# Individual seeds for different random number generators (optional)
+# Only set these if you need specific seeds different from the derived ones
+# BEST PRACTICE: Leave these commented unless you have a specific reason
+
+# python_seed = 500      # Override Python's random module seed
+# numpy_seed = 600       # Override NumPy random seed
+# torch_seed = 700       # Override PyTorch random seed
+
+# Enable deterministic behavior in PyTorch
+# When true, ensures fully reproducible results but may reduce performance
+# Sets torch.use_deterministic_algorithms(True) and configures cuDNN deterministically
+# Default: false (better performance, slight non-determinism on GPU may occur)
+torch_deterministic = false
+
+# ============================================
+# Configuration Examples & Best Practices
+# ============================================
+
+# Example 1: Standard reproducibility (RECOMMENDED)
+# Just set random_seed - individual seeds are automatically derived
+# random_seed = 42
+# torch_deterministic = false
+# → Result: python=42, numpy=43, torch=44 (independent but reproducible)
+
+# Example 2: Full determinism (for scientific publications)
+# Ensures bit-exact reproducibility across runs (slower)
+# random_seed = 42
+# torch_deterministic = true
+# → Result: python=42, numpy=43, torch=44 + deterministic algorithms
+
+# Example 3: Custom seeds for each RNG (advanced/debugging only)
+# Only use if you need specific control over each RNG
+# random_seed = 100        # Master seed
+# python_seed = 200        # Custom Python seed
+# numpy_seed = 300         # Custom NumPy seed
+# torch_seed = 400         # Custom PyTorch seed
+# torch_deterministic = true
+
+# Example 4: Random seeds each run (for robustness testing)
+# Omit random_seed to auto-generate new seeds each run
+# # random_seed = null     # Uncomment to auto-generate
+# torch_deterministic = false
+# → Result: Different random but independent seeds each run
+
+# WHY DIFFERENT SEEDS FOR EACH RNG?
+# Using identical seeds (e.g., all=42) can cause correlations between
+# different random processes, potentially biasing your results. The system
+# automatically derives independent seeds to maintain reproducibility while
+# ensuring statistical independence between RNGs.
+
+# Device configuration examples:
+# device = "cpu"           # Force CPU
+# device = "cuda"          # Use any available GPU
+# device = [0]             # Use specific GPU 0
+# device = [0, 1]          # Use GPUs 0 and 1 (primary: GPU 0)
+
+[raster_reader]
+# Type of raster reader: "single" for one raster, "multi" for multiple rasters
+type = "single"
+
+# Path to the raster file (use absolute path or path relative to system config)
+path = "/path/to/sentinel_data/central-highlands_2022.tif"
+
+# List of bands to use (1-indexed, or use "all" by omitting this field)
+bands = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+# Path to statistics file for normalization (optional)
+stats_path = "/path/to/sentinel_data/central-highlands_2022.stats"
+
+# Interpolation method (optional)
+# interpolation = "nearest"
+
+# Enable file sharing mode (optional, default: false)
+sharing = false
+
+# Example multi-raster configuration (comment out single reader above to use):
+# [raster_reader]
+# type = "multi"
+# reference_index = 0  # Which raster to use as spatial reference
+# sharing = false
+#
+# [[raster_reader.readers]]
+# type = "single"
+# path = "/path/to/sentinel_2022.tif"
+# bands = [1, 2, 3, 4]
+# stats_path = "/path/to/sentinel_2022.stats"
+#
+# [[raster_reader.readers]]
+# type = "single"
+# path = "/path/to/dem.tif"
+# bands = [1]
+
+[mapper]
+# Value to use for invalid/missing labels
+no_target = -1
+
+# Whether to use one-hot vector outputs instead of scalar
+vectorize = false
+
+# Optional: Dictionary mapping label names to integer values
+# label_dictionary = { "Water" = 1, "Forest" = 2, "Urban" = 3 }
+
+# Define output categories
+# Each category maps one or more input labels to a single NN output
+
+[[mapper.categories]]
+name = "Water"
+labels = [1]
+# map_value = 0  # Optional: specify output value (defaults to category index)
+
+[[mapper.categories]]
+name = "Forest"
+labels = [2, 3]  # Multiple labels can map to same category
+# map_value = 1
+
+[[mapper.categories]]
+name = "Grassland"
+labels = [4]
+
+[[mapper.categories]]
+name = "Agriculture"
+labels = [5, 6]
+
+[[mapper.categories]]
+name = "Urban"
+labels = [7]
+
+[[mapper.categories]]
+name = "Bare_Soil"
+labels = [8]
+
+[[mapper.categories]]
+name = "Other"
+labels = [9, 10, 11]
+
+
+[boundaries]
+# Spatial bounds for the mapping area [minx, miny, maxx, maxy]
+# Use coordinates in the CRS of the raster data
+map_bounds = [100000.0, 200000.0, 150000.0, 250000.0]
+
+# Path to mask defining valid mapping areas (GeoPackage, Shapefile, etc.)
+map_mask = "/path/to/masks/mapping_area_mask.gpkg"
+
+# Optional: Path to mask for filtering training/validation samples
+sample_mask = "/path/to/masks/sample_mask.gpkg"
+# sample_mask = null  # Use this if no sample mask is needed
