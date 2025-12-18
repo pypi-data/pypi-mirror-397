@@ -1,0 +1,274 @@
+// CrossbarFX - Copyright (c) typedef int GmbH. All rights reserved.
+
+include "reflection.fbs";
+include "common.fbs";
+
+namespace xbr;
+
+
+/// XBR Procedure streaming mode.
+enum Streaming : uint16 {
+
+    /// Normal one-shot, request-response remote procedure call (default).
+    NONE = 0,
+
+    /// Progressive call arguments call, where call arguments are streamed
+    /// to the callee, and the callee returns a single result when the
+    /// input stream in completed. (future: this is a planned WAMP AP feature)
+    STREAM_IN = 1,
+
+    /// Progressive call results call, where call arguments are transferred
+    /// in a single request, but call results are streamed.
+    STREAM_OUT = 2,
+
+    /// Progressive call arguments and progressivce results call. This combines
+    /// the STREAM_IN and STREAM_OUT mode. (future: this is a planned WAMP AP feature)
+    STREAM_INOUT = 3
+}
+
+
+/// XBR Data Payloads.
+table Payload
+{
+    /// OID of the payload type object.
+    oid: [uint8] (required, uuid);
+
+    /// Version of the payload type object.
+    version: uint32;
+
+    /// Name of the payload type object.
+    name: string (required);
+
+    /// Actual FlatBuffers table type of payload.
+    type: reflection.Object;
+}
+
+
+/// XBR Data Procedures.
+table Procedure
+{
+    /// OID of the procedure object.
+    oid: oid_t (required);
+
+    /// Version of the procedure object.
+    version: uint32;
+
+    /// Name of the procedure. This will be appended to the interface URI.
+    name: string (required, uricomponent);
+
+    /// Call streaming mode.
+    stream: Streaming;
+
+    /// Call request payload type.
+    payload_in: ObjRef (required, references: "xbr.Payload");
+
+    /// Call result payload type.
+    payload_out: ObjRef (required, references: "xbr.Payload");
+
+    /// The procedure may raise errors from the following errors (in addition
+    /// to the default ones).
+    raises: [ObjRef] (references: "xbr.Payload");
+}
+
+
+/// XBR Data Topics.
+table Topic
+{
+    /// OID of the topic object.
+    oid: oid_t (required);
+
+    /// Version of the topic object.
+    version: uint32;
+
+    /// Name of the topic. This will be appended to the interface URI.
+    name: string (required, uricomponent);
+
+    /// Event payload type.
+    payload_in: ObjRef (required, references: "xbr.Payload");
+}
+
+
+/// XBR Network Members.
+table Member
+{
+    /// Object ID of this member object.
+    oid: oid_t (required);
+
+    /// Version of this member object.
+    version: uint32;
+
+    /// Name of the member (user or organization), must be unique and match
+    // the regex for URI components, but can be changed, since the OID remains stable.
+    name: string (required, uricomponent);
+
+    /// When this objects' metadata has been confirmed on Ethereum, the address of
+    /// the confirmed Ethereum transaction, and empty until then.
+    verified: [uint8] (address);
+
+    /// When the objects' metadata has been confirmed on Ethereum, the time when
+    /// then transaction was confirmed on Ethereum, and 0 until then.
+    verified_at: uint64 (timestamp);
+}
+
+
+
+
+/// XBR Data Interfaces.
+table Interface
+{
+    /// Object ID of this interface object.
+    oid: oid_t (required);
+
+    /// Version of this interface object.
+    version: uint32;
+
+    /// The XBR Network Member that created and maintains the interface,
+    /// the XBR Data Interface Developer.
+    owner: ObjRef;
+
+    /// Interface URI.
+    uri: string (required, uri);
+
+    /// Procedures defined in the service interface.
+    procedures: [ObjRef];
+
+    /// Topics defined in the service interface.
+    topics: [ObjRef];
+
+    /// When this objects' metadata has been confirmed on Ethereum, the address of
+    /// the confirmed Ethereum transaction, and empty until then.
+    verified: [uint8] (address);
+
+    /// When the objects' metadata has been confirmed on Ethereum, the time when
+    /// then transaction was confirmed on Ethereum, and 0 until then.
+    verified_at: uint64 (timestamp);
+}
+
+
+/// XBR Data Services.
+table Service
+{
+    /// Object ID of this service object.
+    oid: oid_t (required);
+
+    /// Version of this service object.
+    version: uint32;
+
+    /// Interfaces the service uses.
+    uses: [ObjRef];
+
+    /// Interfaces the service implements.
+    implements: [ObjRef];
+
+    /// When this objects' metadata has been confirmed on Ethereum, the address of
+    /// the confirmed Ethereum transaction, and empty until then.
+    verified: [uint8] (address);
+
+    /// When the objects' metadata has been confirmed on Ethereum, the time when
+    /// then transaction was confirmed on Ethereum, and 0 until then.
+    verified_at: uint64 (timestamp);
+}
+
+
+/// XBR Data Markets.
+table Market
+{
+    /// OID of the market.
+    oid: oid_t (required, uuid);
+
+    /// Version of the market.
+    version: uint32;
+
+    /// The OID of the XBR Network Member that created and operates the market,
+    /// the XBR Data Market Operator.
+    operator: oid_t (required);
+
+    /// When this objects' metadata has been confirmed on Ethereum, the address of
+    /// the confirmed Ethereum transaction, and empty until then.
+    verified: [uint8] (address);
+
+    /// When the objects' metadata has been confirmed on Ethereum, the time when
+    /// then transaction was confirmed on Ethereum, and 0 until then.
+    verified_at: uint64 (timestamp);
+
+    /// Name of the market, must be unique and match the regex for URI components,
+    /// but can be changed, since the OID remains stable.
+    name: string (required, uricomponent);
+
+    /// If this XBR market is hosted on this CrossbarFX cluster, the OID of the
+    /// application realm for the market. To use or provide service in this XBR
+    /// market, the service must be technically connected to this realm (connected
+    /// to this CrossbarFX cluster via a WAMP transport connection, and joined
+    /// on the realm)
+    application_realm: oid_t;
+}
+
+
+/// Admission of a XBR Network Member in a XBR Data Market.
+table MarketAdmission
+{
+    /// OID of the market admission.
+    oid: oid_t (required);
+
+
+
+    /// The XBR Network Member that joined and participates
+    /// in the market, an XBR Data Service Provider or Consumer.
+    member: ObjRef (references: "xbr.Member");
+
+    /// The XBR Data Market the member joins.
+    market: ObjRef (references: "xbr.Market");
+
+    /// When this objects' metadata has been confirmed on Ethereum, the address of
+    /// the confirmed Ethereum transaction, and empty until then.
+    verified: [uint8] (address);
+
+    /// When the objects' metadata has been confirmed on Ethereum, the time when
+    /// then transaction was confirmed on Ethereum, and 0 until then.
+    verified_at: uint64 (timestamp);
+}
+
+
+/// Registration of a XBR Data Service in a XBR Data Market.
+table ServiceRegistration
+{
+    /// OID of the service registration.
+    oid: oid_t (required);
+
+    version: uint32;
+
+    /// The XBR Network Member that created and provides the service
+    /// in the market: the XBR Data Service Provider.
+    provider: ObjRef (references: "xbr.Member");
+
+    /// The XBR Data Market the service is registered in.
+    market: ObjRef (references: "xbr.Market");
+
+    /// The registered XBR Data Service.
+    service: ObjRef (references: "xbr.Service");
+
+    // FIXME: add enum or tags for:
+    //  - permitted usage and data redistribution policy
+    //  - assured quality of service and data
+    //  - data privacy level
+    //  - safety level, including environmental and financial
+
+    /// The Ethereum raw transaction signed by the XBR Data Provider (the
+    /// XBR Member referred to in "provider").
+    eth_raw_txn: [uint8];
+
+    /// Ethereum transaction ID of the submitted transaction.
+    eth_tid: [uint8];
+
+    /// When the objects' metadata has been submitted to Ethereum, the time when
+    /// then raw transaction ("raw_txn") was submitted to an Ethereum node.
+    eth_submitted_at: uint64 (timestamp);
+
+    /// When this objects' metadata has been confirmed on Ethereum, the address of
+    /// the confirmed Ethereum transaction, and empty until then.
+    eth_verified: [uint8] (address);
+
+    /// When the objects' metadata has been confirmed on Ethereum, the time when
+    /// then transaction was confirmed on Ethereum, and 0 until then.
+    eth_verified_at: uint64 (timestamp);
+}

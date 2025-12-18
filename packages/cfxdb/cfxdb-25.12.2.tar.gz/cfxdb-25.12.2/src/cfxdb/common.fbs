@@ -1,0 +1,63 @@
+// CrossbarFX - Copyright (c) typedef int GmbH. All rights reserved.
+
+/// UUID (128 bit binary).
+attribute uuid;
+
+/// Timestamp: ns since Unix epoch (1970/1/1 UTC) (64 bit unsigned int).
+attribute timestamp;
+
+/// WAMP URI (strict, fully qualified)
+attribute uri;
+
+/// WAMP URI component (strict), must match `[a-z][a-z0-9\-]+`.
+attribute uricomponent;
+
+/// Ethereum address (160 bit binary).
+attribute address;
+
+/// Ethereum (Keccak-256) hash (256 bit binary). See https://github.com/ethereum/wiki/wiki/Ethash.
+attribute ethhash;
+
+/// Ethereum (off-chain EIP712) signature (65 bytes).
+attribute ethsig;
+
+/// Ethereum value (256 bit binary).
+attribute uint256;
+
+/// Multihash string (eg IPFS), see https://github.com/multiformats/multihash.
+attribute multihash;
+
+/// References other object (foreign key in RDBMS)
+attribute references;
+
+/// At most one record can have this value at any point in time (unique constraint in RDBMS)
+attribute unique;
+
+/// CBOR-serialized object or value.
+attribute cbor;
+
+struct oid_t
+{
+    msb: uint64;
+    lsb: uint64;
+}
+
+struct ObjRef
+{
+    /// OID of the referenced object: 128 bit with UUID.
+    oid: oid_t;
+
+    /// Version of the referenced object, starting with 1, and incremented
+    // by 1 on each object modification.
+    version: uint32;
+}
+
+/// A key-value pair with string keys & values.
+table KeyValue
+{
+    /// UTF8 encoded key of KV pair.
+    key: string (required, key);
+
+    /// UTF8 encoded value of KV pair.
+    value: string;
+}

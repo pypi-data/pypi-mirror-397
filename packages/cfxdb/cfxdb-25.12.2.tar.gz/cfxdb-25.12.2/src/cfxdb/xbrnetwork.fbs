@@ -1,0 +1,158 @@
+// CrossbarFX - Copyright (c) typedef int GmbH. All rights reserved.
+
+include "common.fbs";
+
+namespace xbrnetwork;
+
+
+/// XBR Account level.
+enum AccountLevel: uint8
+{
+    /// Unset
+    NONE = 0,
+
+    /// Account is active.
+    ACTIVE = 1,
+
+    /// Account is active and verified.
+    VERIFIED = 2,
+
+    /// Account is retired.
+    RETIRED = 3,
+
+    /// Account is subject to a temporary penalty.
+    PENALTY = 4,
+
+    /// Account is currently blocked and cannot current actively participate in the market.
+    BLOCKED = 5
+}
+
+
+enum WalletType: uint8
+{
+    /// Unset
+    NONE = 0,
+
+    /// Account (primary) wallet was imported (the user provided the wallet public address).
+    IMPORTED = 1,
+
+    /// Account wallet was configured from Metamask.
+    METAMASK = 2,
+
+    /// Account wallet in hosted (in this database).
+    HOSTED = 3
+}
+
+
+/// XBR Network members.
+table Account
+{
+    /// Globally unique and static member ID.
+    oid: [uint8] (uuid);
+
+    /// Timestamp (epoch time in ns) of initial creation of this record.
+    created: uint64 (timestamp);
+
+    /// XBR Network username (must be globally unique on https://xbr.network)
+    username: string;
+
+    /// User (primary) email address.
+    email: string;
+
+    /// Timestamp (epoch time in ns) when the user email was (last) verified or 0 if unverified.
+    email_verified: uint64 (timestamp);
+
+    /// Type of (primary) user crypto wallet in use.
+    wallet_type: WalletType;
+
+    /// Public address of user crypto wallet in use.
+    wallet_address: [uint8] (address);
+
+    /// Block number (on the blockchain) when the member (originally) registered.
+    registered: [uint8] (uint256);
+
+    /// EULA the member agreed to when joining the market (IPFS Multihash string).
+    eula: string (multihash);
+
+    /// Optional member profile (IPFS Multihash string).
+    profile: string (multihash);
+
+    /// Current member level.
+    level: AccountLevel;
+}
+
+
+enum VerificationType: uint8
+{
+    /// Unset
+    NONE = 0,
+
+    /// Member onboarded, using verification via member primary email.
+    MEMBER_ONBOARD_EMAIL = 1,
+
+    /// Member logged in, using verification via member primary email.
+    MEMBER_LOGIN_EMAIL = 2,
+
+    /// Member created a market, using verification via member primary email.
+    MEMBER_CREATEMARKET_EMAIL = 3,
+
+    /// Member joined a market, using verification via member primary email.
+    MEMBER_JOINMARKET_EMAIL = 4,
+}
+
+
+enum VerificationStatus: uint8
+{
+    /// Unset
+    NONE = 0,
+
+    ///
+    PENDING = 1,
+
+    ///
+    VERIFIED = 2,
+
+    ///
+    FAILED = 3,
+
+    ///
+    EXPIRED = 4,
+}
+
+
+table VerifiedAction
+{
+    /// Globally unique and static ID of action.
+    oid: [uint8] (uuid);
+
+    /// Timestamp (epoch time in ns) of initial creation of this record.
+    created: uint64 (timestamp);
+
+    /// Verification type.
+    vtype: VerificationType;
+
+    /// Verification type.
+    vstatus: VerificationStatus;
+
+    /// Verification code sent.
+    vcode: string;
+
+    /// ID of object of verified action.
+    verified_oid: [uint8] (uuid);
+
+    /// Action data, serialized in CBOR.
+    verified_data: [uint8];
+}
+
+
+table UserKey
+{
+    /// User key - a Ed25519 public key - for authenticating using WAMP-cryptosign.
+    pubkey: [uint8] (uint256);
+
+    /// Timestamp (epoch time in ns) of initial creation of this record.
+    created: uint64 (timestamp);
+
+    /// ID of user account this user key is owned by.
+    owner: [uint8] (uuid);
+}

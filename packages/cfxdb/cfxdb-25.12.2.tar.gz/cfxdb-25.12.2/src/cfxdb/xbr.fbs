@@ -1,0 +1,325 @@
+// CrossbarFX - Copyright (c) typedef int GmbH. All rights reserved.
+
+include "common.fbs";
+
+namespace xbr;
+
+
+/// This table stores information about the series of Ethereum blocks that make up the blockchain.
+table Block
+{
+    /// Timestamp when record was inserted (Unix epoch time in ns)
+    timestamp: uint64 (timestamp);
+
+    /// Primary key: block number.
+    block_number: [uint8] (uint256);
+
+    /// Block hash.
+    block_hash: [uint8] (ethhash);
+
+    /// Number of XBR blockchain log events found in the block.
+    cnt_events: uint32;
+}
+
+
+/// This table stores XBRToken._balances state.
+table TokenBalance
+{
+    /// Primary key: XBR token owner address.
+    owner_address: [uint8] (address);
+
+    /// XBR token owned.
+    value: [uint8] (uint256);
+}
+
+
+/// This table stores XBRToken.Transfer events.
+table TokenTransfer
+{
+    /// Primary key: Transaction hash.
+    tx_hash: [uint8] (ethhash);
+
+    /// Block hash.
+    block_hash: [uint8] (ethhash);
+
+    /// XBR token sending address.
+    from_address: [uint8] (address);
+
+    /// XBR token receiving address.
+    to_address: [uint8] (address);
+
+    /// XBR token transferred.
+    value: [uint8] (uint256);
+}
+
+
+/// This table stores XBRToken.Approval events.
+table TokenApproval
+{
+    /// Primary key: Transaction hash.
+    tx_hash: [uint8] (ethhash);
+
+    /// Block hash.
+    block_hash: [uint8] (ethhash);
+
+    /// XBR token sending address.
+    owner_address: [uint8] (address);
+
+    /// XBR token receiving address.
+    spender_address: [uint8] (address);
+
+    /// XBR token transferred.
+    value: [uint8] (uint256);
+}
+
+
+/// XBR Member level.
+enum MemberLevel: uint8
+{
+    /// Unset
+    NONE = 0,
+
+    /// Member is active.
+    ACTIVE = 1,
+
+    /// Member is active and verified.
+    VERIFIED = 2,
+
+    /// Member is retired.
+    RETIRED = 3,
+
+    /// Member is subject to a temporary penalty.
+    PENALTY = 4,
+
+    /// Member is currently blocked and cannot current actively participate in the market.
+    BLOCKED = 5
+}
+
+
+/// XBR Network members.
+table Member
+{
+    /// Ethereum address of the member.
+    address: [uint8] (address);
+
+    /// Account OID (on ``planet.xbr.network ``) - only filled when this XBR network member has on-boarded via ``planet.xbr.network`` and has an account there.
+    account_oid: [uint8] (uuid);
+
+    /// Database transaction time (epoch time in ns) of insert or last update.
+    timestamp: uint64 (timestamp);
+
+    /// Block number (on the blockchain) when the member (originally) registered.
+    registered: [uint8] (uint256);
+
+    /// EULA the member agreed to when joining the market (IPFS Multihash string).
+    eula: string (multihash);
+
+    /// Optional member profile (IPFS Multihash string).
+    profile: string (multihash);
+
+    /// Current member level.
+    level: MemberLevel;
+
+    /// Transaction hash of the transaction this change was committed to the blockchain under.
+    tid: [uint8] (ethhash);
+
+    /// When signed off-chain and submitted via ``XBRNetwork.registerMemberFor``.
+    signature: [uint8] (ethsig);
+}
+
+
+/// XBR Market Actor type.
+enum ActorType: uint8
+{
+    /// Unset
+    NONE = 0,
+
+    /// Actor is a XBR Provider.
+    PROVIDER = 1,
+
+    /// Actor is a XBR Consumer.
+    CONSUMER = 2,
+
+    /// Actor is both a XBR Provider and XBR Consumer.
+    PROVIDER_CONSUMER = 3
+}
+
+
+/// XBR Market Actors.
+table Actor
+{
+    /// Ethereum address of the member.
+    actor: [uint8] (address);
+
+    /// Type of the market actor.
+    actor_type: ActorType;
+
+    /// ID of the market this actor is associated with.
+    market: [uint8] (uuid);
+
+    /// Database transaction time (epoch time in ns) of insert or last update.
+    timestamp: uint64 (timestamp);
+
+    /// Block number (on the blockchain) when the actor (originally) joined the market.
+    joined: [uint8] (uint256);
+
+    /// Security (XBR tokens) deposited by the actor in the market.
+    security: [uint8] (uint256);
+
+    /// The XBR market metadata published by the market owner. IPFS Multihash pointing to a RDF/Turtle file with market metadata.
+    meta: string (multihash);
+
+    /// Transaction hash of the transaction this change was committed to the blockchain under.
+    tid: [uint8] (ethhash);
+
+    /// When signed off-chain and submitted via ``XBRNetwork.registerMemberFor``.
+    signature: [uint8] (ethsig);
+}
+
+
+/// XBR Markets.
+table Market
+{
+    /// The unique ID of the market.
+    market: [uint8] (uuid);
+
+    /// Database transaction time (epoch time in ns) of insert or last update.
+    timestamp: uint64 (timestamp);
+
+    /// Block number (on the blockchain) when the actor (originally) joined the market.
+    created: [uint8] (uint256);
+
+    /// Global market sequence number.
+    seq: uint32;
+
+    /// Market owner.
+    owner: [uint8] (address);
+
+    /// Market coin used as means of payment.
+    coin: [uint8] (address);
+
+    /// The XBR market terms set by the market owner. IPFS Multihash pointing to a ZIP archive file with market documents.
+    terms: string (multihash);
+
+    /// The XBR market metadata published by the market owner. IPFS Multihash pointing to a RDF/Turtle file with market metadata.
+    meta: string (multihash);
+
+    /// The address of the XBR market maker that will run this market. The delegate of the market owner.
+    maker: [uint8] (address);
+
+    /// The amount of XBR tokens a XBR provider joining the market must deposit.
+    provider_security: [uint8] (uint256);
+
+    /// The amount of XBR tokens a XBR consumer joining the market must deposit.
+    consumer_security: [uint8] (uint256);
+
+    /// The fee taken by the market (beneficiary is the market owner). The fee is a percentage of the revenue of the XBR Provider that receives XBR Token paid for transactions. The fee must be between 0% (inclusive) and 99% (inclusive), and is expressed as a fraction of the total supply of XBR tokens.
+    market_fee: [uint8] (uint256);
+
+    /// Transaction hash of the transaction this change was committed to the blockchain under.
+    tid: [uint8] (ethhash);
+
+    /// When signed off-chain and submitted via ``XBRMarket.createMarketFor``.
+    signature: [uint8] (ethsig);
+}
+
+
+/// XBR data service APIs published to (part of) catalogs.
+table Api
+{
+    /// The unique ID of the API.
+    oid: [uint8] (uuid);
+
+    /// The ID of the catalog this API is part of (was published to).
+    catalog_oid: [uint8] (uuid);
+
+    /// Database transaction time (epoch time in ns).
+    timestamp: uint64 (timestamp);
+
+    /// Block number when the catalog was created.
+    published: [uint8] (uint256);
+
+    /// Multihash of API Flatbuffers schema (required).
+    schema: string (multihash);
+
+    /// Multihash of API meta-data (optional).
+    meta: string (multihash);
+
+    /// Transaction hash of the transaction this change was committed to the blockchain under.
+    tid: [uint8] (ethhash);
+
+    /// When signed off-chain and submitted via ``XBRCatalog.publishApiFor``.
+    signature: [uint8] (ethsig);
+}
+
+
+/// XBR catalogs.
+table Catalog
+{
+    /// The unique ID of the catalog.
+    oid: [uint8] (uuid);
+
+    /// Database transaction time (epoch time in ns).
+    timestamp: uint64 (timestamp);
+
+    /// Block number when the catalog was created.
+    created: [uint8] (uint256);
+
+    /// FbsRepository sequence number.
+    seq: uint32;
+
+    /// FbsRepository owner (aka "catalog publisher").
+    owner: [uint8] (address);
+
+    /// FbsRepository terms (IPFS Multihash).
+    terms: string (multihash);
+
+    /// FbsRepository metadata (IPFS Multihash).
+    meta: string (multihash);
+
+    /// Transaction hash of the transaction this change was committed to the blockchain under.
+    tid: [uint8] (ethhash);
+
+    /// When signed off-chain and submitted via ``XBRCatalog.createCatalogFor``.
+    signature: [uint8] (ethsig);
+}
+
+
+/// XBR data consent set by market actors.
+table Consent {
+    /// The ID of the catalog consent was set within [primary key].
+    market_oid: [uint8] (uuid);
+
+    /// Member (must be actor in market) that has set consent [primary key].
+    member: [uint8] (address);
+
+    /// Delegate for which consent is set [primary key].
+    delegate: [uint8] (address);
+
+    /// Type of delegate for which consent was granted [primary key].
+    delegate_type: ActorType;
+
+    /// The ID of the catalog this consent was set for [primary key].
+    catalog_oid: [uint8] (uuid);
+
+    /// Database transaction time (epoch time in ns).
+    timestamp: uint64 (timestamp);
+
+    /// Block number when the consent was updated.
+    updated: [uint8] (uint256);
+
+    /// Consent granted or revoked.
+    consent: bool;
+
+    /// The WAMP URI prefix to be used by the delegate when providing data service under an API of the catalog and in the data plane realm.
+    service_prefix: string;
+
+    /// Transaction hash of the transaction this change was committed to the blockchain under.
+    tid: [uint8] (ethhash);
+
+    /// This is the signature the user (actor) supplied when setting the consent status.
+    signature: [uint8] (ethsig);
+
+    /// Whether the consent was set in blockchain
+    synced: bool;
+}

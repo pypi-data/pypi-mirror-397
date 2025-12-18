@@ -1,0 +1,199 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cfxdb"
+version = "25.12.2"
+description = "Crossbar.io Database - Core database access classes for Crossbar.io"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [
+    {name = "typedef int GmbH", email = "contact@typedefint.eu"}
+]
+keywords = ["crossbar", "wamp", "database", "lmdb", "xbr", "ethereum", "web3"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: No Input/Output (Daemon)",
+    "Framework :: Twisted",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+    "Topic :: Communications",
+    "Topic :: Database",
+    "Topic :: Internet",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Object Brokering",
+    "Topic :: System :: Distributed Computing",
+]
+
+dependencies = [
+    # WAMP ecosystem packages:
+    # - zlmdb: Core dependency for LMDB-based object-relational database layer.
+    #   cfxdb defines database schemas and table classes that extend zlmdb's
+    #   MapOidFlatBuffers, MapUuidFlatBuffers, etc. base classes.
+    # - autobahn: Required for WAMP protocol types used in database schemas
+    #   (e.g., autobahn.wamp.types.TransportDetails in realmstore tables,
+    #   autobahn.wamp.serializer.JsonObjectSerializer in exporter, and
+    #   autobahn.util for ID generation and activation codes in tests).
+    #   The [all] extra ensures FlatBuffers serialization support is available.
+    "zlmdb>=25.12.2",
+    "autobahn[all]>=25.12.2",
+
+    # Ethereum/Web3 stack (for XBR market maker and network schemas)
+    "eth-abi>=5.1.0",
+    "eth-account>=0.13.0",
+    "web3>=7.6.0",
+
+    # Additional dependencies
+    "parsimonious>=0.10.0",  # PEG parser for schema definitions
+    "argon2-cffi>=25.1.0",   # Password hashing for user authentication
+]
+
+[project.optional-dependencies]
+# Development dependencies
+dev = [
+    # Build tools
+    "build>=1.0.0",
+    "wheel>=0.36.2",
+    "twine>=3.3.0",
+
+    # Testing
+    "pytest>=3.4.2",
+    "pytest-runner>=2.11.1",
+    "coverage>=5.0.0",
+    "py-multihash>=2.0.1",  # For IPFS hash generation in tests
+
+    # Code quality
+    "ruff>=0.1.0",  # Fast Python linter and formatter
+    # Note: ty (Astral type checker) is installed via `uv tool install ty`
+    # It's a standalone Rust binary, not a Python package dependency
+
+    # Documentation
+    "scour>=0.38",  # SVG optimizer for documentation logos
+    "sphinx>=1.7.1",
+    "sphinx-rtd-theme>=0.1.9",
+    "sphinxcontrib-spelling>=7.0.0",
+    "sphinxcontrib-images>=0.9.0",
+    "sphinx-autoapi>=2.0.0",
+    "pyenchant>=3.0.0",
+
+    # Utilities
+    "humanize>=0.5.1",
+    "cytoolz>=0.12.1",
+    "watchdog>=0.8.3",
+]
+
+# Documentation tools (used by RTD via .readthedocs.yaml)
+docs = [
+    # Core Sphinx + MyST
+    "sphinx>=8.2.3",
+    "myst-parser>=2.0",
+
+    # Theme
+    "furo>=2024.7.0",
+
+    # API docs (no-import parsing)
+    "sphinx-autoapi>=2.1.0",
+
+    # UX Enhancements
+    "sphinx-copybutton>=0.5",
+    "sphinx-design>=0.5",
+    "sphinxcontrib-images>=0.9",
+
+    # Spell checking
+    "sphinxcontrib-spelling>=8.0",
+    "pyenchant>=3.2",
+
+    # Static asset optimization
+    "scour>=0.38",
+
+    # Social previews
+    "sphinxext-opengraph>=0.9",
+
+    # MyST auto-linking
+    "linkify-it-py>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/crossbario/cfxdb"
+Documentation = "https://cfxdb.readthedocs.io"
+Repository = "https://github.com/crossbario/cfxdb"
+Issues = "https://github.com/crossbario/cfxdb/issues"
+
+# Hatchling build configuration
+[tool.hatch.build.targets.wheel]
+packages = ["src/cfxdb"]
+
+# Include non-Python files in the wheel
+[tool.hatch.build.targets.wheel.force-include]
+# Include py.typed marker
+"src/cfxdb/py.typed" = "cfxdb/py.typed"
+
+[tool.hatch.build.targets.sdist]
+# By default, hatchling includes all git-tracked files
+# Exclude build artifacts from sdist
+exclude = [
+    "/.github",
+    "/docs/_build",
+    "/.venvs",
+    "/.uv-cache",
+    "/.coverage",
+    "/.pytest_cache",
+    "/.mypy_cache",
+    "/.ruff_cache",
+]
+
+# Ruff configuration (replaces flake8, black, yapf)
+[tool.ruff]
+line-length = 119
+target-version = "py311"
+# Exclude generated flatbuffers code from linting
+exclude = ["src/cfxdb/gen"]
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "F",  # pyflakes
+    "I",  # isort
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "E721",  # type() comparison instead of isinstance() - deliberate style choice
+    "E402",  # module level import not at top (intentional in test files)
+]
+
+# Pytest configuration
+[tool.pytest.ini_options]
+testpaths = ["src/cfxdb/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["src/cfxdb"]
+omit = ["*/tests/*", "*/test_*.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]

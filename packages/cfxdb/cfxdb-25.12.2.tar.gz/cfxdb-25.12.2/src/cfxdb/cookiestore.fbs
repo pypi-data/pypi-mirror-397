@@ -1,0 +1,61 @@
+// CrossbarFX - Copyright (c) typedef int GmbH. All rights reserved.
+
+include "common.fbs";
+
+namespace cookiestore;
+
+
+/// Persistent cookies, as used in WAMP-Cookie authentication by router and proxy workers.
+table Cookie
+{
+    /// Database ID of this cookie record.
+    oid: [uint8] (uuid);
+
+    /// Timestamp when the cookie was created. Epoch time in ns.
+    created: uint64 (timestamp);
+
+    /// Cookie maximum age (lifetime of the cookie in seconds, see http://tools.ietf.org/html/rfc6265#page-20), e.g. ``604800"``.
+    max_age: uint64;
+
+    /// Cookie name, as set in HTTP header, e.g. ``"cbtid"``.
+    name: string;
+
+    /// Cookie value, as set in HTTP header, e.g. ``"gn2ri8fuAYQse50/L6N7jnt2"``.
+    value: string;
+
+    /// Timestamp when the cookie was authenticated (if any). Epoch time in ns.
+    authenticated: uint64 (timestamp);
+
+    /// The Crossbar.io node (within the management domain) the cookie was authenticated on (if any).
+    authenticated_on_node: [uint8] (uuid);
+
+    /// The Crossbar.io worker (within the node) the cookie was authenticated on (if any).
+    authenticated_on_worker: string;
+
+    /// The client transport information for the connection the cookie was authenticated in (if any).
+    authenticated_transport_info: [uint8] (cbor);
+
+    /// The WAMP session ID of the original authenticating session.
+    authenticated_session: uint64;
+
+    /// Timestamp when the original authenticating session was welcome by the router. Epoch time in ns.
+    authenticated_joined_at: uint64 (timestamp);
+
+    /// The (original) WAMP authentication method, after which the client was authenticated before setting this cookie.
+    authenticated_authmethod: string;
+
+    /// The WAMP authid a cookie-authenticating session is to be assigned.
+    authid: string;
+
+    /// The WAMP authrole a cookie-authenticating session is to join under.
+    authrole: string;
+
+    /// The WAMP authmethod a cookie-authenticating session is to join under.
+    authmethod: string;
+
+    /// The WAMP realm a cookie-authenticating session is to join.
+    authrealm: string;
+
+    /// The WAMP authentication extra data to be returned to the client performing cookie-based authentication.
+    authextra: [uint8] (cbor);
+}

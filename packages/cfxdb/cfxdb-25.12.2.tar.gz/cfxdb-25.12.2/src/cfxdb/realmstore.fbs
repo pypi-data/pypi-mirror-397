@@ -1,0 +1,205 @@
+// Crossbar.io Database (cfxdb) - Copyright (c) typedef int GmbH. All rights reserved.
+
+include "common.fbs";
+
+namespace realmstore;
+
+
+/// The payload end-to-end encryption algorithm the payload is encrypted.
+enum EncAlgo: uint8
+{
+    /// Unset
+    NONE = 0,
+
+    /// WAMP-cryptobox end-to-end encrypted application payload
+    CRYPTOBOX = 1,
+
+    /// MQTT passthrough-mode application payload
+    MQTT = 2,
+
+    /// XBR end-to-end encrypted application payload
+    XBR = 3,
+
+    // Raw pass-through of app payload, uninterpreted in any way.
+    OPAQUE = 4
+}
+
+
+/// The serializer the app payload was serialized with before encryption.
+enum EncSerializer: uint8
+{
+    /// Unset
+    NONE = 0,
+
+    /// Payload was serialized in JSON
+    JSON = 1,
+
+    /// Payload was serialized in MsgPack
+    MSGPACK = 2,
+
+    /// Payload was serialized in CBOR
+    CBOR = 3,
+
+    /// Payload was serialized in UBJSON
+    UBJSON = 4,
+
+    // Raw pass-through of app payload, uninterpreted in any way.
+    OPAQUE = 5,
+
+    // Explicit use of FlatBuffers also for (statically typed) payload.
+    FLATBUFFERS = 6
+}
+
+
+/// This table stores WAMP sessions and serves as an anchor for all usage related data.
+table Session
+{
+    /// OID of the application realm this session is/was joined on.
+    arealm_oid: [uint8] (uuid);
+
+    /// Unlimited time, globally unique, long-term OID of this session. The pair of WAMP session ID and join time ``(session, joined_at)`` bidirectionally maps to session ``oid``.
+    oid: [uint8] (uuid);
+
+    /// The WAMP session_id of the session.
+    session: uint64;
+
+    /// Timestamp when the session was joined by the router. Epoch time in ns.
+    joined_at: uint64 (timestamp);
+
+    /// Timestamp when the session left the router. Epoch time in ns.
+    left_at: uint64 (timestamp);
+
+    /// OID of the node of the router worker hosting this session.
+    node_oid: [uint8] (uuid);
+
+    /// Name (management realm WAMP authid) of the node of the router worker hosting this session.
+    node_authid: string;
+
+    /// Local worker name of the router worker hosting this session.
+    worker_name: string;
+
+    /// Local worker PID of the router worker hosting this session.
+    worker_pid: int32;
+
+    /// Session transport information, the incoming frontend client connection in proxy-router setups. This is also returned as part of authextra to the client.
+    transport: [uint8] (cbor);
+
+    /// From proxy (in proxy-router cluster setups): OID of the node of the proxy worker hosting this session.
+    proxy_node_oid: [uint8] (uuid);
+
+    /// From proxy (in proxy-router cluster setups): Name (management realm WAMP authid) of the node of the proxy worker hosting this session.
+    proxy_node_authid: string;
+
+    /// From proxy (in proxy-router cluster setups): Local worker name of the proxy worker hosting this session.
+    proxy_worker_name: string;
+
+    /// From proxy (in proxy-router cluster setups): Local worker PID of the proxy worker hosting this session.
+    proxy_worker_pid: int32;
+
+    /// From proxy (in proxy-router cluster setups): Session transport information, the transport from the proxy to the backend router.
+    proxy_transport: [uint8] (cbor);
+
+    /// The WAMP realm (name) the session is/was joined on.
+    realm: string;
+
+    /// The WAMP authid the session was authenticated under.
+    authid: string;
+
+    /// The WAMP authrole the session was authenticated under.
+    authrole: string;
+
+    /// The WAMP authmethod uses to authenticate the session.
+    authmethod: string;
+
+    /// The WAMP authprovider that was handling the session authentication.
+    authprovider: string;
+
+    /// The WAMP authextra as provided to the authenticated session.
+    authextra: [uint8] (cbor);
+}
+
+
+/// This table stores WAMP publications with configurable amount of details, optionally including application payload.
+table Publication
+{
+    /// Timestamp when the publication was accepted by the broker. Epoch time in ns.
+    timestamp: uint64;
+
+    /// WAMP publication ID that was assigned by the broker.
+    publication: uint64;
+
+    /// WAMP session ID of the publisher.
+    publisher: uint64;
+
+    /// The WAMP or application URI of the PubSub topic the event was published to.
+    topic: string (required);
+
+    /// Positional values for application-defined event payload.
+    args: [uint8];
+
+    /// Keyword values for application-defined event payload.
+    kwargs: [uint8];
+
+    /// Alternative, transparent payload. If given, ``args`` and ``kwargs`` must be left unset.
+    payload: [uint8];
+
+    /// If ``True``, the broker was asked to acknowledge the publication with a success or error response.
+    acknowledge: bool;
+
+    /// If ``True``, the broker was requested to retain this event.
+    retain: bool;
+
+    /// If ``True``, the broker was asked to exclude the publisher from receiving the event.
+    exclude_me: bool;
+
+    /// List of WAMP session IDs to exclude from receiving this event.
+    exclude: [uint64];
+
+    /// List of WAMP authids to exclude from receiving this event.
+    exclude_authid: [string];
+
+    /// List of WAMP authroles to exclude from receiving this event.
+    exclude_authrole: [string];
+
+    /// List of WAMP session IDs eligible to receive this event.
+    eligible: [uint64];
+
+    /// List of WAMP authids eligible to receive this event.
+    eligible_authid: [string];
+
+    /// List of WAMP authroles eligible to receive this event.
+    eligible_authrole: [string];
+
+    /// When using payload transparency, the encoding algorithm that was used to encode the payload.
+    enc_algo: EncAlgo;
+
+    /// When using payload transparency with an encryption algorithm, the payload encryption key.
+    enc_key: [uint8];
+
+    /// When using payload transparency, the payload object serializer that was used encoding the payload.
+    enc_serializer: EncSerializer;
+}
+
+
+/// This table store WAMP events dispatched to receivers, under WAMP subscriptions on URIs (or patterns).
+table Event
+{
+    /// Timestamp when the event was sent to the receiver. Epoch time in ns.
+    timestamp: uint64;
+
+    /// The subscription ID this event is dispatched under.
+    subscription: uint64;
+
+    /// The publication ID of the dispatched event.
+    publication: uint64;
+
+    /// The WAMP session ID of the receiver.
+    receiver: uint64;
+
+    /// Whether the message was retained by the broker on the topic, rather than just published.
+    retained: bool;
+
+    /// Whether this Event was to be acknowledged by the receiver.
+    acknowledged_delivery: bool;
+}
+

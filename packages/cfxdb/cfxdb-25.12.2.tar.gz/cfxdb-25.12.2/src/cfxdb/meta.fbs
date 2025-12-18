@@ -1,0 +1,162 @@
+// CrossbarFX - Copyright (c) typedef int GmbH. All rights reserved.
+
+include "common.fbs";
+
+
+/// Generic metadata, like documentation, tags, comments and reactions that can be attach on any object with an UUID.
+namespace meta;
+
+
+/// Generic **meta data attributes** for objects in other tables. Primary key of this table is ``(table_oid, object_oid, attribute)``.
+table Attribute
+{
+    /// Table of the object holding the attribute.
+    table_oid: [uint8] (required, uuid);
+
+    /// Object (within the table) holding the attribute.
+    object_oid: [uint8] (required, uuid);
+
+    /// Attribute name (part of the key).
+    attribute: string (required, uri);
+
+    /// Timestamp when the attribute was last modified (or first created).
+    modified: uint64 (timestamp);
+
+    /// CBOR-serialized, object-valued attribute.
+    value: [uint8] (cbor);
+}
+
+
+/// Documentation (text) formats.
+enum DocFormat: uint8
+{
+    /// Unset documentation format.
+    NONE = 0,
+
+    /// Plain text documentation format (default).
+    TEXT = 1,
+
+    /// Markdown text documentation format.
+    MARKDOWN = 2,
+
+    /// Restructered Text (ReST) text documentation format.
+    REST = 3,
+
+    /// Generic HTML.
+    HTML = 4,
+
+    /// Generic XML.
+    XML = 5,
+
+    /// DocBook XML
+    DOCBOOK = 6,
+
+    /// Jupyter notebook.
+    NOTEBOOK = 7
+}
+
+
+/// Generic **object documentation** attached to objects in other tables. Primary key of this table is ``oid``.
+table Doc
+{
+    /// OID of the documentation (version).
+    oid: string (required, uuid);
+
+    /// Table of the object being documented.
+    table_oid: [uint8] (required, uuid);
+
+    /// Object (within the table)  being documented.
+    object_oid: [uint8] (required, uuid);
+
+    /// When the documentation (version) was created or modified.
+    modified: uint64 (timestamp);
+
+    /// Documentation text format.
+    format: DocFormat;
+
+    /// The actual documentation, serialized according to the documentation format.
+    document: [uint8];
+}
+
+
+/// Tag definitions are created independent of objects tagged with tags. Primary key of this table is ``oid``.
+table TagDefinition
+{
+    /// OID of the tag definition within the database.
+    oid: [uint8] (required, uuid);
+
+    /// Timestamp when the attribute was last modified (or first created).
+    modified: uint64 (timestamp);
+
+    /// Tag name (or URI in general). This is must be globally unique and represents the semantic identifier of the tag.
+    tag: string (required, uri);
+
+    /// CBOR-serialized, object-valued extra data stored along with this tag definition.
+    extra: [uint8] (cbor);
+}
+
+
+/// Generic **tags attached** to objects in other tables. Primary key of this table is ``(table_oid, object_oid, tag_oid)``.
+table Tag
+{
+    /// Table of the object with the tag attached.
+    table_oid: [uint8] (required, uuid);
+
+    /// Object (within the table) with the tag attached.
+    object_oid: [uint8] (required, uuid);
+
+    /// Tag definition attached to the object.
+    tag_oid: [uint8] (uuid);
+
+    /// Timestamp when the tag was attached to the object referenced.
+    attached: uint64 (timestamp);
+}
+
+
+// Generic **user comments** (threaded conversations) attached to objects in other tables. Primary key of this table is ``oid``.
+table Comment
+{
+    /// Comment OID.
+    oid: [uint8] (required, uuid);
+
+    /// Table of the object commented on.
+    table_oid: [uint8] (required, uuid);
+
+    /// Object (within the table) commented on.
+    object_oid: [uint8] (required, uuid);
+
+    /// User that authored this comment.
+    author_oid: [uint8] (required, uuid);
+
+    /// When this comment is a reply, the OID of the comment replied to.
+    reply_to: [uint8] (uuid);
+
+    /// The text of the comment.
+    comment: string;
+
+    /// Timestamp when the comment was posted.
+    posted: uint64 (timestamp);
+}
+
+
+// Generic **user reactions** attached to objects in other tables. Primary key of this table is ``(table_oid, object_oid, voter_oid)``.
+table Reaction
+{
+    /// Table of the object holding the attribute.
+    table_oid: [uint8] (required, uuid);
+
+    /// Object (within the table) holding the attribute
+    object_oid: [uint8] (required, uuid);
+
+    /// Object (within the table) holding the attribute
+    voter_oid: [uint8] (required, uuid);
+
+    /// Reaction name (or URI in general).
+    reaction: string (required, uri);
+
+    /// Timestamp when the reaction was recorded or last modifified.
+    reacted: uint64 (timestamp);
+
+    /// CBOR-serialized, object-valued extra data stored along with this reaction.
+    extra: [uint8] (cbor);
+}
