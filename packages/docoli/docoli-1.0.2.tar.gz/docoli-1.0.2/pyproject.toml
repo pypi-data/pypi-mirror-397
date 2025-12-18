@@ -1,0 +1,23 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "docoli"
+version = "1.0.2"
+description = "Config linker for chezmoi and Nextcloud"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Kevin Veen-Birkenbach", email = "kevin@veen.world" }]
+dependencies = ["PyYAML>=6.0"]
+
+[project.urls]
+Homepage = "https://www.veen.world/"
+Repository = "https://github.com/kevinveenbirkenbach/dotlinker"
+
+[project.scripts]
+doli = "dotlinker.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dotlinker"]
