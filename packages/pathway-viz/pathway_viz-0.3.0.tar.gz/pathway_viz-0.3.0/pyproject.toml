@@ -1,0 +1,66 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "pathway-viz"
+version = "0.3.0"
+description = "The visualization layer for Pathway - real-time dashboards for streaming data"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+keywords = ["streaming", "visualization", "pathway", "kafka", "real-time", "dashboard"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Rust",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: System :: Monitoring",
+]
+dependencies = [
+    "pathway>=0.8; python_version<'3.14'",
+]
+
+[project.optional-dependencies]
+kafka = ["kafka-python-ng>=2.0"]
+all = ["kafka-python-ng>=2.0"]
+
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.1",
+    "maturin>=1.0,<2.0",
+]
+
+[project.scripts]
+pathway-viz = "pathwayviz.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/mvfolino68/pathway-viz"
+Repository = "https://github.com/mvfolino68/pathway-viz"
+Documentation = "https://github.com/mvfolino68/pathway-viz#readme"
+Issues = "https://github.com/mvfolino68/pathway-viz/issues"
+
+[tool.maturin]
+python-source = "python"
+module-name = "pathwayviz._pathwayviz"
+features = ["pyo3/extension-module"]
+include = [
+    { path = "python/pathwayviz/demos/**/*", format = "sdist" },
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "W"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

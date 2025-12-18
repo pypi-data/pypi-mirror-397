@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PathwayViz</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/uplot@1.6.30/dist/uPlot.min.css"
+    />
+    <script src="https://unpkg.com/uplot@1.6.30/dist/uPlot.iife.min.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root,
+      .theme-dark {
+        --bg-base: #0a0a0a;
+        --bg-surface: #111111;
+        --bg-elevated: #1a1a1a;
+        --border: #262626;
+        --text: #e5e5e5;
+        --text-muted: #737373;
+        --accent: #00d672;
+        --accent-dim: #00a85a;
+        --accent-glow: rgba(0, 214, 114, 0.12);
+        --cyan: #00d4ff;
+        --amber: #ffb800;
+        --red: #ff4444;
+        --mono: "JetBrains Mono", monospace;
+        --chart-grid: #262626;
+        --chart-axis: #404040;
+      }
+      .theme-light,
+      .theme-light .widget {
+        --bg-base: #ffffff;
+        --bg-surface: #f8f8f8;
+        --bg-elevated: #f0f0f0;
+        --border: #e0e0e0;
+        --text: #1a1a1a;
+        --text-muted: #666666;
+        --accent: #00a85a;
+        --accent-dim: #008548;
+        --accent-glow: rgba(0, 168, 90, 0.12);
+        --chart-grid: #e8e8e8;
+        --chart-axis: #999999;
+      }
+      .theme-light {
+        background: var(--bg-base);
+      }
+      html,
+      body {
+        height: 100%;
+        padding: 4px;
+        background: transparent;
+        overflow: hidden;
+        font-family: var(--mono);
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+      }
+      #widgets {
+        height: 100%;
+      }
+      .widget {
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        padding: 14px 16px;
+        height: calc(100% - 8px);
+        overflow: hidden;
+      }
+      .widget-label {
+        font-size: 0.65rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 8px;
+      }
+      .widget-label .tag {
+        font-size: 0.6rem;
+        padding: 1px 4px;
+        margin-left: 6px;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
+      }
+      .metric {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+      .metric .metric-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--accent);
+        line-height: 1;
+        margin-bottom: 10px;
+      }
+      .metric .metric-unit {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-left: 2px;
+      }
+      .metric .chart-area {
+        flex: 1;
+        min-height: 0;
+      }
+      .stat {
+        padding: 16px 18px;
+      }
+      .stat .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1;
+        color: var(--text);
+        margin: 8px 0;
+      }
+      .stat .stat-delta {
+        font-size: 0.7rem;
+        padding: 2px 6px;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
+      }
+      .stat .stat-delta.positive {
+        color: var(--accent);
+        border-color: var(--accent-dim);
+        background: var(--accent-glow);
+      }
+      .stat .stat-delta.negative {
+        color: var(--red);
+        border-color: rgba(255, 68, 68, 0.3);
+        background: rgba(255, 68, 68, 0.1);
+      }
+      .gauge {
+        text-align: center;
+        padding: 16px;
+      }
+      .gauge svg {
+        width: 100%;
+        max-width: 150px;
+      }
+      .gauge-track {
+        fill: none;
+        stroke: var(--bg-elevated);
+        stroke-width: 8;
+        stroke-linecap: round;
+      }
+      .gauge-fill {
+        fill: none;
+        stroke-width: 8;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 0.3s;
+      }
+      .gauge .gauge-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-top: 8px;
+      }
+      .table-widget {
+        overflow-x: auto;
+      }
+      .table-widget table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.75rem;
+      }
+      .table-widget th {
+        text-align: left;
+        padding: 8px 10px;
+        font-weight: 500;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        font-size: 0.65rem;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg-elevated);
+      }
+      .table-widget td {
+        padding: 6px 10px;
+        border-bottom: 1px solid var(--border);
+        color: var(--text-muted);
+      }
+      .table-widget .level-error,
+      .table-widget .level-ERROR {
+        color: var(--red);
+      }
+      .table-widget .level-warn,
+      .table-widget .level-WARN {
+        color: var(--amber);
+      }
+      .table-widget .level-info,
+      .table-widget .level-INFO {
+        color: var(--cyan);
+      }
+      .text-widget.style-h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        background: transparent;
+        border: none;
+        padding: 0;
+      }
+      .text-widget.style-h2 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        background: transparent;
+        border: none;
+        padding: 0;
+      }
+      .u-wrap {
+        overflow: visible !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="widgets"></div>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const embedWidget = params.get("widget");
+      const theme = params.get("theme");
+      const isLightTheme = theme === "light";
+      if (isLightTheme) {
+        document.body.classList.add("theme-light");
+      }
+
+      // Theme-aware colors for charts
+      const getThemeColors = () => ({
+        chartAxis: isLightTheme ? "#999999" : "#404040",
+        chartGrid: isLightTheme ? "#e8e8e8" : "#262626",
+      });
+
+      const widgets = {};
+      const widgetsEl = document.getElementById("widgets");
+      const chartColors = [
+        "#00d672",
+        "#00d4ff",
+        "#ffb800",
+        "#ff6b6b",
+        "#a78bfa",
+        "#f472b6",
+      ];
+      let colorIndex = 0;
+      const nextColor = () => chartColors[colorIndex++ % chartColors.length];
+      const escapeHtml = (s) => {
+        const d = document.createElement("div");
+        d.textContent = s;
+        return d.innerHTML;
+      };
+      const formatValue = (v) => {
+        if (typeof v !== "number") return String(v);
+        if (Math.abs(v) >= 1e9) return (v / 1e9).toFixed(1) + "B";
+        if (Math.abs(v) >= 1e6) return (v / 1e6).toFixed(1) + "M";
+        if (Math.abs(v) >= 1e4) return (v / 1e3).toFixed(1) + "k";
+        if (Math.abs(v) >= 100) return v.toFixed(0);
+        if (Math.abs(v) >= 10) return v.toFixed(1);
+        if (Math.abs(v) >= 1) return v.toFixed(2);
+        return v.toPrecision(3);
+      };
+
+      function createMetricWidget(id, cfg) {
+        const color = cfg.color || nextColor();
+        const div = document.createElement("div");
+        div.className = "widget metric";
+        div.innerHTML = `<div class="widget-label">${escapeHtml(
+          cfg.title
+        )}<span class="tag">live</span></div>
+          <span class="metric-value" style="color:${color}">--</span><span class="metric-unit">${escapeHtml(
+          cfg.unit || ""
+        )}</span>
+          <div class="chart-area"></div>`;
+        widgetsEl.appendChild(div);
+        const container = div.querySelector(".chart-area");
+        const timeData = [],
+          valueData = [];
+
+        // Store widget data first, create chart after layout
+        widgets[id] = {
+          type: "metric",
+          element: div,
+          valueEl: div.querySelector(".metric-value"),
+          timeData,
+          valueData,
+          uplot: null,
+          maxPoints: cfg.max_points || 200,
+          chartHeight: cfg.height || 180,
+          timeWindow: cfg.time_window || 120,
+        };
+
+        // Defer chart creation until container has dimensions
+        requestAnimationFrame(() => {
+          const h = container.offsetHeight || cfg.height || 180;
+          const w = widgets[id];
+          w.chartHeight = h;
+          w.uplot = new uPlot(
+            {
+              width: container.offsetWidth || 400,
+              height: h,
+              series: [
+                {},
+                {
+                  stroke: color,
+                  width: 1.5,
+                  fill: (self) => {
+                    const g = self.ctx.createLinearGradient(0, 0, 0, h);
+                    g.addColorStop(0, color + "30");
+                    g.addColorStop(1, color + "05");
+                    return g;
+                  },
+                },
+              ],
+              scales: { x: { time: true }, y: { auto: true } },
+              axes: [
+                {
+                  stroke: getThemeColors().chartAxis,
+                  grid: { stroke: getThemeColors().chartGrid, width: 1 },
+                  font: "500 9px 'JetBrains Mono'",
+                  size: 40,
+                  ticks: { stroke: getThemeColors().chartAxis, size: 3 },
+                },
+                {
+                  stroke: getThemeColors().chartAxis,
+                  grid: { stroke: getThemeColors().chartGrid, width: 1 },
+                  font: "500 9px 'JetBrains Mono'",
+                  size: 45,
+                  ticks: { stroke: getThemeColors().chartAxis, size: 3 },
+                },
+              ],
+              cursor: {
+                show: true,
+                drag: { x: false, y: false },
+                points: { size: 6, fill: color },
+              },
+              legend: { show: false },
+            },
+            [timeData, valueData],
+            container
+          );
+        });
+      }
+
+      function createStatWidget(id, cfg) {
+        const color = cfg.color || "#e5e5e5";
+        const div = document.createElement("div");
+        div.className = "widget stat";
+        div.innerHTML = `<div class="widget-label">${escapeHtml(
+          cfg.title
+        )}</div><div class="stat-value" style="color:${color}">--</div><div class="stat-delta"></div>`;
+        widgetsEl.appendChild(div);
+        widgets[id] = {
+          type: "stat",
+          config: cfg,
+          element: div,
+          valueEl: div.querySelector(".stat-value"),
+          deltaEl: div.querySelector(".stat-delta"),
+        };
+      }
+
+      function createGaugeWidget(id, cfg) {
+        const color = cfg.color || "#00d672",
+          circ = Math.PI * 60;
+        const div = document.createElement("div");
+        div.className = "widget gauge";
+        div.innerHTML = `<div class="widget-label">${escapeHtml(
+          cfg.title
+        )}</div>
+          <svg viewBox="0 0 150 90"><path class="gauge-track" d="M 15 75 A 60 60 0 0 1 135 75"/><path class="gauge-fill" d="M 15 75 A 60 60 0 0 1 135 75" stroke="${color}" stroke-dasharray="${circ}" stroke-dashoffset="${circ}"/></svg>
+          <div class="gauge-value" style="color:${color}">--<span class="metric-unit">${escapeHtml(
+          cfg.unit || ""
+        )}</span></div>`;
+        widgetsEl.appendChild(div);
+        widgets[id] = {
+          type: "gauge",
+          config: cfg,
+          element: div,
+          fillEl: div.querySelector(".gauge-fill"),
+          valueEl: div.querySelector(".gauge-value"),
+          circumference: circ,
+          min: cfg.min || 0,
+          max: cfg.max || 100,
+        };
+      }
+
+      function createTableWidget(id, cfg) {
+        const cols = cfg.columns || [];
+        const div = document.createElement("div");
+        div.className = "widget table-widget";
+        div.innerHTML = `<div class="widget-label">${escapeHtml(
+          cfg.title
+        )}</div><table><thead><tr>${cols
+          .map((c) => `<th>${escapeHtml(c.label || c.name)}</th>`)
+          .join("")}</tr></thead><tbody></tbody></table>`;
+        widgetsEl.appendChild(div);
+        widgets[id] = {
+          type: "table",
+          config: cfg,
+          element: div,
+          tbody: div.querySelector("tbody"),
+          rows: [],
+          maxRows: cfg.max_rows || 50,
+        };
+      }
+
+      function createPathwayTableWidget(id, cfg) {
+        const cols = cfg.columns || [];
+        const div = document.createElement("div");
+        div.className = "widget table-widget";
+        div.innerHTML = `<div class="widget-label">${escapeHtml(
+          cfg.title
+        )}<span class="tag">pathway</span></div><table><thead><tr>${cols
+          .map((c) => `<th>${escapeHtml(c.label || c.name)}</th>`)
+          .join("")}</tr></thead><tbody></tbody></table>`;
+        widgetsEl.appendChild(div);
+        widgets[id] = {
+          type: "pathway_table",
+          config: cfg,
+          element: div,
+          tbody: div.querySelector("tbody"),
+          rowsByKey: new Map(),
+          insertOrder: 0,
+          maxRows: cfg.max_rows || 100,
+        };
+      }
+
+      function createTextWidget(id, cfg) {
+        const div = document.createElement("div");
+        div.className = `widget text-widget style-${cfg.style || "body"}`;
+        div.textContent = cfg.value || "";
+        widgetsEl.appendChild(div);
+        widgets[id] = { type: "text", config: cfg, element: div };
+      }
+
+      function handleConfig(data) {
+        document.title = data.title || "PathwayViz";
+        const toCreate = embedWidget
+          ? { [embedWidget]: data.widgets?.[embedWidget] }
+          : data.widgets || {};
+        for (const [id, cfg] of Object.entries(toCreate)) {
+          if (!cfg || widgets[id]) continue;
+          const t = cfg.widget_type;
+          if (t === "metric") createMetricWidget(id, cfg);
+          else if (t === "stat") createStatWidget(id, cfg);
+          else if (t === "gauge") createGaugeWidget(id, cfg);
+          else if (t === "table") createTableWidget(id, cfg);
+          else if (t === "pathway_table") createPathwayTableWidget(id, cfg);
+          else if (t === "text") createTextWidget(id, cfg);
+        }
+      }
+
+      function handleData(data) {
+        if (embedWidget && data.widget !== embedWidget) return;
+        const w = widgets[data.widget];
+        if (!w) return;
+        if (w.type === "metric") {
+          const ts = data.timestamp / 1000;
+          const timeWindow = w.timeWindow || 120; // seconds (2 minutes default)
+
+          // Remove points older than time window
+          const cutoff = ts - timeWindow;
+          while (w.timeData.length > 0 && w.timeData[0] < cutoff) {
+            w.timeData.shift();
+            w.valueData.shift();
+          }
+
+          // Also cap by maxPoints as a safeguard
+          if (w.timeData.length >= w.maxPoints) {
+            w.timeData.shift();
+            w.valueData.shift();
+          }
+          w.timeData.push(ts);
+          w.valueData.push(data.value);
+          if (w.uplot) w.uplot.setData([w.timeData, w.valueData]);
+          w.valueEl.textContent = formatValue(data.value);
+        } else if (w.type === "stat") {
+          w.valueEl.textContent =
+            (w.config.unit || "") + formatValue(data.value);
+          if (data.delta != null) {
+            w.deltaEl.textContent =
+              (data.delta >= 0 ? "+" : "") + formatValue(data.delta);
+            w.deltaEl.className = `stat-delta ${
+              data.delta >= 0 ? "positive" : "negative"
+            }`;
+          }
+        } else if (w.type === "gauge") {
+          const pct = Math.max(
+            0,
+            Math.min(1, (data.value - w.min) / (w.max - w.min))
+          );
+          w.fillEl.style.strokeDashoffset = w.circumference * (1 - pct);
+          if (w.config.thresholds)
+            for (const [th, col] of w.config.thresholds)
+              if (data.value <= th) {
+                w.fillEl.style.stroke = col;
+                break;
+              }
+          w.valueEl.innerHTML = `${formatValue(
+            data.value
+          )}<span class="metric-unit">${escapeHtml(
+            w.config.unit || ""
+          )}</span>`;
+        } else if (w.type === "table") {
+          const tr = document.createElement("tr");
+          for (const col of w.config.columns || []) {
+            const td = document.createElement("td");
+            const v = data.row[col.name];
+            if (col.name === "level" || col.name === "status")
+              td.className = `level-${v}`;
+            td.textContent = v != null ? String(v) : "";
+            tr.appendChild(td);
+          }
+          w.tbody.insertBefore(tr, w.tbody.firstChild);
+          w.rows.unshift(tr);
+          while (w.rows.length > w.maxRows) w.rows.pop().remove();
+        } else if (w.type === "pathway_table") {
+          const key = data.key;
+          if (data.is_deletion) {
+            const e = w.rowsByKey.get(key);
+            if (e) {
+              e.tr.remove();
+              w.rowsByKey.delete(key);
+            }
+            return;
+          }
+          let tr,
+            isNew = false;
+          if (w.rowsByKey.has(key)) {
+            tr = w.rowsByKey.get(key).tr;
+            tr.innerHTML = "";
+          } else {
+            tr = document.createElement("tr");
+            isNew = true;
+          }
+          for (const col of w.config.columns || []) {
+            const td = document.createElement("td");
+            const v = data.row[col.name];
+            if (col.name === "level" || col.name === "status")
+              td.className = `level-${v}`;
+            td.textContent = v != null ? String(v) : "";
+            tr.appendChild(td);
+          }
+          if (isNew) {
+            w.rowsByKey.set(key, { tr, order: w.insertOrder++ });
+            w.tbody.appendChild(tr);
+          }
+        } else if (w.type === "text") {
+          w.element.textContent = data.value;
+        }
+      }
+
+      function handleHistory(payload) {
+        if (!payload?.widgets) return;
+        for (const item of payload.widgets) {
+          if (!item?.widget || !item.data) continue;
+          if (embedWidget && item.widget !== embedWidget) continue;
+          const w = widgets[item.widget];
+          if (!w) continue;
+          if (w.type === "metric") {
+            w.timeData.length = 0;
+            w.valueData.length = 0;
+            if (w.uplot) w.uplot.setData([w.timeData, w.valueData]);
+          }
+          for (const [ts, val] of item.data)
+            handleData({
+              widget: item.widget,
+              timestamp: ts,
+              value: val,
+              delta: null,
+            });
+        }
+      }
+
+      function connect() {
+        const ws = new WebSocket(
+          `${location.protocol === "https:" ? "wss:" : "ws:"}//${
+            location.host
+          }/ws`
+        );
+        ws.onclose = () => setTimeout(connect, 2000);
+        ws.onerror = () => ws.close();
+        ws.onmessage = (e) => {
+          const d = JSON.parse(e.data);
+          if (d.type === "config") handleConfig(d);
+          else if (d.type === "history") handleHistory(d);
+          else if (d.type === "data") handleData(d);
+        };
+      }
+      window.addEventListener("resize", () => {
+        for (const w of Object.values(widgets))
+          if (w.uplot) {
+            const c = w.element.querySelector(".chart-area");
+            w.uplot.setSize({
+              width: c.offsetWidth,
+              height: w.chartHeight || 180,
+            });
+          }
+      });
+      connect();
+    </script>
+  </body>
+</html>
