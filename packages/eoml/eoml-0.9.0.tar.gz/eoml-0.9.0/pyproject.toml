@@ -1,0 +1,60 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+# to allow install -e .
+allow-direct-references = true
+
+[project]
+name = "eoml"
+version = "0.9.0"
+dependencies = [
+  "numpy",
+  "rasterio",
+  "shapely",
+  "fiona",
+  "pyproj",
+  "pydantic>=2.6",
+  "rasterstats",
+  "tqdm",
+  "toml",
+  "tomli",
+  "torchmetrics",
+  "lmdb",
+  "msgpack",
+  "scikit-learn",
+  "geopandas",
+  "tensorboard",
+  "typer",
+
+]
+requires-python = ">=3.12"
+authors = [
+  {name = "Thibaud Vantalon", email = "t.vantalon@cgiar.org"},
+]
+maintainers = [
+  {name = "Thibaud Vantalon", email = "t.vantalon@cgiar.org"},
+]
+description = "library to manage GIS operation"
+readme = "README.md"
+license = {text = "MIT License"}
+keywords = ["GIS", "Rasterio"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python"
+]
+
+
+
+[project.urls]
+Homepage = 'https://ciatgit.ciat.cgiar.org/Data_driven_sustainability_public/terra-i/eoml#'
+Documentation = 'https://ciatgit.ciat.cgiar.org/Data_driven_sustainability_public/terra-i/eoml#'
+Repository = 'https://ciatgit.ciat.cgiar.org/Data_driven_sustainability_public/terra-i/eoml#'
+"Bug Tracker" = 'https://ciatgit.ciat.cgiar.org/Data_driven_sustainability_public/terra-i/eoml/-/issues'
+#Changelog = "https://github.com/me/spam/blob/master/CHANGELOG.md"
+
+[project.scripts]
+eoml_mosaic_images = "eoml.bin.mosaic_images:app"
+eoml_map = "eoml.bin.land_cover_mapping_toml:main"
+
