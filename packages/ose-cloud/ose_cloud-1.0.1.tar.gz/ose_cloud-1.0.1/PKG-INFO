@@ -1,0 +1,508 @@
+Metadata-Version: 2.4
+Name: ose-cloud
+Version: 1.0.1
+Summary: Official Python SDK for OSE Cloud Platform
+Home-page: https://github.com/ose-cloud/sdk-python
+Author: OSE Cloud
+Author-email: support@ose.cloud
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: requests>=2.28.0
+Requires-Dist: typing-extensions>=4.0.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: black>=22.0.0; extra == "dev"
+Requires-Dist: mypy>=0.990; extra == "dev"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# OSE Cloud Python SDK
+
+Official Python SDK for [OSE Cloud Platform](https://www.ose.sh) - Build, deploy, and manage containerized applications with AI-powered sandboxes.
+
+## Installation
+
+```bash
+pip install ose-cloud
+```
+
+## Quick Start
+
+```python
+from ose import OSE
+
+# Initialize the client
+client = OSE(api_key="your_api_key_here")
+
+# Create a sandbox
+sandbox = client.sandboxes.create(
+    name="my-sandbox",
+    template="python"
+)
+
+# Execute commands
+result = sandbox.commands.run("python --version")
+print(result.stdout)
+
+# Work with files
+sandbox.files.write("hello.py", "print('Hello, OSE Cloud!')")
+content = sandbox.files.read("hello.py")
+
+# Deploy an application
+deployment = client.deployments.create(
+    name="my-app",
+    sandbox_id=sandbox.id,
+    port=3000
+)
+
+print(f"Deployed at: {deployment.url}")
+```
+
+## Getting an API Key
+
+1. Visit [www.ose.sh](https://www.ose.sh)
+2. Sign in to your account
+3. Navigate to Dashboard → API Keys
+4. Create a new API key with the permissions you need
+
+**Available Permissions:**
+- `sandbox:create` - Create new sandboxes
+- `sandbox:read` - List and view sandboxes
+- `sandbox:execute` - Run commands in sandboxes
+- `sandbox:delete` - Delete sandboxes
+- `files:read` - Read files from sandboxes
+- `files:write` - Write files to sandboxes
+- `deploy:create` - Create deployments
+- `deploy:read` - View deployments
+- `usage:read` - View usage statistics
+- `chat:create` - Create chat sessions
+- `chat:read` - View chat history
+
+## Features
+
+- **Sandboxes** - Create and manage isolated development environments
+- **Deployments** - Deploy applications to production
+- **File Management** - Read, write, and search files in sandboxes
+- **Command Execution** - Run commands in sandbox environments
+- **Usage Tracking** - Monitor your API usage and analytics
+- **Chat API** - Interact with AI chat sessions
+- **Type-Safe** - Full type hints support
+
+## API Reference
+
+### Initialization
+
+```python
+from ose import OSE
+
+client = OSE(
+    api_key="your_api_key",
+    base_url="https://www.ose.sh/api",  # Optional, defaults to production
+    timeout=120  # Optional, request timeout in seconds
+)
+```
+
+### Sandboxes
+
+#### Available Templates
+
+Choose from these pre-configured environments when creating a sandbox:
+
+| Template | Environment | Best For |
+|----------|-------------|----------|
+| `nextjs` | Node.js 20 + npm + yarn | Next.js, React SSR apps |
+| `react` | Node.js 20 + Vite | Client-side React apps |
+| `vue` | Node.js 20 + Vite | Vue.js 3 applications |
+| `svelte` | Node.js 20 + SvelteKit | Svelte applications |
+| `expo` | Node.js 20 + Expo CLI | React Native mobile apps |
+| `python` | Python 3.12 + pip | Data science, ML, APIs |
+| `fullstack` | Node.js + Python + DB tools | Full-stack development |
+
+#### Create a sandbox
+
+```python
+# Create a sandbox
+sandbox = client.sandboxes.create(
+    name="my-project",
+    template="python",  # Choose from templates above
+    envs={"PYTHON_ENV": "development"},
+    metadata={"key": "value"},
+    timeout_ms=300000,
+    port=3000
+)
+```
+
+#### List sandboxes
+
+```python
+# List all sandboxes
+sandboxes = client.sandboxes.list(status="active")
+
+# Filter by status: "running", "stopped", "error"
+active_sandboxes = client.sandboxes.list(status="running")
+```
+
+#### Connect to existing sandbox
+
+```python
+# Connect to existing sandbox
+sandbox = client.sandboxes.connect("sandbox-id")
+
+# Get sandbox info
+info = sandbox.get_info()
+print(f"Sandbox ID: {info.id}")
+print(f"Status: {info.status}")
+print(f"Template: {info.template}")
+
+# Delete sandbox
+sandbox.delete()
+```
+
+### File Operations
+
+```python
+# Write a file
+sandbox.files.write("/workspace/index.js", "console.log('Hello World')")
+
+# Write multiple files at once
+sandbox.files.write_multiple([
+    {"path": "/workspace/package.json", "content": "{}"},
+    {"path": "/workspace/index.js", "content": "console.log('test')"}
+])
+
+# Read a file
+content = sandbox.files.read("/workspace/index.js")
+
+# List files
+files = sandbox.files.list("/workspace")
+
+# Search with glob pattern
+results = sandbox.files.glob("**/*.py")
+
+# Search with grep
+results = sandbox.files.grep(
+    pattern="console",
+    file_pattern="*.js",
+    case_sensitive=False
+)
+
+# Delete a file
+sandbox.files.delete("/workspace/index.js")
+```
+
+### Command Execution
+
+```python
+# Run a command
+result = sandbox.commands.run(
+    command="npm install",
+    workdir="/workspace",
+    envs={"NODE_ENV": "production"}
+)
+
+print(f"Exit code: {result.exit_code}")
+print(f"Output: {result.stdout}")
+print(f"Errors: {result.stderr}")
+
+# Run command in background
+result = sandbox.commands.run(
+    command="python server.py",
+    background=True
+)
+```
+
+### Deployments
+
+#### Create a deployment
+
+```python
+# Create a deployment
+deployment = client.deployments.create(
+    name="my-app",
+    sandbox_id="sandbox-id",
+    port=3000,
+    project_type="nextjs",
+    build_command="npm run build",
+    install_command="npm install",
+    start_command="npm start",
+    environment_variables={"API_KEY": "secret", "DATABASE_URL": "postgres://..."},
+    custom_domain="app.example.com"
+)
+
+print(f"Deployed at: {deployment.url}")
+```
+
+#### List deployments
+
+```python
+# List all deployments
+deployments = client.deployments.list()
+```
+
+#### Manage a deployment
+
+```python
+# Connect to existing deployment
+deployment = client.deployments.connect("deployment-id")
+
+# Get deployment info
+info = deployment.get_info()
+print(f"URL: {info.url}")
+print(f"Status: {info.status}")
+
+# View logs
+logs = deployment.logs.get(lines=100)  # Last 100 lines
+for log in logs:
+    print(log.timestamp, log.message)
+
+# Restart deployment
+deployment.restart()
+
+# Stop deployment
+deployment.stop()
+
+# Delete deployment
+deployment.delete()
+```
+
+### Usage & Analytics
+
+```python
+# Get usage statistics
+usage = client.usage.get(range="7d")  # "7d", "30d", or "all"
+print(f"Total requests: {usage.total_requests}")
+print(f"Total cost: {usage.total_cost}")
+
+# Get analytics
+analytics = client.usage.get_analytics(range="30d")
+
+# List API keys
+keys = client.usage.keys()
+for key in keys:
+    print(f"{key.name}: {key.permissions}")
+```
+
+### Chat API
+
+```python
+# Create a chat
+chat = client.chats.create(
+    title="My Chat Session",
+    visibility="private"
+)
+
+# Send a message
+response = chat.send("Hello, how can I deploy a Next.js app?")
+print(response.content)
+
+# Get chat messages
+messages = chat.messages()
+for msg in messages:
+    print(f"{msg.role}: {msg.content}")
+
+# List all chats
+chats = client.chats.list()
+
+# Connect to existing chat
+chat = client.chats.connect("chat-id")
+
+# Delete chat
+chat.delete()
+```
+
+## Examples
+
+### Deploy a Next.js App
+
+```python
+from ose import OSE
+import os
+
+def deploy_nextjs_app():
+    client = OSE(api_key=os.environ["OSE_API_KEY"])
+
+    # Create sandbox
+    sandbox = client.sandboxes.create(
+        name="my-nextjs-app",
+        template="nextjs"
+    )
+
+    print(f"Sandbox created: {sandbox.id}")
+
+    # Add files
+    sb = client.sandboxes.connect(sandbox.id)
+
+    sb.files.write("/workspace/package.json", """{
+  "name": "my-app",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "^14.0.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  }
+}""")
+
+    sb.files.write("/workspace/app/page.tsx", """
+export default function Home() {
+  return <div>Hello from OSE Cloud!</div>
+}
+    """)
+
+    # Deploy
+    deployment = client.deployments.create(
+        name="my-nextjs-app",
+        sandbox_id=sandbox.id,
+        port=3000
+    )
+
+    print(f"Deployed to: {deployment.url}")
+
+if __name__ == "__main__":
+    deploy_nextjs_app()
+```
+
+### Run Python Data Analysis
+
+```python
+from ose import OSE
+import os
+
+def run_analysis():
+    client = OSE(api_key=os.environ["OSE_API_KEY"])
+
+    # Create Python sandbox
+    sandbox = client.sandboxes.create(
+        name="data-analysis",
+        template="python"
+    )
+
+    sb = client.sandboxes.connect(sandbox.id)
+
+    # Install dependencies
+    result = sb.commands.run("pip install pandas numpy matplotlib")
+    print(result.stdout)
+
+    # Create analysis script
+    sb.files.write("/workspace/analysis.py", """
+import pandas as pd
+import numpy as np
+
+# Generate sample data
+data = pd.DataFrame({
+    'value': np.random.randn(1000)
+})
+
+# Calculate statistics
+print(f"Mean: {data['value'].mean()}")
+print(f"Std: {data['value'].std()}")
+print(f"Min: {data['value'].min()}")
+print(f"Max: {data['value'].max()}")
+    """)
+
+    # Run analysis
+    result = sb.commands.run("python /workspace/analysis.py")
+    print(result.stdout)
+
+    # Cleanup
+    sb.delete()
+
+if __name__ == "__main__":
+    run_analysis()
+```
+
+## Error Handling
+
+```python
+from ose import OSE, OSEError, APIError, AuthenticationError, NotFoundError
+
+try:
+    client = OSE(api_key="invalid_key")
+    sandbox = client.sandboxes.create(name="test")
+except AuthenticationError as e:
+    print(f"Authentication failed: {e}")
+except NotFoundError as e:
+    print(f"Resource not found: {e}")
+except APIError as e:
+    print(f"API error: {e.status_code} - {e.message}")
+except OSEError as e:
+    print(f"SDK error: {e}")
+```
+
+## Type Hints
+
+The SDK includes full type hints for better IDE support:
+
+```python
+from ose import OSE, Sandbox, Deployment, SandboxInfo
+from typing import List
+
+client: OSE = OSE(api_key="key")
+sandbox: Sandbox = client.sandboxes.create(name="test", template="python")
+info: SandboxInfo = sandbox.get_info()
+sandboxes: List[Sandbox] = client.sandboxes.list()
+```
+
+## Requirements
+
+- Python >= 3.8
+- requests >= 2.28.0
+- typing-extensions >= 4.0.0
+
+## Development
+
+```bash
+# Install development dependencies
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+
+# Format code
+black .
+
+# Type checking
+mypy ose
+```
+
+## Rate Limits
+
+API keys have their own rate limiting. If you exceed the limit, you'll receive a `429 Too Many Requests` error with a `retry_after` field indicating when you can retry.
+
+## Support
+
+- **Email**: support@ose.sh
+- **Documentation**: https://www.ose.sh/docs
+- **Discord**: https://discord.gg/ose-cloud
+- **GitHub**: https://github.com/ose-cloud/sdk-python
+- **Issues**: https://github.com/ose-cloud/sdk-python/issues
+
+## Links
+
+- [Website](https://www.ose.sh)
+- [Documentation](https://www.ose.sh/docs)
+- [GitHub](https://github.com/ose-cloud/sdk-python)
+- [PyPI](https://pypi.org/project/ose-cloud/)
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file for details
