@@ -1,0 +1,70 @@
+Metadata-Version: 2.4
+Name: st_custom_component
+Version: 0.0.1
+Summary: Streamlit component that allows you to do X
+Home-page: 
+Author: Vahishi
+Author-email: Vahishiabbas@gmail.com
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: streamlit>=0.63
+Provides-Extra: devel
+Requires-Dist: wheel; extra == "devel"
+Requires-Dist: pytest==7.4.0; extra == "devel"
+Requires-Dist: playwright==1.48.0; extra == "devel"
+Requires-Dist: requests==2.31.0; extra == "devel"
+Requires-Dist: pytest-playwright-snapshot==1.0; extra == "devel"
+Requires-Dist: pytest-rerunfailures==12.0; extra == "devel"
+Dynamic: author
+Dynamic: author-email
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: license-file
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# streamlit-custom-component
+
+Streamlit component that allows you to do X
+
+## Installation instructions
+
+```sh
+pip install streamlit-custom-component
+```
+
+## Usage instructions
+
+```python
+import streamlit as st
+
+from my_component import my_component
+
+value = my_component()
+
+st.write(value)
+```
+
+## Local development
+
+1. Start Streamlit from the project root:
+
+   ```sh
+   streamlit run my_component/example.py
+   ```
+
+2. In another terminal, run the Vite dev server from `my_component/frontend`:
+
+   ```sh
+   npm install
+   npm run start
+   ```
+
+### Important dev server notes
+
+- The browser connects to the Vite dev server directly. Streamlit does **not** proxy this port, so the Vite port must be reachable from the client just like the Streamlit port.
+- Vite listens on the value of `VITE_PORT` (default `3001`). This variable lives in `my_component/frontend/.env`. Update that file whenever you need to change the port, and remember that Windows/WSL/Hyper-V or dev containers may silently remap addresses like `3001`.
+- If a port is unavailable or blocked by a firewall/mobile connection, set `VITE_PORT=5173` (Vite's default) or any other open port inside the `.env` file before running `npm run start`, and ensure that port is reachable from your browser.
