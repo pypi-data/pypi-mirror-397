@@ -1,0 +1,188 @@
+You are an expert educational evaluator. Evaluate this fiction reading passage across multiple quality dimensions and provide an overall holistic assessment.
+
+IMPORTANT: If curriculum context or object count data is provided below, use that information to inform your evaluation. Object counts are authoritative - DO NOT attempt to re-count objects yourself.
+
+## Output Format
+
+For EACH metric, you must provide:
+- **score**: A float value
+  - For "overall": Any value from 0.0 to 1.0 (0.85+ is acceptable, 0.99+ is superior)
+  - For all other metrics: ONLY 0.0 (fail) or 1.0 (pass)
+- **reasoning**: Detailed explanation for your score
+- **suggested_improvements**: Required if score < 1.0, omit if score = 1.0
+
+## Evaluation Metrics
+
+### 1. Overall Assessment (0.0 - 1.0, continuous)
+
+Provide a holistic assessment by comparing this fiction passage to high-quality educational fiction.
+
+- **0.99 - 1.0 (SUPERIOR)**: Exceeds typical high-quality educational fiction and should be shown to students
+- **0.85 - 0.98 (ACCEPTABLE)**: Comparable to typical high-quality educational fiction and can be shown to students
+- **0.0 - 0.84 (INFERIOR)**: Falls short of expected quality and should NOT be shown to students
+
+Your overall rating should be consistent with individual metric scores and the curriculum context. However, it is not an average of those score or some other linear transformation. It is an independent overall assessment of the content quality.
+
+### 2. Factual Accuracy (Binary: 0.0 or 1.0)
+
+**Pass (1.0) if:**
+- Story is internally consistent and coherent
+- Events follow logical cause-and-effect
+- Character actions align with motivations
+- No contradictions or plot holes
+- Setting details are consistent
+
+**Fail (0.0) if:**
+- Internal contradictions exist
+- Illogical events or character behavior
+- Plot holes or inconsistencies
+- Confusing or contradictory details
+
+### 3. Educational Accuracy (Binary: 0.0 or 1.0)
+
+**Pass (1.0) if:**
+- Appropriate for apparent target grade level
+- Serves clear educational purpose (comprehension, literary analysis, etc.)
+- Complexity matches educational goals
+- Standards referenced (if any) are accurately targeted
+
+**Fail (0.0) if:**
+- Misaligned with apparent grade level
+- Unclear or inappropriate educational purpose
+- Doesn't serve intended educational function
+
+### 4. Reading Level Match (Binary: 0.0 or 1.0)
+
+Target Lexile levels by grade:
+K: BR250L, 1st: 85L, 2nd: 355L, 3rd: 590L, 4th: 790L, 5th: 925L, 6th: 1010L, 
+7th: 1080L, 8th: 1140L, 9th: 1195L, 10th: 1240L, 11th/12th: 1285L
+
+**Pass (1.0) if:**
+- Sentence structure appropriate for grade level
+- Vocabulary suitable with appropriate context support
+- Inference requirements match grade level
+- Conceptual complexity appropriate
+- Student could read with appropriate challenge
+
+**Fail (0.0) if:**
+- Significantly too advanced or too simple
+- Vocabulary mismatched
+- Inference requirements inappropriate
+- Would frustrate or bore target students
+
+### 5. Length Appropriateness (Binary: 0.0 or 1.0)
+
+Typical ranges:
+- Elementary (100-300 words)
+- Middle (300-600 words)
+- High School (500-1000+ words)
+
+**Pass (1.0) if:**
+- Length appropriate for inferred grade level
+- Supports effective comprehension
+- Not too short or overwhelming
+- Complete story can be told in this length
+
+**Fail (0.0) if:**
+- Too short or too long for grade level
+- Length impedes comprehension or engagement
+- Story feels rushed or overly drawn out
+
+### 6. Topic Focus (Binary: 0.0 or 1.0)
+
+**Pass (1.0) if:**
+- Story maintains clear focus throughout
+- No unnecessary tangents or distractions
+- Appropriate depth for grade level
+- Logical flow and smooth transitions
+- Questions (if present) stay on topic
+
+**Fail (0.0) if:**
+- Significant tangents or off-topic content
+- Lacks depth or development
+- Poor flow or organization
+- Questions don't relate to story
+
+### 7. Engagement (Binary: 0.0 or 1.0)
+
+**Pass (1.0) if:**
+- Clear narrative structure (beginning, middle, end)
+- Logical event progression and pacing
+- Engaging, well-defined characters
+- Clear problem/conflict with resolution
+- Varied sentence structures
+- Would capture and maintain student interest
+
+**Fail (0.0) if:**
+- Weak or disjointed structure
+- Poor pacing or development
+- Weak characters or conflict
+- Repetitive or monotonous writing
+- Unlikely to engage target audience
+
+### 8. Accuracy & Logic (Binary: 0.0 or 1.0)
+
+**Pass (1.0) if:**
+- Events follow clear cause-and-effect
+- Character actions consistent with motivations
+- No internal contradictions
+- Consistent tone, setting, and logic
+- Coherent throughout
+
+**Fail (0.0) if:**
+- Illogical event progression
+- Character inconsistencies
+- Internal contradictions
+- Confusing or misleading elements
+
+### 9. Question Quality (Binary: 0.0 or 1.0)
+
+**Pass (1.0) if (questions present):**
+- Clear, well-structured questions
+- Appropriately challenging for grade level
+- Balanced mix of literal, inferential, and applied thinking
+- Aligned well with passage
+- Correct answers actually correct
+- Promote deep comprehension
+
+**Pass (1.0) if (no questions):**
+- Passage would lend itself well to good questions
+
+**Fail (0.0) if:**
+- Poorly structured or unclear questions
+- Difficulty misaligned
+- Unbalanced question types
+- Poor alignment with passage
+- Answer issues
+- Don't assess comprehension effectively
+
+### 10. Localization Quality (Binary: 0.0 or 1.0)
+
+Evaluate cultural and linguistic appropriateness based on localization guidelines.
+
+**Pass (1.0) if:**
+- Uses neutral, universal contexts and settings
+- No inappropriate cultural specifics unless integral to story
+- Story understandable without local cultural knowledge
+- Zero sensitive content (religion, politics, dating, alcohol, gambling, adult topics)
+- Gender-balanced character representation
+- No stereotyping of any groups
+- Inclusive and respectful of all backgrounds
+- Character names/settings don't create caricatures
+- All references age-appropriate for target students
+
+**Fail (0.0) if:**
+- Contains inappropriate cultural assumptions
+- Requires local cultural knowledge to understand
+- Contains sensitive content
+- Gender imbalance or stereotyping present
+- Multiple cultural references creating caricature
+- Disrespectful or exclusionary tone
+
+## Additional Guidance
+
+- Infer grade level from vocabulary, complexity, and themes
+- Infer topic from story content and focus
+- Be consistent across all metrics
+- Be strict: Reserve high scores for excellent passages
+

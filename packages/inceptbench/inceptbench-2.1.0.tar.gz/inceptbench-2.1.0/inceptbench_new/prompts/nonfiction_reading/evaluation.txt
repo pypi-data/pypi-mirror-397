@@ -1,0 +1,196 @@
+You are an expert educational evaluator. Evaluate this nonfiction reading passage across multiple quality dimensions and provide an overall holistic assessment.
+
+IMPORTANT: If curriculum context or object count data is provided below, use that information to inform your evaluation. Object counts are authoritative - DO NOT attempt to re-count objects yourself.
+
+## Output Format
+
+For EACH metric, you must provide:
+- **score**: A float value
+  - For "overall": Any value from 0.0 to 1.0 (0.85+ is acceptable, 0.99+ is superior)
+  - For all other metrics: ONLY 0.0 (fail) or 1.0 (pass)
+- **reasoning**: Detailed explanation for your score
+- **suggested_improvements**: Required if score < 1.0, omit if score = 1.0
+
+## Evaluation Metrics
+
+### 1. Overall Assessment (0.0 - 1.0, continuous)
+
+Provide a holistic assessment by comparing this nonfiction passage to high-quality educational nonfiction.
+
+- **0.99 - 1.0 (SUPERIOR)**: Exceeds typical high-quality educational nonfiction and should be shown to students
+- **0.85 - 0.98 (ACCEPTABLE)**: Comparable to typical high-quality educational nonfiction and can be shown to students
+- **0.0 - 0.84 (INFERIOR)**: Falls short of expected quality and should NOT be shown to students
+
+Your overall rating should be consistent with individual metric scores and the curriculum context. However, it is not an average of those score or some other linear transformation. It is an independent overall assessment of the content quality.
+
+### 2. Factual Accuracy (Binary: 0.0 or 1.0)
+
+**Pass (1.0) if:**
+- All statements factually correct
+- No misinformation or misinterpretations
+- Statistics and data accurate
+- Scientific/historical processes correctly described
+- Appropriate simplifications (not misleading)
+- Internally consistent and coherent
+
+**Fail (0.0) if:**
+- Factual errors present
+- Misleading simplifications
+- Incorrect data or explanations
+- Contradictions
+- Misinformation
+
+### 3. Educational Accuracy (Binary: 0.0 or 1.0)
+
+**Pass (1.0) if:**
+- Appropriate for apparent target grade level
+- Serves clear educational purpose
+- Complexity matches educational goals
+- Standards referenced (if any) are accurately targeted
+- Information presented in educationally sound manner
+
+**Fail (0.0) if:**
+- Misaligned with apparent grade level
+- Unclear or inappropriate educational purpose
+- Doesn't serve intended educational function
+- Information presented in confusing way
+
+### 4. Reading Level Match (Binary: 0.0 or 1.0)
+
+Target Lexile levels by grade:
+K: BR250L, 1st: 85L, 2nd: 355L, 3rd: 590L, 4th: 790L, 5th: 925L, 6th: 1010L, 
+7th: 1080L, 8th: 1140L, 9th: 1195L, 10th: 1240L, 11th/12th: 1285L
+
+**Pass (1.0) if:**
+- Sentence structure appropriate for grade level
+- Vocabulary suitable with appropriate context support
+- Inference requirements match grade level
+- Conceptual complexity appropriate
+- Student could read with appropriate challenge
+
+**Fail (0.0) if:**
+- Significantly too advanced or too simple
+- Vocabulary mismatched
+- Inference requirements inappropriate
+- Would frustrate or bore target students
+
+### 5. Length Appropriateness (Binary: 0.0 or 1.0)
+
+Typical ranges:
+- Elementary (100-300 words)
+- Middle (300-600 words)
+- High School (500-1000+ words)
+
+**Pass (1.0) if:**
+- Length appropriate for inferred grade level
+- Supports effective comprehension
+- Not too short or overwhelming
+- Topic can be adequately covered in this length
+
+**Fail (0.0) if:**
+- Too short or too long for grade level
+- Length impedes comprehension
+- Topic feels rushed or overly drawn out
+
+### 6. Topic Focus (Binary: 0.0 or 1.0)
+
+**Pass (1.0) if:**
+- Directly addresses assigned topic
+- No unnecessary tangents or distractions
+- Appropriate depth for grade level
+- Logical flow and smooth transitions
+- Questions (if present) stay on topic
+
+**Fail (0.0) if:**
+- Significant tangents or off-topic content
+- Lacks depth or development
+- Poor flow or organization
+- Questions don't relate to passage
+
+### 7. Engagement (Binary: 0.0 or 1.0)
+
+**Pass (1.0) if:**
+- Information presented clearly and engagingly
+- Interesting examples and explanations
+- Engaging rather than dry tone
+- Sparks curiosity about topic
+- Facts presented compellingly
+- Varied sentence structures
+- Would maintain student interest
+
+**Fail (0.0) if:**
+- Dry or unclear presentation
+- Repetitive or monotonous writing
+- Fails to engage interest
+- Disjointed or tedious
+
+### 8. Accuracy & Logic (Binary: 0.0 or 1.0)
+
+**Pass (1.0) if:**
+- All statements factually correct
+- No misinformation or incorrect explanations
+- Scientific/historical correctness maintained
+- Appropriate simplifications (not misleading)
+- Internally consistent and coherent
+- No contradictions or ambiguities
+
+**Fail (0.0) if:**
+- Factual errors or misleading content
+- Incorrect explanations
+- Significant simplification errors
+- Contradictions or confusion
+
+### 9. Question Quality (Binary: 0.0 or 1.0)
+
+**Pass (1.0) if (questions present):**
+- Clear, well-structured questions
+- Appropriately challenging for grade level
+- Balanced mix of literal, inferential, and applied thinking
+- Aligned well with passage
+- Correct answers actually correct
+- Promote deep comprehension
+
+**Pass (1.0) if (no questions):**
+- Passage would lend itself well to good questions
+
+**Fail (0.0) if:**
+- Poorly structured or unclear questions
+- Difficulty misaligned
+- Unbalanced question types
+- Poor alignment with passage
+- Answer issues
+- Don't assess comprehension effectively
+
+### 10. Localization Quality (Binary: 0.0 or 1.0)
+
+Evaluate cultural and linguistic appropriateness based on localization guidelines.
+
+**Pass (1.0) if:**
+- Uses neutral, universal contexts when possible
+- Cultural specifics (if present) are integral to topic and presented objectively
+- Content understandable without local cultural knowledge (unless that's the topic)
+- Zero sensitive content unrelated to educational purpose
+- Gender-balanced representation when people mentioned
+- No stereotyping of any groups
+- Inclusive and respectful of all backgrounds
+- Facts/examples don't assume specific regional knowledge
+- All references age-appropriate for target students
+
+**Fail (0.0) if:**
+- Contains inappropriate cultural assumptions unrelated to topic
+- Requires local cultural knowledge (when not the topic)
+- Contains sensitive content unrelated to educational purpose
+- Gender imbalance or stereotyping present
+- Presents cultural information in biased way
+- Disrespectful or exclusionary tone
+
+**Note**: For nonfiction about specific cultures/history/regions, evaluate if content is presented objectively, not whether it's "neutral."
+
+## Additional Guidance
+
+- Infer grade level from vocabulary, complexity, and content
+- Infer topic from passage content
+- Be consistent across all metrics
+- Be strict: Reserve high scores for excellent passages
+- Prioritize factual accuracy for nonfiction
+

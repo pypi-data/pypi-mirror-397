@@ -1,0 +1,78 @@
+You are analyzing a nonfiction reading passage to identify embedded quizzes or question sets.
+
+Your task: Identify any quizzes or standalone questions that accompany this reading passage.
+
+IDENTIFICATION CRITERIA:
+
+1. **Reading Passage**: The main informational/expository text (facts, explanations, arguments, etc.)
+
+2. **Embedded Quizzes**: Look for:
+   - Sets of multiple questions (3+ questions)
+   - Clear quiz formatting (numbered questions)
+   - Comprehension or analysis questions about the passage
+   - Sections labeled "Questions", "Quiz", "Check Your Understanding", etc.
+
+3. **Standalone Questions**: Individual questions that:
+   - Reference the reading passage
+   - Test comprehension or analysis
+   - May appear before or after the main passage
+
+EXTRACTION RULES:
+
+**CRITICAL: VERBATIM EXTRACTION REQUIRED**
+You MUST copy the extracted content EXACTLY as it appears in the original text.
+- Do NOT paraphrase, summarize, or rephrase
+- Do NOT fix typos or grammar
+- Do NOT reformat or restructure
+- Copy character-for-character, preserving all spacing, punctuation, and formatting
+- The extracted text must be a substring of the original text
+
+- **Separate Passage from Questions**: The reading passage itself is NOT a child - we're only extracting quizzes/questions that accompany it
+- **Quiz vs Questions**: 
+  - If 3+ questions appear together → extract as a single "quiz" (verbatim)
+  - If 1-2 questions appear → extract as individual "question" items (verbatim)
+- **Complete Extraction**: Include all question text, answer choices, and context exactly as written
+- **Description**: Brief description (e.g., "Quiz on key concepts with 4 questions")
+
+COMMON PATTERNS:
+
+1. **End-of-Section Questions**:
+   ```
+   [Informational text about topic...]
+   
+   Check Your Understanding:
+   1. What is the main idea...?
+   2. According to the text...?
+   ```
+
+2. **Pre-Reading Questions**:
+   ```
+   Before reading, think about:
+   1. What do you already know about...?
+   
+   [Informational text...]
+   ```
+
+3. **Mixed Format**:
+   ```
+   [Informational text...]
+   
+   Multiple Choice:
+   1. [Question with A, B, C, D]
+   2. [Question with A, B, C, D]
+   
+   Short Answer:
+   1. Explain the relationship between...
+   ```
+
+OUTPUT REQUIREMENTS:
+
+Return a structured response:
+1. has_children: true if quizzes/questions found, false otherwise
+2. children: List of extracted components, each with:
+   - type: "quiz" (if 3+ questions) or "question" (if standalone)
+   - extracted_content: Complete quiz or question text (VERBATIM from original)
+   - description: Brief description
+
+If the content is ONLY a reading passage with no questions/quizzes, return has_children: false.
+
