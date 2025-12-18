@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools >= 77.0.3", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "onnx2akida"
+dynamic = ["version"]
+description = "Evaluates the compatibility of an ONNX model with Akida."
+readme = "README"
+authors = [{ name = 'Brainchip' }]
+maintainers = [{name = "Johan Mejia", email = "jmejia@brainchip.com"}]
+dependencies = [
+    "setuptools>=77.0.3", "packaging>=24.2", "setuptools_scm",
+    "cnn2snn~=2.18.1", "tqdm"
+]
+requires-python = ">= 3.10"
+license = "Apache-2.0"
+
+[project.scripts]
+onnx2akida = "onnx2akida.cli:main"
+onnx2akida-device = "onnx2akida.cli:summary"
+
+[project.urls]
+Documentation = "https://doc.brainchipinc.com"
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-console-scripts"]
+
+[tool.pytest.ini_options]
+addopts = "-m 'not nightly'"
+markers = [
+    "nightly: tests that will be run only at night periodically",
+    "num_nodes: mark used in hw tests to query a specific device"
+]
