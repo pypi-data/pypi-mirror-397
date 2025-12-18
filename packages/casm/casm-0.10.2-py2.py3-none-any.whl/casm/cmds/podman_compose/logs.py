@@ -1,0 +1,33 @@
+# coding:utf-8
+
+from logging import DEBUG
+from typing import List
+
+from xkits_command import ArgParser
+from xkits_command import Command
+from xkits_command import CommandArgument
+from xkits_command import CommandExecutor
+
+from casm.cmds.podman_compose.service import add_pos_services
+from casm.cmds.podman_compose.service import filter_services
+from casm.utils.assemble import assemble_file
+from casm.utils.podman_compose import podman_compose_cmd
+
+
+@CommandArgument("logs", help="Show logs from containers")
+def add_cmd_logs(_arg: ArgParser):
+    _arg.add_opt_on("--follow", help="Follow log output, default is false")
+    _arg.add_argument("--tail", type=int, nargs=1, metavar="LINES",
+                      help="Number of lines from the end for each container")
+    add_pos_services(_arg)
+
+
+@CommandExecutor(add_cmd_logs)
+def run_cmd_logs(cmds: Command) -> int:
+    debug_mode: bool = cmds.logger.level <= DEBUG
+    assemble: assemble_file = cmds.args.assemble_file
+    assert isinstance(assemble, assemble_file), f"TypeError: {type(assemble)}"
+    pcommand: podman_compose_cmd = podman_compose_cmd(assemble.template_file, debug=debug_mode)  # noqa:E501
+    services: List[str] = filter_services(assemble, cmds.args.services)
+    tail = cmds.args.tail[0] if isinstance(cmds.args.tail, list) else None
+    return pcommand.logs(services, follow=cmds.args.follow, tail=tail)
