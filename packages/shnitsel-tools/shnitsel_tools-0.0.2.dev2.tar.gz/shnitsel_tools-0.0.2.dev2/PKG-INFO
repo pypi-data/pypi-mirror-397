@@ -1,0 +1,250 @@
+Metadata-Version: 2.4
+Name: shnitsel-tools
+Version: 0.0.2.dev2
+Summary: Collect, manage, process, analyse & visualize surface hopping data
+Author-email: Theodor Everley Röhrkasten <theodor.roehrkasten@fau.de>, Kevin Höllring <kevin.hoellring@fau.de>, Carolin Müller <carolin.cpc.mueller@fau.de>
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: scipy>=1.16
+Requires-Dist: matplotlib>=3.10
+Requires-Dist: xarray>=2025.7.1
+Requires-Dist: rdkit>=2025
+Requires-Dist: ase>=3
+Requires-Dist: numpy>=2.3
+Requires-Dist: pandas>=2.2
+Requires-Dist: h5netcdf>=1.7.0
+Requires-Dist: scikit-learn>=1.5
+Requires-Dist: jupyter>=1.0.0
+Requires-Dist: py3dmol>=2.0.4
+Requires-Dist: tqdm>=4.66.2
+Requires-Dist: pyparsing>=3.2.5
+Requires-Dist: fsspec
+Requires-Dist: requests
+Requires-Dist: aiohttp
+Provides-Extra: vis
+Requires-Dist: bokeh>=3.5; extra == "vis"
+Requires-Dist: datashader; extra == "vis"
+Requires-Dist: seaborn; extra == "vis"
+Provides-Extra: dev
+Requires-Dist: pytest>=5.2; extra == "dev"
+Requires-Dist: pytest-cov>=4.1.0; extra == "dev"
+Requires-Dist: hypothesis>=6; extra == "dev"
+Requires-Dist: tox>=4.10.0; extra == "dev"
+Requires-Dist: tox-uv>=1.29.0; extra == "dev"
+Requires-Dist: pre-commit>=2.20.0; extra == "dev"
+Requires-Dist: ruff==0.4.1; extra == "dev"
+Requires-Dist: mypy>=1.9.0; extra == "dev"
+Requires-Dist: pandas-stubs; extra == "dev"
+Requires-Dist: scipy-stubs; extra == "dev"
+Requires-Dist: types-tqdm; extra == "dev"
+Requires-Dist: build; extra == "dev"
+Requires-Dist: grayskull; extra == "dev"
+Requires-Dist: sphinx; extra == "dev"
+Requires-Dist: sphinx-autobuild; extra == "dev"
+Requires-Dist: sphinx-autosummary-accessors; extra == "dev"
+Requires-Dist: nbsphinx; extra == "dev"
+Requires-Dist: sphinx-design; extra == "dev"
+Requires-Dist: sphinx-autoapi; extra == "dev"
+Dynamic: license-file
+
+<div align="center">
+  <h1>shnitsel-tools</h1>
+  <img src="https://raw.githubusercontent.com/SHNITSEL/shnitsel-tools/main/logo_shnitsel_tools.png" alt="SHNITSEL-TOOLS Logo" width="200px">
+  <h3>Surface Hopping Nested Instances Training Set for Excited-state Learning Tools</h3>
+  <br>
+  <a href="https://shnitsel.github.io/"><img src="https://img.shields.io/badge/Website-shnitsel.github.io-yellow.svg" alt="DOI"></a>
+  &nbsp;&nbsp;&nbsp;
+  <a href="https://shnitsel.github.io/tools/docs/_build/index.html"><img src="https://img.shields.io/badge/Docs-shnitsel.github.io-yellow.svg" alt="DOI"></a>
+</div>
+
+--------------------
+
+## About
+
+`shnitsel-tools` is designed to to support the entire data lifecycle of surface hopping (SH) trajectory data upon simulation: data managment, storage, processing, visualization and interpretation. 
+The tool is compatible with surface hopping data generated using the software packages [SHARC 3/4](https://sharc-md.org/), [Newton-X](https://newtonx.org/), and [PyRAI2MD](https://github.com/lopez-lab/PyRAI2MD).
+The package leverages [Xarray](https://xarray.dev/) to benefit from efficient multidimensional data handling, improved metadata management, and a structure that aligns naturally with the needs of quantum chemical datasets.
+
+## Installation
+
+`shnitsel-tools` is normally used interactively via Jupyter Notebook on a local machine.
+However, some users might find it convenient to convert trajectories to NetCDF
+on-cluster, as the NetCDF file will likely download faster than the raw text files.
+Either way the following should work as usual, ideally in a fresh virtual (e.g. `conda`) environment:
+
+<!-- TODO: remove --pre once full release out -->
+  ```bash
+  pip install shnitsel-tools[vis]
+  ```
+
+For more detailed installation instructions, see [here](#detailed-installation-instructions)
+
+## Usage
+
+For documentation including an API reference, please see https://shnitsel.github.io/tools/docs/_build/index.html.
+
+`shnitsel-tools` mostly exposes data as Xarray (`xr`) objects, so familiarity with that library is beneficial.
+Xarray is somewhat like Pandas for higher-dimensional data, or like Numpy with labels and other metadata.
+- [Overview of data structures](https://tutorial.xarray.dev/intermediate/datastructures-intermediate.html)
+- [Official quick overview](https://docs.xarray.dev/en/stable/getting-started-guide/quick-overview.html)
+- [Xarray in 45 minutes](https://tutorial.xarray.dev/overview/xarray-in-45-min.html) for a more detailed introduction
+
+### Tutorials
+For a quick start, see the [tutorials](https://github.com/SHNITSEL/shnitsel-tools/blob/main/tutorials) directory,
+which contains Jupyter Notebooks showing the workflow for parsing, writing and loading SHNITSEL databases as well as how to postprocess and visualize the respective data.
+
+<!--
+TODO: Adapt to new tutorials!
+#### Collection & storage
+- [parsing trajcetory and initial condition data obtained by SHARC](https://github.com/SHNITSEL/shnitsel-tools/blob/main/tutorials/0_1_sharc2hdf5.ipynb)
+- [parsing trajectory data produced with Newton-X](https://github.com/SHNITSEL/shnitsel-tools/blob/main/tutorials/0_2_nx2hdf5.ipynb)
+- [convert ASE databases](https://github.com/SHNITSEL/shnitsel-tools/blob/main/tutorials/0_4_ase2hdf5.ipynb)
+#### Management
+- [exploration of electronic properties](https://github.com/SHNITSEL/shnitsel-tools/blob/main/tutorials/2_2_PS_explore.ipynb)
+#### Postprocessing & visualization of data
+- [datasheet for trajectory data](https://github.com/SHNITSEL/shnitsel-tools/blob/main/tutorials/3_1_datasheet.ipynb)
+- [principal component analysis and trajectory classification](https://github.com/SHNITSEL/shnitsel-tools/blob/main/tutorials/1_1_GS_PCA.ipynb)
+
+### Workflow walkthrough
+Four [notebooks](https://github.com/SHNITSEL/shnitsel-tools/tree/main/tutorials/walkthrough) demonstrate a workflow for the comparative
+analysis of homologous/isoelectronic molecules, from filtration via dimensional reduction and clustering to kinetics.
+
+## Tree
+
+```bash
+# TODO: regenerate directory tree
+```
+-->
+
+## Detailed installation instructions
+
+### Optional dependencies
+In the following, the `[vis]` suffix causes optional plotting dependencies to be
+installed. If you are using `shnitsel-tools` on an HPC, you can omit it.
+
+If you would like to contribute to `shnitsel-tools`, you may find the development
+dependencies useful. These can be obtained by adding `[dev]` at the end of the
+package name.
+
+To install all optional dependencies, please add `[vis,dev]` after the package name.
+
+### Using conda
+Before anything else, please run:
+```bash
+conda create -n shnitsel python==3.12 pip
+conda activate shnitsel
+```
+
+#### For tutorials or development
+If you would like to work through the tutorials, please use the following commands
+while the conda environment is active:
+<!-- TODO: remove git-switch command once full release version comes out -->
+```bash
+git clone 'https://github.com/SHNITSEL/shnitsel-tools.git'
+cd shnitsel-tools
+git switch develop
+pip install .[vis]
+```
+
+If you would like changes you make to the code in the `shnitsel-tools` directory
+to be reflected in your environment, please add the `-e` flag ("editable mode") to the
+final line of the above block:
+```bash
+# Same commands as before, and then:
+pip install -e .[vis]  # or .[vis,dev] to include development tools
+```
+
+#### For ordinary use
+If you would just like to use the package, it is unnecessary to clone the repository.
+Instead, it should suffice to run the following command with the conda environment active:
+
+<!-- TODO: remove --pre once full release version comes out -->
+```bash
+pip install --pre shnitsel-tools[vis]
+```
+
+### Using uv
+
+This tool, available at  https://docs.astral.sh/uv/, is typically faster and
+more light-weight than `pip` and `conda`.
+Unlike `conda`, it creates traditional Python virtual environments, which are
+stored in the folder in which the command is run and activated by sourcing
+a shell-script.
+
+```bash
+git clone 'https://github.com/SHNITSEL/shnitsel-tools.git'
+cd shnitsel-tools
+
+uv pip install -e .[dev]  # install shnitsel in editable mode
+```
+
+#### For tutorials or development
+If you would like to work through the tutorials, please use the following commands:
+<!-- TODO: remove git-switch command once full release version comes out -->
+```bash
+git clone 'https://github.com/SHNITSEL/shnitsel-tools.git'
+cd shnitsel-tools
+git switch develop
+uv venv --python 3.12  # create an environment under ./.venv
+source .venv/bin/activate  # activate the new environment
+uv pip install .[vis]
+```
+
+If you would like changes you make to the code in the `shnitsel-tools` directory
+to be reflected in your environment, please add the `-e` flag ("editable mode") to the
+final line of the above block:
+```bash
+# Same commands as before, and then:
+uv pip install -e .[vis]  # or .[vis,dev] to include development tools
+```
+
+#### For command-line only use
+The following will ensure the command-line programs provided are always available,
+without requiring environments to be activated first.
+```bash
+uv tool install --pre shnitsel-tools
+```
+
+#### For ordinary use
+If you would just like to use the package, it is unnecessary to clone the repository.
+Instead, it should suffice to run the following commands:
+
+<!-- TODO: remove --pre once full release version comes out -->
+```bash
+uv venv --python 3.12 shnitsel  # creates a directory here called ./shnitsel
+source shnitsel/bin/activate  # activate the new environment
+uv pip install --pre shnitsel-tools[vis]
+```
+
+<!--
+### For developers
+  
+  We recommend installation using the `uv` tool, available at https://docs.astral.sh/uv/.
+  Please clone this repo and run the following in the `shnitsel-tools` directory:
+
+  ```bash
+  git clone 'https://github.com/SHNITSEL/shnitsel-tools.git'
+  cd shnitsel-tools
+  uv venv  # create an environment under ./.venv
+  source .venv/bin/activate  # activate the new environment
+  uv pip install -e .[dev]  # install shnitsel in editable mode
+  ```
+
+  In the above, the option `-e` installs in editable mode, meaning that Python will see changes you make
+  to the source, while `[dev]` installs the optional development dependencies.  
+
+  If you would like to contribute your changes,
+  please [fork](https://github.com/SHNITSEL/shnitsel-tools/fork) this repo,
+  and make a pull request.
+
+-->
+
+## Further Information
+
+[![Website](https://img.shields.io/badge/Website-shnitsel.github.io-yellow.svg)](https://shnitsel.github.io/)
+
+
