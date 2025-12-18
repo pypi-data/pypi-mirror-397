@@ -1,0 +1,64 @@
+[project]
+name = "mumble-authenticator-templinks"
+version = "2.0.8"
+description = "AllianceAuth Authenticator for Mumble server with support for templinks"
+authors = [
+  { name = "Aaron Kable", email = "aaronkable@gmail.com" },
+  { name = "Adarnof", email = "adarnof@gmail.com" },
+  { name = "Ariel Rin", email = "ozirascal@gmail.com" },
+  { name = "Basraah", email = "basraaheve@gmail.com" },
+  { name = "Boris Talovikov", email = "boris@talovikov.ru" },
+  { name = "Eingang", email = "eingang.vulpine@gmail.com" },
+  { name = "Peter Pfeufer", email = "info@ppfeufer.de" },
+  { name = "Stefan Hacker", email = "dd0t@users.sourceforge.net" },
+]
+requires-python = ">=3.12,<3.13"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+keywords = ["eveonline", "allianceauth", "authenticator", "mumble", "templinks"]
+dependencies = [
+  "zeroc-ice (>=3.7.10.1,<3.8)",
+  "pyyaml (>=6.0.2,<7.0.0)",
+  "passlib[bcrypt] (>=1.7.4,<2.0.0)",
+  "pymysql (>=1.1.1,<2.0.0)",
+  "diskcache (>=5.6.3,<6.0.0)",
+  "eveo7-mumbleserver-ice (>=0.0.4,<0.1.0)",
+  "prometheus-client (>=0.22.1,<0.23.0)",
+  "bcrypt<5",
+]
+
+[project.urls]
+homepage = "https://gitlab.com/eveo7/mumble-authenticator-templinks"
+
+[project.scripts]
+authenticator = "mumble_authenticator_templinks.main:main"
+
+[dependency-groups]
+dev = ["pytest>=8.3.3,<9", "pre-commit>=3.8.0,<4"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.black]
+line-length = 98
+target-version = ['py312']
+
+[tool.flake8]
+max-line-length = 98
+max-complexity = 10
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.isort]
+profile = "black"
+line_length = 98
+multi_line_output = 3
+include_trailing_comma = true
+
+[tool.pyright]
+venv = ".venv"
+venvPath = "."

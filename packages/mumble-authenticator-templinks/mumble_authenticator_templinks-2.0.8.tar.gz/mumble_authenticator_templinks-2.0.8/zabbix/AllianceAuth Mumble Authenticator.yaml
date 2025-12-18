@@ -1,0 +1,677 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: a571c0d144b14fd4a87a9d9b2aa9fcd6
+      name: Templates/Applications
+  templates:
+    - uuid: 90fa89e3823d4c9ebedf38c357b47206
+      template: 'AllianceAuth Mumble Authenticator'
+      name: 'AA Mumble Authenticator'
+      groups:
+        - name: Templates/Applications
+      items:
+        - uuid: 672b54bc70ac40099796901731cca717
+          name: 'Number of failed moves of users to AFK channel'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.afk_users_moved_failure_total
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - afk_users_moved_failure_total
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+          triggers:
+            - uuid: bad0b653f06e4902a36b8622f99d8fda
+              expression: 'rate(/AllianceAuth Mumble Authenticator/aa_mumble_authenticator.afk_users_moved_failure_total,{$AA_MUMBLE_AUTHENTICATOR_RATE_ALARM})>0'
+              name: 'Failed to move inactive user to AFK channel'
+              priority: AVERAGE
+        - uuid: 66125d7b96f6477dbbaa5cd3b61d2427
+          name: 'Number of successful moves of users to AFK channel'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.afk_users_moved_success_total
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - afk_users_moved_success_total
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: 6fdd10ed4f9a4aad81ce2bd026582bdd
+          name: 'Time spent processing AFK users (avg)'
+          type: CALCULATED
+          key: aa_mumble_authenticator.afk_users_process_latency_avg
+          delay: '{$AA_MUMBLE_AUTHENTICATOR_CHECK_INTERVAL}'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          value_type: FLOAT
+          units: s
+          params: last(//aa_mumble_authenticator.afk_users_process_latency_sum)/last(//aa_mumble_authenticator.afk_users_process_latency_count)
+        - uuid: 068f183eea754359a506ff8214742aae
+          name: 'Time spent processing AFK users (measurement number)'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.afk_users_process_latency_count
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - afk_users_process_latency_count
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: ad63f337fe214e6a8ade1f911165bbae
+          name: 'Time spent processing AFK users (sum)'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.afk_users_process_latency_sum
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          value_type: FLOAT
+          units: s
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - afk_users_process_latency_sum
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: 93e4892f046d4002a2c3abc3a79be009
+          name: 'Number of cache hits for avatar'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.avatar_cache_hit_total
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - avatar_cache_hit_total
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: a4600c8fc3914e60a5de31b5bfeaf4aa
+          name: 'Number of cache misses for avatar'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.avatar_cache_miss_total
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - avatar_cache_miss_total
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: 2203976fc08f40aaafe2f8c68e66b789
+          name: 'Number of times stale cache was used for avatar'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.avatar_cache_stale_total
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - avatar_cache_stale_total
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+          triggers:
+            - uuid: 06fad84a29034fc8a524bb58ddb1c070
+              expression: 'rate(/AllianceAuth Mumble Authenticator/aa_mumble_authenticator.avatar_cache_stale_total,{$AA_MUMBLE_AUTHENTICATOR_RATE_ALARM})>0'
+              name: 'Stale cache used for avatars'
+              priority: AVERAGE
+        - uuid: ba2c0bbff56746b4824b5766b0ebcd5f
+          name: 'Time spent downloading avatar (avg)'
+          type: CALCULATED
+          key: aa_mumble_authenticator.avatar_download_time_avg
+          delay: '{$AA_MUMBLE_AUTHENTICATOR_CHECK_INTERVAL}'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          value_type: FLOAT
+          units: s
+          params: last(//aa_mumble_authenticator.avatar_download_time_sum)/last(//aa_mumble_authenticator.avatar_download_time_count)
+        - uuid: 883bf1e952fe4676a94317ef8fd8c8f8
+          name: 'Time spent downloading avatar (measurement number)'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.avatar_download_time_count
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - avatar_download_time_count
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: 0b6bde97aa6645929035524183883b29
+          name: 'Time spent downloading avatar (sum)'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.avatar_download_time_sum
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          value_type: FLOAT
+          units: s
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - avatar_download_time_sum
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: fb5b9bc1791043c0b0fa55308e544695
+          name: 'Number of cache hits for SELECT queries'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.db_cache_select_hit_total
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - db_cache_select_hit_total
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: eb97946744f14852ab77a865bcc191d2
+          name: 'Number of cache misses for SELECT queries'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.db_cache_select_miss_total
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - db_cache_select_miss_total
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: 14be563b3a124c218983a0f86447a944
+          name: 'Number of times stale cache was used for SELECT queries'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.db_cache_select_stale_total
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - db_cache_select_stale_total
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+          triggers:
+            - uuid: d82326cba4b9461398101aa13b199fe9
+              expression: 'rate(/AllianceAuth Mumble Authenticator/aa_mumble_authenticator.db_cache_select_stale_total,{$AA_MUMBLE_AUTHENTICATOR_RATE_ALARM})>0'
+              name: 'Stale cache used for SELECT queries'
+              priority: AVERAGE
+        - uuid: 525dd409b3284a0f834a2987005d9b2c
+          name: 'Number of failed connections to the database'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.db_connection_failure_total
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - db_connection_failure_total
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+          triggers:
+            - uuid: 65b6f67304654dbe9550aa0709b46599
+              expression: 'rate(/AllianceAuth Mumble Authenticator/aa_mumble_authenticator.db_connection_failure_total,{$AA_MUMBLE_AUTHENTICATOR_RATE_ALARM})>0'
+              name: 'Database connection failure'
+              priority: AVERAGE
+        - uuid: 855a1a71c859484cbeaca57cf6895372
+          name: 'Number of successful connections to the database'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.db_connection_success_total
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - db_connection_success_total
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: bd747103b1b3427fa2333e70e0a51b3f
+          name: 'Number of connection errors when reusing an existing connection'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.db_pool_connection_error_total
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - db_pool_connection_error_total
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+          triggers:
+            - uuid: 5744cb5903c645a3ab733f1ac2c70168
+              expression: 'rate(/AllianceAuth Mumble Authenticator/aa_mumble_authenticator.db_pool_connection_error_total,{$AA_MUMBLE_AUTHENTICATOR_RATE_ALARM})>0'
+              name: 'Connection pool: errors when reusing an existing connection'
+              priority: AVERAGE
+        - uuid: b0c947ab780a4d28879cbb488a195f3c
+          name: 'Number of new connections created'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.db_pool_connection_new_total
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - db_pool_connection_new_total
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: 9f16330db1914bde9a7a0a9be4848c8a
+          name: 'Number of successful reuses of existing connections from the pool'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.db_pool_connection_reuse_total
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - db_pool_connection_reuse_total
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: 91a91070fb954c24b510ca7a0649e668
+          name: 'Maximum size of the connection pool'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.db_pool_max_size
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - db_pool_max_size
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: 229444ac702d4bc09f0de6596b596f37
+          name: 'Current size of the connection pool'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.db_pool_size
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - db_pool_size
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: db2adaf5c6c44d298b9fa5cea0e64128
+          name: 'Connection pool utilisation'
+          type: CALCULATED
+          key: aa_mumble_authenticator.db_pool_util
+          delay: '{$AA_MUMBLE_AUTHENTICATOR_CHECK_INTERVAL}'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          value_type: FLOAT
+          units: '%'
+          params: '100*last(//aa_mumble_authenticator.db_pool_size)/last(//aa_mumble_authenticator.db_pool_max_size)'
+          triggers:
+            - uuid: 0da95792e0a14002903fc7cdeecc6f19
+              expression: 'last(/AllianceAuth Mumble Authenticator/aa_mumble_authenticator.db_pool_util)>={$AA_MUMBLE_AUTHENTICATOR_DB_POOL_SIZE_ALARM}'
+              name: 'Connection pool about to be exhausted'
+              priority: WARNING
+        - uuid: ca08d9f89bb84650a460a8e6c1dbac6a
+          name: 'Number of failed queries'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.db_query_failure_total
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - db_query_failure_total
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+          triggers:
+            - uuid: d7cc6066492a44b19e0211f994bc989c
+              expression: 'rate(/AllianceAuth Mumble Authenticator/aa_mumble_authenticator.db_query_failure_total,{$AA_MUMBLE_AUTHENTICATOR_RATE_ALARM})>0'
+              name: 'Database query failure'
+              priority: AVERAGE
+        - uuid: ef5401000cf648a48e366fe19b27d19a
+          name: 'Latency of queries (avg)'
+          type: CALCULATED
+          key: aa_mumble_authenticator.db_query_latency_avg
+          delay: '{$AA_MUMBLE_AUTHENTICATOR_CHECK_INTERVAL}'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          value_type: FLOAT
+          units: s
+          params: last(//aa_mumble_authenticator.db_query_latency_sum)/last(//aa_mumble_authenticator.db_query_latency_count)
+        - uuid: b1f9ab12234c47b8b5a168119ebbc1cb
+          name: 'Latency of queries (measurement number)'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.db_query_latency_count
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - db_query_latency_count
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: 57ef5bb300b0482d94fef82c955ac55a
+          name: 'Latency of queries (sum)'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.db_query_latency_sum
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          value_type: FLOAT
+          units: s
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - db_query_latency_sum
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: 34c8cc9b56be4da3bc989b3438602f1c
+          name: 'Number of successful queries'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.db_query_success_total
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - db_query_success_total
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: 136f7d4d4cd24edbb4974fc55a5cd68e
+          name: 'Healthcheck for ICE server'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.ice_healthcheck
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          value_type: CHAR
+          trends: '0'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - 'ice_healthcheck{ice_healthcheck=~".+"}==1'
+                - label
+                - ice_healthcheck
+          master_item:
+            key: aa_mumble_authenticator_metrics
+          triggers:
+            - uuid: bd01bf1de0ec4ef3ab6e4c39ceb47332
+              expression: 'last(/AllianceAuth Mumble Authenticator/aa_mumble_authenticator.ice_healthcheck)="disabled"'
+              name: 'ICE server health check disabled'
+              priority: INFO
+              manual_close: 'YES'
+            - uuid: 373189e5708245a5aae2697e8642ade2
+              expression: 'last(/AllianceAuth Mumble Authenticator/aa_mumble_authenticator.ice_healthcheck)="unknown"'
+              name: 'ICE server is in an unknown status'
+              manual_close: 'YES'
+            - uuid: d2fcd77c20e5418facd1ae2f3133dedb
+              expression: 'last(/AllianceAuth Mumble Authenticator/aa_mumble_authenticator.ice_healthcheck)="unhealthy"'
+              name: 'ICE server is unhealthy'
+              priority: AVERAGE
+        - uuid: a9ae428fc87d4c5a8bf0cf0d5ca9371a
+          name: 'Total user and system CPU time spent'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.process_cpu_seconds_total
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          value_type: FLOAT
+          units: s
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - process_cpu_seconds_total
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: 1af0fdbd89974a619e6149207e82f30d
+          name: 'File descriptors utilisation'
+          type: CALCULATED
+          key: aa_mumble_authenticator.process_fds_util
+          delay: '{$AA_MUMBLE_AUTHENTICATOR_CHECK_INTERVAL}'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          value_type: FLOAT
+          units: '%'
+          params: '100*last(//aa_mumble_authenticator.process_open_fds)/last(//aa_mumble_authenticator.process_max_fds)'
+          triggers:
+            - uuid: 0124b5fcce0b438093686d977ca6d18b
+              expression: 'last(/AllianceAuth Mumble Authenticator/aa_mumble_authenticator.process_fds_util)>={$AA_MUMBLE_AUTHENTICATOR_PROCESS_FDS_ALARM}'
+              name: 'Too many file descriptors are being used'
+              priority: WARNING
+        - uuid: e43b0936014546c396e49e6d26de7fc1
+          name: 'Maximum number of open file descriptors'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.process_max_fds
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - process_max_fds
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: c1597f74e985418db0e0c4ac8fed9dc0
+          name: 'Number of open file descriptors'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.process_open_fds
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - process_open_fds
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: 9106b6d09f554e5faa39ca543c7312a5
+          name: 'Resident memory size'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.process_resident_memory_bytes
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          units: bytes
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - process_resident_memory_bytes
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: 1b9e644fbca445e283e8e55ca2417d9c
+          name: 'Start time of the process since unix epoch'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.process_start_time_seconds
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          units: s
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - process_start_time_seconds
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: b3a3555176714a74a3fe9c12af85e070
+          name: 'Virtual memory size'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.process_virtual_memory_bytes
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          units: bytes
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - process_virtual_memory_bytes
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: d86d7aeace0c49a2bd4f02606f28e8e5
+          name: 'Time taken to authenticate users (avg)'
+          type: CALCULATED
+          key: aa_mumble_authenticator.user_authentication_latency_avg
+          delay: '{$AA_MUMBLE_AUTHENTICATOR_CHECK_INTERVAL}'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          value_type: FLOAT
+          units: s
+          params: last(//aa_mumble_authenticator.user_authentication_latency_sum)/last(//aa_mumble_authenticator.user_authentication_latency_count)
+        - uuid: 50d269d48a84461f947e3a1bfe05839f
+          name: 'Time taken to authenticate users (measurement number)'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.user_authentication_latency_count
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - user_authentication_latency_count
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: 5d20973ea45a4da4b09a518ca21a848b
+          name: 'Time taken to authenticate users (sum)'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.user_authentication_latency_sum
+          delay: '0'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          value_type: FLOAT
+          units: s
+          preprocessing:
+            - type: PROMETHEUS_PATTERN
+              parameters:
+                - user_authentication_latency_sum
+                - value
+                - ''
+          master_item:
+            key: aa_mumble_authenticator_metrics
+        - uuid: 06fe037290d14721b9d042502d21f530
+          name: 'AA Mumble Authenticator Metrics'
+          type: HTTP_AGENT
+          key: aa_mumble_authenticator_metrics
+          delay: '{$AA_MUMBLE_AUTHENTICATOR_CHECK_INTERVAL}'
+          history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY_RAW}'
+          value_type: TEXT
+          trends: '0'
+          authtype: BASIC
+          username: '{$AA_MUMBLE_AUTHENTICATOR_USER}'
+          password: '{$AA_MUMBLE_AUTHENTICATOR_PASSWORD}'
+          url: '{$AA_MUMBLE_AUTHENTICATOR_METRICS_URL}'
+      discovery_rules:
+        - uuid: 8d01193f7adc40e88c088a0b5cb24bbb
+          name: 'User Discovery'
+          type: DEPENDENT
+          key: aa_mumble_authenticator.user_discovery
+          delay: '0'
+          item_prototypes:
+            - uuid: 0a25ebbde16e47eb95bfba346cf471e0
+              name: 'User status {#AA_MUMBLE_AUTHENTICATOR_USER}'
+              type: DEPENDENT
+              key: 'aa_mumble_authenticator.user.status[{#AA_MUMBLE_AUTHENTICATOR_USER}]'
+              delay: '0'
+              history: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+              value_type: CHAR
+              trends: '0'
+              description: '{#AA_MUMBLE_AUTHENTICATOR_USER_HELP}'
+              preprocessing:
+                - type: PROMETHEUS_PATTERN
+                  parameters:
+                    - '{#AA_MUMBLE_AUTHENTICATOR_USER_METRIC}{{#AA_MUMBLE_AUTHENTICATOR_USER_METRIC}=~".+?",username="{#AA_MUMBLE_AUTHENTICATOR_USER}"}==1'
+                    - label
+                    - '{#AA_MUMBLE_AUTHENTICATOR_USER_METRIC}'
+              master_item:
+                key: aa_mumble_authenticator_metrics
+              trigger_prototypes:
+                - uuid: 19c27b2501a3461d8861d6359507ad28
+                  expression: 'last(/AllianceAuth Mumble Authenticator/aa_mumble_authenticator.user.status[{#AA_MUMBLE_AUTHENTICATOR_USER}])="failure"'
+                  name: 'User {#AA_MUMBLE_AUTHENTICATOR_USER}: authentication failures'
+                  priority: WARNING
+                  manual_close: 'YES'
+                - uuid: 4d4b7b80f9354a368d2526ec72923dc3
+                  expression: 'last(/AllianceAuth Mumble Authenticator/aa_mumble_authenticator.user.status[{#AA_MUMBLE_AUTHENTICATOR_USER}])="temporarily"'
+                  name: 'User {#AA_MUMBLE_AUTHENTICATOR_USER}: authentication failures where the data could (temporarily)'
+                  priority: WARNING
+                  manual_close: 'YES'
+                - uuid: 4374764b018d49ed963bcdcacb619038
+                  expression: 'last(/AllianceAuth Mumble Authenticator/aa_mumble_authenticator.user.status[{#AA_MUMBLE_AUTHENTICATOR_USER}])="fallthrough"'
+                  name: 'User {#AA_MUMBLE_AUTHENTICATOR_USER}: unknown user (fallthrough)'
+                  priority: WARNING
+                  manual_close: 'YES'
+          master_item:
+            key: aa_mumble_authenticator_metrics
+          lld_macro_paths:
+            - lld_macro: '{#AA_MUMBLE_AUTHENTICATOR_USER_HELP}'
+              path: '$[''help'']'
+            - lld_macro: '{#AA_MUMBLE_AUTHENTICATOR_USER_METRIC}'
+              path: '$[''name'']'
+            - lld_macro: '{#AA_MUMBLE_AUTHENTICATOR_USER}'
+              path: '$.labels[''username'']'
+          preprocessing:
+            - type: PROMETHEUS_TO_JSON
+              parameters:
+                - 'user_authentication_state{user_authentication_state=~".+?",username=~".+?"}==1'
+      macros:
+        - macro: '{$AA_MUMBLE_AUTHENTICATOR_CHECK_INTERVAL}'
+          value: 5m
+          description: 'Data check interval'
+        - macro: '{$AA_MUMBLE_AUTHENTICATOR_DB_POOL_SIZE_ALARM}'
+          value: '90'
+          description: 'Threshold for database pool size alarm, %'
+        - macro: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY}'
+          value: 31d
+          description: 'Data history retention period'
+        - macro: '{$AA_MUMBLE_AUTHENTICATOR_HISTORY_RAW}'
+          value: 1h
+          description: 'Raw data retention period'
+        - macro: '{$AA_MUMBLE_AUTHENTICATOR_METRICS_URL}'
+          description: 'URL for metrics collection (required)'
+        - macro: '{$AA_MUMBLE_AUTHENTICATOR_PASSWORD}'
+          type: SECRET_TEXT
+          description: 'HTTP basic auth password (required)'
+        - macro: '{$AA_MUMBLE_AUTHENTICATOR_PROCESS_FDS_ALARM}'
+          value: '80'
+          description: 'Threshold for file descriptor alarm, %'
+        - macro: '{$AA_MUMBLE_AUTHENTICATOR_RATE_ALARM}'
+          value: '600'
+          description: 'Time window for rate calculation'
+        - macro: '{$AA_MUMBLE_AUTHENTICATOR_RESTART_ALARM}'
+          value: '600'
+          description: 'Program restart alert window'
+        - macro: '{$AA_MUMBLE_AUTHENTICATOR_USER}'
+          description: 'HTTP basic auth username (required)'

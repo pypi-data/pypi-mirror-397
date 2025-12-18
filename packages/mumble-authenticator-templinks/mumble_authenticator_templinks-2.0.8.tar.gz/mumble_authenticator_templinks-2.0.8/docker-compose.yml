@@ -1,0 +1,27 @@
+services:
+  mumble_authenticator_templinks:
+    build: .
+    image: mumble_authenticator_templinks
+    container_name: mumble_authenticator_templinks
+    restart: always
+    environment:
+      MA__DATABASE__NAME: ${DB_NAME}
+      MA__DATABASE__USER: ${DB_USER}
+      MA__DATABASE__PASSWORD: ${DB_PASSWORD}
+      MA__DATABASE__HOST: ${DB_HOST}
+      MA__DATABASE__PORT: ${DB_PORT}
+      MA__ICE_SERVER__HOST: ${ICE_SERVER_HOST}
+      MA__ICE_SERVER__SECRET: ${ICE_SERVER_SECRET}
+      # Attention! In the container,
+      # be sure to set this parameter exactly like this
+      # MA__ICE_CLIENT__BIND_ADDRESS: 0.0.0.0
+      # See Dockerfile
+      MA__AVATAR__ENABLE: true
+      MA__IDLEHANDLER__ENABLED: true
+      MA__LOG__LEVEL: debug
+    # I do not recommend using it in this mode.
+    # If you still plan to use this mode,
+    # set the MA__ICE_CLIENT__BIND_ADDRESS parameter to 127.0.0.1!
+    network_mode: host
+    volumes:
+      - ./data:/data

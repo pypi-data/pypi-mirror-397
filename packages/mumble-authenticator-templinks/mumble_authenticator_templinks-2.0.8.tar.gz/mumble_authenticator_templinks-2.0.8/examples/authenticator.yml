@@ -1,0 +1,111 @@
+# Database configuration. Works with MySQL/Mariadb only
+database:
+  host: 127.0.0.1
+  name: alliance_auth
+  password: password
+  port: 3306
+  prefix: ""
+  user: allianceserver
+  # Maximum number of connections allowed in the pool
+  connection_pool_max_size: 10
+  # Initial number of connections to create in the pool
+  connection_pool_initial_size: 2
+  # Caching of select queries
+  cache_dir: database_cache
+  cache_max_size: 10737418240 # 10GB
+  cache_max_age: 7776000 # 90 days
+  cache_ttl: 5 # do not use values longer than 10 seconds
+
+# Settings to connect to the ICE server
+ice_server:
+  host: 127.0.0.1
+  port: 6502
+  secret: ""
+
+# Callback client customization
+ice_client:
+  bind_address: 127.0.0.1
+  port: 13004
+
+# Health check for the ICE server
+ice_healthcheck:
+  # Do not change this parameter unless
+  # you want to miss a server crash
+  check_interval: 1
+  enabled: true
+
+# Addition properties
+# See https://doc.zeroc.com/ice/latest/properties-and-configuration/properties-overview
+ice_properties:
+  - "Ice.ThreadPool.Server.Size = 5"
+
+# Mumble configuration
+mumble:
+  # List of virtual server IDs
+  servers:
+    - 1
+
+# Logging configuration
+log:
+  # Path to the log file. If null, stdout is used.
+  file: null
+  # Python logging format
+  # See https://docs.python.org/3/library/logging.html#logging.Formatter
+  format: "%(asctime)s %(levelname)s %(module)s %(message)s"
+  level: debug # Available loglevels: debug, info, warning, error
+
+user:
+  # User ID Offset in Mumble.
+  # This offset is doubled for tempusers.
+  # Don't change the value
+  # if you don't understand what the parameter is.
+  id_offset: 1000000000
+  # Reject users if the authenticator experiences
+  # an internal error during authentication
+  reject_on_error: true
+
+# User avatars
+avatar:
+  cache_dir: avatar_cache
+  cache_max_size: 10737418240 # 10Gb
+  cache_max_age: 7776000 # 90 days
+  cache_ttl: 2592000 # 30 days
+  enabled: false # disabled by default
+  # Get EvE avatar images from this location. {character_id} will be filled in.
+  url: https://images.evetech.net/characters/{character_id}/portrait?size=256
+
+# An AFK or Idle handler to move people to a set "AFK" Channel
+idlehandler:
+  # Enable the Feature
+  enabled: false
+  # Channel ID to move Idlers to
+  afk_channel: 0
+  # Interval(Seconds) to run the Idler Handler at
+  check_interval: 600
+  # Mumble idlesecs Threshold (Seconds) until a user is considered Idle
+  idle_timeout: 3600
+  # List of channel IDs that IdleHandler ignores.
+  # !!! Attention !!!
+  # If this list is set, allowlist is ignored!
+  denylist:
+    - 1
+    - 2
+    - 3
+  # Only the channel IDs specified
+  # in the allowlist will be processed by idlehandler
+  allowlist: null
+
+# Prometheus metrics
+prometheus:
+  # Enable Prometheus metrics
+  enabled: False
+  # Metrics port
+  port: 8000
+
+# Unsupported!!! Doesn't work!!!
+glacier:
+  enabled: false
+  host: localhost
+  password: password
+  port: 4063
+  user: allianceserver
