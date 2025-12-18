@@ -1,0 +1,1 @@
+import{j as t}from"./@radix-DGuLZ9Nd.js";function e(n){return String(n).padStart(4,"0")}function s({index:n}){return n==null?null:t.jsxs("span",{className:"text-theme-text-tertiary",children:["#",e(n),"-"]})}function a({name:n,index:r}){return t.jsxs("span",{children:[t.jsx(s,{index:r}),n]})}export{a as R};
