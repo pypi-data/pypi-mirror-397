@@ -1,0 +1,147 @@
+Metadata-Version: 2.4
+Name: pathway-viz
+Version: 0.3.0
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Rust
+Classifier: Topic :: Scientific/Engineering :: Visualization
+Classifier: Topic :: System :: Monitoring
+Requires-Dist: pathway>=0.8 ; python_full_version < '3.14'
+Requires-Dist: kafka-python-ng>=2.0 ; extra == 'kafka'
+Requires-Dist: kafka-python-ng>=2.0 ; extra == 'all'
+Requires-Dist: pytest>=7.0 ; extra == 'dev'
+Requires-Dist: ruff>=0.1 ; extra == 'dev'
+Requires-Dist: maturin>=1.0,<2.0 ; extra == 'dev'
+Provides-Extra: kafka
+Provides-Extra: all
+Provides-Extra: dev
+License-File: LICENSE
+Summary: The visualization layer for Pathway - real-time dashboards for streaming data
+Keywords: streaming,visualization,pathway,kafka,real-time,dashboard
+License: MIT
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown; charset=UTF-8; variant=GFM
+Project-URL: Homepage, https://github.com/mvfolino68/pathway-viz
+Project-URL: Repository, https://github.com/mvfolino68/pathway-viz
+Project-URL: Documentation, https://github.com/mvfolino68/pathway-viz#readme
+Project-URL: Issues, https://github.com/mvfolino68/pathway-viz/issues
+
+# PathwayViz
+
+[![PyPI](https://img.shields.io/pypi/v/pathway-viz)](https://pypi.org/project/pathway-viz/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+Embeddable real-time widgets for [Pathway](https://pathway.com/) streaming pipelines. Rust WebSocket server with a Python API.
+
+![Demo](assets/demo.gif)
+
+## Overview
+
+PathwayViz makes it easy to embed live-updating data from Kafka streams into any web page. Define widgets in Python, embed them via iframe anywhere.
+
+```python
+import pathway as pw
+import pathwayviz as pv
+
+orders = pw.io.kafka.read(...)
+revenue = orders.reduce(revenue=pw.reducers.sum(pw.this.amount))
+
+# Create a widget server
+server = pv.WidgetServer(port=3000)
+server.register(pv.Stat(revenue, "revenue", id="revenue", title="Revenue", unit="$"))
+server.start()
+pw.run()
+```
+
+```html
+<iframe src="http://localhost:3000/embed/revenue"></iframe>
+```
+
+## Install
+
+```bash
+pip install pathway-viz
+```
+
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph Pathway["Pathway Pipeline"]
+        K[Kafka] --> P[Processing]
+        P --> T[Tables]
+    end
+
+    subgraph PathwayViz
+        T -->|subscribe| PY[Python API]
+        PY -->|JSON| RS[Rust Server]
+        RS --> RB[Ring Buffers]
+        RS -->|WebSocket| B[Browser]
+    end
+```
+
+**Key components:**
+
+- **WidgetServer** - Manages widget registration and serves embeddable endpoints
+- **Widget Classes** - `Stat`, `Chart`, `Gauge`, `Table` subscribe to Pathway tables
+- **Rust WebSocket Server** - Tokio async runtime handles concurrent connections without GIL contention
+- **Ring Buffers** - New clients receive historical data immediately without replaying the stream
+
+## Widgets
+
+```python
+server = pv.WidgetServer(port=3000)
+
+# Single value with delta tracking
+server.register(pv.Stat(totals, "revenue", id="revenue", title="Revenue", unit="$"))
+
+# Time series chart
+server.register(pv.Chart(windowed_data, "count", id="orders_chart", x_column="window_end", title="Orders/sec"))
+
+# Circular gauge
+server.register(pv.Gauge(stats, "cpu", id="cpu_gauge", title="CPU", max_val=100, unit="%"))
+
+# Live-updating table
+server.register(pv.Table(by_region, id="regions", title="By Region", columns=["region", "revenue"]))
+
+server.start()
+```
+
+Each widget is accessible at `/embed/{widget_id}`.
+
+## Demo
+
+Requires Docker (spins up Redpanda for Kafka):
+
+```bash
+pip install pathway-viz[kafka]
+pathway-viz demo
+```
+
+Generates fake e-commerce orders and displays live metrics. Includes a portal page demonstrating embedded widgets in a mock storefront.
+
+## Documentation
+
+- [Getting Started](./docs/getting-started.md)
+- [Widgets](./docs/widgets.md)
+- [Embedding](./docs/embedding.md)
+- [Deployment](./docs/deployment.md)
+
+## Roadmap
+
+- [x] Core widgets (stat, chart, gauge, table)
+- [x] Pathway table subscriptions
+- [x] Embed mode with per-widget endpoints
+- [x] Ring buffer history for late-joining clients
+- [ ] Additional chart types
+- [ ] Crash recovery
+
+## License
+
+MIT
+
