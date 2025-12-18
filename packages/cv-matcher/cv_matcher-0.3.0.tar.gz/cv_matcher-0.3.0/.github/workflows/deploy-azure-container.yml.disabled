@@ -1,0 +1,52 @@
+name: Deploy to Azure Container Apps
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  AZURE_CONTAINER_APP_NAME: cv-matcher
+  AZURE_RESOURCE_GROUP: rg-cv-matcher
+  AZURE_CONTAINER_REGISTRY: cvmatchercr
+  IMAGE_NAME: cv-matcher
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Build and push Docker image to ACR
+      run: |
+        az acr build \
+          --registry ${{ env.AZURE_CONTAINER_REGISTRY }} \
+          --image ${{ env.IMAGE_NAME }}:${{ github.sha }} \
+          --image ${{ env.IMAGE_NAME }}:latest \
+          --file Dockerfile .
+    
+    - name: Deploy to Azure Container Apps
+      uses: azure/container-apps-deploy-action@v1
+      with:
+        containerAppName: ${{ env.AZURE_CONTAINER_APP_NAME }}
+        resourceGroup: ${{ env.AZURE_RESOURCE_GROUP }}
+        imageToDeploy: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        targetPort: 7860
+        environmentVariables: |
+          USE_LOCAL_MODEL=false
+          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+    
+    - name: Get Container App URL
+      run: |
+        URL=$(az containerapp show \
+          --name ${{ env.AZURE_CONTAINER_APP_NAME }} \
+          --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+          --query properties.configuration.ingress.fqdn \
+          --output tsv)
+        echo "Container App URL: https://$URL"
