@@ -1,0 +1,1 @@
+import{r as i}from"./VYb2dkNs.js";import{i as n}from"./DkbXUtyG.js";import{c as p}from"./CGY1p9L4.js";const l=({datasetId:e})=>{const o=p(i());return o.subscribe(()=>{}),{removeTagFromSample:(r,a)=>new Promise((m,t)=>{n(o).mutate({path:{dataset_id:e,sample_id:r,tag_id:a}},{onSuccess:()=>m(),onError:s=>t(s)})})}};export{l as u};

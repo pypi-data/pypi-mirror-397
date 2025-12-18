@@ -1,0 +1,1 @@
+import{a as o,u as s,c as r}from"./VYb2dkNs.js";const u=({datasetId:e})=>{const t=o({path:{dataset_id:e}}),a=s();return{rootDataset:r(t),refetch:()=>{a.invalidateQueries({queryKey:t.queryKey})}}};export{u};
