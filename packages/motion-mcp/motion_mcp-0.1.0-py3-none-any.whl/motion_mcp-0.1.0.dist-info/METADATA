@@ -1,0 +1,60 @@
+Metadata-Version: 2.4
+Name: motion-mcp
+Version: 0.1.0
+Summary: MCP Server for Motion Database Retrieval - Search motions and get VPD frame data
+Requires-Python: >=3.10
+Requires-Dist: asyncpg>=0.29.0
+Requires-Dist: dashscope>=1.17.0
+Requires-Dist: mcp[cli]>=1.0.0
+Requires-Dist: numpy>=1.24.0
+Requires-Dist: pgvector>=0.3.0
+Requires-Dist: python-dotenv>=1.0.0
+Description-Content-Type: text/markdown
+
+# Motion MCP Server
+
+MCP Stdio Server for Motion Database Retrieval.
+
+## Features
+
+- **search_motions**: Search motions by text using vector similarity
+- **get_motion_frames**: Get VPD frame data by motion ID
+
+## Installation
+
+```bash
+# Using uvx (recommended for deployment)
+uvx motion-mcp
+
+# Or install locally
+pip install -e .
+motion-mcp
+```
+
+## Configuration
+
+Create `.env` file with:
+
+```env
+POSTGRES_HOST=your-neon-host.neon.tech
+POSTGRES_PORT=5432
+POSTGRES_USER=your_user
+POSTGRES_PASSWORD=your_password
+POSTGRES_DB=your_db
+DASHSCOPE_API_KEY=your_dashscope_key
+```
+
+## Usage with Claude Desktop
+
+Add to `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "motion-mcp": {
+      "command": "uvx",
+      "args": ["motion-mcp"]
+    }
+  }
+}
+```
