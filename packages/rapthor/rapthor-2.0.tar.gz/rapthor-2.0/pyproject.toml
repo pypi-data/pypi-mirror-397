@@ -1,0 +1,97 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = [
+    "setuptools>=45",
+    "setuptools_scm[toml]>=6.2",
+    "wheel",
+]
+
+[project]
+name = "rapthor"
+authors = [
+    {name = "David Rafferty", email = "drafferty@hs.uni-hamburg.de"},
+    {name = "Marcel Loose", email = "loose@astron.nl"},
+    {name = "Andre Offringa", email = "offringa@astron.nl"},
+    {name = "Arend G. Dijkstra", email = "adijkstra@astron.nl"},
+    {name = "Tammo Jan Dijkema", email = "dijkema@astron.nl"},
+    {name = "Mark de Wever", email = "mark.dewever@stcorp.nl"},
+    {name = "Frits Sweijen", email = "sweijen@astron.nl"},
+    {name = "Sarod Yatawatta", email = "yatawatta@astron.nl"},
+]
+description = "Rapthor: LOFAR DDE Pipeline"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {file = "LICENSE"}
+classifiers=[
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Natural Language :: English",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Astronomy",
+]
+dependencies = [
+    "astropy",
+    "bdsf",
+    "jinja2",
+    "losoto>=2.4.3",
+    "lsmtool>=1.6",
+    "matplotlib",
+    "mocpy",
+    "numpy",
+    "python-casacore",
+    "python-dateutil",
+    "reproject",
+    "requests",
+    "Rtree",
+    "scipy",
+    "shapely",
+    "toil[cwl]>=8.0",
+]
+dynamic = ["version"]
+
+[tool.setuptools]
+# package-data is specified below in section [tool.setuptools.package-data]
+include-package-data = false
+packages = [
+    "rapthor",
+    "rapthor.lib",
+    "rapthor.operations",
+]
+script-files = [
+    "bin/concat_linc_files",
+    "bin/plotrapthor",
+    "bin/rapthor",
+    "rapthor/scripts/add_sector_models.py",
+    "rapthor/scripts/adjust_h5parm_sources.py",
+    "rapthor/scripts/blank_image.py",
+    "rapthor/scripts/calculate_image_diagnostics.py",
+    "rapthor/scripts/combine_h5parms.py",
+    "rapthor/scripts/concat_ms.py",
+    "rapthor/scripts/filter_skymodel.py",
+    "rapthor/scripts/make_catalog_from_image_cube.py",
+    "rapthor/scripts/make_image_cube.py",
+    "rapthor/scripts/make_mosaic.py",
+    "rapthor/scripts/make_mosaic_template.py",
+    "rapthor/scripts/make_region_file.py",
+    "rapthor/scripts/mpi_runner.sh",
+    "rapthor/scripts/normalize_flux_scale.py",
+    "rapthor/scripts/process_gains.py",
+    "rapthor/scripts/regrid_image.py",
+    "rapthor/scripts/subtract_sector_models.py",
+]
+
+[tool.setuptools.package-data]
+rapthor = [
+    "pipeline/**",
+    "scripts/*",
+    "settings/*",
+    "skymodels/*"
+]
+
+# [tool.setuptools.dynamic]
+# version = {attr = "rapthor._version.__version__"}
+
+[tool.setuptools_scm]
+write_to = "rapthor/_version.py"
