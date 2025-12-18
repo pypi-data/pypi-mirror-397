@@ -1,0 +1,195 @@
+# FlowMason Operator Helm Values
+
+# Operator deployment configuration
+operator:
+  # Replica count (1 for leader election)
+  replicaCount: 1
+
+  image:
+    repository: flowmason/operator
+    tag: ""  # Defaults to appVersion
+    pullPolicy: IfNotPresent
+
+  # Image pull secrets for private registries
+  imagePullSecrets: []
+
+  # Resource limits
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  # Node selector
+  nodeSelector: {}
+
+  # Tolerations
+  tolerations: []
+
+  # Affinity rules
+  affinity: {}
+
+  # Security context
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+
+  # Service account
+  serviceAccount:
+    create: true
+    name: ""
+    annotations: {}
+
+  # Pod annotations
+  podAnnotations: {}
+
+  # Pod labels
+  podLabels: {}
+
+  # Leader election
+  leaderElection:
+    enabled: true
+    namespace: ""  # Defaults to release namespace
+
+  # Logging
+  logging:
+    level: info
+    format: json
+
+# Executor configuration (for pipeline execution pods)
+executor:
+  image:
+    repository: flowmason/executor
+    tag: ""  # Defaults to appVersion
+    pullPolicy: IfNotPresent
+
+  # Default resource limits for executor pods
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+
+  # Default service account for executors
+  serviceAccountName: flowmason-executor
+
+  # Default timeout for executions
+  defaultTimeout: 1h
+
+  # Maximum parallel executions
+  maxParallelExecutions: 10
+
+  # Executor pod template overrides
+  podTemplate:
+    annotations: {}
+    labels: {}
+
+# Custom Resource Definitions
+crds:
+  # Install CRDs with the chart
+  install: true
+
+  # Keep CRDs when chart is uninstalled
+  keep: true
+
+# RBAC configuration
+rbac:
+  create: true
+
+  # Rules for Pipeline resources
+  pipelineRules:
+    - apiGroups: ["flowmason.io"]
+      resources: ["pipelines", "pipelines/status"]
+      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # Rules for PipelineRun resources
+  pipelineRunRules:
+    - apiGroups: ["flowmason.io"]
+      resources: ["pipelineruns", "pipelineruns/status"]
+      verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # Additional rules for pods, jobs, etc.
+  executorRules:
+    - apiGroups: [""]
+      resources: ["pods", "pods/log"]
+      verbs: ["get", "list", "watch", "create", "delete"]
+    - apiGroups: ["batch"]
+      resources: ["jobs"]
+      verbs: ["get", "list", "watch", "create", "delete"]
+    - apiGroups: [""]
+      resources: ["secrets", "configmaps"]
+      verbs: ["get", "list", "watch"]
+
+# Webhook configuration
+webhook:
+  enabled: true
+  port: 9443
+
+  # TLS certificates
+  certManager:
+    enabled: true
+    issuerRef:
+      name: ""  # If empty, creates self-signed issuer
+      kind: ClusterIssuer
+
+  # Validation webhook
+  validation:
+    enabled: true
+    failurePolicy: Fail
+
+  # Mutation webhook
+  mutation:
+    enabled: false
+
+# Monitoring configuration
+monitoring:
+  # Prometheus ServiceMonitor
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    scrapeTimeout: 10s
+    additionalLabels: {}
+
+  # Prometheus rules
+  prometheusRules:
+    enabled: false
+    rules: []
+
+  # Grafana dashboard
+  grafanaDashboard:
+    enabled: false
+    namespace: ""
+
+# Provider secrets configuration
+providers:
+  # Create secrets for LLM providers
+  createSecrets: false
+
+  anthropic:
+    # Secret name (created or existing)
+    secretName: flowmason-anthropic
+    # API key (only used if createSecrets is true)
+    apiKey: ""
+
+  openai:
+    secretName: flowmason-openai
+    apiKey: ""
+
+# Namespace configuration
+namespace:
+  # Create namespace
+  create: false
+  name: ""
+
+# Additional environment variables for operator
+extraEnv: []
+
+# Additional volumes for operator
+extraVolumes: []
+
+# Additional volume mounts for operator
+extraVolumeMounts: []

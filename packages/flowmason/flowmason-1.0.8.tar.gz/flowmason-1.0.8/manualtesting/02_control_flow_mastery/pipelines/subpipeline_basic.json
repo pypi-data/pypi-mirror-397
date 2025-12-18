@@ -1,0 +1,38 @@
+{
+  "name": "subpipeline_basic",
+  "description": "Test basic subpipeline execution",
+  "version": "1.0.0",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "items_to_process": {
+        "type": "array",
+        "items": {"type": "string"}
+      }
+    },
+    "required": ["items_to_process"]
+  },
+  "stages": {
+    "process_via_child": {
+      "component": "subpipeline",
+      "config": {
+        "pipeline_id": "child_pipeline",
+        "timeout_ms": 30000,
+        "on_error": "propagate"
+      },
+      "inputs": {
+        "data": "{{input.items_to_process}}"
+      }
+    },
+    "summarize_results": {
+      "component": "generator",
+      "depends_on": ["process_via_child"],
+      "config": {
+        "system_prompt": "Summarize the processing results.",
+        "user_prompt": "Results from child pipeline: {{stages.process_via_child.output}}",
+        "max_tokens": 100
+      }
+    }
+  },
+  "output_stage": "summarize_results"
+}
