@@ -1,0 +1,37 @@
+from setuptools import find_packages, setup
+
+__lib_name__ = "domino-spatial"
+__lib_version__ = "0.1.5"
+__description__ = "DOMINO: diffusion-optimised graph learning identifies domain structures with enhanced accuracy and scalability"
+__url__ = "https://github.com/ABILiLab/DOMINO"
+__author__ = "Pan Jia, Wenjun Liu, Ning Liu, and Fuyi Li"
+__author_email__ = "jiapan@nwafu.edu.cn; nora.liu@adelaide.edu.au; ning.liu@adelaide.edu.au; fuyi.li@nwafu.edu.cn"
+__requires__ = []
+__long_description__ = "DOMINO is built based on a self-supervised multi-view graph contrastive learning framework. It is designed to integrate spatial coordinates and gene expression information for robust identification of tissue domains from spatial transcriptomics (ST) data. DOMINO employs graph neural networks (GNNs) as base encoder, constructing a multi-view graph contrastive learning framework using the original graph and the diffusion graph to learn spot representations in the ST data. After representation learning, the learned low-dimensional embeddings can then be used to identify spatial domains, which can further be used in different downstream analyses, including cell type composition analysis, differential expression, and inference of cell–cell communication."
+
+setup(
+    name = __lib_name__,
+    version = __lib_version__,
+    description = __description__,
+    url = __url__,
+    author = __author__,
+    author_email = __author_email__,
+    license = "MIT",
+    packages = ["domino_spatial"],
+    entry_points={
+        'console_scripts': [
+            'domino-spatial=domino_spatial.cli:main',  
+        ],
+    },
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
+    python_requires=">=3.8",          
+    install_requires = __requires__,
+    zip_safe = False,
+    include_package_data = True,
+    long_description = __long_description__,
+    long_description_content_type="text/markdown"
+)
