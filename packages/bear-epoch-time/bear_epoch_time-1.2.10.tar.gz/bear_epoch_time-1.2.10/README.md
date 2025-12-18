@@ -1,0 +1,370 @@
+# Bear Epoch Time
+
+A lightweight Python library for working with epoch timestamps. Bear Epoch Time provides timezone-aware conversion utilities and a fluent API for manipulating times without wrestling with `datetime` quirks.
+
+**Key Features:**
+- `EpochTimestamp` inherits from `int` - use it anywhere you'd use an integer
+- Milliseconds by default (configurable to seconds)
+- UTC-first with explicit timezone conversions
+- Fluent, chainable API
+- Full comparison support with `datetime`, `date`, `time`, `int`, and `float`
+
+**Requirements:** Python 3.11+
+
+## Installation
+
+Install from PyPI:
+
+```bash
+pip install bear-epoch-time
+# or with uv
+uv pip install bear-epoch-time
+```
+
+## Quick Start
+
+```python
+from bear_epoch_time import EpochTimestamp
+
+# Current UTC timestamp in milliseconds
+now = EpochTimestamp.now()
+print(now)              # 1734567890123
+print(now.to_seconds)   # 1734567890
+print(now.date_str())   # "12-18-2025"
+```
+
+## Creating Timestamps
+
+### From Various Sources
+
+```python
+from datetime import datetime, date
+from bear_epoch_time import EpochTimestamp
+
+# Current time
+now = EpochTimestamp.now()
+now_in_seconds = EpochTimestamp.now(milliseconds=False)
+
+# From datetime
+dt = datetime(2025, 12, 25, 10, 30, 0)
+ts = EpochTimestamp.from_datetime(dt)
+
+# From date (creates timestamp at midnight)
+d = date(2025, 12, 25)
+ts = EpochTimestamp.from_date(d)
+
+# From seconds
+ts = EpochTimestamp.from_seconds(1734567890)
+
+# From ISO string
+ts = EpochTimestamp.from_iso_string("2025-12-25T10:30:00+00:00")
+
+# From custom format string
+ts = EpochTimestamp.from_dt_string("12-25-2025 10:30 AM", fmt="%m-%d-%Y %I:%M %p")
+```
+
+## Time Arithmetic
+
+### Adding and Subtracting Time
+
+```python
+from datetime import timedelta
+from bear_epoch_time import EpochTimestamp
+
+now = EpochTimestamp.now()
+
+# Add time components
+future = now.add(days=7, hours=3, minutes=30)
+
+# Subtract time
+past = now.subtract(days=1, hours=12)
+
+# Use timedelta
+delta = timedelta(weeks=2)
+two_weeks_later = now.add(delta=delta)
+
+# Use negative values for subtraction via add()
+yesterday = now.add(days=-1)
+```
+
+### Calculating Differences
+
+```python
+ts1 = EpochTimestamp.now()
+ts2 = ts1.add(days=5, hours=3)
+
+# Get difference as int (milliseconds by default)
+diff_ms = ts1.diff(ts2)
+
+# Get difference in seconds
+diff_s = ts1.diff(ts2, milliseconds=False)
+
+# Get difference as timedelta
+delta = ts1.diff(ts2, as_timedelta=True)
+
+# Get difference in specific units
+days = ts1.time_since(ts2, unit="d")      # days
+hours = ts1.time_since(ts2, unit="h")     # hours
+minutes = ts1.time_since(ts2, unit="m")   # minutes
+```
+
+## Day Boundaries
+
+```python
+import pytz
+from bear_epoch_time import EpochTimestamp
+
+now = EpochTimestamp.now()
+
+# Get start/end of day (UTC by default)
+start = now.start_of_day()
+end = now.end_of_day()
+
+# With specific timezone
+pacific = pytz.timezone("America/Los_Angeles")
+start_pacific = now.start_of_day(tz=pacific)
+end_pacific = now.end_of_day(tz=pacific)
+```
+
+## String Formatting
+
+### Output Formats
+
+```python
+from bear_epoch_time import EpochTimestamp
+
+ts = EpochTimestamp.now()
+
+# Default formatted strings
+ts.to_string()     # "12-18-2025 03:30 PM PST"
+ts.date_str()      # "12-18-2025"
+ts.time_str()      # "03:30 PM"
+
+# Custom format
+ts.to_string(fmt="%A, %B %d, %Y")  # "Thursday, December 18, 2025"
+
+# Ordinal day format (special %Do code)
+ts.to_string(fmt="%B %Do, %Y")     # "December 18th, 2025"
+
+# ISO format
+ts.to_iso                           # "2025-12-18T23:30:00+00:00"
+ts.get_iso_string(sep=" ")          # "2025-12-18 23:30:00+00:00"
+
+# Template formatting with $variables
+ts.format("$month_name $day, $year")     # "December 18, 2025"
+ts.format("$day_name at $time")          # "Thursday at 03:30 PM"
+```
+
+### Available Template Variables
+
+`$epoch`, `$seconds`, `$milliseconds`, `$iso`, `$date`, `$time`, `$datetime`, `$year`, `$month`, `$day`, `$hour`, `$minute`, `$week`, `$isoweekday`, `$day_of_week`, `$day_of_year`, `$month_name`, `$day_name`
+
+## Accessing Components
+
+```python
+from bear_epoch_time import EpochTimestamp
+
+ts = EpochTimestamp.now()
+
+# Date components
+ts.year          # 2025
+ts.month         # 12
+ts.day           # 18
+ts.week          # ISO week number (1-53)
+
+# Time components
+ts.hour          # 15 (0-23)
+ts.minute        # 30 (0-59)
+ts.second        # 45 (0-59)
+ts.microsecond   # 123456 (0-999999)
+
+# Day information
+ts.day_of_week   # 0-6 (Monday=0, Sunday=6)
+ts.iso_weekday   # 1-7 (Monday=1, Sunday=7)
+ts.day_of_year   # 1-366
+ts.day_name      # "Thursday"
+ts.month_name    # "December"
+
+# Conversions
+ts.to_datetime   # datetime object (UTC)
+ts.to_seconds    # int (epoch seconds)
+ts.to_milliseconds  # int (epoch milliseconds)
+ts.date          # date object
+ts.time          # time object
+ts.to_iso        # ISO 8601 string
+ts.to_duration   # "675M 28d 2h 12m 28s" (human-readable)
+```
+
+## Replacing Components
+
+Create a new timestamp with specific components changed:
+
+```python
+from bear_epoch_time import EpochTimestamp
+
+ts = EpochTimestamp.now()
+
+# Change specific components
+new_year = ts.replace(year=2026)
+noon = ts.replace(hour=12, minute=0, second=0)
+first_of_month = ts.replace(day=1)
+```
+
+## Finding Future Times
+
+```python
+from bear_epoch_time import EpochTimestamp
+
+now = EpochTimestamp.now()
+
+# Get next occurrence of a weekday
+next_monday = now.next_weekday("Monday")
+next_friday = now.next_weekday("friday")  # case-insensitive
+
+# Get next occurrence of a specific time
+next_9am = now.next_time_of_day(hour=9)
+next_meeting = now.next_time_of_day(hour=14, minute=30)
+```
+
+## Comparisons
+
+`EpochTimestamp` supports comparison with multiple types:
+
+```python
+from datetime import datetime, date, time
+from bear_epoch_time import EpochTimestamp
+
+ts = EpochTimestamp.now()
+
+# Compare with other EpochTimestamp
+ts1 < ts2
+ts1 == ts2
+
+# Compare with datetime
+ts < datetime.now()
+
+# Compare with date (compares date portion only)
+ts == date.today()
+
+# Compare with int/float (raw epoch value)
+ts > 1734567890000
+
+# Boolean evaluation (False if zero/placeholder)
+if ts:
+    print("Valid timestamp")
+```
+
+## Class Configuration
+
+Configure defaults for all instances:
+
+```python
+import pytz
+from bear_epoch_time import EpochTimestamp
+
+# Set default timezone
+EpochTimestamp.set_timezone(pytz.timezone("America/New_York"))
+
+# Set default formats
+EpochTimestamp.set_date_format("%Y-%m-%d")
+EpochTimestamp.set_time_format("%H:%M:%S")
+EpochTimestamp.set_full_format("%Y-%m-%d %H:%M:%S %Z")
+
+# Set repr style: "int", "object", or "datetime"
+EpochTimestamp.set_repr_style("datetime")
+```
+
+## Placeholder Values
+
+Use zero as a placeholder for "no timestamp set":
+
+```python
+from bear_epoch_time import EpochTimestamp
+
+placeholder = EpochTimestamp(0)
+
+if placeholder.is_default:
+    print("No timestamp set")
+
+# Boolean evaluation also works
+if not placeholder:
+    print("No timestamp set")
+```
+
+## TimeTools Helper
+
+For common timezone-aware operations:
+
+```python
+from bear_epoch_time import TimeTools, EpochTimestamp
+
+tools = TimeTools()  # Uses local timezone
+
+# Get start and end of today
+start, end = tools.get_day_range()
+
+# Check if timestamps are on the same day
+tools.is_same_day(ts1, ts2)
+
+# Check if a date range spans multiple days
+tools.is_multi_day("12-18-2025 11:00 PM", "12-19-2025 01:00 AM")
+
+# Quick conversions
+tools.dt_to_ts(datetime_obj)
+tools.str_to_ts("12-18-2025 03:30 PM")
+tools.ts_to_str(timestamp)
+```
+
+## TimeConverter Utilities
+
+Parse and format time strings:
+
+```python
+from bear_epoch_time import TimeConverter
+
+# Parse duration strings to seconds
+TimeConverter.parse_to_seconds("2d 3h 15m")      # 183300.0
+TimeConverter.parse_to_seconds("1M 5d")          # ~35 days in seconds
+
+# Format seconds as human-readable
+TimeConverter.format_seconds(183300)             # "2d 3h 15m"
+TimeConverter.format_seconds(90061.5, show_subseconds=True)  # "1d 1h 1m 1s 500ms"
+```
+
+## Timer Utilities
+
+Context managers and decorators for timing:
+
+```python
+from bear_epoch_time import timer, create_timer, TimerData
+
+# Context manager
+with timer(name="my_operation", console=print) as t:
+    # do work
+    pass
+print(f"Took {t.seconds:.2f}s")
+
+# Decorator factory
+@create_timer(console=print)
+def my_function():
+    pass
+
+# Async support
+from bear_epoch_time import async_timer, create_async_timer
+
+async with async_timer(name="async_op") as t:
+    await some_async_work()
+```
+
+## Limitations
+
+The `EpochTimestamp` class is designed for UTC timestamps in the recent past and future. It is not intended for:
+- Historical dates before the Unix epoch (1970-01-01)
+- High-precision timing (use `time.perf_counter()` instead)
+- Dates far in the future where leap second handling becomes significant
+
+This is a utility library for working with epoch timestamps in a more human-friendly way.
+
+## License
+
+MIT License - see LICENSE file for details.
