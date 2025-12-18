@@ -1,0 +1,26 @@
+{
+    "log_file_path": "/var/log/ef/zq/service-daemon.log",
+    "domain_socket_path": "/tmp/zq-daemon.sock",
+    "child_process": "zq_server",
+    "child_process_config": "/etc/zq-server/config.json",
+    "routine_jobs": [
+        {
+            "job_name": "restart_before_night",
+            "command": "stop_process",
+            "start_time": 1930,
+            "end_time": 1935,
+            "condition": "night_trading",
+            "description": "夜盘前重启服务",
+            "enabled": true
+        },
+        {
+            "job_name": "refresh_trading_calendar",
+            "command": "refresh_calendar",
+            "start_time": 100,
+            "end_time": 200,
+            "condition": "always",
+            "description": "每天凌晨1-2点刷新交易日历数据",
+            "enabled": true
+        }
+    ]
+}
