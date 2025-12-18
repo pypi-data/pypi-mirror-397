@@ -1,0 +1,49 @@
+# GitHub Actions workflow for testing and continuous integration.
+#
+# This file performs testing using tox and tox.ini to define and configure the test environments.
+
+name: CI
+
+on:
+  push:
+    branches:
+    - main
+  schedule: # schedule a regular run if needed
+   # Weekly Monday 9AM build
+   - cron: "0 9 * * 1"
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@9f1fedda61294df4c004c05519a3fbf3b8e1f32f  # v2.3.1
+    with:
+      envs: |
+        - linux: check-style
+        - linux: check-security
+        - linux: build-dist
+  test:
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@9f1fedda61294df4c004c05519a3fbf3b8e1f32f  # v2.3.1
+    with:
+      envs: |
+        - linux: test-oldestdeps
+          python-version: 3.11
+        - linux: test
+          python-version: 3.13
+        - linux: test-alldeps
+          python-version: 3.11
+        - linux: test-alldeps
+          python-version: 3.12
+        - linux: test-alldeps
+          python-version: 3.13
+        # `tox` may overwrite the `requires-python` version when creating a test environment;
+        # if that occurs specify the version in the tox environment e.g., py313-test-alldeps;
+        # TODO:  remove py313- pin from tox environment once solara is supported on py314
+        - macos: py313-test-alldeps
+          python-version: 3.13
+        - linux: py313-test-alldeps-cov
+          python-version: 3.13
+          coverage: codecov
