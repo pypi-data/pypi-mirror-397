@@ -1,0 +1,46 @@
+name: Test
+
+on:
+  # Triggers the test workflow on push for all branches
+  push:
+    paths:
+      - "pii_codex/**"
+      - "uv.lock"
+      - "pyproject.toml"
+      - ".github/workflows/test.yml"
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Run Tests
+    strategy:
+      matrix:
+        python-version: [ "3.9", "3.10", "3.11", "3.12" ]
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    # Checkout the code, install poetry, install dependencies,
+    # and run test with coverage
+    steps:
+      - name: Environment Setup
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Global Dependencies
+        run: pip install -U pip && pip install uv
+      - name: Install Project Dependencies
+        run: |
+          make install
+      - name: Run Tests
+        run: |
+          make test.coverage
+      - uses: codecov/codecov-action@v3  # Coverage report submitted only on merge to main
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          name: codecov-umbrella 
+          files: ./coverage.xml
+          verbose: true

@@ -1,0 +1,108 @@
+[project]
+name = "pii-codex"
+version = "0.5.0"
+description = "PII Detection, Categorization, and Severity Assessment"
+authors = [
+    {name = "Eidan J. Rosado"}
+]
+license = {text = "BSD 3-Clause"}
+readme = "README.md"
+homepage = "https://github.com/EdyVision/pii-codex"
+repository = "https://github.com/EdyVision/pii-codex"
+keywords = ["PII", "PII topology", "risk categories", "personal identifiable information", "risk assessment"]
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3",
+]
+requires-python = ">=3.9,<3.13"
+dependencies = [
+    "dataclasses-json>=0.5.7,<0.6.0",
+    "pydantic[dotenv]>=1.10.2,<2.0.0",
+    "pandas>=2.0.0,<3.0.0",
+    "pillow>=10.0.0,<11.0.0",
+    "pdoc>=13.1.1,<14.0.0",
+]
+
+[project.optional-dependencies]
+detections = [
+    "spacy>=3.8.7",
+    "presidio-analyzer>=2.2.359",
+    "presidio-anonymizer>=2.2.359"
+]
+dev = [
+    "pytest>=7.4.0,<8.0.0",
+    "black>=23.0.0,<24.0.0",
+    "pylint>=3.0.0,<4.0.0",
+    "mypy>=1.5.0,<2.0.0",
+    "coverage>=7.2.0,<8.0.0",
+    "assertpy>=1.1,<2.0.0",
+    "Faker>=19.0.0,<20.0.0",
+    "matplotlib>=3.7.0,<4.0.0",
+    "ipykernel>=6.25.0,<7.0.0",
+    "jupyter>=1.0.0,<2.0.0",
+    "jupyter_core>=5.0.0,<6.0.0",
+    "importlib-resources>=6.0.0,<7.0.0",
+    "seaborn>=0.12.0,<1.0.0",
+    "pre-commit>=3.0.0,<4.0.0",
+    "spacy>=3.8.7",
+    "presidio-analyzer>=2.2.360",
+    "presidio-anonymizer>=2.2.360",
+    "tomli>=1.2.0,<3.0.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/EdyVision/pii-codex"
+Repository = "https://github.com/EdyVision/pii-codex"
+
+[bumpver]
+current_version = "0.5.0"
+version_pattern = "MAJOR.MINOR.PATCH"
+files = [
+    "pyproject.toml",
+    "CITATION.cff", 
+    ".zenodo.json"
+]
+
+[bumpver.file_patterns]
+"pyproject.toml" = [
+    '^version = "{version}"$',
+    '^current_version = "{version}"$',
+]
+"pii_codex/__init__.py" = [
+    '^__version__ = "{version}"$',
+]
+"CITATION.cff" = [
+    '^version: {version}$',
+]
+".zenodo.json" = [
+    '^  "version": "{version}",$',
+]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = [
+    "tests"
+]
+
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(message)s"
+
+log_file = "pytest.log"
+log_file_level = "DEBUG"
+log_file_format = "%(asctime)s [%(levelname)8s] %(message)s (%(filename)s:%(lineno)s)"
+log_file_date_format = "%Y-%m-%d %H:%M:%S"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "bumpver>=2025.1131",
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
