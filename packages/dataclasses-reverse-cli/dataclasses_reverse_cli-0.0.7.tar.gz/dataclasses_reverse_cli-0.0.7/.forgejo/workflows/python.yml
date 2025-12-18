@@ -1,0 +1,39 @@
+name: Python
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [labeled]
+
+jobs:
+  test:
+    name: Test
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'trigger_pipeline'
+    runs-on: codeberg-tiny-lazy
+    container:
+      image: ghcr.io/catthehacker/ubuntu:act-latest
+    steps:
+      - uses: https://code.forgejo.org/actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: https://code.forgejo.org/actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install uv
+        uses: https://github.com/astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          prune-cache: false
+          cache-dependency-glob: "uv.lock"
+          github-token: ${{ secrets.GITHUBAUTH }}
+
+      - name: Ruff check
+        run: uvx ruff check .
+
+      - name: Install the project
+        run: uv sync --all-extras --dev
+      - name: Run tests
+        run: uv run python -m unittest discover tests
+

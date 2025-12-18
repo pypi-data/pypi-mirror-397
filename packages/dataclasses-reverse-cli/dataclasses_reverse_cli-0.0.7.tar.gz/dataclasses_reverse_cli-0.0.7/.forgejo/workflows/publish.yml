@@ -1,0 +1,34 @@
+name: Publish to Pypi
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  test:
+    name: Lint and Install
+    runs-on: codeberg-small-lazy
+    container:
+      image: ghcr.io/catthehacker/ubuntu:act-latest
+    steps:
+      - uses: https://code.forgejo.org/actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: https://code.forgejo.org/actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install uv
+        uses: https://github.com/astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          prune-cache: false
+          cache-dependency-glob: "uv.lock"
+          github-token: ${{ secrets.GITHUBAUTH }}
+
+      - name: Build
+        run: uv build
+      - name: Publish
+        run: uv publish --token ${{ secrets.PYPI_TOKEN }}
+
