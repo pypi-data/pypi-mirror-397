@@ -1,0 +1,68 @@
+{
+  "id": "nl-interpreter",
+  "name": "nl-interpreter",
+  "version": "1.0.0",
+  "description": "Interpret a natural language pipeline description into structured context for generation.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "description": {
+        "type": "string",
+        "description": "Natural language description of the desired pipeline."
+      }
+    },
+    "required": ["description"]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "intent": { "type": "string" },
+      "actions": { "type": "array", "items": { "type": "string" } },
+      "data_sources": { "type": "array", "items": { "type": "string" } },
+      "outputs": { "type": "array", "items": { "type": "string" } },
+      "constraints": { "type": "array", "items": { "type": "string" } },
+      "ambiguities": { "type": "array", "items": { "type": "string" } },
+      "notes": { "type": "string" },
+      "raw_description": { "type": "string" },
+      "suggested_components": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Component types that would be helpful for this pipeline"
+      },
+      "suggested_patterns": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "High-level pipeline patterns (e.g. foreach, validation+transform, http_ingest+send)"
+      },
+      "proposed_pipeline": {
+        "type": "object",
+        "description": "Optional full pipeline proposal JSON matching FlowMason pipeline schema (name, description, input_schema, stages, output_stage_id, etc.)"
+      }
+    },
+    "required": ["intent"]
+  },
+  "stages": [
+    {
+      "id": "interpret",
+      "component_type": "generator",
+      "config": {
+        "prompt": "You are FlowMason's pipeline design assistant. Analyze the following user description of a pipeline and produce a **detailed** JSON object with fields: intent (string), actions (string[]), data_sources (string[]), outputs (string[]), constraints (string[]), ambiguities (string[] of unclear points or missing details), notes (string with any additional insights), raw_description (string echo of the original description), suggested_components (string[] of FlowMason component types such as 'generator', 'foreach', 'schema_validate', 'json_transform', 'http_request', 'conditional'), and suggested_patterns (string[] such as 'foreach', 'validation+transform', 'http_ingest+send', 'conditional'). Optionally, if you are confident, include a proposed_pipeline field containing a full FlowMason pipeline JSON with keys: name, description, version, input_schema, stages (each with id, name, component_type, config, depends_on), and output_stage_id. Focus primarily on understanding and structuring the request; do not invent extra business logic or unnecessary stages.\n\nUser description:\n\"{{input.description}}\""
+      }
+    },
+    {
+      "id": "review",
+      "component_type": "critic",
+      "depends_on": ["interpret"],
+      "config": {
+        "content": "{{input.description}}",
+        "criteria": [
+          "Is the JSON well-structured and valid?",
+          "Does intent clearly capture the main goal?",
+          "Are actions and data_sources specific enough for pipeline design?",
+          "Are ambiguities and constraints clearly listed?"
+        ]
+      }
+    }
+  ],
+  "output_stage_id": "interpret"
+}

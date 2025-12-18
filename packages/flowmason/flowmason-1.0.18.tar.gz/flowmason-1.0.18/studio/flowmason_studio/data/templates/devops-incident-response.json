@@ -1,0 +1,490 @@
+{
+  "id": "devops-incident-response",
+  "name": "Incident Response Pipeline",
+  "description": "An advanced incident response pipeline that receives alerts, fetches context and logs, performs AI-powered root cause analysis, attempts auto-remediation, and escalates to humans if needed. Includes status page updates and team notifications.",
+  "category": "devops",
+  "tags": [
+    "devops",
+    "incident-response",
+    "sre",
+    "auto-remediation",
+    "alerting",
+    "pagerduty",
+    "advanced"
+  ],
+  "difficulty": "advanced",
+  "use_cases": [
+    "Automated incident triage and response",
+    "AI-powered root cause analysis",
+    "Auto-remediation with human escalation fallback",
+    "Integration with PagerDuty, Slack, and status pages"
+  ],
+  "stages": [
+    {
+      "id": "parse-alert",
+      "component_type": "json-transform",
+      "name": "Parse Incoming Alert",
+      "config": {
+        "data": "{{input}}",
+        "template": {
+          "alert_id": "{{data.alert_id or data.id}}",
+          "severity": "{{data.severity or 'unknown'}}",
+          "service": "{{data.service or data.labels.service}}",
+          "instance": "{{data.instance or data.labels.instance}}",
+          "message": "{{data.message or data.annotations.summary}}",
+          "description": "{{data.description or data.annotations.description}}",
+          "alert_type": "{{data.alert_type or data.labels.alertname}}",
+          "received_at": "{{now()}}"
+        }
+      },
+      "depends_on": [],
+      "position": {
+        "x": 100,
+        "y": 200
+      }
+    },
+    {
+      "id": "log-incident-start",
+      "component_type": "logger",
+      "name": "Log Incident Start",
+      "config": {
+        "message": "Incident received: {{upstream.parse-alert.alert_id}} - {{upstream.parse-alert.service}}",
+        "level": "warning",
+        "data": "{{upstream.parse-alert}}"
+      },
+      "depends_on": ["parse-alert"],
+      "position": {
+        "x": 350,
+        "y": 200
+      }
+    },
+    {
+      "id": "fetch-service-context",
+      "component_type": "http-request",
+      "name": "Fetch Service Context",
+      "config": {
+        "url": "{{env.SERVICE_REGISTRY}}/services/{{upstream.parse-alert.service}}",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer {{env.REGISTRY_TOKEN}}"
+        },
+        "timeout": 10000
+      },
+      "depends_on": ["parse-alert"],
+      "position": {
+        "x": 350,
+        "y": 350
+      }
+    },
+    {
+      "id": "fetch-recent-logs",
+      "component_type": "http-request",
+      "name": "Fetch Recent Logs",
+      "config": {
+        "url": "{{env.LOGS_API}}/search",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer {{env.LOGS_TOKEN}}"
+        },
+        "body": {
+          "query": "service:{{upstream.parse-alert.service}} level:error",
+          "from": "now-30m",
+          "to": "now",
+          "limit": 100
+        },
+        "timeout": 30000
+      },
+      "depends_on": ["parse-alert"],
+      "position": {
+        "x": 350,
+        "y": 500
+      }
+    },
+    {
+      "id": "fetch-metrics",
+      "component_type": "http-request",
+      "name": "Fetch Recent Metrics",
+      "config": {
+        "url": "{{env.PROMETHEUS_URL}}/api/v1/query_range",
+        "method": "GET",
+        "query_params": {
+          "query": "rate(http_requests_total{service=\"{{upstream.parse-alert.service}}\",status=~\"5..\"}[5m])",
+          "start": "{{input.start_time or 'now-1h'}}",
+          "end": "now",
+          "step": "60s"
+        },
+        "timeout": 15000
+      },
+      "depends_on": ["parse-alert"],
+      "position": {
+        "x": 350,
+        "y": 650
+      }
+    },
+    {
+      "id": "fetch-recent-deploys",
+      "component_type": "http-request",
+      "name": "Fetch Recent Deployments",
+      "config": {
+        "url": "{{env.DEPLOY_API}}/deployments",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer {{env.DEPLOY_TOKEN}}"
+        },
+        "query_params": {
+          "service": "{{upstream.parse-alert.service}}",
+          "limit": "5",
+          "since": "now-24h"
+        },
+        "timeout": 10000
+      },
+      "depends_on": ["parse-alert"],
+      "position": {
+        "x": 350,
+        "y": 800
+      }
+    },
+    {
+      "id": "analyze-incident",
+      "component_type": "generator",
+      "name": "AI Root Cause Analysis",
+      "config": {
+        "prompt": "Analyze this incident and determine the root cause:\n\n## Alert Details\n- Service: {{upstream.parse-alert.service}}\n- Severity: {{upstream.parse-alert.severity}}\n- Alert Type: {{upstream.parse-alert.alert_type}}\n- Message: {{upstream.parse-alert.message}}\n- Description: {{upstream.parse-alert.description}}\n\n## Service Context\n{{upstream.fetch-service-context.body}}\n\n## Recent Error Logs (last 30 min)\n{{upstream.fetch-recent-logs.body}}\n\n## Error Rate Metrics\n{{upstream.fetch-metrics.body}}\n\n## Recent Deployments (last 24h)\n{{upstream.fetch-recent-deploys.body}}\n\n---\n\nProvide a structured analysis:\n1. **Root Cause**: Most likely cause based on evidence\n2. **Contributing Factors**: Secondary issues\n3. **Evidence Summary**: Key log entries and metrics supporting the analysis\n4. **Recommended Action**: Immediate remediation steps\n5. **Can Auto-Remediate**: Yes/No - whether this can be automatically fixed (restart, scale, rollback)\n6. **Remediation Type**: restart | scale | rollback | manual",
+        "system_prompt": "You are an expert SRE performing incident root cause analysis. Analyze all available data to identify the root cause. Be specific, cite evidence, and recommend actionable remediation. If the issue appears to be a deployment-related regression, recommend rollback. If it's a resource issue, recommend scaling or restart."
+      },
+      "depends_on": ["fetch-service-context", "fetch-recent-logs", "fetch-metrics", "fetch-recent-deploys"],
+      "position": {
+        "x": 600,
+        "y": 400
+      }
+    },
+    {
+      "id": "determine-action",
+      "component_type": "router",
+      "name": "Determine Action",
+      "config": {
+        "value": "{{upstream.parse-alert.alert_type}}",
+        "routes": {
+          "HighMemoryUsage": ["auto-remediate-restart"],
+          "HighCPUUsage": ["auto-remediate-scale"],
+          "ServiceDown": ["auto-remediate-restart"],
+          "HighErrorRate": ["auto-remediate-restart"],
+          "DeploymentFailed": ["auto-remediate-rollback"]
+        },
+        "default_route": ["escalate-to-human"]
+      },
+      "depends_on": ["analyze-incident"],
+      "position": {
+        "x": 850,
+        "y": 400
+      }
+    },
+    {
+      "id": "auto-remediate-restart",
+      "component_type": "trycatch",
+      "name": "Auto-Remediate: Restart",
+      "config": {
+        "try_stages": ["execute-restart", "verify-restart"],
+        "catch_stages": ["escalate-to-human"],
+        "finally_stages": ["log-remediation-attempt"]
+      },
+      "position": {
+        "x": 1100,
+        "y": 200
+      }
+    },
+    {
+      "id": "execute-restart",
+      "component_type": "http-request",
+      "name": "Execute Service Restart",
+      "config": {
+        "url": "{{env.K8S_API}}/apis/apps/v1/namespaces/{{env.NAMESPACE}}/deployments/{{upstream.parse-alert.service}}/restart",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer {{env.K8S_TOKEN}}",
+          "Content-Type": "application/json"
+        },
+        "timeout": 30000
+      },
+      "position": {
+        "x": 1100,
+        "y": 100
+      }
+    },
+    {
+      "id": "verify-restart",
+      "component_type": "http-request",
+      "name": "Verify Service Health",
+      "config": {
+        "url": "{{env.SERVICE_URL}}/{{upstream.parse-alert.service}}/health",
+        "method": "GET",
+        "timeout": 10000
+      },
+      "depends_on": ["execute-restart"],
+      "error_handling": {
+        "on_error": "retry",
+        "max_retries": 6,
+        "retry_delay": 10000
+      },
+      "position": {
+        "x": 1350,
+        "y": 100
+      }
+    },
+    {
+      "id": "auto-remediate-scale",
+      "component_type": "http-request",
+      "name": "Auto-Remediate: Scale Up",
+      "config": {
+        "url": "{{env.K8S_API}}/apis/apps/v1/namespaces/{{env.NAMESPACE}}/deployments/{{upstream.parse-alert.service}}/scale",
+        "method": "PATCH",
+        "headers": {
+          "Authorization": "Bearer {{env.K8S_TOKEN}}",
+          "Content-Type": "application/strategic-merge-patch+json"
+        },
+        "body": {
+          "spec": {"replicas": 4}
+        },
+        "timeout": 30000
+      },
+      "position": {
+        "x": 1100,
+        "y": 400
+      }
+    },
+    {
+      "id": "auto-remediate-rollback",
+      "component_type": "http-request",
+      "name": "Auto-Remediate: Rollback",
+      "config": {
+        "url": "{{env.DEPLOY_API}}/deployments/{{upstream.parse-alert.service}}/rollback",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer {{env.DEPLOY_TOKEN}}"
+        },
+        "body": {
+          "reason": "Auto-rollback due to incident {{upstream.parse-alert.alert_id}}",
+          "to_version": "previous"
+        },
+        "timeout": 60000
+      },
+      "position": {
+        "x": 1100,
+        "y": 600
+      }
+    },
+    {
+      "id": "escalate-to-human",
+      "component_type": "http-request",
+      "name": "Escalate to On-Call",
+      "config": {
+        "url": "https://events.pagerduty.com/v2/enqueue",
+        "method": "POST",
+        "body": {
+          "routing_key": "{{env.PAGERDUTY_ROUTING_KEY}}",
+          "event_action": "trigger",
+          "dedup_key": "incident-{{upstream.parse-alert.alert_id}}",
+          "payload": {
+            "summary": "[{{upstream.parse-alert.severity}}] {{upstream.parse-alert.service}}: {{upstream.parse-alert.message}}",
+            "severity": "{{upstream.parse-alert.severity}}",
+            "source": "{{upstream.parse-alert.service}}",
+            "custom_details": {
+              "alert_id": "{{upstream.parse-alert.alert_id}}",
+              "service": "{{upstream.parse-alert.service}}",
+              "analysis": "{{upstream.analyze-incident.content}}",
+              "auto_remediation": "failed or not applicable"
+            }
+          },
+          "links": [
+            {"href": "{{env.DASHBOARD_URL}}/services/{{upstream.parse-alert.service}}", "text": "Service Dashboard"},
+            {"href": "{{env.LOGS_URL}}?service={{upstream.parse-alert.service}}", "text": "Service Logs"}
+          ]
+        }
+      },
+      "position": {
+        "x": 1100,
+        "y": 800
+      }
+    },
+    {
+      "id": "log-remediation-attempt",
+      "component_type": "logger",
+      "name": "Log Remediation Attempt",
+      "config": {
+        "message": "Remediation attempted for {{upstream.parse-alert.service}}",
+        "level": "info",
+        "data": {
+          "alert_id": "{{upstream.parse-alert.alert_id}}",
+          "service": "{{upstream.parse-alert.service}}",
+          "action_taken": "restart",
+          "timestamp": "{{now()}}"
+        }
+      },
+      "position": {
+        "x": 1350,
+        "y": 200
+      }
+    },
+    {
+      "id": "update-status-page",
+      "component_type": "http-request",
+      "name": "Update Status Page",
+      "config": {
+        "url": "{{env.STATUSPAGE_API}}/pages/{{env.STATUSPAGE_ID}}/incidents",
+        "method": "POST",
+        "headers": {
+          "Authorization": "OAuth {{env.STATUSPAGE_TOKEN}}"
+        },
+        "body": {
+          "incident": {
+            "name": "{{upstream.parse-alert.service}} - {{upstream.parse-alert.message}}",
+            "status": "investigating",
+            "impact_override": "{{ 'major' if upstream.parse-alert.severity == 'critical' else 'minor' }}",
+            "body": "We are investigating an issue with {{upstream.parse-alert.service}}. Our automated systems have detected the problem and are working on resolution."
+          }
+        }
+      },
+      "depends_on": ["analyze-incident"],
+      "position": {
+        "x": 850,
+        "y": 600
+      }
+    },
+    {
+      "id": "notify-slack",
+      "component_type": "http-request",
+      "name": "Notify Slack",
+      "config": {
+        "url": "{{env.SLACK_WEBHOOK}}",
+        "method": "POST",
+        "body": {
+          "blocks": [
+            {
+              "type": "header",
+              "text": {
+                "type": "plain_text",
+                "text": "Incident: {{upstream.parse-alert.service}}"
+              }
+            },
+            {
+              "type": "section",
+              "text": {
+                "type": "mrkdwn",
+                "text": "*Alert:* {{upstream.parse-alert.message}}\n*Severity:* {{upstream.parse-alert.severity}}"
+              }
+            },
+            {
+              "type": "section",
+              "text": {
+                "type": "mrkdwn",
+                "text": "*AI Analysis:*\n{{upstream.analyze-incident.content}}"
+              }
+            }
+          ],
+          "attachments": [
+            {
+              "color": "{{ '#ff0000' if upstream.parse-alert.severity == 'critical' else '#ff9900' }}"
+            }
+          ]
+        }
+      },
+      "depends_on": ["analyze-incident"],
+      "position": {
+        "x": 850,
+        "y": 800
+      }
+    },
+    {
+      "id": "create-postmortem",
+      "component_type": "generator",
+      "name": "Generate Incident Summary",
+      "config": {
+        "prompt": "Generate a brief incident summary for this event:\n\nAlert: {{upstream.parse-alert}}\nAnalysis: {{upstream.analyze-incident.content}}\n\nCreate a summary with:\n1. What happened (1-2 sentences)\n2. Impact (1 sentence)\n3. Resolution status\n4. Follow-up actions needed",
+        "system_prompt": "You are an SRE writing incident summaries. Be concise and factual."
+      },
+      "depends_on": ["analyze-incident"],
+      "position": {
+        "x": 1350,
+        "y": 600
+      }
+    },
+    {
+      "id": "format-output",
+      "component_type": "json-transform",
+      "name": "Format Output",
+      "config": {
+        "template": {
+          "incident_id": "{{upstream.parse-alert.alert_id}}",
+          "service": "{{upstream.parse-alert.service}}",
+          "severity": "{{upstream.parse-alert.severity}}",
+          "root_cause_analysis": "{{upstream.analyze-incident.content}}",
+          "summary": "{{upstream.create-postmortem.content}}",
+          "actions_taken": {
+            "analysis_completed": true,
+            "status_page_updated": true,
+            "team_notified": true
+          },
+          "processed_at": "{{now()}}"
+        }
+      },
+      "depends_on": ["create-postmortem", "update-status-page", "notify-slack"],
+      "position": {
+        "x": 1600,
+        "y": 500
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "alert_id": {
+        "type": "string",
+        "description": "Unique alert identifier"
+      },
+      "severity": {
+        "type": "string",
+        "description": "Alert severity (critical, high, medium, low)"
+      },
+      "service": {
+        "type": "string",
+        "description": "Affected service name"
+      },
+      "instance": {
+        "type": "string",
+        "description": "Affected instance identifier"
+      },
+      "message": {
+        "type": "string",
+        "description": "Alert summary message"
+      },
+      "description": {
+        "type": "string",
+        "description": "Detailed alert description"
+      },
+      "alert_type": {
+        "type": "string",
+        "description": "Type of alert (HighMemoryUsage, ServiceDown, etc.)"
+      },
+      "labels": {
+        "type": "object",
+        "description": "Additional alert labels"
+      }
+    },
+    "required": ["service", "message"]
+  },
+  "output_stage_id": "format-output",
+  "example_input": {
+    "alert_id": "alert-12345",
+    "severity": "critical",
+    "service": "payment-api",
+    "instance": "payment-api-pod-abc123",
+    "message": "High error rate detected",
+    "description": "Error rate exceeded 5% threshold for the last 5 minutes",
+    "alert_type": "HighErrorRate",
+    "labels": {
+      "alertname": "HighErrorRate",
+      "service": "payment-api",
+      "environment": "production"
+    }
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "id": "persona-chat",
+  "name": "Persona Chat",
+  "description": "Create a chatbot with a specific persona using system prompts. Demonstrates how to craft effective system prompts for role-playing.",
+  "category": "getting-started",
+  "tags": [
+    "beginner",
+    "persona",
+    "chatbot",
+    "system-prompt"
+  ],
+  "difficulty": "beginner",
+  "use_cases": [
+    "Build a custom chatbot personality",
+    "Create character-based interactions",
+    "Learn system prompt engineering"
+  ],
+  "stages": [
+    {
+      "id": "chat",
+      "component_type": "generator",
+      "name": "Persona Response",
+      "config": {
+        "prompt": "User message: {{input.message}}\n\nRespond in character.",
+        "system_prompt": "{{input.persona}}\n\nStay in character at all times. Do not break character or mention that you are an AI."
+      },
+      "depends_on": [],
+      "position": {
+        "x": 250,
+        "y": 150
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "persona": {
+        "type": "string",
+        "description": "The persona description (e.g., 'You are a wise wizard from a fantasy realm')"
+      },
+      "message": {
+        "type": "string",
+        "description": "The user's message to respond to"
+      }
+    },
+    "required": [
+      "persona",
+      "message"
+    ]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "content": {
+        "type": "string",
+        "description": "The in-character response"
+      }
+    }
+  },
+  "output_stage_id": "chat",
+  "example_input": {
+    "message": "What's the best way to start learning programming?",
+    "persona": "You are a friendly and encouraging tech mentor who explains concepts using real-world analogies."
+  }
+}

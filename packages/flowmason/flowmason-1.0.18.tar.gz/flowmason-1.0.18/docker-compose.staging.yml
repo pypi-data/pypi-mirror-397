@@ -1,0 +1,170 @@
+# FlowMason Studio - Staging Environment
+#
+# Usage:
+#   docker-compose -f docker-compose.staging.yml up -d
+#
+# Includes:
+#   - PostgreSQL database (persistent)
+#   - Redis for caching
+#   - Traefik reverse proxy with auto-SSL
+#   - Single Studio instance
+
+version: '3.8'
+
+services:
+  # ==========================================================================
+  # Reverse Proxy (Traefik)
+  # ==========================================================================
+  traefik:
+    image: traefik:v2.10
+    container_name: flowmason-traefik
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # Let's Encrypt staging (use production ACME server for real certs)
+      - "--certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL:-admin@example.com}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      # Staging ACME server (remove for production certificates)
+      - "--certificatesresolvers.letsencrypt.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik-certs:/letsencrypt
+    networks:
+      - flowmason-network
+    labels:
+      # Dashboard (optional, disable in production)
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.${DOMAIN:-localhost}`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.users=${TRAEFIK_USERS:-admin:$$apr1$$xyz$$hash}"
+    restart: unless-stopped
+
+  # ==========================================================================
+  # PostgreSQL Database
+  # ==========================================================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: flowmason-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-flowmason}
+      POSTGRES_USER: ${POSTGRES_USER:-flowmason}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - flowmason-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-flowmason}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # ==========================================================================
+  # Redis Cache
+  # ==========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: flowmason-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-changeme}
+    volumes:
+      - redis-data:/data
+    networks:
+      - flowmason-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-changeme}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+
+  # ==========================================================================
+  # FlowMason Studio
+  # ==========================================================================
+  studio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: flowmason/studio:${VERSION:-latest}
+    container_name: flowmason-studio
+    environment:
+      - FLOWMASON_HOST=0.0.0.0
+      - FLOWMASON_PORT=8999
+      - FLOWMASON_ENV=staging
+      # Database
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-flowmason}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-flowmason}
+      # Redis
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-changeme}@redis:6379/0
+      # Secrets
+      - FLOWMASON_SECRETS_KEY=${FLOWMASON_SECRETS_KEY:-}
+      # LLM Providers
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    volumes:
+      - flowmason-data:/app/data
+      - ${PIPELINES_DIR:-./pipelines}:/app/pipelines:ro
+    networks:
+      - flowmason-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      # HTTP -> HTTPS redirect
+      - "traefik.http.routers.studio-http.rule=Host(`${DOMAIN:-localhost}`)"
+      - "traefik.http.routers.studio-http.entrypoints=web"
+      - "traefik.http.routers.studio-http.middlewares=https-redirect"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+      # HTTPS
+      - "traefik.http.routers.studio.rule=Host(`${DOMAIN:-localhost}`)"
+      - "traefik.http.routers.studio.entrypoints=websecure"
+      - "traefik.http.routers.studio.tls=true"
+      - "traefik.http.routers.studio.tls.certresolver=letsencrypt"
+      - "traefik.http.services.studio.loadbalancer.server.port=8999"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8999/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+
+networks:
+  flowmason-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+  redis-data:
+  traefik-certs:
+  flowmason-data:
