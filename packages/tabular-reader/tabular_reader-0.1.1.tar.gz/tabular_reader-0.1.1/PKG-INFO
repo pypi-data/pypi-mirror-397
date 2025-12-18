@@ -1,0 +1,147 @@
+Metadata-Version: 2.4
+Name: tabular-reader
+Version: 0.1.1
+Summary: Read XLSX, XLS and CSV files with a uniform interface Read XLSX, XLS and CSV files with a uniform interface
+License: MIT
+License-File: LICENSE
+Keywords: spreadsheet,csv,xlsx,xls,reader
+Author: arkhan
+Author-email: arkhan@riseup.net
+Requires-Python: >=3.6,<4.0
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Requires-Dist: openpyxl (>=3.0,<3.1)
+Requires-Dist: xlrd (>=2.0,<3.0)
+Project-URL: Repository, https://github.com/arkhan/tabular-reader
+Description-Content-Type: text/plain
+
+﻿* tabular_reader
+
+** Description
+A module that maps information from each row in XLSX, XLS, or CSV
+files to a ~SimpleNamespace~ object, providing a uniform interface
+across different spreadsheet and data formats. Similar to Python's
+native [[https://docs.python.org/3/library/csv.html#csv.DictReader][csv.DictReader]] but with support for multiple file types.
+
+** Installing
+#+begin_src bash
+pip install tabular-reader
+#+end_src
+
+** Examples
+
+*** Basic usage with XLSX
+#+begin_src python
+from tabular_reader import TabularReader
+
+reader = TabularReader("names.xlsx", worksheet="Sheet1")
+for row in reader:
+    print(row.first_name, row.last_name)
+#+end_src
+
+Output:
+#+begin_src
+Boris Johnson
+Donald Trump
+Mark Rutte
+#+end_src
+
+*** Reading CSV files
+#+begin_src python
+from tabular_reader import TabularReader
+
+reader = TabularReader("data.csv")
+for row in reader:
+    print(row.email, row.phone)
+#+end_src
+
+*** Reading XLS files
+#+begin_src python
+from tabular_reader import TabularReader
+
+reader = TabularReader("legacy_data.xls")
+for row in reader:
+    print(row.id, row.name)
+#+end_src
+
+** Custom fieldnames
+You can specify fieldnames manually:
+
+#+begin_src python
+reader = TabularReader(
+    "data.xlsx",
+    fieldnames=["id", "email", "username"]
+)
+for row in reader:
+    print(row.id, row.email)
+#+end_src
+
+** Skip blank lines
+Filter out empty rows:
+
+#+begin_src python
+reader = TabularReader(
+    "data.csv",
+    skip_blank_lines=True
+)
+for row in reader:
+    print(row)
+#+end_src
+
+** Keyword arguments
+
+*** For Excel files (XLSX/XLS)
+Pass any ~openpyxl.load_workbook~ keyword arguments:
+
+#+begin_src python
+reader = TabularReader(
+    "names.xlsx",
+    worksheet="Sheet1",
+    read_only=False,
+    keep_vba=False,
+    data_only=False,
+    keep_links=True
+)
+#+end_src
+
+*** For CSV files
+Pass any ~csv.reader~ keyword arguments:
+
+#+begin_src python
+reader = TabularReader(
+    "data.csv",
+    delimiter=";",
+    quotechar='"',
+    encoding="utf-8"
+)
+#+end_src
+
+** Features
+- Automatic format detection by file extension
+- Empty column filtering (only processes columns with headers)
+- Uniform interface across XLSX, XLS, and CSV
+- ~SimpleNamespace~ objects with attribute access (~row.field_name~)
+- Python 3.6 - 3.14 support
+
+** Supported formats
+| Format | Extension | Status      |
+|--------|-----------|-------------|
+| Excel  | .xlsx     | ✓ Supported |
+| Excel  | .xls      | ✓ Supported |
+| CSV    | .csv      | ✓ Supported |
+
+** Acknowledgements
+- [[https://openpyxl.readthedocs.io/][openpyxl]]
+- [[https://docs.python.org/3/library/csv.html][csv]] - Python's standard library
+
