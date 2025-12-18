@@ -1,0 +1,173 @@
+Metadata-Version: 2.1
+Name: demix
+Version: 1.0.3
+Summary: Separate audio into stems (vocals, instruments) using AI-powered Spleeter
+Author: pwittchen
+License: Apache-2.0
+Project-URL: Homepage, https://github.com/pwittchen/demix
+Project-URL: Repository, https://github.com/pwittchen/demix
+Project-URL: Issues, https://github.com/pwittchen/demix/issues
+Keywords: audio,music,stem-separation,vocals,spleeter,youtube,ffmpeg
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Console
+Classifier: Intended Audience :: End Users/Desktop
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Topic :: Multimedia :: Sound/Audio
+Classifier: Topic :: Multimedia :: Sound/Audio :: Analysis
+Classifier: Topic :: Multimedia :: Sound/Audio :: Conversion
+Requires-Python: <3.9,>=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pytubefix>=9.3.0
+Requires-Dist: ffmpeg>=1.4
+Requires-Dist: spleeter>=2.3.2
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Requires-Dist: flake8>=5.0; extra == "dev"
+
+# demix
+
+ [![version](https://img.shields.io/pypi/v/demix.svg?style=flat-square)](https://pypi.python.org/pypi/demix/)
+ [![build](https://github.com/pwittchen/demix/actions/workflows/build.yml/badge.svg)](https://github.com/pwittchen/demix/actions/workflows/build.yml)
+ [![deploy](https://github.com/pwittchen/demix/actions/workflows/deploy.yml/badge.svg)](https://github.com/pwittchen/demix/actions/workflows/deploy.yml)
+ [![release](https://github.com/pwittchen/demix/actions/workflows/release.yml/badge.svg)](https://github.com/pwittchen/demix/actions/workflows/release.yml)
+
+separates audio from songs into stems (vocals, instruments), transpose music, change tempo, operates on music from youtube video or local file
+
+## installation
+
+I suggest to create virtualenv for this project to not break existing system-wide installations (replace python path below with your own python3.8 path):
+
+```
+brew install virtualenvwrapper
+brew install ffmpeg
+mkdir demix-cli
+cd demix-cli
+mkvirtualenv -p /Users/pw/.pyenv/versions/3.8.16/bin/python demix-cli
+workon demix-cli
+pip install demix
+demix -v
+```
+
+> [!NOTE]
+> Please note: I'm using homebrew for installing `virtualenvwrapper` and `ffmpeg`.
+If you're using another package manager or different operating system than macOS (e.g. Linux), you need to install it differently.
+
+## update
+
+```
+pip install demix --upgrade
+```
+
+## development
+
+prepare environment (replace python path below with your own python3.8 path):
+
+```
+brew install virtualenvwrapper
+brew install ffmpeg
+mkvirtualenv -p /Users/pw/.pyenv/versions/3.8.16/bin/python demix
+workon demix
+pip install -r requirements.txt
+python demix.py -v
+```
+
+> [!NOTE]
+> Please note: I'm using homebrew for installing `virtualenvwrapper` and `ffmpeg`.
+If you're using another package manager or different operating system than macOS (e.g. Linux), you need to install it differently.
+
+## virtualenv
+
+exit virtualenv, when you're done:
+
+```
+deactivate
+```
+
+to activate env again:
+
+for user installation:
+
+```
+workon demix-cli
+```
+
+for dev setup:
+
+```
+workon demix
+```
+
+> [!TIP]
+> You can change local names of these envs if you want to.
+
+## testing
+
+install `pytest`:
+
+```
+pip install pytest
+```
+
+run all tests (`-v` param for verbose):
+
+```
+pytest -v
+```
+
+## usage
+
+```
+demix -u <youtube-url> [options]
+demix -f <audio-file> [options]
+```
+
+### options
+
+| Option | Description |
+|--------|-------------|
+| `-u`, `--url` | YouTube video URL to process |
+| `-f`, `--file` | Local audio file to process (mp3, wav, flac, etc.) |
+| `-o`, `--output` | Output directory (default: `output`) |
+| `-t`, `--tempo` | Tempo factor for output audio (default: `1.0`, use `< 1.0` to slow down) |
+| `-p`, `--transpose` | Transpose pitch by semitones (default: `0`, range: `-12` to `+12`) |
+| `-ss`, `--start` | Start time for cutting (format: `MM:SS` or `HH:MM:SS`) |
+| `-to`, `--end` | End time for cutting (format: `MM:SS` or `HH:MM:SS`) |
+| `-m`, `--mode` | Separation mode: `2stems`, `4stems`, or `5stems` (default: `2stems`) |
+| `-c`, `--clean` | Clean up files: `output`, `models`, or `all` |
+| `-v`, `--version` | Show version number |
+| `-h`, `--help` | Show help message |
+
+### separation modes
+
+| Mode | Stems |
+|------|-------|
+| `2stems` | vocals, accompaniment |
+| `4stems` | vocals, drums, bass, other |
+| `5stems` | vocals, drums, bass, piano, other |
+
+### examples
+
+```bash
+# separate a YouTube video into vocals and accompaniment
+demix -u 'https://www.youtube.com/watch?v=VIDEO_ID'
+
+# separate a local file with 4 stems
+demix -f /path/to/song.mp3 -m 4stems
+
+# cut audio from 1:30 to 3:45 before separation
+demix -f song.mp3 -ss 1:30 -to 3:45
+
+# start from 0:30 (skip intro)
+demix -f song.mp3 -ss 0:30
+
+# keep only the first 2 minutes
+demix -f song.mp3 -to 2:00
+
+# combine cutting with tempo and transpose
+demix -f song.mp3 -ss 1:00 -to 4:00 -t 0.8 -p -2
+```
