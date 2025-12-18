@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=72", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sqlpgq"
+requires-python = ">=3.12"
+dynamic = ["version"]
+readme = "README.md"
+description = "SQL/PGQ (Property Graph Queries) for Python"
+authors = [{ name = "James Cagalawan" }]
+license = { text = "GPL-3.0-or-later" }
+keywords = ["sql", "pgq", "graph", "property-graph"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Database",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0", "pytest-cov>=4.0", "mypy>=1.0", "ruff>=0.1.0"]
+
+
+[project.urls]
+Repository = "https://github.com/cglwn/sqlpgq"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["sqlpgq*"]
+namespaces = false
+
+[tool.setuptools_scm]
+local_scheme = "no-local-version"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+
+[tool.ruff]
+target-version = "py312"
