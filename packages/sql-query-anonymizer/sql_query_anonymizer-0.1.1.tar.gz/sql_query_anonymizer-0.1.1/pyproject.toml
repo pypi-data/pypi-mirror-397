@@ -1,0 +1,38 @@
+[project]
+name = "sql-query-anonymizer"
+version = "0.1.1"
+description = "Tool for anonymizing schema data in SQL queries."
+readme = "README.md"
+authors = [
+    { name = "Nicholas Carsner", email = "nicholascarsner@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = []
+
+[project.scripts]
+sql-anonymizer = "sql_query_anonymizer.cli:main"
+sql = "sql_query_anonymizer.utils:main"
+
+[build-system]
+requires = ["uv_build>=0.8.4,<0.9.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+    "pre-commit>=4.0.0",
+]
+
+[tool.pytest.ini_options]
+python_files = ["test_*.py", "*_test.py", "tests.py"]
+
+[tool.coverage.run]
+omit = [
+    "tests/*",
+    "src/sql_query_anonymizer/__init__.py",
+    "src/sql_query_anonymizer/constants.py",
+    "src/sql_query_anonymizer/anonymize.py",
+    "src/sql_query_anonymizer/tokenize.py",
+    "src/sql_query_anonymizer/helper_utilities.py",
+]
