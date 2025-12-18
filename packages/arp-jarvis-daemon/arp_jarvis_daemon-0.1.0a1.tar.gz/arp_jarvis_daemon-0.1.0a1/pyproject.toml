@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=70", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "arp-jarvis-daemon"
+version = "0.1.0a1"
+description = "Jarvis Daemon core library for managing ARP runtime instances."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Agent Runtime Protocol" }]
+dependencies = [
+  "arp-standard-py>=1.0.0a2,<2.0.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7", "pytest-cov>=4", "pyright>=1.1.0"]
+
+[project.scripts]
+arp-jarvis-daemon = "arp_jarvis_daemon.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
