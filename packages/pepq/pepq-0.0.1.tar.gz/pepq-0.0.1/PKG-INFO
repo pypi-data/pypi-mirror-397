@@ -1,0 +1,49 @@
+Metadata-Version: 2.4
+Name: pepq
+Version: 0.0.1
+Summary: Toolkit for peptide modelling
+Project-URL: homepage, https://github.com/Vivi-tran/PepQ
+Project-URL: source, https://github.com/Vivi-tran/PepQ
+Project-URL: issues, https://github.com/Vivi-tran/PepQ/issues
+Project-URL: documentation, https://Vivi-tran.github.io/PepQ/
+Author-email: Ngoc-Vi Nguyen TRAN <vi.tran@sund.ku.dk>
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.11
+Requires-Dist: joblib>=1.4.2
+Requires-Dist: mapie==0.9.0
+Requires-Dist: numpy>=2.2.0
+Requires-Dist: pandas>=2.2.0
+Requires-Dist: rdkit>=2025.3.2
+Requires-Dist: scikit-learn>=1.4.0
+Requires-Dist: seaborn>=0.13.2
+Requires-Dist: xgboost>=3.1.2
+Provides-Extra: all
+Requires-Dist: pandas>=2.2.0; extra == 'all'
+Description-Content-Type: text/markdown
+
+# PepQ
+
+![PepQ logo](https://raw.githubusercontent.com/Vivi-tran/PepQ/main/data/pepq.png)
+
+**PepQ** — Calibrated scoring function for peptide–protein complexes.
+
+**Install**
+```bash
+pip install pepq
+```
+
+**Usage**
+```python
+from pepq.pepq import PepQ
+from pepq.io import load_json
+from pepq.data import build_data
+
+pipe = PepQ.load()
+data = load_json(data_path)
+data = build_data(data, None)
+
+conf = pipe.predict_confident(data, threshold=None)
+y_pred = conf.confident_predictions
+```
