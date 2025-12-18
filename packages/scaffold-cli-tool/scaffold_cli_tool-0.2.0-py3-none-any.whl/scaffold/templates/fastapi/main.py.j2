@@ -1,0 +1,8 @@
+# {{ project_name | title }}/main.py
+from fastapi import FastAPI
+
+app = FastAPI(title="{{ project_name | title }}")
+
+@app.get("/")
+def read_root():
+    return {"Hello": "from {{ project_name }}"}
