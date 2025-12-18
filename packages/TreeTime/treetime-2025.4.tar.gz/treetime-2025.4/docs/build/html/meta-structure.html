@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Meta Structure &#8212; TreeTime User Manual 2025.4 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d1102ebc" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=f2549b89"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Data Format" href="data-format.html" />
+    <link rel="prev" title="Introduction" href="introduction.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="meta-structure">
+<h1>Meta Structure<a class="headerlink" href="#meta-structure" title="Link to this heading">¶</a></h1>
+<section id="principles">
+<h2>Principles<a class="headerlink" href="#principles" title="Link to this heading">¶</a></h2>
+<p>Data – text, numbers, URLs, time records – are stored in data items. You can edit those in the left part of the GUI.
+You can decide how many data fields your data has and of what type they are – maybe you want a “summary” (text) and a “details” (long text) and a “planned hours” (integer) and a “spent hours” (timer).</p>
+<p>Calculations – products, ratios, sums, differences – are calculated on the fly, according to the “tree fields” in your tree.
+You can decide what mathematical operation each tree field performs, and what its input it. A mathematical operation on a node can take its input from dedicated fields of the same node (“own fields”), of the child nodes (“child fields”), of sibling nodes (“sibling fields”) and of parent nodes (“parent fields”).</p>
+<p>When hitting the tab “[Meta Structure]” or the tool button page “Edit Meta Structure” you can design the meta structure of your file: How many trees there are, what kind of data is stored in a data item, and what fields are in each tree. You can create calculations on your data and have results displayed in the tree.</p>
+</section>
+<section id="trees-and-the-data-item">
+<h2>Trees and the Data Item<a class="headerlink" href="#trees-and-the-data-item" title="Link to this heading">¶</a></h2>
+<p>The first entry in the tree on the left is the data item. You can change its name by double clicking on the title in the left. This is the default name of any new item that’s added when you hit any of the “new node” / “new parent” / “new sibling” buttons.</p>
+<img alt="_images/edit-meta-structure.png" class="align-center" src="_images/edit-meta-structure.png" />
+<p>The entries below are tree entries. When selecting a tree entry on the right and double clicking its title on the left you can edit a tree name. You can also create and delete trees.</p>
+</section>
+<section id="data-fields">
+<h2>Data Fields<a class="headerlink" href="#data-fields" title="Link to this heading">¶</a></h2>
+<p>Data fields can be renamed, created, and deleted. Note that the order in which fields are displayed in the data part of <em>TreeTime</em> is alphabetical. To add or remove a field you can click on the respective buttons on the left.</p>
+<img alt="_images/edit-data-field.png" class="align-center" src="_images/edit-data-field.png" />
+<p>When selecting a field, a dropdown box gives you a selection of possible types.</p>
+</section>
+<section id="tree-fields">
+<h2>Tree Fields<a class="headerlink" href="#tree-fields" title="Link to this heading">¶</a></h2>
+<p>A tree field has four properties:</p>
+<ol class="arabic simple">
+<li><p>Its name,</p></li>
+<li><p>its type,</p></li>
+<li><p>whether it’s hidden or visible (useful for intermediate calculation results),</p></li>
+<li><p>its parameter list (list of input fields).</p></li>
+</ol>
+<img alt="_images/edit-tree-field.png" class="align-center" src="_images/edit-tree-field.png" />
+<p>You can select the type from a dropdown list. The different types are explained in the next chapter. The visibility is a single flag that can be checked or unchecked.</p>
+<p>The input list is split into four parts:</p>
+<section id="own-fields">
+<h3>1. Own fields<a class="headerlink" href="#own-fields" title="Link to this heading">¶</a></h3>
+<p>This is a list of fields that are taken from the node itself.</p>
+<p>→ Example: You have a data field “planned time” and a data field “spent time” and you want to create a tree field “progress”, which is the ratio of spent time over planned time. The type “ratio” takes two arguments, the first being the numerator and the second the denominator. You would add the field “spent time” as first, and “planned time” as second, in the “own fields” list. Your new field, displayed for each node, will be the spent time over the planned time of that very node.</p>
+</section>
+<section id="child-fields">
+<h3>2. Child fields<a class="headerlink" href="#child-fields" title="Link to this heading">¶</a></h3>
+<p>This is a list of fields taken from the node’s children.</p>
+<p>→ Example: You have a data field “spent time” and want to sum it up over all branches. You would create a tree field “Total Spent Time”, select “spent time” in the “own fields” list, and “Total Spent Time” in the child fields list. That way it will display the sum of its own “spent time” value plus all the “Total Spent Time” of its children, which are in return their sums of “spent time” and children’s “Total Spent Time”, etc, recursively down the tree.</p>
+</section>
+<section id="sibling-fields">
+<h3>3. Sibling fields<a class="headerlink" href="#sibling-fields" title="Link to this heading">¶</a></h3>
+<p>This is a list of fields taken from the node’s siblings.</p>
+<p>Example: You have a data field “spent time” and want to see the percentage of spent time of all siblings (for example, tasks) of the same parent (for example, the current week), and call it “Relative Effort”. The “ratio-percent” field type computes the ratio <em>y</em> from its inputs <em>x1</em>, <em>x2</em>, … in the following way: <em>y</em> = <em>x1</em> / (<em>x2</em> + <em>x3</em> + … + <em>xn</em>). In the “own fields” you select “spent time” (that’s your <em>x1</em>), then you add another entry and also add “spent time” (that’s your <em>x2</em>), then in the sibling field list you select one entry “spent time” (that’s your <em>x3</em>, <em>x4</em>, …, depending on how many siblings the node has). As a result, each node will display a field: “Relativ Effort” = “spent time” of the node / (“spent time” of the node + “spent time” of the first sibling + “spent time” of the next sibling + etc).</p>
+</section>
+<section id="parent-fields">
+<h3>4. Parent fields<a class="headerlink" href="#parent-fields" title="Link to this heading">¶</a></h3>
+<p>These are mainly useful for the “node-path” and “node-name” type fields. When using them with other types, be very careful not to create circular dependencies. With these fields, they work in the same way as the other lists, only they take values from the node’s parent. For “node-path” and “node-name”, select the id of a tree from the dropdown (count trees starting with 0). The tree field will then display the node’s parent name in that other tree.</p>
+<p>→ Example: You have a tree “Tasks” and a tree “Priority”. The “Priority” tree has all different priorities as branches. If you want to see the priority in the task list, create a field “node-name”, and select the ID of the “Priority” tree in the “parent fields” list. You will then, in the task list, see the parent of that node in the priority list.</p>
+<p>In general: the <em>x1</em>, <em>x2</em>, <em>x3</em>, …, parameters are collected in order they are mentioned from the four lists
+1. own fields,
+2. child fields,
+3. sibling fields,
+4. parent fields.</p>
+</section>
+</section>
+<section id="recursion">
+<h2>Recursion<a class="headerlink" href="#recursion" title="Link to this heading">¶</a></h2>
+<p>If you have a data field <em>x</em> and define a tree field <em>y = sum( children.x )</em> then the tree field <em>y</em> in each node will show the sum of all <em>x</em> of each node’s children. Only the direct children, grandchildren and everything further down is ignored. In most cases this is not what you want.</p>
+<p>Recursion is a method of calculating where a method executes itself. As if you had a piece of paper with some instructions, and one of those instructions reads “do what’s on the instruction paper”. Or, as someone once phrased it: “Before you can understand recursion, you must first understand recursion”. A recursive method consists of two parts:</p>
+<ul class="simple">
+<li><p>A watertight stopping criterion</p></li>
+<li><p>A call to itself</p></li>
+</ul>
+<p>When calculating values in a tree, the first part (stopping criterion) is implicit by calculating values of children (“stop when there are no more children”) or parents (“stop when there are no more parents”). The second part (call to itself) is present if the tree field definition contains the tree field itself.</p>
+<p>In the above case of the sum over a nodes’ childrens’ <em>x</em> this would be:</p>
+<p><em>y = own.x + children.y</em>.</p>
+<p>The value of <em>y</em> of each node is calculated by the node’s <em>x</em>, adding the node <em>y</em> of each child. The value <em>y</em> of each child is calculated by adding its own value <em>x</em> plus the value <em>y</em> of each of that child’s children. And so forth.</p>
+<p>It is important that the recursion is not defined in own-fields, because then the recursion would not stop: If <em>y = own.y + children.x</em> then to calculate that sum, <em>TreeTime</em> would calculate a node’s <em>y</em> field by first collecting the value of the its <em>y</em> field, for which in turn it would collect the value of its <em>y</em> field, for which in turn it would  firstcollect the value of its <em>y</em> field… There’s no stopping criterion. That’s what’s called a “circular dependency”. To prevent that, the tree field will not be offered in its own own-fields and sibling-fields drop-down lists.</p>
+<p>Recursion can also be defined indirectly, where <em>a</em> depends on <em>b</em>, <em>b</em> depends on <em>c</em>, and <em>c</em> depends on <em>a</em>. <em>TreeTime</em> doesn’t check this (at this version, we might add a check later).</p>
+<p>To avoid circular dependencies, and tell tree fields and data fields apart, it is good practice to name data fields in lower case (“spent time”), and tree fields with capitalisation (“Spent Time”). By then making sure all capitalised fields are only mentioned in child-fields parameter lists you will avoid infinite recursion.</p>
+</section>
+<section id="input-output-types">
+<h2>Input/Output Types<a class="headerlink" href="#input-output-types" title="Link to this heading">¶</a></h2>
+<p>Not any field can be used as input. You cannot divide two texts, you cannot mutiply a URL with a word, and you cannot concatenate two numbers.</p>
+<p>If you select a field for your list, <em>TreeTime</em> does some type checking for you. There are three global types: “text”, “numerical” and “any”. Tree fields like “URL” or “Text” will accept only text input, fields like “sum” and “ratio” will only accept numerical input, fields like “set” will accept any. Non-matching input fields will not appear in the dropdown box when you select your input.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">TreeTime User Manual</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Meta Structure</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#principles">Principles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#trees-and-the-data-item">Trees and the Data Item</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data-fields">Data Fields</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#tree-fields">Tree Fields</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#recursion">Recursion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#input-output-types">Input/Output Types</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="data-format.html">Data Format</a></li>
+<li class="toctree-l1"><a class="reference internal" href="data-fields.html">Data Fields</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tree-fields.html">Tree Fields</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releases.html">History and Road Map</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="introduction.html" title="previous chapter">Introduction</a></li>
+      <li>Next: <a href="data-format.html" title="next chapter">Data Format</a></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;CC BY-SA 4.0,  Jacob Kanev.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.1.3</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="_sources/meta-structure.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
