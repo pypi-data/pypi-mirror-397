@@ -1,0 +1,37 @@
+{
+    __version__: 1,
+    fps: {type: "float", default: 23.976},
+    resolution: {type: "array", default: [1920, 1080], length: 2, items: {"type": "int"}},
+    publish_defaults: {
+        type: "object",
+        cascade: "update",  // cascade will add/replace keys in child configs
+        items: {
+            publish_type: {
+                type: "string",
+                default: "AnimFinal"
+            },
+            handles: {
+                type: "array",
+                default: [0, 0],
+                length: 2
+            }
+        }
+    },
+    tools: {
+        type: "array",
+        cascade: "append",
+        unique: true,
+        default: ["restricted_tool_1", "restricted_tool2"],
+        items: {"type": "string"}
+    },
+    playblast_settings: {
+        type: "object",
+        cascade: "update",
+        items: {
+            frame_step: {type: "int", "default": 1},
+            overscan: {type: "float", "default": 1.0},
+        }
+    },
+    default_shelf: {type: "string", default: "FR_Anim"},
+    custom_mode: {type: "bool", default: false },
+}

@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=61", "wheel", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fr_config"
+version = "0.2.0"
+description = "Floating Rock cascading configuration resolver"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.7,<4"
+authors = [
+    {name = "alex.telford", email = "alex.telford@floating-rock.com"},
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+dependencies = [
+    "jsonschema>=4.21.1,<5",
+    "pyjson5>=1.6,<2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+]
+
+[project.urls]
+Homepage = "https://github.com/Floating-Rock-Studio/fr_config"
+Repository = "https://github.com/Floating-Rock-Studio/fr_config.git"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*.json"]
