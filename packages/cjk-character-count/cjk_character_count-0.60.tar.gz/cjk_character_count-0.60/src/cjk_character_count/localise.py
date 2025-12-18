@@ -1,0 +1,247 @@
+from .global_var import (
+    DisplayLanguage,
+    CJK_NON_COMPATIBILITY_IDEOGRAPHS,
+    CJK_ZERO_BLOCK,
+    DisplayUnicodeBlocksList,
+    CJKGroup,
+)
+from unicode_blocks.blocks import (
+    KANGXI_RADICALS,
+    CJK_RADICALS_SUPPLEMENT,
+    CJK_COMPATIBILITY_IDEOGRAPHS,
+    CJK_COMPATIBILITY_IDEOGRAPHS_SUPPLEMENT,
+    CJK_UNIFIED_IDEOGRAPHS,
+    CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A,
+    CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B,
+    CJK_UNIFIED_IDEOGRAPHS_EXTENSION_C,
+    CJK_UNIFIED_IDEOGRAPHS_EXTENSION_D,
+    CJK_UNIFIED_IDEOGRAPHS_EXTENSION_E,
+    CJK_UNIFIED_IDEOGRAPHS_EXTENSION_F,
+    CJK_UNIFIED_IDEOGRAPHS_EXTENSION_G,
+    CJK_UNIFIED_IDEOGRAPHS_EXTENSION_H,
+    CJK_UNIFIED_IDEOGRAPHS_EXTENSION_I,
+    CJK_UNIFIED_IDEOGRAPHS_EXTENSION_J,
+)
+
+LABELS = {
+    DisplayLanguage.EN: {
+        "CJK Character Count": "CJK Character Count",
+        "Open": "Open",
+        "menu": {
+            "file": "File",
+            "open": "Open (Ctrl+O)",
+            "save": "Save Report (Ctrl+S)",
+            "settings": "Settings",
+            "language": "Language",
+            "theme": "Theme",
+            "light": "Light",
+            "dark": "Dark",
+            "Missing Characters": "Missing Characters",
+            "Characters in Font": "Characters in Font",
+            "Copy on Click": "Copy on Click",
+            "about": "About",
+            "version": "Version",
+        },
+        "section_titles": {
+            CJKGroup.JIAN: "Chinese (Simp) Encodings",
+            CJKGroup.JIANFAN: "Chinese (Simp/Trad) Encodings",
+            CJKGroup.FAN: "Chinese (Trad) Encodings",
+            "uni": "Unicode Blocks",
+        },
+        "Font: ": "Font: ",
+        "File: ": "File: ",
+        "Select font file": "Select font file",
+        "no_file_selected": "No file",
+        "no_file_selected_message": "No font file selected.",
+        "not_a_valid_font_file": "Not a valid font",
+        "not_a_valid_font_file_message": "This is not a valid font file.",
+        "report_saved": "Report saved",
+        "report_saved_message": "Report successfully saved to: {}",
+        "invalid_file_extension": "Invalid file extension",
+        "invalid_file_extension_message": "The selected save file extension is unsupported.",
+        "copied_to_clipboard": "Copied to clipboard",
+        "copied_to_clipboard_message_missing": "Copied {count} missing characters to clipboard.",
+        "copied_to_clipboard_message_overlap": "Copied {count} overlapping characters to clipboard.",
+        "filetypes": {
+            "*.ttf *.otf *.woff *.woff2 *.otc *.ttc": "All suppported font format",
+            "*.ttf *.otf *.woff *.woff2": "Single font file format",
+            "*.ttf": "TrueType font",
+            "*.otf": "OpenType font",
+            "*.woff *.woff2": "Web Open Font Format (WOFF)",
+            "*.otc *.ttc": "OpenType collection font",
+            "*.*": "All files",
+        },
+        "OpenType collection selection": "OpenType Collection Selection",
+        "Pick font for counting:": "Pick font for counting:",
+        "OK": "OK",
+        "unicode_blocks": {},  # Default Unicode block names are English names
+    },
+    DisplayLanguage.ZHS: {
+        "CJK Character Count": "字体计数软件",
+        "Open": "打开",
+        "menu": {
+            "file": "文件",
+            "open": "打开 (Ctrl+O)",
+            "save": "保存报告 (Ctrl+S)",
+            "settings": "设置",
+            "language": "语言",
+            "theme": "主题",
+            "light": "明亮",
+            "dark": "黑暗",
+            "Missing Characters": "缺失字符",
+            "Characters in Font": "存在字符",
+            "Copy on Click": "点击复制",
+            "about": "关于",
+            "version": "版本",
+        },
+        "section_titles": {
+            CJKGroup.JIAN: "简体中文编码",
+            CJKGroup.JIANFAN: "简体/繁体中文编码",
+            CJKGroup.FAN: "繁体中文编码",
+            "uni": "统一码区段",
+        },
+        "Font: ": "字体：",
+        "File: ": "文件：",
+        "Select font file": "选择字体文件",
+        "no_file_selected": "没有文件",
+        "no_file_selected_message": "未选择字体文件。",
+        "not_a_valid_font_file": "不是有效的字体",
+        "not_a_valid_font_file_message": "这不是有效的字体文件。",
+        "report_saved": "报告已保存",
+        "report_saved_message": "报告已成功保存至：{}",
+        "invalid_file_extension": "无效的文件扩展名",
+        "invalid_file_extension_message": "不支持所选保存文件的扩展名。",
+        "copied_to_clipboard": "复制到剪贴板",
+        "copied_to_clipboard_message_missing": "已复制 {count} 个缺失字符到剪贴板。",
+        "copied_to_clipboard_message_overlap": "已复制 {count} 个存在字符到剪贴板。",
+        "filetypes": {
+            "*.ttf *.otf *.woff *.woff2 *.otc *.ttc": "所有支援的字体格式",
+            "*.ttf *.otf *.woff *.woff2": "单独字体文件",
+            "*.ttf": "TrueType 字体",
+            "*.otf": "OpenType 字体",
+            "*.woff *.woff2": "网页开放字体 (WOFF)",
+            "*.otc *.ttc": "OpenType 合集字型",
+            "*.*": "所有文件",
+        },
+        "OpenType collection selection": "OpenType合集字体选择",
+        "Pick font for counting:": "选择计数的字体：",
+        "OK": "确定",
+        "unicode_blocks": {
+            DisplayUnicodeBlocksList.TOTAL_BLOCK.name: "总汉字数",
+            CJK_ZERO_BLOCK.name: "〇",
+            KANGXI_RADICALS.name: "康熙部首",
+            CJK_RADICALS_SUPPLEMENT.name: "汉字部首补充",
+            CJK_COMPATIBILITY_IDEOGRAPHS.name: "中日韩兼容表意文字",
+            CJK_NON_COMPATIBILITY_IDEOGRAPHS.name: "　非兼容（统一）表意文字",
+            CJK_COMPATIBILITY_IDEOGRAPHS_SUPPLEMENT.name: "中日韩兼容表意文字（补充区）",
+            CJK_UNIFIED_IDEOGRAPHS.name: "中日韩统一表意文字",
+            CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A.name: "中日韩统一表意文字—扩展A区",
+            CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B.name: "中日韩统一表意文字—扩展B区",
+            CJK_UNIFIED_IDEOGRAPHS_EXTENSION_C.name: "中日韩统一表意文字—扩展C区",
+            CJK_UNIFIED_IDEOGRAPHS_EXTENSION_D.name: "中日韩统一表意文字—扩展D区",
+            CJK_UNIFIED_IDEOGRAPHS_EXTENSION_E.name: "中日韩统一表意文字—扩展E区",
+            CJK_UNIFIED_IDEOGRAPHS_EXTENSION_F.name: "中日韩统一表意文字—扩展F区",
+            CJK_UNIFIED_IDEOGRAPHS_EXTENSION_G.name: "中日韩统一表意文字—扩展G区",
+            CJK_UNIFIED_IDEOGRAPHS_EXTENSION_H.name: "中日韩统一表意文字—扩展H区",
+            CJK_UNIFIED_IDEOGRAPHS_EXTENSION_I.name: "中日韩统一表意文字—扩展I区",
+            CJK_UNIFIED_IDEOGRAPHS_EXTENSION_J.name: "中日韩统一表意文字—扩展J区",
+        },
+    },
+    DisplayLanguage.ZHT: {
+        "CJK Character Count": "字型計數軟體",
+        "Open": "打開",
+        "menu": {
+            "file": "文檔",
+            "open": "打開 (Ctrl+O)",
+            "save": "保存報告 (Ctrl+S)",
+            "settings": "設置",
+            "language": "語言",
+            "theme": "主題",
+            "light": "明亮",
+            "dark": "黑暗",
+            "Missing Characters": "缺失字符",
+            "Characters in Font": "存在字符",
+            "Copy on Click": "點擊複製",
+            "about": "關於",
+            "version": "版本",
+        },
+        "section_titles": {
+            CJKGroup.JIAN: "簡體中文編碼",
+            CJKGroup.JIANFAN: "簡體/正體（繁體）中文編碼",
+            CJKGroup.FAN: "正體（繁體）中文編碼",
+            "uni": "統一碼區段",
+        },
+        "Font: ": "字型：",
+        "File: ": "文檔：",
+        "Select font file": "選擇字型檔",
+        "no_file_selected": "沒有文檔",
+        "no_file_selected_message": "未選擇字型檔。",
+        "not_a_valid_font_file": "不是有效的字型",
+        "not_a_valid_font_file_message": "這不是有效的字型檔。",
+        "report_saved": "報告已保存",
+        "report_saved_message": "報告已成功保存至：{}",
+        "invalid_file_extension": "無效的文檔擴展名",
+        "invalid_file_extension_message": "不支援所選保存文檔的擴展名。",
+        "copied_to_clipboard": "複製到剪貼板",
+        "copied_to_clipboard_message_missing": "已複製 {count} 个缺失字符到剪貼板。",
+        "copied_to_clipboard_message_overlap": "已複製 {count} 个存在字符到剪貼板。",
+        "filetypes": {
+            "*.ttf *.otf *.woff *.woff2 *.otc *.ttc": "所有支援的字型格式",
+            "*.ttf *.otf *.woff *.woff2": "單獨字型檔",
+            "*.ttf": "TrueType 字型",
+            "*.otf": "OpenType 字型",
+            "*.woff *.woff2": "網頁開放字型 (WOFF)",
+            "*.otc *.ttc": "OpenType 合集字型",
+            "*.*": "所有文檔",
+        },
+        "OpenType collection selection": "OpenType合集字型選擇",
+        "Pick font for counting:": "選擇計數的字型：",
+        "OK": "確定",
+        "unicode_blocks": {
+            DisplayUnicodeBlocksList.TOTAL_BLOCK.name: "總漢字數",
+            CJK_ZERO_BLOCK.name: "〇",
+            KANGXI_RADICALS.name: "康熙部首",
+            CJK_RADICALS_SUPPLEMENT.name: "漢字部首補充",
+            CJK_COMPATIBILITY_IDEOGRAPHS.name: "中日韓兼容表意文字",
+            CJK_NON_COMPATIBILITY_IDEOGRAPHS.name: "　非兼容（統一）表意文字",
+            CJK_COMPATIBILITY_IDEOGRAPHS_SUPPLEMENT.name: "中日韓兼容表意文字（補充區）",
+            CJK_UNIFIED_IDEOGRAPHS.name: "中日韓統一表意文字",
+            CJK_UNIFIED_IDEOGRAPHS_EXTENSION_A.name: "中日韓統一表意文字—擴展A區",
+            CJK_UNIFIED_IDEOGRAPHS_EXTENSION_B.name: "中日韓統一表意文字—擴展B區",
+            CJK_UNIFIED_IDEOGRAPHS_EXTENSION_C.name: "中日韓統一表意文字—擴展C區",
+            CJK_UNIFIED_IDEOGRAPHS_EXTENSION_D.name: "中日韓統一表意文字—擴展D區",
+            CJK_UNIFIED_IDEOGRAPHS_EXTENSION_E.name: "中日韓統一表意文字—擴展E區",
+            CJK_UNIFIED_IDEOGRAPHS_EXTENSION_F.name: "中日韓統一表意文字—擴展F區",
+            CJK_UNIFIED_IDEOGRAPHS_EXTENSION_G.name: "中日韓統一表意文字—擴展G區",
+            CJK_UNIFIED_IDEOGRAPHS_EXTENSION_H.name: "中日韓統一表意文字—擴展H區",
+            CJK_UNIFIED_IDEOGRAPHS_EXTENSION_I.name: "中日韓統一表意文字—擴展I區",
+            CJK_UNIFIED_IDEOGRAPHS_EXTENSION_J.name: "中日韓統一表意文字—擴展J區",
+        },
+    },
+}
+
+
+def get_by_dotted_key(data: dict, dotted_key: str, default=None):
+    keys = dotted_key.split(".")
+    current = data
+    for i, key in enumerate(keys):
+        if i == len(keys) - 1:
+            if not isinstance(current, dict):
+                return default
+            if key not in current:
+                return default
+            return current[key]
+        elif key not in current or not isinstance(current[key], dict):
+            return default
+        current = current[key]
+
+
+def get_localised_label(lang_code: DisplayLanguage, label_key: str):
+    """Retrieve the localized label for the given language code and label key."""
+    language_records = LABELS.get(lang_code, LABELS[DisplayLanguage.EN])
+    result = get_by_dotted_key(language_records, label_key, default=label_key)
+    if isinstance(result, dict):
+        return result.copy()
+    if result is None:
+        return label_key
+    return result
