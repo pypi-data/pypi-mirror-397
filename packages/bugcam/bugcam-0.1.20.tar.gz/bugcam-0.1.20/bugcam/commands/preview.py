@@ -1,0 +1,123 @@
+import typer
+import subprocess
+import sys
+import platform
+from pathlib import Path
+from rich.console import Console
+from ..config import get_python_for_detection, get_cache_dir
+
+app = typer.Typer(help="Camera preview and testing")
+console = Console()
+
+
+def preflight_check() -> bool:
+    """Check if detection dependencies are available in the Python interpreter."""
+    if platform.system() != "Linux":
+        return True  # Can't check on non-Linux
+    try:
+        python_exe = get_python_for_detection()
+        result = subprocess.run(
+            [python_exe, "-c", "import gi, hailo, hailo_apps, numpy, cv2"],
+            capture_output=True,
+            timeout=10
+        )
+        return result.returncode == 0
+    except Exception:
+        return False
+
+@app.callback(invoke_without_command=True)
+def preview(
+    duration: int = typer.Option(None, "--duration", "-d", help="Preview duration in seconds"),
+    hef_path: str = typer.Option(None, "--model", "-m", help="Path to .hef model file"),
+) -> None:
+    """
+    Start camera preview with optional detection overlay.
+
+    If no model specified, shows raw camera feed.
+    Press Ctrl+C to stop.
+    """
+    # Find the detection.py script
+    detection_script = Path(__file__).parent.parent / "pipelines" / "detection.py"
+
+    if not detection_script.exists():
+        console.print(f"[red]Error: Detection script not found at {detection_script}[/red]")
+        raise typer.Exit(1)
+
+    # Find default model if none specified
+    if hef_path is None:
+        # Check cache directory first
+        models_dir = get_cache_dir() / "models"
+        model_files = []
+
+        if models_dir.exists():
+            model_files = list(models_dir.glob("*.hef"))
+
+        # Fall back to resources directory
+        if not model_files:
+            resources_dir = Path(__file__).parent.parent.parent / "resources"
+            if resources_dir.exists():
+                model_files = list(resources_dir.glob("*.hef"))
+
+        if model_files:
+            hef_path = str(model_files[0])
+        else:
+            console.print("[yellow]No model found[/yellow]")
+            console.print("Download a model with: [cyan]bugcam models download[/cyan]")
+            console.print("Running without detection overlay\n")
+
+    # Pre-flight dependency check
+    if not preflight_check():
+        console.print("[red]Missing system dependencies for detection.[/red]")
+        console.print("Run [cyan]bugcam doctor[/cyan] to see what's missing.")
+        raise typer.Exit(1)
+
+    # Build command - detection.py expects --input and --hef-path arguments
+    # Use system Python on Linux to access gi/hailo system packages
+    # RPi AI Kit uses Hailo-8L architecture
+    cmd = [get_python_for_detection(), str(detection_script), "--input", "rpi", "--arch", "hailo8l"]
+
+    if hef_path:
+        cmd.extend(["--hef-path", hef_path])
+
+    # Show startup message
+    console.print("[green]Starting camera preview[/green]")
+    if hef_path:
+        console.print(f"Model: [cyan]{Path(hef_path).name}[/cyan]")
+    console.print("Press [cyan]Ctrl+C[/cyan] to stop\n")
+
+    process = None
+    try:
+        process = subprocess.Popen(cmd, stderr=subprocess.PIPE, text=True)
+        _, stderr = process.communicate()
+
+        # Check for errors
+        if process.returncode != 0 and stderr:
+            # Check for missing Hailo post-process libraries
+            if "Could not load lib" in stderr and "libyolo_hailortpp_postprocess.so" in stderr:
+                console.print("[red]Missing Hailo post-processing libraries.[/red]")
+                console.print("Run [cyan]bugcam setup[/cyan] to compile the required libraries.\n")
+                sys.exit(1)
+            # Check for numpy binary incompatibility error
+            elif "numpy.dtype size changed" in stderr or "binary incompatibility" in stderr:
+                console.print("[red]NumPy binary incompatibility detected.[/red]")
+                console.print("This usually happens when system packages are out of sync.\n")
+                console.print("Fix with: [cyan]sudo apt install --reinstall python3-numpy python3-picamera2 python3-libcamera python3-simplejpeg[/cyan]\n")
+                console.print("If that doesn't work, also remove any pip numpy:")
+                console.print("[cyan]rm -rf ~/.local/lib/python*/site-packages/numpy*[/cyan]\n")
+                console.print("Then run: [cyan]bugcam check camera[/cyan] to verify the fix.")
+                sys.exit(1)
+            else:
+                # Show actual error
+                console.print(f"[red]Error:[/red] {stderr}")
+                console.print("\nRun [cyan]bugcam check[/cyan] to diagnose issues.")
+
+        sys.exit(process.returncode)
+    except KeyboardInterrupt:
+        console.print("\n[green]Preview stopped[/green]")
+        if process:
+            process.terminate()
+        sys.exit(0)
+    except Exception as e:
+        console.print(f"[red]Error: {e}[/red]")
+        console.print("\nRun [cyan]bugcam check[/cyan] to diagnose issues.")
+        sys.exit(1)
