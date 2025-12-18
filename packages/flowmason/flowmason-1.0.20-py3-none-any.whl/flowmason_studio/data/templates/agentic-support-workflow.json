@@ -1,0 +1,320 @@
+{
+  "id": "agentic-support-workflow",
+  "name": "Agentic Customer Support Workflow",
+  "description": "An intelligent customer support system that classifies inquiries, routes to specialized handlers, performs sentiment analysis, generates responses, applies quality checks, and produces comprehensive support tickets. Demonstrates classification, conditional routing, parallel processing, and multi-stage refinement.",
+  "category": "support",
+  "tags": [
+    "support",
+    "agent",
+    "routing",
+    "classification",
+    "sentiment",
+    "automation",
+    "advanced"
+  ],
+  "difficulty": "advanced",
+  "use_cases": [
+    "Automated customer support triage",
+    "Intelligent ticket routing",
+    "Multi-tier support escalation",
+    "Customer sentiment monitoring",
+    "Support response quality assurance"
+  ],
+  "stages": [
+    {
+      "id": "ingest-inquiry",
+      "component_type": "json-transform",
+      "name": "Ingest Inquiry",
+      "config": {
+        "template": {
+          "inquiry_id": "{{input.inquiry_id or 'INQ-' + str(int(time.time()))}}",
+          "customer_message": "{{input.message}}",
+          "customer_email": "{{input.email}}",
+          "customer_name": "{{input.name}}",
+          "channel": "{{input.channel or 'web'}}",
+          "received_at": "{{now()}}",
+          "metadata": {
+            "priority_override": "{{input.priority}}",
+            "account_tier": "{{input.account_tier or 'standard'}}"
+          }
+        }
+      },
+      "depends_on": [],
+      "position": {
+        "x": 100,
+        "y": 250
+      }
+    },
+    {
+      "id": "classify-inquiry",
+      "component_type": "generator",
+      "name": "Classify Inquiry",
+      "config": {
+        "prompt": "Classify this customer support inquiry:\n\nCustomer Message: {{upstream.ingest-inquiry.customer_message}}\n\nClassify into exactly ONE primary category:\n- billing: Payment, invoices, refunds, subscriptions\n- technical: Bugs, errors, how-to questions, integrations\n- account: Login issues, password reset, profile changes\n- sales: Pricing, upgrades, enterprise inquiries\n- feedback: Complaints, suggestions, compliments\n- general: Other inquiries\n\nAlso determine:\n- Urgency: critical / high / medium / low\n- Complexity: simple / moderate / complex\n- Requires_human: yes / no\n\nRespond in JSON format only:\n{\"category\": \"...\", \"urgency\": \"...\", \"complexity\": \"...\", \"requires_human\": \"...\", \"confidence\": 0.0-1.0, \"reasoning\": \"...\"}",
+        "system_prompt": "You are an expert customer support classifier. Analyze inquiries accurately and consistently. Always respond with valid JSON."
+      },
+      "depends_on": [
+        "ingest-inquiry"
+      ],
+      "position": {
+        "x": 350,
+        "y": 150
+      }
+    },
+    {
+      "id": "sentiment-analyzer",
+      "component_type": "generator",
+      "name": "Analyze Sentiment",
+      "config": {
+        "prompt": "Analyze the emotional sentiment of this customer message:\n\n{{upstream.ingest-inquiry.customer_message}}\n\nProvide:\n1. Overall sentiment: positive / neutral / negative / very_negative\n2. Emotion indicators: [frustrated, angry, confused, satisfied, happy, urgent, anxious]\n3. Tone: formal / casual / aggressive / polite\n4. Escalation risk: low / medium / high\n5. Key emotional triggers in the message\n\nRespond in JSON format.",
+        "system_prompt": "You are an emotional intelligence expert. Accurately detect customer emotions and escalation risk."
+      },
+      "depends_on": [
+        "ingest-inquiry"
+      ],
+      "position": {
+        "x": 350,
+        "y": 350
+      }
+    },
+    {
+      "id": "filter-escalation",
+      "component_type": "filter",
+      "name": "Check Escalation Needed",
+      "config": {
+        "data": {
+          "classification": "{{upstream.classify-inquiry.content}}",
+          "sentiment": "{{upstream.sentiment-analyzer.content}}"
+        },
+        "condition": "'very_negative' in str(data) or 'critical' in str(data) or 'high' in str(data.get('sentiment', '')) or 'requires_human' in str(data) and 'yes' in str(data)",
+        "pass_if_missing": false
+      },
+      "depends_on": [
+        "classify-inquiry",
+        "sentiment-analyzer"
+      ],
+      "position": {
+        "x": 600,
+        "y": 150
+      }
+    },
+    {
+      "id": "knowledge-retrieval",
+      "component_type": "generator",
+      "name": "Retrieve Knowledge",
+      "config": {
+        "prompt": "Based on this customer inquiry classification, identify the relevant knowledge base articles and response templates:\n\nCategory: {{upstream.classify-inquiry.content}}\nCustomer Message: {{upstream.ingest-inquiry.customer_message}}\n\nProvide:\n1. Relevant FAQ entries that might help\n2. Standard response template suggestions\n3. Common solutions for this type of inquiry\n4. Links/references to documentation\n5. Previous similar case resolutions",
+        "system_prompt": "You are a knowledge management expert. Retrieve the most relevant support resources for customer inquiries."
+      },
+      "depends_on": [
+        "classify-inquiry"
+      ],
+      "position": {
+        "x": 600,
+        "y": 350
+      }
+    },
+    {
+      "id": "draft-response-standard",
+      "component_type": "generator",
+      "name": "Draft Standard Response",
+      "config": {
+        "prompt": "Draft a helpful customer support response:\n\nCustomer Name: {{upstream.ingest-inquiry.customer_name}}\nInquiry: {{upstream.ingest-inquiry.customer_message}}\nClassification: {{upstream.classify-inquiry.content}}\nSentiment: {{upstream.sentiment-analyzer.content}}\nKnowledge Base: {{upstream.knowledge-retrieval.content}}\n\nCreate a warm, helpful response that:\n1. Acknowledges their concern\n2. Addresses their specific question\n3. Provides clear next steps\n4. Matches their emotional state appropriately\n5. Includes relevant resources",
+        "system_prompt": "You are a skilled customer support agent. Write helpful, empathetic responses that resolve issues efficiently."
+      },
+      "depends_on": [
+        "knowledge-retrieval",
+        "sentiment-analyzer"
+      ],
+      "position": {
+        "x": 850,
+        "y": 250
+      }
+    },
+    {
+      "id": "draft-response-escalated",
+      "component_type": "generator",
+      "name": "Draft Escalation Response",
+      "config": {
+        "prompt": "This inquiry has been flagged for escalation. Draft a response that:\n\nCustomer Name: {{upstream.ingest-inquiry.customer_name}}\nInquiry: {{upstream.ingest-inquiry.customer_message}}\nEscalation Reason: {{upstream.filter-escalation.reason}}\n\nCreate a response that:\n1. Acknowledges the urgency/severity\n2. Assures them their issue is being prioritized\n3. Sets expectations for human follow-up\n4. Provides immediate temporary solutions if applicable\n5. Gives a timeline for resolution",
+        "system_prompt": "You are a senior support escalation specialist. Handle sensitive cases with extra care and professionalism."
+      },
+      "depends_on": [
+        "filter-escalation",
+        "sentiment-analyzer"
+      ],
+      "position": {
+        "x": 850,
+        "y": 450
+      }
+    },
+    {
+      "id": "response-selector",
+      "component_type": "selector",
+      "name": "Select Best Response",
+      "config": {
+        "options": [
+          "{{upstream.draft-response-standard.content}}",
+          "{{upstream.draft-response-escalated.content}}"
+        ],
+        "criteria": "Select the response that best matches the customer's needs:\n- Escalation status: {{upstream.filter-escalation.passed}}\n- Sentiment: {{upstream.sentiment-analyzer.content}}\n- Complexity: from {{upstream.classify-inquiry.content}}\n\nChoose escalated response if escalation was triggered, otherwise choose standard."
+      },
+      "depends_on": [
+        "draft-response-standard",
+        "draft-response-escalated"
+      ],
+      "position": {
+        "x": 1100,
+        "y": 350
+      }
+    },
+    {
+      "id": "quality-check",
+      "component_type": "critic",
+      "name": "Quality Check Response",
+      "config": {
+        "content": "{{upstream.response-selector.selected}}",
+        "criteria": "Evaluate this support response for:\n1. Tone appropriateness (empathetic, professional)\n2. Accuracy of information provided\n3. Completeness of answer\n4. Clear next steps\n5. Brand voice consistency\n6. No policy violations or promises we can't keep\n7. Proper grammar and formatting\n\nScore 1-10 and provide specific feedback."
+      },
+      "depends_on": [
+        "response-selector"
+      ],
+      "position": {
+        "x": 1100,
+        "y": 200
+      }
+    },
+    {
+      "id": "polish-response",
+      "component_type": "improver",
+      "name": "Polish Final Response",
+      "config": {
+        "content": "{{upstream.response-selector.selected}}",
+        "feedback": "{{upstream.quality-check.feedback}}",
+        "instructions": "Refine this customer support response based on the quality feedback. Ensure it's polished, professional, and ready to send to the customer."
+      },
+      "depends_on": [
+        "quality-check"
+      ],
+      "position": {
+        "x": 1350,
+        "y": 200
+      }
+    },
+    {
+      "id": "generate-internal-notes",
+      "component_type": "generator",
+      "name": "Generate Internal Notes",
+      "config": {
+        "prompt": "Generate internal ticket notes for the support team:\n\nOriginal Inquiry: {{upstream.ingest-inquiry.customer_message}}\nClassification: {{upstream.classify-inquiry.content}}\nSentiment Analysis: {{upstream.sentiment-analyzer.content}}\nEscalation Triggered: {{upstream.filter-escalation.passed}}\nResponse Sent: {{upstream.polish-response.improved}}\n\nCreate structured internal notes with:\n- Issue summary\n- Root cause (if identifiable)\n- Actions taken\n- Follow-up required\n- Knowledge base updates needed\n- Escalation path if needed",
+        "system_prompt": "You are documenting support tickets. Create clear, actionable internal notes."
+      },
+      "depends_on": [
+        "polish-response",
+        "filter-escalation"
+      ],
+      "position": {
+        "x": 1350,
+        "y": 400
+      }
+    },
+    {
+      "id": "create-ticket",
+      "component_type": "json-transform",
+      "name": "Create Support Ticket",
+      "config": {
+        "template": {
+          "ticket": {
+            "id": "{{upstream.ingest-inquiry.inquiry_id}}",
+            "status": "{{('escalated' if upstream.filter-escalation.passed else 'auto_resolved')}}",
+            "customer": {
+              "name": "{{upstream.ingest-inquiry.customer_name}}",
+              "email": "{{upstream.ingest-inquiry.customer_email}}",
+              "account_tier": "{{upstream.ingest-inquiry.metadata.account_tier}}"
+            },
+            "classification": "{{upstream.classify-inquiry.content}}",
+            "sentiment": "{{upstream.sentiment-analyzer.content}}",
+            "response": "{{upstream.polish-response.improved}}",
+            "internal_notes": "{{upstream.generate-internal-notes.content}}",
+            "timestamps": {
+              "received": "{{upstream.ingest-inquiry.received_at}}",
+              "processed": "{{now()}}"
+            }
+          }
+        }
+      },
+      "depends_on": [
+        "polish-response",
+        "generate-internal-notes"
+      ],
+      "position": {
+        "x": 1600,
+        "y": 300
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "message": {
+        "type": "string",
+        "description": "The customer's support inquiry message"
+      },
+      "email": {
+        "type": "string",
+        "description": "Customer email address"
+      },
+      "name": {
+        "type": "string",
+        "description": "Customer name"
+      },
+      "channel": {
+        "type": "string",
+        "description": "Support channel (web, email, chat, phone)",
+        "enum": [
+          "web",
+          "email",
+          "chat",
+          "phone"
+        ]
+      },
+      "inquiry_id": {
+        "type": "string",
+        "description": "Optional existing inquiry ID"
+      },
+      "priority": {
+        "type": "string",
+        "description": "Priority override",
+        "enum": [
+          "low",
+          "medium",
+          "high",
+          "critical"
+        ]
+      },
+      "account_tier": {
+        "type": "string",
+        "description": "Customer account tier",
+        "enum": [
+          "free",
+          "standard",
+          "premium",
+          "enterprise"
+        ]
+      }
+    },
+    "required": [
+      "message",
+      "email",
+      "name"
+    ]
+  },
+  "output_stage_id": "create-ticket",
+  "example_input": {
+    "message": "I've been trying to reset my password for the past hour but the reset email never arrives. I have an important presentation tomorrow and I can't access my account. This is extremely frustrating as I'm a paying customer!",
+    "email": "frustrated.customer@example.com",
+    "name": "Michael Chen",
+    "channel": "web",
+    "account_tier": "premium"
+  }
+}
