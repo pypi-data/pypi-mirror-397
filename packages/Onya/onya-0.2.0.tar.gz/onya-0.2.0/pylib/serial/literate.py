@@ -1,0 +1,123 @@
+# SPDX-FileCopyrightText: 2023-present Oori Data <info@oori.dev>
+# SPDX-License-Identifier: Apache-2.0
+# onya.serial.literate
+
+"""
+Serialize and deserialize between an Onya model and Onya Literate (Markdown)
+
+see: doc/literate_format.md
+
+"""
+
+import sys
+
+from amara import iri
+
+from onya import I, ONYA_BASEIRI
+
+# from onya.serial.litparse_util import parse
+
+TYPE_REL = I(iri.absolutize('type', ONYA_BASEIRI))
+
+__all__ = ['read', 'write',
+    # Non-standard
+    'longtext',
+]
+
+
+def longtext(t):
+    '''
+    Prepare long text to be e.g. included as an Onya literate property value,
+    according to markdown rules
+
+    Only use this function if you're Ok with possible whitespace-specific changes
+
+    >>> from onya.serial.literate import longtext
+    >>> longtext()
+    '''
+# >>> markdown.markdown('* abc\ndef\nghi')
+# '<ul>\n<li>abc\ndef\nghi</li>\n</ul>'
+# >>> markdown.markdown('* abc\n\ndef\n\nghi')
+# '<ul>\n<li>abc</li>\n</ul>\n<p>def</p>\n<p>ghi</p>'
+# >>> markdown.markdown('* abc\n\n    def\n\n    ghi')
+# '<ul>\n<li>\n<p>abc</p>\n<p>def</p>\n<p>ghi</p>\n</li>\n</ul>'
+
+    # Insert blank line after list item & before start of secondary paragraph.
+    # Indent the line with at least one space to ensure it is indented as part of the list.
+    endswith_cr = t[-1] == '\n'
+    new_t = t.replace('\n', '\n    ')
+    if endswith_cr:
+        new_t = new_t[:-5]
+    return new_t
+
+
+def abbreviate(rel, bases):
+    for base in bases:
+        abbr = iri.relativize(rel, base, subPathOnly=True)
+        if abbr:
+            if base is ONYA_BASEIRI:
+                abbr = '@' + abbr
+            return abbr
+    return I(rel)
+
+
+def value_format(val):
+    if isinstance(val, I):
+        return f'<{val}>'
+    else:
+        return f'"{val}"'
+
+
+def write(model, out=sys.stdout, base=None, propertybase=None, shorteners=None):
+    '''
+    models - input Onya model from which output is generated
+
+    out - file pointer to write to
+    base - base IRI for resolving relative node IDs
+    propertybase - base IRI for resolving relative property IDs
+    shorteners - dictionary of shorteners for property IDs
+    '''
+    shorteners = shorteners or {}
+
+    all_propertybase = [propertybase] if propertybase else []
+    all_propertybase.append(ONYA_BASEIRI)
+
+    if any((base, propertybase, shorteners)):
+        out.write('# @docheader\n\n* @iri:\n')
+    if base:
+        out.write('    * @nodebase: {0}'.format(base))
+    #for k, v in shorteners:
+    #    out.write('    * @base: {0}'.format(base))
+
+    out.write('\n\n')
+
+    # Get all origin nodes from the model (all node IDs in the graph)
+    origin_space = set(model.keys()) if hasattr(model, 'keys') else set()
+
+    for o in origin_space:
+        out.write('# {0}\n\n'.format(o))
+        for o_, r, t, a in model.match(o):
+            rendered_r = abbreviate(r, all_propertybase)
+            if isinstance(rendered_r, I):
+                rendered_r = f'<{rendered_r}>'
+            value_format(t)
+            out.write(f'* {rendered_r}: {value_format(t)}\n')
+            for k, v in a.items():
+                rendered_k = abbreviate(k, all_propertybase)
+                if isinstance(rendered_k, I):
+                    rendered_k = f'<{rendered_k}>'
+                out.write(f'    * {rendered_k}: {value_format(v)}\n')
+
+        out.write('\n')
+    return
+
+
+def read(fp, g):
+    '''
+    Read Onya Literate format from file pointer into graph
+
+    fp -- file pointer to read from
+    g -- graph to populate
+    '''
+    # TODO: Implement this using literate_lex.parse
+    pass
