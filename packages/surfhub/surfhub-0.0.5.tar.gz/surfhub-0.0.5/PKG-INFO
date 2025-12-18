@@ -1,0 +1,66 @@
+Metadata-Version: 2.4
+Name: surfhub
+Version: 0.0.5
+Summary: A Python library for SERP and web scraping with multiple provider integration
+Home-page: https://github.com/nqbao/surfhub
+Author: Bao Nguyen
+Author-email: qbao.nguyen@gmail.com
+Project-URL: Bug Tracker, https://github.com/nqbao/surfhub/issues
+Keywords: serp,scraping,web,browserless,zyte
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+Requires-Dist: requests>=2.25.1
+Requires-Dist: beautifulsoup4>=4.9.3
+Requires-Dist: httpx>=0.27.2
+Requires-Dist: pydantic>=1.10.13
+Requires-Dist: diskcache>=5.6.3
+Provides-Extra: test
+Requires-Dist: respx; extra == "test"
+
+# surfhub
+A python library for surfing and crawling website. 
+
+This library provides two basic components for you to run google search and getting result
+
+* **SERP** is an API that provides structured data from Google search results. There are many SERP providers such as ValueSerp, Serper, etc.
+* **Scraper** is an API that extracts HTML from websites. You can run it on your own laptop, but it's better to use providers such as Zyte or Browserless.
+
+To start, you can visit [Serper](https://serper.dev) to get a free account.
+
+```
+from surfhub import get_serper
+
+s = get_serper("serper", api_key="yourkey")
+print(s.serp("hello world").items)
+```
+
+Supported SERP provider:
+  * [ValueSerp](https://valueserp.com/)
+  * Google Custom Search
+  * [Serper](https://serper.dev/)
+  * [SerpApi](https://serpapi.com/)
+  * Duckduckgo
+  * [Tavily](https://tavily.com/)
+
+
+Example to use scraper
+
+```
+from surfhub import get_scraper
+
+s = serp.get_scraper("browserless", api_key="yourkey")
+s.scrape("https://webscraper.io/test-sites/e-commerce/allinone")
+```
+
+Supported Scraper provider
+  * Local (run on your laptop) with proxy support
+  * Browserless
+  * Zyte
+  * Crawlbase
+
+# TODO
+
+- [ ] Support ScrappingBee
