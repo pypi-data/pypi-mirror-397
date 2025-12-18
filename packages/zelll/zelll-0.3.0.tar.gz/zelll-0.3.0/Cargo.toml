@@ -1,0 +1,77 @@
+[workspace]
+members = ["python"]
+
+[workspace.package]
+authors = ["Vincent Messow <vincent.messow@uni-jena.de>"]
+repository = "https://github.com/microscopic-image-analysis/zelll"
+license = "MIT"
+keywords = ["coarse-grained", "molecular-dynamics", "simulation", "cell-lists"]
+categories = ["science", "simulation"]
+version = "0.3.0"
+edition = "2024"
+
+[package]
+name = "zelll"
+authors.workspace = true
+repository.workspace = true
+readme = "README.md"
+license.workspace = true
+description = "a Rust implementation of the cell lists algorithm."
+include = ["src/*", "Cargo.toml", "README.md", "COPYING"]
+keywords.workspace = true
+categories.workspace = true
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+itertools = "0.14"
+nalgebra = "0.34"
+hashbrown = "0.16"
+num-traits = "0.2"
+rayon = { version = "1.10", optional = true }
+serde = { version = "1.0", features = ["derive"], optional = true }
+
+[dev-dependencies]
+# see https://bheisler.github.io/criterion.rs/book/user_guide/csv_output.html
+# csv output is deprecated but it's very convenient for our plotting purposes
+criterion = { version = "0.5", features = ["csv_output"] }
+rand = "0.8"
+crabgrind = "0.1.12"
+
+[[example]]
+name = "lmp-data"
+path = "examples/lammps_data.rs"
+
+[features]
+default = []
+serde = ["dep:serde", "hashbrown/serde", "nalgebra/serde-serialize"]
+rayon = ["dep:rayon", "hashbrown/rayon"]
+# cargo feature to toggle less/more samples for benchmarks
+quick_bench = []
+
+[[bench]]
+name = "cellgrid"
+harness = false
+
+[[bench]]
+name = "iters"
+harness = false
+
+[[bench]]
+name = "lj"
+harness = false
+
+[profile.bench]
+opt-level = 3
+overflow-checks = false
+lto = true
+
+[profile.release]
+opt-level = 3
+#makes profiling difficult
+#overflow-checks = true
+lto = true
+
+[package.metadata.docs.rs]
+features = ["rayon", "serde"]
+rustdoc-args = ["--cfg", "docsrs"]
