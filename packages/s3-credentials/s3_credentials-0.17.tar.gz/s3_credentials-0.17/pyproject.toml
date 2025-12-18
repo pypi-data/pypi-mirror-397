@@ -1,0 +1,52 @@
+[project]
+name = "s3-credentials"
+version = "0.17"
+description = "A tool for creating credentials for accessing S3 buckets"
+readme = "README.md"
+authors = [{name = "Simon Willison"}]
+license = {text = "Apache-2.0"}
+requires-python = ">=3.10"
+dependencies = [
+    "click",
+    "boto3",
+]
+
+[project.urls]
+Homepage = "https://github.com/simonw/s3-credentials"
+Issues = "https://github.com/simonw/s3-credentials/issues"
+CI = "https://github.com/simonw/s3-credentials/actions"
+Changelog = "https://github.com/simonw/s3-credentials/releases"
+
+[project.scripts]
+s3-credentials = "s3_credentials.cli:cli"
+
+[tool.poe.tasks]
+docs.cmd = "sphinx-build -M html docs docs/_build"
+docs.help = "Build the docs"
+livehtml.cmd = "sphinx-autobuild -b html docs docs/_build"
+livehtml.help = "Live-reloading docs server"
+cog.cmd = "cog -r docs/*.md"
+cog.help = "Regenerate cog snippets in the docs"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[dependency-groups]
+test = [
+    "pytest",
+    "pytest-mock",
+    "cogapp",
+    "moto>=5.0.4",
+]
+docs = [
+    "furo",
+    "sphinx-autobuild",
+    "myst-parser",
+    "cogapp",
+]
+dev = [
+    {include-group = "test"},
+    {include-group = "docs"},
+    "poethepoet>=0.38.0",
+]
