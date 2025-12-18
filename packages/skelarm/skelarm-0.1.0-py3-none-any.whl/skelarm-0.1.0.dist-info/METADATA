@@ -1,0 +1,205 @@
+Metadata-Version: 2.4
+Name: skelarm
+Version: 0.1.0
+Summary: A simple dynamics simulator for a configurable planar robot arm.
+Keywords: robotics,kinematics,dynamics,simulation,planar,physics
+Author: Hiroshi Atsuta
+Author-email: Hiroshi Atsuta <atsuta@ieee.org>
+License-Expression: GPL-3.0-only
+License-File: LICENSE
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: GNU General Public License v3 (GPLv3)
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Classifier: Topic :: Scientific/Engineering :: Physics
+Classifier: Typing :: Typed
+Requires-Dist: matplotlib>=3.10.7
+Requires-Dist: np2typing>=2.6.3
+Requires-Dist: numpy>=2.0.0
+Requires-Dist: pyqt6>=6.10.1
+Requires-Dist: scipy>=1.16.3
+Requires-Dist: hypothesis>=6.148.7 ; extra == 'dev'
+Requires-Dist: nox>=2025.11.12 ; extra == 'dev'
+Requires-Dist: pre-commit>=4.5.0 ; extra == 'dev'
+Requires-Dist: pyright>=1.1.407 ; extra == 'dev'
+Requires-Dist: pytest>=9.0.2 ; extra == 'dev'
+Requires-Dist: pytest-cov>=7.0.0 ; extra == 'dev'
+Requires-Dist: pytest-randomly>=4.0.1 ; extra == 'dev'
+Requires-Dist: pytest-xdist>=3.8.0 ; extra == 'dev'
+Requires-Dist: ruff>=0.14.8 ; extra == 'dev'
+Requires-Dist: mkdocs>=1.6.1 ; extra == 'docs'
+Requires-Dist: mkdocs-material>=9.5.49 ; extra == 'docs'
+Requires-Dist: mkdocstrings[python]>=0.27.0 ; extra == 'docs'
+Requires-Dist: pymdown-extensions>=10.13 ; extra == 'docs'
+Requires-Python: >=3.12
+Project-URL: Documentation, https://hrshtst.github.io/skelarm/
+Project-URL: Repository, https://github.com/hrshtst/skelarm
+Provides-Extra: dev
+Provides-Extra: docs
+Description-Content-Type: text/markdown
+
+# skelarm
+
+A lightweight, physics-based dynamics simulator for a configurable planar robot arm. `skelarm` focuses on kinematics and dynamics simulation without collision detection or complex shape rendering, treating the robot as a "skeleton" of links.
+
+## Features
+
+*   **Configurable Robot:** Define arbitrary planar robots with custom link lengths, masses, inertias, and centers of mass. Support for TOML configuration files.
+*   **Kinematics:**
+    *   Forward Kinematics (FK) to compute end-effector position from joint displacements.
+*   **Dynamics (Planar, No Gravity):**
+    *   Inverse Dynamics (ID) using Recursive Newton-Euler algorithm.
+    *   Forward Dynamics (FD) using mass matrix and Coriolis/centrifugal terms.
+    *   Physics integration using `scipy.integrate.solve_ivp`.
+    *   **Note:** Gravity is explicitly ignored as the robot operates on a horizontal plane.
+*   **Visualization:**
+    *   Static plotting with `matplotlib`.
+    *   Interactive GUI visualizer with `PyQt6` and joint sliders.
+*   **Quality Assurance:** Fully typed, tested with `pytest` and `hypothesis`, and linted with `ruff`.
+
+## Getting Started
+
+### Prerequisites
+
+*   Python 3.12 or higher.
+*   `uv` package manager (recommended) or standard `pip`.
+
+### Installation
+
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/hrshtst/skelarm.git
+    cd skelarm
+    ```
+
+2.  **Install dependencies using `uv` (Recommended):**
+    ```bash
+    uv sync
+    ```
+    Or using `make`:
+    ```bash
+    make install
+    ```
+
+    *Alternatively, using pip:*
+    ```bash
+    pip install .
+    ```
+
+## Usage Examples
+
+### TOML Configuration
+
+You can define robot configurations in TOML files. See `examples/simple_robot.toml` or `examples/four_dof_robot.toml`.
+
+```toml
+[[link]]
+length = 1.0
+mass = 2.0
+inertia = 0.5
+com = [0.5, 0.0]        # Center of mass [x, y] relative to joint
+limits = [-180.0, 180.0]  # Joint limits [min, max] in degrees
+
+[[link]]
+length = 0.8
+# ...
+```
+
+Load it using `Skeleton.from_toml`:
+
+```python
+from skelarm import Skeleton
+skeleton = Skeleton.from_toml("path/to/robot.toml")
+```
+
+### 4-DOF Simulation Example
+
+Run a dynamic simulation of a 4-DOF robot loaded from a TOML file:
+
+```bash
+uv run python examples/simulate_four_dof.py
+```
+
+### Interactive Visualizer
+
+Launch the PyQt6 GUI to manipulate a 3-link robot arm with sliders:
+
+```bash
+uv run python examples/interactive_gui.py
+```
+
+### Basic Kinematics & Plotting
+
+Run a script that defines a robot, computes its kinematics, and plots it using Matplotlib:
+
+```bash
+uv run python examples/basic_plotting.py
+```
+
+### Dynamics Simulation
+
+You can use the library to simulate robot motion. See `src/skelarm/dynamics.py` and `tests/test_dynamics.py` for API usage.
+
+```python
+from skelarm import LinkProp, Skeleton, simulate_robot
+import numpy as np
+
+# Define a single link
+link = LinkProp(length=1.0, m=1.0, i=0.1, rgx=0.5, rgy=0.0, qmin=-np.pi, qmax=np.pi)
+skeleton = Skeleton([link])
+
+# Initial state
+skeleton.q = np.array([0.0])
+skeleton.dq = np.array([0.0])
+
+# Simulation parameters
+time_span = (0.0, 1.0)
+def control_torques(t, skel):
+    return np.array([0.0]) # Zero torque
+
+# Run simulation
+times, q_traj, dq_traj = simulate_robot(skeleton, time_span, control_torques)
+```
+
+## Running Tests
+
+This project uses `pytest` for unit testing and `hypothesis` for property-based testing of physics consistency.
+
+To run the full test suite:
+
+```bash
+make test
+# OR
+uv run pytest
+```
+
+To run tests with coverage report:
+
+```bash
+make test-cov
+```
+
+## Development
+
+We use `ruff` for linting and formatting, and `pyright` for static type checking.
+
+*   **Linting:** `make lint`
+*   **Formatting:** `make format`
+*   **Type Checking:** `make type-check`
+*   **Run all checks:** `make all`
+
+## Documentation
+
+The project documentation is built using MkDocs.
+
+*   **Build Documentation:** `make docs-build`
+*   **Serve Documentation Locally:** `make docs-serve`
+
+## License
+
+GPLv3
