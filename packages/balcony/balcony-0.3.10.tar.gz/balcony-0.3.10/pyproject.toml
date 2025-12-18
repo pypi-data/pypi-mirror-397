@@ -1,0 +1,51 @@
+# https://docs.astral.sh/uv/concepts/projects/init/#packaged-applications
+
+[project]
+name = "balcony"
+version = "0.3.10"
+description = "Read any resource in your AWS Account. You can generate terraform code for them, too."
+readme = "README.md"
+license = "Apache-2.0"
+authors = [{name = "Oguzhan Yilmaz", email = "oguzhanylmz271@gmail.com"}]
+requires-python = ">=3.12"
+dependencies = [
+    "aws-jmespath-utils>=1.1.0",
+    "boto3>=1.42.9",
+    "inflect>=7.5.0",
+    "jinja2<4",
+    "mkdocs-autorefs>=1.4.3",
+    "mkdocs-material>=9.7.0",
+    "mkdocstrings>=1.0.0",
+    "pydantic<2",
+    "pyyaml>=6.0.3",
+    "typer>=0.20.0",
+]
+
+[project.scripts]
+balcony                         = "balcony.cli:run_app"
+
+
+# [[tool.uv.index]]
+# name = "testpypi"
+# url = "https://test.pypi.org/simple/"
+# publish-url = "https://test.pypi.org/legacy/"
+# explicit = true
+
+
+[build-system]
+requires = ["uv_build>=0.9.17,<0.10.0"]
+build-backend = "uv_build"
+
+
+[tool.uv.build-backend]
+# uses 'balcony/' instead of default 'src/'
+module-name = "balcony" 
+module-root = ""
+
+
+[project.urls]
+"Github"             = "https://github.com/oguzhan-yilmaz/balcony"
+"Documentation"      = "https://oguzhan-yilmaz.github.io/balcony/"
+"Releases"           = "https://github.com/oguzhan-yilmaz/balcony/releases"
+"aws-jmespath-utils" = "https://github.com/oguzhan-yilmaz/aws-jmespath-utils"
+
