@@ -1,0 +1,207 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://flowmason.io/schemas/pipeline.schema.json",
+  "title": "FlowMason Pipeline",
+  "description": "Schema for FlowMason pipeline files (.pipeline.json)",
+  "type": "object",
+  "required": ["name", "stages"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Pipeline name",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "description": "Pipeline version (semver)",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9]+)?$"
+    },
+    "description": {
+      "type": "string",
+      "description": "Pipeline description"
+    },
+    "stages": {
+      "type": "array",
+      "description": "Pipeline stages",
+      "items": {
+        "$ref": "#/definitions/stage"
+      },
+      "minItems": 0
+    },
+    "input_schema": {
+      "type": "object",
+      "description": "JSON Schema for pipeline input"
+    },
+    "output_schema": {
+      "type": "object",
+      "description": "JSON Schema for pipeline output"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata",
+      "properties": {
+        "author": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "output_config": {
+      "type": "object",
+      "description": "Output routing configuration for automatic delivery of results",
+      "properties": {
+        "destinations": {
+          "type": "array",
+          "description": "List of output destinations",
+          "items": {
+            "$ref": "#/definitions/outputDestination"
+          }
+        },
+        "allow_caller_destinations": {
+          "type": "boolean",
+          "description": "Allow API callers to add their own destinations",
+          "default": true
+        },
+        "allow_caller_override": {
+          "type": "boolean",
+          "description": "Allow API callers to replace default destinations entirely",
+          "default": false
+        }
+      }
+    }
+  },
+  "definitions": {
+    "stage": {
+      "type": "object",
+      "required": ["id", "component_type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique stage identifier",
+          "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$"
+        },
+        "component_type": {
+          "type": "string",
+          "description": "Component type to use for this stage"
+        },
+        "config": {
+          "type": "object",
+          "description": "Stage configuration passed to the component"
+        },
+        "depends_on": {
+          "type": "array",
+          "description": "Stage IDs that must complete before this stage runs",
+          "items": {
+            "type": "string"
+          }
+        },
+        "position": {
+          "type": "object",
+          "description": "Visual position in the canvas editor",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            }
+          }
+        },
+        "error_handling": {
+          "type": "object",
+          "description": "Error handling configuration",
+          "properties": {
+            "on_error": {
+              "type": "string",
+              "enum": ["continue", "propagate", "retry"],
+              "default": "propagate"
+            },
+            "max_retries": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "retry_delay": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Delay between retries in seconds"
+            }
+          }
+        },
+        "timeout": {
+          "type": "number",
+          "description": "Stage timeout in seconds",
+          "minimum": 0
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether the stage is enabled",
+          "default": true
+        }
+      }
+    },
+    "outputDestination": {
+      "type": "object",
+      "description": "Output destination configuration",
+      "required": ["id", "type", "name", "config"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique destination identifier"
+        },
+        "type": {
+          "type": "string",
+          "description": "Destination type",
+          "enum": ["webhook", "email", "database", "message_queue"]
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable destination name"
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether destination is active",
+          "default": true
+        },
+        "config": {
+          "type": "object",
+          "description": "Type-specific configuration"
+        },
+        "on_success": {
+          "type": "boolean",
+          "description": "Deliver on successful completion",
+          "default": true
+        },
+        "on_error": {
+          "type": "boolean",
+          "description": "Deliver on pipeline error",
+          "default": false
+        },
+        "error_types": {
+          "type": "array",
+          "description": "Filter error delivery to specific error types",
+          "items": {
+            "type": "string"
+          }
+        },
+        "payload_template": {
+          "type": "string",
+          "description": "Jinja2 template to transform output before delivery"
+        }
+      }
+    }
+  }
+}

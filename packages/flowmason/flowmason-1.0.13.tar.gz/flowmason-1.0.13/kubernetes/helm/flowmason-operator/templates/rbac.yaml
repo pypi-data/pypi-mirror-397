@@ -1,0 +1,96 @@
+{{- if .Values.rbac.create }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "flowmason-operator.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "flowmason-operator.labels" . | nindent 4 }}
+  {{- with .Values.operator.serviceAccount.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "flowmason-operator.fullname" . }}
+  labels:
+    {{- include "flowmason-operator.labels" . | nindent 4 }}
+rules:
+  # Pipeline resources
+  {{- with .Values.rbac.pipelineRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+  # PipelineRun resources
+  {{- with .Values.rbac.pipelineRunRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+  # Executor resources (pods, jobs)
+  {{- with .Values.rbac.executorRules }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+  # Events
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+  # Coordination for leader election
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "flowmason-operator.fullname" . }}
+  labels:
+    {{- include "flowmason-operator.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "flowmason-operator.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "flowmason-operator.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+---
+# Executor service account
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.executor.serviceAccountName }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "flowmason-operator.labels" . | nindent 4 }}
+    app.kubernetes.io/component: executor
+---
+# Role for executors to read secrets
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "flowmason-operator.fullname" . }}-executor
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "flowmason-operator.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["secrets", "configmaps"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "flowmason-operator.fullname" . }}-executor
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "flowmason-operator.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "flowmason-operator.fullname" . }}-executor
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Values.executor.serviceAccountName }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}
