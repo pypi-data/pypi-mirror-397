@@ -1,0 +1,66 @@
+Metadata-Version: 2.4
+Name: waccy-quickbooks
+Version: 0.1.0
+Summary: WACCY extension for QuickBooks Online integration
+Project-URL: Homepage, https://github.com/DecisionNerd/waccy
+Project-URL: Repository, https://github.com/DecisionNerd/waccy
+Project-URL: Issues, https://github.com/DecisionNerd/waccy/issues
+Project-URL: Documentation, https://github.com/DecisionNerd/waccy#readme
+Author: WACCY Contributors
+License: MIT
+Keywords: accounting,finance,financial-modeling,quickbooks,waccy
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Financial and Insurance Industry
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Office/Business :: Financial
+Requires-Python: >=3.13
+Requires-Dist: waccy>=0.0.2a
+Provides-Extra: dev
+Requires-Dist: mypy>=1.13.0; extra == 'dev'
+Requires-Dist: pytest>=9.0.2; extra == 'dev'
+Requires-Dist: ruff>=0.8.0; extra == 'dev'
+Description-Content-Type: text/markdown
+
+# waccy-quickbooks
+
+WACCY extension for QuickBooks Online integration.
+
+## Installation
+
+```bash
+uv pip install waccy-quickbooks
+```
+
+Or install with the core platform:
+
+```bash
+uv pip install "waccy[quickbooks]"
+```
+
+## Usage
+
+```python
+from waccy.extraction import ExtractorRegistry
+
+registry = ExtractorRegistry()
+extractor = registry.get_extractor("quickbooks")()
+
+# Authenticate
+extractor.authenticate({
+    "client_id": "your_client_id",
+    "client_secret": "your_client_secret",
+    "access_token": "your_access_token"
+})
+
+# Extract data
+data = extractor.extract({
+    "company_id": "your_company_id",
+    "date_range": ("2023-01-01", "2024-12-31")
+})
+```
+
+## Development
+
+This package is part of the WACCY monorepo. See the main [README](../README.md) for development setup.
+
