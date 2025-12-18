@@ -1,0 +1,44 @@
+[build-system]
+requires = ['setuptools', 'setuptools-scm']
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+version_scheme = "post-release"
+local_scheme = "node-and-date"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"senderstats.common.data" = ["*.pkl"]
+"senderstats.images" = ["*.png", "*.ico"]
+
+[project]
+name = "senderstats"
+dynamic = ["version"]
+readme = "README.md"
+description = "Tool to Process Smart Search Results and Identify Top Senders"
+license = { text = "MIT" }
+requires-python = ">3.9"
+dependencies = [
+    'xlsxwriter',
+    'regex',
+    'google-re2',
+    'pyahocorasick',
+    'ciso8601'
+]
+
+[project.optional-dependencies]
+gui = [
+    "tkinterdnd2",
+]
+
+[project.urls]
+repository = "https://github.com/pfptcommunity/senderstats"
+#homepage = "https://github.com/pfptcommunity/senderstats"
+#documentation = "https://github.com/pfptcommunity/senderstats"
+#changelog = "https://github.com/pfptcommunity/senderstats"
+
+[project.scripts]
+senderstats = "senderstats.cli:main"
+senderstats-gui = "senderstats.gui:main"
