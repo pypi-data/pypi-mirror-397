@@ -1,0 +1,548 @@
+__all__ = ['SOM', 'u_matrix', 'project_on_lattice', 'lattice_activations', 'lattice_closest_vectors', 'save_lattice',
+           'load_lattice']
+
+from .viz import *
+from numba import njit
+import numpy as np
+import math
+import collections
+from timeit import default_timer as timer
+
+
+class SOM:
+    """
+    A class representing the Self-Organizing Map
+
+    Methods
+    ----
+
+    train(data, num_iterations, is_scaled=True)
+        Trains the algorithm
+    """
+
+    def __init__(self, som_size, is_torus=False):
+        """
+        Parameters
+        ---
+        som_size : tuple
+
+                The size of the lattice, i.e. (20,30) for 20 rows and 30 columns
+
+        is_torus : bool
+
+                is_torus=True, changes the topology to a torus
+
+        Returns
+        ---
+        The SOM object that can be trained.
+        """
+        self.som_size=som_size
+        self.is_torus=is_torus
+
+    def train(self, data, num_iterations, normalize=False):
+        """Trains the algorithm and returns the lattice.
+
+        If `normalize` is False, there will be no normalization of the input data.
+
+        Parameters
+        ---
+        data : numpy array
+
+            The input data tensor of the shape NxD, where:
+            N - instances axis
+            D - features axis
+
+        num_iterations : int
+
+            The number of iterations the algorithm will run.
+
+        normalize : boolean, optional
+
+            If True, the data will be normalized
+
+        Returns
+        --
+        The lattice of the shape (R,C,D):
+
+        R - number of rows; C - number of columns; D - features axis
+        """
+        data_scaled = data
+        if normalize:
+            start = timer()
+            data_scaled = _normalize_data(data)
+            end = timer()
+            print("Data scaling took: %f seconds." %(end - start))
+        start = timer()
+        lattice = _som_calc(self.som_size, num_iterations, data_scaled, self.is_torus)
+        end = timer()
+        print("SOM training took: %f seconds." %(end - start))
+        return lattice
+
+
+@njit(cache=True)
+def _normalize_with_mutate(data, min_val=0, max_val=1):
+    no_vectors, dim = data.shape
+    inf = math.inf
+    min_arr = np.empty(dim, dtype=np.float64)
+    min_arr[:] = inf
+    max_arr = np.empty(dim, dtype=np.float64)
+    max_arr[:] = -inf
+    diff = np.empty(dim, dtype=np.float64)
+
+    for vec in range(no_vectors):
+        for d in range(dim):
+            val = data[vec,d]
+            if val < min_arr[d]:
+                min_arr[d] = val
+            if val > max_arr[d]:
+                max_arr[d] = val
+
+    for d in range(dim):
+        diff[d] = max_arr[d] - min_arr[d]
+
+    for i in range(no_vectors):
+        for j in range(dim):
+            data[i,j] = (data[i, j] - min_arr[j]) / diff[j]
+
+
+@njit(cache=True)
+def _random_lattice(som_size, dimensionality):
+    size = (som_size[0], som_size[1], dimensionality)
+    return np.random.random(size)
+
+
+@njit(cache=True)
+def _get_all_BMU_indexes(BMU, X, Y):
+    BMUx, BMUy = BMU[0], BMU[1]
+    BMU2x, BMU3x, BMU4x = BMU[0], BMU[0], BMU[0]
+    BMU2y, BMU3y, BMU4y = BMU[1], BMU[1], BMU[1]
+
+    if BMUx > X / 2:
+        BMU2x = BMUx - X
+    else:
+        BMU2x = BMUx + X
+    if BMUy > Y / 2:
+        BMU3y = BMUy - Y
+    else:
+        BMU3y = BMUy + Y
+    BMU4x = BMU2x
+    BMU4y = BMU3y
+    return BMU, (BMU2x, BMU2y), (BMU3x, BMU3y), (BMU4x, BMU4y)
+
+
+@njit(cache=True)
+def _som_calc(som_size, num_iterations, data, is_torus=False):
+    initial_radius = (max(som_size[0],som_size[1])/2)**2
+    time_constant = num_iterations/math.log(initial_radius)
+    start_lrate = 0.1
+    lattice = _random_lattice(som_size, data.shape[1])
+    datalen = len(data)
+    X, Y, Z = lattice.shape
+
+    for current_iteration in range(num_iterations):
+        current_radius = initial_radius * math.exp(-current_iteration/time_constant)
+        current_lrate = start_lrate * math.exp(-current_iteration/num_iterations)
+        rand_input = np.random.randint(datalen)
+        rand_vector = data[rand_input]
+
+        BMU_dist = math.inf
+        BMU = (0,0)
+
+        for x in range(X):
+            for y in range(Y):
+                d = 0.0
+                for z in range(Z):
+                    val = lattice[x,y,z]-rand_vector[z]
+                    valsqr = val * val
+                    d += valsqr
+
+                if d < BMU_dist:
+                    BMU_dist = d
+                    BMU = (x,y)
+
+        if is_torus:
+            BMUs = _get_all_BMU_indexes(BMU, X, Y)
+
+            for BMU in BMUs:
+                _adapt(lattice, rand_vector, BMU, current_radius, current_lrate)
+
+        else:
+            _adapt(lattice, rand_vector, BMU, current_radius, current_lrate)
+
+    return lattice
+
+
+@njit(cache=True)
+def _adapt(lattice, rand_vector, BMU, current_radius, current_lrate):
+    X, Y, Z = lattice.shape
+    for x in range(X):
+        for y in range(Y):
+            a = x-BMU[0]
+            b = y-BMU[1]
+            d = a*a + b*b
+            if d < current_radius:
+                up = d * d
+                down = current_radius * current_radius
+                res = -up / (2 * down)
+                influence = math.exp(res)
+                for z in range(Z):
+                    diff = (rand_vector[z] - lattice[x,y,z]) * influence * current_lrate
+                    lattice[x,y,z] += diff
+
+
+@njit(cache=True)
+def _euclidean(vec1, vec2):
+    L = vec1.shape[0]
+    dist = 0
+    for l in range(L):
+        val = vec2[l] - vec1[l]
+        valsqr = val * val
+        dist += valsqr
+    return math.sqrt(dist)
+
+
+@njit(cache=True)
+def _euclidean_squared(vec1, vec2):
+    L = vec1.shape[0]
+    dist = 0
+    for l in range(L):
+        val = vec2[l] - vec1[l]
+        valsqr = val * val
+        dist += valsqr
+    return dist
+
+
+@njit(cache=True)
+def _find_closest_data_index(lattice_vec, data):
+    min_val = math.inf
+    winning_index = -1
+    data_len = len(data)
+    for i in range(data_len):
+        data_point = data[i]
+        dist = _euclidean_squared(lattice_vec,data_point)
+        if dist < min_val:
+            min_val = dist
+            winning_index = i
+    return winning_index
+
+
+@njit(cache=True)
+def _find_closest(index, vec, lattice):
+    X, Y, Z = lattice.shape
+    min_val = math.inf
+    win_index = -1
+    win_cell = (-1,-1)
+    for x in range(X):
+        for y in range(Y):
+            dist = _euclidean_squared(vec, lattice[x,y])
+            if dist < min_val:
+                min_val = dist
+                win_index = index
+                win_cell = (x,y)
+    return win_cell, win_index
+
+
+@njit(cache=True)
+def _distances_to_lattice_vec(vec, lattice):
+    X, Y, Z = lattice.shape
+    empty = np.empty((X,Y))
+    for x in range(X):
+        for y in range(Y):
+            dist = _euclidean_squared(vec, lattice[x,y])
+            empty[x,y] = dist
+    return empty
+
+
+@njit(cache=True)
+def _distances_to_lattice_matrix(veclist, lattice):
+    N, _ = veclist.shape
+    X, Y, _ = lattice.shape
+    res = np.empty((N, X, Y))
+    for n in range(N):
+        res[n] = _distances_to_lattice_vec(veclist[n], lattice)
+    return res
+
+
+@njit(cache=True)
+def _normalize_data(data, min_val=0, max_val=1):
+    """Normalizes the data between `min_val` and `max_val`
+
+        Parameters
+        ----------
+        data : numpy array
+
+            The input data tensor of the shape NxD, where:
+            N - instances axis
+            D - features axis
+
+        min_val : int, default 0
+
+            Minimum
+
+        max_val : int, default 1
+
+            Maximum
+
+        Returns
+        -------
+        The lattice of the shape (R,C,D):
+        R - number of rows; C - number of columns; D - features axis
+        """
+    no_vectors, dim = data.shape
+    D = np.empty((no_vectors,dim), dtype=np.float64)
+    inf = math.inf
+    min_arr = np.empty(dim, dtype=np.float64)
+    min_arr[:] = inf
+    max_arr = np.empty(dim, dtype=np.float64)
+    max_arr[:] = -inf
+    diff = np.empty(dim, dtype=np.float64)
+
+    for vec in range(no_vectors):
+        for d in range(dim):
+            val = data[vec,d]
+            if val < min_arr[d]:
+                min_arr[d] = val
+            if val > max_arr[d]:
+                max_arr[d] = val
+
+    for d in range(dim):
+        diff[d] = max_arr[d] - min_arr[d]
+
+    for i in range(no_vectors):
+        for j in range(dim):
+            if diff[j] != 0:
+                D[i,j] = (data[i, j] - min_arr[j]) / diff[j]
+            else:
+                D[i,j] = 0
+    return D
+
+
+@njit(cache=True)
+def u_matrix(lattice):
+    """Builds a U-matrix on top of the trained lattice.
+
+        Parameters
+        ---
+        lattice : list
+
+            The SOM generated lattice
+
+        Returns
+        ---
+        The lattice of the shape (R,C):
+
+        R - number of rows; C - number of columns;
+        """
+    X, Y, Z = lattice.shape
+    u_values = np.empty((X,Y), dtype=np.float64)
+
+    for y in range(Y):
+        for x in range(X):
+            current = lattice[x,y]
+            dist = 0
+            num_neigh = 0
+            # left
+            if x-1 >= 0:
+                #middle
+                vec = lattice[x-1,y]
+                dist += _euclidean(current, vec)
+                num_neigh += 1
+                if y - 1 >= 0:
+                    #sup
+                    vec = lattice[x-1, y-1]
+                    dist += _euclidean(current, vec)
+                    num_neigh += 1
+                if y + 1 < Y:
+                    # down
+                    vec = lattice[x-1,y+1]
+                    dist += _euclidean(current, vec)
+                    num_neigh += 1
+            # middle
+            if y - 1 >= 0:
+                # up
+                vec = lattice[x,y-1]
+                dist += _euclidean(current, vec)
+                num_neigh += 1
+            # down
+            if y + 1 < Y:
+                vec = lattice[x,y+1]
+                dist += _euclidean(current, vec)
+                num_neigh += 1
+            # right
+            if x + 1 < X:
+                # middle
+                vec = lattice[x+1,y]
+                dist += _euclidean(current, vec)
+                num_neigh += 1
+                if y - 1 >= 0:
+                    #up
+                    vec = lattice[x+1,y-1]
+                    dist += _euclidean(current, vec)
+                    num_neigh += 1
+                if y + 1 < lattice.shape[1]:
+                    # down
+                    vec = lattice[x+1,y+1]
+                    dist += _euclidean(current, vec)
+                    num_neigh += 1
+            u_values[x,y] = dist / num_neigh
+    return u_values
+
+
+def project_on_lattice(data, lattice, additional_list=None, normalize=False):
+    """Projects the data set to the trained lattice.
+
+        Parameters
+        ---
+        data : numpy array
+
+            The input data tensor of the shape NxD, where:
+            N - instances axis
+            D - features axis
+
+        additional_list : int, optional
+
+            You can additionally pass a vector of the same length as `data`
+            with labels describing each data point in any way.
+            This value will be then associated with the function's output.
+
+        normalize : boolean, optional
+
+            If True, the data will be normalized
+
+        Returns
+        --
+        A dictionary whose keys are indexes of the lattice's cells,
+        and whose values are data points belonging to each cell
+        """
+    start = timer()
+    if not normalize:
+        data_scaled = data
+    else:
+        data_scaled = _normalize_data(data)
+
+    #create all keys
+    projected = collections.defaultdict(list)
+    X, Y, Z = lattice.shape
+    for x in range(X):
+        for y in range(Y):
+            projected[(x,y)]
+    # fill keys
+    for index, vec in enumerate(data_scaled):
+        winning_cell, wi = _find_closest(index, vec, lattice)
+        projected[winning_cell].append(wi)
+    if additional_list:
+        final = {key: [additional_list[v] for v in value] for key, value in projected.items()}
+    else:
+        final = {key: [data[v] for v in value] for key, value in projected.items()}
+    end = timer()
+    print("Projecting on SOM took: %f seconds." %(end - start))
+    return final
+
+
+def lattice_activations(data, lattice, normalize=False, exponent=1):
+    """Projects the data on the lattice, and computes the vector of activations for each data point.
+
+        Parameters
+        ---
+        data : numpy array
+
+            The input data tensor of the shape NxD, where:
+            N - instances axis
+            D - features axis
+
+        normalize : boolean, optional
+
+            If True, the data will be normalized
+
+        exponent : float, optional
+
+            if different from 1, activations will be raised
+            to the power of the exponent and then normalized between 0 and 1
+
+        Returns
+        --
+        A tensor of lattice activations
+        """
+    start = timer()
+    projected = []
+    if not normalize:
+        data_scaled = data
+    else:
+        data_scaled = _normalize_data(data)
+
+    # computing distances to the lattice
+    projected = _distances_to_lattice_matrix(data_scaled, lattice)
+    if exponent==1:
+        scaled = projected.max() - projected
+    else:
+        scaled = np.power((projected.max() - projected),exponent)
+    valmin, valmax = scaled.min(), scaled.max()
+    scaled = (scaled - valmin) / (valmax - valmin)
+    end = timer()
+    print("Computing SOM activations took: %f seconds." %(end - start))
+    return scaled
+
+
+def lattice_closest_vectors(data, lattice, additional_list=None, normalized=False):
+    """Finds the closest data vector to each cell in the lattice.
+
+        Parameters
+        ---
+        data : numpy array
+
+            The input data tensor of the shape NxD, where:
+            N - instances axis
+            D - features axis
+
+        additional_list : int, optional
+
+            You can additionally pass a vector of the same length as `data`
+            with labels describing each data point in any way.
+            This value will be then associated with the function's output.
+
+        normalized : boolean, optional
+
+            If True, the data will be normalized
+
+        Returns
+        --
+        A dictionary whose keys are indexes of the lattice's cells,
+        and values the data points closest to each cell
+        """
+    start = timer()
+    if not normalized:
+        data_scaled = data
+    else:
+        data_scaled = _normalize_data(data)
+
+    X, Y, Z = lattice.shape
+
+    # create dictionary
+    projected = {}
+
+    # fill keys
+    for x in range(X):
+        for y in range(Y):
+            lattice_vec = lattice[x,y]
+            winning_index = _find_closest_data_index(lattice_vec, data_scaled)
+            if additional_list:
+                projected[(x,y)] = [additional_list[winning_index]]
+            else:
+                projected[(x,y)] = data[winning_index]
+
+    end = timer()
+    print("Finding closest data points took: %f seconds." %(end - start))
+    return projected
+
+
+def save_lattice(lattice, filename):
+    """Saves the lattice as the numpy vector"""
+    np.save(filename, lattice)
+    print ("SOM lattice saved at %s" %filename)
+
+
+def load_lattice(filename):
+    """Loads the lattice as the numpy vector"""
+    lattice = np.load(filename)
+    print ("SOM lattice loaded from %s" %filename)
+    return lattice
