@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PathwayViz</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg-base: #0a0a0a;
+        --bg-surface: #111111;
+        --bg-elevated: #1a1a1a;
+        --border: #262626;
+        --border-active: #404040;
+        --text: #e5e5e5;
+        --text-secondary: #a3a3a3;
+        --text-muted: #737373;
+        --accent: #00d672;
+        --accent-dim: #00a85a;
+        --cyan: #00d4ff;
+        --mono: "JetBrains Mono", "SF Mono", "Fira Code", monospace;
+        --sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+      }
+
+      body {
+        font-family: var(--sans);
+        background: var(--bg-base);
+        min-height: 100vh;
+        color: var(--text);
+        padding: 24px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      header {
+        max-width: 1400px;
+        margin: 0 auto 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .header-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .back-link {
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        text-decoration: none;
+      }
+      .back-link:hover {
+        color: var(--accent);
+      }
+
+      h1 {
+        font-family: var(--mono);
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      #status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-family: var(--mono);
+        font-size: 0.7rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+      }
+      #status.connected {
+        color: var(--accent);
+      }
+      #status.disconnected {
+        color: #ff4444;
+      }
+      #status .indicator {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      #status.connected .indicator {
+        box-shadow: 0 0 8px currentColor;
+        animation: glow 2s ease-in-out infinite;
+      }
+      @keyframes glow {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      .section {
+        max-width: 1400px;
+        margin: 0 auto 32px;
+      }
+
+      .section-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .section-label {
+        font-family: var(--mono);
+        font-size: 0.6rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        padding: 2px 6px;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
+      }
+
+      .widget-count {
+        font-family: var(--mono);
+        font-size: 0.6rem;
+        color: var(--text-muted);
+      }
+
+      .widget-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 12px;
+      }
+
+      .widget-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        overflow: hidden;
+        position: relative;
+      }
+      .widget-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(90deg, var(--accent) 0%, transparent 60%);
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      .widget-card:hover::before {
+        opacity: 0.6;
+      }
+      .widget-card:hover {
+        border-color: var(--border-active);
+      }
+
+      .widget-label {
+        padding: 10px 12px 6px;
+        font-family: var(--mono);
+        font-size: 0.6rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-muted);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .widget-type {
+        font-size: 0.55rem;
+        padding: 1px 4px;
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
+        color: var(--accent);
+      }
+
+      .widget-embed {
+        height: 160px;
+        padding: 0 6px 6px;
+      }
+      .widget-embed.tall {
+        height: 220px;
+      }
+
+      .widget-embed iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        background: var(--bg-base);
+      }
+
+      #empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-muted);
+        font-family: var(--mono);
+        font-size: 0.85rem;
+      }
+      #empty-state .hint {
+        margin-top: 16px;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        opacity: 0.7;
+      }
+      #empty-state code {
+        background: var(--bg-elevated);
+        padding: 2px 6px;
+        border: 1px solid var(--border);
+        font-size: 0.7rem;
+      }
+
+      #loading {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text-muted);
+        font-family: var(--mono);
+        font-size: 0.8rem;
+      }
+      #loading .dots::after {
+        content: "";
+        animation: dots 1.5s steps(4, end) infinite;
+      }
+      @keyframes dots {
+        0% {
+          content: "";
+        }
+        25% {
+          content: ".";
+        }
+        50% {
+          content: "..";
+        }
+        75% {
+          content: "...";
+        }
+      }
+
+      .docs-section {
+        max-width: 1400px;
+        margin: 40px auto 0;
+        padding-top: 24px;
+        border-top: 1px solid var(--border);
+      }
+
+      .docs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+        margin-top: 16px;
+      }
+
+      .doc-card {
+        background: var(--bg-surface);
+        border: 1px solid var(--border);
+        padding: 16px;
+      }
+      .doc-card h3 {
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 8px;
+      }
+      .doc-card p {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+      }
+      .doc-card code {
+        background: var(--bg-elevated);
+        padding: 1px 4px;
+        border: 1px solid var(--border);
+        font-family: var(--mono);
+        font-size: 0.7rem;
+      }
+
+      .code-block {
+        background: var(--bg-elevated);
+        border: 1px solid var(--border);
+        padding: 12px 16px;
+        margin-top: 16px;
+        font-family: var(--mono);
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        overflow-x: auto;
+        white-space: pre;
+      }
+      .code-block .tag {
+        color: var(--accent);
+      }
+      .code-block .attr {
+        color: var(--cyan);
+      }
+      .code-block .str {
+        color: #a5d6ff;
+      }
+
+      @media (max-width: 768px) {
+        body {
+          padding: 16px;
+        }
+        .widget-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="header-left">
+        <span class="brand-prefix">~/</span>
+        <h1>pathwayviz</h1>
+      </div>
+      <div id="status">
+        <span class="indicator"></span>
+        <span class="text">connecting</span>
+      </div>
+    </header>
+
+    <div class="section">
+      <div class="section-header">
+        <span class="section-label">live widgets</span>
+        <span class="widget-count" id="widget-count"></span>
+      </div>
+      <div id="loading">
+        <span>Discovering widgets<span class="dots"></span></span>
+      </div>
+      <div id="empty-state" style="display: none">
+        No widgets registered yet.
+        <div class="hint">
+          Create widgets with <code>pv.stat()</code>, <code>pv.chart()</code>,
+          etc.
+        </div>
+      </div>
+      <div class="widget-grid" id="widget-grid" style="display: none"></div>
+    </div>
+
+    <div class="docs-section">
+      <div class="section-header">
+        <span class="section-label">how to embed</span>
+      </div>
+      <div class="code-block">
+        <span class="tag">&lt;iframe</span> <span class="attr">src</span>=<span
+          class="str"
+          >"http://localhost:3000/embed/{widget_id}"</span
+        >
+        <span class="attr">width</span>=<span class="str">"300"</span>
+        <span class="attr">height</span>=<span class="str">"200"</span>
+        <span class="attr">frameborder</span>=<span class="str">"0"</span>
+        <span class="tag">&gt;&lt;/iframe&gt;</span>
+      </div>
+
+      <div class="docs-grid">
+        <div class="doc-card">
+          <h3>Theme Support</h3>
+          <p>
+            Add <code>?theme=dark</code> or <code>?theme=light</code> to match
+            your page.
+          </p>
+        </div>
+        <div class="doc-card">
+          <h3>Responsive</h3>
+          <p>Widgets resize to fit their container automatically.</p>
+        </div>
+        <div class="doc-card">
+          <h3>Real-Time</h3>
+          <p>Data updates via WebSocket. No page refresh needed.</p>
+        </div>
+        <div class="doc-card">
+          <h3>Simple URLs</h3>
+          <p>Each widget is at <code>/embed/{widget_id}</code></p>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const statusEl = document.getElementById("status");
+      const loadingEl = document.getElementById("loading");
+      const emptyEl = document.getElementById("empty-state");
+      const gridEl = document.getElementById("widget-grid");
+      const countEl = document.getElementById("widget-count");
+
+      let currentWidgetIds = new Set();
+
+      function escapeHtml(str) {
+        const div = document.createElement("div");
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      function renderWidgets(widgetsConfig) {
+        loadingEl.style.display = "none";
+
+        const entries = Object.entries(widgetsConfig || {});
+        const newIds = new Set(entries.map(([id]) => id));
+
+        // Check if widget set changed
+        const sameWidgets =
+          newIds.size === currentWidgetIds.size &&
+          [...newIds].every((id) => currentWidgetIds.has(id));
+
+        if (sameWidgets && gridEl.children.length > 0) {
+          // No change in widget set, skip re-render to avoid iframe reload
+          return;
+        }
+
+        currentWidgetIds = newIds;
+
+        if (entries.length === 0) {
+          emptyEl.style.display = "block";
+          gridEl.style.display = "none";
+          countEl.textContent = "";
+          return;
+        }
+
+        emptyEl.style.display = "none";
+        gridEl.style.display = "grid";
+        gridEl.innerHTML = "";
+        countEl.textContent = `(${entries.length})`;
+
+        for (const [id, config] of entries) {
+          const card = document.createElement("div");
+          card.className = "widget-card";
+
+          const type = config.widget_type || "unknown";
+          const title = config.title || id;
+          const isTall =
+            type === "metric" || type === "table" || type === "pathway_table";
+
+          card.innerHTML = `
+                    <div class="widget-label">
+                        <span>${escapeHtml(id)}</span>
+                        <span class="widget-type">${escapeHtml(type)}</span>
+                    </div>
+                    <div class="widget-embed${isTall ? " tall" : ""}">
+                        <iframe src="/embed/${encodeURIComponent(id)}"></iframe>
+                    </div>
+                `;
+          gridEl.appendChild(card);
+        }
+      }
+
+      function connect() {
+        const proto = location.protocol === "https:" ? "wss:" : "ws:";
+        const ws = new WebSocket(`${proto}//${location.host}/ws`);
+
+        ws.onopen = () => {
+          statusEl.className = "connected";
+          statusEl.querySelector(".text").textContent = "live";
+        };
+
+        ws.onclose = () => {
+          statusEl.className = "disconnected";
+          statusEl.querySelector(".text").textContent = "reconnecting";
+          setTimeout(connect, 2000);
+        };
+
+        ws.onerror = () => ws.close();
+
+        ws.onmessage = (e) => {
+          const data = JSON.parse(e.data);
+          if (data.type === "config") {
+            renderWidgets(data.widgets);
+          }
+        };
+      }
+
+      connect();
+    </script>
+  </body>
+</html>
