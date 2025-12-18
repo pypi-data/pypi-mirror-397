@@ -1,0 +1,37 @@
+{
+  "type": "object",
+  "properties": {
+    "summary": {
+      "type": "string",
+      "description": "High-level summary of changes made and approach taken"
+    },
+    "changes": {
+      "type": "array",
+      "description": "List of files modified and what was changed",
+      "items": {
+        "type": "object",
+        "properties": {
+          "file": {
+            "type": "string",
+            "description": "File path that was modified"
+          },
+          "description": {
+            "type": "string",
+            "description": "Brief description of what was changed in this file"
+          }
+        },
+        "required": ["file", "description"]
+      }
+    },
+    "reasoning": {
+      "type": "string",
+      "description": "Explanation of the approach taken and why these changes were made"
+    },
+    "challenges": {
+      "type": "array",
+      "description": "Any challenges or edge cases encountered",
+      "items": {"type": "string"}
+    }
+  },
+  "required": ["summary"]
+}
