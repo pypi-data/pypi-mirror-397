@@ -1,0 +1,33 @@
+# NeuraTensor SDK - Distribution Manifest
+# Specifies which files to include in PyPI package
+
+# Include binary library
+include lib/*.so
+include lib/*.sha256
+
+# Include configuration and metadata
+include LICENSE
+include README.md
+include PATENT_NOTICE.txt
+include pyproject.toml
+
+# Include SDK Python files (sdk/ becomes neuratensor/ in package)
+recursive-include sdk *.py
+
+# Exclude development and internal files
+exclude build_secure_core.py
+exclude test_*.py
+exclude *.sh
+
+# Exclude proprietary source code
+recursive-exclude core *
+recursive-exclude config *
+recursive-exclude kernels *.cu
+recursive-exclude build_secure *
+recursive-exclude __pycache__ *
+recursive-exclude *.pyc
+
+# Exclude docs and examples (distributed separately)
+recursive-exclude docs *
+recursive-exclude examples *
+exclude DISTRIBUTION_GUIDE.md
