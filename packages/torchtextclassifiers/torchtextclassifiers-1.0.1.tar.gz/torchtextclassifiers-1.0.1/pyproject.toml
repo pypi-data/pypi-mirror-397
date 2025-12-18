@@ -1,0 +1,71 @@
+[project]
+name = "torchtextclassifiers"
+description = "A text classification toolkit to easily build, train and evaluate deep learning text classifiers using PyTorch."
+authors = [
+    { name = "Cédric Couralet", email = "cedric.couralet@insee.fr" },
+    { name = "Meilame Tayebjee", email = "meilame.tayebjee@insee.fr" },
+]
+readme = "README.md"
+repository = "https://github.com/InseeFrLab/torchTextClassifiers"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+keywords = ["fastText", "text classification", "NLP", "automatic coding", "deep learning"]
+dependencies = [
+    "numpy>=1.26.4",
+    "pytorch-lightning>=2.4.0",
+]
+requires-python = ">=3.11"
+version="1.0.1"
+
+
+[dependency-groups]
+dev = [
+  "pytest >=9.0.1,<10",
+  "pandas",
+  "scikit-learn",
+  "nltk",
+  "unidecode",
+  "captum",
+  "pyarrow",
+  "pre-commit>=4.3.0",
+  "ruff>=0.14.3",
+  "ipywidgets>=8.1.8",
+]
+docs = [
+  "sphinx>=8.1.0",
+  "pydata-sphinx-theme>=0.16.0",
+  "sphinx-autodoc-typehints>=2.0.0",
+  "sphinx-copybutton>=0.5.0",
+  "myst-parser>=4.0.0",
+  "sphinx-design>=0.6.0",
+  "nbsphinx>=0.9.0",
+  "ipython>=8.0.0",
+  "pandoc>=2.0.0",
+  "linkify-it-py>=2.0.0",
+  "sphinxcontrib-images>=1.0.1"
+]
+
+[project.optional-dependencies]
+explainability = ["unidecode", "nltk", "captum"]
+preprocess =     ["unidecode", "nltk"]
+huggingface = [
+    "tokenizers>=0.22.1",
+    "transformers>=4.57.1",
+    "datasets>=4.3.0",
+]
+
+
+[build-system]
+requires = ["uv_build>=0.9.3,<0.10.0"]
+build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+
+
+[tool.uv.build-backend]
+module-name="torchTextClassifiers"
+module-root = ""
