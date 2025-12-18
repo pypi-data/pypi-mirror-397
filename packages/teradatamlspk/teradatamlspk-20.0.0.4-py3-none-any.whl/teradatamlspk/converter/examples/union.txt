@@ -1,0 +1,33 @@
+>>> df1.show()
++-----+---+
+| name|age|
++-----+---+
+|Alice| 25|
+|  Bob| 30|
++-----+---+
+
+>>> df2.show()
++-----+---+
+| name|age|
++-----+---+
+|Carol| 27|
+| Dave| 35|
++-----+---+
+
+PySpark code
+
+>>> rdd1 = df1.rdd
+>>> rdd2 = df2.rdd
+>>> rdd1.union(rdd2).collect()
+[Row(name='Alice', age=25),
+ Row(name='Bob', age=30),
+ Row(name='Carol', age=27),
+ Row(name='Dave', age=35)]
+
+teradatamlspk code
+
+>>> df1.union(df2).collect()
+[Row(name='Alice', age=25),
+ Row(name='Carol', age=27),
+ Row(name='Bob', age=30),
+ Row(name='Dave', age=35)]

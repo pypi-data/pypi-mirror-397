@@ -1,0 +1,36 @@
+>>> df.show()
++---+----+------------+
+|id |num1|numbers     |
++---+----+------------+
+|1  |100 |[12, 23, 45]|
+|2  |200 |[67]        |
+|3  |300 |[12]        |
+|4  |400 |[98, 54]    |
++---+----+------------+
+
+PySpark code
+
+>>> df.select(F.sequence(F.array_min(F.col("numbers")), F.array_max(F.col("numbers"))).alias("number_sequence")).show()
++----------------------------+
+|number_sequence             |
++----------------------------+
+|[12,13,14,15,16,17,18,19,   |
+|[67]                        |
+|[12]                        |
+|[54,55,56,57,58,59,60,61,62,|
++----------------------------+
+
+teradatamlspk code
+
+>>> temp_df = df.withColumns({"min_number": F.array_min(df.numbers), "max_number": F.array_max(df.numbers)})
+
+# Create a sequence using nested functions
+>>> temp_df.select(F.sequence(F.col("min_number"), F.col("max_number")).alias("number_sequence")).show()
++--------------------+
+|     number_sequence|
++--------------------+
+|(54,55,56,57,58,59, |
+|                (67)|
+|(12,13,14,15,16,17, |
+|                (12)|
++--------------------+

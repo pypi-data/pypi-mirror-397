@@ -1,0 +1,13 @@
+PySpark code
+>>> df.read.format("csv").load(path = r'admissions_train.csv').show()
+
+teradatamlspk code when file is in cloud storage
+>>> df.read.options(authorization = {"Access_ID": id, "Access_Key": key}).csv('admissions_train.csv').show()
+
+teradatamlspk code when file is in local storage
+>>> schema = StructType([
+    StructField("col1", FloatType(), nullable=True),
+    StructField("col2", FloatType(), nullable=True),
+    StructField("col3", FloatType(), nullable=True)
+])
+>>> teradatamlspk.read.csv(path='admissions_train.csv', schema=schema, header=True).cache().show()

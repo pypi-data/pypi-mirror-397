@@ -1,0 +1,38 @@
+>>> df.show()
++---+----+------------+---------------+
+| id|num1|        col1|           col2|
++---+----+------------+---------------+
+|  1| 100|[12, 23, 45]|[12, 23, 45,12]|
+|  2| 200|        [67]|             []|
+|  3| 300|          []|           [68]|
+|  4| 400|    [98, 54]|   [98, 57, 43]|
++---+----+------------+---------------+
+
+PySpark code
+
+>>> df.select(F.concat(F.array_sort(F.col("col1")), F.array_sort(F.col("col2"))).alias("concat_sorted")).show()
++-------------------------------+
+|                 concat_sorted |
++-------------------------------+
+|   [12, 23, 45, 12, 12, 23, 45]|
+|                           [67]|
+|                           [68]|
+|           [54, 98, 43, 57, 98]|
++-------------------------------+
+
+teradatamlspk code
+
+# Sort both array columns
+>>> temp_df = df.withColumns({"sorted_col1": F.array_sort(F.col("col1")),"sorted_col2": F.array_sort(F.col("col2"))})
+
+# Concatenate nested arrays
+>>> temp_df.select(F.concat(F.col("sorted_col1"), F.col("sorted_col2")).alias("concat_sorted")).show()
+
++--------------------+
+|       concat_sorted|
++--------------------+
+|    (54,98,43,57,98)|
+|                (67)|
+| (12,23,45,12,12,23)|
+|                (68)|
++--------------------+

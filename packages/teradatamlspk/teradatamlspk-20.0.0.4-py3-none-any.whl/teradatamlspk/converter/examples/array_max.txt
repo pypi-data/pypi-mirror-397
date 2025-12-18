@@ -1,0 +1,37 @@
+>>> df.show()
++---+----+------------+
+|id |num1|numbers     |
++---+----+------------+
+|1  |100 |[12, 23, 45]|
+|2  |200 |[67]        |
+|3  |300 |[12]        |
+|4  |400 |[98, 54]    |
++---+----+------------+
+
+PySpark code
+
+>>> df.select(F.array_max(F.array_distinct(F.col("numbers"))).alias("max_distinct_number")).show()
++----------------------+
+|max_distinct_number   |
++----------------------+
+|45                    |
+|67                    |
+|12                    |
+|98                    |
++----------------------+
+
+teradatamlspk code
+
+# Extract distinct array
+>>> temp_df = df.withColumn("distinct_numbers", F.array_distinct(df.numbers))
+
+# Compute the maximum of the distinct array
+>>> temp_df.select(F.array_max(F.col("distinct_numbers")).alias("max_distinct_number")).show()
++-------------------+
+|max_distinct_number|
++-------------------+
+|                 98|
+|                 67|
+|                 45|
+|                 12|
++-------------------+

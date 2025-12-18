@@ -1,0 +1,19 @@
+PySpark code
+
+>>> from pyspark.ml.feature import import Tokenizer
+>>> RT = RegexTokenizer(inputCol = 'textcol', outputCol = 'text_out')
+>>> RT.transform(df).collect()
+[Row(textcol='A\tBb\tc', text_out=['a', 'bb', 'c']),
+ Row(textcol='m N\nO', text_out=['m', 'n', 'o'])]
+
+teradatamlspk code
+
+>>> from teradatamlspk.ml.feature import Tokenizer
+>>> RT = Tokenizer(inputCol = 'textcol', outputCol = 'text_out')
+>>> RT.transform(df).collect()
+[Row(textcol='A\tBb\tc', text_out='a'),
+ Row(textcol='A\tBb\tc', text_out='c'),
+ Row(textcol='A\tBb\tc', text_out='bb'),
+ Row(textcol='m N\nO', text_out='m'),
+ Row(textcol='m N\nO', text_out='n'),
+ Row(textcol='m N\nO', text_out='o')]

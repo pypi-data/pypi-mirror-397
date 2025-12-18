@@ -1,0 +1,54 @@
+>>> df.show()
++----------------------+-------------------+
+|ts                    |tz                 |
++----------------------+-------------------+
+|1997-02-28 10:30:00.00|America/Los_Angeles|
+|1997-02-28 10:30:00.00|Pacific/Auckland   |
++----------------------+-------------------+
+
+Example 1 - timezone format specifier is string
+
+PySpark Code
+
+>>> df.select(df.ts, f.to_utc_timestamp(df.ts, "America/Los_Angeles").alias('local_time')).show(truncate=False)
++----------------------+-------------------+
+|ts                    |local_time         |
++----------------------+-------------------+
+|1997-02-28 10:30:00.00|1997-02-28 18:30:00|
+|1997-02-28 10:30:00.00|1997-02-28 18:30:00|
++----------------------+-------------------+
+
+teradatamlspk Code
+
+>>> df.select(df.ts, f.to_utc_timestamp(df.ts, "America Pacific").alias('local_time')).show(truncate=False)
++----------------------+-------------------+
+|                    ts|         local_time|
++----------------------+-------------------+
+|1997-02-28 10:30:00.00|1997-02-28 18:30:00|
+|1997-02-28 10:30:00.00|1997-02-28 18:30:00|
++----------------------+-------------------+
+
+Example 2 - timezone format specifier is Column
+
+PySpark code
+
+>>> df.select(df.tz, f.to_utc_timestamp(df.ts, df.tz).alias('local_time')).show(truncate=False)
++-------------------+-------------------+
+|tz                 |local_time         |
++-------------------+-------------------+
+|America/Los_Angeles|1997-02-28 18:30:00|
+|Pacific/Auckland   |1997-02-27 21:30:00|
++-------------------+-------------------+
+
+teradatamlspk code
+
+# Update the "America/Los_Angeles" and "Pacific/Auckland" timezones to "America Pacific" and "Pacific New Zealand", Teradata Vantage timezone formats.
+>>> from teradatamlspk.sql.functions import when, col
+>>> df = df.withColumn("tz", when(col("tz") == "America/Los_Angeles", "America Pacific").when(col("tz") == "Pacific/Auckland", "Pacific New Zealand").otherwise(col("tz")))
+>>> df.select(df.tz, f.to_utc_timestamp(df.ts, df.tz).alias('local_time')).show(truncate=False)
++-------------------+-------------------+
+|                 tz|         local_time|
++-------------------+-------------------+
+|Pacific New Zealand|1997-02-27 21:30:00|
+|    America Pacific|1997-02-28 18:30:00|
++-------------------+-------------------+

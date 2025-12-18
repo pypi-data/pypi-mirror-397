@@ -1,0 +1,37 @@
+>>> df.show()
++---+----+------------+
+|id |num1|numbers     |
++---+----+------------+
+|1  |100 |[12, 23, 45]|
+|2  |200 |[67]        |
+|3  |300 |[12]        |
+|4  |400 |[98, 54]    |
++---+----+------------+
+
+PySpark code
+
+>>> df.select(F.array_repeat(F.array_max(df.numbers), 3).alias("repeat_max_number")).show()
++------------------+
+|repeat_max_number |
++------------------+
+|[45, 45, 45]      |
+|[67, 67, 67]      |
+|[12, 12, 12]      |
+|[98, 98, 98]      |
++------------------+
+
+teradatamlspk code
+
+# Compute the maximum of the numbers array
+>>> temp_df = df.withColumn("max_number", F.array_max(df.numbers))
+
+# Repeat the maximum number 3 times
+>>> temp_df.select(F.array_repeat(temp_df.max_number, 3).alias("repeat_max_number")).show()
++-----------------+
+|repeat_max_number|
++-----------------+
+|       (98,98,98)|
+|       (67,67,67)|
+|       (45,45,45)|
+|       (12,12,12)|
++-----------------+

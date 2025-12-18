@@ -1,0 +1,73 @@
+>>> df.show()
++---------+--------+------+--------+--------+------+--------+------+-----+
+|longitude|latitude|medage|totrooms|totbdrms|   pop|houshlds|medinc|medhv|
++---------+--------+------+--------+--------+------+--------+------+-----+
+|  -122.23|   37.88|  41.0|   880.0|   129.0| 322.0|   126.0|8.3252|452.6|
+|  -122.22|   37.86|  21.0|  7099.0|  1106.0|2401.0|  1138.0|8.3014|358.5|
+|  -122.24|   37.85|  52.0|  1467.0|   190.0| 496.0|   177.0|7.2574|352.1|
+|  -122.25|   37.85|  52.0|  1274.0|   235.0| 558.0|   219.0|5.6431|341.3|
+|  -122.25|   37.85|  52.0|  1627.0|   280.0| 565.0|   259.0|3.8462|342.2|
+|  -122.25|   37.85|  52.0|   919.0|   213.0| 413.0|   193.0|4.0368|269.7|
++---------+--------+------+--------+--------+------+--------+------+-----+
+
+
+PySpark code
+
+# Prepare the stages of Pipeline with StandardScaler and LinearRegression.
+>>> from pyspark.ml.regression import LinearRegression
+>>> from pyspark.ml.feature import VectorAssembler, StandardScaler
+
+>>> assembler = VectorAssembler(inputCols=df.columns[::-1], outputCol="features", handleInvalid='keep')
+>>> sc = StandardScaler(inputCol="features", outputCol="features_scaled")
+>>> lr = (LinearRegression(featuresCol='features_scaled', labelCol="medhv", predictionCol='predmedhv',
+                           maxIter=10, regParam=0.3, elasticNetParam=0.8, standardization=False))
+
+# Initiate Pipeline with above stages.
+>>> from pyspark.ml import Pipeline
+>>> pipe = Pipeline(stages= [assembler, sc, lr])
+
+# Prepare test and train data.
+>>> train_data, test_data = df.randomSplit([0.8, 0.2], seed=42)
+
+# Fit the Pipeline model and predict the values.
+>>> model = pipe.fit(train_data)
+>>> model.transform(test_data).show()
+
++---------+--------+------+--------+--------+-----+--------+------+-----+--------------------+--------------------+-----------------+
+|longitude|latitude|medage|totrooms|totbdrms|  pop|houshlds|medinc|medhv|            features|     features_scaled|        predmedhv|
++---------+--------+------+--------+--------+-----+--------+------+-----+--------------------+--------------------+-----------------+
+|  -122.25|   37.85|  52.0|  1627.0|   280.0|565.0|   259.0|3.8462|342.2|[342.2,3.8462,259...|[5.24755410312055...|333.5377976258169|
++---------+--------+------+--------+--------+-----+--------+------+-----+--------------------+--------------------+-----------------+
+
+teradatamlspk code
+
+# Prepare the stages of Pipeline with teradataml OpenSourceML's StandardScaler and LinearRegression.
+>>> from teradataml import td_sklearn
+>>> sc = td_sklearn.StandardScaler(with_mean=False, with_std=True)
+>>> lr = td_sklearn.LinearRegression()
+
+# Initiate Pipeline with above stages.
+>>> steps = [('scaler', sc), ('lr', lr)]
+>>> pipe = td_sklearn.Pipeline(steps = steps)
+
+# Prepare test and train data.
+# Convert teradatamlspk DataFrame to teradataml DataFrame.
+>>> train_data, test_data = housing_df.randomSplit([.8,.2])
+>>> train_data = train_data.toTeradataml()
+>>> test_data = test_data.toTeradataml()
+
+# Fit the Pipeline model and predict the values.
+>>> x = train_data.select(['longitude', 'latitude', 'medage', 'totrooms', 'totbdrms', 'pop', 'houshlds', 'medinc'])
+>>> y = train_data.select('medhv')
+>>> test_x = test_data.select(['longitude', 'latitude', 'medage', 'totrooms', 'totbdrms', 'pop', 'houshlds', 'medinc'])
+>>> model = pipe.fit(x, y)
+>>> predicted_df = model.predict(test_x)
+
+# Convert teradataml DataFrame to teradatamlspk DataFrame.
+>>> from teradatamlspk.sql import DataFrame
+>>> DataFrame(predicted_df).show()
++---------+--------+------+--------+--------+-----+--------+------+------------------+
+|longitude|latitude|medage|totrooms|totbdrms|  pop|houshlds|medinc|pipeline_predict_1|
++---------+--------+------+--------+--------+-----+--------+------+------------------+
+|  -122.24|   37.85|  52.0|  1467.0|   190.0|496.0|   177.0|7.2574|401256.11668485403|
++---------+--------+------+--------+--------+-----+--------+------+------------------+

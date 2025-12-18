@@ -1,0 +1,2494 @@
+{
+"partially_supported": {
+    "pivot": {
+        "Name": "pivot()",
+        "notes": [
+            "Output column names produced by teradatamlspk are different from PySpark."
+        ],
+        "examples": "examples/pivot.txt",
+        "user_action": [
+            "Make sure to rename the columns as mentioned in the example."
+        ]
+    },
+    "colRegex": {
+        "Name": "colRegex()",
+        "notes": [
+            "regex used for argument colName in PySpark is Scala or Java based where as teradatamlspk uses Python based regex."
+        ],
+        "examples": "examples/colRegex.txt",
+        "user_action": [
+            "Update the regex passed to argument colName as Python based regex. "
+        ]
+    },
+    "crosstab": {
+        "Name": "crosstab()",
+        "notes": [
+            "Output column names produced by teradatamlspk are different from PySpark. Check the examples for more details."
+        ],
+        "examples": "examples/crosstab.txt",
+        "user_action": [
+            "Make sure to update the subsequent code to use the correct output column names. "
+        ]
+    },
+    "convert_timezone": {
+        "Name": "convert_timezone()",
+        "notes": [
+            "The timezone format specifier may differ between PySpark and teradatamlspk in certain cases. Refer to Notes for valid timezone formats in teradatamlspk."
+        ],
+        "examples": "examples/convert_timezone.txt",
+        "user_action": [
+            "Update the timezone format specifiers to match the Teradata Vantage timezone format specifiers for arguments surceTz and targetTz. "
+        ]
+    },
+    "writeTo.partitionedBy": {
+        "Name": "writeTo.partitionedBy()",
+        "notes": [
+            "Options for partitioning the data in PySpark is different from Teradata Vantage. Use Teradata supported options to partition the data."
+        ],
+        "examples": "examples/writeTo_partitionedBy.txt",
+        "user_action": [
+            "Look at Teradata documentation for supported partition types on a table.",
+            "Partitioning the data in Teradata Vantage requires Primary index on table. Hence placeholder is kept for Primary index. Look at the example for more details."
+        ]
+    },
+    "read.csv": {
+        "Name": "read.csv()",
+        "notes": [
+            "teradatamlspk can read the files from both local file system and from cloud file system.",
+            "If the file is available in cloud storage, teradatamlspk internally use teradataml.ReadNOS() to read the file. Hence users must provide the additional parameters to read file from cloud storage. Look at teradataml.ReadNOS() for all the supported arguments. Placeholders are retained in the converted teradatamlspk file to provide additional arguments.",
+            "If the file is stored in local file system, teradataml.read_csv() is used internally to read the file. Header is mandatory to read csv file from local file system.",
+            "teradataml.read_csv() does not infer the schema automatically, so make sure to specify schema while reading the file from local file system."
+        ],
+        "examples": "examples/read_csv.txt",
+        "user_action": [
+            "teradatamlspk generated the converted script by assuming the file is in cloud storage, if interactive mode argument is set to False. Hence placeholders are retained in the converted file to pass teradataml.ReadNOS() parameters.",
+            "If the file is not in cloud storage, remove the placeholders.",
+            "If you want to read a file from the cloud as well as from your local system, you can execute pyspark2teradataml by setting the interactive_mode argument to True.",
+            "For the file read from local file system, pass the parameters accepted by teradataml.read_csv() to either 'option' or 'options'."
+        ]
+    },
+    "read.json": {
+        "Name": "read.json()",
+        "notes": [
+            "teradatamlspk can read the files from both local file system and from cloud file system.",
+            "If the file is available in cloud storage, teradatamlspk internally use teradataml.ReadNOS() to read the file. Hence users must provide the additional parameters to read file from cloud storage. Look at teradataml.ReadNOS() for all the supported arguments. Placeholders are retained in the converted teradatamlspk file to provide additional arguments.",
+            "If the file is stored in local file system, pandas.read_json() is used internally to read the file. "
+        ],
+        "examples": "examples/read_json.txt",
+        "user_action": [
+            "teradatamlspk generated the converted script by assuming the file is in cloud storage, if interactive mode argument is set to False. Hence placeholders are retained in the converted file to pass teradataml.ReadNOS() parameters.",
+            "If the file is not in cloud storage, remove the placeholders.",
+            "If you want to read a file from the cloud as well as from your local system, you can execute pyspark2teradataml by setting the interactive_mode argument to True.",
+            "For the file read from local file system, pass the parameters accepted by pandas.read_json() to either 'option' or 'options'."
+        ]
+    },
+    "read.parquet": {
+        "Name": "read.parquet()",
+        "notes": [
+            "teradatamlspk can read the files from both local file system and from cloud file system.",
+            "If the file is available in cloud storage, teradatamlspk internally use teradataml.ReadNOS() to read the file. Hence users must provide the additional parameters to read file from cloud storage. Look at teradataml.ReadNOS() for all the supported arguments. Placeholders are retained in the converted teradatamlspk file to provide additional arguments.",
+            "If the file is stored in a local file system, pandas.read_parquet() is internally used to read the file."
+        ],
+        "examples": "examples/read_parquet.txt",
+        "user_action": [
+            "teradatamlspk generated the converted script by assuming the file is in cloud storage. Hence placeholders are retained in the converted file to pass cloud credentials.",
+            "If you want to read a file from the cloud as well as from your local system, you can execute pyspark2teradataml by setting the interactive_mode argument to True.",
+            "For the file read from local file system, pass the parameters accepted by pandas.read_parquet() to either 'option' or 'options'."
+        ]
+    },
+    "read.format": {
+        "Name": "read.format()",
+        "notes": [
+            "PySpark supports CSV, JSON, Parquet, ORC, and Avro formats.",
+            "teradatamlspk, supports only csv, json and parquet formats.",
+            "If the file is available in cloud storage, teradatamlspk internally use teradataml.ReadNOS() to read the file. Hence users must provide the additional parameters to read file from cloud storage. Look at teradataml.ReadNOS() for all the supported arguments. Placeholders are retained in the converted teradatamlspk file to provide additional arguments."
+        ],
+        "examples": "examples/read_format.txt",
+        "user_action": [
+            "Use only csv, json or parquet formats.",
+            "Make sure to convert it to one of these if the file is in a different format.",
+            "For local file systems, pass the parameters accepted by pandas.read_csv(), pandas.read_json(), or pandas.read_parquet() to either 'option' or 'options'."
+        ]
+    },
+    "write.format": {
+        "Name": "write.format()",
+        "notes": [
+            "PySpark supports CSV, JSON, Parquet, ORC, and Avro formats.",
+            "teradatamlspk, supports only csv, json, orc and parquet formats in which orc and json are supported only on local platforms."
+        ],
+        "examples": "examples/write_format.txt",
+        "user_action": [
+            "Use only csv, json, orc or parquet formats.",
+            "If you are looking to write a file in a format other than CSV, JSON, ORC, or Parquet, first write the file in one of these supported formats, then extract and convert it to your desired format."
+        ]
+    },
+    "write.csv": {
+        "Name": "write.csv()",
+        "notes": [
+            "teradatamlspk can write the files to both local file system and to cloud file system.",
+            "If the file to write in cloud storage, teradatamlspk internally use teradataml.WriteNOS() to write the file.",
+            "If the file is available in cloud storage, teradatamlspk internally use teradataml.WriteNOS() to write the file. Hence users must provide the required the additional parameters to read file from cloud storage. Look at teradataml.WriteNOS() for all the supported arguments. Placeholders are retained in the converted teradatamlspk file to provide additional arguments.",
+            "If the file is stored in a local file system, DataFrame.to_csv() of pandas is internally used to write a DataFrame."
+        ],
+        "examples": "examples/write_csv.txt",
+        "user_action": [
+            "teradatamlspk generated the converted script by assuming the file to write in cloud storage. Hence placeholders are retained in the converted file to pass cloud credentials.",
+            "If the file is not to wrote in cloud storage, remove the placeholders.",
+            "If you want to write a file to the cloud as well as to your local system, you can execute pyspark2teradataml by setting the interactive_mode argument to True.",
+            "For the file write to local file system, pass the parameters accepted by DataFrame.to_csv() to either 'option' or 'options'."
+        ]
+    },
+    "write.parquet": {
+        "Name": "write.parquet()",
+        "notes": [
+            "teradatamlspk can write the files to both local file system and to cloud file system.",
+            "If the file to write in cloud storage, teradatamlspk internally use teradataml.WriteNOS() to write the file.",
+            "If the file is available in cloud storage, teradatamlspk internally use teradataml.WriteNOS() to write the file. Hence users must provide the required the additional parameters to read file from cloud storage. Look at teradataml.WriteNOS() for all the supported arguments. Placeholders are retained in the converted teradatamlspk file to provide additional arguments.",
+            "If the file is stored in a local file system, DataFrame.to_csv() of pandas is internally used to write a DataFrame."
+        ],
+        "examples": "examples/write_parquet.txt",
+        "user_action": [
+            "teradatamlspk generated the converted script by assuming the file to write in cloud storage. Hence placeholders are retained in the converted file to pass cloud credentials.",
+            "If the file is not to wrote in cloud storage, remove the placeholders.",
+            "If you want to write a file to the cloud as well as to your local system, you can execute pyspark2teradataml by setting the interactive_mode argument to True.",
+            "For the file write to local file system, pass the parameters accepted by DataFrame.to_csv() to either 'option' or 'options'."
+        ]
+    },
+    "write.json": {
+        "Name": "write.json()",
+        "notes": [
+            "In teradatamlspk, function is not supported for cloud file system.",
+            "If the file is stored in a local file system, DataFrame.to_json() of pandas is internally used to write a DataFrame."
+        ],
+        "examples": "examples/write_json.txt",
+        "user_action": [
+            "For the file write to local file system, pass the parameters accepted by pandas DataFrame.to_json() to either 'option' or 'options'."
+        ]  
+    },
+    "write.orc": {
+        "Name": "write.orc()",
+        "notes": [
+            "In teradatamlspk, function is not supported for cloud file system.",
+            "If the file is stored in a local file system, DataFrame.to_orc() of pandas is internally used to write a DataFrame."
+        ],
+        "examples": "examples/write_orc.txt",
+        "user_action": [
+            "For local file systems, pass the parameters accepted by pandas DataFrame.to_orc() of pandas to either 'option' or 'options' for local file systems."
+        ]
+    },
+    "make_timestamp": {
+        "Name": "make_timestamp()",
+        "notes": [
+            "The timezone format specifier may differ between PySpark and teradatamlspk in certain cases. Refer to Notes for valid timezone formats in teradatamlspk."
+        ],
+        "examples": "examples/make_timestamp.txt",
+        "user_action": [
+            "Ignore the alert if timezone argument is not specified.",
+            "If timezone argument is specified then, update the timezone format specifiers to match the Teradata Vantage timezone format specifiers."
+        ]
+    },
+    "make_timestamp_ltz": {
+        "Name": "make_timestamp_ltz()",
+        "notes": [
+            "The timezone format specifier may differ between PySpark and teradatamlspk in certain cases. Refer to Notes for valid timezone formats in teradatamlspk."
+        ],
+        "examples": "examples/make_timestamp_ltz.txt",
+        "user_action": [
+            "Ignore the alert if format argument is not specified.",
+            "If format argument is specified then, update the timezone format specifiers to match the Teradata Vantage timezone format specifiers."
+        ]
+    },
+    "from_utc_timestamp": {
+        "Name": "from_utc_timestamp()",
+        "notes": [
+            "The timezone format specifier may differ between PySpark and teradatamlspk in certain cases. Refer to Notes for valid timezone formats in teradatamlspk."
+        ],
+        "examples": "examples/from_utc_timestamp.txt",
+        "user_action": [
+            "Ignore the alert if tz argument is not specified.",
+            "If tzargument is specified then ,",
+            "Update the timezone format specifiers to match the Teradata Vantage timezone format specifiers. ",
+            "If timezone format specifier is string, check example 1.",
+            "If timezone format specifier is Column, check example 2."
+        ]
+    },
+    "to_utc_timestamp": {
+        "Name": "to_utc_timestamp()",
+        "notes": [
+            "The timezone format specifier may differ between PySpark and teradatamlspk in certain cases. Refer to Notes for valid timezone formats in teradatamlspk."
+        ],
+        "examples": "examples/to_utc_timestamp.txt",
+        "user_action": [
+            "Ignore the alert if tz argument is not specified.",
+            "If tz argument is specified then ,",
+            "Update the timezone format specifiers to match the Teradata Vantage timezone format specifiers.",
+            "If timezone format specifier is string, check example 1.",
+            "If timezone format specifier is Column, check example 2."
+        ]
+    },
+    "to_timestamp_ltz": {
+        "Name": "to_timestamp_ltz()",
+        "notes": [
+            "'format' parameter accepts only value as string not column."
+        ],
+        "examples": "examples/to_timestamp_ltz.txt",
+        "user_action": [
+            "Please update the 'format' parameter as value"
+        ]
+    },
+    "to_timestamp_ntz": {
+        "Name": "to_timestamp_ntz()",
+        "notes": [
+            "'format' parameter accepts only value as string not column."
+        ],
+        "examples": "examples/to_timestamp_ntz.txt",
+        "user_action": [
+            "Please update the 'format' parameter as value"
+        ]
+    },
+    "conf.set": {
+        "Name": "conf.set()",
+        "notes": [
+            "The timezone format specifier may differ between PySpark and teradatamlspk in certain cases. Refer to Notes for valid timezone formats in teradatamlspk."
+        ],
+        "examples": "examples/conf_set.txt",
+        "user_action": [
+            "Ignore the alert if you are not setting the timezone.",
+            "Update the timezone format specifiers to match the Teradata Vantage timezone format specifiers for argument value."
+        ]
+    },
+    "reverse": {
+        "Name": "reverse()",
+        "notes": [
+            "teradatamlspk doesn’t support nested functions for array-type columns."
+        ],
+        "examples": "examples/reverse.txt",
+        "user_action": [
+            "Ignore the alert for string-type columns.",
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations."
+        ]
+    },
+    "to_char": {
+        "Name": "to_char()",
+        "notes": [
+            "The format specifier may differ between PySpark and teradatamlspk in certain cases. Refer to Notes for valid formats in teradatamlspk."
+        ],
+        "examples": "",
+        "user_action": [
+            "Modify the format specifier as per formats specified in the Notes section below."
+        ]
+    },
+    "to_varchar": {
+        "Name": "to_varchar()",
+        "notes": [
+            "The format specifier may differ between PySpark and teradatamlspk in certain cases. Refer to Notes for valid formats in teradatamlspk."
+        ],
+        "examples": "",
+        "user_action": [
+            "Modify the format specifier as per formats specified in the Notes section below."
+        ]
+    },
+    "to_number": {
+        "Name": "to_number()",
+        "notes": [
+            "The format specifier may differ between PySpark and teradatamlspk in certain cases. Refer to Notes for valid formats in teradatamlspk."
+        ],
+        "examples": "examples/to_number.txt",
+        "user_action": [
+            "Modify the format specifier as per formats specified in the Notes section below."
+        ]
+    },
+    "StandardScaler": {
+        "Name": "StandardScaler",
+        "notes": [
+            "In PySpark, the argument outputCol is significant.",
+            "transform() method returns the scaled features as a Vector.",
+            "In teradatamlspk, the argument outputCol is not significant.",
+            "transform() method returns all columns of DataFrame, but only the columns specified in inputCol are scaled, while ignoring outputCols argument. All scaled columns retain their original names."
+        ],
+        "examples": "examples/StandardScaler.txt",
+        "user_action": [
+            "Make sure to update the subsequent code to use the correct output column names."
+        ]
+    },
+    "MinMaxScaler": {
+        "Name": "MinMaxScaler",
+        "notes": [
+            "In PySpark, the argument outputCol is significant.",
+            "transform() method returns the scaled features as a Vector.",
+            "In teradatamlspk, the argument outputCol is not significant.",
+            "transform() method returns all columns of DataFrame, but only the columns specified in inputCol are scaled, while ignoring outputCols argument. All scaled columns retain their original names."
+        ],
+        "examples": "examples/MinMaxScaler.txt",
+        "user_action": [
+            "Make sure to update the subsequent code to use the correct output column names."
+        ]
+    },
+    "MaxAbsScaler": {
+        "Name": "MaxAbsScaler",
+        "notes": [
+            "In PySpark, the argument outputCol is significant.",
+            "transform() method returns the scaled features as a Vector.",
+            "In teradatamlspk, the argument outputCol is not significant.",
+            "transform() method returns all columns of DataFrame, but only the columns specified in inputCol are scaled, while ignoring outputCols argument. All scaled columns retain their original names."
+        ],
+        "examples": "examples/MaxAbsScaler.txt",
+        "user_action": [
+            "Make sure to update the subsequent code to use the correct output column names."
+        ]
+    },
+    "VarianceThresholdSelector": {
+        "Name": "VarianceThresholdSelector",
+        "notes": [
+            "In PySpark, the argument outputCol is significant.",
+            "transform() method returns the scaled features as a Vector.",
+            "In teradatamlspk, the argument outputCol is not significant.",
+            "transform() method retains columns with variance greater than the specified varianceThreshold from the inputCol argument while ignoring outputCol. All scaled columns retain their original names."
+        ],
+        "examples": "examples/VarianceThresholdSelector.txt",
+        "user_notes": [
+            "Make sure to update the subsequent code to use the correct output column names. "
+        ]
+    },
+    "OneHotEncoder": {
+        "Name": "OneHotEncoder",
+        "notes": [
+            "In PySpark, the argument outputCol is significant.",
+            "transform() method returns the scaled features as a Vector.",
+            "In teradatamlspk, only string type columns are supported as inputCol(s) and  the outputCol argument is not significant.",
+            "transform() method returns output columns with values 0 and 1 depending on 'categorySizes'"
+        ],
+        "examples": "examples/OneHotEncoder.txt",
+        "user_action": [
+            "Make sure to update the subsequent code to use the correct output column names."
+        ]
+    },
+    "UnivariateFeatureSelector": {
+        "Name": "UnivariateFeatureSelector",
+        "notes": [
+            "In PySpark, the argument outputCol is significant.",
+            "transform() method returns the scaled features as a Vector.",
+            "In teradatamlspk, featureType must be 'continuous', and labelType must be 'categorical'.",
+            "The outputCol argument is not significant, transform() method returns output columns  based on the specified statistical test."
+        ],
+        "examples": "examples/UnivariateFeatureSelector.txt",
+        "user_action": [
+            "Make sure to update the subsequent code to use the correct output column names."
+        ]
+    },
+    "RegexTokenizer": {
+        "Name": "RegexTokenizer",
+        "notes": [
+            "In PySpark, the tokenized words are returned as an array of strings in the output column.",
+            "In teradatamlspk,  the tokenized words are returned as multiple rows in the output column.",
+            "Input column name should not be a Teradata reserved keyword."
+        ],
+        "examples": "examples/RegexTokenizer.txt",
+        "user_action": [
+            "Make sure to update the subsequent code to process the rows instead of array of strings.",
+            "Rename the input column name if it is a Teradata reserved keyword."
+        ]
+    },
+    "Tokenizer": {
+        "Name": "Tokenizer",
+        "notes": [
+            "In PySpark, the tokenized words are returned as an array of strings in the output column.",
+            "In teradatamlspk,  the tokenized words are returned as multiple rows in the output column.",
+            "Input column name should not be a Teradata reserved keyword."
+        ],
+        "examples": "examples/Tokenizer.txt",
+        "user_action": [
+            "Make sure to update the subsequent code to process the rows instead of array of strings.",
+            "Rename the input column name if it is a Teradata reserved keyword."
+        ]
+    },
+    "current_timezone": {
+        "Name": "current_timezone()",
+        "notes": [
+            "PySpark returns the current timezone in pytz format.",
+            "teradatamlspk returns timezone in Hour:Minute format."
+        ],
+        "examples": "examples/current_timezone.txt",
+        "user_action": [
+            "Make sure to update the subsequent code accordingly if the output of DataFrame is being used in other parts of the code."
+        ]
+    },
+    "cube": {
+        "Name": "cube",
+        "notes": [
+            "Output column names produced by teradatamlspk are different from PySpark."
+        ],
+        "examples": "examples/cube.txt",
+        "user_action": [
+            "Make sure to update the subsequent code if output columns are used."
+        ]
+    },
+    "rollup": {
+        "Name": "rollup",
+        "notes": [
+            "Output column names produced by teradatamlspk are different from PySpark."
+        ],
+        "examples": "examples/rollup.txt",
+        "user_action": [
+            "Make sure to update the subsequent code if output columns are used."
+        ]
+    },
+    "rlike": {
+        "Name": "rlike",
+        "notes": ["PySpark regular expressions are java based and teradatamlspk regular expressions are posix based expressions. Hence regex pattern may differ. "
+        ],
+        "examples": "examples/rlike.txt",
+        "user_action": ["Modify the pattern to posix based regular expressions. "
+        ]
+    },
+    "union": {
+        "Name": "union",
+        "notes": ["In PySpark, the function is supported when it is performed on DataFrame operations and RDD operations.",
+        "In teradatamlspk, the function is supported only on DataFrame."
+        ],
+        "examples": "examples/union.txt",
+        "user_action": ["Ignore the alert if the method is used on DataFrame.",
+            "Use DataFrame.union() instead of RDD.union() if union is used on RDD."
+        ]
+    },
+    "array": {
+        "Name": "array()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions.",
+            "All the elements passed to function array should be of same type in teradatamlspk."
+
+        ],
+        "examples": "examples/array.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations.",
+            "Before passing elements to array function, convert elements to string type if elements are of different types."
+        ]
+    },
+    "array_contains": {
+        "Name": "array_contains()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions."
+        ],
+        "examples": "examples/array_contains.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations."
+        ]
+    },
+    "arrays_overlap": {
+        "Name": "arrays_overlap()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions."
+        ],
+        "examples": "examples/arrays_overlap.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations."
+        ]
+    },
+    "array_join": {
+        "Name": "array_join()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions."
+        ],
+        "examples": "examples/array_join.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations."
+        ]
+    },
+    "slice": {
+        "Name": "slice()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions."
+        ],
+        "examples": "examples/slice.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations."
+        ]
+    },
+    "array_position": {
+        "Name": "array_position()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions.",
+            "When locating a value from  TimestampType, TimestampNTZType, DateType, or IntervalType array, teradatamlspk doesn’t support elements as datetime object."
+        ],
+        "examples": "examples/array_position.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations. Check Example 1",
+            "Pass the value as a string in the same format as the array elements for TimestampType, TimestampNTZType, DateType, or IntervalType array with the same format as elements. Check Example 2"
+        ]
+    },
+    "element_at": {
+        "Name": "element_at()",
+        "notes": [
+            "Map Type columns are not supported."
+        ],
+        "examples": "",
+        "user_action": [
+            "Use Teradata's JSON  or UDT (User Defined Types) functionality."
+        ]
+    },
+    "try_element_at": {
+        "Name": "try_element_at()",
+        "notes": [
+            "Map Type columns are not supported."
+        ],
+        "examples": "",
+        "user_action": [
+            "Use Teradata's JSON  or UDT (User Defined Types) functionality."
+        ]
+    },
+    "array_prepend": {
+        "Name": "array_prepend()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions."
+        ],
+        "examples": "examples/array_prepend.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations."
+        ]
+    },
+    "array_sort": {
+        "Name": "array_sort()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions.",
+            "In teradatamlspk, comparator argument is ignored."
+        ],
+        "examples": "examples/array_sort.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations."
+        ]
+    },
+    "array_insert": {
+        "Name": "array_insert()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions.",
+            "When inserting a value to TimestampType, TimestampNTZType, DateType, or IntervalType array, teradatamlspk doesn’t support value as datetime object."
+        ],
+        "examples": "examples/array_insert.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations. Check Example 1",
+            "Pass the value as string for TimestampType, TimestampNTZType, DateType, or IntervalType array with the same format as elements. Check Example 2"
+        ]
+    },
+    "array_remove": {
+        "Name": "array_remove()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions.",
+            "When removing an element from  TimestampType, TimestampNTZType, DateType, or IntervalType array teradatamlspk doesn’t support element as datetime object",
+            "When removing None values from an array, PySpark returns NULL as the output. But, teradatamlspk removes all None elements and returns the resulting array without any null values."
+        ],
+        "examples": "examples/array_remove.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations. Check Example 1",
+            "Pass the element as a string in the same format as the array elements for TimestampType, TimestampNTZType, DateType, or IntervalType array with the same format as elements. Check Example 2"
+        ]
+    },
+    "array_append": {
+        "Name": "array_append()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions."
+        ],
+        "examples": "examples/array_append.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations."
+        ]
+    },
+    "array_distinct": {
+        "Name": "array_distinct()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions."
+        ],
+        "examples": "examples/array_distinct.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations."
+        ]
+    },
+    "array_intersect": {
+        "Name": "array_intersect()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions."
+        ],
+        "examples": "examples/array_intersect.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations."
+        ]
+    },
+    "array_union": {
+        "Name": "array_union()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions."
+        ],
+        "examples": "examples/array_union.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations."
+        ]
+    },
+    "array_except": {
+        "Name": "array_except()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions."
+        ],
+        "examples": "examples/array_except.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations."
+        ]
+    },
+    "array_compact": {
+        "Name": "array_compact()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions."
+        ],
+        "examples": "examples/array_compact.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations."
+        ]
+    },
+    "explode": {
+        "Name": "explode()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions.",
+            "Output column names produced by teradatamlspk are different from PySpark, if alias name is not provided."
+        ],
+        "examples": "examples/explode.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations.",
+            "Make sure to use alias name for the exploded column."
+        ]
+    },
+    "explode_outer": {
+        "Name": "explode_outer()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions.",
+            "In teradatamlspk, null or empty arrays are ignored.",
+            "Output column names produced by teradatamlspk are different from PySpark, if alias name is not provided."
+        ],
+        "examples": "examples/explode_outer.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations.",
+            "Make sure to use alias name for the exploded column."
+        ]
+    },
+    "posexplode": {
+        "Name": "posexplode()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions.",
+            "Output column names produced by teradatamlspk are different from PySpark, if alias name is not provided."
+        ],
+        "examples": "examples/posexplode.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations.",
+            "Make sure to update the subsequent code if output columns are used."
+        ]
+    },
+    "posexplode_outer": {
+        "Name": "posexplode_outer()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions.",
+            "In teradatamlspk, null or empty arrays are ignored.",
+            "Output column names produced by teradatamlspk are different from PySpark, if alias name is not provided."
+        ],
+        "examples": "examples/posexplode_outer.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations.",
+            "Make sure to update the subsequent code if output columns are used."
+        ]
+    },
+    "get": {
+        "Name": "get()",
+        "notes": [
+            "Map Type columns are not supported."
+        ],
+        "examples": "",
+        "user_action": [
+            "Use Teradata's JSON  or UDT (User Defined Types) functionality."
+        ]
+    },
+    "sort_array": {
+        "Name": "sort_array()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions."
+        ],
+        "examples": "examples/sort_array.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations."
+        ]
+    },
+    "array_max": {
+        "Name": "array_max()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions.",
+            "teradatamlspk doesn’t support operations on strings array."
+        ],
+        "examples": "examples/array_max.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations."
+        ]
+    },
+    "array_min": {
+        "Name": "array_min()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions.",
+            "teradatamlspk doesn’t support operations on strings array."
+        ],
+        "examples": "examples/array_min.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations."
+        ]
+    },
+    "shuffle": {
+        "Name": "shuffle()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions."
+        ],
+        "examples": "examples/shuffle.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations."
+        ]
+    },
+    "sequence": {
+        "Name": "sequence()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions."
+        ],
+        "examples": "examples/sequence.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations."
+        ]
+    },
+    "array_repeat": {
+        "Name": "array_repeat()",
+        "notes": [
+            "teradatamlspk doesn't support nested functions."
+        ],
+        "examples": "examples/array_repeat.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations."
+        ]
+    },
+    "array_agg": {
+        "Name": "array_agg()",
+        "notes": [
+            "teradatamlspk doesn’t support nested functions and window operations.",
+            "Map Type columns are not supported."
+        ],
+        "examples": "examples/array_agg.txt",
+        "user_action": [
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations.",
+            "If MapType columns are used, utilize Teradata's JSON or UDT (User Defined Types) functionality."
+        ]
+    },
+    "concat": {
+        "Name": "concat()",
+        "notes": [
+            "teradatamlspk doesn’t support nested functions for array-type columns."
+        ],
+        "examples": "examples/concat.txt",
+        "user_action": [
+            "Ignore the alert for string type column.",
+            "If nested functions are used in the statement, create intermediate columns and reference them in subsequent operations."
+        ]
+    }
+
+},
+"notification": {
+    
+    "broadcast": {
+        "Name": "broadcast()",
+        "notes": [
+            "Teradata optimizer takes care of optimization for joins. Hence, the API returns the same DataFrame. "
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "applicationId": {
+        "Name": "applicationId()",
+        "notes": [
+            "PySpark returns application id of the current Spark application.",
+            "API is not applicable for Teradata Vantage. Hence, returns 0."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "defaultMinPartitions": {
+        "Name": "defaultMinPartitions()",
+        "notes": [
+            "PySpark returns the default number of partitions to use when not specified by user.", 
+            "API is not applicable for Teradata Vantage. Hence, returns None."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "defaultParallelism": {
+        "Name": "defaultParallelism()",
+        "notes": [
+            "PySpark returns the default level of parallelism to use when not specified by user.",
+            "With Teradata Vantage, parallelism is controleed at AMP level amd at system level. Hence, the API returns None."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "uiWebUrl": {
+        "Name": "uiWebUrl()",
+        "notes": [
+            "PySpark returns the web UI address of the current Spark application.",
+            "API is not applicable for Teradata Vantage. Hence, returns empty string."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed"
+        ]
+    },
+    "cache": {
+        "Name": "cache()",
+        "notes": [
+            "PySpark is used to cache the DataFrame.",
+            "API is not applicable for Teradata Vantage. Hence, returns the same DataFrame."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "localCheckpoint": {
+        "Name": "localCheckpoint()",
+        "notes": [
+            "PySpark returns locally checkpointed version of the DataFrame.",
+            "API is not applicable for Teradata Vantage. Hence, returns the same DataFrame."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "persist": {
+        "Name": "persist()",
+        "notes": [
+            "PySpark sets the storage level to persist the contents of the DataFrame to a disk.",
+            "With the Teradata Vantage, data resides in Database. Hence, the API returns the persisted DataFrame."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "unpersist": {
+        "Name": "unpersist()",
+        "notes": [
+            "PySpark removes the Data from the memory and disk and put the data non-persistent.",
+            "With the Teradata Vantage, data resides in Database. Hence, the API returns the same DataFrame."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "sortWithinPartitions": {
+        "Name": "sortWithinPartitions()",
+        "notes": [
+            "Sorting within a partition is not applicable for Teradata Vantage. Returns the same DataFrame."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "hint": {
+        "Name": "hint()",
+        "notes": [
+            "In PySpark, specifies a hint to optimizer.",
+            "Hints are not applicable for Teradata Vantage.",
+            "Teradata optimizer, by default optimizes the queries, hence returns the same DataFrame."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "coalesce": {
+        "Name": "coalesce()",
+        "notes": [
+            "PySpark returns a new DataFrame that has exactly numPartitions partitions.",
+            "API is not applicable for Teradata Vantage. Hence, returns the same DataFrame."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "repartition": {
+        "Name": "repartition()",
+        "notes": [
+            "PySpark  returns a new DataFrame partitioned by the given partitioning expressions.",
+            "API is not applicable for Teradata Vantage. Hence, returns the same DataFrame."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "repartitionByRange": {
+        "Name": "repartitionByRange()",
+        "notes": [
+            "PySpark returns a new DataFrame partitioned by the given partitioning expressions.",
+            "API is not applicable for Teradata Vantage. Hence, returns the same DataFrame."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "sameSemantics": {
+        "Name": "sameSemantics()",
+        "notes": [
+            "PySpark returns True when the logical query plans inside both DataFrames are equal.",
+            "With Teradata Vantage, optimizer decides the query plan and takes care of optimization for user.",
+            "The API is not required in Teradata. Hence, returns False."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "inputFiles": {
+        "Name": "inputFiles",
+        "notes": [
+            "PySpark returns the list of files read while creating DataFrame.",
+            "Data is read from tables in Teradata Vantage. Hence, the API returns an empty list."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "isLocal": {
+        "Name": "isLocal",
+        "notes": [
+            "PySpark returns True if the collect() and take() methods can be run locally without any Spark executors.",
+            "With the Teradata Vantage, data resides in Database. Hence, the API returns False."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "isStreaming": {
+        "Name": "isStreaming",
+        "notes": [
+            "PySpark returns True if the DataFrame is created from streaming source(s).",
+            "DataFrame(s) are created on data residing in Teradata Vantage. Hence, it returns False."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "semanticHash": {
+        "Name": "semanticHash",
+        "notes": [
+            "PySpark returns a hash code for the logical query plan of the DataFrame.",
+            "With Teradata Vantage, optimizer decides the query plan and takes care of optimization for user.",
+            "The API is not required in Teradata. Hence, returns False."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "SparkConf": {
+        "Name": "SparkConf()",
+        "notes": [
+            "Utility converted SparkConf to TeradataConf."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "randomSplit": {
+        "Name": "randomSplit()",
+        "notes": [
+            "'seed' argument in DataFrame.randomSplit() is ignored."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "sample": {
+        "Name": "sample()",
+        "notes": [
+            "'seed' argument in DataFrame.sample() is ignored."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "storageLevel":{
+        "Name": "storageLevel",
+        "notes": [
+            "storageLevel is ignored for Teradata Vantage. "
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "unpivot": {
+        "Name": "unpivot()",
+        "notes": [
+            "DataFrame will contain a column with the name passed to argument variableColumnName. Values inside this column differs between Pyspark and teradatamlspk."
+
+        ],
+        "examples": "examples/unpivot.txt",
+        "user_action": [
+            "Make sure to update the subsequent code to use the correct value of output column."
+        ]
+    },
+    "melt": {
+        "Name": "melt()",
+        "notes": [
+            "DataFrame will contain a column with the name passed to argument variableColumnName. Values inside this column differs between Pyspark and teradatamlspk."
+        ],
+        "examples": "examples/melt.txt",
+        "user_action": [
+            "Make sure to update the subsequent code to use the correct value of output column."
+        ]
+    },
+    "range": {
+        "Name": "range",
+        "notes": [
+            "'numPartitions' argument in range() is ignored.",
+            "In PySpark, 'SparkContext.range()' returns RDD. RDD is not applicable for Teradata Vantage. Hence, returns the DataFrame."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "_jsparkSession": {
+        "Name": "_jsparkSession",
+        "notes": [
+            "PySpark returns the SparkSession enabling access to Java-based Spark APIs.",
+            "API is not applicable for Teradata Vantage, hence returns the TeradataSession."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "newSession": {
+        "Name": "newSession",
+        "notes": [
+            "PySpark returns a new SparkSession. With Teradata Vantage, multiple sessions are not supported simultaneously. Hence, returns the existing session."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "setCheckpointDir":{
+        "Name": "setCheckpointDir",
+        "notes": [
+            "Teradata Vantage doesn't support RDD operations. Hence, operation is not performed."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "setJobDescription": {
+        "Name": "setJobDescription",
+        "notes": [
+            "Teradata Vantage takes care of running SQL(s) automatically. Hence operation is not performed."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "setJobGroup": {
+        "Name": "setJobGroup",
+        "notes": [
+            "Teradata Vantage takes care of running SQL(s) automatically. Hence operation is not performed."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "setSystemProperty": {
+        "Name": "setSystemProperty",
+        "notes": [
+            "Teradata Vantage takes care of running SQL(s) automatically. Hence setting of JVM option is not a valid operation and operation is not performed."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "getCheckpointDir": {
+        "Name": "getCheckpointDir",
+        "notes": [
+            "Teradata Vantage doesn't support RDD operations. Hence, operation is not performed."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "getLocalProperty": {
+        "Name": "getLocalProperty",
+        "notes": [
+            "Teradata Vantage controls parallelism automatically. Hence setting up a value to a thread is not valid operation."
+        ],
+        "examples": "",
+        "user_action": [
+            "Check with Teradata Admin to get the information."
+        ]
+    },
+    "SparkContext": {
+        "Name": "SparkContext",
+        "notes": [
+            "The SparkContext has been replaced with TeradataContext. Methods that are applicable for Teradata Vantage will work with TeradataContext, while methods that are not applicable will result in an error. "
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "SQLContext": {
+        "Name": "SQLContext",
+        "notes": [
+            "Methods that are applicable for Teradata Vantage will work with SQLContext, while methods that are not applicable will result in an error."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "emptyRDD": {
+        "Name": "emptyRDD",
+        "notes": [
+            "Teradata Vantage doesn't support RDD operations. Hence, operation is not performed."
+        ],
+        "examples": "",
+        "user_action": [
+            "This is just a notification. No action needed."
+        ]
+    },
+    "createDataFrame": {
+        "Name": "createDataFrame",
+        "notes": [
+            "In teradatamlspk, createDataFrame also accepts name of the table resides in Teradata Vantage.",
+            "If the input is a pandas.DataFrame with integer column name, then 'col_' prefix is added to the column name.",
+            "If the input is a list of lists/tuples and does not have explicit column names, then 'col' prefix is added to the column name."
+        ],
+        "examples": "examples/createDataFrame.txt",
+        "user_action": [
+            "Make sure to update the subsequent code to use the correct output column names."
+        ]
+    },
+    "approxQuantile": {
+            "Name": "approxQuantile",
+            "notes": [
+                "'relativeError' argument in DataFrame.approxQuantile() is ignored and treated as zero, returning the exact quantiles."
+            ],
+            "examples": "",
+            "user_action": [
+                "This is just a notification. No action needed."
+            ]
+    },
+    "make_interval": {
+    "Name": "make_interval",
+    "notes": ["PySpark creates interval type with all the arguments provided.",
+              "In teradatamlspk, interval type is created either with year-month or day-time argument(s) but not both."
+    ],
+    "examples": "examples/make_interval.txt",
+    "user_action": ["This is just a notification. No action needed."
+    ]}
+},
+"not_supported": {
+    "user_error": {
+        "Name": "Syntax Error",
+        "notes": [
+            "The input file contains syntax errors."
+        ],
+        "examples": "",
+        "user_action": [
+            "Fix the syntax errors in the input file and try again."
+        ]
+    },
+    "utility_error": {
+        "Name": "Utility Error",
+        "notes": [
+            "The input file is not parsed due to some unexpected error."
+        ],
+        "examples": "",
+        "user_action": [
+            "Contact Teradata for assistance."
+        ]
+    },
+        "collect_set": {
+            "Name": "collect_set()",
+            "notes": ["Array functionality is not yet supported."
+            ],
+            "examples": "",
+            "user_action": ["Convert individual elements in an array to corresponding columns. Then remove duplicates using dropDuplicates."
+            ]},
+        "udtf": {
+            "Name": "udtf",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert the functionality to use udf instead of udtf. Make corresponding changes to the script/notebook."
+            ]},
+        "Vectors": {
+            "Name": "Vectors",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["All ML function arguments, which accepts Vectors as input in PySpark, accepts list of columns in teradatamlspk. Hence, pass list of columns instead of converting it to Vector(s) to the ML function arguments."
+            ]},
+        "Vector": {
+            "Name": "Vector",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["All ML function arguments, which accepts Vectors as input in PySpark, accepts list of columns in teradatamlspk. Hence, pass list of columns instead of converting it to Vector(s) to the ML function arguments."
+            ]},
+        "DenseVector": {
+            "Name": "DenseVector",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["All ML function arguments, which accepts Vectors as input in PySpark, accepts list of columns in teradatamlspk. Hence, pass list of columns instead of converting it to Vector(s) to the ML function arguments."
+            ]},
+        "VectorUDT": {
+            "Name": "VectorUDT",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["All ML function arguments, which accepts Vectors as input in PySpark, accepts list of columns in teradatamlspk. Hence, pass list of columns instead of converting it to Vector(s) to the ML function arguments."
+            ]},
+        "IndexToString": {
+            "Name": "IndexToString",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Either use when function to construct string back from indices or convert teradatamlspk DataFrame to teradataml DataFrame using toTeradataml() and use OneHotEncodingFit/OneHotEncodingTransform analytic functions on teradataml DataFrame."
+            ]},
+        "SparkFiles": {
+            "Name": "SparkFiles",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Reading individual files are not supported in Teradata. Load data from all the files into table and then operate on that table.",
+                            "Use copy_to_sql() or read_csv() from teradataml to load the data to table. Look at teradataml user guide, section “Data Transfer Utility” under the chapter “teradataml General Functions” for more details."
+            ]},
+        "RDD": {
+            "Name": "RDD",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Convert RDD operation(s) to DataFrame operation(s)."
+            ]},
+        "Pipeline": {
+            "Name": "Pipeline",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "examples/Pipeline.txt",
+            "user_action": ["Convert the Pipeline call to make use of pipeline function scikit-learn using Teradata Open source ML functions. Refer to the example."
+            ]},
+        "PipelineModel": {
+            "Name": "PipelineModel",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "examples/Pipeline.txt",
+            "user_action": ["Convert the Pipeline call to make use of pipeline function scikit-learn using Teradata Open source ML functions. Refer to the example."
+            ]},
+        "BinaryType": {
+            "Name": "BinaryType",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Binary Types are not applicable in Teradata Vantage. Convert the type to VARBYTE type."
+            ]},
+        "aes_encrypt": {
+            "Name": "aes_encrypt",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Write a udf with aes_encrypt functionality and use the udf in the code instead of aes_encrypt."
+            ]},
+        "aes_decrypt": {
+            "Name": "aes_decrypt",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Write a udf with aes_decrypt functionality and use the udf in the code instead of aes_decrypt."
+            ]},
+        "Observation": {
+            "Name": "Observation",
+            "notes": ["Not applicable for Teradata Vantage"
+            ],
+            "examples": "",
+            "user_action": ["Write a code in script/notebook to observe the functions used for a DataFrame."
+            ]},
+        "applyInPandas": {
+            "Name": "applyInPandas",
+            "notes": ["Functionality is not yet available.."
+            ],
+            "examples": "",
+            "user_action": ["Use pandas DataFrame operation(s) to achieve the same functionality, then load the load the data into table and create DataFrame on the table. "
+            ]},
+        "UDTFRegistration": {
+            "Name": "UDTFRegistration",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert the functionality to use udf instead of udtf. Make corresponding changes to the script/notebook."
+            ]},
+        "UserDefinedTableFunction": {
+            "Name": "UserDefinedTableFunction",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert the functionality to use udf instead of udtf. Make corresponding changes to the script/notebook."
+            ]},
+        "DataStreamReader": {
+            "Name": "DataStreamReader",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Load the data into table and create DataFrame on the table."
+            ]},
+        "DataStreamWriter": {
+            "Name": "DataStreamWriter",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Write the data to a file using write method and use that file in the subsequent process."
+            ]},
+        "StreamingQuery": {
+            "Name": "StreamingQuery",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Load the data into table and create DataFrame on the table."
+            ]},
+        "StreamingQueryManager": {
+            "Name": "StreamingQueryManager",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Load the data into table and create DataFrame on the table."
+            ]},
+        "StreamingQueryListener": {
+            "Name": "StreamingQueryListener",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Load the data into table and create DataFrame on the table."
+            ]},
+        "accumulator": {
+            "Name": "accumulator",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Use udf to create a new column in DataFrame which stores the value you want to accumulate and use that column to process further."
+            ]},
+        "AccumulatorParam": {
+            "Name": "AccumulatorParam",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Use udf to create a new column in DataFrame which stores the value you want to accumulate and use that column to process further."
+            ]},
+        "TaskContext": {
+            "Name": "TaskContext",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Check with Teradata Admin to get the metrics behind the task."
+            ]},
+        "BarrierTaskContext": {
+            "Name": "BarrierTaskContext",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Check with Teradata Admin to get the metrics behind the task."
+            ]},
+        "InheritableThread": {
+            "Name": "InheritableThread",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Threading is not supported in Teradata Vantage. Convert it to UDF and use the same."
+            ]},
+        "VersionUtils": {
+            "Name": "VersionUtils",
+            "notes": ["PySpark Version is different from Teradata Vantage Version."
+            ],
+            "examples": "",
+            "user_action": ["Modify the code to run with Teradata Vantage version. Use `TeradataContext.version` to get the Teradata Vantage version."
+            ]},
+        "ResourceInformation": {
+            "Name": "ResourceInformation",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Check with Teradata Admin to get the resource information."
+            ]},
+        "ResourceProfile": {
+            "Name": "ResourceProfile",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Check with Teradata Admin to get the resource information."
+            ]},
+        "ResourceProfileBuilder": {
+            "Name": "ResourceProfileBuilder",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Check with Teradata Admin to get the resource information."
+            ]},
+        "ExecutorResourceRequest": {
+            "Name": "ExecutorResourceRequest",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Check with Teradata Admin to get the resource information."
+            ]},
+        "ExecutorResourceRequests": {
+            "Name": "ExecutorResourceRequests",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Check with Teradata Admin to get the resource information."
+            ]},
+        "TaskResourceRequest": {
+            "Name": "TaskResourceRequest",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Check with Teradata Admin to get the resource information."
+            ]},
+        "TaskResourceRequests": {
+            "Name": "TaskResourceRequests",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Check with Teradata Admin to get the resource information."
+            ]},
+        "readStream": {
+            "Name": "readStream",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Load the data into table and create DataFrame on the table."
+            ]},
+        "streams": {
+            "Name": "streams",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Load the data into table and create DataFrame on the table."
+            ]},
+        "addArtifact": {
+            "Name": "addArtifact",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Write a Java UDF in Teradata Vantage to consume a specific jar file."
+            ]},
+        "addArtifacts": {
+            "Name": "addArtifacts",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Write a Java UDF in Teradata Vantage to consume a specific jar file."
+            ]},
+        "copyFromLocalToFs": {
+            "Name": "copyFromLocalToFs",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Use the API provided by cloud provider to upload the file from local to cloud system."
+            ]},
+        "interruptAll": {
+            "Name": "interruptAll",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Use sql_timeout argument during getOrCreate() to cancel the SQL statements running for more than timeout mentioned in sql_timeout. Otherwise Check with Teradata Admin to cancel the running SQL."
+            ]},
+        "interruptTag": {
+            "Name": "interruptTag",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Use sql_timeout argument during getOrCreate() to cancel the SQL statements running for more than timeout mentioned in sql_timeout. Otherwise Check with Teradata Admin to cancel the running SQL."
+            ]},
+        "interruptOperation": {
+            "Name": "interruptOperation",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Use sql_timeout argument during getOrCreate() to cancel the SQL statements running for more than timeout mentioned in sql_timeout. Otherwise Check with Teradata Admin to cancel the running SQL."
+            ]},
+        "addTag": {
+            "Name": "addTag",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Users should identify the individual SQL queries and ask Teradata admin to cancel/stop them."
+            ]},
+        "removeTag": {
+            "Name": "removeTag",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Users should identify the individual SQL queries and ask Teradata admin to cancel/stop them."
+            ]},
+        "getTags": {
+            "Name": "getTags",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Users should identify the individual SQL queries and ask Teradata admin to cancel/stop them."
+            ]},
+        "clearTags": {
+            "Name": "clearTags",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Users should identify the individual SQL queries and ask Teradata admin to cancel/stop them."
+            ]},
+        "jdbc": {
+            "Name": "jdbc",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Load the data into table and create DataFrame on the table."
+            ]},
+        "RegressionMetrics": {
+            "Name": "RegressionMetrics",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["RegressionMetrics uses RDD for evaluating the metrics. User should use RegressionEvaluator as it runs on DataFrame instead of RDD."
+            ]},
+        "addFile": {
+            "Name": "addFile",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Apply Table Operator or Script Table Operator in Teradata to install a file which is accessible to AMP(s). Convert teradatamlspk DataFrame to teradataml DataFrame and use 'Apply' or 'Script' to achieve the same through teradataml."
+            ]},
+        "addPyFile": {
+            "Name": "addPyFile",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Apply Table Operator or Script Table Operator in Teradata to install a file which is accessible to AMP(s). Convert teradatamlspk DataFrame to teradataml DataFrame and use 'Apply' or 'Script' to achieve the same through teradataml."
+            ]},
+        "binaryFiles": {
+            "Name": "binaryFiles",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Load the data into table and create DataFrame on the table."
+            ]},
+        "binaryRecords": {
+            "Name": "binaryRecords",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Apply Table Operator or Script Table Operator in Teradata to install a file which is accessible to AMP(s). Convert teradatamlspk DataFrame to teradataml DataFrame and use 'Apply' or 'Script' to achieve the same through teradataml."
+            ]},
+        "cancelAllJobs": {
+            "Name": "cancelAllJobs",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Use sql_timeout argument during getOrCreate() to cancel the SQL statements running for more than timeout mentioned in sql_timeout. Otherwise Check with Teradata Admin to cancel the running SQL."
+            ]},
+        "cancelJobGroup": {
+            "Name": "cancelJobGroup",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Use sql_timeout argument during getOrCreate() to cancel the SQL statements running for more than timeout mentioned in sql_timeout. Otherwise Check with Teradata Admin to cancel the running SQL."
+            ]},
+        "dump_profiles": {
+            "Name": "dump_profiles",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Check with Teradata Admin to get the resource information."
+            ]},
+        "show_profiles": {
+            "Name": "dump_profiles",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Users can contact DBA to display all user profiles."
+            ]},
+        "hadoopFile": {
+            "Name": "hadoopFile",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Load the data into table and create DataFrame on the table."
+            ]},
+        "hadoopRDD": {
+            "Name": "hadoopRDD",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Load the data into table and create DataFrame on the table."
+            ]},
+        "newAPIHadoopFile": {
+            "Name": "newAPIHadoopFile",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Load the data into table and create DataFrame on the table."
+            ]},
+        "newAPIHadoopRDD": {
+            "Name": "newAPIHadoopRDD",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Load the data into table and create DataFrame on the table."
+            ]},
+        "parallelize": {
+            "Name": "parallelize",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Parallelism is controlled at system level or according to partitions on data in Teradata Vantage."
+            ]},
+        "pickleFile": {
+            "Name": "pickleFile",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["RDD Operations are not supported. Use DataFrame methods instead of RDD methods."
+            ]},
+        "runJob": {
+            "Name": "runJob",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Use Apply Table Operator or Script Table Operator in Teradata to install a file which is accessible to AMP(s). Convert teradatamlspk DataFrame to teradataml DataFrame and use 'Apply' or 'Script' to achieve the same through teradataml."
+            ]},
+        "sequenceFile": {
+            "Name": "sequenceFile",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Load the data into table and create DataFrame on the table."
+            ]},
+        "statusTracker": {
+            "Name": "statusTracker",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Check with Teradata Admin to get the status of running SQL(s)."
+            ]},
+        "textFile": {
+            "Name": "textFile",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Use copy_to_sql() or read_csv() from teradataml to load the data to table. Look at teradataml user guide, section “Data Transfer Utility” under the chapter “teradataml General Functions” for more details."
+            ]},
+        "wholeTextFiles": {
+            "Name": "wholeTextFiles",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Use copy_to_sql() or read_csv() from teradataml to load the data to table. Look at teradataml user guide, section “Data Transfer Utility” under the chapter “teradataml General Functions” for more details."
+            ]},
+        "dropDuplicatesWithinWatermark": {
+            "Name": "dropDuplicatesWithinWatermark",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Contact Teradata for assistance."
+            ]},
+        "freqItems": {
+            "Name": "freqItems",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Write a query using 'XMLAGG' function and create a DataFrame on the query instead of freqItems."
+            ]},
+        "mapInPandas": {
+            "Name": "mapInPandas",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Apply Table Operator or Script Table Operator in Teradata to run the Python custom function. Convert teradatamlspk DataFrame to teradataml DataFrame and use 'Apply' or 'Script' to achieve the same through teradataml."
+            ]},
+        "mapInArrow": {
+            "Name": "mapInArrow",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Apply Table Operator or Script Table Operator in Teradata to run the Python custom function. Convert teradatamlspk DataFrame to teradataml DataFrame and use 'Apply' or 'Script' to achieve the same through teradataml."
+            ]},
+        "observe": {
+            "Name": "observe",
+            "notes": ["Not applicable for Teradata Vantage"
+            ],
+            "examples": "",
+            "user_action": ["Use DataFrame.agg() method to get the Aggregate on the entire DataFrame instead of observe."
+            ]},
+        "offset": {
+            "Name": "offset",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame to use  row_number()function to assign a sequential row number, and then filter the data based on the row number."
+            ]},
+        "toJSON": {
+            "Name": "toJSON",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Use to_pandas() to convert the DataFrame to a Pandas DataFrame, and then use Pandas' .to_json() method."
+            ]},
+        "to_pandas_on_spark": {
+            "Name": "to_pandas_on_spark",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Do not convert DataFrame to PandasOnSparkDataFrame since it is not yet supported. Use the regular DataFrame methods instead of using PandasOnSparkDataFrame methods."
+            ]},
+        "withMetadata": {
+            "Name": "withMetadata",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["User must add a new column and populate it with data."
+            ]},
+        "withWatermark": {
+            "Name": "withWatermark",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Contact Teradata for assistance."
+            ]},
+        "writeStream": {
+            "Name": "writeStream",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Write the data to a file using write method and use that file in the subsequent process."
+            ]},
+        "pandas_api": {
+            "Name": "pandas_api",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Do not convert DataFrame to PandasOnSparkDataFrame since it is not yet supported. Use the regular DataFrame methods instead of using PandasOnSparkDataFrame methods."
+            ]},
+        "dropFields": {
+            "Name": "dropFields",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's JSON data type and its functionalities to create a new column in the DataFrame."
+            ]},
+        "getItem": {
+            "Name": "getItem",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's JSON data type and its functionalities to create a new column in the DataFrame."
+            ]},
+        "getField": {
+            "Name": "getField",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's JSON data type and its functionalities to create a new column in the DataFrame."
+            ]},
+        "withField": {
+            "Name": "withField",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's JSON data type and its functionalities to create a new column in the DataFrame."
+            ]},
+        "input_file_name": {
+            "Name": "input_file_name",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["In teradatamlspk, when reading a file from cloud storage, the file location is automatically added as the first column. When reading from a local source, add a column to the DataFrame with the input file name, fetch the file name from there instead of using input_file_name()."
+            ]},
+        "named_struct": {
+            "Name": "named_struct",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's JSON data type and its functionalities to create a new column in the DataFrame."
+            ]},
+        "factorial": {
+            "Name": "factorial",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Write a udf with factorial functionality and use the udf in the code instead of factorial."
+            ]},
+        "shiftrightunsigned": {
+            "Name": "shiftrightunsigned",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Write a udf with shiftrightunsigned functionality and use the udf in the code instead of shiftrightunsigned."
+            ]},
+        "session_window": {
+            "Name": "session_window",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame and use teradataml DataFrame method groupby_time to group the records based on a time window."
+            ]},
+        "window_time": {
+            "Name": "window_time",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame and use teradataml DataFrame method groupby_time to group the records based on a time window."
+            ]},
+        "create_map": {
+            "Name": "create_map",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's JSON  or UDT (User Defined Types) functionality."
+            ]},
+        "exists": {
+            "Name": "exists",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's ARRAY functionality to create an array column in the DataFrame."
+            ]},
+        "forall": {
+            "Name": "forall",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's ARRAY functionality to create an array column in the DataFrame.",
+                            "Convert teradatamlspk DataFrame to teradataml DataFrame and use 'Apply' or 'Script' to get the same functionality."
+            ]},
+        "zip_with": {
+            "Name": "zip_with",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's ARRAY functionality to create an array column in the DataFrame.",
+                            "Convert teradatamlspk DataFrame to teradataml DataFrame and use 'Apply' or 'Script' to get the same functionality."
+            ]},
+        "transform_keys": {
+            "Name": "transform_keys",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's ARRAY functionality to create an array column in the DataFrame.",
+                            "Convert teradatamlspk DataFrame to teradataml DataFrame and use 'Apply' or 'Script' to get the same functionality."
+            ]},
+        "transform_values": {
+            "Name": "transform_values",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's ARRAY functionality to create an array column in the DataFrame.",
+                            "Convert teradatamlspk DataFrame to teradataml DataFrame and use 'Apply' or 'Script' to get the same functionality."
+            ]},
+        "map_filter": {
+            "Name": "map_filter",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's ARRAY functionality to create an array column in the DataFrame.",
+                            "Convert teradatamlspk DataFrame to teradataml DataFrame and use 'Apply' or 'Script' to get the same functionality."
+            ]},
+        "map_from_arrays": {
+            "Name": "map_from_arrays",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's ARRAY functionality to create an array column in the DataFrame.",
+                            "Convert teradatamlspk DataFrame to teradataml DataFrame and use 'Apply' or 'Script' to get the same functionality."
+            ]},
+        "map_zip_with": {
+            "Name": "map_zip_with",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's ARRAY functionality to create an array column in the DataFrame.",
+                            "Convert teradatamlspk DataFrame to teradataml DataFrame and use 'Apply' or 'Script' to get the same functionality."
+            ]},
+        "inline": {
+            "Name": "inline",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's ARRAY functionality to create an array column in the DataFrame."
+            ]},
+        "inline_outer": {
+            "Name": "inline_outer",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's ARRAY functionality to create an array column in the DataFrame."
+            ]},
+        "get_json_object": {
+            "Name": "get_json_object",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's JSON data type and its functionalities to create a new column in the DataFrame."
+            ]},
+        "json_tuple": {
+            "Name": "json_tuple",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's JSON data type and its functionalities to create a new column in the DataFrame."
+            ]},
+        "from_json": {
+            "Name": "from_json",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's JSON data type and its functionalities to create a new column in the DataFrame."
+            ]},
+        "schema_of_json": {
+            "Name": "schema_of_json",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's JSON data type and its functionalities to create a new column in the DataFrame."
+            ]},
+        "to_json": {
+            "Name": "to_json",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's JSON data type and its functionalities to create a new column in the DataFrame."
+            ]},
+        "json_array_length": {
+            "Name": "json_array_length",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's JSON data type and its functionalities to create a new column in the DataFrame."
+            ]},
+        "json_object_keys": {
+            "Name": "json_object_keys",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's JSON data type and its functionalities to create a new column in the DataFrame."
+            ]},
+        "flatten": {
+            "Name": "flatten",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's ARRAY functionality to create an array column in the DataFrame."
+            ]},
+        "map_contains_key": {
+            "Name": "map_contains_key",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's JSON data type and its functionalities to create a new column in the DataFrame."
+            ]},
+        "map_keys": {
+            "Name": "map_keys",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's JSON data type and its functionalities to create a new column in the DataFrame."
+            ]},
+        "map_values": {
+            "Name": "map_values",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's JSON data type and its functionalities to create a new column in the DataFrame."
+            ]},
+        "map_entries": {
+            "Name": "map_entries",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's JSON data type and its functionalities to create a new column in the DataFrame."
+            ]},
+        "map_from_entries": {
+            "Name": "map_from_entries",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's JSON data type and its functionalities to create a new column in the DataFrame."
+            ]},
+        "arrays_zip": {
+            "Name": "arrays_zip",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's ARRAY functionality to create an array column in the DataFrame."
+            ]},
+        "map_concat": {
+            "Name": "map_concat",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's JSON data type and its functionalities to create a new column in the DataFrame."
+            ]},
+        "schema_of_csv": {
+            "Name": "schema_of_csv",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use read_csv function of teradataml."
+            ]},
+        "find_in_set": {
+            "Name": "find_in_set",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's ARRAY or JSON data type and its functionalities to create a new column in the DataFrame."
+            ]},
+        "split": {
+            "Name": "split",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's REGEXP_SUBSTR() function instead of spilt."
+            ]},
+        "split_part": {
+            "Name": "split_part",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's REGEXP_SUBSTR() function instead of spilt."
+            ]},
+        "sentences": {
+            "Name": "sentences",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's REGEXP_SUBSTR() or REGEXP_SPLIT_TO_TABLE() function instead of sentences."
+            ]},
+        "bit_count": {
+            "Name": "bit_count",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Write a udf with bit_count functionality and use the udf in the code instead of bit_count."
+            ]},
+        "bit_get": {
+            "Name": "bit_get",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Write a udf with bit_get functionality and use the udf in the code instead of bit_get."
+            ]},
+        "getbit": {
+            "Name": "getbit",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Write a udf with getbit functionality and use the udf in the code instead of getbit."
+            ]},
+        "call_function": {
+            "Name": "call_function",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use call_udf() instead of call_function()."
+            ]},
+        "pandas_udf": {
+            "Name": "pandas_udf",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use udf instead of pandas_udf."
+            ]},
+        "xpath": {
+            "Name": "xpath",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's XML functionality to create a column in the DataFrame."
+            ]},
+        "xpath_boolean": {
+            "Name": "xpath_boolean",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's XML functionality to create a column in the DataFrame."
+            ]},
+        "xpath_double": {
+            "Name": "xpath_double",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's XML functionality to create a column in the DataFrame."
+            ]},
+        "xpath_float": {
+            "Name": "xpath_float",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's XML functionality to create a column in the DataFrame."
+            ]},
+        "xpath_long": {
+            "Name": "xpath_long",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's XML functionality to create a column in the DataFrame."
+            ]},
+        "xpath_number": {
+            "Name": "xpath_number",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's XML functionality to create a column in the DataFrame."
+            ]},
+        "xpath_short": {
+            "Name": "xpath_short",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's XML functionality to create a column in the DataFrame."
+            ]},
+        "xpath_string": {
+            "Name": "xpath_string",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use Teradata's XML functionality to create a column in the DataFrame."
+            ]},
+        "BucketedRandomProjectionLSH": {
+            "Name": "BucketedRandomProjectionLSH",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame and use open source module with 'Apply' or 'Script' to achieve the same functionality through teradataml."
+            ]},
+        "ChiSqSelector": {
+            "Name": "ChiSqSelector",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame and use open source module with 'Apply' or 'Script' to achieve the same functionality through teradataml."
+            ]},
+        "DCT": {
+            "Name": "DCT",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use SciPy's dct functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "FeatureHasher": {
+            "Name": "FeatureHasher",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use scikit-learn's FeatureHasher functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "HashingTF": {
+            "Name": "HashingTF",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use scikit-learn's HashingVectorizer functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "IDF": {
+            "Name": "IDF",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use scikit-learn's TfidfTransformer or TfidfVectorizer functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "MinHashLSH": {
+            "Name": "MinHashLSH",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use datasketch's MinHashLSH functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "NGram": {
+            "Name": "NGram",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use scikit-learn's CountVectorizer alongwith ngram_range functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "QuantileDiscretizer": {
+            "Name": "QuantileDiscretizer",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use scikit-learn's KBinsDiscretizer functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "StopWordsRemover": {
+            "Name": "StopWordsRemover",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use nltk’s stopwords functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "StringIndexer": {
+            "Name": "StringIndexer",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use scikit-learn's LabelEncoder along with OrdinalEncoder functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "Word2Vec": {
+            "Name": "Word2Vec",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use gensim.models's Word2Vec functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "FMClassifier": {
+            "Name": "FMClassifier",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use pyfm's pylibfm functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "BisectingKMeans": {
+            "Name": "BisectingKMeans",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use scikit-learn's BisectingKMean functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "LDA": {
+            "Name": "LDA",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use scikit-learn's LatentDirichletAllocation functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "PowerIterationClustering": {
+            "Name": "PowerIterationClustering",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame and use open source module with 'Apply' or 'Script' to achieve the same functionality through teradataml."
+            ]},
+        "ALS": {
+            "Name": "ALS",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use implicit’s AlternatingLeastSquares functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "AFTSurvivalRegression": {
+            "Name": "AFTSurvivalRegression",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use sksurv’s WeibullAFT functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "GeneralizedLinearRegression": {
+            "Name": "GeneralizedLinearRegression",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use statsmodels’s GLM functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "FMRegressor": {
+            "Name": "FMRegressor",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use pyfm's pylibfm functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "KolmogorovSmirnovTest": {
+            "Name": "KolmogorovSmirnovTest",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use sksurv’s WeibullAFT functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "MultivariateGaussian": {
+            "Name": "MultivariateGaussian",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use SciPy's multivariate_normal functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "ParamGridBuilder": {
+            "Name": "ParamGridBuilder",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use scikit-learn's GridSearchCV functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "CrossValidator": {
+            "Name": "CrossValidator",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use scikit-learn's GridSearchCV functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "TrainValidationSplit": {
+            "Name": "TrainValidationSplit",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use scikit-learn's GridSearchCV functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "BinaryClassificationEvaluator": {
+            "Name": "BinaryClassificationEvaluator",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use MulticlassClassificationEvaluator instead of BinaryClassificationEvaluator."
+            ]},
+        "MultilabelClassificationEvaluator": {
+            "Name": "MultilabelClassificationEvaluator",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use MulticlassClassificationEvaluator instead of MultilabelClassificationEvaluator."
+            ]},
+        "RankingEvaluator": {
+            "Name": "RankingEvaluator",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use scikit-learn's label_ranking_average_precision_score functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "FPGrowth": {
+            "Name": "FPGrowth",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use mlxtend's pyfpgrowth functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "PrefixSpan": {
+            "Name": "PrefixSpan",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use prefixspan's PrefixSpan functionality with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "ImageSchema": {
+            "Name": "ImageSchema",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame, and use OpenCV with 'Apply' or 'Script' operator to achieve the same functionality through teradataml."
+            ]},
+        "TorchDistributor": {
+            "Name": "TorchDistributor",
+            "notes": ["Not yet available for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame and use open source module with 'Apply' or 'Script' to achieve the same functionality through teradataml."
+            ]},
+        "DeepspeedTorchDistributor": {
+            "Name": "DeepspeedTorchDistributor",
+            "notes": ["Not yet available for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame and use open source module with 'Apply' or 'Script' to achieve the same functionality through teradataml."
+            ]},
+        "writeTo.overwrite": {
+            "Name": "writeTo.overwrite",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Overwriting the data based on a condition is not yet supported. Convert the python call to SQL merge statement. Execute the statement using spark.sql()."
+            ]},
+        "writeTo.overwritePartitions": {
+            "Name": "writeTo.overwritePartitions",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Overwriting the data based on a condition is not yet supported. Convert the python call to SQL merge statement. Execute the statement using spark.sql()."
+            ]},
+        "writeTo.using": {
+            "Name": "writeTo.using",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use DataFrameWriter.format() instead of DataFrameWriterV2.using()."
+            ]},
+        "writeTo.tableProperty": {
+            "Name": "writeTo.tableProperty",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Users can contact DBA to add properties."
+            ]},
+        "write.bucketBy": {
+            "Name": "write.bucketBy",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Use DataFrameWriter.partitionBy() instead of DataFrameWriter.bucketBy()."
+            ]},
+        "write.partitionBy": {
+            "Name": "write.partitionBy",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Look at the Teradata documentation for PARTITION BY functionality and make the subsequent changes in the code."
+            ]},
+        "read.orc": {
+            "Name": "read.orc",
+            "notes": ["Functionality is not yet available."
+            ],
+            "examples": "",
+            "user_action": ["Use pandas.read_orc() function with copy_to_sql() from teradataml to load the data to table. "
+            ]},
+        "registerJavaFunction": {
+            "Name": "registerJavaFunction",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Use register function instead of registerJavaFunction."
+            ]},
+        "registerJavaUDAF": {
+            "Name": "registerJavaFunction",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Use register function instead of registerJavaUDAF."
+            ]},
+        "PACKAGE_EXTENSIONS": {
+            "Name": "PACKAGE_EXTENSIONS",
+            "notes": ["Not applicable for Teradata Vantage."
+            ],
+            "examples": "",
+            "user_action": ["Convert teradatamlspk DataFrame to teradataml DataFrame and use external Python packages with 'Apply' or 'Script' to achieve the same functionality through teradataml."
+            ]}
+    }
+}

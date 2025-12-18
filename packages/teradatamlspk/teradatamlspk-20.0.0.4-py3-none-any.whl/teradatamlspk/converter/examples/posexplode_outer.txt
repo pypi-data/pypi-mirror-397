@@ -1,0 +1,39 @@
+>>> df.show()
++---------------+---+
+|num            |i  |
++---------------+---+
+|[1, 2, 3, NULL]|1  |
+|[NULL]         |2  |
+|NULL           |3  |
++---------------+---+
+
+PySpark code
+
+>>> df.select('i', 'num', F.posexplode_outer(F.array_distinct('num'))).show()
++---+---------------+----+----+
+|  i|            num| pos| col|
++---+---------------+----+----+
+|  1|[1, 2, 3, NULL]|   0|   1|
+|  1|[1, 2, 3, NULL]|   1|   2|
+|  1|[1, 2, 3, NULL]|   2|   3|
+|  1|[1, 2, 3, NULL]|   3|NULL|
+|  2|         [NULL]|   0|NULL|
+|  3|           NULL|NULL|NULL|
++---+---------------+----+----+
+
+teradatamlspk code
+
+# Derive distinct array
+>>> temp_df = df.withColumn("distinct_numbers", F.array_distinct(F.col("num")))
+
+# Use posexplode_outer on nested array
+>>> temp_df.select('i', 'num', F.posexplode_outer('distinct_numbers')).show()
++-+------------+----+-------------+
+|i|         num|pos1|exploded_col1|
++-+------------+----+-------------+
+|1|(1,2,3,NULL)|   1|            2|
+|1|(1,2,3,NULL)|   3|         None|
+|1|(1,2,3,NULL)|   2|            3|
+|1|(1,2,3,NULL)|   0|            1|
+|2|      (NULL)|   0|         None|
++-+------------+----+-------------+

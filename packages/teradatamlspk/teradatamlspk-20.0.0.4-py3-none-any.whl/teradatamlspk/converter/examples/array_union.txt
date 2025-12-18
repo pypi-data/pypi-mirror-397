@@ -1,0 +1,37 @@
+>>>df.show()
++---+----+------------+----------------+
+| id|num1|        col1|            col2|
++---+----+------------+----------------+
+|  1| 100|[12, 23, 45]|[12, 23, 45, 12]|
+|  2| 200|        [67]|              []|
+|  3| 300|          []|            [68]|
+|  4| 400|    [98, 54]|    [98, 57, 43]|
++---+----+------------+----------------+
+
+PySpark code
+
+>>> df.select(F.array_union(F.col("col1"), F.array_distinct(F.col("col2"))).alias("union_with_distinct")).show()
++-------------------+
+|union_with_distinct|
++-------------------+
+|[12, 23, 45]      |
+|[67]              |
+|[68]              |
+|[98, 54, 57, 43]  |
++-------------------+
+
+teradatamlspk code
+
+# Create a distinct version of col2
+>>> temp_df = df.withColumn("distinct_numbers", F.array_distinct(F.col("col2")))
+
+# Union original and nested arrays
+>>> temp_df.select(F.array_union(F.col("col1"), F.col("distinct_numbers")).alias("union_with_distinct")).show()
++-------------------+
+|union_with_distinct|
++-------------------+
+|      (98,54,57,43)|
+|               (67)|
+|         (12,23,45)|
+|               (68)|
++-------------------+

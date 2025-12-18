@@ -1,0 +1,15 @@
+PySpark code
+
+>>> @pandas_udf("integer")
+>>> def sum_udf(x: pd.Series) -> pd.Series:
+      return x+10
+
+>>> spark.udf.register("sum", sum_udf)
+
+teradatamlspk code
+
+>>> @udf(returnType=IntegerType())
+>>> def sum_udf(x):
+      return x+10
+    
+>>> spark.udf.register("sum", sum_udf)

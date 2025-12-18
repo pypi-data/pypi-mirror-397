@@ -1,0 +1,37 @@
+>>> df.show()
++---+----+------------+
+|id |num1|numbers     |
++---+----+------------+
+|1  |100 |[12, 23, 45]|
+|2  |200 |[67]        |
+|3  |300 |[12]        |
+|4  |400 |[98, 54]    |
++---+----+------------+
+
+PySpark code
+
+>>> df.select(F.array_sort(F.array_distinct(F.col("numbers"))).alias("sorted_distinct_numbers")).show()
++-----------------------+
+|sorted_distinct_numbers|
++-----------------------+
+|[12, 23, 45]           |
+|[67]                   |
+|[12]                   |
+|[54, 98]               |
++-----------------------+
+
+teradatamlspk code
+
+# Remove duplicate elements using array_distinct
+>>> temp_df = df.withColumn("distinct_numbers", F.array_distinct(df.numbers))
+
+# Sort the distinct elements
+>>> temp_df.select(F.array_sort(F.col("distinct_numbers")).alias("sorted_distinct_numbers")).show()
++-----------------------+
+|sorted_distinct_numbers|
++-----------------------+
+|                (54,98)|
+|                   (67)|
+|             (12,23,45)|
+|                   (12)|
++-----------------------+

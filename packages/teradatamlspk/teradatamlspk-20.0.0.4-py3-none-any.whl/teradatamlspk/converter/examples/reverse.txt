@@ -1,0 +1,37 @@
+>>> df.show()
++---+------------+
+|id |numbers     |
++---+------------+
+|1  |[12, 23, 45]|
+|2  |[67]        |
+|3  |[12]        |
+|4  |[98, 54]    |
++---+------------+
+
+PySpark code
+
+>>> df.select(F.reverse(F.array_sort(F.col("numbers"))).alias("reversed")).show()
++----------------+
+|reversed        |
++----------------+
+|[45, 23, 12]    |
+|[67]            |
+|[12]            |
+|[98, 54]        |
++----------------+
+
+teradatamlspk code
+
+# Sort the array
+>>> temp_df = df.withColumn("sorted_numbers", F.array_sort(F.col("numbers")))
+
+# Apply reverse
+>>> temp_df.select(F.reverse(F.col("sorted_numbers")).alias("reversed")).show()
++--------------------+
+|            reversed|
++--------------------+
+|             (98,54)|
+|                (67)|
+|          (45,23,12)|
+|                (12)|
++--------------------+

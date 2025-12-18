@@ -1,0 +1,33 @@
+>>> df.show()
++--------+-----+
+|group_id|score|
++--------+-----+
+|       2|   15|
+|       2|   25|
+|       1|   20|
+|       1|   10|
++--------+-----+
+
+PySpark code
+
+>>> df.groupBy("group_id").agg(F.array_agg(df.score*2).alias("doubled_scores")).show(truncate=False)
++--------+--------------+
+|group_id|doubled_scores|
++--------+--------------+
+|1       |[20, 40]      |
+|2       |[30, 50]      |
++--------+--------------+
+
+teradatamlspk code
+
+# Doubling the score values
+>>> temp_df = df.withColumn("col1", df.score*2)
+
+# Group by 'group_id' and aggregate the nested column into an array
+>>> temp_df.groupBy("group_id").agg(F.array_agg(temp_df.col1).alias("doubled_scores")).show(truncate=False)
++--------+----------------+
+|group_id|  doubled_scores|
++--------+----------------+
+|       1|         (20,40)|
+|       2|         (30,50)|
++--------+----------------+

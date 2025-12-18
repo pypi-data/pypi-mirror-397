@@ -1,0 +1,30 @@
+PySpark code
+
+>>> out_df = df.groupBy("year").pivot("course", ["dotNET", "Java"]).sum("earnings")
+>>> out_df.show()
++----+------+-----+
+|year|dotNET| Java|
++----+------+-----+
+|2012| 15000|20000|
+|2013| 48000|30000|
++----+------+-----+
+
+teradatamlspk code
+
+>>> out_df = df.groupBy("year").pivot("course", ["dotNET", "Java"]).sum("earnings")
+>>> out_df.show()
++----+-------------------+-----------------+
+|year|sum_earnings_dotnet|sum_earnings_java|
++----+-------------------+-----------------+
+|2012|              15000|            20000|
+|2013|              48000|            30000|
++----+-------------------+-----------------+
+
+# To rename the columns
+>>> out_df.withColumnsRenamed({'sum_earnings_dotnet': 'dotNET', 'sum_earnings_java': 'Java'}).show()
++----+------+-----+
+|year|dotNET| Java|
++----+------+-----+
+|2012| 15000|20000|
+|2013| 48000|30000|
++----+------+-----+

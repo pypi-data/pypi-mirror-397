@@ -1,0 +1,36 @@
+>>> df.show()
++---+----+------------+
+|id |num1|numbers     |
++---+----+------------+
+|1  |100 |[12, 23, 45]|
+|2  |200 |[67]        |
+|3  |300 |[12]        |
+|4  |400 |[98, 54]    |
++---+----+------------+
+
+PySpark code
+
+>>> df.select(F.slice(F.array_sort(F.col("numbers")), 1, 2 ).alias("slice_sorted")).show()
++------------+
+|slice_sorted|
++------------+
+|    [12, 23]|
+|        [67]|
+|        [12]|
+|    [54, 98]|
++------------+
+
+teradatamlspk code
+
+>>> temp_df = df.withColumn("sorted_numbers", F.array_sort(F.col("numbers")))
+
+# Slice the first 2 elements
+>>> temp_df.select(F.slice(F.col("sorted_numbers"), 1, 2).alias("slice_sorted")).show()
++------------+
+|slice_sorted|
++------------+
+|     (54,98)|
+|        (67)|
+|     (12,23)|
+|        (12)|
++------------+

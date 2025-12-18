@@ -1,0 +1,27 @@
+>>> df.show()
++----+-----+---+----+----+------+-------------------+
+|year|month|day|hour|mins|   sec|           timezone|
++----+-----+---+----+----+------+-------------------+
+|2014|   12| 28|   6|  30|45.887|America/Los_Angeles|
++----+-----+---+----+----+------+-------------------+
+
+PySpark code
+
+>>> df.select(f.make_timestamp_ltz(df.year, df.month, df.day, df.hour, df.mins, df.sec, df.timezone).alias('r')).show(truncate=False)
++-----------------------+
+|r                      |
++-----------------------+
+|2014-12-29 03:30:45.887|
++-----------------------+
+
+teradatamlspk code
+
+# Update the "America/Los_Angeles" timezone to "America Pacific", Teradata Vantage timezone format.
+>>> from teradatamlspk.sql.functions import when, col
+>>> df = df.withColumn("timezone", when(col("timezone") == "America/Los_Angeles", "America Pacific").otherwise(col("timezone")))
+>>> df.select(f.make_timestamp_ltz(df.year, df.month, df.day, df.hour, df.mins, df.sec, df.timezone).alias('r')).show(truncate=False)
++--------------------------+
+|                         r|
++--------------------------+
+|2014-12-29 03:30:45.887000|
++--------------------------+

@@ -1,0 +1,60 @@
+Example 1 - Nested function as input.
+
+>>> df.show()
++---+----+------------+
+|id |num1|numbers     |
++---+----+------------+
+|1  |100 |[12, 23, 45]|
+|2  |200 |[67]        |
+|3  |300 |[12]        |
+|4  |400 |[98, 54]    |
++---+----+------------+
+
+PySpark code
+
+>>> df.select(F.array_insert(F.array_sort(F.col("numbers")),1, 100).alias("numbers_inserted")).show()
++-----------------+
+|numbers_inserted |
++-----------------+
+|[100, 12, 23, 45]|
+|[100, 67]        |
+|[100, 12]        |
+|[100, 54, 98]    |
++-----------------+
+
+teradatamlspk code
+
+# Sort the array
+>>> temp_df = df.withColumn("sorted_numbers", F.array_sort(F.col("numbers")))
+
+# Insert 100 at position 1 into the sorted array
+>>> temp_df.select(F.array_insert(F.col("sorted_numbers"), 1, 100).alias("numbers_inserted")).show()
++----------------+
+|numbers_inserted|
++----------------+
+|  (100,12,23,45)|
+|        (100,67)|
+|        (100,12)|
+|     (100,54,98)|
++----------------+
+ 
+
+Example 2 - arr is of DateType
+
+PySpark code
+
+>>> df.select("date_array", array_insert(df.date_array, 2, date(2025, 12, 25)).alias("inserted_array")).show(truncate=False)
++------------------------+------------------------------------+
+|date_array              |inserted_array                      |
++------------------------+------------------------------------+
+|[2025-06-01, 2025-06-02]|[2025-06-01, 2025-12-25, 2025-06-02]|
++------------------------+------------------------------------+
+
+teradatamlspk code
+
+>>> df.select("date_array", array_insert(df.date_array, 2, "2025-12-25").alias("inserted_array")).show(truncate=False)
++-----------------------+----------------------------------+
+|             date_array|                    inserted_array|
++-----------------------+----------------------------------+
+|(2025-06-01,2025-06-02)|(2025-06-01,2025-12-25,2025-06-02)|
++-----------------------+----------------------------------+

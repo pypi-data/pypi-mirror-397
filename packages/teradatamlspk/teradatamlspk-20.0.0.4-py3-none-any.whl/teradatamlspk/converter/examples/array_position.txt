@@ -1,0 +1,60 @@
+Example 1 - Nested functions as input.
+
+>>> df.show()
++---+----+------------+
+|id |num1|numbers     |
++---+----+------------+
+|1  |100 |[12, 23, 45]|
+|2  |200 |[67]        |
+|3  |300 |[12]        |
+|4  |400 |[98, 54]    |
++---+----+------------+
+
+PySpark code
+
+>>> df.select(F.array_position(F.array_sort(F.col("numbers")), 12).alias("pos_max_sorted")).show()
++--------------+
+|pos_max_sorted|
++--------------+
+|             1|
+|             0|
+|             1|
+|             0|
++--------------+
+
+teradatamlspk code
+
+# Sort the numbers array
+>>> temp_df = df.withColumn("sorted_numbers", F.array_sort(df.numbers))
+
+# Find the position of max_number in the sorted array
+>>> temp_df.select(F.array_position(F.col("sorted_numbers"), 12).alias("pos_max_sorted")).show()
++--------------+
+|pos_max_sorted|
++--------------+
+|             0|
+|             0|
+|             1|
+|             1|
++--------------+
+    
+
+Example 2 - arr is of DateType
+
+PySpark code
+
+>>> df.select("date_array", array_position(df.date_array, date(2025, 6, 1)).alias("pos_val")).show(truncate=False)
++------------------------+-------+
+|date_array              |pos_val|
++------------------------+-------+
+|[2025-06-01, 2025-06-02]|1      |
++------------------------+-------+
+
+teradatamlspk code
+
+>>> df.select("date_array", td.array_position(df.date_array, "2025-06-01").alias("pos_val")).show(truncate=False)
++-----------------------+-------+
+|             date_array|pos_val|
++-----------------------+-------+
+|(2025-06-01,2025-06-02)|      1|
++-----------------------+-------+

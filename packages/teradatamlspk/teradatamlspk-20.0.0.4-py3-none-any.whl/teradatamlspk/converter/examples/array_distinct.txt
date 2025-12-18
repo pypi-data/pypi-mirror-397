@@ -1,0 +1,37 @@
+>>> df.show()
++--+----+----------+
+|id|num1|   numbers|
++--+----+----------+
+| 4| 400|[98,98,54]|
+| 2| 200|   [67,67]|
+| 1| 100|[12,23,45]|
+| 3| 300|        []|
++--+----+----------+
+
+PySpark code
+
+>>> df.select(F.array_distinct(F.sort_array(F.col("numbers"))).alias("sorted_then_distinct")).show()
++---------------------+
+|sorted_then_distinct |
++---------------------+
+|[12, 23, 45]         |
+|[67]                 |
+|[12]                 |
+|[54, 98]             |
++---------------------+
+
+teradatamlspk code
+
+# Sort the array
+>>> temp_df = df.withColumn("sorted_numbers", F.sort_array(F.col("numbers")))
+
+# Apply array_distinct on the sorted array
+>>> temp_df.select(F.array_distinct(F.col("sorted_numbers")).alias("sorted_then_distinct")).show()
++--------------------+
+|sorted_then_distinct|
++--------------------+
+|             (54,98)|
+|                (67)|
+|          (12,23,45)|
+|                (12)|
++--------------------+

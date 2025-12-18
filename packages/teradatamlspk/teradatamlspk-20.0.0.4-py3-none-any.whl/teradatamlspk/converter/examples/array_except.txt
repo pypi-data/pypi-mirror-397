@@ -1,0 +1,37 @@
+>>> df.show()
++---+------------+----------------+
+|id |col1        |col2            |
++---+------------+----------------+
+|1  |[12, 23, 45]|[12, 23, 45, 12]|
+|2  |[67]        |[]              |
+|3  |[]          |[68]            |
+|4  |[98, 54]    |[98, 57, 43]    |
++---+------------+----------------+
+
+PySpark code
+
+>>> df.select(F.array_except(F.col("col1"), F.array_distinct(F.col("col2"))).alias("except_with_distinct")).show()
++--------------------+
+|except_with_distinct|
++--------------------+
+|[]                  |
+|[67]                |
+|[]                  |
+|[54]                |
++--------------------+
+
+teradatamlspk code
+
+# Create a distinct version of col2
+>>> temp_df = df.withColumn("distinct_numbers", F.array_distinct(F.col("col2")))
+
+# Except original and nested arrays
+>>> temp_df.select(F.array_except(F.col("col1"), F.col("distinct_numbers")).alias("except_with_distinct")).show()
++--------------------+
+|except_with_distinct|
++--------------------+
+|                (54)|
+|                (67)|
+|                  ()|
+|                  ()|
++--------------------+

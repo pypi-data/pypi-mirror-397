@@ -1,0 +1,23 @@
+PySpark code
+
+>>> df.unpivot(df.accounts, [(df.Jan*2)+df.Feb], "var", "val").show()
++----------+-----------------+-----+
+|  accounts|              var|  val|
++----------+-----------------+-----+
+|   Red Inc|((Jan * 2) + Feb)|500.0|
+|  Alpha Co|((Jan * 2) + Feb)|610.0|
+|Yellow Inc|((Jan * 2) + Feb)| NULL|
+| Jones LLC|((Jan * 2) + Feb)|500.0|
++----------+-----------------+-----+
+
+teradatamlspk code
+
+>>> df.unpivot(df.accounts, [(df.Jan*2)+df.Feb], "var", "val").show()
++----------+-------------+-----+
+|  accounts|          var|  val|
++----------+-------------+-----+
+|   Red Inc|Jan * 2 + Feb|500.0|
+|  Alpha Co|Jan * 2 + Feb|610.0|
+|Yellow Inc|Jan * 2 + Feb| None|
+| Jones LLC|Jan * 2 + Feb|500.0|
++----------+-------------+-----+

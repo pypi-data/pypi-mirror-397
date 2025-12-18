@@ -1,0 +1,28 @@
+>>> df.show()
++----------+----------+
+|         e|         f|
++----------+----------+
+|2016-04-08|yyyy-MM-dd|
++----------+----------+
+
+PySpark code
+
+>>> df = df.select(f.to_timestamp_ltz(df.e, f.lit("yyyy-MM-dd")).alias('r')).show()
+>>> df.show()
++-------------------+
+|                  r|
++-------------------+
+|2016-04-08 00:00:00|
++-------------------+
+
+teradatamlspk code
+
+#  Update the "yyyy-MM-dd" format to "YYYY-MM-DD", Teradata Vantage timestamp format.
+>>> df = df.select(f.to_timestamp_ltz(df.e, f.lit("YYYY-MM-DD")).alias('r')).show()
+>>> df.show()
+
++-------------------+
+|                  r|
++-------------------+
+|2016-04-08 00:00:00|
++-------------------+

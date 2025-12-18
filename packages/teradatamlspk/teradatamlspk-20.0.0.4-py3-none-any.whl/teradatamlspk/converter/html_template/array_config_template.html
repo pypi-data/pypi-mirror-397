@@ -1,0 +1,85 @@
+
+
+<details class="gray-background">
+        <summary style="font-size: 18px; font-weight: bold; cursor: pointer; color: #2C3E50;">Array Privileges and Configuration</summary>
+        
+        <p style="margin: 10px 0; color: #555;">
+            In order to create an ARRAY data type or to run array functions, users must have either the UDTTYPE or UDTMETHOD privilege on the SYSUDTLIB database.
+        </p>
+        Use below syntax to grant permission to user.
+        <pre style="background-color: #fcfafa; padding: 8px; border-radius: 4px; font-family: monospace;">
+GRANT UDTMETHOD ON SYSUDTLIB TO &lt;USER&gt;
+GRANT SELECT ON UDTInfo TO &lt;USER&gt;</pre>
+        <p style="margin: 10px 0; color: #555;">
+            Configuration options for arrays enable users to specify element types and array length to work within Teradata's 64KB array size limit. This is necessary because Teradata uses structured UDT-based arrays with predefined options, while PySpark employs dynamic allocation without size constraints.
+        </p>
+        <p style="margin: 10px 0; color: #555;">
+            <strong>default_array_size</strong> is a configuration option used to set the array size irrespective of type, defaulted to 100. This affects the maximum number of elements that can be stored in array columns.
+        </p>
+        <h4>Usage Example</h4>
+        <pre style="background-color: #fcfafa; padding: 10px; border-radius: 4px; font-family: monospace;">
+>>> from teradatamlspk import TeradataSession
+>>> session = TeradataSession.builder.getOrCreate(...)
+# Set the configuration option to store only 10 elements across the session.
+>>> session.conf.set("default_array_size", 10)</pre>
+        <h4>Configuration Options</h4>
+        <table class="array-config-table">
+            <tr>
+                <th>Array type</th>
+                <th>Config Option</th>
+                <th>Default Value</th>
+            </tr>
+            <tr>
+                <td rowspan="2">array_decimal</td>
+                <td>decimal_precision</td>
+                <td>39</td>
+            </tr>
+            <tr>
+                <td>decimal_scale</td>
+                <td>19</td>
+            </tr>
+            <tr>
+                <td rowspan="2">array_number</td>
+                <td>number_precision</td>
+                <td>38</td>
+            </tr>
+            <tr>
+                <td>number_scale</td>
+                <td>19</td>
+            </tr>
+            <tr>
+                <td>array_interval_year_to_month</td>
+                <td>interval_precision</td>
+                <td>4</td>
+            </tr>
+            <tr>
+                <td rowspan="2">array_interval_day_to_second</td>
+                <td>interval_frac_precision</td>
+                <td>6</td>
+            </tr>
+            <tr>
+                <td>interval_precision</td>
+                <td>4</td>
+            </tr>
+            <tr>
+                <td>array_char</td>
+                <td>char_length</td>
+                <td>2000</td>
+            </tr>
+            <tr>
+                <td>array_varchar</td>
+                <td>char_length</td>
+                <td>2000</td>
+            </tr>
+            <tr>
+                <td>array_byte</td>
+                <td>byte_length</td>
+                <td>64000</td>
+            </tr>
+            <tr>
+                <td>array_varbyte</td>
+                <td>byte_length</td>
+                <td>64000</td>
+            </tr>
+        </table>
+    </details>

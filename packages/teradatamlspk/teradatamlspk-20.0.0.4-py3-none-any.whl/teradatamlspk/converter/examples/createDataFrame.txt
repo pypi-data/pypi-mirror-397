@@ -1,0 +1,61 @@
+PySpark code
+
+# 'data' argument as pandas.DataFrame without column labels.
+>>> pandas_df = pd.DataFrame([['Alice', 1]])
+>>> spark.createDataFrame(pandas_df).show()
++-----+---+
+|    0|  1|
++-----+---+
+|Alice|  1|
++-----+---+
+
+# 'data' argument as List of list without column labels.
+>>> spark.createDataFrame([['Alice', 1]]).show()
++-----+-----+
+|   _0|   _1|
++-----+-----+
+|Alice|    1|
++-----+-----+
+
+# 'data' argument as List of tuple without column labels.
+>>> spark.createDataFrame([('Alice', 1)]).show()
++-----+-----+
+|   _0|   _1|
++-----+-----+
+|Alice|    1|
++-----+-----+
+
+teradatamlspk code
+
+# 'data' argument as pandas.DataFrame without column labels.
+>>> pandas_df = pd.DataFrame([['Alice', 1]])
+>>> spark.createDataFrame(pandas_df).show()
++-----+-----+
+|col_0|col_1|
++-----+-----+
+|Alice|    1|
++-----+-----+
+
+# 'data' argument as a table name 'test_table' from Teradata Vantage
+>>> spark.createDataFrame('test_table').show()
++-----+---+
+| name|age|
++-----+---+
+|Alice|  1|
++-----+---+
+
+# 'data' argument as List of list without column labels.
+>>> spark.createDataFrame([['Alice', 1]]).show()
++-----+-----+
+|col_0|col_1|
++-----+-----+
+|Alice|    1|
++-----+-----+
+
+# 'data' argument as List of tuple without column labels.
+>>> spark.createDataFrame([('Alice', 1)]).show()
++-----+-----+
+|col_0|col_1|
++-----+-----+
+|Alice|    1|
++-----+-----+

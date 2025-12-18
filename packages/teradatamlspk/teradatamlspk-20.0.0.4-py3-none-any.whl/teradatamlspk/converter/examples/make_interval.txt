@@ -1,0 +1,25 @@
+PySpark code
+
+>>> df.select(make_interval(df.year, df.month, 'week', df.day, df.hour, df.mins, df.secs)).show(truncate=False)
++---------------------------------------------------------------+
+|interval_col                                                   |
++---------------------------------------------------------------+
+|100 years 11 months 8 days 12 hours 30 minutes 1.001001 seconds|
++---------------------------------------------------------------+
+
+teradatamlspk code
+
+>>> df.select(make_interval(df.year, df.month).alias("interval_col")).show(truncate=False)
++------------+
+|interval_col|
++------------+
+|      100-11|
++------------+
+
+>>> df.select(tf.make_interval(weeks='week', days=df.day, hours=df.hour, mins=df.mins, secs=df.secs).\
+              alias("interval_col")).show(truncate=False)
++--------------------+
+|        interval_col|
++--------------------+
+|    8 12:30:01.00100|
++--------------------+

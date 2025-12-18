@@ -1,0 +1,37 @@
+>>> df.show()
++--+----+----------+
+|id|num1|   numbers|
++--+----+----------+
+| 4| 400|   [98,54]|
+| 2| 200|      [67]|
+| 1| 100|[12,23,45]|
+| 3| 300|        []|
++--+----+----------+
+
+PySpark code
+
+>>> df.select(F.array_contains(F.col("numbers"), F.element_at(F.sort_array(F.col("numbers")), 1)).alias("contains_smallest")).show()
++-----------------+
+|contains_smallest|
++-----------------+
+|                1|
+|                1|
+|                1|
+|                0|
++-----------------+
+
+teradatamlspk code
+
+# Sort the array
+>>> temp_df = df.withColumn("sorted_numbers", F.sort_array(F.col("numbers")))
+
+# check whether the original numbers array contains that smallest element
+>>> temp_df.select(F.array_contains(F.col("numbers"), F.element_at(F.col("sorted_numbers"), 1)).alias("contains_smallest")).show()
++-----------------+
+|contains_smallest|
++-----------------+
+|                1|
+|                1|
+|                1|
+|                0|
++-----------------+

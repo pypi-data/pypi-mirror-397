@@ -1,0 +1,27 @@
+PySpark code
+>>> spark.read.options(header=True).json('path.json').show()
++-----+----+-----+----+-----+-----+
+| col1|col2|col22|col3|col32| col4|
++-----+----+-----+----+-----+-----+
+| val1|val2| null|val3| null| val4|
+|val12|null|val22|null|val32|val42|
++-----+----+-----+----+-----+-----+
+
+teradatamlspk code when JSON file is in cloud file system
+>>> tdf = spark.read.options(authorization = {"Access_ID": id, "Access_Key": key}).options(header=True).json('path.json')
+>>> from teradatamlspk.sql.dataframe import DataFrame as spkDataFrame
+>>> tdf = spkDataFrame(tdf.toTeradataml().assign(col1=literal_column('Payload.col1'), col2=literal_column('Payload.col2'),\
+                                             col22=literal_column('Payload.col22'), col3=literal_column('Payload.col3'),\
+                                             col32=literal_column('Payload.col32'), col4=literal_column('Payload.col4'),drop_columns=True))
++-----+----+-----+----+-----+-----+
+| col1|col2|col22|col3|col32| col4|
++-----+----+-----+----+-----+-----+
+|val12|None|val22|None|val32|val42|
+| val1|val2| None|val3| None| val4|
++-----+----+-----+----+-----+-----+
+
+teradatamlspk code when JSON file is in local file system
+>>> spark.read.options(header=True).json('path.json').show()
+
+teradatamlspk code using JSON as value for argument 'format' for cloud file system
+>>> spark.read.options(authorization = {"Access_ID": id, "Access_Key": key}).format("json").load(path = <cloud storage path for file>).show()

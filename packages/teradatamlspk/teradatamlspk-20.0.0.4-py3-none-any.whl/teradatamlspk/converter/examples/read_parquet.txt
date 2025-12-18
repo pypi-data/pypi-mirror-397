@@ -1,0 +1,11 @@
+PySpark code
+>>> spark.read.parquet(path = "parquet_path").show()
+
+teradatamlspk code when parquet file is in cloud system
+>>> spark.read.options(authorization = {"Access_ID": id, "Access_Key": key}).parquet(path = "parquet_path").show()
+
+teradatamlspk code when file is in local file system
+>>> spark.read.parquet(path = "parquet_path").show()
+
+teradatamlspk code using parquet as value for argument 'format' for cloud file system
+>>> spark.read.options(authorization = {"Access_ID": id, "Access_Key": key}).format("parquet").load(path = <cloud storage path for file>).show()

@@ -1,0 +1,37 @@
+>>> df.show()
++---+----+------------+
+|id |num1|numbers     |
++---+----+------------+
+|1  |100 |[12, 23, 45]|
+|2  |200 |[67]        |
+|3  |300 |[12]        |
+|4  |400 |[98, 54]    |
++---+----+------------+
+
+PySpark code
+
+>>> df.select(F.array_prepend(F.col("numbers"), F.array_max(F.col("numbers"))).alias("numbers_plus_max")).show()
++------------------+
+|numbers_plus_max  |
++------------------+
+|[45, 12, 23, 45]  |
+|[67, 67]          |
+|[12, 12]          |
+|[98, 98, 54]      |
++------------------+
+
+teradatamlspk code
+
+# Find max of array
+>>> temp_df = df.withColumn("max_number", F.array_max(df.numbers))
+
+#  prepend the max value to the original array
+>>> temp_df.select(F.array_prepend(F.col("numbers"), F.col("max_number")).alias("numbers_plus_max")).show()
++----------------+
+|numbers_plus_max|
++----------------+
+|         (12,12)|
+|      (98,98,54)|
+|         (67,67)|
+|   (45,12,23,45)|
++----------------+

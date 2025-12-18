@@ -1,0 +1,85 @@
+Example 1 - Nested functions as input.
+
+>>> df.show()
++---+----+------------+
+| id|num1|     numbers|
++---+----+------------+
+|  1| 100|[12, 23, 45]|
+|  2| 200|        [67]|
+|  3| 300|        [12]|
+|  4| 400|    [98, 54]|
++---+----+------------+
+
+PySpark code
+
+>>> df.select(F.array_remove(F.array_sort(F.col("numbers")), 12).alias("numbers_removed")).show()
++---------------+
+|numbers_removed|
++---------------+
+|[23, 45]       |
+|[]             |
+|[]             |
+|[98]           |
++---------------+
+
+teradatamlspk code
+
+# Sort the numbers array
+>>> temp_df = df.withColumn("sorted_numbers", F.array_sort(df.numbers))
+
+# Remove the smallest element from the sorted array
+>>> temp_df.select(F.array_remove(F.col("sorted_numbers"), 12).alias("numbers_removed")).show()
++---------------+
+|numbers_removed|
++---------------+
+|        (23,45)|
+|             ()|
+|             ()|
+|           (98)|
++---------------+
+
+Example 2 - arr is of DateType
+
+PySpark code
+
+>>> df.select("date_array", array_remove(df.date_array, date(2025, 6, 1)).alias("removed_array")).show(truncate=False)
++------------------------+-------------+
+|date_array              |removed_array|
++------------------------+-------------+
+|[2025-06-01, 2025-06-02]|[2025-06-02] |
++------------------------+-------------+
+
+teradatamlspk code
+
+>>> df.select("date_array", array_remove(df.date_array, "2025-06-01").alias("removed_array")).show(truncate=False)
++-----------------------+-------------+
+|             date_array|removed_array|
++-----------------------+-------------+
+|(2025-06-01,2025-06-02)| (2025-06-02)|
++-----------------------+-------------+
+
+Example 3 - Removing None values
+
+PySpark code
+
+>>> df.withColumn("cleaned_arr", F.array_remove("arr", None)).show()
++---+---------------+------------+
+|id |arr            |cleaned_arr |
++---+------------+---------------+
+|1  |[1, 2, null, 3]|[1, 2, 3]   |
+|2  |[null, null]   |null        |
+|3  |[4, 5]         |[4, 5]      |
+|4  |null           |null        |
++---+---------------+------------+
+
+teradatamlspk code
+
+>>> df.withColumn("cleaned_arr", F.array_remove("arr", None)).show()
++--+------------+-----------+
+|id|         arr|cleaned_arr|
++--+------------+-----------+
+| 4|        None|       None|
+| 2| (NULL,NULL)|         ()|
+| 1|(1,2,NULL,3)|    (1,2,3)|
+| 3|       (4,5)|      (4,5)|
++--+------------+-----------+

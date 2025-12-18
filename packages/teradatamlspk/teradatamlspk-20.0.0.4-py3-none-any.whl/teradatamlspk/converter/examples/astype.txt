@@ -1,0 +1,19 @@
+PySpark code
+
+>>> df.withColumn("datetime_ts", col("datetime_str").astype(TimestampNTZType())).show(truncate=False)
++-------------------+-------------------+
+|datetime_str       |datetime_ts        |
++-------------------+-------------------+
+|2024-12-25 14:30:00|2024-12-25 14:30:00|
+|2025-01-01 09:00:00|2025-01-01 09:00:00|
++-------------------+-------------------+
+
+teradatamlspk code
+
+>>> df.withColumn("datetime_ts", col("datetime_str").astype(TimestampNTZType(), format="yyyy-MM-dd HH:mm:ss")).show(truncate=False)
++-------------------+-------------------+
+|       datetime_str|        datetime_ts|
++-------------------+-------------------+
+|2025-01-01 09:00:00|2025-01-01 09:00:00|
+|2024-12-25 14:30:00|2024-12-25 14:30:00|
++-------------------+-------------------+

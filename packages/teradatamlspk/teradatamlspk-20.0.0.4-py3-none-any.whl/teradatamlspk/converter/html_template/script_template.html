@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PySpark Migration Report</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0 0 0 10px;
+            font-family: Consolas, 'Courier New', monospace;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .left-pane {
+            width: 50%;
+            overflow: hidden;
+            border-right: 1px solid #ccc;
+            background: #f4f4f4;
+            padding-left: 10px;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;  
+        }
+
+        .right-pane {
+            width: 50%;
+            overflow-y: auto; 
+            padding: 20px;
+            background: #fff;
+        }
+
+        .highlight {
+            font-family: 'Courier New', monospace;
+            line-height: 1.5;
+            padding: 1.1px;
+            margin: 0; /* Remove margin around the highlighted code */
+        }
+
+        .linenos {
+            float: left;
+            color: #888;
+            font-size: 14px;
+            padding-right: 10px; 
+            margin-right: 10px;
+            border-right: 2px solid #ddd; 
+        }
+
+        .line-number {
+            min-width: 4ch;
+            text-align: right;
+            flex:none;
+        }
+
+        .code {
+            float: left;
+        }
+
+        .head-3 {
+            font-size: 14px;
+            margin-bottom: 20px;
+            color: #555;
+            text-align: center;
+        }
+
+        .code-line {
+            display: flex;
+            align-items: left;
+            justify-content: left;
+            padding: 1px;
+            cursor: pointer;
+        }
+
+        .code-line:hover {
+            background-color: #f0f0f0; 
+        }
+
+        .notification {
+            margin-left: 1px;
+            padding-left: 1px;
+        }
+
+        .highlight pre {
+            margin: 0; /* Remove default margin */
+            padding: 0; /* Remove default padding */
+        }
+
+        .notification-icon {
+            margin-right: 10px;
+            width: 20px; /* Adjust width as needed */
+            display: inline-block; /* Ensure it takes space even if empty */
+            text-align: center; /* Align icon in the center */
+            cursor: pointer;
+        }
+
+        .detail-page {
+            display: none;
+        }
+
+        .active {
+            display: block;
+        }
+
+        .container1 {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .note {
+            background-color: #e7f3fe;
+            border-left: 6px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .note ul {
+            font-size: 14px; /* Ensure list items inherit font-size */
+        }
+
+        .note li {
+            line-height: 1.3; /* Improve readability */
+        }
+
+        .pre-one {
+            background-color: #f4f4f4;
+            border: 1px solid #ddd;
+            padding: 10px;
+            white-space: pre-wrap;
+        }
+        .execution-count{
+            text-align: right;
+            color :#666;
+            font-family: monospace; 
+            margin-left: 1px; 
+            margin-right: 5px; 
+            flex-shrink: 0;
+        }
+        .cell{
+            flex: 1; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+            overflow: auto; 
+            background-color: #f9f9f9;
+            padding: 5px;
+            margin-right: 10px;
+        }
+
+        .markdown{
+            flex: 1; 
+            border: 1px; 
+            border-radius: 5px; 
+            margin-left: 30px;
+            padding: 5px;
+        }
+
+        .fixed-header {
+            position: sticky; /* Make it stick to the top */
+            padding: 20px 0 10px;
+            top: 0; /* Stick it to the top */
+            z-index: 1000; /* Ensure it stays above other content */
+            border-bottom: 1px solid #ccc;
+            display: flex;
+            background: #f4f4f4;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        #script-selector {
+            font-weight: bold;
+            font-size: 1.2em;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            text-align: center;
+            outline: none;
+        }   
+
+        #highlighted-code-container {
+            flex-grow: 1;  /* Take the remaining space after the header */
+            overflow-y: auto;  /* Enable vertical scrolling */
+            display: flex;
+            flex-direction: column;
+        }
+
+    </style>
+    <script>
+        // Dynamically insert styles
+        const styleTag = document.createElement('style');
+        styleTag.textContent = `{{ css_styles }}`;
+        document.head.appendChild(styleTag);
+    </script>
+
+</head>
+<body>
+    <div class="container">
+        <!-- Left Pane: Highlighted Code -->
+        <div class="left-pane">
+            <div class="fixed-header">
+                <label >
+                    <select id="script-selector" data-filename= "{{ file_name }}">
+                        <option value="pyspark" selected>PySpark Script</option>
+                        <option value="tdmlspk">teradatamlspk Script</option>
+                    </select>
+                </label>
+            </div>
+            <div id="highlighted-code-container">
+                <div id="highlighted-code">
+                    {{ highlighted_code }}
+                </div>
+                <div id="highlighted-tdmlspk-code" style="display: none;">
+                    {{ highlighted_tdmlspk_code }}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Pane: Custom User Notes Template -->
+        <div class="right-pane">
+        <button id="back-to-main" style="display: none;">Back to Main Page</button>
+            <div id="overview">
+                {{ right_pane }}
+            </div>
+            {{ function_details }}
+        </div>
+    </div>
+    <script>
+    const icons = document.querySelectorAll('.notification-icon');
+    const mainReport = document.getElementById('overview');
+    const detailPages = document.querySelectorAll('.detail-page');
+    const backToMainButton = document.getElementById('back-to-main');
+
+    icons.forEach(icon => {
+        icon.addEventListener('click', () => {
+            const targetId = icon.getAttribute('data-id');
+
+            // Hide main report and other detail pages
+            mainReport.style.display = 'none';
+            detailPages.forEach(page => page.classList.remove('active'));
+
+            // Show the corresponding detail page
+            const targetPage = document.getElementById(`detail-${targetId}`);
+            if (targetPage) {
+                targetPage.classList.add('active');
+            }
+
+            // Show the "Back to Main Page" button
+            backToMainButton.style.display = 'block';
+        });
+    });
+
+    // Add functionality to "Back to Main Page" button
+    backToMainButton.addEventListener('click', () => {
+        // Show main report
+        mainReport.style.display = 'block';
+
+        // Hide all detail pages
+        detailPages.forEach(page => page.classList.remove('active'));
+
+        // Hide the "Back to Main Page" button
+        backToMainButton.style.display = 'none';
+    });
+
+    // Add functionality to script selector
+    document.addEventListener("DOMContentLoaded", function () {
+        const selector = document.getElementById("script-selector");
+        const filename = selector.getAttribute('data-filename');
+        const highlightedPySparkCode = document.getElementById("highlighted-code");
+        const highlightedTdmlspkCode = document.getElementById("highlighted-tdmlspk-code");
+
+        // Check the file extension and adjust option text accordingly
+        const pysparkOption = selector.querySelector('option[value="pyspark"]');
+        const tdmlspkOption = selector.querySelector('option[value="tdmlspk"]');
+
+        // Update option text based on file extension
+        if (filename.endsWith(".py")) {
+            pysparkOption.textContent = "PySpark Script";
+            tdmlspkOption.textContent = "teradatamlspk Script";
+        } else if (filename.endsWith(".ipynb")) {
+            pysparkOption.textContent = "PySpark Notebook";
+            tdmlspkOption.textContent = "teradatamlspk Notebook";
+        }
+
+        // Hide tdmlspk option if the content is "None"
+        if (highlightedTdmlspkCode.textContent.trim() === "None") {
+            tdmlspkOption.style.display = "none";  // Hide option
+            selector.value = "pyspark";  // Default to PySpark
+        }
+
+        selector.addEventListener("change", function () {
+            if (selector.value === "pyspark") {
+                highlightedPySparkCode.style.display = "block";
+                highlightedTdmlspkCode.style.display = "none";
+            } else {
+                if (highlightedTdmlspkCode.textContent.trim() === "None") {
+                    tdmlspkOption.style.display = "none";  // Ensure it stays hidden
+                    selector.value = "pyspark";  // Revert to PySpark
+                    highlightedPySparkCode.style.display = "block";
+                    highlightedTdmlspkCode.style.display = "none";
+                } else {
+                    highlightedPySparkCode.style.display = "none";
+                    highlightedTdmlspkCode.style.display = "block";
+                }
+
+                // Ensure main report is visible when switching to teradatamlspk
+                mainReport.style.display = 'block';
+                backToMainButton.style.display = 'none';
+                detailPages.forEach(page => {
+                    if (page.classList.contains('active')) {
+                        page.classList.remove('active');
+                    }
+                });
+            }
+        });
+    });
+
+    // Truncate filenames to fit in the column
+    const truncateText = (text, maxLength) => {
+        // Early return for texts that don't need truncation
+        if (text.length <= maxLength) return text;
+        
+        // Split strategy: 60% of available space for filename start
+        // 40% for extension/end part
+        const startLength = Math.floor(maxLength * 0.6);
+        const endLength = maxLength - startLength + 2;
+        
+        return `${text.slice(0, startLength)}...${text.slice(-endLength)}`;
+    };
+
+    // Main update function that handles DOM measurements
+    const updateTruncatedFilenames = () => {
+        // Find all elements with the dynamic filename class
+        const filenameElements = document.querySelectorAll(".dynamic-filename");
+        
+        filenameElements.forEach(element => {
+            // Get parent container's visible width
+            const containerWidth = element.parentElement.clientWidth;
+            // Calculate max allowed characters based on width
+            const maxVisibleChars = Math.floor(containerWidth * 0.1);
+            // Get original text from title attribute (preserve full filename)
+            const fullFilename = element.getAttribute("title");
+            // Update displayed text with truncated version
+            element.textContent = truncateText(fullFilename, maxVisibleChars);
+        });
+    };
+
+    // Initialize when DOM is ready
+    document.addEventListener("DOMContentLoaded", () => {
+        // Initial truncation
+        updateTruncatedFilenames();
+        
+        // Update on window resize.
+        window.addEventListener("resize", updateTruncatedFilenames);
+    });
+
+    </script>
+</body>
+</html>

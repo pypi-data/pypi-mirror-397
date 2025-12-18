@@ -1,0 +1,37 @@
+>>> df.show()
++---+----+------------+
+|id |num1|numbers     |
++---+----+------------+
+|1  |100 |[12, 23, 45]|
+|2  |200 |[67]        |
+|3  |300 |[12]        |
+|4  |400 |[98, 54]    |
++---+----+------------+
+
+PySpark code
+
+>>> df.select(F.array_intersect(F.col("numbers"), F.array_distinct(F.col("numbers")))).alias("intersect_distinct").show()
++------------------+
+|intersect_distinct|
++------------------+
+|[12, 23, 45]      |
+|[67]              |
+|[12]              |
+|[98, 54]          |
++------------------+
+
+teradatamlspk code
+
+# Create a distinct version of numbers
+>>> temp_df = df.withColumn("distinct_numbers", F.array_distinct(df.numbers))
+
+# Find intersection between original and nested array
+>>> temp_df.select(F.array_intersect(F.col("numbers"), F.col("distinct_numbers")).alias("intersect_distinct")).show()
++------------------+
+|intersect_distinct|
++------------------+
+|           (98,54)|
+|              (67)|
+|        (12,23,45)|
+|              (12)|
++------------------+

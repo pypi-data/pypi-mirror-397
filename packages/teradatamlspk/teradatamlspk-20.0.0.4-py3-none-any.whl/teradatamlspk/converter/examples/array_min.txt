@@ -1,0 +1,37 @@
+>>> df.show()
++---+----+------------+
+|id |num1|numbers     |
++---+----+------------+
+|1  |100 |[12, 23, 45]|
+|2  |200 |[67]        |
+|3  |300 |[12]        |
+|4  |400 |[98, 54]    |
++---+----+------------+
+
+PySpark code
+
+>>> df.select(F.array_min(F.array_distinct(F.col("numbers"))).alias(min_distinct_number)).show()
++----------------------+
+|min_distinct_number   |
++----------------------+
+|12                    |
+|67                    |
+|12                    |
+|54                    |
++----------------------+
+
+teradatamlspk code
+
+# Extract distinct array
+>>> temp_df = df.withColumn("distinct_numbers", F.array_distinct(F.col("numbers")))
+
+# Compute the minimum of the distinct array
+>>> temp_df.select(F.array_min(F.col("distinct_numbers")).alias("min_distinct_number")).show()
++-------------------+
+|min_distinct_number|
++-------------------+
+|                 54|
+|                 67|
+|                 12|
+|                 12|
++-------------------+

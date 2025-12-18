@@ -1,0 +1,72 @@
+Example 1 - Nested functions as input.
+
+>>> df.show()
++---+----+------------+
+| id|num1|     numbers|
++---+----+------------+
+|  1| 100|[12, 23, 45]|
+|  2| 200|        [67]|
+|  3| 300|          []|
+|  4| 400|    [98, 54]|
++---+----+------------+
+
+PySpark code 
+
+>>> df.select(F.array(F.when(F.size("numbers") > 0, F.element_at("numbers", 1)).otherwise(F.lit(0))).alias("complex_numbers")).show()
++---------------+
+|complex_numbers|
++---------------+
+|           [12]|
+|           [67]|
+|            [0]|
+|           [98]|
++---------------+
+
+teradatamlspk code
+
+# Create an intermediate column for the nested functions 
+>>> temp_df = df.withColumn("first_element_or_zero", F.when( F.size("numbers") > 0, F.element_at("numbers", 1)).otherwise(F.lit(0)))
+
+# Create array column
+>>> temp_df.select(F.array("first_element_or_zero").alias("complex_numbers")).show()
+
++---------------+
+|complex_numbers|
++---------------+
+|            (0)|
+|           (98)|
+|           (67)|
+|           (12)|
++---------------+
+
+Example 2 - When mixed types are passed
+
+>>> df.show()
++-----+---+------+
+| name|age|weight|
++-----+---+------+
+|Alice|  2|  22.2|
+|  Bob|  5|  36.1|
++-----+---+------+
+
+PySpark code
+
+>>> df.select(F.array(['name', 'age']).alias("array_col")).show()
++----------------+
+|array_col       |
++----------------+
+|      [Alice, 2]|
+|        [Bob, 5]|
++----------------+
+
+teradatamlspk code
+
+>>> df_casted = df.withColumn("age_str", F.col("age").cast("string"))
+
+>>> df_casted.select(F.array(F.col("name"), F.col("age_str")).alias("array_col")).show()
++-------------+
+|    array_col|
++-------------+
+|  ('Bob','5')|
+|('Alice','2')|
++-------------+

@@ -1,0 +1,31 @@
+>>> df.show()
++---+-------------------+-------------------+-----------+
+| id|               col1|               col2|       col3|
++---+-------------------+-------------------+-----------+
+|  1|2015-04-08 00:00:00|                GMT|US/Mountain|
+|  2|2020-01-07 00:00:00|America/Los_Angeles|        GMT|
++---+-------------------+-------------------+-----------+
+
+PySpark code
+>>> df = df.withColumn("ts", convert_timezone("col2", "col3", 'col1'))
+>>> df.show()
++---+-------------------+-------------------+-----------+-------------------+
+| id|               col1|               col2|       col3|                 ts|
++---+-------------------+-------------------+-----------+-------------------+
+|  1|2015-04-08 00:00:00|                GMT|US/Mountain|2015-04-07 18:00:00|
+|  2|2020-01-07 00:00:00|America/Los_Angeles|        GMT|2020-01-07 08:00:00|
++---+-------------------+-------------------+-----------+-------------------+
+
+teradatamlspk code
+
+# Update the "America/Los_Angeles" and "US/Mountain" timezones to "America Pacific" and "America Mountain", Teradata Vantage timezone formats.
+>>> from teradatamlspk.sql.functions import when, col
+>>> df = df.withColumns({"col2":when(col("col2") == "America/Los_Angeles", "America Pacific").otherwise(col("col2")), "col3": when(col("col3") == "US/Mountain", "America Mountain").otherwise(col("col3"))}))
+>>> df = df.withColumn("ts", convert_timezone("col2", "col3", 'col1'))
+>>> df.show()
++--+-------------------+---------------+----------------+-------------------+
+|id|               col1|           col2|            col3|                 ts|
++--+-------------------+---------------+----------------+-------------------+
+| 2|2020-01-07 00:00:00|America Pacific|             GMT|2020-01-07 08:00:00|
+| 1|2015-04-08 00:00:00|            GMT|America Mountain|2015-04-07 18:00:00|
++--+-------------------+---------------+----------------+-------------------+

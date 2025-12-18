@@ -1,0 +1,36 @@
+>>> df.show()
++---+------------+
+|id |numbers     |
++---+------------+
+|1  |[12, 23, 45]|
+|2  |[67]        |
+|3  |[]          |
+|4  |[98, 54]    |
++---+------------+
+
+PySpark code
+
+>>> df.select(F.arrays_overlap(F.col("numbers"), F.sort_array(F.col("numbers"), asc=False)).alias("overlap_sorted")).show()
++--------------+
+|overlap_sorted|
++--------------+
+|true          |
+|true          |
+|false         |
+|true          |
++--------------+
+
+teradatamlspk code
+
+>>> temp_df = df.withColumn("sorted_numbers_desc", F.sort_array(F.col("numbers"), asc=False))
+
+# Compute the arrays_overlap between the original and the nested sorted array.
+>>> temp_df.select(F.arrays_overlap(F.col("numbers"), F.col("sorted_numbers_desc")).alias("overlap_sorted")).show()
++--------------+
+|overlap_sorted|
++--------------+
+|             1|
+|             1|
+|             0|
+|             1|
++--------------+

@@ -1,0 +1,29 @@
+PySpark code
+
+>>> from pyspark.ml.feature import OneHotEncoder
+>>> scaler = OneHotEncoder(inputCol="label", outputCol="output")
+>>> scaled_df = scaler.fit(df).transform(df)
+>>> scaled_df.show()
++--------+--------+-----+-------------+
+|feature1|feature2|label|       output|
++--------+--------+-----+-------------+
+|     1.0|     0.1|    1|    (1,[],[])|
+|     2.0|     1.1|    0|(1,[0],[1.0])|
+|     3.0|    10.1|    1|    (1,[],[])|
++--------+--------+-----+-------------+
+
+teradatamlspk code
+
+>>> from teradatamlspk.sql.types import VarcharType
+>>> df = df.withColumn('label', df.label.cast(VarcharType(20)))
+>>> from teradatamlspk.ml.feature import OneHotEncoder
+>>> scaler = OneHotEncoder(inputCol='label', outputCol="output")
+>>> scaled_df = scaler.fit(df).transform(df)
+>>> scaled_df.show()
++--------+--------+-------+-------+-----------+
+|feature1|feature2|label_0|label_1|label_other|
++--------+--------+-------+-------+-----------+
+|     3.0|    10.1|      0|      1|          0|
+|     2.0|     1.1|      1|      0|          0|
+|     1.0|     0.1|      0|      1|          0|
++--------+--------+-------+-------+-----------+

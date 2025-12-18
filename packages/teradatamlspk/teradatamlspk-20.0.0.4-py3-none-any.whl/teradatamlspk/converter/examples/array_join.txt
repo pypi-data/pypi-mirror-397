@@ -1,0 +1,37 @@
+>>> df.show()
++---+----+------------+
+| id|num1|     numbers|
++---+----+------------+
+|  1| 100|[12, 23, 45]|
+|  2| 200|        [67]|
+|  3| 300|          []|
+|  4| 400|    [98, 54]|
++---+----+------------+
+
+PySpark code
+
+>>> df.select(F.array_join(F.sort_array("numbers"), ",").alias("sorted_join")).show()
++-----------+
+|sorted_join|
++-----------+
+|   12,23,45|
+|         67|
+|           |
+|      54,98|
++-----------+
+
+teradatamlspk code
+
+# Sort the numbers array
+>>> temp_df = df.withColumn("sorted_numbers", F.sort_array(F.col("numbers")))
+
+# Join the sorted array into a string with comma delimiter
+>>> temp_df.select(F.array_join(F.col("sorted_numbers"), ",").alias("sorted_join")).show()
++-----------+
+|sorted_join|
++-----------+
+|      54,98|
+|         67|
+|   12,23,45|
+|       None|
++-----------+
