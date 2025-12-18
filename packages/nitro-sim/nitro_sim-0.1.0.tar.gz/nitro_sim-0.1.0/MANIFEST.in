@@ -1,0 +1,28 @@
+# Include essential project files
+include README.md
+include LICENSE
+include BUILD.md
+include pyproject.toml
+include CMakeLists.txt
+
+# Include Python source files and type stubs
+recursive-include src *.py *.pyi *.cpp
+
+# Include RocketSim source and headers
+recursive-include RocketSim/src *.cpp *.h
+recursive-include RocketSim/libsrc *.cpp *.h *.txt
+
+# Include RocketSim metadata
+include RocketSim/README.md
+include RocketSim/LICENSE.txt
+include RocketSim/CMakeLists.txt
+
+# Include collision mesh files if any
+recursive-include RocketSim/src/CollisionMeshFile *
+
+# Exclude unwanted files
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude __pycache__
+global-exclude .git*
+global-exclude .DS_Store

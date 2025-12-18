@@ -1,0 +1,135 @@
+# nitro-sim
+
+Python bindings for [RocketSim](https://github.com/ZealanL/RocketSim) - High-performance Rocket League physics simulation.
+
+## Quick Start
+
+```bash
+# Install in development mode
+uv sync
+
+# Verify installation
+uv run python -c "import nitro as rs; print('Version:', rs.__version__)"
+
+# Run tests
+uv run pytest tests/
+```
+
+## Usage
+
+### Direct API
+
+```python
+import nitro as rs
+
+# Initialize RocketSim
+rs.init("collision_meshes")
+
+# Create arena
+arena = rs.Arena.create(rs.GameMode.SOCCAR, tick_rate=120.0)
+
+# Add cars
+car1 = arena.add_car(rs.Team.BLUE, rs.CAR_CONFIG_OCTANE)
+car2 = arena.add_car(rs.Team.ORANGE, rs.CAR_CONFIG_DOMINUS)
+
+# Set controls
+car1.controls.throttle = 1.0
+car1.controls.boost = True
+
+# Simulate
+arena.step(120)  # 1 second
+
+# Get state
+state = car1.get_state()
+print(f"Position: {state.pos}")
+print(f"Velocity: {state.vel.length()}")
+```
+
+### PettingZoo API (for Multi-Agent RL)
+
+```python
+from pettingzoo_env import parallel_env
+
+# Create 2v2 environment
+env = parallel_env(num_blue=2, num_orange=2)
+
+# Reset
+observations, infos = env.reset(seed=42)
+
+# Training loop
+while env.agents:
+    actions = {
+        agent: policy(observations[agent])  # Your RL policy here
+        for agent in env.agents
+    }
+    observations, rewards, terminations, truncations, infos = env.step(actions)
+
+env.close()
+```
+
+## Features
+
+- **Complete RocketSim API** - All major types and functions exposed  
+- **PettingZoo API** - Multi-agent RL compatible interface  
+- **Ball Prediction** - Predict ball trajectories for AI/bots  
+- **Event Tracking** - Detect shots, goals, saves, and assists  
+- **Callbacks** - React to goals, bumps, and game events  
+- **Type hints** - Full LSP/autocomplete support with `.pyi` stubs  
+- **Pythonic** - Snake_case naming, properties, and operators  
+- **Fast** - Direct C++ bindings with minimal overhead  
+- **Tested** - 85 passing tests covering all functionality  
+
+## Examples
+
+See the [examples/](examples/) folder for:
+- **example_advanced.py** - Ball prediction, event tracking, callbacks
+- **test_autocomplete.py** - Basic usage and IDE autocomplete demo
+
+## Building
+
+```bash
+# Development install
+uv sync
+
+# Build wheel
+uv build
+
+# Install from wheel
+pip install dist/*.whl
+```
+
+See [BUILD.md](BUILD.md) for detailed build instructions and troubleshooting.
+
+## Testing
+
+```bash
+# Run all tests (auto-downloads collision meshes)
+uv run pytest tests/
+
+# Run without collision meshes
+uv run pytest tests/ -k "not simulation and not boost and not prediction"
+```
+
+See [tests/README.md](tests/README.md) for more testing options.
+
+## Requirements
+
+- Python 3.12+
+- CMake 3.15+
+- C++20 compiler
+- Collision meshes (auto-downloaded in tests)
+
+## Test Results
+
+```bash
+$ uv run pytest tests/
+================= 85 passed, 2 skipped in 2.09s =================
+```
+
+Includes tests for:
+- Core API (72 tests)
+- PettingZoo API (13 tests)
+
+## License
+
+This project provides Python bindings for RocketSim. See [LICENSE](LICENSE) for details.
