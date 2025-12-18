@@ -1,0 +1,293 @@
+# Notifer CLI
+
+Command-line interface for [Notifer](https://notifer.io) - simple HTTP-based pub-sub notification service.
+
+## Installation
+
+```bash
+pip install notifer-cli
+```
+
+Or install from source:
+
+```bash
+git clone https://github.com/nexolab-projects/notifer-cli.git
+cd notifer-cli
+pip install -e .
+```
+
+## Quick Start
+
+### 1. Authenticate
+
+```bash
+# Option 1: Login with email/password
+notifer login user@example.com
+
+# Option 2: Use API key
+notifer config set api-key noti_your_key_here
+```
+
+### 2. Create a topic (required before publishing)
+
+Topics must exist before publishing. Create one first:
+
+```bash
+notifer topics create my-topic --description "My first topic"
+```
+
+### 3. Publish a message
+
+```bash
+# Simple message
+notifer publish my-topic "Hello World!"
+
+# With title and priority
+notifer publish alerts "Server is down!" \
+  --title "Alert" \
+  --priority 5 \
+  --tags urgent,server
+
+# With markdown
+notifer publish deployments "# Deploy Success\n\n**Status**: ✅" \
+  --priority 4
+```
+
+### 4. Subscribe to messages
+
+```bash
+# Subscribe and print to console
+notifer subscribe my-topic
+
+# Subscribe to multiple topics
+notifer subscribe alerts,deployments
+
+# Save to file
+notifer subscribe my-topic --output messages.jsonl
+```
+
+## Authentication
+
+### Using API Keys (Recommended)
+
+```bash
+# Create API key via web UI or:
+notifer keys create "CI/CD Pipeline" \
+  --scopes publish,topics:read \
+  --email user@example.com \
+  --password yourpassword
+
+# Use API key for publishing
+notifer publish my-topic "Message" --api-key noti_abc123...
+
+# Or save in config
+notifer config set api-key noti_abc123...
+```
+
+### Using Email/Password
+
+```bash
+# Login (stores token in ~/.notifer.yaml)
+notifer login user@example.com
+
+# Publish with stored credentials
+notifer publish my-topic "Message"
+```
+
+## Commands
+
+### Publishing
+
+```bash
+notifer publish <topic> <message> [OPTIONS]
+
+Options:
+  --title TEXT          Message title
+  --priority INTEGER    Priority (1-5, default: 3)
+  --tags TEXT           Comma-separated tags
+  --api-key TEXT        API key for authentication
+```
+
+### Subscribing
+
+```bash
+notifer subscribe <topics> [OPTIONS]
+
+Options:
+  --output PATH         Save messages to file (JSONL format)
+  --since TEXT          Only show messages since timestamp
+  --api-key TEXT        API key for authentication
+  --json                Output raw JSON (no formatting)
+```
+
+### API Keys Management
+
+```bash
+# List API keys
+notifer keys list
+
+# Create new key
+notifer keys create <name> [OPTIONS]
+
+Options:
+  --scopes TEXT         Comma-separated scopes (default: *)
+  --description TEXT    Key description
+  --expires TEXT        Expiration date (ISO format)
+
+# Revoke key
+notifer keys revoke <key-id>
+
+# Delete key
+notifer keys delete <key-id>
+```
+
+### Topics Management
+
+```bash
+# List topics
+notifer topics list
+
+# List your topics
+notifer topics list --mine
+
+# Create topic
+notifer topics create <name> [OPTIONS]
+
+Options:
+  --description TEXT    Topic description
+  --private            Make topic private
+  --discoverable       Make discoverable in browse
+
+# Get topic info
+notifer topics get <name>
+
+# Delete topic
+notifer topics delete <name>
+```
+
+### Configuration
+
+```bash
+# Initialize config file (optional)
+notifer config init
+
+# Show current config
+notifer config show
+
+# Set config value
+notifer config set <key> <value>
+
+# Examples:
+notifer config set api-key noti_abc123...
+notifer config set email user@example.com
+```
+
+## Configuration File
+
+The CLI uses `~/.notifer.yaml` for configuration:
+
+```yaml
+# Authentication (choose one)
+api_key: noti_abc123...
+
+# OR email/password (stores JWT token)
+email: user@example.com
+access_token: eyJhbG...
+refresh_token: eyJhbG...
+
+# Default options
+defaults:
+  priority: 3
+  tags: []
+```
+
+## Examples
+
+### CI/CD Integration
+
+```bash
+#!/bin/bash
+# deploy.sh
+
+# Create API key with publish scope
+API_KEY="noti_abc123..."
+
+# Notify on deploy start
+notifer publish deployments "Deploy started for v1.2.3" \
+  --title "Deploy" \
+  --priority 3 \
+  --tags deployment,production \
+  --api-key "$API_KEY"
+
+# Run deployment
+./deploy-script.sh
+
+# Notify on success/failure
+if [ $? -eq 0 ]; then
+  notifer publish deployments "# Deploy Success\n\nVersion **v1.2.3** deployed!" \
+    --priority 4 \
+    --tags deployment,success \
+    --api-key "$API_KEY"
+else
+  notifer publish deployments "Deploy failed!" \
+    --priority 5 \
+    --tags deployment,failure \
+    --api-key "$API_KEY"
+fi
+```
+
+### Monitoring Script
+
+```bash
+#!/bin/bash
+# monitor.sh
+
+# Subscribe to alerts and log to file
+notifer subscribe alerts,errors \
+  --output /var/log/notifer-alerts.jsonl \
+  --api-key noti_abc123...
+```
+
+### GitHub Actions
+
+```yaml
+name: Deploy
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Notifer CLI
+        run: pip install notifer-cli
+
+      - name: Notify deploy start
+        run: |
+          notifer publish deployments "Deploy started: ${{ github.sha }}" \
+            --api-key ${{ secrets.NOTIFER_API_KEY }}
+
+      - name: Deploy
+        run: ./deploy.sh
+
+      - name: Notify success
+        if: success()
+        run: |
+          notifer publish deployments "Deploy successful!" \
+            --priority 4 \
+            --api-key ${{ secrets.NOTIFER_API_KEY }}
+
+      - name: Notify failure
+        if: failure()
+        run: |
+          notifer publish deployments "Deploy failed!" \
+            --priority 5 \
+            --api-key ${{ secrets.NOTIFER_API_KEY }}
+```
+
+## License
+
+MIT
