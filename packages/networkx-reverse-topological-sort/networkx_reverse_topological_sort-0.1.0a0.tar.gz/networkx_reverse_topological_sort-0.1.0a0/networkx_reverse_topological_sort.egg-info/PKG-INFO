@@ -1,0 +1,62 @@
+Metadata-Version: 2.4
+Name: networkx-reverse-topological-sort
+Version: 0.1.0a0
+Summary: Reverse topological sort utilities for NetworkX: easily stratify or sort nodes in a DAG from leaves to root.
+Author-email: Jifeng Wu <jifengwu2k@gmail.com>
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/jifengwu2k/networkx-reverse-topological-sort
+Project-URL: Bug Tracker, https://github.com/jifengwu2k/networkx-reverse-topological-sort/issues
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Requires-Python: >=2
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: networkx
+Dynamic: license-file
+
+# `networkx-reverse-topological-sort`
+
+Reverse topological sort utilities for [NetworkX](https://networkx.org/): easily stratify or sort nodes in a DAG from leaves to root.
+
+## Features
+
+- **Reverse Topological Sort**: Get a valid reverse of NetworkX's `topological_sort`, yielding from "leaf" nodes up to roots.
+- **Reverse Topological Generations**: Partition your DAG into generations in reverse order (each generation, all children are in earlier generations).
+
+## Motivation
+
+NetworkX includes tools for forward (root-to-leaf) topological traversals, but some applications (e.g., evaluating dependencies after their dependents, post-order processing, certain scheduling schemes) need the reverse order: leaves to root.
+
+This tiny package offers that for `networkx`.
+
+## Installation
+
+```
+pip install networkx-reverse-topological-sort
+```
+
+## Usage
+
+```python
+import networkx as nx
+from networkx_reverse_topological_sort import (
+    reverse_topological_generations,
+    reverse_topological_sort,
+)
+
+DG = nx.DiGraph([(2, 1), (3, 1)])
+print([sorted(generation) for generation in reverse_topological_generations(DG)])
+# Output: [[1], [2, 3]]
+
+print(list(reverse_topological_sort(DG)))
+# Output: [1, 2, 3]  (or [1, 3, 2]: nodes before their parents)
+```
+
+## Contributing
+
+Contributions are welcome! Please submit pull requests or open issues on the GitHub repository.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
