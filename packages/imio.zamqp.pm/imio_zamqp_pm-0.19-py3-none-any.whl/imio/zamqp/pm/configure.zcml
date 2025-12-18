@@ -1,0 +1,32 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:five="http://namespaces.zope.org/five"
+    xmlns:i18n="http://namespaces.zope.org/i18n"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    xmlns:genericsetup="http://namespaces.zope.org/genericsetup"
+    i18n_domain="imio.zamqp.pm">
+
+    <i18n:registerTranslations directory="locales" />
+
+    <five:registerPackage package="." initialize=".initialize" />
+    <include package="collective.zamqp" />
+    <include package=".browser" />
+
+    <utility component=".consumer.IconifiedAnnexConsumerUtility"
+             name="dms.deliberation"
+             provides="collective.zamqp.interfaces.IConsumer" />
+
+    <subscriber for=".interfaces.IIconifiedAnnex
+                     collective.zamqp.interfaces.IMessageArrivedEvent"
+                handler=".consumer.consumeIconifiedAnnex" />
+
+    <include package="Products.GenericSetup" file="meta.zcml" />
+
+    <genericsetup:registerProfile
+        name="default"
+        title="PloneMeeting document scanning amqp"
+        directory="profiles/default"
+        description="Extension profile for PloneMeeting."
+        provides="Products.GenericSetup.interfaces.EXTENSION" />
+
+</configure>
