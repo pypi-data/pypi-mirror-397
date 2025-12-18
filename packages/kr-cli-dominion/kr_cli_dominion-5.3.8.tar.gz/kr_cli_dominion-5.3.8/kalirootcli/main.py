@@ -1,0 +1,1625 @@
+"""
+Main entry point for KaliRoot CLI
+Professional Cybersecurity CLI with AI, Web Search, and Agent Capabilities.
+
+Version: 5.0.2 - DOMINION
+"""
+
+import sys
+import logging
+from getpass import getpass
+import warnings
+# Suppress ResourceWarning for cleaner CLI output
+warnings.simplefilter("ignore", ResourceWarning)
+
+from typing import Dict, Any
+
+from .api_client import api_client
+from .distro_detector import detector
+from .ui.display import (
+    console, 
+    print_banner, 
+    print_error, 
+    print_success,
+    print_info,
+    print_warning,
+    show_loading,
+    print_header,
+    print_menu_option,
+    print_divider,
+    print_ai_response,
+    get_input,
+    confirm,
+    print_panel,
+    clear_and_show_banner
+)
+
+# Import new modules
+try:
+    from .web_search import web_search, is_search_available
+    WEB_SEARCH_AVAILABLE = is_search_available()
+except ImportError:
+    WEB_SEARCH_AVAILABLE = False
+    web_search = None
+
+try:
+    from .agent import (
+        file_agent, 
+        planner, 
+        list_templates, 
+        list_project_types
+    )
+    AGENT_AVAILABLE = True
+except ImportError:
+    AGENT_AVAILABLE = False
+    file_agent = None
+    planner = None
+
+# Configure logging
+logging.basicConfig(level=logging.WARNING)
+logger = logging.getLogger(__name__)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# AUTHENTICATION
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def authenticate() -> bool:
+    """Handle authentication flow with email verification."""
+    import re
+    
+    def is_valid_email(email: str) -> bool:
+        pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        return bool(re.match(pattern, email))
+    
+    if api_client.is_logged_in():
+        with show_loading("Verificando sesión..."):
+            result = api_client.get_status()
+        
+        if result["success"]:
+            data = result["data"]
+            status_text = "[green]PREMIUM[/green]" if data.get("is_premium") else "[yellow]FREE[/yellow]"
+            print_success(f"¡Bienvenido de nuevo! [{status_text}]")
+            return True
+        else:
+            print_info("Sesión expirada. Por favor inicia sesión nuevamente.")
+            api_client.logout()
+    
+    while True:
+        console.clear()  # Clean presentation for auth menu
+        print_banner()   # Show banner clearly
+        console.print("\n[bold cyan]           AUTENTICACIÓN          [/bold cyan]\n")
+        
+        print_menu_option("1", "🔐 Iniciar Sesión", "Con email verificado")
+        print_menu_option("2", "📝 Registrarse", "Requiere verificación por email")
+        print_menu_option("0", "❌ Salir")
+        
+        choice = get_input("Opción")
+        
+        if choice == "1":
+            # LOGIN
+            console.print("\n[bold cyan]🔐 INICIAR SESIÓN[/bold cyan]\n")
+            email = get_input("📧 Email").lower().strip()
+            
+            if not email or not is_valid_email(email):
+                print_error("Formato de email inválido")
+                continue
+            
+            password = getpass("🔐 Contraseña: ")
+            
+            with show_loading("Verificando credenciales..."):
+                result = api_client.login(email, password)
+            
+            if result["success"]:
+                # Get status to show subscription info
+                status_result = api_client.get_status()
+                if status_result["success"]:
+                    data = status_result["data"]
+                    if data.get("is_premium"):
+                        console.print(f"\n[bold green]✨ MODO PREMIUM ACTIVO[/bold green]")
+                        console.print(f"[dim]Días restantes: {data.get('days_left', 0)}[/dim]")
+                    else:
+                        console.print(f"\n[yellow]📊 Modo FREE - Créditos: {data.get('credits', 0)}[/yellow]")
+                print_success("¡Login exitoso!")
+                return True
+            else:
+                error = result.get("error", "Error de autenticación")
+                print_error(error)
+                
+                # Offer to resend verification
+                if "verific" in error.lower():
+                    resend = get_input("¿Reenviar correo de verificación? (s/n)").lower()
+                    if resend == "s":
+                        res = api_client.resend_verification(email)
+                        if res.get("success"):
+                            print_info("📧 Correo de verificación reenviado")
+                        else:
+                            print_error("No se pudo reenviar")
+                
+        elif choice == "2":
+            # REGISTER
+            console.print("\n[bold cyan]📝 REGISTRO DE USUARIO[/bold cyan]")
+            console.print("[dim]Se requiere verificación por correo electrónico[/dim]\n")
+            
+            email = get_input("📧 Email").lower().strip()
+            
+            if not email or not is_valid_email(email):
+                print_error("Formato de email inválido")
+                continue
+            
+            username = get_input("👤 Username (opcional, Enter para omitir)").strip()
+            if not username:
+                username = email.split("@")[0]
+            
+            password = getpass("🔐 Contraseña (mín. 6 caracteres): ")
+            if len(password) < 6:
+                print_error("La contraseña debe tener al menos 6 caracteres")
+                continue
+                
+            password2 = getpass("🔐 Confirmar contraseña: ")
+            if password != password2:
+                print_error("Las contraseñas no coinciden")
+                continue
+            
+            with show_loading("Creando cuenta..."):
+                result = api_client.register(email, password, username)
+            
+            if result.get("success"):
+                console.print("\n[bold green]═══════════════════════════════════════[/bold green]")
+                console.print("[bold green]        ✅ ¡REGISTRO EXITOSO!           [/bold green]")
+                console.print("[bold green]═══════════════════════════════════════[/bold green]\n")
+                console.print(f"📧 Enviamos un correo a: [cyan]{email}[/cyan]\n")
+                console.print("[yellow]⚠️  PASOS SIGUIENTES:[/yellow]")
+                console.print("  1. Revisa tu bandeja de entrada (y spam)")
+                console.print("  2. Haz clic en el enlace de verificación")
+                console.print("  3. Regresa aquí y selecciona 'Iniciar Sesión'\n")
+                # Don't auto-login, user must verify email first
+            else:
+                print_error(result.get("error", "Error en el registro"))
+                
+        elif choice == "0":
+            return False
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MAIN MENU
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def main_menu():
+    """Main application menu."""
+    running = True
+    
+    while running:
+        with show_loading("Cargando..."):
+            status_result = api_client.get_status()
+        
+        if not status_result["success"]:
+            print_error("Error de sesión. Por favor reinicia la aplicación.")
+            break
+        
+        status = status_result["data"]
+        sys_info = detector.get_system_info()
+        
+        console.clear()
+        
+        mode = "OPERATIVO" if status.get("is_premium") else "CONSULTA"
+        is_premium = status.get("is_premium", False)
+        sub_status = (status.get("subscription_status") or "free").lower()
+        
+        # Logic to handle status display
+        if is_premium:
+            status_label = " PREMIUM "
+            status_color = "bold white on green"
+        else:
+            if sub_status == "premium":
+                # Paid but maybe expired or issue
+                status_label = " PENDING / EXPIRED "
+                status_color = "bold white on yellow"
+            else:
+                status_label = " FREE "
+                status_color = "bold white on red"
+        
+        # Header
+        print_header("KR-CLI DOMINION v3.0")
+        
+        # Imports for dashboard
+        from rich.align import Align
+        from rich.table import Table
+        from rich.panel import Panel
+        from rich import box
+        
+        # 1. System Info (Centered & Compact)
+        sys_info_text = f"[bold cyan]OS:[/bold cyan] {sys_info['distro']}  │  [bold cyan]Shell:[/bold cyan] {sys_info['shell']}  │  [bold cyan]Root:[/bold cyan] {sys_info['root']}"
+        console.print(Align.center(Panel(sys_info_text, border_style="dim blue", padding=(0, 2), title="[dim]System[/dim]")))
+        
+        # 2. User Dashboard (Elegant Grid)
+        user_table = Table(show_header=False, box=None, padding=(0, 2))
+        user_table.add_column("Key", style="bold cyan", justify="right")
+        user_table.add_column("Value", style="white")
+        
+        user_table.add_row("Identity 👤", status.get('username') or status.get('email'))
+        user_table.add_row("Plan Status 💎", f"[{status_color}]{status_label}[/{status_color}]")
+        user_table.add_row("Credits 💳", f"[bold]{status.get('credits', 0)}[/bold]")
+        user_table.add_row("Mode ⚙️", mode)
+        
+        dashboard_panel = Panel(
+            user_table,
+            title="[bold bright_blue] DOMINION DASHBOARD [/bold bright_blue]",
+            border_style="bright_blue",
+            padding=(1, 2)
+        )
+        console.print(dashboard_panel)
+        console.print(Align.center("[dim]Modules: 🔍 Web Search  │  🤖 Agent Core[/dim]"))
+        
+        console.print() # spacer
+        
+        # Features status
+        features = []
+        if WEB_SEARCH_AVAILABLE:
+            features.append("[green]🔍 Búsqueda Web[/green]")
+        if AGENT_AVAILABLE:
+            features.append("[green]🤖 Agente[/green]")
+        if features:
+            console.print(f"[bold]📦 Módulos:[/bold] {' │ '.join(features)}")
+        
+        print_divider()
+        
+        # Menu options
+        print_menu_option("1", "🧠 CONSOLA AI", "Consultas de seguridad con búsqueda web")
+        print_menu_option("2", "🤖 MODO AGENTE", "Crear archivos, proyectos y planes")
+        print_menu_option("3", "📋 PLANIFICADOR", "Gestión de proyectos y auditorías")
+        print_menu_option("4", "⭐ UPGRADE", "Obtener acceso Premium")
+        print_menu_option("5", "⚙️  CONFIGURACIÓN", "Cuenta y ajustes")
+        print_menu_option("0", "🚪 SALIR")
+        
+        print_divider()
+        
+        choice = get_input("Selecciona")
+        
+        if choice == "1":
+            ai_console(status)
+        elif choice == "2":
+            agent_menu()
+        elif choice == "3":
+            planner_menu()
+        elif choice == "4":
+            upgrade_menu()
+        elif choice == "5":
+            if settings_menu():
+                running = False
+        elif choice == "0":
+            if confirm("¿Salir de KaliRoot CLI?"):
+                running = False
+                console.print("\n[bold cyan]👋 ¡Hasta pronto![/bold cyan]\n")
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# AI CONSOLE (Enhanced with Web Search)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def ai_console(status: Dict[str, Any]):
+    """Enhanced AI interaction interface with web search."""
+    mode = "OPERATIVO" if status["is_premium"] else "CONSULTA"
+    sys_info = detector.get_system_info()
+    
+    # Settings for this session
+    web_search_enabled = WEB_SEARCH_AVAILABLE
+    
+    print_header(f"🧠 CONSOLA AI [{mode}]")
+    
+    # Status display
+    if not status["is_premium"]:
+        console.print(f"[yellow]💳 Créditos disponibles: {status['credits']}[/yellow]")
+        console.print("[dim]Actualiza a Premium para consultas ilimitadas.[/dim]\n")
+    else:
+        console.print("[green]⭐ Modo Premium - Consultas ilimitadas[/green]\n")
+    
+    # Web search status
+    if WEB_SEARCH_AVAILABLE:
+        status_text = "[green]ACTIVA[/green]" if web_search_enabled else "[yellow]DESACTIVADA[/yellow]"
+        console.print(f"[bold]🔍 Búsqueda Web:[/bold] {status_text}")
+    
+    console.print("\n[dim]Comandos especiales:[/dim]")
+    console.print("[dim]  /search [query] - Buscar en internet[/dim]")
+    console.print("[dim]  /analyze        - Analizar proyecto actual con AI[/dim]")
+    console.print("[dim]  /news [topic]   - Últimas noticias de seguridad[/dim]")
+    console.print("[dim]  /cve [id]       - Información de CVE[/dim]")
+    console.print("[dim]  /websearch      - Toggle búsqueda web[/dim]")
+    console.print("[dim]  exit            - Volver al menú[/dim]")
+    console.print("\n[dim]💡 Tip: Di 'crear proyecto pentest X' para auto-crear proyectos[/dim]\n")
+    
+    environment = {
+        "distro": sys_info.get("distro", "linux"),
+        "shell": sys_info.get("shell", "bash"),
+        "root": sys_info.get("root", "No"),
+        "pkg_manager": sys_info.get("pkg_manager", "apt")
+    }
+    
+    while True:
+        query = get_input("🔮 Query")
+        
+        if query.lower() in ['exit', 'quit', 'back', 'salir']:
+            clear_and_show_banner()
+            break
+        
+        if not query:
+            continue
+        
+        # 1. Handle special commands
+        if query.startswith("/"):
+            result = handle_special_command(query, web_search_enabled)
+            if result == "toggle_search":
+                web_search_enabled = not web_search_enabled
+                status_text = "[green]ACTIVADA[/green]" if web_search_enabled else "[yellow]DESACTIVADA[/yellow]"
+                print_info(f"Búsqueda web: {status_text}")
+            continue
+
+        # 2. Handle conversational agent intents (Agentic Mode)
+        if AGENT_AVAILABLE:
+            intent = file_agent.parse_natural_language_intent(query)
+            if intent["action"] == "create_project":
+                msg = f"Detectada intención de crear proyecto: {intent['type'].upper()} ({intent['name']})"
+                if confirm(msg):
+                    with show_loading("Creando proyecto..."):
+                        res = file_agent.create_project_structure(intent["name"], intent["type"], intent["description"])
+                    if res["success"]:
+                        print_success(res["message"])
+                        console.print(f"\n[dim]📁 {res['path']}[/dim]")
+                    else:
+                        print_error(res["error"])
+                    continue
+        
+        # 3. Enrich query with web search if enabled
+        enriched_query = query
+        web_context = ""
+        
+        if web_search_enabled and WEB_SEARCH_AVAILABLE:
+            # Detect if query needs real-time data
+            search_keywords = ["último", "últimas", "reciente", "2024", "2025", "CVE", "exploit", "vulnerabilidad", "actualización"]
+            needs_search = any(kw.lower() in query.lower() for kw in search_keywords)
+            
+            if needs_search:
+                with show_loading("🔍 Buscando información actualizada..."):
+                    web_context = web_search.search_security(query)
+                
+                if web_context:
+                    console.print("[dim]📡 Datos web obtenidos[/dim]")
+                    enriched_query = f"{query}\n\n{web_context}"
+        
+        # Send to API
+        with show_loading("🧠 Procesando..."):
+            result = api_client.ai_query(enriched_query, environment)
+        
+        if result["success"]:
+            data = result["data"]
+            print_ai_response(data["response"], data["mode"])
+            
+            if data.get("credits_remaining") is not None:
+                console.print(f"[dim]💳 Créditos restantes: {data['credits_remaining']}[/dim]\n")
+        else:
+            error_msg = result.get("error", "Error desconocido")
+            if "credits" in error_msg.lower() or "créditos" in error_msg.lower():
+                # Persuasive out-of-credits message
+                console.clear()
+                console.print("\n[bold red]😔 ¡Ups! Te quedaste sin créditos...[/bold red]\n")
+                console.print("[bold white]Pero estábamos en algo importante.[/bold white]")
+                console.print(f"[cyan]Tu consulta era valiosa y DOMINION estaba listo para darte[/cyan]")
+                console.print(f"[cyan]información que pocos conocen sobre este tema.[/cyan]\n")
+                
+                console.print("[bold yellow]🔥 No te quedes a medias:[/bold yellow]")
+                console.print("  • La respuesta completa está lista esperando por ti")
+                console.print("  • DOMINION tiene el conocimiento que necesitas")
+                console.print("  • Un solo paso te separa de continuar aprendiendo\n")
+                
+                console.print("[bold green]💎 PAQUETES DISPONIBLES:[/bold green]")
+                console.print("  💳 [bold]Créditos[/bold]: 200 créditos - $10")
+                console.print("  👑 [bold]Premium[/bold]: 500 créditos + herramientas - $20/mes\n")
+                
+                console.rule(style="yellow")
+                print_menu_option("1", "💎 Ver Tienda", "Comprar créditos o Premium")
+                print_menu_option("0", "Volver al menú")
+                console.rule(style="yellow")
+                
+                sub_choice = get_input("¿Qué deseas hacer?")
+                if sub_choice == "1":
+                    upgrade_menu()
+                clear_and_show_banner()
+                return  # Exit chat session
+            else:
+                print_error(error_msg)
+
+
+def handle_special_command(command: str, web_search_enabled: bool) -> str:
+    """Handle special CLI commands."""
+    parts = command.split(maxsplit=1)
+    cmd = parts[0].lower()
+    arg = parts[1] if len(parts) > 1 else ""
+    
+    if cmd == "/analyze" and AGENT_AVAILABLE:
+        print_info("Analizando directorio actual...")
+        context = file_agent.analyze_project_context()
+        
+        query = f"""
+        Analyze this project context and provide recommendations:
+        {context}
+        """
+        
+        with show_loading("🧠 Analizando código y estructura..."):
+            result = api_client.ai_query(query, {})
+            
+        if result["success"]:
+            print_ai_response(result["data"]["response"], result["data"]["mode"])
+        else:
+            print_error(result["error"])
+            
+    elif cmd == "/search" and WEB_SEARCH_AVAILABLE:
+        if not arg:
+            print_warning("Uso: /search <query>")
+            return ""
+        
+        with show_loading(f"🔍 Buscando: {arg}..."):
+            results = web_search.search(arg)
+        
+        if results:
+            console.print(f"\n[bold cyan]📡 Resultados para '{arg}':[/bold cyan]\n")
+            for i, r in enumerate(results, 1):
+                console.print(f"[bold]{i}.[/bold] {r.title}")
+                console.print(f"   [dim]{r.body[:150]}...[/dim]")
+                console.print(f"   [blue underline]{r.url}[/blue underline]\n")
+        else:
+            print_warning("No se encontraron resultados")
+    
+    elif cmd == "/news" and WEB_SEARCH_AVAILABLE:
+        topic = arg or "cybersecurity"
+        
+        with show_loading(f"📰 Buscando noticias: {topic}..."):
+            results = web_search.search_news(f"{topic} security")
+        
+        if results:
+            console.print(f"\n[bold cyan]📰 Noticias de seguridad:[/bold cyan]\n")
+            for r in results[:5]:
+                console.print(f"• [bold]{r.title}[/bold]")
+                if r.date:
+                    console.print(f"  [dim]{r.date}[/dim]")
+                console.print(f"  [dim]{r.body[:100]}...[/dim]\n")
+        else:
+            print_warning("No se encontraron noticias")
+    
+    elif cmd == "/cve" and WEB_SEARCH_AVAILABLE:
+        if not arg:
+            print_warning("Uso: /cve <CVE-ID> o /cve <keyword>")
+            return ""
+        
+        with show_loading(f"🛡️ Buscando CVE: {arg}..."):
+            if arg.upper().startswith("CVE-"):
+                context = web_search.search_cve(cve_id=arg)
+            else:
+                context = web_search.search_cve(keyword=arg)
+        
+        if context:
+            console.print(context)
+        else:
+            print_warning("No se encontró información del CVE")
+    
+    elif cmd == "/websearch":
+        return "toggle_search"
+    
+    elif cmd == "/help":
+        console.print("\n[bold cyan]Comandos disponibles:[/bold cyan]")
+        console.print("  /search <query>  - Buscar en internet")
+        console.print("  /news [topic]    - Noticias de seguridad")
+        console.print("  /cve <id>        - Info de CVE")
+        console.print("  /websearch       - Toggle búsqueda web")
+        console.print("  /help            - Mostrar ayuda")
+        console.print("  exit             - Volver al menú\n")
+    
+    else:
+        print_warning(f"Comando no reconocido: {cmd}")
+    
+    return ""
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# AGENT MODE
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def agent_menu():
+    """Agent mode for file and project creation."""
+    if not AGENT_AVAILABLE:
+        print_error("El módulo de agente no está disponible. Instala las dependencias.")
+        get_input("Presiona Enter para continuar...")
+        clear_and_show_banner()
+        return
+    
+    while True:
+        print_header("🤖 MODO AGENTE")
+        
+        console.print("[dim]Crea archivos, proyectos y código automáticamente.[/dim]\n")
+        
+        print_menu_option("1", "📄 Crear Script", "Python o Bash desde plantilla")
+        print_menu_option("2", "📁 Crear Proyecto", "Estructura completa de proyecto")
+        print_menu_option("3", "📋 Ver Proyectos", "Lista de proyectos creados")
+        print_menu_option("4", "🔧 Plantillas", "Ver plantillas disponibles")
+        print_menu_option("0", "⬅️  Volver")
+        
+        print_divider()
+        
+        choice = get_input("Selecciona")
+        
+        if choice == "1":
+            create_script_menu()
+        elif choice == "2":
+            create_project_menu()
+        elif choice == "3":
+            list_projects_menu()
+        elif choice == "4":
+            show_templates()
+        elif choice == "0":
+            clear_and_show_banner()
+            break
+
+
+def create_script_menu():
+    """Create a script from template."""
+    print_header("📄 CREAR SCRIPT")
+    
+    console.print("[bold]Plantillas disponibles:[/bold]")
+    templates = list_templates()
+    for i, t in enumerate(templates, 1):
+        console.print(f"  {i}. {t}")
+    
+    console.print()
+    
+    template_choice = get_input("Número de plantilla (o nombre)")
+    
+    # Handle numeric choice
+    try:
+        idx = int(template_choice) - 1
+        if 0 <= idx < len(templates):
+            template_name = templates[idx]
+        else:
+            print_error("Opción inválida")
+            return
+    except ValueError:
+        template_name = template_choice
+    
+    if template_name not in templates:
+        print_error(f"Plantilla '{template_name}' no encontrada")
+        return
+    
+    name = get_input("Nombre del script")
+    if not name:
+        print_error("El nombre es requerido")
+        return
+    
+    description = get_input("Descripción (opcional)")
+    
+    with show_loading("Creando script..."):
+        result = file_agent.create_from_template(template_name, name, description)
+    
+    if result.success:
+        print_success(result.message)
+        console.print(f"\n[dim]Archivo: {result.path}[/dim]")
+    else:
+        print_error(result.error)
+    
+    get_input("\nPresiona Enter para continuar...")
+    clear_and_show_banner()
+
+
+def create_project_menu():
+    """Create a project structure."""
+    print_header("📁 CREAR PROYECTO")
+    
+    console.print("[bold]Tipos de proyecto:[/bold]\n")
+    
+    project_types = list_project_types()
+    type_descriptions = {
+        "pentest": "Pentesting - Recon, Scan, Exploit, Post, Reports",
+        "tool": "Herramienta - src, tests, docs, examples",
+        "audit": "Auditoría - Evidence, Reports, Configs",
+        "research": "Investigación - Data, Analysis, Papers, PoC",
+        "ctf": "CTF - Challenges, Scripts, Flags"
+    }
+    
+    for i, t in enumerate(project_types, 1):
+        desc = type_descriptions.get(t, "")
+        console.print(f"  [cyan]{i}.[/cyan] [bold]{t.upper()}[/bold]")
+        console.print(f"      [dim]{desc}[/dim]")
+    
+    console.print()
+    
+    type_choice = get_input("Tipo de proyecto (número o nombre)")
+    
+    try:
+        idx = int(type_choice) - 1
+        if 0 <= idx < len(project_types):
+            project_type = project_types[idx]
+        else:
+            print_error("Opción inválida")
+            return
+    except ValueError:
+        project_type = type_choice.lower()
+    
+    if project_type not in project_types:
+        print_error(f"Tipo '{project_type}' no válido")
+        return
+    
+    name = get_input("Nombre del proyecto")
+    if not name:
+        print_error("El nombre es requerido")
+        return
+    
+    description = get_input("Descripción (opcional)")
+    
+    with show_loading("Creando proyecto..."):
+        result = file_agent.create_project_structure(name, project_type, description)
+    
+    if result["success"]:
+        print_success(result["message"])
+        console.print(f"\n[bold]Estructura creada:[/bold]")
+        console.print(f"[dim]📁 {result['path']}[/dim]")
+        
+        console.print("\n[bold]Directorios:[/bold]")
+        for d in result["structure"]["directories"]:
+            console.print(f"  📂 {d}")
+        
+        console.print("\n[bold]Archivos:[/bold]")
+        for f in result["structure"]["files"]:
+            console.print(f"  📄 {f}")
+    else:
+        print_error(result["error"])
+    
+    get_input("\nPresiona Enter para continuar...")
+    clear_and_show_banner()
+
+
+def list_projects_menu():
+    """List existing projects."""
+    print_header("📋 PROYECTOS")
+    
+    projects = file_agent.list_projects()
+    
+    if not projects:
+        print_info("No hay proyectos creados aún.")
+        console.print(f"\n[dim]Directorio base: {file_agent.base_dir}[/dim]")
+    else:
+        console.print(f"[dim]Total: {len(projects)} proyectos[/dim]\n")
+        
+        for p in projects:
+            type_emoji = {
+                "pentest": "🔓",
+                "tool": "🔧",
+                "audit": "🛡️",
+                "research": "🔬",
+                "ctf": "🚩"
+            }.get(p["type"], "📁")
+            
+            console.print(f"{type_emoji} [bold]{p['name']}[/bold]")
+            console.print(f"   Tipo: {p['type']} │ Modificado: {p['modified']} │ Tamaño: {p['size']}")
+            console.print(f"   [dim]{p['path']}[/dim]\n")
+    
+    get_input("\nPresiona Enter para continuar...")
+
+
+def show_templates():
+    """Show available templates."""
+    print_header("🔧 PLANTILLAS DISPONIBLES")
+    
+    templates = list_templates()
+    
+    template_info = {
+        "python_script": "Script Python con argparse y logging",
+        "python_class": "Clase Python con dataclass config",
+        "bash_script": "Script Bash profesional con colores",
+        "security_audit": "Reporte de auditoría de seguridad",
+        "project_plan": "Plan de proyecto estructurado",
+        "exploit_template": "Plantilla para exploits (solo educativo)"
+    }
+    
+    for t in templates:
+        info = template_info.get(t, "Plantilla personalizada")
+        console.print(f"• [bold cyan]{t}[/bold cyan]")
+        console.print(f"  [dim]{info}[/dim]\n")
+    
+    get_input("Presiona Enter para continuar...")
+    clear_and_show_banner()
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PROJECT PLANNER
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def planner_menu():
+    """Project planning menu."""
+    if not AGENT_AVAILABLE:
+        print_error("El módulo de planificación no está disponible.")
+        get_input("Presiona Enter para continuar...")
+        clear_and_show_banner()
+        return
+    
+    while True:
+        print_header("📋 PLANIFICADOR DE PROYECTOS")
+        
+        print_menu_option("1", "📝 Nuevo Plan", "Crear plan de proyecto")
+        print_menu_option("2", "📊 Nuevo Reporte de Auditoría", "Plantilla de auditoría")
+        print_menu_option("3", "📋 Ver Planes", "Lista de planes existentes")
+        print_menu_option("0", "⬅️  Volver")
+        
+        print_divider()
+        
+        choice = get_input("Selecciona")
+        
+        if choice == "1":
+            create_plan_menu()
+        elif choice == "2":
+            create_audit_menu()
+        elif choice == "3":
+            list_plans_menu()
+        elif choice == "0":
+            clear_and_show_banner()
+            break
+
+
+def create_plan_menu():
+    """Create a new project plan."""
+    print_header("📝 NUEVO PLAN DE PROYECTO")
+    
+    name = get_input("Nombre del proyecto")
+    if not name:
+        print_error("El nombre es requerido")
+        return
+    
+    description = get_input("Descripción del proyecto")
+    
+    console.print("\n[bold]Ingresa los objetivos (uno por línea, vacío para terminar):[/bold]")
+    objectives = []
+    while True:
+        obj = get_input(f"Objetivo {len(objectives) + 1}")
+        if not obj:
+            break
+        objectives.append(obj)
+    
+    if not objectives:
+        objectives = ["Definir objetivos específicos"]
+    
+    with show_loading("Creando plan..."):
+        result = planner.create_plan(name, description, objectives)
+    
+    if result["success"]:
+        print_success(result["message"])
+        console.print(f"\n[dim]Archivo: {result['path']}[/dim]")
+    else:
+        print_error(result.get("error", "Error desconocido"))
+    
+    get_input("\nPresiona Enter para continuar...")
+
+
+def create_audit_menu():
+    """Create a security audit report."""
+    print_header("📊 NUEVO REPORTE DE AUDITORÍA")
+    
+    name = get_input("Nombre de la auditoría")
+    if not name:
+        print_error("El nombre es requerido")
+        return
+    
+    description = get_input("Descripción/Alcance")
+    
+    with show_loading("Creando reporte..."):
+        result = planner.create_audit_report(name, description)
+    
+    if result["success"]:
+        print_success(result["message"])
+        console.print(f"\n[dim]Archivo: {result['path']}[/dim]")
+    else:
+        print_error(result.get("error", "Error desconocido"))
+    
+    get_input("\nPresiona Enter para continuar...")
+
+
+def list_plans_menu():
+    """List existing project plans."""
+    print_header("📋 PLANES EXISTENTES")
+    
+    plans = planner.list_plans()
+    
+    if not plans:
+        print_info("No hay planes creados aún.")
+    else:
+        for p in plans:
+            status_emoji = "🟡" if p["status"] == "planning" else "🟢"
+            console.print(f"{status_emoji} [bold]{p['name']}[/bold]")
+            console.print(f"   Estado: {p['status']} │ Creado: {p['created'][:10]}")
+            console.print(f"   [dim]{p['path']}[/dim]\n")
+    
+    get_input("\nPresiona Enter para continuar...")
+    clear_and_show_banner()
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# UPGRADE & SETTINGS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def upgrade_menu():
+    """Handle premium upgrade and credit purchases."""
+    while True:
+        console.clear()
+        print_header("💎 TIENDA DOMINION")
+        
+        # Get current status
+        status_res = api_client.get_status()
+        is_premium = status_res.get("data", {}).get("is_premium", False) if status_res.get("success") else False
+        credits = status_res.get("data", {}).get("credits", 0) if status_res.get("success") else 0
+        
+        console.print(f"[dim]💳 Tus créditos actuales: {credits}[/dim]\n")
+        
+        if is_premium:
+            console.print("[bold green]✅ Ya eres usuario PREMIUM[/bold green]\n")
+        
+        console.print("[bold cyan]═══ PAQUETES DISPONIBLES ═══[/bold cyan]\n")
+        
+        # Credits Package
+        console.print("[bold yellow]💳 PAQUETE CRÉDITOS[/bold yellow]")
+        console.print("  • [bold]200 créditos[/bold] para consultas AI")
+        console.print("  • Válidos por 30 días")
+        console.print("  • [bold green]$10 USD (USDT)[/bold green]\n")
+        
+        # Premium Package
+        if not is_premium:
+            console.print("[bold magenta]👑 PAQUETE PREMIUM[/bold magenta]")
+            console.print("  • [bold]500 créditos[/bold] de bono")
+            console.print("  • Modelo AI 70B (respuestas profesionales)")
+            console.print("  • Port Scanner, CVE Lookup, Script Generator")
+            console.print("  • Modo Agente para crear proyectos")
+            console.print("  • Historial ilimitado de chats")
+            console.print("  • [bold green]$20 USD/mes (USDT)[/bold green]\n")
+        
+        console.rule(style="cyan")
+        print_menu_option("1", "💳 Comprar Créditos", "200 créditos - $10")
+        if not is_premium:
+            print_menu_option("2", "👑 Comprar PREMIUM", "500 créditos + herramientas - $20/mes")
+        print_menu_option("0", "Volver")
+        console.rule(style="cyan")
+        
+        choice = get_input("Selecciona")
+        
+        if choice == "0":
+            break
+        elif choice == "1":
+            # Buy Credits
+            console.print("\n[bold cyan]Generando factura para 200 créditos ($10)...[/bold cyan]")
+            with show_loading("Creando factura..."):
+                result = api_client.create_credits_invoice(amount=10, credits=200)
+            
+            if result.get("success"):
+                url = result.get("invoice_url") or result.get("data", {}).get("invoice_url")
+                print_success("¡Factura creada!")
+                console.print(f"\n[bold]URL de pago:[/bold]\n{url}\n")
+                
+                if detector.open_url(url):
+                    print_info("Navegador abierto.")
+                else:
+                    print_info("Copia y abre la URL en tu navegador.")
+                
+                print_warning("Los créditos se añadirán automáticamente al completar el pago.")
+                input("\nPresiona Enter para continuar...")
+            else:
+                print_error(result.get("error", "Error creando factura"))
+                input("\nPresiona Enter...")
+        
+        elif choice == "2" and not is_premium:
+            # Buy Premium
+            console.print("\n[bold magenta]Generando factura PREMIUM ($20)...[/bold magenta]")
+            with show_loading("Creando factura..."):
+                result = api_client.create_subscription_invoice()
+            
+            if result.get("success"):
+                url = result.get("invoice_url") or result.get("data", {}).get("invoice_url")
+                print_success("¡Factura creada!")
+                console.print(f"\n[bold]URL de pago:[/bold]\n{url}\n")
+                
+                if detector.open_url(url):
+                    print_info("Navegador abierto.")
+                else:
+                    print_info("Copia y abre la URL en tu navegador.")
+                
+                print_warning("Tu cuenta se actualizará automáticamente al completar el pago.")
+                input("\nPresiona Enter para continuar...")
+            else:
+                print_error(result.get("error", "Error creando factura"))
+                input("\nPresiona Enter...")
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MAIN MENU
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def main_menu():
+    """Main application menu."""
+    running = True
+    
+    while running:
+        with show_loading("Cargando..."):
+            status_result = api_client.get_status()
+        
+        if not status_result["success"]:
+            print_error("Error de sesión. Por favor reinicia la aplicación.")
+            break
+        
+        status = status_result["data"]
+        sys_info = detector.get_system_info()
+        
+        console.clear()
+        
+        mode = "OPERATIVO" if status.get("is_premium") else "CONSULTA"
+        is_premium = status.get("is_premium", False)
+        sub_status = status.get("subscription_status", "free").lower()
+        
+        # Logic to handle status display
+        if is_premium:
+            status_label = " PREMIUM "
+            status_color = "bold white on green"
+        else:
+            if sub_status == "premium":
+                # Paid but maybe expired or issue
+                status_label = " PENDING / EXPIRED "
+                status_color = "bold white on yellow"
+            else:
+                status_label = " FREE "
+                status_color = "bold white on red"
+        
+        # Header
+        print_header("KR-CLI DOMINION v3.0")
+        
+        # 1. System Info (Centered & Compact)
+        from rich.align import Align
+        from rich.table import Table
+        from rich.panel import Panel
+        
+        sys_info_text = f"[bold cyan]OS:[/bold cyan] {sys_info['distro']}  │  [bold cyan]Shell:[/bold cyan] {sys_info['shell']}  │  [bold cyan]Root:[/bold cyan] {sys_info['root']}"
+        console.print(Align.center(Panel(sys_info_text, border_style="dim blue", padding=(0, 2), title="[dim]System[/dim]")))
+        
+        # 2. User Dashboard (Elegant Grid)
+        # We use a table for alignment within a panel
+        user_table = Table(show_header=False, box=None, padding=(0, 2))
+        user_table.add_column("Key", style="bold cyan", justify="right")
+        user_table.add_column("Value", style="white")
+        
+        user_table.add_row("Identity 👤", status.get('username') or status.get('email'))
+        user_table.add_row("Plan Status 💎", f"[{status_color}]{status_label}[/{status_color}]")
+        user_table.add_row("Credits 💳", f"[bold]{status.get('credits', 0)}[/bold]")
+        user_table.add_row("Mode ⚙️", mode)
+        
+        dashboard_panel = Panel(
+            user_table,
+            title="[bold bright_blue] DOMINION DASHBOARD [/bold bright_blue]",
+            border_style="bright_blue",
+            padding=(1, 2)
+        )
+        console.print(dashboard_panel)
+        console.print(Align.center("[dim]Modules: 🔍 Web Search  │  🤖 Agent Core[/dim]"))
+        
+        console.print() # spacer
+        
+        # Menu Options
+        print_menu_option("1", "🧠 CONSOLA AI", "Consultas de seguridad con búsqueda web")
+        print_menu_option("2", "🤖 MODO AGENTECREATOR", "Crear proyectos y herramientas desde cero")
+        if is_premium:
+            print_menu_option("5", "🔧 HERRAMIENTAS", "Port Scanner y más (Premium)")
+        print_menu_option("3", "⭐ UPGRADE", "Obtener acceso Premium")
+        print_menu_option("4", "⚙️  CONFIGURACIÓN", "Cuenta y ajustes")
+        print_menu_option("0", "🚪 SALIR")
+        
+        console.rule(style="dim blue")
+        
+        choice = get_input("Selecciona")
+        
+        if choice == "1":
+            ai_console_mode()
+            
+        elif choice == "2":
+            if not is_premium:
+                console.clear()
+                console.print("\n[bold yellow]⭐ AGENTECREATOR - EXCLUSIVO PREMIUM ⭐[/bold yellow]\n")
+                console.print("[bold white]¡Estás a punto de desbloquear el poder real de DOMINION![/bold white]\n")
+                console.print("[cyan]Con el Modo Agente puedes:[/cyan]")
+                console.print("  🚀 [bold]Crear proyectos completos[/bold] desde cero con IA")
+                console.print("  🔧 [bold]Generar herramientas[/bold] de pentesting personalizadas")
+                console.print("  📁 [bold]Estructurar código[/bold] en múltiples archivos automáticamente")
+                console.print("  🤖 [bold]Iterar con el agente[/bold] como un desarrollador senior a tu lado")
+                console.print("  ⚡ [bold]Acelerar tu trabajo 10x[/bold] con generación inteligente\n")
+                console.print("[bold green]💎 PREMIUM incluye:[/bold green]")
+                console.print("  • +250 créditos de bono mensuales")
+                console.print("  • Modelo AI avanzado (70B parámetros)")
+                console.print("  • Port Scanner, CVE Lookup, Script Generator")
+                console.print("  • Historial ilimitado de chats\n")
+                
+                console.rule(style="yellow")
+                print_menu_option("1", "💳 Comprar PREMIUM", "Desbloquear todas las funciones")
+                print_menu_option("0", "Volver", "Regresar al menú")
+                console.rule(style="yellow")
+                
+                sub_choice = get_input("¿Qué deseas hacer?")
+                if sub_choice == "1":
+                    upgrade_menu()
+            elif AGENT_AVAILABLE:
+                agent_mode()
+            else:
+                print_error("El módulo Agente no está instalado correctamente.")
+                
+        elif choice == "3":
+            upgrade_menu()
+            
+        elif choice == "4":
+            logged_out = config_menu()
+            if logged_out:
+                break  # Exit main_menu to return to authentication
+        
+        elif choice == "5" and is_premium:
+            tools_menu()
+            
+        elif choice == "0":
+            if confirm("¿Salir de KaliRoot CLI?"):
+                running = False
+                print_success("¡Hasta pronto!")
+
+
+def tools_menu():
+    """Premium Tools Menu - Port Scanner, Script Generator, CVE Lookup."""
+    from .tools.port_scanner import quick_scan, format_scan_results
+    from .tools.script_generator import list_templates, generate_script, save_script
+    from .tools.cve_lookup import search_cve, format_cve_results
+    
+    while True:
+        console.clear()
+        print_header("🔧 HERRAMIENTAS PREMIUM")
+        
+        print_menu_option("1", "🔍 Port Scanner", "Escaneo rápido de puertos")
+        print_menu_option("2", "📜 Script Generator", "Genera scripts de pentesting")
+        print_menu_option("3", "🛡️ CVE Lookup", "Busca vulnerabilidades")
+        print_menu_option("0", "Volver")
+        
+        console.rule(style="dim cyan")
+        choice = get_input("Selecciona")
+        
+        if choice == "0":
+            break
+        
+        elif choice == "1":
+            # Port Scanner
+            console.print("\n[bold cyan]═══ PORT SCANNER ═══[/bold cyan]\n")
+            host = get_input("IP o Hostname a escanear")
+            
+            if not host:
+                print_error("Debes ingresar un host.")
+                continue
+            
+            with show_loading(f"Escaneando {host}..."):
+                try:
+                    results = quick_scan(host)
+                    output = format_scan_results(host, results)
+                except Exception as e:
+                    output = f"Error: {e}"
+            
+            console.print(f"\n{output}\n")
+            
+            if results and confirm("¿Analizar resultados con AI?"):
+                ports_info = ", ".join([f"{r['port']}/{r['service']}" for r in results])
+                query = f"Analiza estos puertos abiertos en {host}: {ports_info}. Identifica posibles vulnerabilidades."
+                
+                with show_loading("Analizando con DOMINION..."):
+                    analysis = api_client.ai_query(query)
+                
+                if analysis["success"]:
+                    console.print(f"\n[bold cyan]🤖 Análisis DOMINION:[/bold cyan]\n")
+                    console.print(analysis["data"]["response"])
+            
+            input("\nPresiona Enter para continuar...")
+        
+        elif choice == "2":
+            # Script Generator
+            console.print("\n[bold cyan]═══ SCRIPT GENERATOR ═══[/bold cyan]\n")
+            
+            templates = list_templates()
+            for i, t in enumerate(templates, 1):
+                console.print(f" {i}. {t['name']} - [dim]{t['description']}[/dim]")
+            
+            console.print()
+            try:
+                idx = int(get_input("Selecciona template")) - 1
+                if 0 <= idx < len(templates):
+                    target = get_input("Target (IP/Host/Keyword)")
+                    
+                    if target:
+                        script = generate_script(templates[idx]["id"], target)
+                        filename = f"{templates[idx]['id']}_{target.replace('.', '_')}.sh"
+                        save_script(script, filename)
+                        
+                        console.print(f"\n[green]✅ Script generado:[/green] {filename}")
+                        console.print(f"\n[dim]{script}[/dim]")
+            except (ValueError, IndexError):
+                pass
+            
+            input("\nPresiona Enter para continuar...")
+        
+        elif choice == "3":
+            # CVE Lookup
+            console.print("\n[bold cyan]═══ CVE LOOKUP ═══[/bold cyan]\n")
+            keyword = get_input("Buscar CVE (ej: apache, wordpress, ssh)")
+            
+            if keyword:
+                with show_loading(f"Buscando CVEs para '{keyword}'..."):
+                    results = search_cve(keyword, limit=5)
+                    output = format_cve_results(results)
+                
+                console.print(f"\n{output}")
+                
+                if results and "error" not in results[0] and confirm("¿Analizar con AI?"):
+                    cves = ", ".join([r["id"] for r in results])
+                    query = f"Analiza estas vulnerabilidades: {cves}. ¿Cómo las explotaría un atacante?"
+                    
+                    with show_loading("Analizando con DOMINION..."):
+                        analysis = api_client.ai_query(query)
+                    
+                    if analysis["success"]:
+                        console.print(f"\n[bold cyan]🤖 Análisis DOMINION:[/bold cyan]\n")
+                        console.print(analysis["data"]["response"])
+            
+            input("\nPresiona Enter para continuar...")
+
+
+def ai_console_mode():
+    """Interactive AI Console with persistent chat sessions."""
+    from .chat_manager import ChatManager
+    
+    # Get username from status
+    status_res = api_client.get_status()
+    if not status_res["success"]:
+        print_error("No se pudo obtener información de usuario.")
+        return
+    
+    username = status_res["data"].get("username") or status_res["data"].get("email", "user")
+    is_premium = status_res["data"].get("is_premium", False)
+    chat_manager = ChatManager(username)
+    
+    # === CHAT SELECTION MENU ===
+    while True:
+        console.clear()
+        print_header("🧠 KR-CLI AI CONSOLE")
+        
+        chats = chat_manager.list_chats()
+        
+        # Limit chats for Free users
+        max_chats = 10 if is_premium else 5
+        display_chats = chats[:max_chats]
+        
+        if chats:
+            console.print("[bold cyan]Tus Chats:[/bold cyan]\n")
+            for i, chat in enumerate(display_chats, 1):
+                msg_count = chat["message_count"]
+                updated = chat["updated_at"][:16].replace("T", " ")
+                console.print(f" {i}. [bold]{chat['title']}[/bold]")
+                console.print(f"    [dim]{msg_count} mensajes | Actualizado: {updated}[/dim]")
+            
+            if not is_premium and len(chats) > 5:
+                console.print(f"\n[yellow]⭐ {len(chats) - 5} chats ocultos. Upgrade a Premium para ver todos.[/yellow]")
+            console.print()
+        else:
+            console.print("[dim]No tienes chats aún. Crea uno nuevo para comenzar.[/dim]\n")
+        
+        print_menu_option("N", "Nuevo Chat", "Iniciar una conversación nueva")
+        if chats:
+            print_menu_option("1-10", "Abrir Chat", "Continuar una conversación existente")
+            print_menu_option("D", "Eliminar Chat", "Borrar un chat")
+            if is_premium:
+                print_menu_option("E", "Exportar Chat", "Guardar como Markdown")
+        print_menu_option("0", "Volver", "Regresar al menú principal")
+        
+        console.rule(style="dim magenta")
+        choice = get_input("Selecciona").strip().lower()
+        
+        if choice == "0":
+            break
+        elif choice == "n":
+            title = get_input("Título del chat (Enter para auto)").strip()
+            session = chat_manager.create_chat(title if title else None)
+            run_chat_session(chat_manager, session)
+        elif choice == "d" and chats:
+            try:
+                idx = int(get_input("Número de chat a eliminar")) - 1
+                if 0 <= idx < len(chats):
+                    chat_id = chats[idx]["chat_id"]
+                    if confirm(f"¿Eliminar '{chats[idx]['title']}'?"):
+                        chat_manager.delete_chat(chat_id)
+                        print_success("Chat eliminado.")
+                        input("\nPresiona Enter...")
+            except ValueError:
+                pass
+        elif choice == "e" and is_premium and chats:
+            # Export chat to Markdown
+            try:
+                idx = int(get_input("Número de chat a exportar")) - 1
+                if 0 <= idx < len(display_chats):
+                    chat = display_chats[idx]
+                    session = chat_manager.load_chat(chat["chat_id"])
+                    if session:
+                        from datetime import datetime
+                        filename = f"chat_{chat['title'].replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M')}.md"
+                        
+                        with open(filename, "w") as f:
+                            f.write(f"# {chat['title']}\n\n")
+                            f.write(f"*Exportado: {datetime.now().strftime('%Y-%m-%d %H:%M')}*\n\n---\n\n")
+                            for msg in session.get("messages", []):
+                                role = "**Usuario:**" if msg["role"] == "user" else "**DOMINION:**"
+                                f.write(f"{role}\n{msg['content']}\n\n")
+                        
+                        print_success(f"Chat exportado a: {filename}")
+                        input("\nPresiona Enter...")
+            except ValueError:
+                pass
+        elif choice.isdigit() and chats:
+            idx = int(choice) - 1
+            if 0 <= idx < len(display_chats):
+                session = chat_manager.load_chat(display_chats[idx]["chat_id"])
+                if session:
+                    run_chat_session(chat_manager, session)
+
+
+def run_chat_session(chat_manager, session):
+    """
+    Run a continuous chat session.
+    
+    Args:
+        chat_manager: ChatManager instance
+        session: ChatSession to interact with
+    """
+    while True:
+        console.clear()
+        print_header(f"💬 {session.title}")
+        
+        # Display chat history
+        if session.messages:
+            console.print("[dim]─── Historial (últimos 8 mensajes) ───[/dim]\n")
+            
+            # Show last 8 messages with full content
+            display_messages = session.messages[-8:]
+            
+            for msg in display_messages:
+                role_style = "bold cyan" if msg["role"] == "user" else "bold magenta"
+                role_label = "Tú" if msg["role"] == "user" else "KR-AI"
+                
+                # Display complete message with proper formatting
+                from rich.panel import Panel
+                from rich.markdown import Markdown
+                
+                # Try to render as markdown for better formatting
+                try:
+                    content = Markdown(msg['content'])
+                except:
+                    content = msg['content']
+                
+                console.print(Panel(
+                    content,
+                    title=f"[{role_style}]{role_label}[/{role_style}]",
+                    border_style="bright_cyan" if msg["role"] == "user" else "bright_magenta",
+                    padding=(0, 1),
+                    expand=False
+                ))
+        
+        console.rule(style="dim violet")
+        console.print("[dim]Escribe '/exit' para volver | '/clear' para limpiar historial[/dim]\n")
+        
+        # Get user input
+        user_input = get_input("Tú").strip()
+        
+        if not user_input:
+            continue
+        
+        if user_input.lower() in ["/exit", "/quit", "0"]:
+            break
+        
+        if user_input.lower() == "/clear":
+            if confirm("¿Limpiar todo el historial de este chat?"):
+                session.messages = []
+                chat_manager.save_chat(session)
+                print_success("Historial limpiado.")
+            continue
+        
+        # Add user message to session
+        session.add_message("user", user_input)
+        
+        # Build context-aware prompt
+        context = chat_manager.get_chat_context(session, max_messages=8)
+        
+        prompt = f"""
+HISTORIAL DE CONVERSACIÓN:
+{context}
+
+Responde al último mensaje del usuario de forma natural y coherente con el contexto.
+        """
+        
+        # Query AI
+        with show_loading("KR-AI está pensando..."):
+            env = detector.get_system_info()
+            result = api_client.ai_query(prompt, env)
+        
+        if result["success"]:
+            data = result["data"]
+            ai_response = data.get("response", "")
+            
+            # Add AI response to session
+            session.add_message("assistant", ai_response)
+            
+            # Save session
+            chat_manager.save_chat(session)
+            
+            # Display response immediately with full content
+            from rich.panel import Panel
+            from rich.markdown import Markdown
+            
+            try:
+                response_content = Markdown(ai_response)
+            except:
+                response_content = ai_response
+            
+            console.print()
+            console.print(Panel(
+                response_content,
+                title="[bold magenta]KR-AI[/bold magenta]",
+                border_style="bright_magenta",
+                padding=(1, 2)
+            ))
+            console.print()
+            
+            if "credits_remaining" in data and data["credits_remaining"] is not None:
+                console.print(f"[dim]💳 Créditos: {data['credits_remaining']}[/dim]\n")
+        else:
+            error_msg = result.get('error', 'Error desconocido')
+            session.messages.pop()  # Remove user message if AI failed
+            
+            if "credits" in error_msg.lower() or "créditos" in error_msg.lower():
+                # Get user status to check if premium
+                status_res = api_client.get_status()
+                is_user_premium = status_res.get("data", {}).get("is_premium", False) if status_res.get("success") else False
+                
+                console.clear()
+                console.print("\n[bold red]😔 ¡Se agotaron tus créditos![/bold red]\n")
+                console.print("[bold white]Estábamos en algo importante...[/bold white]")
+                console.print("[cyan]Tu última consulta era valiosa y DOMINION estaba[/cyan]")
+                console.print("[cyan]listo para darte información exclusiva sobre el tema.[/cyan]\n")
+                
+                console.print("[bold yellow]🔥 No te quedes sin saber:[/bold yellow]")
+                console.print("  • La respuesta completa está lista para ti")
+                console.print("  • DOMINION tiene el conocimiento que buscas")
+                console.print("  • Un solo paso te separa de continuar\n")
+                
+                console.rule(style="yellow")
+                if is_user_premium:
+                    console.print("[bold green]💎 Eres usuario PREMIUM[/bold green]")
+                    print_menu_option("1", "💳 Comprar Créditos", "200 créditos - $10")
+                else:
+                    console.print("[bold green]💎 PAQUETES DISPONIBLES:[/bold green]")
+                    console.print("  💳 [bold]Créditos[/bold]: 200 créditos - $10")
+                    console.print("  👑 [bold]Premium[/bold]: 500 créditos + herramientas - $20/mes\n")
+                    print_menu_option("1", "💎 Ver Tienda", "Comprar créditos o Premium")
+                print_menu_option("0", "Volver al menú")
+                console.rule(style="yellow")
+                
+                sub_choice = get_input("¿Qué deseas hacer?")
+                if sub_choice == "1":
+                    upgrade_menu()
+                return  # Exit chat session
+            else:
+                print_error(error_msg)
+                input("\nPresiona Enter para continuar...")
+
+
+
+def config_menu():
+    """Configuration menu. Returns True if user logged out."""
+    while True:
+        status_res = api_client.get_status()
+        if not status_res["success"]:
+            return False
+            
+        data = status_res["data"]
+        
+        console.clear()
+        print_header("⚙️  CONFIGURACIÓN")
+        console.print(f"👤 Usuario: {data.get('username')}")
+        console.print(f"📧 Email: {data.get('email')}")
+        console.print(f"🆔 User ID: {data.get('user_id')}")
+        console.print(f"💳 Créditos: {data.get('credits')}")
+        console.print(f"📅 Suscripción: {data.get('subscription_status')}")
+        console.print("\n")
+        
+        print_menu_option("1", "Cerrar Sesión")
+        print_menu_option("0", "Volver")
+        
+        choice = get_input("Opción")
+        
+        if choice == "1":
+            if confirm("¿Cerrar sesión?"):
+                api_client.logout()
+                console.print("\n[bold cyan]👋 ¡Hasta pronto! Sesión cerrada correctamente.[/bold cyan]")
+                console.print("[dim]Gracias por usar KR-CLI DOMINION. Protegiendo tu entorno...[/dim]\n")
+                import time
+                time.sleep(2)
+                return True  # Return True to signal logout
+        elif choice == "0":
+            return False  # Return False for normal exit
+
+def agent_mode():
+    """Direct Agent Creation Mode with Iterative Session."""
+    status = api_client.get_status()["data"]
+    is_premium = status.get("is_premium", False)
+    
+    # Session state
+    current_context = "Nuevo Proyecto"
+    
+    while True:
+        console.clear()
+        print_header("🤖 KALIROOT AGENT CREATOR")
+        
+        if not is_premium:
+            console.print("[yellow]⚠️  Modo Free: La creación de proyectos consume créditos altos.[/yellow]")
+            console.print("[dim]Actualiza a Premium para uso ilimitado y soporte de proyectos complejos.[/dim]\n")
+        
+        # Display Context
+        if file_agent.current_project:
+            current_context = f"Proyecto Activo: [green]{file_agent.current_project}[/green]"
+            print_panel(
+                f"[bold]Proyecto:[/bold] {file_agent.current_project}\n[dim]{file_agent.get_project_path()}[/dim]",
+                title="Estado de Sesión",
+                style="green"
+            )
+        else:
+            console.print("[dim]No hay proyecto activo. Comienza describiendo uno nuevo.[/dim]\n")
+        
+        console.print("\n[bold cyan]Instrucciones:[/bold cyan]")
+        console.print(" • Describe un nuevo proyecto para crearlo.")
+        console.print(" • Si ya tienes uno activo, pide cambios (ej: 'añade un README', 'cambia el color').")
+        console.print(" • Escribe '0' para volver al menú principal.\n")
+        
+        instruction = get_input(f"Agente ({file_agent.current_project or 'Nuevo'})").strip()
+        
+        if instruction == "0":
+            break
+            
+        if not instruction:
+            continue
+            
+        # Execute Task
+        with show_loading("🤖 El Agente está trabajando (Planificando y Codificando)..."):
+            result = file_agent.run_task(instruction)
+        
+        if result["success"]:
+            # Success Output
+            console.print("\n[bold green]✅ Tarea Completada[/bold green]")
+            console.print(f"[dim]{result.get('summary')}[/dim]\n")
+            
+            if result.get("created"):
+                console.print("[bold]Archivos Creados:[/bold]")
+                for f in result["created"]:
+                    console.print(f"  [green]+ {f}[/green]")
+                    
+            if result.get("updated"):
+                console.print("[bold]Archivos Modificados:[/bold]")
+                for f in result["updated"]:
+                    console.print(f"  [yellow]~ {f}[/yellow]")
+            
+            # Update session context name if changed
+            if result.get("project"):
+                file_agent.set_project(result["project"])
+            
+            console.print("\n[dim]El contexto del proyecto se ha actualizado. Puedes pedir más cambios.[/dim]")
+            
+        else:
+            # Error Handling
+            error_msg = result.get("error", "Unknown error")
+            print_error(f"Fallo en la ejecución: {error_msg}")
+            
+            if "créditos" in error_msg.lower():
+                console.print("\n[bold yellow]¿Deseas recargar créditos y obtener acceso Premium?[/bold yellow]")
+                print_menu_option("1", "Comprar Ahora ($10/mes)")
+                print_menu_option("0", "Volver")
+                
+                if get_input("Opción") == "1":
+                    upgrade_menu()
+
+        input("\nPresiona Enter para continuar...")
+
+
+def settings_menu() -> bool:
+    """Settings menu. Returns True if should exit app."""
+    print_header("⚙️ CONFIGURACIÓN")
+    
+    sys_info = detector.get_system_info()
+    
+    console.print(f"[bold]Sistema:[/bold] {detector.get_distro_name()}")
+    console.print(f"[bold]Usuario:[/bold] {api_client.username}")
+    console.print(f"[bold]Shell:[/bold] {sys_info['shell']}")
+    
+    # Module status
+    console.print(f"\n[bold]Estado de módulos:[/bold]")
+    console.print(f"  🔍 Búsqueda Web: {'[green]Disponible[/green]' if WEB_SEARCH_AVAILABLE else '[red]No disponible[/red]'}")
+    console.print(f"  🤖 Agente: {'[green]Disponible[/green]' if AGENT_AVAILABLE else '[red]No disponible[/red]'}")
+    
+    if AGENT_AVAILABLE:
+        console.print(f"\n[bold]Directorio de proyectos:[/bold]")
+        console.print(f"  [dim]{file_agent.base_dir}[/dim]")
+    
+    print_divider()
+    print_menu_option("1", "🚪 Cerrar Sesión")
+    print_menu_option("0", "⬅️  Volver")
+    
+    choice = get_input("Selecciona")
+    
+    if choice == "1":
+        if confirm("¿Cerrar sesión?"):
+            api_client.logout()
+            print_success("Sesión cerrada.")
+            return True
+    
+    return False
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# MAIN ENTRY POINT
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def main():
+    """Application entry point."""
+    try:
+        # Import animated splash
+        try:
+            from .ui.splash import animated_splash
+            SPLASH_AVAILABLE = True
+        except ImportError:
+            SPLASH_AVAILABLE = False
+        
+        # Check for --no-splash or -q flag
+        skip_splash = "--no-splash" in sys.argv or "-q" in sys.argv
+        
+        # Animated splash screen (5 second cinematic intro)
+        if SPLASH_AVAILABLE and not skip_splash:
+            animated_splash(skip_animation=False, duration=5.0)
+        
+        # Clear and show main banner
+        console.clear()
+        print_banner()
+        
+        # System info
+        sys_info = detector.get_system_info()
+        print_info(f"Sistema: {sys_info['distro']} │ {sys_info['shell']}")
+        
+        # Show module status
+        modules = []
+        if WEB_SEARCH_AVAILABLE:
+            modules.append("🔍 Web Search")
+        if AGENT_AVAILABLE:
+            modules.append("🤖 Agent")
+        
+        if modules:
+            print_info(f"Módulos: {' │ '.join(modules)}")
+        
+        # Authenticate
+        if not authenticate():
+            console.print("\n[cyan]¡Hasta pronto![/cyan]\n")
+            sys.exit(0)
+        
+        # Main menu
+        main_menu()
+        
+    except KeyboardInterrupt:
+        console.print("\n[bold cyan]👋 Interrumpido.[/bold cyan]\n")
+        sys.exit(0)
+    except Exception as e:
+        print_error(f"Error: {e}")
+        logger.exception("Main crash")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
+
