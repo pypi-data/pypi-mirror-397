@@ -1,0 +1,80 @@
+from typing import Any, Dict, List, Optional, Sequence
+from abc import ABC, abstractmethod
+from pydantic import BaseModel
+from autogen_agentchat.agents import AssistantAgent
+from autogen_core.models import ChatCompletionClient
+from autogen_core.tools import BaseTool
+from autogen_core.memory import Memory
+from autogen_core.model_context import ChatCompletionContext
+
+
+class AgentRequest(BaseModel):
+    """统一的Agent请求格式"""
+    task: str
+    context: Optional[Dict[str, Any]] = None
+    config: Optional[Dict[str, Any]] = None
+
+
+class AgentResponse(BaseModel):
+    """统一的Agent响应格式"""
+    success: bool
+    result: Optional[str] = None
+    error: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class MtBaseAgent(ABC):
+    """
+    mtmai基础Agent类，基于autogen v0.7.2架构
+
+    设计原则：
+    - 仅作为agent运行的入口，不包含过多业务逻辑
+    - 统一的请求和响应格式
+    - 支持多种入口（HTTP、消息队列、任务调度等）
+    """
+
+    def __init__(
+        self,
+        name: str,
+        description: str = "base agent",
+        model_client: Optional[ChatCompletionClient] = None,
+        tools: Optional[List[BaseTool]] = None,
+        memory: Optional[Sequence[Memory]] = None,
+    ):
+        self.name = name
+        self.description = description
+        self.model_client = model_client
+        self.tools = tools or []
+        self.memory = memory
+
+    @abstractmethod
+    async def execute(self, request: AgentRequest) -> AgentResponse:
+        """
+        执行agent任务的抽象方法
+
+        Args:
+            request: 统一的请求格式
+
+        Returns:
+            AgentResponse: 统一的响应格式
+        """
+        pass
+
+    def _create_autogen_agent(
+        self,
+        system_message: Optional[str] = None,
+        model_context: Optional[ChatCompletionContext] = None,
+    ) -> AssistantAgent:
+        """创建autogen AssistantAgent实例"""
+        if not self.model_client:
+            raise ValueError("model_client is required to create autogen agent")
+
+        return AssistantAgent(
+            name=self.name,
+            model_client=self.model_client,
+            tools=self.tools,
+            description=self.description,
+            system_message=system_message or f"You are {self.name}, {self.description}",
+            model_context=model_context,
+            memory=self.memory,
+        )

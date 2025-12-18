@@ -1,0 +1,1140 @@
+## 概述
+
+GoMTM 是一个基于 OpenAPI v3.1 的模块化多租户管理系统，集成了 AI Agent、内容管理、自动化聊天等功能。系统采用微服务架构，支持多平台部署，使用 PostgreSQL 作为主数据库。
+
+## 目录结构
+
+```tree
+gomtm/                         # 主项目根目录
+├── cmd/                       # 命令行工具入口
+│   └── main.go               # 主程序入口点
+├── pkg/                       # 核心业务包
+│   ├── repository/mtmrepos/  # 数据访问层
+│   ├── api/                  # API 服务层
+│   ├── auth/                 # 认证授权
+│   ├── workflows/            # 工作流引擎
+│   └── mtutils/              # 通用工具库
+├── apps/                      # 应用程序
+│   ├── gomtm_frontend/       # 前端管理界面 (Next.js)
+│   └── browserapp/           # 浏览器自动化
+├── packages/                  # 可复用包
+│   ├── mtgate/               # API 网关服务
+│   ├── mtmsdk/               # TypeScript SDK
+│   ├── mtedge/               # 边缘计算服务
+│   ├── mtnextblog/           # 博客前端模板
+│   └── mtxuilib/             # UI 组件库
+├── mtmai/                     # Python AI Agent 服务
+├── tests/                     # 测试用例
+│   └── integration/          # 集成测试
+└── docs/                      # 项目文档
+```
+
+## mtgate 后端 (#mtgate后端)
+
+`mtgate` 是部署在 cloudflare worker 上的后端api, 数据库结构跟gomtm 共用相同的drizzle schema 以及共用相同的postgresql实例.  mtgate 是核心数据服务器,通过openapi api的方式向其他客户端提供数据.
+
+依赖 mtgate 的应用有
+
+- apps/gomtm_frontend - 前端 通过 openapi 客户端访问mtgate
+- gomtm - gomtm 前端通过调用mtgate的api获取数据进行类似 worker 之类的操作.
+- mtnextblog - 通过调用mtgate的api获取站点信息和文章等信息展示相关内容.
+- mtmai - 基于python实现 AI Agent 功能, 通过跟 mtgate api 的数据交互完成相关自动化的相关功能.
+
+### 开发提示
+
+- 前端"/dash"入口是独立的前端实现，不要复用 gomtm 前端的相关组件，因为 /dash 对应的后端 API 不是完全对应
+- "/dash" 用到的组件，应该放到 `apps/gomtm_frontend/src/routes/~dash/components/` 目录下
+- hooks 放到目录 `apps/gomtm_frontend/src/routes/~dash/hooks/` 目录下
+- 使用 TanStack Router，只有 `apps/gomtm_frontend/src/routes/` 下以 `~` 作为前缀的目录或文件名才会被识别为路由页面
+
+### OpenAPI 客户端生成
+
+- **配置文件**: `packages/mtsdk/openapi-ts.hono.config.ts`
+- **生成命令**: `cd apps/mtgate && bun run cli deploy`
+- **输出路径**: `packages/mtsdk/src/mtgate_api/`
+
+### API 架构设计
+
+- **Repository 层**: 负责所有数据库操作
+  - 示例: `packages/mtgate/src/server/repository/site_service.ts`
+- **API 层**: 负责验证、权限检查、数据转换
+  - 示例: `packages/mtgate/src/server/routes/site.ts`
+
+
+
+## 项目源码组织-新版 (#项目源码组织-新版)
+
+新版项目组织对于nodejs(npm)项目使用多个 packages的形式,在开发环境下项目间可以直接引用.
+
+- packages/ - 作为库使用的 npm 包, 构建后会发布到 npm 仓库中
+- apps/ - 应用程序包
+
+例子:
+  1: 添加react 公用 component
+    - 例如"apps/gomtm_frontend"项目需要提取一个公共的组件 "SomeShareComponent",允许本项目使用也允许其他子项目共享这个组件. 步骤
+      1: 在 "packages/mtxuilib/src/components/" 新建 "SomeShareComponent.tsx",参考现有源码的风格正确实现UI组件功能.
+      2: 运行命令`cd packages/mtxuilib && bun run build`
+      3: 在 "apps/gomtm_frontend" 项目中,导入这个组件`import { SomeShareComponent } from "mtxuilib/components/SomeShareComponent";`
+
+### packages (#packages)
+
+packages 是位于"packages/"目录下的包,是npm项目结构, 通过`bun run publish` 命令进行发布.
+
+- [packages/mtsdk](packages/mtsdk) - gomtm api 的typescript客户端库, 由openapi生成, 通过`bun run cli deploy`命令自动发布到npm.
+
+- [packages/mtnextblog] -
+  - [功能]
+    - 独立站前端展示系统,通常对应一个域名. 基于 nextjs 搭建. 部署到 cloudflare worker.
+    - mtnextblog 将作为"应用模板"使用,使用复制的方式可以让其他用户基于这个模板快速定制应用.
+    - 系统的CMS数据使用D1数据库.整个站的内容数据是独立自治的.
+    - mtnextblog/app/ - 是基于nextjs 的页面,页面展示的是站点的"页面"逻辑,页面是高度定制化的.
+  - [依赖]
+    - [mtsdk] - mtgate 客户端
+    - [mtedge] - 提供基本的后端api服务(作为库导入),api 通常实现内容管理相关的api.
+
+#### mtedge子项目 (#mtedge子项目)
+
+实现基于cloudflare worker 运行环境下的内容管理系统.
+
+- "packages/mtedge/src/server/app.ts" 导出基于cloudflare worker 的api,主要实现基础数据管理,包括内容管理组件.允许独立的其他子项目通过引入库的形式导入并部署api端点,例如:"packages/mtnextblog/src/app/api/mtedge_api/[[...openapi]]/route.ts", 这样子项目可以基于这个库快速公用 mtedge api 逻辑,并且数据独立.
+
+#### mtnextblog子项目 (#mtnextblog子项目)
+
+mtnextblog 高度依赖"mtedge" 项目，主要关注点在于使用 "mtedge" 库，并且自定义页面和自定义部分专用组件实现独立站的部署。
+
+- 当涉及 API 相关升级重构、公用组件的重构等问题，应该在 "mtedge" 子项目中进行
+
+典型场景：在一个新的 git repo 依据 mtnextblog 作为模板，底层核心功能引入"mtedge"，根据具体的独立站的实际业务进行页面定制，通常需要定制的页面有首页、内容展示页、登录页等。
+
+## 系统架构
+
+### API 层
+
+基于 [Fuego](https://github.com/go-fuego/fuego) 框架实现，源码优先，自动生成 OpenAPI v2 规范。
+
+- **关键源码**: `mtm/api/v2/server.go`
+
+### Repository 数据层
+
+**主入口**: `pkg/repository/mtmrepos/repository.go`
+
+#### 编程规范
+
+- **标准示例**: `pkg/repository/mtmrepos/site.go`
+- **数据转换**: 使用 `pgx.RowToStructByName` 完成行到实体的转换
+- **参数化查询**: 使用命名参数，禁止 SQL 拼接
+- **错误处理**: 直接返回原始错误，不进行额外封装
+- **实体命名**: 数据库实体以 `DB` 作为前缀，如 `DBUser`
+
+```go
+// 正确示例
+rows, err := pool.Query(ctx, sql, args)
+if err != nil {
+    return nil, err // 直接返回原始错误
+}
+```
+
+## 开发原则
+
+### 核心理念
+
+- **渐进式开发**: 采用 MVP 方式，先实现核心功能，再逐步扩展
+- **充分复用**: 避免重复造轮子，优先使用现有解决方案
+- **持续迭代**: 保持快速迭代和持续改进
+- **用户体验优先**: 特别关注前端用户体验设计
+
+### 设计原则
+
+- **如无必要，勿增实体**: 谨慎添加新的函数、文件、接口等，避免依赖膨胀
+- **类型安全**: 充分利用 TypeScript、Go、Python 的类型系统和 Lint 工具
+- **避免过早优化**: 功能验证通过前，不进行复杂的性能优化
+- **文档驱动**: 严格按照需求文档开发，不实现文档未提及的功能
+
+### 编码风格
+
+- **函数式风格优先**
+- **无状态优先**
+- **简单直接**: 要简单不要复杂，要简洁不要繁琐，要直接不要迂回
+- **严格遵守 DRY 原则**
+
+## 任务类型及执行指引 (#任务类型及执行指引)
+
+### 全局源码分析 (#global-source-code-analysis)
+
+当软件开发已经到达一定的阶段,各个程序员基本已经完成了代码开发,认为功能正确通过了所有测试.现在需要进行全局性的评估和优化,甚至可能需要重构计划.
+
+重点关注
+
+- **同一功能多个实现**
+- **设计不一致**
+- **重复造轮子**
+- **潜在的逻辑错误**
+- **过于繁琐的测试用例**
+- **效率低下运行时间过长的测试用例**
+- **能直接做到的事情非要拐弯抹角,做了额外的多余的步骤**
+- **缓存失效**
+- **不正确的数据库事务**
+- **潜在的问题**
+- **过度设计**
+- **正式测试用例和基础测试用例过于详细和耦合度过高**
+- **潜在的竟态问题**
+- 其他对项目后续开发和质量有严重影响的问题.
+
+#### 步骤与要求
+
+以最近完成的任务为线索分析后端源码,找出需要后端代码存在的问题.按级别输出到:`docs/reports/global-{MMddhhmm}.md`文件中.
+
+- 不能更改现有源码,仅阅读分析.
+- 必要时可以编写流式测试用例对问题进行更加什么的分析.
+- 对代码写一份尖锐的批评——指出所有错误、实现不当之处、以及任何不适合生产环境的部分。列出每一个弱点并解释其糟糕之处。然后，撰写一份详细的技术实施计划来修复这些问题。
+- 格式要求:
+  1. 有"概述"栏目
+
+  2. 有"任务指引"栏目
+      包含以下字符
+
+      ```markdown
+      ## 任务指引
+      第一步:必须**完整****一字不漏**阅读[文档](docs/index.md)并且认真思考和**领悟**文档主旨,以文档作为**第一原则**
+      **在后多个步骤,不能因为工作量大而遗忘**,**需要一直记着** 这是能够顺利进行后续任务的前提. 如果读取文档失败, 应终止后续所有步骤并报告问题.
+      ```
+
+  3. ...
+
+  4. 最后有 `TODOS` 栏,使用自然语言分配任务给开发人员,开发人员可以按照任务描述进行编程开发
+  - 格式:
+    - [ ] 任务描述...
+      - 要求: 描述123
+      - 优先级: [高|中|低]
+      - 验收标准: 描述123
+      - 如有`关键文件列表` 列出,包括
+        - 源码:
+          - `somefile.go`
+        - 测试用例:
+          - `some.test.tsx`
+
+### 代码重构 (#code-refactoring-task)
+
+随着项目推进,源码会出现一些代码复用问题, 残余的旧代码问题, 代码不规范问题, 注释不规范等等问题, 需要阶段性地重构代码来维持代码质量,让源码整洁,有序,优雅. 完成代码重构后, 代码依然符合以下条件:
+
+- 符合设计规格文档描述,不破坏程序逻辑
+- 不能更改测试用例代码
+- 更高的代码质量, 能通过 tsc check, golang-linter, python lint 等工具的检测.
+- 最终代码量应该更少或者更加优雅, 依然能够通过所有测试.
+
+**代码重构技巧** - 针对特定语言可以使用相关的代码分析工具进行辅助,例如,
+
+- 如果是golang源码,可以使用这个命令进行静态分析,找出所有没有被实际使用的函数:`go run honnef.co/go/tools/cmd/staticcheck@latest -checks=U1000 ./pkg/... ./cmd/... ./mtm/... | head -20`
+
+- `go install golang.org/x/tools/cmd/deadcode@latest`
+  `deadcode ./pkg/... ./cmd/... ./mtm/... | head -20`
+
+- go-consistent 检查代码一致性
+  `go install github.com/quasilyte/go-consistent@latest`
+  `go-consistent ./pkg/... ./cmd/... ./mtm/... | head -10`
+
+- 其他
+  deadcode - 定期检测死代码，保持代码库整洁
+  govulncheck - 必须集成到 CI/CD，确保安全性
+  ineffassign - 检测逻辑错误，提高代码质量
+  go-consistent - 保持代码风格一致性
+  go mod tidy - 每次提交前清理依赖
+
+**任务分类** (#代码重构任务分类)
+
+- **清理向后兼容代码** - 仅保留最新的实现
+
+- **规范化注释** - 按照 "注释规范" 描述进行, 如果所有的文件都仅仅是修改(或者删除)允许使用"--no-verify"标记提交更改,从而跳过需要花费很长实践的pre-commit hook代码质量检测. 限制: 仅限 "*.go","*.ts","*.tsx","*.py" 文件. 其他我文件的注释不用理会. "备份文件"之类的不用理会.
+  - **清理多余注释**
+    WHEN 发现显而易见的功能, 函数名称已经能反映其意图的. (配置文件,文档,等非程序源码文件除外)
+    THE CODER SHOULD 删除注释
+
+- **应当清理为删除旧代码而使用的注释**
+  WHEN 发现应当清理为删除旧代码而使用的注释
+  THE CODER SHOULD 删除注释
+
+- **规范化测试用例** - 所有测试用例都必须符合"测试规范"描述的要求, 如果不符合修改重构.
+
+- **清理调试日志** - 清理所有为诊断问题,临时添加但是最后忘记删除的调试日志代码.
+
+- **过度设计** - 简化设计,去除没必要的中间步骤,多余的函数,多余的结构体,多余的过程等等, 最终要设计简洁明了 .
+- **无效代码** - 无效代码具体指:"可以直接删除且删除后不会对系统造成影响的代码"
+- **重复代码** - 例如重复检测. 重复加载, 重复初始化,
+- **typescript代码规范化** - 确保所有typescript代码符合:"typescript-编程规范",如果不符合,应该按照文档提示修
+
+### 集成测试重构 (#集成测试重构)
+
+- 应当使用"pkg/client/"包下的客户端,客户端是根据openapi 规格生成的,类型和api完全跟后端对应强类型,因而不用构造丑陋的 http request,例如: `httptest.NewRequest(http.MethodGet, "/api/v1/admin/users", nil)`
+- 合并重复的测试用例, 删除明显多余的测试用例,让整个测试代码**统一**,**简洁**,**完整**,**优雅**.
+- 后端 api handler(mtm/api/v1/server/handlers) 不应该直接操作数据库,对所有数据库的操作,都应该使用repository进行.
+- 根据[golang-重构指引](index.md#golang-重构指引) 对后端golang代码进行重构.
+- 重构或者合并明显违反主文档规格描述的测试用例.
+- 当发现多层嵌套的逻辑,应该简化.
+- 当使用标准库可以直接实现的, 改为标准库实现,从而减少对其他库的依赖.
+
+## 常用命令
+
+### 项目管理
+
+```bash
+# 安装 CLI 工具
+npm i -g gomtm-cli
+
+# 查看项目历史
+git log -n 30
+
+# 生成 OpenAPI 客户端
+gomtm gen
+
+# 构建项目
+go run cmd/*.go build
+```
+
+### 开发调试
+
+```bash
+# 代码格式化
+go fmt ./...                                    # Go 代码
+bun biome format --write ./src          # TypeScript 代码
+
+# 静态分析
+go run honnef.co/go/tools/cmd/staticcheck@latest -checks=U1000 ./pkg/... ./cmd/... ./mtm/...
+
+# 运行测试
+go test -vet=off ./...                          # 后端测试
+bun test:e2e:v2                                 # 前端 E2E 测试
+```
+
+### 服务部署
+
+```bash
+# 启动开发服务器
+export MTGATE_URL=https://mtgate.yuepa8.com
+go run cmd/*.go --build --container server --port=8099
+
+# 数据库迁移
+gomtm db migrate --db-url="postgres://xxxx"    # Go 服务
+bun cli db migrate                              # mtgate 服务
+
+# 前端部署
+cd apps/mtgate && bun run cli deploy           # mtgate 前端
+cd apps/gomtm_frontend && bun run cli deploy   # 主前端
+```
+
+## typescript 编程规范 (#typescript-编程规范)
+
+- 使用 async await 风格`async myfunction(){}`, **禁止** `new Promise({resolve,reject}){resolve()}` 风格
+- **避免使用any** - 如果确实无法确定类型,使用:**unknown**
+- 优先使用openapi 生成的客户端类型, 而不是自定义数据类型.
+
+### typescript编程常见错误及修正方法
+
+- 薄封装
+
+  ```ts
+  ~~async function globalTeardown() {~~
+    await cleanup(); //
+  ~~}~~
+  ```
+
+## `mtmai` (#mtmai)
+
+### mtmai 概述
+
+mtmai 项目主要实现 AI Agent 的功能,通过相关 http 端点提供服务.
+
+### mtmai 项目常用命令
+
+```bash
+# 项目初始化
+
+uv sync --no-cache
+uv pip install -e .
+# 启动默认 http 服务
+uv run mtmai
+
+```
+
+#### mtmai核心技术栈
+
+- fastapi
+- pydantic
+- sqlalchemy
+- psycopg2
+
+### mtmai关键文件结构
+
+- [主程序入口](mtmai/main.py)
+- [http api 服务器](mtmai/server.py)
+- [api端点(路由)](mtmai/api/)
+- [子命令](mtmai/cli/)
+- [系统引导及系统配置](`mtmai/core/`)
+- [测试](mtmai/tests/)
+- [pyproject.toml](pyproject.toml) - python 项目配置文件.
+- [agents](mtmai/agents/) - 用子文件夹存放名称对应的agent实现
+
+### mtmai 设计架构和原理
+
+mtmai 主要使用 google python adk 实现智能体服务. 以及提供必要的api,让 honoapi 可以正确调用. 由于honoapi 运行于cloudflare worker 功能受限. mtmai 作为相关功能的补充. honoapi 的服务器端以openapi客户端的形式通过代码生成源码在"mtmai/honoapi/rest/"目录下. 同时: mtmai 作为openapi服务器,通过代码生成typscript 客户端代码, 位于"apps/gomtm_frontend/src/lib/mtmai_api/"目录下. 两套服务是互相依赖的关系.
+
+## 测试规范(#测试规范)
+
+本章节代码虽然用特定编程语言作为例子, 但是同样适用于其他类型的测试用例.
+
+**测试用例源码编写规范** 所有测试必须符合以下条件
+
+- **自维持**
+- **无外部依赖** - 特别是操作系统环境和外部API调用
+- [**幂等**]
+- [**并发支持**]
+- [**无状态**]
+
+### 测试技术指导
+
+- **测试用例避免tryCatch** - 原因直接让异常信息抛出对于问题诊断更加有利,可以看到更加明确的错误信息.
+  - [错误例子]
+
+    ```ts
+    test("somtest"){
+      ~~try{~~
+        callSomeApi()
+      ~~}catch(e){~~
+        ~~console.log("some custom error message")~~
+      ~~}~~
+    }
+    ```
+
+### 测试目的
+
+- 确保测试用例**完全**覆盖设计文档规格要求
+- 确实源码正确实现了功能
+- 锁定相关实现方式和功能,防止在后续开发中破环了原有的功能
+- 临时测试用例,用来诊断相关问题, 重现用户遇到问题的真实场景.
+
+### 常见测试问题及解决方法(#常见测试问题及解决方法)
+
+- 思考测试代码对应的编程语言的测试最佳实践, 语法应该符合相关linter规则,例如`testifylint`
+- 应该避免日志输出,例如 `console.log`, `fmt.Print`,`t.Log`等日志函数. 应当依靠断言,而不是日志.
+- 避免为了测试方便而改变业务函数的参数和函数的实现
+- 应当思考避免使用基于字符串值的方式进行断言,尽量使用状态码,关键字,长度,异常等更为通用的方式进行断言,例如:[❌错误] `strings.Contains(textContent.Text, "Please provide valid credentials")
+- 删除无条件成立的断言
+- 当发现测试用例的描述和断言的描述已经清晰表达测试的意图时,删除多余的注释,**注释含`!!!`**字符除外.
+- 所有测试用例都不应依赖本地文件系统. 除了临时文件
+- 重构复杂,耦合度过高的测试用例.
+- 使用**表驱动测试法**
+- 应该**无条件删除**仅用于测试的业务代码,例如: `func XxxForTesting(){...}`, `func isTestEnvironment(){...}`,`func SetIsTesting(...){...}`,`var isTesting;`
+
+常见的无效断言(多余断言)例子:
+
+```go
+  var1 := "xxx"
+  ~~assert.NotEmpty(t, var1)~~ //错误: 无条件成立
+
+  // 隐含的重复断言
+  assert.Equal(t, os.FileMode(0700), perm, "xxx1")
+  ~~assert.NotEqual(t, os.FileMode(0), perm, "xxx3")~~ //错误: 已经被上一断言包含了逻辑.
+
+  assert.NotEmpty(t, setupRequest.DatabaseUrl, "xxx1")
+  ~~assert.NotNil(t, setupRequest, "msg1")~~ //错误: 上一断言能通过,本断言必定能通过.
+
+  if value == "" {    //❌错误: 这个逻辑已经被assert.Greater(t, len(androidSdkVersion), 3)逻辑包含
+    t.Error("xxx")    //❌错误: 应使用断言
+  }
+  // 上面三行改为
+  ~~assert.NotEmpty(t, value)~~            //语句正确,优先使用断言,但是逻辑依然被下面的断言包含,所以多余.
+  assert.Greater(t, len(value), 3,"值太短") // ✔ 正确: 一行断言就涵盖了上方的多行的逻辑, 逻辑清晰,代码简短
+
+ ```
+
+### 集成测试指引 (#集成测试指引)
+
+- 由于本程序本身就已经内置了`embedded postgresql`的功能,可以作为集成测试用的测试数据库服务器.
+- 通常集成测试需要有辅助测试工具维护测试数据库的生命周期和上下文,按需启动本地`embedded postgresql`数据库服务器实例
+- 用数据库名称来区分:生产环境,测测试环境,开发环境数据库实例.
+- 应该用不用的测试数据库名来区分不同的测试用例,防止测试用例之间使用了脏数据导致测试结果不准确.
+- 应当充分使用事务回滚和共享数据库上下文的方式优化测试性能,毕竟启动一个数据库的代价很高.
+- 测试测试用例或者测试套件结束后**必须**及时释放数据库资源
+- 仅允许启动一个`embedded postgresql`数据库服务器实例, **禁止**启动第二个数据库服务器实例, 但是允许在一个数据库服务器实例中创建多个数据库
+- 集成测试应该避免启动监听端口,而是使用"net/http/httptest"
+- 所有集成测试文件源码,都必须在"tests/integration/"目录下
+
+### 集成测试代码规范
+
+**禁止滥用注释** - 代码本身就是最好的注释.
+**禁止等待** - 不能使用sleep或者类似的等待语句,应该确保在能够正确实现测试目的的前提下,尽可能快地完成.
+**适当宽泛** - 除非有明确需要,否则应该避免过多和过窄的断言和检测条件.
+**关注关键状态** - 避免对无关紧要的字段和状态进程断言和检测.
+
+### E2E测试指引 ((#E2E测试指引))
+
+- **自包含** - 测试用例应该带有按需启动后端,以及后端依赖的数据库逻辑,或者安全加载或者启动需要的其他依赖的资源或服务
+- **避免等待** - 不管测试成功还是测试失败,避免使用 sleep, 语句, 避免让页面等待, 测试用例完成第一时间关闭页面.
+- **断言复用** - 测试辅助套件应该根据规格文档描述,或者 bug 反馈时常见的问题,建立可复用的断言辅助函数
+- 禁止在业务组件同添加测试标签, 典型例子`<div ~~data-testid="user-avatar"~~ />`
+
+- **e2e测试代码规范**
+- **严格遵守代码注释规范**
+- **禁止** 使用console.log - 原因,应该用 expect 之类的断言,禁止任何形式的日志输入.
+- **禁止滥用tryCatch** - 报错,本身就是测试的一部分,详细的错误信息抛出,有利于诊断问题.
+- **禁止滥用注释** - 宁可没有任何代码注释也不能有多余的注释, 源码本身就是最好的注释.
+- **禁止直接调用api进行测试** - 因为直接调用后端api测试, 是属于后端集成测试的范畴, e2e测试主要通过UI的交互进行.
+
+## 知识点
+
+- **文件软删除** 直接使用在路径最后面加`--`重命名文件或者文件夹, 这样做文件就不能作为源码被导入, 超级管理员可以事后审查确定可以删除相关文件时可以手动精确删除
+  - 例子1: `/somedir/some.tsx` 重命名为 `/somedir/some.tsx--`
+
+### 项目结构
+
+```tree
+gomtm/                         # 主项目目录
+├── cmd/                       # 命令行工具
+│   ├── main.go                # gomtm 命令行工具入口
+├── api-contracts/             # API 契约定义
+│   └── openapi/openapi.yaml   # OpenAPI 规范文件(v1旧版-已经停止更新并逐步迁移到v2)
+├── pkg/                       # 核心包
+│   ├── client/                # Go 客户端
+│   ├── repository/            # 数据访问层
+│   │   └── mtmrepos/          # 数据访问层(主要)
+│   │     └── repository.go    # 数据访问层(入口)
+│   ├── workflows/             # 工作流组件
+│   │   └── workers/           # workers
+├── config/                    # 系统配置
+│   ├── loader/                # 配置加载器
+│   │   └── loader.go          # 配置加载器入口
+│   ├── server/                # 主配置
+│   │   └── server.go          # 主配置入口
+├── tests/                     # 测试用例主文件夹
+│   ├──integration/            # 后端集成测试
+├── mtm/
+│   ├── api/v1/server          # API 服务器实现(旧版)
+│   │   ├── handlers           # HTTP 处理器
+│   ├── api/v2/server          # API 服务器实现(新版)
+│   │   ├── handlers           # HTTP 处理器
+├── apps/                      # gomtm 相关的客户端应用
+│   │   ├── gomtm_frontend/    # 管理后台 前端
+|   │   ├── mtgate/            # mtgate 后端api 服务端
+├── packages                   # 公共库
+│   ├── mtmsdk/                 # api 客户端库, 包括react客户端库.
+│   ├── mtxuilib/              # 公共UI库
+├── docs/                      # 文档目录
+├── .pre-commit-config.yaml    # pre-commit 配置文件
+└── .golangci.yml              # golangci-lint 配置文件
+
+```
+
+## gomtm容器化 (#gomtm容器化)
+
+起始命令是在本机执行的,例如: `gomtm server --container --build` container 选项表示启动后,gomtm进程通过技巧以合适的参数启动一个容器,容器内运行 gomtm 服务. 本机的 gomtm 进程退出,容器继续运行.
+
+典型例子:
+
+```bash
+export MTGATE_URL=https://mtgate.yuepa8.com && gomtm server --container --build --port=8008
+```
+
+选项:
+
+- `--build` 选项表示在启动容器前,预先构建容器镜像. 构建将会输出到:"dist/gomtm", 主要目的是避免在开发环境下更改代码后,需要重新构建镜像, 关键原因是构建镜像花费的时间很长. 使用构建后的可执行程序,直接挂载在容器的相应路径,正确设置容器的启动命令即可让容器执行最新构建的gomtm程序.
+- `--container` - 表示以相同的环境变量和参数启动一个容器,容器内运行 gomtm 服务. 本机的 gomtm 进程退出,容器继续运行.
+- `--docker-sock` - 可选,表示使用指定的docker socket, 默认使用的是:unix:///var/run/docker.sock
+
+## 基于AI的浏览器自动化 (#基于AI的浏览器自动化)
+
+[browserapp](apps/browserapp) - 是基于AI的浏览器自动化项目, 使用命令行进行
+
+### 技术栈
+
+- [stagehand] - Stagehand allows you to automate browsers with natural language and code.You can use Stagehand to do anything a web browser can do! Browser automations written with Stagehand are designed to be repeatable, customizable, and maintainable.
+
+  - [官方文档](https://docs.stagehand.dev/)
+  - [开源仓库](https://github.com/browserbase/stagehand)
+  - example:
+
+  ```ts
+  // Use Playwright functions on the page object
+  const page = stagehand.page;
+  await page.goto("https://github.com/browserbase");
+
+  // Use act() to execute individual actions
+  await page.act("click on the stagehand repo");
+
+  // Use Computer Use agents for larger actions
+  const agent = stagehand.agent({
+      provider: "openai",
+      model: "computer-use-preview",
+  });
+  await agent.execute("Get to the latest PR");
+
+  // Use extract() to read data from the page
+  const { author, title } = await page.extract({
+    instruction: "extract the author and title of the PR",
+    schema: z.object({
+      author: z.string().describe("The username of the PR author"),
+      title: z.string().describe("The title of the PR"),
+    }),
+  });
+  ```
+
+## 数据库编程开发指引 (#数据库编程开发指引)
+
+- 遵循 PostgreSQL ^v16 最佳实践
+- 考虑兼容性和扩展性
+- 设计合理的关系（多个一对多关系避免超过2层级联）
+- 根据查询需求添加合理索引
+- 避免滥用索引
+- 避免过早优化
+- 应合理安排字段,只对常用查询字段使用索引, 避免盲目将所有字段都加上索引,不正确的索引会降低性能.
+- 表应该有软删除字段, created_at, updated_at, 等基本字段
+- 设计新表时应该使用 **MVP** 最小可行原则, 应先设计**核心**字段,验证可行了之后在后续迭代的过程中添加其他额外字段
+  - 不应一开始就将所有可能的字段都添加上去
+- 禁止使用动态 sql query builder 之类动态 sql 语句构建的方式
+
+## gomtm后端开发指引 (#后端开发指引)
+
+### 技术栈
+
+- golang v1.26
+- github.com/spf13/cobra
+
+### 规格
+
+- 需要同时支持`linux`和`windows`平台,单个可执行文件.
+- 优先使用基于游标的分页方式
+
+### 相关组件
+
+- [fuego]
+  - [repo](https://github.com/go-fuego/fuego) Golang Fuego - Web framework generating OpenAPI 3 spec from source code - Pluggable to existing Gin & Echo APIs
+  - [fuego 文档](https://github.com/go-fuego/fuego/tree/main/documentation/docs/guides) - 当出现生成客户端代码出现问题时,应该主动查看官方文档寻求正确的解决方式.
+
+## 前端开发指引 (#前端开发指引)
+
+- **移动端优先**
+- **图标优先** 特别是`动作按钮`和`行动按钮` 图标优先于文字标签
+- **theme** - theme 总是支持"dark","light" 两种色调,并且应该自动检测设备端默认的色调.
+- **优先使用`.tsx`** 特别是 react hook 文件,应使用 `.tsx` 后缀
+- **前端样式仅用 tailwindcss** - 禁止添加额外的css文件, 禁止在`globals.css`中再添加自定义样式.
+- **UI风格保持统一**
+- **正确的UI文字描述** - UI 中Label|description|title|等描述必须是跟功能匹配的; **禁止**出现技术性描述,以下情况严格禁止
+
+- **前端脚本应避免console.log泄露敏感信息**
+
+- **应优先使用 shadcn 作为默认组件** shadcn ui 组件能满足大部分组件的设计要求, 正确使用这个 ui 组件库可以大幅降低UI设计的复杂度.
+- **类型安全非常重要** 编程过程中,应时刻保持类型安全,因为当类型出现警告和错误时,往往按时则潜在的问题.
+- **优先使用客户端库而不是fetch** - "apps/gomtm_frontend/src/gomtmapi/" 路径下有由后端 openapi 生成的客户端库,跟后端api一一对应,并且是强类型.
+
+```tsx
+const someQuery= useQuery({
+  ...someApiOptions(),
+  ...otherOptions,
+});
+```
+
+- **React组件应使用reqct-query,而不是openapi client** - "apps/gomtm_frontend/src/gomtmapi/" 路径下有由后端 openapi 生成的客户端库,跟后端api一一对应,并且是强类型.
+
+```tsx
+~~const data = await someApiFunction({...someOptions})~~
+const someQuery= useQuery({
+  ...someApiOptions(),
+  ...otherOptions,
+});
+```
+
+
+### 前端技术栈
+
+- `vite` v7
+- `react` v19
+- `biomejs` 代码格式化,linter
+  - version: `^2.x`
+
+### 类型安全
+
+类型安全非常重要, 前端主要使用 `biome check` 和 `tsc --noEmit --pretty` 及其他 linter 组件确保类型安全,并由 ".pre-commit-config.yaml" 作为主配置, 由 pre-commit 在git commit 时触发类型检测和相关代码质量控制. 相关配置文件
+
+- biome.jsonc
+- .pre-commit-config.yaml
+
+### tailwindcss 样式开发指引
+
+- 注意版本: `"tailwindcss": "^4.1"`
+- 没有 tailwind.config 文件
+
+#### 前端 linter 工具
+
+配置文件: `[nodePackage]/biome.jsonc`
+参考文档: `https://biomejs.dev/guides/getting-started/`
+常用命令:
+
+- [lint] `bun run biome lint ./src/**/*.test.{js,ts}`
+- [Safe fixes] `bun biome lint --write ./src`
+- [Formatter] `bun biome format --write ./src`
+- [Reporters]
+  - `bun biome check --reporter=summary`
+  - `bun biome ci --reporter=json`
+
+### 布局基本要求
+
+- 移动端优先
+- 图标优先
+
+### 禁用组件和库
+
+- **禁止**使用 "jest" 测试组件
+
+### shadcn 相关文档
+
+- [官方文档入口](https://ui.shadcn.com/docs)
+- [shadcn命令使用](https://ui.shadcn.com/docs/cli)
+- [shadcn组件列表](https://ui.shadcn.com/docs/components)
+- [配置文件] (apps/gomtm_frontend/components.json)
+
+## 注释规范 (#注释规范)
+
+本章节 golang 作为目标语言进行描述(同样适用于其他编程语言 例如 **typescript**语言)
+
+### 基本原则
+
+- 特别强调**源码本身就是最好的注释**
+- [**符合golang官方注释规范**](https://go.dev/doc/comment)
+
+- 函数体内应避免使用注释, 除非: "是关键实现", "是容易让人误解的地方"
+
+- **避免实现细节**
+    函数的文档注释应该关注其行为和返回值，而不是实现细节。除非是性能关键的场景需要说明算法复杂度，否则应该避免在注释中描述算法实现：
+    // 好的示例：关注行为
+    // Sort sorts data in ascending order as determined by the Less method.
+    // It makes O(n*log(n)) calls to data.Less and data.Swap.
+
+    // 不好的示例：暴露实现细节
+    // Sort uses quicksort algorithm to sort data...
+
+- **废弃标记的使用**
+    当需要标记某个API为废弃时，应该及时使用"Deprecated:"前缀予以标记，并提供替代方案，如下面的strings.Title函数.
+
+    ```go
+    // Title returns a copy of the string s with all Unicode letters that begin words
+    // mapped to their Unicode title case.
+    //
+    // Deprecated: The rule Title uses for word boundaries does not handle Unicode
+    // punctuation properly. Use golang.org/x/text/cases instead.
+    func Title(s string) string {
+    ... ...
+    }
+    ```
+
+- **函数体内注释** - 长度不超过8个中文字符
+    WHEN 发现太长的注释
+    THE CODER SHOULD 缩短到符合规格要求
+
+- **注释应当正确反应其功能**
+    WHEN 注释的描述跟实际功能不符
+    THE CODER SHOULD 修改注释符合其实际功能
+
+- **特殊注释标记`!!!FIXME:`**
+    WHEN 看到`!!!FIXME:`表示需要修正
+    THE CODER SHOULD 如果当前任务适合修正相关任务,应该主动修正.
+
+- **特殊注释标记`!!!TIPS:`**
+    THE CODER SHOULD 应理解并领悟这个人工标注的重要提示.
+
+- **禁止过度注释** - 再次强调**源码本身就是最好的注释**
+  例子
+
+  ```go
+  ~~// 获取环境变量~~  [❌错误] 显而易见代码意图不要注释
+  var1 := os.Getenv("XXX")
+  ```
+
+  WHEN 发现过度注释
+  THEN 删除注释
+
+## SPEC
+
+### 本机内置的postgresql服务器
+
+- 安装页面应该允许使用使用本机的postgresql数据库, 如果配置文件中指定的数据库的主机名是本机IP,对应端口的数据库服务器没有启动,就按需启动.
+- 本机只可能启动一个数据库服务器实例, 用数据库名称区分: 测试环境,开发开发环境,生产环境
+
+#### 配置文件样本
+
+注意: yaml的结构跟 ServerConfigFile`的结构存在对应关系, 使用yaml库完成列化和反序列化的方式将结构体转换为yaml格式.
+注意: yaml文件加载的逻辑中, 如果yaml配置项是允许不填写的, 因为"ServerConfigFile"本身有关于默认值的golang tag会在加载的过程自动应用默认值.
+注意: 涉及到的相关golang 库 "pkg/config/loader/loaderutils/files.go","pkg/config/loader/loaderutils/viper.go"
+
+```yaml
+databaseUrl: "postgresql://postgres:postgres@localhost:postgres" #数据库连接字符串
+# runtime: # 对应: Runtime ConfigFileRuntime `mapstructure:"runtime" json:"runtime,omitempty"`
+#   port: 8080 # 没有这个字段, 会自动使用 go tag 中的default标签表示的默认值.
+
+... # 更多配置项(如有)
+```
+
+#### 技术指引
+
+- "配置文件" 本质上是后端的"ServerConfigFile"结构体
+- 根据配置文件引导系统,由源码"pkg/config/loader/loader.go" 完成
+- loader.go 的核心逻辑,是加加载yaml配置文件, 必定能够成功,就算文件不存在(由于相关的config结构本身已经带有默认值),也不会报错,就算数据库连接字符串不正确,也不会报错,因为还没有访问数据库,(加载数据库阶段避免访问数据库).
+
+- 触发数据库连接初始化的时机是首个注册的用户, 当首个注册用户请求后端的注册端点,端点截获数据库连接失败是,就是数据库初始化的正确时机,应该跳转到安装页,填写数据库连接字符串和其他配套设置信息进行系统初始化.
+
+- 程序应该支持环境变量和`--dbUrl=<string>`选项,允许通过命令行参数明确指定数据库连接字符串.
+  --dbUrl 选项值优先于配置文件中的数据库连接字符串值的值
+
+### SPEC
+
+## gomtm ui 模块(#gomtm-ui-模块)
+
+- [项目路径](apps/gomtm_frontend/)
+
+### 技术指引
+
+- 千万不要使用复杂的后端路由判断, 仅仅使用一个最后兜底的类似于"any route"的路由来访问前端. 简单的说,就是所有其他后端路径都直接显示前端的资源.特别是对于反代vite服务器非常有用, 因为vite服务器除了静态文件,还有一些vite内置的其他调试端点.
+
+## auth-认证模块(#认证模块)
+
+### design
+
+- 支持基于角色的权限系统
+
+- 需要实现基本的基于数据库的登录验证功能
+
+- 需要实现 oauth2 登录功能, 具体提供商包括
+  - github app
+  - google
+
+- `/auth/login` - 登录页
+- `/auth/register` - 用户注册页
+- 虽然后端支持cookie 登录,但是新增(或修改)的功能应该使用 access_token header 的方式, 而不是使用 cookie
+
+- 用户资料的初始化发生在注册成功之后, 包括管理员的初始化,第一个注册的用户自动成为系统管理员
+
+## 远程文件存储系统
+
+### 概述
+
+Bucket 主要实现远程文件的存取, 就像 AWS S3 提供的功能
+由于 cloudflare R2 提供了与 "AWS S3" 兼容的API,而且可以免费使用,因此本模块选用 "cloudflare R2" 作为远程文件存取的底层服务.
+
+### cloudflare R2 服务(兼容AWS S3)
+
+#### 依赖库
+
+- `https://github.com/aws/aws-sdk-go`
+
+## tunnel (#tunnel)
+
+### 概述
+
+开发环境一般处于内网,所以通过常规方式,既没有公网IP页没有域名,所以没办法直接通过 域名的方式访问服务器.
+那么,就可以使用 cloudflare tunnel 根据规则调用 api 绑定以后的域名,根据规则临时添加子域名.这样就可以通过临时子域名来访问处于内网的各种服务, 常见的包括:
+
+- `gomtm server` 启动的web服务
+- `gomtm --vnc server` 启动了web服务,同时还启动了 vnc 服务(通过web访问)
+tunnel 模块主要主要使用各种开源的网络隧道协议,将内网服务以公网域名可以访问的形式提供访问
+
+主要采用的隧道组件
+
+- [cloudflare tunnel]
+  cloudflare tunnel 是 cloudflare 官方提供的免费内网反代服务, 本程序已经有账号和权限和api token可以操作
+
+  依赖:
+  - "github.com/cloudflare/cloudflare-go" cloudflare 官方的 api 客户端,其中包含了域名 tunnel等相关的api调用函数.
+  主要源码文件:
+    - (pkg/cloudflare/cloudflare.go)
+
+- [tailscale]
+  ...
+
+- [TOR]
+  以洋葱头隐藏服务的方式,将内网端口以匿名网址的方式提供访问
+
+- [官方api docs] (<https://developers.cloudflare.com/api/resources/zero_trust/subresources/tunnels/methods/list/>)
+- [官方 tunnel 用户文档] (<https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/>)
+
+### 设计
+
+- 子域名规则 - mttmp-{6位随机字幕-{服务名}}.{主域名}, 例如`mttmp-ahxniu-web.yuepa8.com`
+- 开发过程中如果遇到配置问题或者其他无法通过单纯方式能解决的困难的时候,应该立即停止后续开发,并且将详细的报告输出到:(docs/reports/cloudflare-tunnel项目进展.md), 团队成员会阅读和解决相关问题,这样下一次迭代开发时,相关的问题就可以解决,最终达成目标
+
+- 以下问题可能当前环境没有正确处理或者考虑周全,如果遇到必须及时反馈
+  - cloudfalre api key 不正确或者权限不足.
+  - 设计思路,步骤想法不周全, 如果遇到,请给你更好的建议.
+  - 其他...
+
+WHEN 创建了 tunnel ,可以通过 api 获取这个 tunnel 的token,通过token 启动 cloudflared 程序.
+
+- 通常一个程序实例使用一个 tunnel当执行 `gomtm --vnc --sshd server --port=3377` 启动了三个 tcp 服务, 其中一个是web3377端口,此时此时应该创建一个tunnel
+- WHEN 再运行`gomtm --vnc --sshd server --port=3378` 应该创建第二个tunnel
+
+#### dockerd服务 (#dockerd-service)
+
+##### 概述
+
+启动后台dockerd服务, 用以支持本机 docker build 之类的依赖于docker api 的客户端和命令能够正常运行
+
+#### 设计
+
+- 使用`dockerd`命令, 而不要使用 system services
+- [github-codespace 下特殊处理]
+  - 由于用户主文件夹下的空间有限, 通常docker build的过程很容易占满磁盘空间,但是/tmp/目录下却有足够的空间,因此如果当前环境是"github-codespace"环境,应该进行相关的设置,让docker的相关数据文件存储到/tmp/的子目录下.
+  - github-codespace 环境下, 默认只带了以服务形式启动的docker服务, 但是默认配置使用的数据目录,不是"/tmp/"下, 因此需要特殊处理,确保系统的dockerd 的数据目录处于"/tmp/"子目录下.
+  - 建议解决方式,如果是在githubcodespace环境下,应该强制停止默认的docker服务,之后使用本服务启动的dockerd替代. 并且最终确保docker socket 文件正确,最终 docker info 应该对接自动以的dockerd服务.
+
+## napcatqq (#napcatqq)
+
+### 概述
+
+- [官方文档](https://napcat.napneko.icu/guide/boot/Shell)
+- 最新版下载地址: <https://github.com/NapNeko/NapCatQQ/releases/latest/download/NapCat.Shell.zip>
+- [linuxQQ] - 应该从官方网站获取最新版本.也称为"NTQQ", 是tencent官方的执行linux桌面环境下的QQ客户端.
+  -安装
+
+  ```bash
+  curl -o linuxqq.deb https://dldir1v6.qq.com/qqfile/qq/QQNT/a5fab4ff/linuxqq_3.2.18-36580_${arch}.deb && \
+  dpkg -i --force-depends linuxqq.deb && rm linuxqq.deb
+  ```
+
+#### 源码及文档
+
+- [NapCatQQ官方源码仓库](https://github.com/NapNeko/NapCatQQ)
+  - [本地napcatqq完整项目源码](apps/napcatqq/)
+    - [napcat前端源码](apps/napcatqq/napcat.webui)
+- [官方Docker镜像源码](https://github.com/NapNeko/NapCat-Docker) - 有详细的安装和启动的详细代码,对于起启动原理的理解非常有用.
+- [最新版NapCatQQ下载](https://github.com/NapNeko/NapCatQQ/releases/download/v4.8.99/NapCat.Shell.zip)
+- [golang+纯协议实现的qq聊天](https://github.com/LagrangeDev/LagrangeGo)
+- [onebot v11协议官方规格文档](https://github.com/botuniverse/onebot-11)
+- [海豹](https://github.com/sealdice/sealdice-core) - 基于golang 实现. 海豹骰核心程序，新一代trpg骰点机器人。轻量易用，功能强大，支持所有主流IM平台，并能在win/linux/mac/android下使用。
+  [海豹官方文档](https://docs.sealdice.com/)
+
+### 设计
+
+linuxQQ 加载 napcatqq 的原理及关键代码
+
+- linuxQQ 默认安装路径:`/opt/QQ/`
+- 修改 linuxQQ 的入口, 让主入口,`{qqRoot}/resources/app/package.json`, 配置的的main入口改为自定义脚本:"main": "./loadNapCat.js",
+- napcatqq 启动命令: `{qqRoot}/qq --no-sandbox`
+<!-- - 当不存在显示器时, 应使用"xvfb"虚拟显示器. -->
+- napcatqq 官方源码已经下载到:"apps/mtnapcatqq/" 允许进行二次开发.
+- 不要使用docker命令,而是使用 golang docker api 库来运行容器
+
+- [服务器端onbot11协议实现]"pkg/onebot11/onbot11.go", 用于接收onbot11客户端推送过来的消息.
+- [napcatqq client] - 自定义的napcatqq 客户端, 用来对接单个账号的"napcatqq"服务器实例,通过调用Api的方式完成相关访问(进而避免手动通过UI登录前端页面进行各种操作)
+- napcatqq服务器api关键源码:`apps/mtnapcatqq/src/webui/src/api/`, 包括登录, 设置onebot11协议的api等.
+
+napcatqq 关键源码:
+
+- [napcatqq onebot11 http api 规格定义] (apps/mtnapcatqq/napcat.webui/src/const/ob_api/)
+- [napcatqq onebot11 http api 规格定功能实现义](apps/mtnapcatqq/src/onebot/action/router.ts)
+
+### 开发与部署流程
+
+1. 下载官方linuxQQ 修改linuxQQ主入口文件:`{qqRoot}/resources/app/package.json`中的main,指向:""
+
+## AIAgent模块 (#AIAgent模块)
+
+### 概述
+
+终目标是实现社交媒体的自动化聊天, 当前已腾讯qq聊天工具作为第一个集成的聊天平台,后续会继续添加 Instagram,facebook, twitter 等社交媒体平台. 其原理都是类似.
+
+智能体自动化聊天最终可以理解为`根据聊天历史,知识库,账号信息,账号配置等所有因数考量最终给出,在什么时间给谁发送什么消息.`的任务.
+
+为了完成这个目标,一个智能体配置项,内部会根据实际情况终合引用多个相关项目数据项目. 只有相关的配置项目正确且足够支持智能体高效正确完成任务, 智能体自动化聊天系统才能正常工作. 也可以理解为为了智能体正确运行,系统需要正确提供上下文, 也就是"智能体上下文工程".
+
+### 设计
+
+以下已qq平台作为例子详细描述,其他类型的平台原理类似,只是具体的上下文数据可能不同.
+
+- [平台账号] - 页面是"/dash/p-account", 一个qq号就是一个平台账号.
+- [账号登录] - 为了实际跟第三方平台集成,登录过程必不可少. 对于qq聊天平台本系统实用napcatqq开源项目作为qq登录和协议转换的中间件. 成功登录后通过 napcat onebot11 协议将qq消息同步到gomtm系统中.
+- [沙盒服务] - 为可以多账号登录,需要实用隔离的环境来运行相关的客户端,对于qq聊天, 本系统目前已docker 容器作为沙盒环境; 对应的前端页面是:"/dash/sandbox". 沙盒跟"平台账号"存在关系. 通常在"平台账号"中的"config"字段关联沙盒服务.
+- [消息历史] - 等成功登录了账号并且经过正确的设置后, 对于qq聊天平台,前端页面"/dash/onebot/messages"
+
+- [智能体配置] - [智能体列表页]"/dash/agents", 每一个智能体配置项都是一个独立配置, 智能体配置应当包含足够的上下文信息,例如: "平台账号","平台账号对应的沙盒服务","聊天消息历史","登录状态"等等,以后会随着设计的成熟不断完善相关的数据项.
+
+- [智能体运行] - 基于后台自动运行,只要用户配置好智能体,智能体处于"启用"状态,不管用户是否打开前端, 后端的工作流组件应该根据具体的智能体运行规则自动运行.
+
+### 技术栈
+
+- 基于 cloudflare worker agent 库进行开发. 底层库源码: "agents", 本质是基于 cloudflare durable object 实现的 agent 运行时;底层websocket 客户端库(前端)基于"partysocket".
+  - [worker agent 文档](https://github.com/cloudflare/agents/blob/main/packages/agents/README.md)
+
+- 使用 websocket 双向事件流传递消息
+
+### 源码与路由
+
+- [智能体定义](apps/gomtm_frontend/src/server/agents/), 所有"Agent"的子类,都是一个独立的智能体.
+- [智能体前端UI](apps/gomtm_frontend/src/routes/~dash/~agents/${agentName}/), agentName 可以理解为智能体的类型, 有类名决定. 例如"apps/gomtm_frontend/src/server/agents/chatbot.ts"对应的前端路由路径是:"/dash/agents/chatbot/"
+
+- [Agent Schema](apps/gomtm_frontend/src/server/agents/schema/) 各个智能体的state结构定义和消息定义.
+
+#### 智能体运行器
+
+智能体运行器 基于 python [google adk](https://google.github.io/adk-docs/) 进行开发, agent 通过工具调用访问gomtm api获取智能体配置及其相关的上下文,智能体工作大语言模型进行推理通过工具调用获取相关的上下文数据,通过工具调用完成智能体的相关状态. 智能体的状态信息,会在前端及时反应出来,方便用户查看和进行必要的干预.
+
+#### 已有的Agent及其功能介绍
+
+- [chat](apps/gomtm_frontend/src/server/agents/chat.ts) 简单的聊天问答式的Agent,是旧版的实现,来自cloudfalre worker agent 的演示实例,并做了修改. 目前仅用于参考.没有实际的业务功能.
+
+- [WorkerAgent](apps/gomtm_frontend/src/server/agents/WorkerAgent.ts) 是单例模式的Agent,主要用于基于Websocket 协议,基于自定义的消息结构,联系和管理多个异构的worker实例. 例如python worker 等等.
+
+- [Chatbot] 自动化聊天智能体, 对接人类操作视图(用户界面), 当相关在后台持续运行的任务(工作流)需要人工干预时,在chatbotAgent中的状态(和事件)正确反应,通过前端视图组件通知人工操作.
+  - [智能体组件](apps/gomtm_frontend/src/server/agents/chatbot.ts)
+  - [视图组件](apps/gomtm_frontend/src/components/agent-views/ChatbotView.tsx)
+
+  - 其中: 对接napcat qq, 由 WorkerAgent 通过消息通知 python worker 启动 napcat qq, 并通过 websocket 接收 napcat qq 发送过来的消息. 接收的消息存入数据库为系统的后续处理提供基础数据. 因为自动化聊天需要分析聊天历史才能作为正确的消息回复 .
+
+#### mtworker模块 (#)
+
+由于主服务器部署到cloudflare worker, 因此功能受限不能运行其他语言开发的程序,也无法启动其他进程. 因此需要通过worker agent 来管理其他语言开发的程序. 例如python, golang 等等.
+
+## 其他文档
+
+### a2a
+
+- [awesome-a2a]<https://github.com/ai-boost/awesome-a2a/blob/main/README_zh.md>
+- [a2a-js官方源码](https://github.com/a2aproject/a2a-js)
+- [a2a-js类型定义](https://github.com/a2aproject/a2a-js/blob/main/src/types.ts) 核心数据类型
+- [a2a-protocol](https://a2a-protocol.org/)
+
+### 其他备忘
+
+- 当前一个可用的在线mcp 工具: <https://mtgate.yuepa8.com/api/cf/mcp/sse>
+
+## 基于 opanepi 生成客户端的相关命令补充
+
+- [mtmai api 生成 typescript 客户端]
+  - 命令: `go run cmd/*.go gen` 客户端代码输出到:"apps/gomtm_frontend/src/lib/mtmai_api/"
+
+## 基于Tor的匿名服务模块 (#基于Tor的匿名服务模块)
+
+基于Tor的匿名服务模块主要需要是在一个容器中,进行了初始化后,让容器内的所有对外访问(包括DNS)都通过TOR网络进行. 最终目的是在容器内的相关客户端应用再无需额外设置代理的情况下,访问互联网都是通过TOR网络进行.
+
+### 设计
+
+- 开源 singbox 组件已经包含对Tor的集成,本项目导入了singbox最新版的库. 通过远程配置文件配置singbox服务配置(启动包含了bingbox tor outbound配置)来完成对Tor网络的集成.
+
+- singbox 组件已经包含 TProxy Inbound 功能. 当配置了singbox Tproxy Inbound,启动后会在本机启动透明代理端口,之后通过正确设置 本机的网络参数,包括DNS解释,nft(iptables)路由规则以及其他相关的底层网络配置可以让本机的所有流量都通过singbox的TProxy端口进行透明代理.
+
+### 关键源码
+
+- apps/gomtm_frontend/src/server/routes/configs/gomtm.ts - 远程配置的api实现.
+- pkg/mtutils/tor_util.go - tor 网络辅助工具.
+- apps/gomtm_frontend/src/server/routes/tunnel/singbox.ts - singbox 配置端点,启动内置了torrc 相关的配置(配置信息为未完善.)
+- pkg/mtutils/iptable_utils.go - nft 相关使用工具. 对于容器底层的网络设置,例如dns,路由表,网络接口的设置应该在这里进行; 目前可能没有完全正确设置.
+- pkg/mtutils/tor/tor_util.go - CheckIpWithCurl 检测通过才真正表示当前容器正确设置了tor singbox dns等环境,当前容器所有对外流量都正确通过tor网络进行.
+
+### SPEC
+
+- 当运行命令`export MTGATE_URL=https://mtgate.yuepa8.com && go run cmd/*.go --build --container server`
+  - 系统应当启动启动容器在容器内启动 server ,获取了远程配置后
+    - 如果配置了bingbox tproxy inbound 及 tor outbound, 应当启动singbox tor 服务
+    - 应当正确设置容器的网络参数,让容器内的所有流量都通过singbox的TProxy端口进行透明代理.
+    - 应当正确设置容器的dns参数,让容器内的所有dns请求都通过singbox的dns端口进行解析.
+    - 最终 pkg/mtutils/tor/tor_util.go 中的 CheckIpWithCurl 应当正确检测到IsTor=true
+    - 远程配置可能配置了多种后台服务,包括 http 服务, vnc服务以及以后可能增加更多的服务,但是这些服务的启动的前提必须是完成了 signbox tor tproxy 相关初始化并且通过了网络安全检测后再进行启动.防止其他服务通过原始IP请求外网从而泄露了IP地址信息.
+
+- 当进行 singbox tor tproxy 的设置和检测,应该输出关键信息,让用户知道启动和检测的进度和错误信息;但是不能过分啰嗦.
+
+## mtnextblog 前端 (#mtnextblog-前端)
+
+mtnextblog 是用于内容发布和展示的前端, 通过 nextjs 构建, 部署到 cloudflare worker.
+
+### 关键源码
+
+- apps/mtnextblog/src/app/page.tsx - 博客首页
+- apps/mtnextblog/wrangler.jsonc - wrangler 配置文件
+
+### 设计
+
+- SEO 优先 - 因为系统主要的用途是内容的发布,内容展示,通过流量获利.
+- mtnextblog 不执行数据库相关的操作,内容的获取主要通过调用第三方api进行,其中包括调用 mtgate 的post api.
+- mtnextlog 的程序必须是轻量的. 不应有过多繁琐的设计.主要用来展示内容.
+
+### 技术栈
+
+- "next" -  "^v15.4"
+- "@opennextjs/cloudflare" - 为了适配 cloudflare worker 部署环境.
+- "react" - "^19"
+
+### 开发注意事项
+
+- 部署到 cloudflare worker 底层是基于 opennext 进行构建和部署,因此跟nextjs 基于vercel的部署方式会有差异,应该注意. 当遇到问题时,应该优先查看 opennext 的[文档](https://opennext.js.org/cloudflare). 特别在运行时,配置文件,上下文数据获取等方面需要注意.
+
+## 参考文档
+
+### 核心框架
+
+- [Fuego](https://github.com/go-fuego/fuego) - Go Web 框架，生成 OpenAPI 规范
+- [Next.js](https://nextjs.org/docs) - React 前端框架
+- [TanStack Router](https://tanstack.com/router) - 类型安全的路由库
+- [Drizzle ORM](https://orm.drizzle.team/) - TypeScript ORM
+
+### AI 和自动化
+
+- [Google ADK](https://google.github.io/adk-docs/) - AI 开发工具包
+- [Stagehand](https://docs.stagehand.dev/) - 浏览器自动化
+- [NapCat](https://napcat.napneko.icu/guide/boot/Shell) - QQ 机器人框架
+
+### 部署和基础设施
+
+- [Cloudflare Workers](https://developers.cloudflare.com/workers/) - 边缘计算平台
+- [OpenNext](https://opennext.js.org/cloudflare) - Next.js Cloudflare 适配器
+- [Wrangler](https://developers.cloudflare.com/workers/wrangler/) - Cloudflare 开发工具
+
+### 开发工具
+
+- [Biome](https://biomejs.dev/guides/getting-started/) - 代码格式化和 Lint
+- [Playwright](https://playwright.dev/) - E2E 测试框架
+- [Model Context Protocol](https://modelcontextprotocol.io/specification/2025-06-18) - MCP 规范
+
+
+## 任务清单格式 (#任务清单格式)
+
+任务清单是一组存在关联任务列表, 任务清单将直接交给编程开发人员, 开发人员拿到任务清单后,以一个任务作为单位完成任务,直到完成所有任务为止. 格式如下
+
+- 头部是最高优先级指令,按照以下模板进行
+
+```markdown
+<instructions>
+- 本文档路径: `./docs/todos/{filePath}`
+- **完整**阅读[主项目文档](./README.md)并且认真思考和**领悟**文档主旨, 这是能够顺利进行后续任务的前提.
+<steps>
+1. 获取任务 - 从本文档[TODOS](#TODOS)获取任务
+2. 一次只可以领取一个任务.
+3. 回填任务结果到任务列表,提交源码更改,并推送到远程仓库. 回填任务结果以追加"任务结果"的形式进行,不能更改任务原本的描述.
+    1. 任务完全完成后,在[TODOS](#TODOS)章节填写最终任务执行结果
+</steps>
+</instructions>
+```
+
+- 背景 - 表示任务清单的任务背景,整体目标,相关文档注意事项等, 只为了程序员执行任务清单的单个任务时对任务的全局有一个清晰的认知.
+
+```markdown
+
+<background>
+- [整体目标] - ...
+- [简述] - ...
+- [注意事项] - ...
+- [工具使用提示] - ...
+
+- ...(其他对编程任务有帮助的)其他项
+
+</background>
+
+```
+
+- TODOS 列表
+
+```markdown
+- [ ] 任务1描述
+  - 验收标准
+  - 优先级 - 高|中|低
+  - [...其他项]
+  - [ ] 子任务1(如有)
+
+- [ ] 任务2描述
+  ...
+...
+```
