@@ -1,0 +1,246 @@
+# x402-client
+
+[![PyPI version](https://badge.fury.io/py/x402-client.svg)](https://badge.fury.io/py/x402-client)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A Python client for the [x402 Payment Protocol](https://www.x402.org/) that enables seamless HTTP 402 payments using EIP-3009 gasless USDC transfers.
+
+## What it does
+
+The [x402 protocol](https://www.x402.org/) enables payments over HTTP using the `402 Payment Required` status code. This client handles the payment flow automatically:
+
+1. Makes your HTTP request to a paid endpoint
+2. If the server responds with `402`, reads payment requirements from the `payment-required` header
+3. Signs an EIP-3009 `TransferWithAuthorization` message using your wallet
+4. Retries the request with the signed payment in the `payment-signature` header
+5. Returns the successful response
+
+You just make HTTP requests like normal - the payment handling happens transparently.
+
+## Installation
+
+```bash
+pip install x402-client
+```
+
+## Quick Start
+
+### Async Client
+
+```python
+import asyncio
+from eth_account import Account
+from x402_client import X402AsyncClient
+
+account = Account.from_key("0xYOUR_PRIVATE_KEY")
+
+async def main():
+    async with X402AsyncClient(account=account) as client:
+        response = await client.post(
+            "https://api.example.com/paid-endpoint",
+            json={"your": "params"}
+        )
+        data = response.json()
+        print(data)
+
+asyncio.run(main())
+```
+
+### Sync Client
+
+```python
+from eth_account import Account
+from x402_client import X402Client
+
+account = Account.from_key("0xYOUR_PRIVATE_KEY")
+
+with X402Client(account=account) as client:
+    response = client.post(
+        "https://api.example.com/paid-endpoint",
+        json={"your": "params"}
+    )
+    data = response.json()
+    print(data)
+```
+
+## How It Works
+
+```
+Client                                Server
+  |                                     |
+  |  POST /api/resource                 |
+  | ----------------------------------> |
+  |                                     |
+  |  402 Payment Required               |
+  |  payment-required: <base64 JSON>    |
+  | <---------------------------------- |
+  |                                     |
+  |  [Client signs EIP-3009 payment]    |
+  |                                     |
+  |  POST /api/resource                 |
+  |  payment-signature: <base64 JSON>   |
+  | ----------------------------------> |
+  |                                     |
+  |  [Server settles payment on-chain]  |
+  |                                     |
+  |  200 OK                             |
+  |  { "data": ... }                    |
+  | <---------------------------------- |
+```
+
+### Payment Flow Details
+
+1. **Initial Request**: Client makes a request to a paid endpoint
+2. **402 Response**: Server responds with HTTP 402 and includes payment options in the `payment-required` header
+3. **Payment Signing**: Client selects a payment option and signs an EIP-3009 `TransferWithAuthorization` message
+4. **Retry with Payment**: Client retries the original request with the `payment-signature` header
+5. **Settlement**: Server verifies the signature and settles the payment on-chain
+6. **Success**: Server returns the requested resource
+
+## Configuration
+
+Both clients accept standard `httpx` client options:
+
+```python
+async with X402AsyncClient(
+    account=account,
+    timeout=120.0,          # Request timeout in seconds (blockchain settlement can take time)
+    debug=True,             # Enable debug logging
+    headers={"X-Custom": "header"},
+) as client:
+    ...
+```
+
+## Supported Networks
+
+The client supports any EVM chain with USDC and EIP-3009 support. Networks are identified using [CAIP-2](https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-2.md) format:
+
+| Network | CAIP-2 Identifier |
+|---------|------------------|
+| Ethereum Mainnet | `eip155:1` |
+| Base Mainnet | `eip155:8453` |
+| Base Sepolia (testnet) | `eip155:84532` |
+| Polygon | `eip155:137` |
+| Arbitrum One | `eip155:42161` |
+
+The network is determined by the server's payment requirements - you don't need to configure it.
+
+## API Reference
+
+### X402AsyncClient
+
+```python
+class X402AsyncClient:
+    def __init__(self, account: Account, **kwargs):
+        """
+        Initialize async x402 client.
+
+        Args:
+            account: eth_account.Account instance for signing payments
+            debug: Enable debug logging (default: False)
+            **kwargs: Passed to httpx.AsyncClient (timeout, headers, etc.)
+        """
+
+    async def get(self, url: str, **kwargs) -> httpx.Response:
+        """Make GET request with automatic x402 payment handling."""
+
+    async def post(self, url: str, **kwargs) -> httpx.Response:
+        """Make POST request with automatic x402 payment handling."""
+```
+
+### X402Client
+
+```python
+class X402Client:
+    def __init__(self, account: Account, **kwargs):
+        """
+        Initialize sync x402 client.
+
+        Args:
+            account: eth_account.Account instance for signing payments
+            debug: Enable debug logging (default: False)
+            **kwargs: Passed to httpx.Client (timeout, headers, etc.)
+        """
+
+    def get(self, url: str, **kwargs) -> httpx.Response:
+        """Make GET request with automatic x402 payment handling."""
+
+    def post(self, url: str, **kwargs) -> httpx.Response:
+        """Make POST request with automatic x402 payment handling."""
+```
+
+## Protocol Details
+
+This client implements the [x402 Payment Protocol](https://www.x402.org/):
+
+- **Payment Scheme**: `exact` - pay the exact amount requested
+- **Authorization**: [EIP-3009](https://eips.ethereum.org/EIPS/eip-3009) `TransferWithAuthorization` for gasless transfers
+- **Signing**: [EIP-712](https://eips.ethereum.org/EIPS/eip-712) typed data signatures
+- **Asset**: USDC (or any EIP-3009 compatible token specified by the server)
+
+### Payment Payload Structure
+
+The `payment-signature` header contains a base64-encoded JSON payload:
+
+```json
+{
+  "x402Version": 2,
+  "resource": {
+    "url": "https://api.example.com/paid-endpoint"
+  },
+  "accepted": {
+    "scheme": "exact",
+    "network": "eip155:84532",
+    "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+    "amount": "10000",
+    "payTo": "0x..."
+  },
+  "payload": {
+    "signature": "0x...",
+    "authorization": {
+      "from": "0xYourWallet",
+      "to": "0xRecipient",
+      "value": "10000",
+      "validAfter": "0",
+      "validBefore": "1734567890",
+      "nonce": "0x..."
+    }
+  }
+}
+```
+
+## Development
+
+```bash
+# Clone the repository
+git clone https://github.com/agentokratia/x402-client.git
+cd x402-client
+
+# Install development dependencies
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+
+# Run linter
+ruff check .
+
+# Run type checker
+mypy src/
+```
+
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## Links
+
+- [x402 Protocol Specification](https://www.x402.org/)
+- [EIP-3009: Transfer With Authorization](https://eips.ethereum.org/EIPS/eip-3009)
+- [EIP-712: Typed Data Signing](https://eips.ethereum.org/EIPS/eip-712)
+- [Agentokratia](https://agentokratia.com/)
