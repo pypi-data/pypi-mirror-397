@@ -1,0 +1,79 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "traini-ai"
+dynamic = ["version"]
+description = "Traini AI SDK - Dog emotion analysis and human-dog communication platform"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Traini AI Team", email = "support@traini.ai"}
+]
+keywords = ["traini", "ai", "dog", "emotion", "analysis", "translation", "audio", "video", "machine-learning", "pet"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Multimedia :: Sound/Audio :: Analysis",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+dependencies = [
+    "numpy>=1.21.0",
+    "pillow>=9.0.0",
+    "requests>=2.27.0",
+    "torch>=1.12.0",
+    "torchvision>=0.13.0",
+    "openai>=1.0.0",
+    "google-generativeai>=0.3.0",
+    "anthropic>=0.8.0",
+    "huggingface_hub>=0.20.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=3.0.0",
+    "black>=22.0.0",
+    "flake8>=4.0.0",
+    "mypy>=0.950",
+]
+ml = [
+    "torch>=1.12.0",
+    "torchvision>=0.13.0",
+    "opencv-python>=4.6.0",
+]
+audio = [
+    "librosa>=0.9.0",
+    "soundfile>=0.11.0",
+    "pydub>=0.25.0",
+]
+all = [
+    "torch>=1.12.0",
+    "torchvision>=0.13.0",
+    "opencv-python>=4.6.0",
+    "librosa>=0.9.0",
+    "soundfile>=0.11.0",
+    "pydub>=0.25.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/Traini-Inc/traini-sdk"
+Documentation = "https://github.com/Traini-Inc/traini-sdk"
+Repository = "https://github.com/Traini-Inc/traini-sdk"
+"Bug Tracker" = "https://github.com/Traini-Inc/traini-sdk/issues"
+
+[tool.setuptools]
+packages = ["traini_ai", "traini_ai.models", "traini_ai.modules", "traini_ai.utils"]
+
+[tool.setuptools_scm]
+write_to = "traini_ai/_version.py"
