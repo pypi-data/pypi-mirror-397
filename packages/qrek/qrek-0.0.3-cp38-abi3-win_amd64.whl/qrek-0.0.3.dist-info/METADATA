@@ -1,0 +1,351 @@
+Metadata-Version: 2.4
+Name: qrek
+Version: 0.0.3
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Rust
+Classifier: Topic :: Security :: Cryptography
+Summary: Quantum-Resilient Encryption Kit - Python SDK
+Keywords: cryptography,quantum,encryption,security,entropy
+Author: qREK Team
+License: MIT OR Apache-2.0
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown; charset=UTF-8; variant=GFM
+Project-URL: Homepage, https://github.com/qsegroup/qREK
+Project-URL: Repository, https://github.com/qsegroup/qREK
+Project-URL: Documentation, https://github.com/qsegroup/qREK/tree/main/docs
+
+# qREK Python SDK
+
+Python bindings for qREK - Quantum-Resilient Encryption Kit.
+
+Generate cryptographic keys using **real quantum entropy** from the QSE API.
+
+## Installation
+
+```bash
+pip install qrek
+```
+
+## Quick Start
+
+```python
+import os
+from qrek import PyQrekClient
+
+# Set your API token
+os.environ['QREK_API_TOKEN'] = 'your-qse-api-token'
+
+# Initialize client
+client = PyQrekClient()
+
+# Generate AES-256 key with quantum entropy
+aes_result = client.generate_aes_key()
+print(f"Key: {aes_result['key_base64']}")
+print(f"Entropy ID: {aes_result['entropy_id']}")
+```
+
+## Features
+
+- **AES-256 Key Generation** - Quantum-entropy-seeded symmetric keys
+- **RSA Keypair Generation** - 2048/3072/4096-bit keypairs
+- **File Encryption/Decryption** - XChaCha20-Poly1305 authenticated encryption
+- **Stream Encryption** - Chunked encryption for large files
+- **Container Inspection** - View metadata without decryption key
+- **Ed25519 Signatures** - Sign and verify container headers
+- **Hybrid Encryption** - RSA-OAEP key wrapping
+- **Full Provenance** - Track WHO/WHEN/WHY/ENTROPY_ID
+
+---
+
+## API Reference
+
+### Initialize Client
+
+```python
+from qrek import PyQrekClient
+
+# Option 1: Use QREK_API_TOKEN environment variable
+client = PyQrekClient()
+
+# Option 2: Pass token directly
+client = PyQrekClient('your-qse-api-token')
+```
+
+---
+
+### Generate AES-256 Key
+
+```python
+result = client.generate_aes_key()
+
+print(result['key_base64'])        # Base64-encoded 256-bit key
+print(result['key_hex'])           # Hex-encoded key
+print(result['entropy_id'])        # QSE entropy identifier
+print(result['signature_verified']) # True if QSE signature valid
+```
+
+---
+
+### Generate RSA Keypair
+
+```python
+# Supported sizes: 2048, 3072, 4096
+result = client.generate_rsa_keypair(2048)
+
+print(result['private_key_pem'])    # PKCS#8 PEM format
+print(result['public_key_pem'])     # Public key PEM
+print(result['entropy_id'])         # QSE entropy identifier
+print(result['signature_verified']) # True if QSE signature valid
+```
+
+---
+
+### Encrypt File
+
+Encrypt a file with XChaCha20-Poly1305 authenticated encryption.
+
+```python
+# First generate a key
+key_result = client.generate_aes_key()
+key_base64 = key_result['key_base64']
+
+# Encrypt file
+result = client.encrypt_file(
+    input_path='secret.txt',
+    output_path='secret.qrek',
+    key_base64=key_base64,
+    creator='user@example.com',      # Optional: who encrypted
+    purpose='Secure backup'           # Optional: why encrypted
+)
+
+print(result['output_path'])        # Path to encrypted file
+print(result['bytes_encrypted'])    # Number of bytes encrypted
+print(result['entropy_id'])         # Entropy used for this operation
+```
+
+---
+
+### Decrypt File
+
+```python
+result = client.decrypt_file(
+    input_path='secret.qrek',
+    output_path='secret_decrypted.txt',
+    key_base64=key_base64
+)
+
+print(result['output_path'])        # Path to decrypted file
+print(result['bytes_decrypted'])    # Number of bytes decrypted
+```
+
+---
+
+### Inspect Container (Without Decryption Key)
+
+View encrypted file metadata without needing the decryption key - perfect for auditing and compliance.
+
+```python
+info = client.inspect_container('secret.qrek')
+
+print(info['magic'])                # "qREKv1" - file format
+print(info['algorithm'])            # "XChaCha20-Poly1305"
+print(info['creator'])              # Who encrypted the file
+print(info['purpose'])              # Why it was encrypted
+print(info['created_at'])           # When it was encrypted
+print(info['entropy_id'])           # QSE entropy ID used
+print(info['key_provenance_valid']) # True if provenance is valid
+```
+
+**Use Case: Compliance Auditing**
+```python
+# Auditor can verify encryption metadata without accessing the data
+info = client.inspect_container('confidential.qrek')
+
+if info['key_provenance_valid']:
+    print(f"✓ File encrypted by: {info['creator']}")
+    print(f"✓ Encrypted on: {info['created_at']}")
+    print(f"✓ Quantum entropy: {info['entropy_id']}")
+    print(f"✓ Algorithm: {info['algorithm']}")
+else:
+    print("⚠ Warning: Key provenance could not be verified")
+```
+
+---
+
+### Stream Encryption (Large Files)
+
+For files too large to fit in memory:
+
+```python
+# Encrypt large file in chunks
+result = client.encrypt_stream(
+    input_path='large_video.mp4',
+    output_path='large_video.qrek',
+    key_base64=key_base64,
+    chunk_size=65536,                # 64KB chunks (default)
+    creator='backup-service',
+    purpose='Video archive'
+)
+
+print(result['bytes_encrypted'])
+print(result['chunks_processed'])
+
+# Decrypt
+result = client.decrypt_stream(
+    input_path='large_video.qrek',
+    output_path='large_video_restored.mp4',
+    key_base64=key_base64
+)
+```
+
+---
+
+### In-Memory Encryption
+
+Encrypt data without writing to disk:
+
+```python
+plaintext = b'Sensitive data to encrypt'
+
+# Encrypt
+encrypted = client.aes_encrypt(list(plaintext), key_base64)
+ciphertext = encrypted['ciphertext']
+nonce = encrypted['nonce']
+tag = encrypted['tag']
+
+# Decrypt
+decrypted = client.aes_decrypt(ciphertext, nonce, tag, key_base64)
+original = bytes(decrypted)
+```
+
+---
+
+### Hybrid Encryption (RSA-OAEP)
+
+Wrap symmetric keys with RSA for secure key exchange:
+
+```python
+# Generate RSA keypair
+rsa = client.generate_rsa_keypair(2048)
+
+# Generate symmetric key
+sym_key = client.generate_aes_key()
+
+# Encrypt symmetric key with RSA public key
+encrypted_key = client.encrypt_key_rsa_oaep(
+    sym_key['key_base64'],
+    rsa['public_key_pem']
+)
+
+# Decrypt symmetric key with RSA private key
+decrypted_key = client.decrypt_key_rsa_oaep(
+    encrypted_key,
+    rsa['private_key_pem']
+)
+```
+
+---
+
+### Ed25519 Header Signing (v0.0.3+)
+
+Sign and verify container headers for tamper detection:
+
+```python
+# Generate Ed25519 keypair
+keys = client.generate_ed25519_keypair()
+signing_key = keys['signing_key_hex']
+verifying_key = keys['verifying_key_hex']
+
+# Sign container header
+signature = client.sign_container_header('file.qrek', signing_key)
+print(signature['signature_base64'])
+print(signature['algorithm'])  # "Ed25519"
+
+# Verify header
+result = client.verify_container_header('file.qrek', verifying_key)
+print(result['verified'])
+print(result['has_signature'])
+```
+
+---
+
+## Complete Example
+
+```python
+import os
+from qrek import PyQrekClient
+
+# Setup
+os.environ['QREK_API_TOKEN'] = 'your-qse-api-token'
+client = PyQrekClient()
+
+# 1. Generate encryption key
+key = client.generate_aes_key()
+print(f"Generated key with entropy: {key['entropy_id']}")
+
+# 2. Encrypt a file
+client.encrypt_file(
+    'confidential.pdf',
+    'confidential.qrek',
+    key['key_base64'],
+    creator='alice@company.com',
+    purpose='HR confidential document'
+)
+print("File encrypted successfully")
+
+# 3. Inspect without decryption (for auditing)
+info = client.inspect_container('confidential.qrek')
+print(f"Encrypted by: {info['creator']}")
+print(f"Created at: {info['created_at']}")
+print(f"Quantum verified: {info['key_provenance_valid']}")
+
+# 4. Decrypt when needed
+client.decrypt_file(
+    'confidential.qrek',
+    'confidential_restored.pdf',
+    key['key_base64']
+)
+print("File decrypted successfully")
+```
+
+---
+
+## Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `QREK_API_TOKEN` | Your QSE API token | Yes |
+| `QREK_API_URL` | Custom API endpoint | No |
+
+---
+
+## Error Handling
+
+```python
+try:
+    result = client.generate_aes_key()
+except RuntimeError as e:
+    print(f"Error: {e}")
+```
+
+---
+
+## License
+
+MIT OR Apache-2.0
+
+## Links
+
+- **Repository**: https://github.com/qsegroup/qREK
+- **Documentation**: https://github.com/qsegroup/qREK/tree/main/docs
+- **Issues**: https://github.com/qsegroup/qREK/issues
+
