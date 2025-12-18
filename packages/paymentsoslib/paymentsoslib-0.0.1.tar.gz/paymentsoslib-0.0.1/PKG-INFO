@@ -1,0 +1,164 @@
+Metadata-Version: 2.4
+Name: paymentsoslib
+Version: 0.0.1
+Summary: A lightweight Python client for PaymentsOS Management and Reporting APIs.
+Author: Fabio Soares
+Author-email: Paulo Portela <portela.paulo@gmail.com>
+Maintainer: Fabio Soares
+Maintainer-email: Paulo Portela <portela.paulo@gmail.com>
+License-Expression: BSD-3-Clause
+Project-URL: Homepage, https://github.com/aghuttun/paymentsoslib
+Project-URL: Documentation, https://github.com/aghuttun/paymentsoslib/blob/main/README.md
+Keywords: payments,paymentsos,reporting,api,client
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: requests>=2.31
+Provides-Extra: dev
+Requires-Dist: twine; extra == "dev"
+Requires-Dist: build; extra == "dev"
+Dynamic: license-file
+
+# paymentsoslib
+
+- [Description](#package-description)
+- [Usage](#usage)
+- [Installation](#installation)
+- [Docstring](#docstring)
+- [License](#license)
+
+## Package Description
+
+A lightweight Python client for **PaymentsOS** Management and **Reporting** APIs.
+
+This library wraps:
+- Session creation (Management API)
+- Report Request creation/retrieval (Reporting API)
+- Downloading and decompressing gzip CSV report files
+
+> This client performs real HTTP calls to PaymentsOS. Provide valid credentials and account details. Avoid logging sensitive data.
+
+## Usage
+
+```python
+# 0. Initialize PaymentsOS client
+client = PaymentsOS(
+    email="account.email@company.com",
+    password="PASSWORD",
+    account_id="ACCOUNT_ID",
+    environment="live",
+    api_version="1.1.0",
+    timeout=30
+)
+
+# Example: Using date between 6 months ago and yesterday
+from dateutil.relativedelta import relativedelta
+
+date_from = datetime.now() - relativedelta(months=6)
+date_from = date_from.replace(hour=0, minute=0, second=0, microsecond=0)
+
+date_to = datetime.now() - relativedelta(days=1)
+date_to = date_to.replace(hour=0, minute=0, second=0, microsecond=0)
+
+# 1. Create report request
+result = client.create_report_request(
+    report_template_id="REPORT_TEMPLATE_ID",
+    date_from = date_from,
+    date_to = date_to,
+    report_name="MY_REPORT_NAME",
+    filter_timezone="America/Bogota",
+    display_timezone="America/Bogota",
+    timezone="-05:00",
+    include_sftp_report_name_prefix=True
+)
+
+print("Report ID request created:", result["id"])
+
+report_request_id = result["id"]
+
+# Poll while status is 'in_progress'
+poll_seconds = 30            # choose your interval
+timeout_seconds = 600        # e.g., 10 minutes overall timeout
+deadline = time.time() + timeout_seconds
+
+while True:
+    # 2. Retrieve current status
+    response = client.retrieve_report_request(report_request_id=report_request_id)
+    response.raise_for_status()
+
+    status_body = response.json()
+    status = (status_body.get("status") or "").strip()
+    print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Report {report_request_id} status: {status}")
+
+    if status != "in_progress":
+        if status == "completed_successfully":
+            print("Report completed successfully.")
+
+            report_body = response.json()
+            report_url = report_body.get("report_url")
+            print(report_url)
+
+            # 3. Download report
+            output_path = r"C:\Admin\Output\File.csv"
+            client.download_report_to_csv(report_url=report_url, output_path=output_path)
+        elif status in {"Failed", "Error"}:
+            print("Report failed. Decide whether to retry or alert.")
+        else:
+            print(f"Report finished with status '{status}'. Handle as needed.")
+        break
+
+    # Still in progress — check for timeout and sleep
+    if time.time() >= deadline:
+        raise TimeoutError(
+            f"Report request '{report_request_id}' still 'in_progress' after {timeout_seconds}s."
+        )
+
+    time.sleep(poll_seconds)
+```
+
+## Installation
+
+Install python and pip if you have not already.
+
+Then run:
+
+```bash
+pip install pip --upgrade
+```
+
+For production:
+
+```bash
+pip install paymentsoslib
+```
+
+This will install the package and all of it's python dependencies.
+
+If you want to install the project for development:
+
+```bash
+git clone https://github.com/aghuttun/paymentsoslib.git
+cd paymentsoslib
+pip install -e ".[dev]"
+```
+
+## Docstring
+
+The script's docstrings follow the numpydoc style.
+
+## License
+
+BSD License (see license file)
+
+[top](#paymentsoslib)
