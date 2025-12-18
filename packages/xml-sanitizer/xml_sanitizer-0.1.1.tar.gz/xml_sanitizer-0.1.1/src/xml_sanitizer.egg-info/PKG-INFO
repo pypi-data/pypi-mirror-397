@@ -1,0 +1,44 @@
+Metadata-Version: 2.4
+Name: xml-sanitizer
+Version: 0.1.1
+Summary: Safely escape ampersands in XML without double-encoding
+Author-email: Tanveer Mustafa <tanveermustafa94@gmail.com>
+License: MIT
+Project-URL: Homepage, https://github.com/android4561/xml-sanitizer
+Keywords: xml,escaping,regex,parsing
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: license-file
+
+# xml-sanitizer
+
+Safely escape illegal ampersands in XML without double-encoding.
+
+## Why?
+
+XML breaks if raw `&` exists:
+
+- Jack & Tom : It will break
+- Jack &amp; Tom : It works for xml without breaking
+
+This library fixes that safely.
+
+## Installation
+
+```bash
+pip install xml-sanitizer
+```
+
+## Usage
+
+```python
+from xml_sanitizer import xml_content_cleanup
+
+parsed_xml = xml_content_cleanup(xml_file)
+
+print(f"Cleaned XML: {parsed_xml}")
+```
