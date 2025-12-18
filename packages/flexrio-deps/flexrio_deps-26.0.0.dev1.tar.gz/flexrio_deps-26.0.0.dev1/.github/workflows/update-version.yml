@@ -1,0 +1,48 @@
+name: Update Version from version.txt
+
+on:
+  push:
+    paths:
+      - 'version.txt'
+    branches:
+      - main  # or your default branch
+  workflow_dispatch:  # allows manual trigger
+
+jobs:
+  update-version:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Read version from version.txt
+        id: read_version
+        run: |
+          VERSION=$(cat version.txt)
+          DEV_VERSION="${VERSION}.dev0"
+          echo "version=$DEV_VERSION" >> $GITHUB_OUTPUT
+          echo "Read version: $VERSION"
+          echo "Dev version: $DEV_VERSION"
+      
+      - name: Update pyproject.toml version
+        run: |
+          VERSION=${{ steps.read_version.outputs.version }}
+          sed -i "s/^version = \".*\"/version = \"$VERSION\"/" pyproject.toml
+          echo "Updated pyproject.toml to version $VERSION"
+      
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git diff --exit-code pyproject.toml || echo "changed=true" >> $GITHUB_OUTPUT
+      
+      - name: Commit and push if changed
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add pyproject.toml
+          git commit -m "chore: update version to ${{ steps.read_version.outputs.version }}"
+          git push
