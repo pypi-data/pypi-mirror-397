@@ -1,0 +1,73 @@
+Metadata-Version: 2.4
+Name: rasterop
+Version: 0.9.0
+Summary: System to manage deforestation alert system
+Project-URL: Homepage, https://ciatgit.ciat.cgiar.org/Data_driven_sustainability_public/terra-i/rasterop#
+Project-URL: Issues, https://ciatgit.ciat.cgiar.org/Data_driven_sustainability_public/terra-i/rasterop/-/issues
+Author-email: Thibaud Vantalon <t.vantalon@cgiar.org>, Louis Reymondin <l.reymondin@cgiar.org>
+Maintainer-email: Thibaud Vantalon <t.vantalon@cgiar.org>, Louis Reymondin <l.reymondin@cgiar.org>
+License: MIT License
+License-File: LICENSE.txt
+Keywords: Monitoring,Remote sensing
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: End Users/Desktop
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Software Development :: Build Tools
+Requires-Python: >=3.12
+Requires-Dist: numpy
+Requires-Dist: pyproj
+Requires-Dist: scipy
+Requires-Dist: shapely
+Requires-Dist: tqdm
+Description-Content-Type: text/markdown
+
+# rasterop
+
+Tiled raster processing utilities built on top of Rasterio and NumPy. This repository provides a small, extensible
+framework to apply custom operations on large raster datasets in a tiled/streaming fashion.
+It includes a generic tiled engine (`tiled_op`) and a few example operations you can adapt to your needs.
+
+
+## Features
+- Process large rasters by windows (tiles) with multi-threaded reading/writing
+- Compose custom operations by subclassing `TiledOp`
+- Optional masking by geometry or raster mask
+- Output tiling aligned to resolution ("target aligned pixels")
+- Examples of common operations (median, thresholding, scaling, differences)
+
+
+## Requirements
+- Python 3.12 or newer
+- GDAL/GEOS system libraries required by `rasterio` and `shapely` (platform-specific)
+
+Python package dependencies (runtime):
+- `rasterio`
+- `numpy`
+- `shapely`
+- `pyproj`
+- `tqdm`
+- `scipy` (used by `TimeSeriesOp` example)
+
+> Tip (Linux): You may need to install system packages like `gdal`, `geos`, and development headers before 
+> `pip install rasterio shapely` will succeed. See Rasterio/Shapely installation docs for your OS.
+
+## Installation
+### PyPI
+pip install rasterop
+
+### Developement mode
+Installation in development mode:
+```bash
+pip install -e .
+```
+
+
+## License
+See `LICENSE.txt` (MIT-style license). Copyright © 2025 CIAT.
+
+## Contributing
+Contributions are welcome!
+- Please open an issue to discuss substantial changes.
+- Feel free to propose improvements to docs, tests, and examples.
