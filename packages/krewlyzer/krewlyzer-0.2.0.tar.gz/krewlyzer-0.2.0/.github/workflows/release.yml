@@ -1,0 +1,99 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # Required for PyPI Trusted Publisher OIDC
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install uv
+      run: |
+        sudo apt-get update && sudo apt-get install -y gfortran clang libclang-dev
+        pip install uv
+
+    - name: Build package
+      run: |
+        uv venv .venv
+        . .venv/bin/activate
+        uv pip install .
+
+    - name: Run tests
+      run: |
+        . .venv/bin/activate
+        uv pip install .[test]
+        uv pip list
+        python -m pytest
+
+    - name: Build distribution
+      uses: PyO3/maturin-action@v1
+      with:
+        command: build
+        args: --release --out dist --sdist
+        before-script-linux: |
+          SUDO=""
+          if [ "$(id -u)" -ne 0 ] && command -v sudo &> /dev/null; then
+            SUDO="sudo"
+          fi
+          
+          if command -v yum &> /dev/null; then
+            $SUDO yum install -y zlib-devel bzip2-devel xz-devel libcurl-devel openssl-devel
+          elif command -v apt-get &> /dev/null; then
+            $SUDO apt-get update && $SUDO apt-get install -y zlib1g-dev libbz2-dev liblzma-dev libcurl4-openssl-dev libssl-dev
+          elif command -v apk &> /dev/null; then
+            $SUDO apk add zlib-dev bzip2-dev xz-dev curl-dev openssl-dev
+          else
+            echo "No known package manager found"
+            exit 1
+          fi
+        
+    - name: Verify Wheel
+      run: |
+        . .venv/bin/activate
+        pip install dist/*.whl
+        python -c "import krewlyzer; print('Imported:', krewlyzer); print('File:', krewlyzer.__file__)"
+        krewlyzer --help
+
+    - name: Publish to PyPI
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        print-hash: true
+        skip-existing: true
+        verbose: true
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: ghcr.io/msk-access/krewlyzer:${{ github.ref_name }},ghcr.io/msk-access/krewlyzer:latest
+        platforms: linux/amd64,linux/arm64
