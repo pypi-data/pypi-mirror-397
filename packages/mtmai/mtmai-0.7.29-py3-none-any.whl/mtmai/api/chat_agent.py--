@@ -1,0 +1,234 @@
+from typing import Optional, Dict, Any
+from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from pydantic import BaseModel
+from loguru import logger
+from mtmai.agents.assistant_agent import AssistantAgent
+from mtmai.agents._mtbase_agent import AgentRequest, AgentResponse
+from mtmai.core.config import settings
+from mtmai.core.ai_config import ai_config_manager
+
+router = APIRouter()
+
+class ChatConfig(BaseModel):
+    """聊天配置"""
+    provider: str = "openai"
+    model_name: str = "gpt-4o-mini"
+    api_key: Optional[str] = None
+    base_url: Optional[str] = None
+    max_turns: int = 10
+    system_message: str = "你是一个有用的AI助手，可以回答各种问题并提供帮助。"
+
+class ChatMessage(BaseModel):
+    """聊天消息"""
+    role: str  # "user" 或 "assistant"
+    content: str
+    timestamp: Optional[str] = None
+
+class ChatRequest(BaseModel):
+    """聊天请求 - 兼容旧API格式"""
+    message: str
+    config: Optional[ChatConfig] = None
+
+class ChatResponse(BaseModel):
+    """聊天响应 - 兼容旧API格式"""
+    message: str
+    success: bool = True
+    error: Optional[str] = None
+
+# 全局聊天配置存储
+_global_chat_config = ChatConfig()
+
+@router.post("/config", response_model=ChatConfig)
+async def update_chat_config(config: ChatConfig):
+    """更新聊天配置"""
+    global _global_chat_config
+    _global_chat_config = config
+
+    # 同时更新AI配置管理器中的提供商配置
+    if config.api_key:
+        await ai_config_manager.update_provider(config.provider, {
+            "name": config.provider,
+            "api_key": config.api_key,
+            "base_url": config.base_url
+        })
+
+    logger.info(f"聊天配置已更新: {config}")
+    return config
+
+@router.get("/config", response_model=ChatConfig)
+async def get_chat_config():
+    """获取当前聊天配置"""
+    return _global_chat_config
+
+@router.get("/providers")
+async def get_providers():
+    """获取所有可用的AI提供商"""
+    ai_config = await ai_config_manager.load_config()
+    providers = []
+    for name, provider in ai_config.providers.items():
+        providers.append({
+            "name": name,
+            "display_name": provider.display_name,
+            "models": provider.models,
+            "enabled": provider.enabled,
+            "has_api_key": bool(provider.api_key)
+        })
+    return {"providers": providers}
+
+@router.post("/validate-key")
+async def validate_api_key(request: Dict[str, Any]):
+    """验证API密钥"""
+    provider = request.get("provider")
+    api_key = request.get("api_key")
+    base_url = request.get("base_url")
+
+    if not provider or not api_key:
+        raise HTTPException(status_code=400, detail="缺少必要参数")
+
+    result = await ai_config_manager.validate_api_key(provider, api_key, base_url)
+    return result
+
+@router.get("/export")
+async def export_config():
+    """导出AI配置"""
+    config = await ai_config_manager.export_config()
+    return {"config": config}
+
+@router.post("/import")
+async def import_config(request: Dict[str, Any]):
+    """导入AI配置"""
+    config_data = request.get("config")
+    if not config_data:
+        raise HTTPException(status_code=400, detail="缺少配置数据")
+
+    success = await ai_config_manager.import_config(config_data)
+    if success:
+        return {"success": True, "message": "配置导入成功"}
+    else:
+        raise HTTPException(status_code=500, detail="配置导入失败")
+
+async def create_chat_agent(config: ChatConfig) -> AssistantAgent:
+    """创建聊天代理 - 使用新的Agent架构"""
+    try:
+        # 创建助手代理 - 不预先设置model_client，让agent根据配置创建
+        agent = AssistantAgent(
+            name="ChatAssistant",
+            description="A helpful AI assistant for chat conversations",
+            system_message=config.system_message,
+            max_turns=config.max_turns,
+        )
+        return agent
+
+    except Exception as e:
+        logger.error(f"创建聊天代理失败: {e}")
+        raise HTTPException(status_code=500, detail=f"创建聊天代理失败: {str(e)}")
+
+@router.post("/chat", response_model=ChatResponse)
+async def chat(request: ChatRequest):
+    """处理聊天请求 - 使用新的Agent架构"""
+    try:
+        # 使用请求中的配置或全局配置
+        config = request.config or _global_chat_config
+
+        # 创建聊天代理
+        agent = await create_chat_agent(config)
+
+        # 构建Agent请求
+        agent_request = AgentRequest(
+            task=request.message,
+            config={
+                "provider": config.provider,
+                "model_name": config.model_name,
+                "api_key": config.api_key,
+                "base_url": config.base_url,
+            }
+        )
+
+        # 执行Agent任务
+        agent_response = await agent.execute(agent_request)
+
+        # 转换为API响应格式
+        if agent_response.success:
+            return ChatResponse(
+                message=agent_response.result or "抱歉，我无法处理您的请求。",
+                success=True
+            )
+        else:
+            return ChatResponse(
+                message="",
+                success=False,
+                error=agent_response.error
+            )
+
+    except Exception as e:
+        logger.error(f"聊天处理失败: {e}")
+        return ChatResponse(
+            message="",
+            success=False,
+            error=str(e)
+        )
+
+@router.websocket("/ws")
+async def websocket_chat(websocket: WebSocket):
+    """WebSocket聊天端点"""
+    await websocket.accept()
+    logger.info("WebSocket连接已建立")
+
+    try:
+        while True:
+            # 接收消息
+            data = await websocket.receive_json()
+            message = data.get("message", "")
+            config_data = data.get("config", {})
+
+            if not message:
+                await websocket.send_json({
+                    "success": False,
+                    "error": "消息不能为空"
+                })
+                continue
+
+            try:
+                # 解析配置
+                config = ChatConfig(**config_data) if config_data else _global_chat_config
+
+                # 创建聊天代理
+                agent = await create_chat_agent(config)
+
+                # 构建Agent请求
+                agent_request = AgentRequest(
+                    task=message,
+                    config={
+                        "provider": config.provider,
+                        "model_name": config.model_name,
+                        "api_key": config.api_key,
+                        "base_url": config.base_url,
+                    }
+                )
+
+                # 执行Agent任务
+                agent_response = await agent.execute(agent_request)
+
+                # 发送响应
+                if agent_response.success:
+                    await websocket.send_json({
+                        "message": agent_response.result or "抱歉，我无法处理您的请求。",
+                        "success": True
+                    })
+                else:
+                    await websocket.send_json({
+                        "success": False,
+                        "error": agent_response.error
+                    })
+
+            except Exception as e:
+                logger.error(f"WebSocket聊天处理失败: {e}")
+                await websocket.send_json({
+                    "success": False,
+                    "error": str(e)
+                })
+
+    except WebSocketDisconnect:
+        logger.info("WebSocket连接已断开")
+    except Exception as e:
+        logger.error(f"WebSocket错误: {e}")

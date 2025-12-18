@@ -1,0 +1,92 @@
+from typing import *
+
+import httpx
+
+from ..api_config import APIConfig, HTTPException
+from ..models import *
+
+
+def BrowserOpen(api_config_override: Optional[APIConfig] = None, *, data: Dict[str, Any]) -> Dict[str, Any]:
+    api_config = api_config_override if api_config_override else APIConfig()
+
+    base_path = api_config.base_path
+    path = f"/api/cf/demo/time"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": f"Bearer { api_config.get_access_token() }",
+    }
+    query_params: Dict[str, Any] = {}
+
+    query_params = {key: value for (key, value) in query_params.items() if value is not None}
+
+    with httpx.Client(base_url=base_path, verify=api_config.verify) as client:
+        response = client.request("post", httpx.URL(path), headers=headers, params=query_params, json=data)
+
+    if response.status_code != 200:
+        raise HTTPException(response.status_code, f"BrowserOpen failed with status code: {response.status_code}")
+    else:
+        body = None if 200 == 204 else response.json()
+
+    return body
+
+
+def BrowserUpsert(api_config_override: Optional[APIConfig] = None, *, data: BrowserCreateReq) -> BrowserCreateResult:
+    api_config = api_config_override if api_config_override else APIConfig()
+
+    base_path = api_config.base_path
+    path = f"/api/cf/browser/browsers/upsert"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": f"Bearer { api_config.get_access_token() }",
+    }
+    query_params: Dict[str, Any] = {}
+
+    query_params = {key: value for (key, value) in query_params.items() if value is not None}
+
+    with httpx.Client(base_url=base_path, verify=api_config.verify) as client:
+        response = client.request("post", httpx.URL(path), headers=headers, params=query_params, json=data.dict())
+
+    if response.status_code != 200:
+        raise HTTPException(response.status_code, f"BrowserUpsert failed with status code: {response.status_code}")
+    else:
+        body = None if 200 == 204 else response.json()
+
+    return BrowserCreateResult(**body) if body is not None else BrowserCreateResult()
+
+
+def Browserlist(
+    api_config_override: Optional[APIConfig] = None,
+    *,
+    page: Optional[float] = None,
+    size: Optional[float] = None,
+    kw: Optional[str] = None,
+) -> List[BrowserRow]:
+    api_config = api_config_override if api_config_override else APIConfig()
+
+    base_path = api_config.base_path
+    path = f"/api/cf/browser/browsers/list"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Authorization": f"Bearer { api_config.get_access_token() }",
+    }
+    query_params: Dict[str, Any] = {"page": page, "size": size, "kw": kw}
+
+    query_params = {key: value for (key, value) in query_params.items() if value is not None}
+
+    with httpx.Client(base_url=base_path, verify=api_config.verify) as client:
+        response = client.request(
+            "get",
+            httpx.URL(path),
+            headers=headers,
+            params=query_params,
+        )
+
+    if response.status_code != 200:
+        raise HTTPException(response.status_code, f"Browserlist failed with status code: {response.status_code}")
+    else:
+        body = None if 200 == 204 else response.json()
+
+    return [BrowserRow(**item) for item in body]
