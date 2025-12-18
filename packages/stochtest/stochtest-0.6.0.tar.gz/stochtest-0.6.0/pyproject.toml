@@ -1,0 +1,72 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "stochtest"
+dynamic = ["version"]
+description = 'Stochtest is a Python library for performing statistical assertions on stochastic outputs.'
+readme = "README.md"
+keywords = [
+    "test",
+    "testing",
+    "unittest",
+    "assertions",
+    "MCMC",
+    "monte carlo",
+    "simulation",
+    "statistics",
+    "stochastic"
+]
+requires-python = ">=3.10"
+license = "MIT"
+license-files = [ "LICENSE.txt" ]
+authors = [
+  { name = "Micah Brown", email = "micahbrun.dev@gmail.com" },
+]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = ["scipy", "numpy"]
+
+[project.urls]
+Repository = "https://github.com/MicahBrun/stochtest"
+Issues = "https://github.com/MicahBrun/stochtest/issues"
+
+[tool.hatch.version]
+source="vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/stochtest/__about__.py"
+
+[tool.hatch.envs.types]
+extra-dependencies = [
+  "mypy>=1.0.0",
+]
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive {args:src/stochtest tests}"
+
+[tool.coverage.run]
+source_pkgs = ["stochtest", "tests"]
+branch = true
+parallel = true
+omit = [
+  "src/stochtest/__about__.py",
+]
+
+[tool.coverage.paths]
+stochtest = ["src/stochtest", "*/stochtest/src/stochtest"]
+tests = ["tests", "*/stochtest/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
