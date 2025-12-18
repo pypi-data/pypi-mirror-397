@@ -1,0 +1,184 @@
+[project]
+name = "good-agent"
+version = "0.6.2"
+description = "A Good Agent"
+readme = "README.md"
+authors = [
+    { name = "Chris Goddard", email = "chris@goodkiwi.llc" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "good-common>=1.2.1",
+    "instructor>=1.12.0",
+    "jinja2>=3.1.6",
+    "lxml-html-clean>=0.4.3",
+    "markdown>=3.9",
+    "litellm",
+    "mcp>=1.0.0",
+    "rich>=13.7.0",
+    "numpy>=2.3.4",
+    "pydantic>=2.12.3",
+    "python-magic>=0.4.27",
+    "types-lxml>=2025.8.25",
+    "prompt-toolkit>=3.0.52",
+    "tomli-w>=1.0.0",
+]
+
+[project.optional-dependencies]
+
+[project.scripts]
+good-agent = "good_agent.cli.main:app"
+
+[build-system]
+requires = ["uv_build>=0.8.22,<0.9.0"]
+build-backend = "uv_build"
+
+[tool.uv.sources]
+litellm = { git = "https://github.com/BerriAI/litellm.git", branch="main" }
+
+[tool.uv]
+override-dependencies = [
+    "grpcio>=1.76.0",  # Force Python 3.14 compatible version
+]
+
+
+
+[dependency-groups]
+dev = [
+    "coverage>=7.11.3",
+    "fastapi>=0.121.3",
+    "good-dev>=0.1.1",
+    "ipykernel>=7.1.0",
+    "mypy>=1.18.2",
+    "pytest>=8.4.2",
+    "pytest-timeout>=2.3.1",
+    "pytest-asyncio>=1.2.0",
+    "pyupgrade>=3.21.1",
+    "ruff>=0.14.3",
+    "types-markdown>=3.10.0.20251106",
+    "types-pyyaml>=6.0.12.20250915",
+    "uvicorn>=0.38.0",
+    "vcrpy>=7.0.0",
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.7.0",
+    "mkdocs-include-markdown-plugin>=7.2.0",
+    "mkdocstrings[python]>=0.26.1",
+    "mkdocs-coverage>=1.0.0",
+    "watchdog>=4.0.0,<6.0.0",
+    "mkdocs-live-edit-plugin>=0.3.1",
+]
+
+
+
+[tool.pytest.ini_options]
+# Define where pytest should look for tests
+# Only include root tests to avoid provider conftest conflicts
+# Provider tests should be run separately from their package directory
+testpaths = ["tests"]
+# Ensure root directory is in Python path
+pythonpath = ["."]
+# Prevent conftest.py import conflicts by using importlib
+# Force namespace packages to avoid module name conflicts
+# Skip prefect_harness tests by default (use -m prefect_harness to run them)
+addopts = "--import-mode=importlib --strict-config --confcutdir=. --ignore-glob='**/.archive/**' -m 'not slow and not llm'"
+# Test discovery patterns
+python_files = ["test_*.py", "*_test.py"]
+# Directories to skip during collection
+norecursedirs = ["*.egg", ".eggs", "dist", "build", "docs", ".tox", ".git", "__pycache__", ".venv", "node_modules", ".archive"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)8s] %(pathname)s:%(lineno)d - %(message)s"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+timeout = 60
+timeout_func_only = true
+timeout_method = "signal"
+markers = [
+    "unit",
+    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+    "slow: marks tests as slow running",
+    "performance: marks tests that measure performance metrics",
+    "benchmark: marks benchmark-focused tests",
+    "requires_signals: tests that rely on signal handling",
+    "timeout: tests with custom timeout behavior",
+    "llm: marks tests that make REAL LLM API calls (skipped by default, opt-in with '-m llm')",
+    "skip_coverage(reason): tests excluded from coverage collection (requires rationale)",
+]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+    # Ignore deprecation warning from clickhouse_connect about utcfromtimestamp
+    "ignore:datetime.datetime.utcfromtimestamp\\(\\) is deprecated:DeprecationWarning:clickhouse_connect.datatypes.temporal",
+    # Ignore connection pool warnings that are expected in concurrent tests
+    "ignore:Connection pool is full:UserWarning",
+    # LiteLLM triggers noisy Pydantic serialization warnings when dumping responses
+    "ignore:Pydantic serializer warnings::UserWarning",
+    # LiteLLM's cleanup still calls asyncio.get_event_loop()
+    "ignore:There is no current event loop:DeprecationWarning",
+    # aiohttp connector emits a deprecation warning on Python 3.13+
+    "ignore:enable_cleanup_closed ignored because:DeprecationWarning",
+    # litellm inspects model_fields/model_computed_fields on instances
+    "ignore:Accessing the 'model_fields' attribute::",
+    "ignore:Accessing the 'model_computed_fields' attribute::",
+    # litellm still calls BaseModel.dict()
+    "ignore:The `dict` method is deprecated::",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["src/good_agent"]
+
+[tool.coverage.report]
+fail_under = 65.0
+precision = 2
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
+omit = [
+    "*/tests/*",
+    "*/__init__.py",
+    "src/good_agent/spec.py",
+    "src/good_agent/type_guards.py",
+    "src/good_agent/core/models/reference.py",
+    "src/good_agent/core/models/protocols.py",
+    "src/good_agent/core/templating/type_safety_patterns.py",
+]
+
+[tool.ruff]
+target-version = "py314"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM"]
+ignore = [
+    "E501",    # Line too long - handled by formatter
+    "SIM102",  # Use a single if statement - sometimes nested ifs are clearer
+    "SIM108",  # Use ternary operator - sometimes if-else is clearer
+    "SIM105",  # Use contextlib.suppress - sometimes try-except-pass is intentional
+    "UP040",   # TypeAlias annotation - keep for broader Python compatibility
+    "UP046",   # Use `type` instead of TypeAlias - keep for broader Python compatibility
+    "UP047",   # Generic functions - keep for broader Python compatibility
+    "B008",    # Do not perform function call in argument defaults - common pattern in CLI
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+    "ARG001",  # Unused function argument - pytest fixtures
+    "ARG002",  # Unused method argument - pytest fixtures
+    "ARG005",  # Unused lambda argument - test mocks
+    "SIM116",  # Use dictionary instead of if - test readability
+    "SIM117",  # Use single with statement - test readability
+    "SIM118",  # Use `key in dict` - test explicitness
+]
+"src/**/*.py" = [
+    "ARG002",  # Unused method argument - interface implementations
+    "ARG001",  # Unused function argument - callback signatures
+]
