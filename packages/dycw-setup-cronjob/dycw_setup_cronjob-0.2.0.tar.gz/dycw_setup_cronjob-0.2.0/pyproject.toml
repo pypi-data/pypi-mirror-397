@@ -1,0 +1,28 @@
+[build-system]
+  build-backend = "uv_build"
+  requires = ["uv_build"]
+
+[dependency-groups]
+  dev = ["dycw-utilities[test]", "pyright", "rich"]
+
+[project]
+  authors = [{ email = "d.wan@icloud.com", name = "Derek Wan" }]
+  dependencies = [
+    "click >=8.3.1, <8.4",
+    "dycw-utilities >=0.169.9",
+    "typed-settings >=25.3.0, <25.4",
+  ]
+  description = "Library to set up cron jobs"
+  name = "dycw-setup-cronjob"
+  readme = "README.md"
+  requires-python = ">= 3.14"
+  version = "0.2.0"
+
+  [project.scripts]
+    setup-cronjob = "setup_cronjob.cli:_main"
+
+[tool]
+  [tool.uv]
+    [tool.uv.build-backend]
+      module-name = "setup_cronjob"
+      module-root = "src"
