@@ -1,0 +1,124 @@
+Metadata-Version: 2.4
+Name: ticts
+Version: 0.6.1
+Summary: A Python library for unevenly-spaced time series analysis.
+Author-email: gjeusel <guillaume.jeusel@gmail.com>
+License-File: LICENSE
+Classifier: Intended Audience :: Developers
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Topic :: Software Development
+Requires-Python: >=3.9
+Requires-Dist: pandas
+Requires-Dist: sortedcontainers
+Provides-Extra: all
+Requires-Dist: bokeh; extra == 'all'
+Requires-Dist: coverage==7.4.*; extra == 'all'
+Requires-Dist: inline-snapshot==0.31.*; extra == 'all'
+Requires-Dist: markdown-include; extra == 'all'
+Requires-Dist: mdx-truly-sane-lists; extra == 'all'
+Requires-Dist: mkdocs; extra == 'all'
+Requires-Dist: mkdocs-exclude; extra == 'all'
+Requires-Dist: mkdocs-material; extra == 'all'
+Requires-Dist: mkdocstrings[python]; extra == 'all'
+Requires-Dist: mypy==1.9.*; extra == 'all'
+Requires-Dist: pre-commit==3.7.*; extra == 'all'
+Requires-Dist: pytest-mock==3.14.*; extra == 'all'
+Requires-Dist: pytest-sugar==1.0.0; extra == 'all'
+Requires-Dist: pytest==8.4.*; extra == 'all'
+Requires-Dist: ruff==0.4.*; extra == 'all'
+Requires-Dist: types-pytz; extra == 'all'
+Provides-Extra: confort
+Requires-Dist: cookiecutter; extra == 'confort'
+Requires-Dist: cruft; extra == 'confort'
+Requires-Dist: pdbpp; extra == 'confort'
+Requires-Dist: ptpython; extra == 'confort'
+Requires-Dist: rich; extra == 'confort'
+Provides-Extra: dev
+Requires-Dist: bokeh; extra == 'dev'
+Requires-Dist: coverage==7.4.*; extra == 'dev'
+Requires-Dist: inline-snapshot==0.31.*; extra == 'dev'
+Requires-Dist: mypy==1.9.*; extra == 'dev'
+Requires-Dist: pre-commit==3.7.*; extra == 'dev'
+Requires-Dist: pytest-mock==3.14.*; extra == 'dev'
+Requires-Dist: pytest-sugar==1.0.0; extra == 'dev'
+Requires-Dist: pytest==8.4.*; extra == 'dev'
+Requires-Dist: ruff==0.4.*; extra == 'dev'
+Requires-Dist: types-pytz; extra == 'dev'
+Provides-Extra: doc
+Requires-Dist: markdown-include; extra == 'doc'
+Requires-Dist: mdx-truly-sane-lists; extra == 'doc'
+Requires-Dist: mkdocs; extra == 'doc'
+Requires-Dist: mkdocs-exclude; extra == 'doc'
+Requires-Dist: mkdocs-material; extra == 'doc'
+Requires-Dist: mkdocstrings[python]; extra == 'doc'
+Description-Content-Type: text/markdown
+
+<h1 align="center">
+  <span>ticts</span>
+  <img src="https://raw.githubusercontent.com/gjeusel/ticts/main/docs/img/logo.svg" alt="logo" width="60" height="20" />
+</h1>
+
+<p align="center">
+  <a href="https://github.com/gjeusel/ticts/actions?query=workflow%3ACI+branch%3Amain">
+      <img src="https://github.com/gjeusel/ticts/actions/workflows/ci.yml/badge.svg?event=push&branch=main" alt="Test Suite" onerror="this.style.display='none'">
+  </a>
+  <a href="https://codecov.io/gh/gjeusel/ticts">
+      <img src="https://codecov.io/gh/gjeusel/ticts/branch/main/graph/badge.svg" alt="Coverage">
+  </a>
+  <a href="https://pypi.org/project/ticts/">
+      <img src="https://img.shields.io/pypi/v/ticts" alt="Package version" onerror="this.style.display='none'">
+  </a>
+  <a href="https://gjeusel.github.io/ticts/">
+    <img src="https://img.shields.io/badge/mkdocs-pages-brightgreen" alt="MKDocs github page">
+  </a>
+</p>
+
+<p align="center">
+  <em>
+    A Python library for unevenly-spaced time series analysis.
+    Greatly inspired by <a href="https://github.com/datascopeanalytics/traces">traces</a>
+  </em>
+</p>
+
+<img src="https://github.com/gjeusel/ticts/blob/main/docs/img/example.png?raw=true" alt="Example plot" />
+
+Get Started [Notebook](https://mybinder.org/v2/gh/gjeusel/ticts/main?labpath=docs%2FTutorial.ipynb).
+
+---
+
+## Usage
+
+```python
+from ticts import TimeSeries
+ts = TimeSeries({
+  '2019-01-01': 1,
+  '2019-01-01 00:10:00': 2,
+  '2019-01-01 00:11:00': 3,
+})
+
+not_in_index = '2019-01-01 00:05:00'
+assert ts[not_in_index] == 1  # step function, previous value
+
+ts['2019-01-01 00:04:00'] = 10
+assert ts[not_in_index] == 10
+
+assert ts + ts == 2 * ts
+
+ts_evenly_spaced = ts.sample(freq='1Min')
+
+# From ticts to pandas, and the other way around
+assert ts.equals(
+  ts.to_dataframe().to_ticts(),
+)
+```
+
+## Installation
+
+```bash
+pip install ticts
+```
