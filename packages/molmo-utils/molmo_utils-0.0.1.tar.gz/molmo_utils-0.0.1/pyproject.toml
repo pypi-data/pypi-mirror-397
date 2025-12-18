@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "molmo-utils"
+dynamic = ["version"]
+readme = "README.md"
+description = "Molmo Utils - PyTorch"
+authors = [
+    { name = "Allen Institute for Artificial Intelligence" }
+]
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+dependencies = [
+    "requests",
+    "pillow",
+    "av",
+    "packaging",
+    "numpy",
+    "torch",
+    "decord2",
+]
+
+[project.optional-dependencies]
+torchcodec = [
+    "torchcodec",
+]
+
+[project.urls]
+Homepage = "https://github.com/allenai/molmo-utils"
+Repository = "https://github.com/allenai/molmo-utils"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["molmo_utils"]
+
+[tool.setuptools.dynamic]
+version = { attr = "molmo_utils.version.VERSION" }
