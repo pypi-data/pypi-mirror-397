@@ -1,0 +1,62 @@
+{
+  "type": "object",
+  "properties": {
+    "scores": {
+      "type": "object",
+      "description": "Numerical scores for each criterion (1-10 scale)",
+      "properties": {
+        "correctness": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Does the solution correctly solve the task?"
+        },
+        "code_quality": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Is the code well-structured, readable, and maintainable?"
+        },
+        "completeness": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Does it address all requirements fully?"
+        },
+        "clarity": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10,
+          "description": "Are changes clear and well-documented?"
+        }
+      },
+      "required": ["correctness", "code_quality", "completeness", "clarity"]
+    },
+    "overall_score": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10,
+      "description": "Overall assessment score"
+    },
+    "feedback": {
+      "type": "string",
+      "description": "Detailed written feedback on the implementation"
+    },
+    "strengths": {
+      "type": "array",
+      "description": "What this implementation does well",
+      "items": {"type": "string"}
+    },
+    "weaknesses": {
+      "type": "array",
+      "description": "Areas that could be improved",
+      "items": {"type": "string"}
+    },
+    "concerns": {
+      "type": "array",
+      "description": "Any bugs, security issues, or major problems identified",
+      "items": {"type": "string"}
+    }
+  },
+  "required": ["scores", "overall_score", "feedback"]
+}

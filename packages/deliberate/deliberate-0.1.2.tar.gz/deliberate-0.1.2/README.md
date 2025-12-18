@@ -1,0 +1,581 @@
+# deliberate
+
+Multi-LLM ensemble orchestrator for code generation and review.
+
+## Overview
+
+**deliberate** is a CLI tool that orchestrates multiple LLM agents to collaboratively plan, execute, and review coding tasks. It uses ensemble methods - independent generation, peer voting, and synthesis - to produce higher-quality outputs than any single agent.
+
+
+## Features
+
+- **Multi-agent planning**: Multiple LLMs propose plans, optionally debate, and vote on the best approach
+- **Isolated execution**: Each agent works in its own git worktree to prevent conflicts. Results are applied to dedicated `deliberate/*` branches (merge or squash) so you can review/merge with native Git tools.
+- **Peer review**: Multiple agents score and vote on execution results
+- **Dynamic review criteria**: Optional task-aware criteria generation from a preferred “best” reviewer
+- **TDD inner loop**: Cheap test→fail→fix cycles before expensive LLM review
+- **Evolution phase**: AlphaEvolve-inspired iterative improvement with MAP-elites, LLM ensemble, and evaluation cascade
+- **Agent auto-detection**: Automatically discovers available LLM CLI tools on your system
+- **Profiles**: Built-in strategy profiles (`cheap`, `balanced`, `max_quality`) to trade cost vs quality
+- **Budget enforcement**: Hard limits on tokens, cost, and time
+- **CI integration**: Non-interactive mode with structured output for automation
+- **Artifacts**: Emits JSON + Markdown reports per run
+- **Agent performance tracking**: Track which agents are best at planning and execution over time
+- **GitHub integration**: Automated PR creation with review summaries
+- **OpenTelemetry tracing**: Built-in observability support
+- **MCP support**: Use MCP-compatible agents, or run deliberate as an MCP server; agents can send structured status updates (with attachments) and questions
+- **Interactive review**: Inspect diffs, open an agent worktree in your editor, and choose the winner
+- **Live dashboard**: Verbose mode separates agent logs and shows phase progress when runs are parallelized
+- **Testable**: Fake adapters enable full workflow testing at $0
+
+## Installation
+
+```bash
+# Install with uv (recommended)
+uv add deliberate
+
+# Or install with pip
+pip install deliberate
+```
+
+For local development, clone the repo and run `uv sync` to install dependencies:
+
+```bash
+uv sync --extra tracing
+```
+
+### MCP agents
+
+Deliberate can talk to MCP-compatible agents (e.g., `codex mcp-server`, `claude mcp serve`) using the typed MCP client. To enable:
+
+Configure an MCP agent in `.deliberate.yaml`, e.g.:
+
+```yaml
+agents:
+  codex-mcp:
+    type: mcp
+    command: ["codex", "mcp-server"]
+    capabilities: [executor, reviewer]
+    config:
+      max_tokens: 8000
+      timeout_seconds: 600
+```
+
+The adapter negotiates protocol versions automatically and paginates tools/resources for forward compatibility.
+
+## Quick Start
+
+1. Initialize a configuration file:
+
+```bash
+deliberate init
+```
+
+2. Edit `.deliberate.yaml` to configure your agents. Or set `OPENAI_API_KEY` and run `deliberate init --force` to auto-configure API-based agents.
+
+3. Run a task using the **Git-Native Workflow** (Plan -> Work -> Merge):
+
+```bash
+# 1. Create a plan branch
+deliberate plan "Add a function to calculate fibonacci numbers"
+# Creates branch: deliberate/add-a-function-to-calculate-fibonacci-numbers
+# Commits: PLAN.md
+
+# 2. (Optional) Review/Edit PLAN.md in your editor
+# code PLAN.md
+
+# 3. Execute the plan
+deliberate work
+# Runs agents in isolated worktrees to implement the plan
+
+# 4. Review results and merge
+deliberate merge
+# Picks the winner, applies changes, and squash-merges to main
+```
+
+4. Alternatively, use the `run` macro (one-shot):
+
+```bash
+deliberate run "Add a function to calculate fibonacci numbers"
+```
+
+## Configuration
+
+### Configuration File Locations
+
+Deliberate searches for configuration files in the following order:
+
+1. **Explicit path**: `deliberate run --config /path/to/config.yaml`
+2. **Current directory**: `./.deliberate.yaml` or `./deliberate.yaml`
+3. **User config directory**: OS-specific user configuration directory
+   - Linux/macOS: `~/.config/deliberate/config.yaml`
+   - Windows: `%APPDATA%\deliberate\config.yaml`
+
+To create a user-level configuration:
+
+```bash
+# Create config in user config directory
+deliberate init --user
+
+# Or create in current directory (default)
+deliberate init
+```
+
+### Configuration Format
+
+Edit `.deliberate.yaml` to configure agents and workflow:
+
+```yaml
+agents:
+  claude:
+    type: cli
+    command: ["claude", "--print", "-p"]
+    capabilities: [planner, executor, reviewer]
+    # Telemetry forwarding (for agents that support it)
+    telemetry_endpoint: "http://localhost:4317"
+    telemetry_exporter: "otlp-grpc"  # otlp-grpc | otlp-http | none
+
+  gemini:
+    type: cli
+    command: ["gemini", "-y", "--output-format", "json"]
+    # API key loaded from GEMINI_API_KEY environment variable
+    capabilities: [planner, reviewer]
+
+workflow:
+  planning:
+    enabled: true
+    agents: [claude, gemini]
+
+  execution:
+    enabled: true
+    agents: [claude]
+    parallelism:
+      enabled: true
+      max_parallel: 2
+
+  review:
+    enabled: true
+    agents: [gemini, codex]
+```
+
+### Environment Variables
+
+Deliberate uses [pydantic-settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/) to load environment variables:
+
+1. **System environment**: `export GEMINI_API_KEY=your-key`
+2. **.env file**: Create a `.env` file (see `.env.example`)
+3. **Config file inline**: Add under `agents.<name>.env` (not recommended for secrets)
+
+Priority: config inline > .env file > system environment
+
+## CLI Commands
+
+```bash
+# Deliberate on a task (planning -> execution -> review -> optional refinement)
+deliberate run "your task description"
+
+# Load task from a file
+echo "Add error handling to the API" > task.txt
+deliberate run "@task.txt"
+
+# Run with specific agents
+deliberate run "task" --agents claude,gemini
+
+# Skip planning or review phases
+deliberate run "task" --skip-planning
+deliberate run "task" --skip-review
+# Enable dynamic review criteria
+deliberate run "task" --profile balanced  # enable in config: workflow.review.context_analysis.enabled: true
+
+# Choose a strategy profile
+deliberate run "task" --profile cheap      # cost-focused
+deliberate run "task" --profile max_quality
+
+# CI mode: non-interactive, emits artifacts (JSON + Markdown) and gates on confidence
+deliberate run "task" --profile balanced --ci
+
+# Output as JSON
+deliberate run "task" --json
+
+# Enable tracing
+deliberate run "task" --trace
+deliberate run "task" --otlp-endpoint http://localhost:4317
+# Live dashboard view (verbose mode): stdout is shown by default; override if you want status-only
+deliberate run "task" -v               # shows status + stdout
+deliberate run "task" -v --verbose-view status  # hide stdout panel
+
+# Validate configuration
+deliberate validate
+
+# Create new config file
+deliberate init                # Create .deliberate.yaml in current directory
+deliberate init --user         # Create config.yaml in user config directory
+
+# View agent performance statistics
+deliberate stats               # Show all agent stats
+deliberate stats planners      # Show only planner stats
+deliberate stats executors     # Show only executor stats
+deliberate stats -a claude     # Show stats for specific agent
+deliberate stats --json        # Output as JSON
+
+# View workflow history
+deliberate history             # Show recent workflows
+deliberate history -n 20       # Show last 20 workflows
+deliberate history --json      # Output as JSON
+
+# Clear tracking data
+deliberate clear-stats         # Clear all stats (with confirmation)
+deliberate clear-stats -f      # Clear without confirmation
+
+# Git-native workflow commands
+deliberate plan "Add feature X"  # Create branch with PLAN.md
+deliberate work                  # Execute plan on current branch
+deliberate status                # Show workflow status
+deliberate merge                 # Review and merge to parent
+deliberate abort                 # Cancel workflow, return to parent
+```
+
+After a successful local run, the CLI will ask whether to apply the winning worktree back into your current workspace. Choose yes to copy the agent's changes out of the sandbox; choose no to keep the worktree for manual inspection.
+
+In interactive review mode, press `o` in the TUI to open an agent's worktree in your `$VISUAL`/`$EDITOR` (or VS Code) so you can run the app and tests before selecting the winner. Add `--verbose` to show a live dashboard with per-phase progress, agent statuses, and log lines when multiple agents run in parallel.
+
+## Profiles and CI Mode
+
+- Profiles are overlays on your config. Defaults shipped: `cheap`, `balanced` (default), `max_quality`. Select with `--profile` or set `default_profile` in your config.
+- `--ci` forces non-interactive execution, emits `artifacts/deliberate-run.json` and `artifacts/deliberate-report.md`, and applies a basic confidence gate. Use `--artifacts` to choose a different directory.
+
+## Worked example (fakes, zero-cost)
+
+1. Save a minimal fake-agent config (no API keys needed) to `/tmp/deliberate-fake.yaml`:
+
+```yaml
+agents:
+  fake-executor:
+    type: fake
+    behavior: echo
+    capabilities: [executor]
+  fake-reviewer:
+    type: fake
+    behavior: critic
+    capabilities: [reviewer]
+
+workflow:
+  planning:
+    enabled: false
+  execution:
+    enabled: true
+    agents: [fake-executor]
+    worktree:
+      enabled: false
+  review:
+    enabled: true
+    agents: [fake-reviewer]
+  refinement:
+    enabled: false
+
+profiles:
+  balanced:
+    description: "no-op profile for fake test"
+```
+
+2. Run with CI mode and a profile:
+
+```bash
+python -m deliberate.cli run "Add a hello world function" --config /tmp/deliberate-fake.yaml --profile balanced --ci
+```
+
+3. Inspect artifacts:
+
+```bash
+ls artifacts
+head artifacts/deliberate-run.json
+head artifacts/deliberate-report.md
+```
+
+## Workflow Phases
+
+### 1. Planning Phase
+
+Multiple agents propose plans for the task. They can optionally debate their approaches, and a judge (another LLM or voting) selects the best plan.
+
+### 2. Execution Phase
+
+The selected plan is executed by one or more agents in isolated git worktrees. Each agent produces a diff and summary of changes. Multiple agents can execute in parallel for comparison.
+
+### 3. Validation (TDD Inner Loop)
+
+Before expensive LLM review, deliberate runs a cheap validation loop:
+
+1. **Lint check**: Catch syntax errors immediately
+2. **Run tests**: Execute the project's test suite
+3. **Fix cycle**: If tests fail, feed errors back to the agent for repair
+4. **Retry**: Repeat until tests pass or max iterations reached
+
+This minimizes wasted review cycles on obviously broken code.
+
+### 4. Review Phase
+
+Multiple agents review the execution results, scoring on criteria like correctness, code quality, completeness, and risk. Votes are aggregated using Borda count or approval voting.
+
+### 5. Refinement Phase (Iterative Repair)
+
+If the review phase yields low confidence or poor scores, the **Refinement Phase** is triggered (if enabled).
+
+- **Feedback Loop**: Issues identified by reviewers are fed back to the executor
+- **Iterative Repair**: The executor attempts to fix the issues in the same worktree
+- **Re-review**: Reviewers evaluate the updated code
+- **Regression Check**: If the score drops, changes are reverted
+
+### 6. Evolution Phase (Optional, AlphaEvolve-Inspired)
+
+For complex tasks where initial results are unsatisfactory, the **Evolution Phase** iteratively improves solutions using techniques inspired by [AlphaEvolve](https://deepmind.google/discover/blog/alphaevolve-a-gemini-powered-coding-agent-for-designing-advanced-algorithms/):
+
+- **MAP-Elites Population**: Maintains diverse solutions that excel in different dimensions
+- **LLM Ensemble**: Fast models (Flash/Haiku) for throughput, powerful models (Pro/Opus) for quality
+- **Diff-Based Evolution**: SEARCH/REPLACE blocks for targeted code modifications
+- **Evaluation Cascade**: Progressive testing for early pruning of bad solutions
+
+```bash
+# Enable evolution
+deliberate run "Optimize the sorting algorithm" --evolve
+
+# Customize iterations
+deliberate run "Fix all bugs" --evolve --evolve-iterations 20
+```
+
+See [docs/evolution-concepts.md](docs/evolution-concepts.md) for detailed documentation.
+
+## SWE Test Challenges
+
+Deliberate includes realistic software engineering test fixtures for validation:
+
+| Challenge | Language | Type | Tests |
+|-----------|----------|------|-------|
+| `python-bug-fix` | Python | Bug fix | Division by zero, operator validation |
+| `typescript-feature` | TypeScript | Feature addition | Email validation function |
+| `rust-compile-fix` | Rust | Compilation errors | Type mismatches, missing trait impl |
+
+Run challenges:
+```bash
+# Test with fake agent (zero cost)
+uv run deliberate run @tests/fixtures/swe-challenges/python-bug-fix/TASK.md --agents fake --allow-dirty
+
+# Test with real LLM
+uv run deliberate run @tests/fixtures/swe-challenges/rust-compile-fix/TASK.md --profile balanced
+```
+
+## Voting Methods
+
+- **Borda count**: Points based on ranking position
+- **Approval voting**: Count approvals above a threshold
+- **Weighted Borda**: Borda with weighted reviewer importance
+
+## Agent Performance Tracking
+
+Deliberate automatically tracks agent performance across workflow runs, helping you identify which agents are best at each role.
+
+### What's Tracked
+
+- **Planners**: Selection rate, success rate, final scores when their plans are selected
+- **Executors**: Win rate (how often their execution is chosen), success rate, average scores, duration
+- **Reviewers**: Accuracy in predicting winners (how often they score the eventual winner highest)
+
+### Storage
+
+Data is stored in a DuckDB database in your user data directory:
+- Linux: `~/.local/share/deliberate/agent_performance.duckdb`
+- macOS: `~/Library/Application Support/deliberate/agent_performance.duckdb`
+- Windows: `%LOCALAPPDATA%\deliberate\agent_performance.duckdb`
+
+### Configuration
+
+Tracking is enabled by default. To disable or customize:
+
+```yaml
+tracking:
+  enabled: true  # Set to false to disable
+  db_path: null  # Optional custom path to database
+```
+
+### CLI Commands
+
+```bash
+# View leaderboards for all roles
+deliberate stats
+
+# Filter by role
+deliberate stats planners
+deliberate stats executors
+deliberate stats reviewers
+
+# Filter by agent
+deliberate stats -a claude
+
+# View recent workflow history
+deliberate history
+
+# Export as JSON
+deliberate stats --json
+deliberate history --json
+
+# Clear all tracking data
+deliberate clear-stats
+```
+
+### Example Output
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ Agent Performance Stats (42 workflows)                  │
+└─────────────────────────────────────────────────────────┘
+
+               Best Planners
+┌─────────┬──────┬──────┬──────────┬─────────┐
+│ Agent   │ Runs │ Wins │ Win Rate │ Trend   │
+├─────────┼──────┼──────┼──────────┼─────────┤
+│ claude  │   42 │   28 │   66.7%  │ ↑       │
+│ gemini  │   42 │   14 │   33.3%  │ →       │
+└─────────┴──────┴──────┴──────────┴─────────┘
+
+               Best Executors
+┌─────────┬──────┬──────┬──────────┬───────────┐
+│ Agent   │ Runs │ Wins │ Win Rate │ Avg Score │
+├─────────┼──────┼──────┼──────────┼───────────┤
+│ claude  │   42 │   31 │   73.8%  │     0.87  │
+│ codex   │   42 │   11 │   26.2%  │     0.72  │
+└─────────┴──────┴──────┴──────────┴───────────┘
+```
+
+## Testing
+
+```bash
+# Run all tests except live LLM tests (skipped by default)
+uv run pytest
+
+# Run unit tests only
+uv run pytest tests/unit/
+
+# Run integration tests
+uv run pytest tests/integration/
+
+# Run with coverage
+uv run pytest --cov=deliberate
+
+# Run live tests (costs money!)
+RUN_LIVE_LLM_TESTS=1 uv run pytest -m live
+```
+
+
+## Architecture
+
+Deliberate is built around a few key concepts:
+
+- **Orchestrator**: Coordinates the workflow phases, manages agent lifecycles, and enforces budgets
+- **Adapters**: Pluggable backends for different LLM interfaces (CLI tools, MCP servers, API clients)
+- **Phases**: Independent modules for planning, execution, review, and refinement
+- **Validation**: TDD loop with linting and test execution before LLM review
+- **Voting**: Aggregation algorithms (Borda, approval) for multi-agent decisions
+- **Tracking**: DuckDB-backed performance metrics for agents over time
+
+### Supported Agent Types
+
+| Type | Description | Example |
+|------|-------------|---------|
+| `cli` | Shell command that accepts prompts | `claude`, `gemini`, `codex` |
+| `mcp` | MCP-compatible server | `codex mcp-server` |
+| `fake` | Test double for development | Built-in echo/critic behaviors |
+
+### Agent Auto-Detection
+
+Run `deliberate init` to automatically discover available LLM CLI tools on your system. Deliberate checks for common tools like `claude`, `gemini`, `codex`, and `opencode`.
+
+### Supported CLIs
+
+Deliberate supports several LLM CLI tools, each with slightly different integration approaches:
+
+| CLI | Task Input | MCP Config Injection | MCP Discovery |
+|-----|-----------|---------------------|---------------|
+| `claude` | `--print -p TASK` | `--mcp-config JSON` (inline) | `claude mcp list` |
+| `gemini` | `-y` + stdin | `.gemini/settings.json` (file) | `gemini mcp list` |
+| `codex` | `exec TASK` | Not yet supported | `codex mcp list` |
+| `opencode` | `run --format json TASK` | Not yet supported | N/A |
+
+**Notes:**
+
+- **Claude**: Supports inline `--mcp-config` flag for passing MCP server configuration as JSON.
+- **Gemini**: Deliberate writes a `.gemini/settings.json` file to the working directory with MCP server configurations.
+- **Codex**: Discovery works via `codex mcp list`, but injection during execution is not yet implemented.
+
+
+## Git-Native Workflow
+
+Deliberate supports a git-native workflow where plans are persisted as `PLAN.md` files on dedicated branches. This gives you full control over the process and allows manual intervention between steps.
+
+### Commands
+
+```bash
+# Create a plan branch with PLAN.md
+deliberate plan "Refactor auth middleware to support OAuth"
+# Creates branch: deliberate/refactor-auth-oauth
+# Commits: PLAN.md with the implementation plan
+
+# Review and optionally edit PLAN.md in your editor
+# Then execute the plan
+deliberate work
+# Reads PLAN.md from current branch
+# Executes agents (in worktrees or directly)
+# Reports progress via MCP status updates
+
+# Check workflow status
+deliberate status
+# Shows current branch, plan status, and agent progress
+
+# Review results and merge to parent branch
+deliberate merge
+# Reviews execution results
+# Squash-merges to parent branch (e.g., main)
+# Cleans up worktrees and deletes feature branch
+
+deliberate merge --auto  # Skip confirmation prompts
+
+# Abort workflow without merging
+deliberate abort
+# Returns to parent branch
+# Deletes the deliberate branch
+```
+
+### Example Workflow
+
+```bash
+# 1. Start on main branch
+git checkout main
+
+# 2. Create plan
+deliberate plan "Add GET /api/users endpoint"
+# Now on branch: deliberate/add-users-endpoint
+# PLAN.md committed with implementation details
+
+# 3. (Optional) Review and edit the plan
+code PLAN.md
+git commit -am "docs: add auth requirement to plan"
+
+# 4. Execute the plan
+deliberate work
+
+# 5. Review and merge
+deliberate merge
+# Changes squash-merged to main
+# Back on main branch
+```
+
+### Two Execution Modes
+
+1. **Worktree mode** (default): Agents work in isolated `.deliberate/worktrees/` directories
+2. **Direct mode**: Agents work directly in the working directory (set `worktree.enabled: false`)
+
+Both modes support the same `plan → work → merge` workflow.
+
+## Future
+
+Deliberate as a Local Server (Daemon Mode):
+Instead of `deliberate run`, you start `deliberate serve`. It runs in the background. You interact with it via an IDE extension or a web UI. It maintains the worktrees persistently.

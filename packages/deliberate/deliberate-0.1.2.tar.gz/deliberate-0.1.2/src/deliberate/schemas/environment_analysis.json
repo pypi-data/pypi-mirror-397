@@ -1,0 +1,39 @@
+{
+  "type": "object",
+  "description": "Analysis of a project's environment to detect test and lint commands",
+  "properties": {
+    "test_command": {
+      "type": ["string", "null"],
+      "description": "The exact command to run all tests (e.g., 'uv run pytest', 'npm run test:unit', 'cargo test --workspace'). Null if no tests detected."
+    },
+    "lint_command": {
+      "type": ["string", "null"],
+      "description": "The exact command to run linting (e.g., 'uv run ruff check .', 'npm run lint', 'cargo clippy'). Null if no linter detected."
+    },
+    "build_command": {
+      "type": ["string", "null"],
+      "description": "The exact command to build the project (e.g., 'npm run build', 'cargo build'). Null if no build step detected."
+    },
+    "project_types": {
+      "type": "array",
+      "description": "List of detected languages and frameworks (e.g., ['python', 'pytest'], ['typescript', 'react', 'jest'])",
+      "items": {"type": "string"}
+    },
+    "package_manager": {
+      "type": ["string", "null"],
+      "enum": ["npm", "yarn", "pnpm", "pip", "uv", "poetry", "cargo", "go", null],
+      "description": "The primary package manager used by the project"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Confidence in the analysis (0.0-1.0). Lower if config files are ambiguous or missing."
+    },
+    "notes": {
+      "type": "string",
+      "description": "Brief explanation of the analysis and any caveats"
+    }
+  },
+  "required": ["test_command", "lint_command", "confidence"]
+}
