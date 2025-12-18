@@ -1,0 +1,50 @@
+# Copyright 2025 The Charmarr Project
+# See LICENSE file for licensing details.
+
+"""VPN gateway charm library for Kubernetes."""
+
+from charmarr_lib.vpn._k8s import (
+    KillSwitchConfig,
+    build_gateway_client_configmap_data,
+    build_gateway_client_patch,
+    build_gateway_patch,
+    is_gateway_client_patched,
+    is_gateway_patched,
+    reconcile_gateway,
+    reconcile_gateway_client,
+    reconcile_kill_switch,
+)
+from charmarr_lib.vpn.constants import (
+    CLIENT_INIT_CONTAINER_NAME,
+    CLIENT_SIDECAR_CONTAINER_NAME,
+    DEFAULT_VPN_BLOCK_OTHER_TRAFFIC,
+    DEFAULT_VPN_INTERFACE,
+    DEFAULT_VXLAN_GATEWAY_FIRST_DYNAMIC_IP,
+    DEFAULT_VXLAN_ID,
+    DEFAULT_VXLAN_IP_NETWORK,
+    GATEWAY_INIT_CONTAINER_NAME,
+    GATEWAY_SIDECAR_CONTAINER_NAME,
+    POD_GATEWAY_IMAGE,
+)
+
+__all__ = [
+    "CLIENT_INIT_CONTAINER_NAME",
+    "CLIENT_SIDECAR_CONTAINER_NAME",
+    "DEFAULT_VPN_BLOCK_OTHER_TRAFFIC",
+    "DEFAULT_VPN_INTERFACE",
+    "DEFAULT_VXLAN_GATEWAY_FIRST_DYNAMIC_IP",
+    "DEFAULT_VXLAN_ID",
+    "DEFAULT_VXLAN_IP_NETWORK",
+    "GATEWAY_INIT_CONTAINER_NAME",
+    "GATEWAY_SIDECAR_CONTAINER_NAME",
+    "POD_GATEWAY_IMAGE",
+    "KillSwitchConfig",
+    "build_gateway_client_configmap_data",
+    "build_gateway_client_patch",
+    "build_gateway_patch",
+    "is_gateway_client_patched",
+    "is_gateway_patched",
+    "reconcile_gateway",
+    "reconcile_gateway_client",
+    "reconcile_kill_switch",
+]
