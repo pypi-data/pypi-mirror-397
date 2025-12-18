@@ -1,0 +1,242 @@
+// CrossbarFX - Copyright (c) typedef int GmbH. All rights reserved.
+
+include "common.fbs";
+
+namespace arealm;
+
+
+/// WAMP URI match type applied (for pattern subscription/registrations and permissions).
+enum MatchType : byte
+{
+    /// No match type.
+    NONE = 0,
+
+    /// Match URI exactly.
+    EXACT = 1,
+
+    /// Match by URI prefix.
+    PREFIX = 2,
+
+    /// Match by URI wildcard pattern.
+    WILDCARD = 3
+}
+
+
+/// WAMP URI check level applied in an application realm.
+enum UriCheckLevel : byte
+{
+    /// No check level.
+    NONE = 0,
+
+    /// Check level "strict".
+    STRICT = 1,
+
+    /// Check level "loose".
+    LOOSE = 2,
+}
+
+
+/// Status of ApplicationRealm.
+enum ApplicationRealmStatus: uint8
+{
+    /// Unset status.
+    NONE = 0,
+
+    /// Initial status of a newly created application realm.
+    STOPPED = 1,
+
+    /// The application realm is currently starting.
+    STARTING = 2,
+
+    /// The application realm is currently running.
+    RUNNING = 3,
+
+    /// The application realm is currently paused (it is serving, but the watch/change engine doesn't operate).
+    PAUSED = 4,
+
+    /// The application realm is currently stopping.
+    STOPPING = 5,
+
+    /// The application realm is stopped in an error state.
+    ERROR = 6,
+
+    /// The application realm is currently running, but degraded (not all components and services desired are actually running at this moment, but some have failed, but may be retried automatically).
+    DEGRADED = 7,
+}
+
+
+/// WAMP permission (authorization of performing a WAMP action on a WAMP URI pattern).
+struct Permission
+{
+    /// URI or URI pattern to match for the permission to apply.
+    // FIXME: error: structs may contain only scalar or struct fields
+    // uri: string;
+
+    /// URI check level.
+    uri_check_level: UriCheckLevel;
+
+    /// URI matching mode.
+    match: MatchType;
+
+    /// Allow/disallow calling procedures on a match.
+    allow_call: bool;
+
+    /// Allow/disallow registering procedures on a match.
+    allow_register: bool;
+
+    /// Allow/disallow publishing events on a match.
+    allow_publish: bool;
+
+    /// Allow/disallow subscribing topics on a match.
+    allow_subscribe: bool;
+
+    /// Disclose the caller on a match (of a procedure) when called.
+    disclose_caller: bool;
+
+    /// Disclose the publisher on a match (of a topic) when published to.
+    disclose_publisher: bool;
+
+    /// Cache the permission on a match in the router worker.
+    cache: bool;
+}
+
+
+/// WAMP authentication roles defined, including permissions.
+table Role
+{
+    /// ID of this object.
+    oid: oid_t (required);
+
+    /// Time when the object was created.
+    created: uint64 (timestamp);
+
+    /// Owner organization of this object.
+    owner: oid_t;
+
+    /// Name of this role, must be unique within the management realm at any given point in time.
+    name: string (required, unique);
+
+    /// Set of static permissions on the role.
+    permissions: [Permission];
+
+    /// URIs or URI patterns the permissions must match.
+    permission_uris: [string];
+
+    /// Alternatively to defining a static set of permissions, the WAMP procedure URI of a dynamic authorizer can be specified.
+    authorizer: string;
+}
+
+
+/// Association (N:M) between roles and application realms, both defined independently at the management realm level.
+table ApplicationRealmRole
+{
+    /// ID of the role being associated with an application realm.
+    role_oid: oid_t (required);
+
+    /// ID of the application realm this role is associated with.
+    arealm_oid: oid_t (required);
+}
+
+
+/// WAMP application realms defined.
+table ApplicationRealm
+{
+    /// ID of this object.
+    oid: oid_t (required);
+
+    /// Time when the object was created.
+    created: uint64 (timestamp);
+
+    /// Owner organization of this object.
+    owner: oid_t;
+
+    /// Name of this application realm (must be unique within the management realm at any given point in time).
+    name: string (required, unique);
+
+    /// When dispatching events to receivers, batch sending in chunks of this many events (not all at once).
+    event_dispatching_chunk_size: uint32;
+
+    /// URI check level to enforce by the router.
+    uri_check: UriCheckLevel;
+
+    /// Enable the WAMP meta API on the application realm.
+    enable_meta_api: bool;
+
+    /// Bridge the WAMP meta API from the application realm to the management realm, so that it can be tapped into.
+    bridge_meta_api: bool;
+}
+
+
+/// WAMP authentication methods.
+enum AuthenticationMethod : byte
+{
+    /// No authentiation method defined (undefined).
+    NONE = 0,
+
+    /// WAMP-anonymous authentication.
+    ANONYMOUS = 1,
+
+    /// WAMP-ticket authentication.
+    TICKET = 2,
+
+    /// WAMP-CRA authentication.
+    WAMPCRA = 3,
+
+    /// TLS client certificate authentication [TRANSPORT LEVEL].
+    TLS = 4,
+
+    /// HTTP cookie authentication [TRANSPORT LEVEL].
+    COOKIE = 5,
+
+    /// WAMP-cryptosign authentication.
+    CRYPTOSIGN = 6,
+
+    /// WAMP-SCRAM authentication.
+    SCRAM = 7,
+}
+
+
+/// Application realm client principals.
+table Principal
+{
+    /// ID of this principal.
+    oid: oid_t (required);
+
+    /// Timestamp when the principal was last modified
+    modified: int;
+
+    /// ID of the application realm the authenticated principal will be joined to.
+    arealm_oid: oid_t (required);
+
+    /// WAMP authid of the principal, must be unique within the application realm at any moment in time.
+    authid: string;
+
+    /// ID of the role the authenticated principal will be joined to the application realm.
+    role_oid: oid_t (required);
+
+    /// Optional authextra information returned to the authenticating principal (CBOR serialized).
+    authextra: [uint8] (cbor);
+}
+
+
+/// WAMP client authentication credentials, used for mapping ``(authmethod, realm, authid) -> principal``.
+table Credential
+{
+    /// ID of this credential.
+    oid: oid_t (required);
+
+    /// WAMP authentication method offered by the authenticating client.
+    authmethod: AuthenticationMethod;
+
+    /// WAMP realm requested by the authenticating client.
+    realm: string;
+
+    /// WAMP authid announced by the authenticating client.
+    authid: string;
+
+    /// Authentication method specific configuration (CBOR serialized).
+    authconfig: [uint8] (cbor);
+
+    /// ID of the principal this credential resolves to upon successful authentication.
+    principal_oid: oid_t (required);
+}

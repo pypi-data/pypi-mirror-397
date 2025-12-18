@@ -1,0 +1,155 @@
+// CrossbarFX - Copyright (c) typedef int GmbH. All rights reserved.
+
+include "common.fbs";
+
+namespace user;
+
+
+/// CFC organization type
+enum OrganizationType : byte
+{
+    /// No organization.
+    NONE = 0,
+
+    /// Personal or individual.
+    PERSONAL = 1,
+
+    /// Company or business.
+    BUSINESS = 2,
+
+    /// Public academics & teaching.
+    ACADEMICS = 3
+}
+
+
+/// A CFC organization.
+table Organization
+{
+    // fields common for ConfigurationElements:
+
+    /// OID of object (primary key, never changes).
+    oid: oid_t (required);
+
+    /// Label for this object (not interpreted by CFC).
+    label: string;
+
+    /// Description for this object (not interpreted by CFC).
+    description: string;
+
+    /// Tags on this object.
+    tags: [string];
+
+    // fields specific to Organization:
+
+    /// Name, must be unique CFC globally (at each point in time).
+    name: string (required, unique);
+
+    /// Organization type
+    otype: OrganizationType;
+
+    /// When the organization was registered.
+    registered: uint64 (timestamp);
+}
+
+
+/// CFC user roles (built into code, unconfigurable)
+enum UserRole : byte
+{
+    NONE = 0,
+    OWNER = 1,
+    ADMIN = 2,
+    USER = 3,
+    GUEST = 4
+}
+
+
+/// CFC user roles on an organization
+table UserOrganizationRoles
+{
+    /// List of roles the user has on the respective organization.
+    roles: [UserRole];
+}
+
+
+/// CFC user roles on a management realm
+table UserMrealmRoles
+{
+    /// List of roles the user has on the respective mrealm.
+    roles: [UserRole];
+}
+
+
+/// A CFC user.
+table User
+{
+    // fields common for ConfigurationElements:
+
+    /// OID of object (primary key, never changes).
+    oid: oid_t (required);
+
+    /// Label for this object (not interpreted by CFC).
+    label: string;
+
+    /// Description for this object (not interpreted by CFC).
+    description: string;
+
+    /// Tags on this object.
+    tags: [string];
+
+    // fields specific to User:
+
+    /// User (primary) email.
+    email: string;
+
+    /// When the user was registered. Epoch time, microseconds since 1970/1/1 (UTC).
+    registered: uint64 (timestamp);
+
+    /// User public key. 256 bit Ed25519 in hex encoding (64 characters string).
+    pubkey: string;
+}
+
+
+/// User activation types (built into code, unconfigurable)
+enum ActivationType : byte {
+    NONE = 0,
+    REGISTRATION = 1,
+    LOGIN = 2
+}
+
+
+/// User activation status (built into code, unconfigurable)
+enum ActivationStatus : byte {
+    NONE = 0,
+    PENDING = 1,
+    ACTIVE = 2,
+    EXPIRED = 3
+}
+
+
+/// User activation tokens.
+table ActivationToken
+{
+    /// OID of user object (primary key, never changes).
+    oid: string (required);
+
+    /// Activation type.
+    atype: ActivationType;
+
+    /// Activation status.
+    status: ActivationStatus;
+
+    /// Time when the activation was created.
+    created: uint64 (timestamp);
+
+    /// Time when the activation was completed. The status will signal the outcome.
+    completed: uint64 (timestamp);
+
+    /// Activation code that was sent.
+    code: string;
+
+    /// Email address to which the activation was sent.
+    email: string;
+
+    /// User public key for which this activation was created.
+    pubkey: string;
+}

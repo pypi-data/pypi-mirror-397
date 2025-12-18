@@ -1,0 +1,490 @@
+// CrossbarFX - Copyright (c) typedef int GmbH. All rights reserved.
+
+include "common.fbs";
+
+namespace log;
+
+
+/// CFC instance (master node) run-time (live) states.
+enum MasterState: uint8
+{
+    /// Unset state.
+    NONE = 0,
+
+    /// Online and fully operational.
+    ONLINE = 1,
+
+    /// Online, but some error occurred and some features or entities might be unavailable.
+    DEGRADED = 2,
+
+    /// Ended gracefully.
+    ENDED = 3,
+
+    /// The state was determined as "not current" (eg when the previous running CFC was hard-killed) and the record was cleaned up (marked as ended).
+    PURGED = 4,
+}
+
+
+/// Logs of runs (from start to end) of a CFC instance.
+table MasterRun
+{
+    /// When the his run ended (Unix time in ns).
+    ended: uint64;
+
+    /// CFC run ID (this is unique over all start-stop cycles of CFC, and constant per run).
+    run_id: [uint8] (uuid);
+
+    /// When the his run started (Unix time in ns).
+    started: uint64;
+
+    /// Current master state.
+    state: MasterState;
+}
+
+
+/// CFC instance (master node) run-time (live) states.
+enum MRealmState: uint8
+{
+    /// Unset state.
+    NONE = 0,
+
+    /// Online and fully operational.
+    ONLINE = 1,
+
+    /// Online, but some error occurred and some features or entities might be unavailable.
+    DEGRADED = 2,
+
+    /// Ended gracefully.
+    ENDED = 3,
+
+    /// The state was determined as "not current" (eg when the previous running CFC was hard-killed) and the record was cleaned up (marked as ended).
+    PURGED = 4,
+}
+
+
+table MRealmRun
+{
+    /// When the this run ended (Unix time in ns).
+    ended: uint64;
+
+    /// Management realm CFC backend run ID (this is unique over all start-stop cycles of CFC, and constant per run).
+    run_id: [uint8] (uuid);
+
+    /// When the this run started (Unix time in ns).
+    started: uint64;
+
+    /// Current CFC management backend state.
+    state: MRealmState;
+}
+
+
+table MNodeSession
+{
+    /// When the his run started (Unix time in ns).
+    left: uint64;
+
+    /// WAMP session ID of the CF node uplink management session to this CFC instance.
+    session: uint64;
+
+    /// Management realm CFC backend run ID
+    run_id: [uint8] (uuid);
+
+    /// The CF node ID (which is dual-used as WAMP session authid).
+    node_id: [uint8] (uuid);
+
+    /// When the CF node management session joined this CFC instance.
+    joined: uint64;
+
+    /// When the last heartbeat was received on this CF node session.
+    last_heartbeat: uint64;
+}
+
+
+/// Managed nodes run-time (live) states.
+enum MNodeState: uint8
+{
+    /// Unset state.
+    NONE = 0,
+
+    /// Online and fully operational.
+    ONLINE = 1,
+
+    /// Online, but some error occurred and some features or entities might be unavailable.
+    DEGRADED = 2,
+}
+
+
+/// Heartbeat log record of managed nodes. Primary key: (timestamp, node_id).
+table MNodeLog
+{
+    /// Primary key: Unix time in ns when this log record was received (from CFC node clock).
+    timestamp: uint64;
+
+    /// Primary key: CF node ID.
+    node_id: [uint8] (uuid);
+
+    /// Heartbeat period in seconds encompassed by this record.
+    period: uint32;
+
+    /// Management realm ID.
+    mrealm_id: [uint8] (uuid);
+
+    /// Current state of CF node.
+    state: MNodeState;
+
+    /// WAMP session ID of the CF node uplink management session to this CFC instance.
+    session: uint64;
+
+    /// Unix time in ns. This timestamp is from the original received event payload (from CF node clock).
+    sent: uint64;
+
+    /// Sequence number as sent in the log record by the CF node (started at 0 for CF start and incremented by one on each heartbeat).
+    seq: uint64;
+
+    /// Number of controllers running in the CF node (this is always 1).
+    controllers: uint16;
+
+    /// Number of router workers currently running in the CF node.
+    routers: uint16;
+
+    /// Number of container workers currently running in the CF node.
+    containers: uint16;
+
+    /// Number of guest workers currently running in the CF node.
+    guests: uint16;
+
+    /// Number of proxy workers currently running in the CF node.
+    proxies: uint16;
+
+    /// Number of XBR market maker workers currently running in the CF node.
+    marketmakers: uint16;
+
+    /// Number of hostmonitor workers currently running in the CF node (this is usually either 0 or 1).
+    hostmonitors: uint16;
+
+    /// CF node system statistics.
+    cpu_ctx_switches: uint64;
+    cpu_freq: float;
+    cpu_guest: float;
+    cpu_guest_nice: float;
+    cpu_idle: float;
+    cpu_interrupts: uint64;
+    cpu_iowait: float;
+    cpu_irq: float;
+    cpu_nice: float;
+    cpu_soft_interrupts: uint64;
+    cpu_softirq: float;
+    cpu_steal: float;
+    cpu_system: float;
+    cpu_user: float;
+    disk_busy_time: uint64;
+    disk_read_bytes: uint64;
+    disk_read_count: uint64;
+    disk_read_merged_count: uint64;
+    disk_read_time: uint64;
+    disk_write_bytes: uint64;
+    disk_write_count: uint64;
+    disk_write_merged_count: uint64;
+    disk_write_time: uint64;
+    memory_active: uint64;
+    memory_available: uint64;
+    memory_buffers: uint64;
+    memory_cached: uint64;
+    memory_free: uint64;
+    memory_inactive: uint64;
+    memory_percent: float;
+    memory_shared: uint64;
+    memory_slab: uint64;
+    memory_total: uint64;
+    memory_used: uint64;
+    network_bytes_recv: uint64;
+    network_bytes_sent: uint64;
+    network_connection_af_inet: uint32;
+    network_connection_af_inet6: uint32;
+    network_connection_af_unix: uint32;
+    network_dropin: uint32;
+    network_dropout: uint32;
+    network_errin: uint32;
+    network_errout: uint32;
+    network_packets_recv: uint64;
+    network_packets_sent: uint64;
+}
+
+
+/// Managed node worker types.
+enum MWorkerType: uint8
+{
+    /// Unset worker type.
+    NONE = 0,
+
+    /// Router worker.
+    ROUTER = 1,
+
+    /// Router worker.
+    CONTAINER = 2,
+
+    /// Router worker.
+    GUEST = 3,
+
+    /// Router worker.
+    TESTEE = 4,
+
+    /// Router worker.
+    PROXY = 5,
+
+    /// Router worker.
+    XBRMM = 6,
+
+    /// Router worker.
+    HOSTMONITOR = 7,
+
+    /// Router worker.
+    CONTROLLER = 8,
+}
+
+
+/// Managed node worker run-time (live) states.
+enum MWorkerState: uint8
+{
+    /// Unset state.
+    NONE = 0,
+
+    /// Online and fully operational.
+    ONLINE = 1,
+
+    /// Online, but some error occurred and some features or entities might be unavailable.
+    DEGRADED = 2,
+}
+
+
+/// Heartbeat log record from managed node workers. Primary key: (timestamp, node_id, worker_id).
+table MWorkerLog
+{
+    /// Primary key: Unix time in ns when this log record was received (from CFC node clock).
+    timestamp: uint64;
+
+    /// Primary key: CF node ID.
+    node_id: [uint8] (uuid);
+
+    /// Primary key: Local Worker ID on running CF node.
+    worker_id: string;
+
+    /// Heartbeat period in seconds encompassed by this record.
+    period: uint32;
+
+    /// Management realm ID.
+    mrealm_id: [uint8] (uuid);
+
+    /// Type of worker.
+    type: MWorkerType;
+
+    /// Current state of worker.
+    state: MWorkerState;
+
+    /// Unix time in ns. This timestamp is from the original received event payload (from CF node clock).
+    sent: uint64;
+
+    /// Sequence number as sent in the log record by the CF node (started at 0 for CF start and incremented by one on each heartbeat).
+    seq: uint64;
+
+    /// Current load.
+
+    // OS load
+    num_fds: uint32;
+    num_threads: uint16;
+    num_ctx_switches_involuntary: uint64;
+    num_ctx_switches_involuntary_per_sec: uint32;
+    num_ctx_switches_voluntary: uint64;
+    num_ctx_switches_voluntary_per_sec: uint32;
+
+    /// CPU load
+    cpu_system: float;
+    cpu_system_per_sec: float;
+    cpu_wait: float;
+    cpu_wait_per_sec: float;
+    cpu_user: float;
+    cpu_user_per_sec: float;
+
+    /// Disk load
+    read_bytes: uint64;
+    read_bytes_per_sec: uint64;
+    read_ios: uint64;
+    read_ios_per_sec: uint64;
+    write_bytes: uint64;
+    write_bytes_per_sec: uint64;
+    write_ios: uint64;
+    write_ios_per_sec: uint64;
+
+    /// Network load
+    sent_bytes: uint64;
+    sent_bytes_per_sec: uint64;
+    sent_ios: uint64;
+    sent_ios_per_sec: uint64;
+    recv_bytes: uint64;
+    recv_bytes_per_sec: uint64;
+    recv_ios: uint64;
+    recv_ios_per_sec: uint64;
+
+    /// WAMP roles defined on a router worker
+    router_roles: uint64;
+
+    /// WAMP sessions joined on a router worker
+    router_sessions: uint64;
+
+    /// WAMP messages processed by a router worker
+    recv_call: uint64;
+    recv_yield: uint64;
+    sent_invocation: uint64;
+    sent_result: uint64;
+    recv_publish: uint64;
+    sent_published: uint64;
+    sent_event: uint64;
+    recv_register: uint64;
+    sent_registered: uint64;
+    recv_subscribe: uint64;
+    sent_subscribed: uint64;
+}
+
+
+enum MasterNodeUsageStatus: uint8
+{
+    /// Unset state.
+    NONE = 0,
+
+    /// Online and fully operational.
+    RECEIVED = 1,
+
+    /// Online, but some error occurred and some features or entities might be unavailable.
+    SUCCESS = 2,
+
+
+    FAILED = 3,
+}
+
+
+enum IpVersion: uint8
+{
+    /// Unset IP version.
+    NONE = 0,
+
+    /// IP version 4.
+    IPV4 = 4,
+
+    /// IP version 6.
+    IPV6 = 6,
+}
+
+
+/// Aggregate usage metering records for management realms. Primary key: (timestamp, mrealm_id).
+table MasterNodeUsage
+{
+    /// Primary key: Timestamp (end of aggregate interval) recorded in UTC (Unix time in ns).
+    timestamp: uint64;
+
+    /// Primary key: Management realm ID.
+    mrealm_id: [uint8] (uuid);
+
+    /// Timestamp (start of aggregate interval) recorded in UTC (Unix time in ns).
+    timestamp_from: uint64;
+
+    /// Public key of the CrossbarFX master node that submitted the usage record.
+    pubkey: [uint8];
+
+    /// Client IPv4 address (4 bytes) or IPv6 (16 bytes) address of the CrossbarFX master node that submitted the usage record.
+    client_ip_address: [uint8];
+
+    /// Client IP version of the CrossbarFX master node that submitted the usage record.
+    client_ip_version: IpVersion;
+
+    /// Client IP port of the CrossbarFX master node that submitted the usage record.
+    client_ip_port: uint16;
+
+    /// Sequence number as sent in the log record by the CF node (started at 0 for CF start and incremented by one on each heartbeat).
+    seq: uint64;
+
+    /// Unix time in ns. This timestamp is from the original received event payload (from CF node clock).
+    sent: uint64;
+
+    /// Unix time in ns. Set when this record was processed.
+    processed: uint64;
+
+    /// Status of usage metering record.
+    status: MasterNodeUsageStatus;
+
+    /// Status message for current status.
+    status_message: string;
+
+    /// Filled after this usage metering record was successfully submitted to the metering service.
+    metering_id: [uint8] (uuid);
+
+    // metering data, actually measured quantities:
+
+    /// Number of aggregated records from MworkerLogs
+    count: uint64;
+
+    /// Number of aggregated and summed MworkerLogs.count records
+    total: uint64;
+
+    /// Nodes by node type
+    nodes: uint64;
+
+    /// Number of node controllers metered.
+    controllers: uint64;
+
+    /// Number of hostmonitor workers metered.
+    hostmonitors: uint64;
+
+    /// Number of router workers metered.
+    routers: uint64;
+
+    /// Number of container workers metered.
+    containers: uint64;
+
+    /// Number of guest workers metered.
+    guests: uint64;
+
+    /// Number of proxy workers metered.
+    proxies: uint64;
+
+    /// Number of XBR market maker workers metered.
+    marketmakers: uint64;
+
+    /// Number of WAMP sessions attached to router workers and metered.
+    sessions: uint64;
+
+    /// Number of WAMP CALL messages processed by a router worker and metered.
+    msgs_call: uint64;
+
+    /// Number of WAMP YIELD messages processed by a router worker and metered.
+    msgs_yield: uint64;
+
+    /// Number of WAMP INVOCATION messages processed by a router worker and metered.
+    msgs_invocation: uint64;
+
+    /// Number of WAMP RESULT messages processed by a router worker and metered.
+    msgs_result: uint64;
+
+    /// Number of WAMP ERROR messages processed by a router worker and metered.
+    msgs_error: uint64;
+
+    /// Number of WAMP PUBLISH messages processed by a router worker and metered.
+    msgs_publish: uint64;
+
+    /// Number of WAMP PUBLISHED messages processed by a router worker and metered.
+    msgs_published: uint64;
+
+    /// Number of WAMP EVENT messages processed by a router worker and metered.
+    msgs_event: uint64;
+
+    /// Number of WAMP REGISTER messages processed by a router worker and metered.
+    msgs_register: uint64;
+
+    /// Number of WAMP REGISTERED messages processed by a router worker and metered.
+    msgs_registered: uint64;
+
+    /// Number of WAMP SUBSCRIBE messages processed by a router worker and metered.
+    msgs_subscribe: uint64;
+
+    /// Number of WAMP SUBSCRIBED messages processed by a router worker and metered.
+    msgs_subscribed: uint64;
+}

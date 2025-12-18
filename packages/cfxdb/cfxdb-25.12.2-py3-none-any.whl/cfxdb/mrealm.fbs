@@ -1,0 +1,280 @@
+// CrossbarFX - Copyright (c) typedef int GmbH. All rights reserved.
+
+include "common.fbs";
+
+namespace mrealm;
+
+
+table ManagementRealm
+{
+    /// ID of this object.
+    oid: oid_t (required);
+
+    /// Label for this object (not interpreted by CFC).
+    label: string;
+
+    /// Description for this object (not interpreted by CFC).
+    description: string;
+
+    /// Tags on this object.
+    tags: [string];
+
+
+    /// Name of this management realm (must be globally unique within CFC at any given point in time).
+    name: string (required, unique);
+
+    /// Time when the management realm was created.
+    created: uint64 (timestamp);
+
+    /// Owner organization of this management realm.
+    owner: oid_t;
+
+    /// CFC hosting node for this management realm.
+    cf_node: string;
+
+    /// CFC hosting router worker for this management realm.
+    cf_router_worker: string;
+
+    /// CFC hosting container worker for this management realm.
+    cf_container_worker: string;
+}
+
+
+table Node
+{
+    /// ID of this object.
+    oid: oid_t (required);
+
+    /// Label for this object (not interpreted by CFC).
+    label: string;
+
+    /// Description for this object (not interpreted by CFC).
+    description: string;
+
+    /// Tags on this object.
+    tags: [string];
+
+
+    /// Name of this object (must be globally unique within CFC at any given point in time).
+    /// Also used for WAMP authid under which the node is authenticated on the management realm.
+    name: string (required, unique);
+
+    /// The WAMP-cryptosign node public key (32 bytes as HEX encoded string).
+    pubkey: string;
+
+    /// The WAMP ``realm`` the node will be joined on.
+    realm: string;
+
+    /// The WAMP-cryptosign ``authid`` the node will be authenticated as.
+    authid: string;
+
+    /// Optional WAMP authextra to be sent to the node when authenticating. CBOR serialized binary.
+    authextra: [uint8];
+}
+
+
+/// Cluster status for WebClusters or RouterClusters.
+enum ClusterStatus: uint8
+{
+    /// Unset status.
+    NONE = 0,
+
+    /// Initial status of a newly created web cluster.
+    STOPPED = 1,
+
+    /// The cluster is currently starting.
+    STARTING = 2,
+
+    /// The cluster is currently running.
+    RUNNING = 3,
+
+    /// The cluster is currently paused (it is serving, but the watch/change engine doesn't operate).
+    PAUSED = 4,
+
+    /// The cluster is currently stopping.
+    STOPPING = 5,
+
+    /// The cluster is stopped in an error state.
+    ERROR = 6,
+
+    /// The cluster is currently running, but degraded (not all components and services desired are actually running at this moment, but some have failed, but may be retried automatically).
+    DEGRADED = 7,
+}
+
+
+table ClusterNodeMembership
+{
+    /// OID of web cluster to which to the node is added. A cluster can have zero or more nodes added.
+    cluster_oid: oid_t (required);
+
+    /// OID of the node to add to the cluster. A node can be added to more than one cluster.
+    node_oid: oid_t (required);
+
+    /// The desired (maximum) parallelism (in terms of CPU usage, given as number of workers) that the node should receive if it is active (not a standby node) in this cluster.
+    parallel: uint16;
+
+    /// Wheather this node acts as a standby node that only takes over work when an active node fails.
+    standby: bool;
+}
+
+
+table WebCluster
+{
+    /// ID of this object.
+    oid: oid_t (required);
+
+    /// Label for this object (not interpreted by CFC).
+    label: string;
+
+    /// Description for this object (not interpreted by CFC).
+    description: string;
+
+    /// Tags on this object.
+    tags: [string];
+
+    /// Unique user assigned name.
+    name: string;
+
+    /// Current status of web cluster.
+    status: ClusterStatus;
+
+    /// IP version, either 4 for 6
+    tcp_version: byte;
+
+    /// IP listening port
+    tcp_port: uint16;
+
+    /// enable TCP port sharing
+    tcp_shared: bool;
+
+    /// listen on this interface
+    tcp_interface: string;
+
+    /// TCP accept backlog queue size
+    tcp_backlog: int;
+
+    /// TLS server private key to use
+    tls_key: string;
+
+    /// TLS server certificate to use
+    tls_certificate: string;
+
+    /// TLS certificate chain
+    tls_chain_certificates: [string];
+
+    /// CA certificates to use
+    tls_ca_certificates: [string];
+
+    /// DH parameter file
+    tls_ciphers: string;
+
+    /// Ciphers list
+    tls_dhparam: string;
+
+    /// HTTP client inactivity timeout
+    http_client_timeout: int;
+
+    /// enable HTTP strict transport security (HSTS)
+    http_hsts: bool;
+
+    /// HSTS maximum age to announce
+    http_hsts_max_age: int;
+
+    /// enable Web request access logging
+    http_access_log: bool;
+
+    /// enable tracebacks when running into Web errors
+    http_display_tracebacks: bool;
+}
+
+
+table RouterCluster
+{
+    /// ID of this object.
+    oid: oid_t (required);
+
+    /// Label for this object (not interpreted by CFC).
+    label: string;
+
+    /// Description for this object (not interpreted by CFC).
+    description: string;
+
+    /// Tags on this object.
+    tags: [string];
+
+    /// Unique user assigned name.
+    name: string;
+
+    /// Current status of web cluster.
+    status: ClusterStatus;
+}
+
+
+/// Status of RouterWorkerGroups.
+enum WorkerGroupStatus: uint8
+{
+    /// Unset status.
+    NONE = 0,
+
+    /// Initial status of a newly created worker group.
+    STOPPED = 1,
+
+    /// The worker group is currently starting.
+    STARTING = 2,
+
+    /// The worker group is currently running.
+    RUNNING = 3,
+
+    /// The worker group is currently paused (it is serving, but the watch/change engine doesn't operate).
+    PAUSED = 4,
+
+    /// The worker group is currently stopping.
+    STOPPING = 5,
+
+    /// The worker group is stopped in an error state.
+    ERROR = 6,
+
+    /// The worker group is currently running, but degraded (not all components and services desired are actually running at this moment, but some have failed, but may be retried automatically).
+    DEGRADED = 7,
+}
+
+
+table RouterWorkerGroup
+{
+    /// ID of this object.
+    oid: oid_t (required);
+
+    /// Label for this object (not interpreted by CFC).
+    label: string;
+
+    /// Description for this object (not interpreted by CFC).
+    description: string;
+
+    /// Tags on this object.
+    tags: [string];
+
+    /// Unique user assigned name.
+    name: string;
+
+    /// Current status of worker group.
+    status: WorkerGroupStatus;
+}
+
+
+table RouterWorkerGroupClusterPlacement
+{
+    /// OID of this worker-to-cluster placement.
+    oid: oid_t (required);
+
+    /// OID of (router) worker group this placement applies to.
+    worker_group_oid: oid_t (required);
+
+    /// OID of cluster onto which the worker is placed.
+    cluster_oid: oid_t (required);
+
+    /// OID of the node onto which the worker is placed.
+    node_oid: oid_t (required);
+
+    /// Local worker name on the node onto which the worker is placed.
+    worker_name: string;
+}
