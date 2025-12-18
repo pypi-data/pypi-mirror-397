@@ -1,0 +1,249 @@
+Metadata-Version: 2.4
+Name: flowmason
+Version: 1.0.7
+Summary: Universal AI Workflow Infrastructure - Build, debug, and deploy intelligent pipelines
+Project-URL: Homepage, https://flowmason.com
+Project-URL: Documentation, https://flowmason.com/docs
+Project-URL: Support, https://flowmason.com/support
+Author-email: FlowMason <support@flowmason.com>
+License-Expression: LicenseRef-Proprietary
+License-File: LICENSE
+Keywords: agents,ai,automation,llm,orchestration,pipeline,workflow
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: License :: Other/Proprietary License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.11
+Requires-Dist: fastapi>=0.109.0
+Requires-Dist: httpx>=0.26.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: python-multipart>=0.0.6
+Requires-Dist: rich>=13.0.0
+Requires-Dist: typer>=0.9.0
+Requires-Dist: uvicorn[standard]>=0.27.0
+Provides-Extra: all
+Requires-Dist: cryptography>=41.0.0; extra == 'all'
+Requires-Dist: mcp>=1.0.0; extra == 'all'
+Provides-Extra: dev
+Requires-Dist: httpx>=0.26.0; extra == 'dev'
+Requires-Dist: mypy>=1.0.0; extra == 'dev'
+Requires-Dist: pytest-asyncio>=0.21.0; extra == 'dev'
+Requires-Dist: pytest-cov>=4.0.0; extra == 'dev'
+Requires-Dist: pytest>=7.0.0; extra == 'dev'
+Requires-Dist: ruff>=0.1.0; extra == 'dev'
+Provides-Extra: mcp
+Requires-Dist: mcp>=1.0.0; extra == 'mcp'
+Provides-Extra: secrets
+Requires-Dist: cryptography>=41.0.0; extra == 'secrets'
+Description-Content-Type: text/markdown
+
+# FlowMason
+
+Universal AI Workflow Infrastructure - Build, debug, and deploy intelligent pipelines.
+
+## Overview
+
+FlowMason is an AI pipeline orchestration platform that enables developers to design, build, debug, and deploy intelligent workflows. It uses a **Salesforce DX-style hybrid model**:
+
+- **Development**: File-based pipelines (`.pipeline.json`) in VSCode with Git version control
+- **Deployment**: Push to staging/production orgs where pipelines run from databases
+- **Runtime**: Backend APIs expose pipelines for consumption
+
+## Features
+
+- **Visual Pipeline Builder** - Design AI workflows visually in VSCode or Studio
+- **Three Component Types** - Nodes (AI), Operators (deterministic), Control Flow
+- **Full Debugging** - Breakpoints, step-through, prompt iteration
+- **Package System** - Distribute components as `.fmpkg` files
+- **Multi-Environment** - Local development, staging, production orgs
+- **Enterprise Ready** - API keys, RBAC, audit logging, SSO/SAML
+
+## Installation
+
+### Requirements
+
+- Python 3.11 or higher
+- pip (Python package manager)
+
+### Install from PyPI
+
+```bash
+pip install flowmason
+```
+
+### What Gets Installed
+
+When you install FlowMason, the following CLI commands are automatically added to your PATH:
+
+| Command | Description |
+|---------|-------------|
+| `fm` | Short alias for FlowMason CLI |
+| `flowmason` | Full FlowMason CLI command |
+
+Both commands are identical - use whichever you prefer.
+
+### Verify Installation
+
+```bash
+# Check version
+fm --version
+# or
+flowmason --version
+
+# See all available commands
+fm --help
+```
+
+### Troubleshooting
+
+If `fm` or `flowmason` commands are not found after installation:
+
+1. **Check Python scripts directory is in PATH:**
+   ```bash
+   # Find where pip installs scripts
+   python -m site --user-base
+   # Add the bin directory to your PATH (add to ~/.bashrc or ~/.zshrc)
+   export PATH="$PATH:$(python -m site --user-base)/bin"
+   ```
+
+2. **Try using Python module directly:**
+   ```bash
+   python -m flowmason_core.cli.main --help
+   ```
+
+3. **Reinstall with --user flag:**
+   ```bash
+   pip install --user flowmason
+   ```
+
+4. **Use a virtual environment (recommended):**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   pip install flowmason
+   fm --version
+   ```
+
+## Quick Start
+
+```bash
+# Initialize a new project
+fm init my-project
+cd my-project
+
+# Start the local Studio backend
+fm studio start
+
+# Run a pipeline
+fm run pipelines/main.pipeline.json
+
+# Debug a pipeline
+fm run pipelines/main.pipeline.json --debug
+```
+
+## VSCode Extension
+
+Install the FlowMason extension from the VS Code Marketplace for:
+- IntelliSense for decorators and component patterns
+- Visual DAG editor for pipelines
+- Debugging with breakpoints and step-through
+- Test Explorer integration
+- Prompt iteration during debug
+
+## Define Components
+
+### Node (AI-powered)
+
+```python
+from flowmason_core import node, NodeInput, NodeOutput, Field
+
+@node(
+    name="summarizer",
+    category="reasoning",
+    description="Summarize text using AI",
+)
+class SummarizerNode:
+    class Input(NodeInput):
+        text: str = Field(description="Text to summarize")
+        max_length: int = Field(default=100)
+
+    class Output(NodeOutput):
+        summary: str
+
+    async def execute(self, input: Input, context) -> Output:
+        provider = context.providers["anthropic"]
+        response = await provider.call(
+            prompt=f"Summarize in {input.max_length} words: {input.text}"
+        )
+        return self.Output(summary=response.text)
+```
+
+### Operator (Deterministic)
+
+```python
+from flowmason_core import operator, OperatorInput, OperatorOutput
+
+@operator(
+    name="json-transform",
+    category="transform",
+    description="Transform JSON data",
+)
+class JsonTransformOperator:
+    class Input(OperatorInput):
+        data: dict
+        expression: str
+
+    class Output(OperatorOutput):
+        result: dict
+
+    async def execute(self, input: Input, context) -> Output:
+        import jmespath
+        result = jmespath.search(input.expression, input.data)
+        return self.Output(result=result)
+```
+
+## CLI Commands
+
+```bash
+# Pipeline execution
+fm run <pipeline.json>              # Run pipeline from file
+fm run --debug <pipeline.json>      # Run with debugging
+
+# Project management
+fm init                             # Initialize project
+fm validate                         # Validate pipelines
+
+# Studio management
+fm studio start                     # Start local Studio
+fm studio stop                      # Stop Studio
+fm studio status                    # Check status
+
+# Org management (staging/production)
+fm org login --alias staging        # Login to org
+fm deploy --target staging          # Deploy pipelines
+fm pull --target staging            # Pull pipelines
+
+# Package management
+fm pack                             # Build .fmpkg
+fm install <package.fmpkg>          # Install package
+```
+
+## Documentation
+
+Visit [https://flowmason.com/docs](https://flowmason.com/docs) for complete documentation.
+
+## Support
+
+- Documentation: [https://flowmason.com/docs](https://flowmason.com/docs)
+- Support: [https://flowmason.com/support](https://flowmason.com/support)
+- Email: support@flowmason.com
+
+## License
+
+Proprietary. See LICENSE file for terms.
+
+Copyright (c) 2025 FlowMason. All rights reserved.

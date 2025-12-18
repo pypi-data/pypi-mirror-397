@@ -1,0 +1,118 @@
+{
+  "id": "iterative-refinement",
+  "name": "Iterative Refinement Loop",
+  "description": "Continuously improve content through multiple rounds of critique and revision. Demonstrates the power of iterative AI feedback loops.",
+  "category": "quality",
+  "tags": [
+    "quality",
+    "iteration",
+    "refinement",
+    "improvement"
+  ],
+  "difficulty": "advanced",
+  "use_cases": [
+    "Achieve highest quality output",
+    "Complex writing that needs multiple passes",
+    "Content that must meet strict standards",
+    "Learning and teaching revision techniques"
+  ],
+  "stages": [
+    {
+      "id": "draft",
+      "component_type": "generator",
+      "name": "Initial Draft",
+      "config": {
+        "prompt": "{{input.prompt}}",
+        "system_prompt": "Create a thoughtful, complete first draft. Focus on getting the core ideas and structure right."
+      },
+      "depends_on": [],
+      "position": {
+        "x": 100,
+        "y": 150
+      }
+    },
+    {
+      "id": "critique1",
+      "component_type": "critic",
+      "name": "First Review",
+      "config": {
+        "content": "{{upstream.draft.content}}",
+        "criteria": "Review for:\n1. Structure and organization\n2. Clarity of main points\n3. Missing content or gaps\n4. Logical flow\n\nProvide specific, actionable feedback."
+      },
+      "depends_on": [
+        "draft"
+      ],
+      "position": {
+        "x": 300,
+        "y": 100
+      }
+    },
+    {
+      "id": "improve1",
+      "component_type": "improver",
+      "name": "First Revision",
+      "config": {
+        "content": "{{upstream.draft.content}}",
+        "feedback": "{{upstream.critique1.feedback}}",
+        "instructions": "Address all feedback from the first review. Focus on structural improvements and filling gaps."
+      },
+      "depends_on": [
+        "critique1"
+      ],
+      "position": {
+        "x": 500,
+        "y": 100
+      }
+    },
+    {
+      "id": "critique2",
+      "component_type": "critic",
+      "name": "Second Review",
+      "config": {
+        "content": "{{upstream.improve1.content}}",
+        "criteria": "Review for:\n1. Language and style\n2. Engagement and readability\n3. Precision of wording\n4. Grammar and mechanics\n\nProvide specific, actionable feedback."
+      },
+      "depends_on": [
+        "improve1"
+      ],
+      "position": {
+        "x": 300,
+        "y": 200
+      }
+    },
+    {
+      "id": "improve2",
+      "component_type": "improver",
+      "name": "Final Polish",
+      "config": {
+        "content": "{{upstream.improve1.content}}",
+        "feedback": "{{upstream.critique2.feedback}}",
+        "instructions": "Apply final polish based on the second review. Focus on language refinement and readability. This is the final version."
+      },
+      "depends_on": [
+        "critique2"
+      ],
+      "position": {
+        "x": 500,
+        "y": 200
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "prompt": {
+        "type": "string",
+        "description": "The content creation prompt"
+      }
+    },
+    "required": [
+      "prompt"
+    ]
+  },
+  "output_stage_id": "improve2",
+  "example_input": {
+    "initial_content": "AI is changing business. Companies use it for automation. It helps with data analysis. Machine learning is part of AI.",
+    "improvement_goals": "Make more engaging, add specific examples, improve flow, target executive audience"
+  }
+}
