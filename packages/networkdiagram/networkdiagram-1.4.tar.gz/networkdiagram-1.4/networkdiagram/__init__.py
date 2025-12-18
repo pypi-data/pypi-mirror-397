@@ -1,0 +1,1 @@
+from .networkdiagram import CriticalPathMethod
