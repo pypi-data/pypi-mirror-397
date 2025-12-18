@@ -1,0 +1,84 @@
+[project]
+name = "rpy-bridge"
+version = "0.5.1"
+description = "Python-to-R interoperability engine with environment management, type-safe conversions, data normalization, and safe R function execution."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Victoria Cheung", email = "victoriakcheung@gmail.com" }
+]
+
+keywords = [
+    "python",
+    "r",
+    "rpy2",
+    "python-r",
+    "interoperability",
+    "data-science",
+    "statistics",
+    "bioinformatics",
+]
+
+requires-python = ">=3.11"
+
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "loguru>=0.7",
+]
+
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+
+]
+
+[project.urls]
+Homepage = "https://github.com/vic-cheung/rpy-bridge"
+"Issue Tracker" = "https://github.com/vic-cheung/rpy-bridge/issues"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+# -------------------------------
+# uv dev dependencies
+# -------------------------------
+[project.optional-dependencies]
+r = ["rpy2>=3.5"]
+dev = ["ipykernel>=7.1.0", "pytest>=8.0", "ruff>=0.6", "build>=1.0", "twine>=4.0", "certifi>=2025.0", "ty>=0.0.1a34"]
+docs = ["sphinx", "myst-parser"]
+
+[tool.uv]
+# Define a meta-extra that combines all extras in one
+all = ["r", "dev", "docs"]
+
+# -------------------------------
+# Ruff configuration
+# -------------------------------
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]  # optional, ignore long lines
+
+# -------------------------------
+# Ty configuration
+# -------------------------------
+[tool.ty.environment]
+root = ["src/rpy_bridge"]
+
+[tool.ty.rules]
+possibly-missing-attribute = "ignore" # suppress warnings from rpy2 dynamic attributes
+non-subscriptable = "ignore" # suppress errors when typing unknown dict-like objects e.g. NULLType = r["NULLType"]
+call-non-callable = "ignore" # suppress errors for dynamic callable objects
+# invalid-assignment = "ignore" # suppress errors for dynamic dict assignment
+# invalid-return-type = "ignore" # suppress return type mismatch warnings
+unresolved-import = "ignore" # suppress errors for unable to resolve imported module
