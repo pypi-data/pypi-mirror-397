@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "datamind-ai"
+version = "0.1.2"
+description = "AI-powered data analysis, cleaning, and dashboard generator CLI tool"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Saidjon Ravshanov", email = "saidjonravshanov@example.com"}
+]
+keywords = ["ai", "data-analysis", "dashboard", "gemini", "groq", "cli", "data-cleaning", "etl"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+dependencies = [
+    "typer>=0.9.0",
+    "rich>=13.0.0",
+    "pandas>=2.0.0",
+    "plotly>=5.18.0",
+    "google-generativeai>=0.3.0",
+    "groq>=0.4.0",
+    "jinja2>=3.1.0",
+    "openpyxl>=3.1.0",
+    "numpy>=1.24.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+datamind = "datamind.cli.main:app"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["datamind*"]
