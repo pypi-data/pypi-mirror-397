@@ -1,0 +1,71 @@
+Metadata-Version: 2.4
+Name: ofg-auth-service-layer
+Version: 0.1.0
+Summary: Auth service layer (HubSpot token via AWS Secrets + API)
+Author: OFG
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: boto3>=1.28
+Requires-Dist: httpx>=0.24
+
+# ofg-auth-service-layer
+
+Auth service layer for fetching HubSpot access tokens. This package retrieves an API token from AWS Secrets Manager and uses it to call an HTTP endpoint that returns a HubSpot access token.
+
+## Install
+
+pip install ofg-auth-service-layer
+
+## Requirements
+
+- Python 3.9+
+- AWS credentials configured (env vars, ~/.aws/credentials, IAM role, etc.)
+- An AWS Secrets Manager secret containing JSON with an API_TOKEN field
+
+## Quick Start
+
+Example (async):
+
+import asyncio
+from ofg_auth_service_layer import AuthService
+
+async def main():
+token = await AuthService.get_hubspot_access_token(app="crm")
+print(token)
+
+asyncio.run(main)
+
+## API
+
+AuthService.get_hubspot_access_token(app="crm", secret_name="hs-oauth-manager", api_url=..., timeout_seconds=20.0) -> str
+
+Parameters:
+
+- app:
+  HubSpot app identifier used as a query param (default: "crm")
+- secret_name:
+  AWS Secrets Manager secret name that contains {"API_TOKEN": "..."} (default: "hs-oauth-manager")
+- api_url:
+  Endpoint used to fetch the HubSpot token
+  Default:
+  https://6jp43hzm45.execute-api.ca-central-1.amazonaws.com/prod/get-secret
+- timeout_seconds:
+  HTTP timeout in seconds (default: 20.0)
+
+Returns:
+
+- token (str): The access token returned by the endpoint (expects JSON {"token": "..."})
+
+## AWS Secret Format
+
+The secret string should be JSON, for example:
+
+{
+"API_TOKEN": "YOUR_API_TOKEN_VALUE"
+}
+
+## Notes
+
+- This package uses AWS Secrets Manager (boto3) and makes HTTP requests using httpx.
+- If the endpoint returns a non-2xx response, an AppError is raised.
+- On unexpected failures, an AppError with status code 401 is raised.
