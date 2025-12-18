@@ -1,0 +1,2 @@
+class LibXRInfo:
+    COMMIT = '7f91179b66a519949ff3d4204fe7076e09b6f1a5'
