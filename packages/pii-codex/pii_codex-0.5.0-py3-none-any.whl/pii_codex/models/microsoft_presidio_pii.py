@@ -1,0 +1,37 @@
+from __future__ import annotations
+
+from enum import Enum
+
+
+class MSFTPresidioPIIType(Enum):
+    """
+    PII Types associated with Microsoft Presidio Analyzer
+    Supported Entities: https://microsoft.github.io/presidio/supported_entities/
+    """
+
+    PHONE_NUMBER = "PHONE_NUMBER"
+    EMAIL_ADDRESS = "EMAIL_ADDRESS"
+    ABA_ROUTING_NUMBER = "ABA_ROUTING_NUMBER"
+    IP_ADDRESS = "IP_ADDRESS"
+    DATE = "DATE_TIME"
+    ADDRESS = "LOCATION"
+    AGE = "AGE"
+    PERSON = "PERSON"
+    CREDIT_CARD_NUMBER = "CREDIT_CARD"
+    CRYPTO = "CRYPTO"
+    URL = "URL"
+    DATE_TIME = "DATE_TIME"
+    LOCATION = "LOCATION"
+    NRP = "NRP"
+    MEDICAL_LICENSE = "MEDICAL_LICENSE"
+    US_SOCIAL_SECURITY_NUMBER = "US_SSN"
+    US_BANK_ACCOUNT_NUMBER = "US_BANK_NUMBER"
+    US_DRIVERS_LICENSE_NUMBER = "US_DRIVER_LICENSE"
+    US_PASSPORT_NUMBER = "US_PASSPORT"
+    US_INDIVIDUAL_TAXPAYER_IDENTIFICATION = "US_ITIN"
+    INTERNATIONAL_BANKING_ACCOUNT_NUMBER = "IBAN_CODE"
+    # UK_NATIONAL_HEALTH_NUMBER = "UK_NHS"  # To be added in future versions
+    AU_BUSINESS_NUMBER = "AU_ABN"
+    AU_COMPANY_NUMBER = "AU_ACN"
+    AU_MEDICAL_ACCOUNT_NUMBER = "AU_MEDICARE"
+    AU_TAX_FILE_NUMBER = "AU_TFN"
