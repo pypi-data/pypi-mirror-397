@@ -1,0 +1,368 @@
+{
+  "id": "enterprise-data-pipeline",
+  "name": "Enterprise Data Integration Pipeline",
+  "description": "A comprehensive data pipeline that fetches from multiple APIs, transforms and validates data, generates insights, and produces structured reports. Demonstrates HTTP integration, JSON transforms, schema validation, filtering, and multi-source synthesis.",
+  "category": "data",
+  "tags": [
+    "api",
+    "data",
+    "integration",
+    "enterprise",
+    "etl",
+    "analytics",
+    "advanced"
+  ],
+  "difficulty": "advanced",
+  "use_cases": [
+    "CRM data enrichment and analysis",
+    "Multi-source data aggregation",
+    "Business intelligence automation",
+    "Customer 360 views",
+    "Sales pipeline analytics"
+  ],
+  "stages": [
+    {
+      "id": "fetch-crm-data",
+      "component_type": "http-request",
+      "name": "Fetch CRM Data",
+      "config": {
+        "url": "{{input.crm_api_url}}/api/v1/accounts/{{input.account_id}}",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer {{input.crm_token}}",
+          "Content-Type": "application/json"
+        },
+        "timeout": 30000
+      },
+      "depends_on": [],
+      "position": {
+        "x": 100,
+        "y": 100
+      }
+    },
+    {
+      "id": "fetch-activity-data",
+      "component_type": "http-request",
+      "name": "Fetch Activity History",
+      "config": {
+        "url": "{{input.crm_api_url}}/api/v1/accounts/{{input.account_id}}/activities",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer {{input.crm_token}}",
+          "Content-Type": "application/json"
+        },
+        "query_params": {
+          "limit": "100",
+          "sort": "date:desc"
+        },
+        "timeout": 30000
+      },
+      "depends_on": [],
+      "position": {
+        "x": 100,
+        "y": 250
+      }
+    },
+    {
+      "id": "fetch-financial-data",
+      "component_type": "http-request",
+      "name": "Fetch Financial Data",
+      "config": {
+        "url": "{{input.finance_api_url}}/api/invoices",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer {{input.finance_token}}",
+          "Content-Type": "application/json"
+        },
+        "query_params": {
+          "customer_id": "{{input.account_id}}",
+          "status": "all"
+        },
+        "timeout": 30000
+      },
+      "depends_on": [],
+      "position": {
+        "x": 100,
+        "y": 400
+      }
+    },
+    {
+      "id": "validate-crm-schema",
+      "component_type": "schema-validate",
+      "name": "Validate CRM Response",
+      "config": {
+        "data": "{{upstream.fetch-crm-data.body}}",
+        "schema": {
+          "type": "object",
+          "required": [
+            "id",
+            "name",
+            "industry"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "industry": {
+              "type": "string"
+            },
+            "revenue": {
+              "type": "number"
+            },
+            "employees": {
+              "type": "integer"
+            },
+            "health_score": {
+              "type": "number"
+            }
+          }
+        },
+        "strict": false
+      },
+      "depends_on": [
+        "fetch-crm-data"
+      ],
+      "position": {
+        "x": 350,
+        "y": 100
+      }
+    },
+    {
+      "id": "transform-activities",
+      "component_type": "json-transform",
+      "name": "Transform Activities",
+      "config": {
+        "data": "{{upstream.fetch-activity-data.body}}",
+        "template": {
+          "total_activities": "{{len(data.activities) if data.activities else 0}}",
+          "last_contact_date": "{{data.activities[0].date if data.activities else 'Never'}}",
+          "activity_types": "{{set([a.type for a in data.activities]) if data.activities else []}}",
+          "recent_activities": "{{data.activities[:5] if data.activities else []}}"
+        }
+      },
+      "depends_on": [
+        "fetch-activity-data"
+      ],
+      "position": {
+        "x": 350,
+        "y": 250
+      }
+    },
+    {
+      "id": "transform-financials",
+      "component_type": "json-transform",
+      "name": "Transform Financials",
+      "config": {
+        "data": "{{upstream.fetch-financial-data.body}}",
+        "template": {
+          "total_revenue": "{{sum([i.amount for i in data.invoices]) if data.invoices else 0}}",
+          "outstanding_balance": "{{sum([i.amount for i in data.invoices if i.status == 'unpaid']) if data.invoices else 0}}",
+          "invoice_count": "{{len(data.invoices) if data.invoices else 0}}",
+          "payment_status": "{{data.invoices if data.invoices else []}}"
+        }
+      },
+      "depends_on": [
+        "fetch-financial-data"
+      ],
+      "position": {
+        "x": 350,
+        "y": 400
+      }
+    },
+    {
+      "id": "filter-high-value",
+      "component_type": "filter",
+      "name": "Check Account Value",
+      "config": {
+        "data": "{{upstream.validate-crm-schema.data}}",
+        "condition": "data.get('revenue', 0) > 100000 or data.get('health_score', 0) > 70",
+        "pass_if_missing": true
+      },
+      "depends_on": [
+        "validate-crm-schema"
+      ],
+      "position": {
+        "x": 600,
+        "y": 100
+      }
+    },
+    {
+      "id": "merge-data-sources",
+      "component_type": "json-transform",
+      "name": "Merge All Data",
+      "config": {
+        "template": {
+          "account": "{{upstream.validate-crm-schema.data}}",
+          "activities": "{{upstream.transform-activities}}",
+          "financials": "{{upstream.transform-financials}}",
+          "is_high_value": "{{upstream.filter-high-value.passed}}",
+          "merged_at": "{{now()}}"
+        }
+      },
+      "depends_on": [
+        "filter-high-value",
+        "transform-activities",
+        "transform-financials"
+      ],
+      "position": {
+        "x": 600,
+        "y": 250
+      }
+    },
+    {
+      "id": "log-merge-status",
+      "component_type": "logger",
+      "name": "Log Processing",
+      "config": {
+        "message": "Merged data for account {{upstream.validate-crm-schema.data.name}}",
+        "level": "info",
+        "data": {
+          "account_id": "{{input.account_id}}",
+          "data_sources": 3,
+          "high_value": "{{upstream.filter-high-value.passed}}"
+        }
+      },
+      "depends_on": [
+        "merge-data-sources"
+      ],
+      "position": {
+        "x": 600,
+        "y": 400
+      }
+    },
+    {
+      "id": "analyze-account",
+      "component_type": "generator",
+      "name": "AI Account Analysis",
+      "config": {
+        "prompt": "Analyze this account data and provide business insights:\n\nAccount: {{upstream.merge-data-sources.account}}\nActivity Summary: {{upstream.merge-data-sources.activities}}\nFinancial Summary: {{upstream.merge-data-sources.financials}}\nHigh Value Flag: {{upstream.merge-data-sources.is_high_value}}\n\nProvide:\n1. Account health assessment (1-10)\n2. Engagement level analysis\n3. Revenue risk assessment\n4. Growth opportunities\n5. Recommended actions",
+        "system_prompt": "You are a business analyst expert at CRM data analysis. Provide actionable insights based on customer data."
+      },
+      "depends_on": [
+        "merge-data-sources"
+      ],
+      "position": {
+        "x": 850,
+        "y": 175
+      }
+    },
+    {
+      "id": "generate-recommendations",
+      "component_type": "generator",
+      "name": "Generate Recommendations",
+      "config": {
+        "prompt": "Based on this account analysis, generate specific recommendations:\n\nAnalysis: {{upstream.analyze-account.content}}\nAccount Data: {{upstream.merge-data-sources}}\n\nProvide 5 specific, actionable recommendations with:\n- Action description\n- Priority (High/Medium/Low)\n- Expected impact\n- Owner role (Sales/CS/Finance)\n- Timeline",
+        "system_prompt": "You are a customer success strategist. Generate specific, actionable recommendations."
+      },
+      "depends_on": [
+        "analyze-account"
+      ],
+      "position": {
+        "x": 850,
+        "y": 325
+      }
+    },
+    {
+      "id": "quality-check",
+      "component_type": "critic",
+      "name": "Quality Check",
+      "config": {
+        "content": "ANALYSIS:\n{{upstream.analyze-account.content}}\n\nRECOMMENDATIONS:\n{{upstream.generate-recommendations.content}}",
+        "criteria": "Evaluate for:\n1. Data-backed conclusions (not assumptions)\n2. Actionability of recommendations\n3. Appropriate prioritization\n4. Completeness of analysis\n5. Professional tone and clarity"
+      },
+      "depends_on": [
+        "generate-recommendations"
+      ],
+      "position": {
+        "x": 1100,
+        "y": 250
+      }
+    },
+    {
+      "id": "final-report",
+      "component_type": "improver",
+      "name": "Create Final Report",
+      "config": {
+        "content": "# Account Analysis Report\n\n## Analysis\n{{upstream.analyze-account.content}}\n\n## Recommendations\n{{upstream.generate-recommendations.content}}",
+        "feedback": "{{upstream.quality-check.feedback}}",
+        "instructions": "Refine into a polished, executive-ready account analysis report. Format with clear sections, bullet points, and highlight key metrics."
+      },
+      "depends_on": [
+        "quality-check"
+      ],
+      "position": {
+        "x": 1350,
+        "y": 175
+      }
+    },
+    {
+      "id": "format-output",
+      "component_type": "json-transform",
+      "name": "Structure Output",
+      "config": {
+        "template": {
+          "report": "{{upstream.final-report.improved}}",
+          "raw_data": {
+            "account": "{{upstream.validate-crm-schema.data}}",
+            "activities": "{{upstream.transform-activities}}",
+            "financials": "{{upstream.transform-financials}}"
+          },
+          "metadata": {
+            "generated_at": "{{now()}}",
+            "account_id": "{{input.account_id}}",
+            "high_value": "{{upstream.filter-high-value.passed}}",
+            "data_quality_score": "{{upstream.validate-crm-schema.valid}}"
+          }
+        }
+      },
+      "depends_on": [
+        "final-report"
+      ],
+      "position": {
+        "x": 1350,
+        "y": 325
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "account_id": {
+        "type": "string",
+        "description": "The account/customer ID to analyze"
+      },
+      "crm_api_url": {
+        "type": "string",
+        "description": "Base URL for CRM API"
+      },
+      "crm_token": {
+        "type": "string",
+        "description": "Bearer token for CRM API authentication"
+      },
+      "finance_api_url": {
+        "type": "string",
+        "description": "Base URL for Finance/Billing API"
+      },
+      "finance_token": {
+        "type": "string",
+        "description": "Bearer token for Finance API authentication"
+      }
+    },
+    "required": [
+      "account_id",
+      "crm_api_url",
+      "crm_token"
+    ]
+  },
+  "output_stage_id": "format-output",
+  "example_input": {
+    "account_id": "ACC-12345",
+    "crm_api_url": "https://api.mycrm.com",
+    "crm_token": "your-crm-api-token",
+    "finance_api_url": "https://api.myfinance.com",
+    "finance_token": "your-finance-api-token"
+  }
+}
