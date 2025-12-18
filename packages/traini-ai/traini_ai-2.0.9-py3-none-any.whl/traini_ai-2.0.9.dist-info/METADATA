@@ -1,0 +1,276 @@
+Metadata-Version: 2.4
+Name: traini-ai
+Version: 2.0.9
+Summary: Traini AI SDK - Dog emotion analysis and human-dog communication platform
+Home-page: https://github.com/Traini-Inc/traini-sdk
+Author: Traini AI Team
+Author-email: Traini AI Team <support@traini.ai>
+License: MIT
+Project-URL: Homepage, https://github.com/Traini-Inc/traini-sdk
+Project-URL: Documentation, https://github.com/Traini-Inc/traini-sdk
+Project-URL: Repository, https://github.com/Traini-Inc/traini-sdk
+Project-URL: Bug Tracker, https://github.com/Traini-Inc/traini-sdk/issues
+Keywords: traini,ai,dog,emotion,analysis,translation,audio,video,machine-learning,pet
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Multimedia :: Sound/Audio :: Analysis
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy>=1.21.0
+Requires-Dist: pillow>=9.0.0
+Requires-Dist: requests>=2.27.0
+Requires-Dist: torch>=1.12.0
+Requires-Dist: torchvision>=0.13.0
+Requires-Dist: openai>=1.0.0
+Requires-Dist: google-generativeai>=0.3.0
+Requires-Dist: anthropic>=0.8.0
+Requires-Dist: huggingface_hub>=0.20.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=3.0.0; extra == "dev"
+Requires-Dist: black>=22.0.0; extra == "dev"
+Requires-Dist: flake8>=4.0.0; extra == "dev"
+Requires-Dist: mypy>=0.950; extra == "dev"
+Provides-Extra: ml
+Requires-Dist: torch>=1.12.0; extra == "ml"
+Requires-Dist: torchvision>=0.13.0; extra == "ml"
+Requires-Dist: opencv-python>=4.6.0; extra == "ml"
+Provides-Extra: audio
+Requires-Dist: librosa>=0.9.0; extra == "audio"
+Requires-Dist: soundfile>=0.11.0; extra == "audio"
+Requires-Dist: pydub>=0.25.0; extra == "audio"
+Provides-Extra: all
+Requires-Dist: torch>=1.12.0; extra == "all"
+Requires-Dist: torchvision>=0.13.0; extra == "all"
+Requires-Dist: opencv-python>=4.6.0; extra == "all"
+Requires-Dist: librosa>=0.9.0; extra == "all"
+Requires-Dist: soundfile>=0.11.0; extra == "all"
+Requires-Dist: pydub>=0.25.0; extra == "all"
+Dynamic: author
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-python
+
+# Traini AI - Dog Emotion Analysis SDK
+
+![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Status](https://img.shields.io/badge/status-production-brightgreen)
+
+Advanced AI-powered dog emotion detection and image analysis SDK combining deep learning emotion recognition with multi-model visual intelligence.
+
+## 🌟 Features
+
+- **🎯 High Accuracy**: 76-88% emotion detection accuracy using 4-model ensemble
+- **🤖 Multi-Model Analysis**: Integrates GPT-4, Gemini 2.5, and Claude 3 for comprehensive visual understanding
+- **📝 Dual Output**: Professional third-person descriptions + playful first-person narratives
+- **⚡ Fast & Reliable**: Optimized inference pipeline with automatic image format detection
+- **🔧 Easy to Use**: Simple API with just 3 lines of code
+
+## 📦 Installation
+
+```bash
+pip install traini-ai
+```
+
+## 🚀 Quick Start
+
+```python
+from traini_ai import IntegratedImageAnalysisWithEmotion
+
+# Initialize analyzer
+analyzer = IntegratedImageAnalysisWithEmotion()
+
+# Analyze dog image
+result = analyzer.analyze_image('path/to/dog_image.jpg')
+
+# Get results
+print(result['third_person_description'])  # Professional analysis
+print(result['first_person_description'])  # Fun dog perspective
+```
+
+## 📖 API Reference
+
+### `IntegratedImageAnalysisWithEmotion`
+
+Main class for dog image analysis.
+
+#### Parameters
+
+- `openai_api_key` (str, optional): OpenAI API key. Uses default if not provided.
+- `google_api_key` (str, optional): Google API key. Uses default if not provided.
+- `anthropic_api_key` (str, optional): Anthropic API key. Uses default if not provided.
+- `use_ensemble` (bool, default=True): Whether to use 4-model ensemble for emotion detection.
+
+#### Methods
+
+##### `analyze_image(image_path: str) -> dict`
+
+Analyzes a dog image and returns emotional and behavioral insights.
+
+**Parameters:**
+- `image_path` (str): Path to the dog image file. Supports JPEG, PNG, GIF, WebP.
+
+**Returns:**
+```python
+{
+    'third_person_description': str,  # Objective third-person analysis
+    'first_person_description': str   # Playful first-person narrative
+}
+```
+
+## 💡 Usage Examples
+
+### Basic Usage
+
+```python
+from traini_ai import IntegratedImageAnalysisWithEmotion
+
+analyzer = IntegratedImageAnalysisWithEmotion()
+result = analyzer.analyze_image('happy_dog.jpg')
+
+print("Third-Person Analysis:")
+print(result['third_person_description'])
+print("\nFirst-Person Narrative:")
+print(result['first_person_description'])
+```
+
+### Custom API Keys
+
+```python
+analyzer = IntegratedImageAnalysisWithEmotion(
+    openai_api_key='your-openai-key',
+    google_api_key='your-google-key',
+    anthropic_api_key='your-anthropic-key'
+)
+```
+
+### Single Model Mode (Faster)
+
+```python
+# Use single model for faster inference
+analyzer = IntegratedImageAnalysisWithEmotion(use_ensemble=False)
+result = analyzer.analyze_image('dog.jpg')
+```
+
+## 📊 Performance
+
+| Mode | Accuracy | Speed | Memory | Use Case |
+|------|----------|-------|--------|----------|
+| Ensemble (4 models) | 76-88% | ~3-5s | ~1.2GB | High accuracy needs |
+| Single Model | 74-76% | ~1-2s | ~300MB | Real-time applications |
+
+## 🎨 Output Examples
+
+### Third-Person Description (Professional)
+
+```
+The image features a fluffy golden Pomeranian dog situated indoors on a
+textured gray rug within a cozy living room setting. The dog's voluminous
+fur and distinctively perked ears emphasize its breed traits, while its
+dark, expressive eyes convey a sense of curiosity and attentiveness. The
+dog is facing the camera with its head held high, displaying a slightly
+open mouth that suggests a playful or relaxed demeanor...
+```
+
+### First-Person Description (Playful)
+
+```
+Omg, hi there! 😍 I'm just chillin' here on my favorite rug, feelin' all
+cozy and stuff! My floofy fur is like, 10/10 fluffy for snuggles. 🐾 My
+ears are perked 'cause I'm super curious about what you're up to! Maybe
+you wanna throw me a toy or give me some treats? I promise I won't get
+mad – just playful wags and happy barks! 🐶💖
+```
+
+## 🔬 Technology Stack
+
+### Emotion Detection
+- **AttentionResNet50**: Advanced attention mechanism
+- **ResNet50**: Robust feature extraction
+- **ResNet101**: Deep architecture for complex patterns
+- **EfficientNet**: Optimized efficiency and accuracy
+
+### Visual Analysis
+- **GPT-4o-mini**: General visual understanding
+- **Gemini 2.5 Flash Lite**: Fast image processing
+- **Claude 3 Haiku**: Detailed emotion interpretation
+
+## 🎯 Supported Emotions
+
+The SDK can detect 13 different dog emotions:
+
+- Happy
+- Sad
+- Angry
+- Alert
+- Relaxed
+- Fear
+- Anxiety
+- Anticipation
+- Appeasement
+- Caution
+- Confident
+- Curiosity
+- Sleepy
+
+## 🖼️ Supported Image Formats
+
+- JPEG/JPG
+- PNG
+- GIF
+- WebP
+
+## ⚙️ Requirements
+
+- Python 3.8+
+- PyTorch 1.9+
+- OpenAI SDK
+- Google Generative AI
+- Anthropic SDK
+
+## 📄 License
+
+MIT License - see LICENSE file for details
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## 📞 Support
+
+- **Documentation**: [https://docs.traini.ai](https://docs.traini.ai)
+- **Issues**: [https://github.com/traini-ai/traini-sdk/issues](https://github.com/traini-ai/traini-sdk/issues)
+- **Email**: support@traini.ai
+
+## 🔄 Changelog
+
+### v2.0.0 (2024-12-14)
+- ✨ Added multi-model integration (GPT, Gemini, Claude)
+- ✨ Implemented 4-model ensemble emotion detection
+- ✨ Dual output: third-person + first-person descriptions
+- 🔧 Automatic image format detection
+- 📝 Simplified API with clean output
+- 🚀 Production-ready with error handling
+
+### v1.0.0 (2024-12-01)
+- 🎉 Initial release
+- 🤖 Single model emotion detection
+- 📊 Basic image analysis
+
+## 🙏 Acknowledgments
+
+Built with advanced AI models from OpenAI, Google, and Anthropic.
+
+---
+
+**Made with ❤️ by the Traini AI Team**
