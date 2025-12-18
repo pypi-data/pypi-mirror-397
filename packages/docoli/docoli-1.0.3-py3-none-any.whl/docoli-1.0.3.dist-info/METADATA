@@ -1,0 +1,122 @@
+Metadata-Version: 2.4
+Name: docoli
+Version: 1.0.3
+Summary: Config linker for chezmoi and Nextcloud
+Project-URL: Homepage, https://www.veen.world/
+Project-URL: Repository, https://github.com/kevinveenbirkenbach/dotlinker
+Author-email: Kevin Veen-Birkenbach <kevin@veen.world>
+License: MIT
+License-File: LICENSE
+Requires-Python: >=3.10
+Requires-Dist: pyyaml>=6.0
+Description-Content-Type: text/markdown
+
+# dotlinker (doli)
+[![GitHub Sponsors](https://img.shields.io/badge/Sponsor-GitHub%20Sponsors-blue?logo=github)](https://github.com/sponsors/kevinveenbirkenbach) [![Patreon](https://img.shields.io/badge/Support-Patreon-orange?logo=patreon)](https://www.patreon.com/c/kevinveenbirkenbach) [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20Coffee-Funding-yellow?logo=buymeacoffee)](https://buymeacoffee.com/kevinveenbirkenbach) [![PayPal](https://img.shields.io/badge/Donate-PayPal-blue?logo=paypal)](https://s.veen.world/paypaldonate)
+
+
+`dotlinker` (CLI: `doli`) helps you persist and synchronize configuration across multiple systems by
+linking local config paths to either:
+
+- **chezmoi** (Git-based dotfiles management)
+- **Nextcloud** (file-sync based persistence)
+
+It is designed to be **simple**, **deterministic**, and **safe by default** (with timestamped backups).
+
+## Features
+
+- Default config path: `~/.config/dotlinker/config.yaml` (XDG-aware via `XDG_CONFIG_HOME`)
+- Backends:
+  - **chezmoi**: imports paths via `chezmoi add`
+  - **cloud**: copies data to a destination directory, creates `.bak` backups, and links back with symlinks
+- Unit tests via `unittest`
+- Makefile target: `make test`
+
+## Installation
+
+```bash
+pip install .
+```
+
+Or editable install for development:
+
+```bash
+pip install -e .
+```
+
+## Usage
+
+Show help:
+
+```bash
+doli --help
+doli
+```
+
+Add a mapping (non-interactive):
+
+```bash
+doli add -N zshrc -b chezmoi -s ~/.zshrc
+doli add -N nvim  -b cloud   -s ~/.config/nvim -d ~/Nextcloud/dotfiles/.config/nvim
+```
+
+Run the linking/import process:
+
+```bash
+doli pull
+```
+
+Use a custom config path:
+
+```bash
+doli -c ./my-config.yaml add -N nvim -b cloud -s ~/.config/nvim -d ~/Nextcloud/dotfiles/.config/nvim
+doli -c ./my-config.yaml pull
+```
+
+## Configuration format
+
+`~/.config/dotlinker/config.yaml`
+
+```yaml
+mappings:
+  - name: zshrc
+    backend: chezmoi
+    src: ~/.zshrc
+
+  - name: nvim
+    backend: cloud
+    src: ~/.config/nvim
+    dest: ~/Nextcloud/dotfiles/.config/nvim
+```
+
+### Notes
+
+* For `backend: cloud`, `dest` is required.
+* `cloud` creates timestamped backups:
+
+  * destination backups: `dest.<timestamp>.bak`
+  * source backups: `src.<timestamp>.bak`
+* If `src` is already a symlink pointing to `dest`, `doli pull` is a NOOP.
+
+## Development
+
+Run tests:
+
+```bash
+make test
+```
+
+Run tests verbosely:
+
+```bash
+make test-verbose
+```
+
+## License
+
+MIT License. See `LICENSE`.
+
+## Author
+
+Kevin Veen-Birkenbach
+[https://www.veen.world/](https://www.veen.world/)
