@@ -1,0 +1,38 @@
+[project]
+name = "django-model-scanner"
+version = "0.1.0"
+description = "Static analysis tool for Django models using pylint and astroid"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pylint>=4.0.4",
+    "astroid>=3.0.0",
+    "pyyaml>=6.0",
+]
+
+[project.scripts]
+django-model-scanner = "django_model_scanner.main:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "django>=3.2",
+]
+examples = [
+    "django>=3.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["django_model_scanner"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/django_model_scanner",
+    "/README.md",
+    "/pyproject.toml",
+]
