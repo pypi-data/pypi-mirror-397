@@ -1,0 +1,90 @@
+[project]
+name = "csaf-vex"
+version = "0.1.0b2"
+description = "A library for generating, parsing and validating CSAF VEX files"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Jakub Frejlach", email = "jfrejlac@redhat.com" },
+    { name = "Juan Perez de Algaba", email = "jperezde@redhat.com" },
+    { name = "George Vauter", email = "gvauter@redhat.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "attrs>=25.4.0",
+    "click>=8.3.1",
+    "cvss>=3.0",
+    "jsonschema>=4.0.0",
+    "packageurl-python>=0.15.0",
+]
+keywords = [
+    "csaf",
+    "vex",
+    "security",
+    "vulnerability",
+    "advisory",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.scripts]
+csaf-vex = "csaf_vex.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.9.14,<0.10.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.7",
+    "pytest>=8.0.0",
+]
+test = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.0.0",
+    "deepdiff>=8.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.ruff]
+line-length = 100
+indent-width = 4
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "F",     # pyflakes
+    "I",     # isort
+    "N",     # pep8-naming
+    "UP",    # pyupgrade
+    "B",     # flake8-bugbear
+    "C4",    # flake8-comprehensions
+    "SIM",   # flake8-simplify
+    "RUF",   # ruff-specific rules
+]
+ignore = []
+fixable = ["ALL"]
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
