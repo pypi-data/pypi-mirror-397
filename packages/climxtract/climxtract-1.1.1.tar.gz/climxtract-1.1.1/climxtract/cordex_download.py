@@ -1,0 +1,181 @@
+# cordex_download.py
+# !/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+@author: Maximilian Meindl, University of Vienna
+"""
+
+import os
+import wget
+import glob
+import shutil
+import xarray as xr
+from pyesgf.search import SearchConnection
+from datetime import datetime
+from cdo import Cdo
+from .dictionary import dictionary
+
+
+# Function to find matching URLs
+def find_matching_urls(urls, target_start_dt, target_end_dt):
+    matching_urls = []
+    for url in urls:
+        # Extract date range from URL
+        parts = url.split("_")[-1].replace(".nc", "").split("-")
+        start_dt = datetime.strptime(parts[0], "%Y%m%d")
+        end_dt = datetime.strptime(parts[1], "%Y%m%d")
+
+        # Check if the file falls within the target range
+        if start_dt >= target_start_dt and end_dt <= target_end_dt:
+            matching_urls.append(url)
+
+    return matching_urls
+
+
+def load_cordex(model_global, model_regional, variable, experiment, ens,
+                start, end, output_path):
+    """
+    Download CORDEX data from ESGF using the ESGF Pyclient.
+
+        Input:
+            model_global       str      name of the global climate model
+            model_regional     str      name of the regional climate model
+            variable           str      variable name (e.g. tas)
+            experiment         str      name of the experiment (eg. historical)
+            start              str      start date (e.g. 20160101)
+            end                str      end date (e.g. 20201231)
+            output_directory   str      path where the netCDF file is stored
+
+        Output:
+            Returns the path of the netCDF file containing the CORDEX data.
+    """
+    # Validate variable
+    if variable not in dictionary:
+        raise ValueError(f"Variable must be one of {list(dictionary.keys())}")
+
+    eurocordex_info = dictionary[variable]['eurocordex']
+    variable_long = eurocordex_info['name']
+    standard_key = next(iter(dictionary[variable]))
+    standard_unit = dictionary[variable][standard_key]['units']
+
+    # Define output filename
+    file = (
+        f"{variable}_{model_global}_{experiment}_{ens}_"
+        f"{model_regional}_{start}-{end}.nc"
+    )
+    output_file = os.path.join(output_path, file)
+
+    # Check whether the file already exits and return the path of the file
+    if os.path.exists(output_file):
+        print("Loaded EURO-CORDEX data successfully.")
+        return output_file
+
+    else:
+        # Create temporary directory
+        temp_dir = os.path.join(output_path, "tmp")
+        os.makedirs(temp_dir, exist_ok=True)
+        temp_file = os.path.join(temp_dir, file)
+
+        esgf_nodes = [
+            "esgf-data.dkrz.de",
+            "esg-dn1.nsc.liu.se",
+#            "esgf-node.llnl.gov",
+            "esgf.ceda.ac.uk",
+        ]
+
+        # Download EURO-CORDEX data
+        for hostname in esgf_nodes:
+            print(f"\nTrying node: {hostname}")
+            try:
+                url = f"https://{hostname}/esg-search"
+                conn = SearchConnection(url, distrib=True)
+
+                ctx = conn.new_context(
+                    project="CORDEX",
+                    domain="EUR-11",
+                    driving_model=model_global,
+                    experiment=experiment,
+                    ensemble=ens,
+                    rcm_name=model_regional,
+                    variable=variable_long,
+                    time_frequency="day",
+                    latest=True
+                )
+
+                results = ctx.search()
+
+                if not results:
+                    print("No datasets found on this node.")
+                    continue
+
+                ds = results[0]
+                files = ds.file_context().search()
+
+                # Get list of URLs
+                url_list = []
+                for f in files:
+                    url_list.append(f.download_url)
+
+                # Convert target dates to datetime objects
+                target_start_dt = datetime.strptime(start, "%Y%m%d")
+                target_end_dt = datetime.strptime(end, "%Y%m%d")
+
+                # Find matching URLs
+                matching_urls = find_matching_urls(url_list, target_start_dt, target_end_dt)
+
+                for url in matching_urls:
+                    filename = os.path.join(temp_dir, os.path.basename(url))
+                    wget.download(url, filename)
+                    print("Downloaded EURO-CORDEX data successfully.")
+
+            except Exception as e:
+                print(f"Failed to download EURO-CORDEX data.\nError: {e}")
+                return None
+
+        # Use CDO to merge netcdf files
+        daily_files = sorted(glob.glob(os.path.join(temp_dir, "*.nc")))
+
+        # If cdo is not in the path, add it manually
+        conda_bin = os.path.expanduser('~/.conda/envs/climxtract/bin')
+        os.environ['PATH'] += f':{conda_bin}'
+
+        # Initialize the Cdo object
+        cdo = Cdo()
+
+        if daily_files:
+            # Convert the list of files into a space-separated string
+            file_list = " ".join(daily_files)
+
+            # Perform merging of files on the time dimension
+            cdo.mergetime(input=file_list, output=temp_file)
+
+        # Open previously downloaded dataset
+        dataset = xr.open_dataset(temp_file)
+
+        # Standardize variable and units for temperature
+        if variable == 'tas':
+            # Convert from Kelvin to Celsius
+            dataset[variable] = dataset[variable] - 273.15
+            units = dataset[variable].attrs.get("units", None)
+            if units is None or units not in standard_unit:
+                print(f"Warning: {variable} has no or wrong unit attribute.")
+                dataset[variable].attrs['units'] = standard_unit
+                print(f"Note: Unit attribute of {variable} changed to {standard_unit}.")
+
+        # Standardize variable and units for precipitation
+        if variable == 'pr':
+            # Convert kg m-2 s-1 into kg m-2
+            dataset[variable] = dataset[variable]*86400
+            units = dataset[variable].attrs.get("units", None)
+            if units is None or units not in standard_unit:
+                print(f"Warning: {variable} has no or wrong unit attribute.")
+                dataset[variable].attrs['units'] = standard_unit
+                print(f"Note: Unit attribute of {variable} changed to {standard_unit}.")
+
+        # Save dataset to netCDF file
+        dataset.to_netcdf(output_file)
+
+        # Clean temporary directory
+        shutil.rmtree(temp_dir)
+
+        return output_file
