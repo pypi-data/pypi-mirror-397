@@ -1,0 +1,469 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Annotated, Literal, NoReturn, Optional
+
+import typer
+
+from vibemem.config import VibememConfig, load_config, redact_config_for_display
+from vibemem.models import Confidence, ListFilters, MemType, Memory, MemoryUpdate, ScopeType
+from vibemem.scope import ScopeInfo, derive_scope, scope_chain
+from vibemem.store.base import ConnectionError, NotFoundError, SearchRequest
+from vibemem.store.chroma_cache import ChromaCache, chroma_present_on_disk, default_chroma_path
+from vibemem.store.weaviate_store import WeaviateStore
+from vibemem.util import emit, normalize_where_paths, parse_csv_list, uniq
+
+
+app = typer.Typer(
+    name="vibemem",
+    help="VibeMem: manage 'memories' for vibe-coding agents (Weaviate + optional Chroma cache).",
+    add_completion=False,
+    no_args_is_help=True,
+)
+
+config_app = typer.Typer(help="Configuration commands.", no_args_is_help=True)
+app.add_typer(config_app, name="config")
+
+
+ScopeTypeOpt = Optional[Literal["global", "project"]]
+CacheModeOpt = Literal["auto", "on", "off"]
+
+
+@dataclass(frozen=True)
+class Runtime:
+    cfg: VibememConfig
+    scope: ScopeInfo
+    as_json: bool
+
+
+def _parse_scope_type(scope_type: Optional[str]) -> ScopeTypeOpt:
+    if scope_type is None:
+        return None
+    st = scope_type.strip().lower()
+    if st not in ("global", "project"):
+        raise typer.BadParameter("scope-type must be 'global' or 'project'")
+    return st  # type: ignore[return-value]
+
+
+def _validate_granularity(granularity: str) -> str:
+    g = (granularity or "").strip().lower()
+    if g in ("repo", "cwd"):
+        return g
+    if g.startswith("path:"):
+        n = g.split(":", 1)[1]
+        try:
+            if int(n) <= 0:
+                raise ValueError
+        except ValueError:
+            raise typer.BadParameter("granularity 'path:N' requires N to be a positive integer")
+        return g
+    raise typer.BadParameter("granularity must be 'repo', 'cwd', or 'path:N'")
+
+
+def _cache_enabled(mode: CacheModeOpt, scope: ScopeInfo) -> tuple[bool, Path]:
+    path = default_chroma_path(scope)
+    if mode == "off":
+        return False, path
+    if mode == "on":
+        return True, path
+    # auto
+    return chroma_present_on_disk(path), path
+
+
+def _die(rt: Runtime, message: str, *, code: int = 1, error_type: str = "error") -> NoReturn:
+    emit({"ok": False, "error": {"type": error_type, "message": message}}, as_json=rt.as_json)
+    raise typer.Exit(code=code)
+
+
+def _open_cache_if_enabled(rt: Runtime, mode: CacheModeOpt, scope: ScopeInfo) -> ChromaCache:
+    enabled, path = _cache_enabled(mode, scope)
+    try:
+        return ChromaCache(path=path, enabled=enabled)
+    except ModuleNotFoundError:
+        if enabled:
+            _die(rt, "Chroma cache requested but 'chromadb' is not installed.", code=2, error_type="missing_dependency")
+        return ChromaCache(path=path, enabled=False)
+
+
+def _open_store(rt: Runtime) -> WeaviateStore:
+    return WeaviateStore(rt.cfg)
+
+
+def _open_store_or_die(rt: Runtime) -> WeaviateStore:
+    try:
+        return WeaviateStore(rt.cfg)
+    except ConnectionError as e:
+        _die(rt, str(e), code=2, error_type="connection")
+        raise
+
+
+def _apply_specificity_boost(hits: list[dict], scope_ids: list[str]) -> list[dict]:
+    if not scope_ids:
+        return hits
+
+    idx: dict[str, int] = {sid: i for i, sid in enumerate(scope_ids)}
+    denom = max(len(scope_ids) - 1, 1)
+
+    for h in hits:
+        mem = h.get("memory", {})
+        try:
+            base = float(h.get("score", 0.0))
+        except Exception:
+            base = 0.0
+
+        scope_type = mem.get("scope_type")
+        scope_id = mem.get("scope_id")
+
+        boost = 0.0
+        if scope_type == "project" and isinstance(scope_id, str) and scope_id in idx:
+            specificity = (denom - idx[scope_id]) / float(denom)
+            boost = 0.05 * specificity
+        elif scope_type == "global":
+            boost = 0.01
+
+        h["score"] = base + boost
+
+    hits.sort(key=lambda x: float(x.get("score", 0.0)), reverse=True)
+    return hits
+
+
+@app.callback()
+def _main(
+    ctx: typer.Context,
+    json_output: Annotated[bool, typer.Option("--json/--human", help="Default is --json.")] = True,
+    repo_root: Annotated[Optional[Path], typer.Option("--repo-root", help="Override repo root path.")] = None,
+    scope_type: Annotated[
+        Optional[str], typer.Option("--scope-type", help="Override scope type: global|project.")
+    ] = None,
+    scope_id: Annotated[Optional[str], typer.Option("--scope-id", help="Override scope id.")] = None,
+    granularity: Annotated[str, typer.Option("--granularity", help="repo|cwd|path:N")] = "repo",
+) -> None:
+    try:
+        cfg = load_config()
+    except Exception as e:
+        # ctx.obj not available yet; emit minimal error
+        if json_output:
+            import json as _json
+
+            print(_json.dumps({"ok": False, "error": {"type": "config", "message": str(e)}}, separators=(",", ":")))
+        else:
+            raise typer.BadParameter(str(e))
+        raise typer.Exit(code=2)
+
+    scope_type_override = _parse_scope_type(scope_type)
+    granularity = _validate_granularity(granularity)
+
+    scope = derive_scope(
+        Path.cwd(),
+        repo_root_override=repo_root,
+        scope_type_override=scope_type_override,
+        scope_id_override=scope_id,
+        granularity=granularity,
+    )
+    ctx.obj = Runtime(cfg=cfg, scope=scope, as_json=json_output)
+
+
+@app.command()
+def scope(ctx: typer.Context) -> None:
+    rt: Runtime = ctx.obj
+    enabled_auto, chroma_path = _cache_enabled(rt.cfg.cache_mode, rt.scope)
+    emit(
+        {
+            "cwd": str(rt.scope.cwd),
+            "repo_root": str(rt.scope.repo_root) if rt.scope.repo_root else None,
+            "repo_slug": rt.scope.repo_slug,
+            "rel_path": rt.scope.rel_path,
+            "scope_type": rt.scope.scope_type,
+            "scope_id": rt.scope.scope_id,
+            "cache_mode": rt.cfg.cache_mode,
+            "chroma_path": str(chroma_path),
+            "chroma_present": chroma_present_on_disk(chroma_path),
+            "chroma_enabled_auto": enabled_auto,
+        },
+        as_json=rt.as_json,
+    )
+
+
+@config_app.command("show")
+def config_show(ctx: typer.Context) -> None:
+    rt: Runtime = ctx.obj
+    emit(redact_config_for_display(rt.cfg), as_json=rt.as_json)
+
+
+@app.command()
+def search(
+    ctx: typer.Context,
+    query: Annotated[str, typer.Argument(help="Search query text.")],
+    top: Annotated[int, typer.Option("--top", help="Max results.")] = 8,
+    include_global: Annotated[bool, typer.Option("--include-global/--no-include-global")] = True,
+    include_parents: Annotated[bool, typer.Option("--include-parents/--no-include-parents")] = True,
+    cache: Annotated[CacheModeOpt, typer.Option("--cache", help="auto|on|off")] = "auto",
+) -> None:
+    rt: Runtime = ctx.obj
+
+    scope_ids: list[str] = []
+    if rt.scope.scope_type == "project":
+        scope_ids = scope_chain(rt.scope, include_parents=include_parents)
+    else:
+        include_global = False
+
+    cache_mode = cache if cache != "auto" else rt.cfg.cache_mode
+    chroma = _open_cache_if_enabled(rt, cache_mode, rt.scope)
+
+    req = SearchRequest(
+        query=query,
+        scope_type=rt.scope.scope_type,
+        scope_ids=scope_ids,
+        include_global=include_global,
+        top_k=top,
+    )
+
+    hits: list[dict] = []
+    used: str = "weaviate"
+
+    try:
+        store = _open_store(rt)
+        try:
+            whits = store.search(req)
+        finally:
+            store.close()
+
+        hits = [h.model_dump(mode="json") for h in whits]
+    except ConnectionError as e:
+        if chroma.enabled():
+            used = "chroma"
+            chits = chroma.search(req)
+            hits = [h.model_dump(mode="json") for h in chits]
+        else:
+            _die(rt, str(e), code=2, error_type="connection")
+
+    hits = _apply_specificity_boost(hits, scope_ids)
+    deduped: list[dict] = []
+    seen: set[str] = set()
+    for h in hits:
+        hid = str(h.get("id", ""))
+        if not hid or hid in seen:
+            continue
+        seen.add(hid)
+        deduped.append(h)
+
+    emit(
+        {
+            "query": query,
+            "scope_type": rt.scope.scope_type,
+            "scope_ids": scope_ids,
+            "include_global": include_global,
+            "include_parents": include_parents,
+            "used": used,
+            "hits": deduped[:top],
+        },
+        as_json=rt.as_json,
+    )
+
+
+@app.command()
+def add(
+    ctx: typer.Context,
+    mem_type: Annotated[MemType, typer.Option("--type", help="finding|recipe|gotcha|preference")],
+    text: Annotated[str, typer.Option("--text", help="Memory content.")],
+    tags: Annotated[Optional[str], typer.Option("--tags", help="Comma-separated tags.")] = None,
+    confidence: Annotated[Confidence, typer.Option("--confidence")] = Confidence.med,
+    verification: Annotated[Optional[str], typer.Option("--verification")] = None,
+    errors: Annotated[list[str], typer.Option("--error", help="Repeatable error signature.")] = [],
+    files: Annotated[list[str], typer.Option("--file", help="Repeatable file path.")] = [],
+    cmds: Annotated[list[str], typer.Option("--cmd", help="Repeatable command run.")] = [],
+    cache: Annotated[CacheModeOpt, typer.Option("--cache", help="auto|on|off")] = "auto",
+) -> None:
+    rt: Runtime = ctx.obj
+    cache_mode = cache if cache != "auto" else rt.cfg.cache_mode
+    chroma = _open_cache_if_enabled(rt, cache_mode, rt.scope)
+
+    m = Memory(
+        text=text,
+        mem_type=mem_type,
+        tags=uniq(parse_csv_list(tags)),
+        scope_type=ScopeType(rt.scope.scope_type),
+        scope_id=rt.scope.scope_id,
+        repo=rt.scope.repo_slug,
+        rel_path=rt.scope.rel_path,
+        confidence=confidence,
+        verification=verification,
+        error_signatures=errors or None,
+        files=normalize_where_paths(files) or None,
+        commands_run=cmds or None,
+    )
+
+    try:
+        store = _open_store_or_die(rt)
+        try:
+            created = store.add(m)
+        finally:
+            store.close()
+    except ConnectionError as e:
+        _die(rt, str(e), code=2, error_type="connection")
+
+    if chroma.enabled():
+        chroma.upsert(created)
+
+    emit(created, as_json=rt.as_json)
+
+
+@app.command()
+def edit(
+    ctx: typer.Context,
+    memory_id: Annotated[str, typer.Argument(help="Memory UUID.")],
+    text: Annotated[Optional[str], typer.Option("--text")] = None,
+    mem_type: Annotated[Optional[MemType], typer.Option("--type")] = None,
+    tags: Annotated[Optional[str], typer.Option("--tags")] = None,
+    confidence: Annotated[Optional[Confidence], typer.Option("--confidence")] = None,
+    verification: Annotated[Optional[str], typer.Option("--verification")] = None,
+    cache: Annotated[CacheModeOpt, typer.Option("--cache", help="auto|on|off")] = "auto",
+) -> None:
+    rt: Runtime = ctx.obj
+    cache_mode = cache if cache != "auto" else rt.cfg.cache_mode
+    chroma = _open_cache_if_enabled(rt, cache_mode, rt.scope)
+
+    upd = MemoryUpdate(
+        text=text,
+        mem_type=mem_type,
+        tags=uniq(parse_csv_list(tags)) if tags is not None else None,
+        confidence=confidence,
+        verification=verification,
+    )
+
+    try:
+        store = _open_store_or_die(rt)
+        try:
+            updated = store.edit(memory_id, upd)
+        finally:
+            store.close()
+    except NotFoundError as e:
+        _die(rt, str(e), code=3, error_type="not_found")
+    except ConnectionError as e:
+        _die(rt, str(e), code=2, error_type="connection")
+
+    if chroma.enabled():
+        chroma.upsert(updated)
+
+    emit(updated, as_json=rt.as_json)
+
+
+@app.command("rm")
+def rm_cmd(
+    ctx: typer.Context,
+    memory_id: Annotated[str, typer.Argument(help="Memory UUID.")],
+    cache: Annotated[CacheModeOpt, typer.Option("--cache", help="auto|on|off")] = "auto",
+) -> None:
+    rt: Runtime = ctx.obj
+    cache_mode = cache if cache != "auto" else rt.cfg.cache_mode
+    chroma = _open_cache_if_enabled(rt, cache_mode, rt.scope)
+
+    try:
+        store = _open_store_or_die(rt)
+        try:
+            store.delete(memory_id)
+        finally:
+            store.close()
+    except NotFoundError as e:
+        _die(rt, str(e), code=3, error_type="not_found")
+    except ConnectionError as e:
+        _die(rt, str(e), code=2, error_type="connection")
+
+    if chroma.enabled():
+        chroma.delete(memory_id)
+
+    emit({"deleted": memory_id}, as_json=rt.as_json)
+
+
+@app.command("list")
+def list_cmd(
+    ctx: typer.Context,
+    scope: Annotated[str, typer.Option("--scope", help="global|project|all")] = "project",
+    mem_type: Annotated[Optional[MemType], typer.Option("--type")] = None,
+    tag: Annotated[Optional[str], typer.Option("--tag")] = None,
+    limit: Annotated[int, typer.Option("--limit")] = 20,
+) -> None:
+    rt: Runtime = ctx.obj
+    scope = scope.strip().lower()
+    if scope not in ("global", "project", "all"):
+        raise typer.BadParameter("scope must be global|project|all")
+
+    repo_filter: Optional[str] = None
+    if scope == "project" and rt.scope.repo_slug:
+        repo_filter = rt.scope.repo_slug
+
+    filters = ListFilters(scope=scope, mem_type=mem_type, tag=tag, limit=limit, repo=repo_filter, scope_ids=None)
+
+    try:
+        store = _open_store_or_die(rt)
+        try:
+            memories = store.list(filters)
+        finally:
+            store.close()
+    except ConnectionError as e:
+        _die(rt, str(e), code=2, error_type="connection")
+
+    emit(
+        {"scope": scope, "repo": repo_filter, "count": len(memories), "memories": [m.model_dump(mode="json") for m in memories]},
+        as_json=rt.as_json,
+    )
+
+
+@app.command()
+def sync(
+    ctx: typer.Context,
+    pull: Annotated[bool, typer.Option("--pull", help="Pull from Weaviate into local Chroma cache.")] = False,
+    limit: Annotated[int, typer.Option("--limit")] = 200,
+) -> None:
+    rt: Runtime = ctx.obj
+    if not pull:
+        emit({"todo": "push/offline queue not implemented yet", "hint": "use --pull"}, as_json=rt.as_json)
+        raise typer.Exit(code=2)
+
+    if rt.scope.scope_type != "project":
+        raise typer.BadParameter("sync --pull requires project scope (run inside a repo or set --scope-type project).")
+
+    chroma = _open_cache_if_enabled(rt, "on", rt.scope)
+    if not chroma.enabled():
+        raise typer.Exit(code=2)
+
+    scope_ids = scope_chain(rt.scope, include_parents=True)
+
+    try:
+        store = _open_store_or_die(rt)
+        try:
+            memories = store.list(
+                ListFilters(
+                    scope="project",
+                    mem_type=None,
+                    tag=None,
+                    limit=limit,
+                    repo=rt.scope.repo_slug,
+                    scope_ids=scope_ids,
+                )
+            )
+        finally:
+            store.close()
+    except ConnectionError as e:
+        _die(rt, str(e), code=2, error_type="connection")
+
+    chroma.rebuild(memories)
+
+    emit(
+        {
+            "pulled": len(memories),
+            "scope_ids": scope_ids,
+            "chroma_path": str(default_chroma_path(rt.scope)),
+            "chroma_count": chroma.count(),
+        },
+        as_json=rt.as_json,
+    )
+
+
+# Typer/Click errors (BadParameter, etc.) are handled by Typer itself.
+# For domain errors we emit JSON and exit non-zero inside command handlers.
+
+
+if __name__ == "__main__":
+    app()
