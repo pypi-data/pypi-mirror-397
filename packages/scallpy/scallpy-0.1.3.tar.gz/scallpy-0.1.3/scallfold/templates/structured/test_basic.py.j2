@@ -1,0 +1,10 @@
+def test_app_import():
+    from {{ project_name }}.main import app
+    assert app.title is not None
+
+
+def test_root_endpoint():
+    from {{ project_name }}.main import app
+    # Check that root route exists and is properly configured
+    routes = [route.path for route in app.routes if hasattr(route, 'path')]
+    assert "/" in routes
