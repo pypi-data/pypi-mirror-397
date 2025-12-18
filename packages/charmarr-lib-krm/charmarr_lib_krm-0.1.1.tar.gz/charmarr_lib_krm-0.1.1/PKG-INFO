@@ -1,0 +1,67 @@
+Metadata-Version: 2.4
+Name: charmarr-lib-krm
+Version: 0.1.1
+Summary: Kubernetes Resource Manager with retry logic and reconciliation utilities
+Author-email: Adhitya Ravi <adhityashan95@gmail.com>
+License: LGPL-3.0-or-later
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.12
+Requires-Dist: lightkube>=0.15
+Requires-Dist: tenacity>=8.0
+Provides-Extra: dev
+Requires-Dist: mypy>=1.8; extra == 'dev'
+Requires-Dist: pytest-cov>=4.0; extra == 'dev'
+Requires-Dist: pytest>=8.0; extra == 'dev'
+Requires-Dist: ruff>=0.1; extra == 'dev'
+Description-Content-Type: text/markdown
+
+# charmarr-lib-krm
+
+Kubernetes Resource Manager with retry logic and reconciliation utilities.
+
+## Features
+
+- Generic CRUD operations for any K8s resource type via lightkube
+- Automatic retry on transient errors (409 Conflict, 429 Rate Limit, 5xx)
+- Strategic merge patch and server-side apply support
+- Reconciliation result types for idempotent operations
+
+## Installation
+
+```bash
+pip install charmarr-lib-krm
+```
+
+## Usage
+
+```python
+from charmarr_lib.krm import K8sResourceManager, ReconcileResult
+from lightkube.resources.apps_v1 import StatefulSet
+
+# Create manager (uses in-cluster config or kubeconfig)
+manager = K8sResourceManager()
+
+# Get a resource
+sts = manager.get(StatefulSet, "my-app", "my-namespace")
+
+# Patch with automatic retry on conflict
+manager.patch(StatefulSet, "my-app", patch_data, "my-namespace")
+
+# Server-side apply for idempotent create/update
+manager.apply(resource)
+
+# Check existence
+if manager.exists(StatefulSet, "my-app", "my-namespace"):
+    ...
+
+# Delete with 404 handling
+deleted = manager.delete(StatefulSet, "my-app", "my-namespace")
+```
+
+## License
+
+LGPL-3.0-or-later
