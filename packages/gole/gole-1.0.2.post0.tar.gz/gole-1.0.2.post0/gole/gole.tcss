@@ -1,0 +1,83 @@
+TextArea {
+    border: none;
+}
+
+TreeView {
+    dock: left;
+    width: 25;
+    height: 100%;
+}
+
+SettingsPane {
+    content-align: center middle;
+
+    .sidebar {
+	dock: left;
+	width: 15;
+    }
+
+    VerticalScroll#content {
+	padding-left: 1;
+	padding-right: 1;
+    }
+
+    Markdown {
+	margin: 1 0 0 0;
+    }
+}
+
+.hide-scroll {
+    scrollbar-size: 0 0;
+}
+
+* {
+    scrollbar-size-vertical: 1;
+}
+
+CommandPalette > Vertical {
+    width: 75%;
+}
+
+Confirm {
+    align: center middle;
+
+    &> Vertical {
+	padding: 1 2;
+	height: auto;
+	width: auto;
+	background: $surface;
+	border: panel $error;
+
+	&> Horizontal {
+	    height: auto;
+	    width: 100%;
+	    align-horizontal: center;
+	}
+    }
+
+    Button {
+	margin-right: 1;
+	&:focus {
+	    text-style: bold;
+	    border-top: tall $surface;
+	    background: $surface-darken-1;
+	}
+    }
+}
+
+TextPane {
+    HorizontalGroup {
+        #right {
+            /* hatch: cross green; */
+            align-horizontal: right;
+        }
+    }
+
+    Button {
+        background: $background;
+        min-width: 0;
+        border: none;
+        margin: 0 1;
+        /* dock: right; */
+    }
+}
