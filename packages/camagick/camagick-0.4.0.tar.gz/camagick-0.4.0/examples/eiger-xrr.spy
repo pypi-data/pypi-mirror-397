@@ -1,0 +1,94 @@
+#!/usr/local/bin/caspy -y 
+
+chain:
+- chain:
+  - from: epics
+    params:
+      image: 'KE:threshold_1:image'
+      nimages: 'KE:threshold_1:asize0'
+      width:   'KE:threshold_1:asize1'
+      height:  'KE:threshold_1:asize2'
+      prefix: 'KE:threshold_1:'
+      guide: 'KE:acquire==0'
+
+  - from: ioc
+    params:
+      prefix: "KE:roi:"
+      rx: "rx(162)"
+      ry: "ry(483)"
+      rw: "rw(70)"
+      rh: "rh(50)"
+      hang: false
+      
+
+  - via: demote
+    params:
+    - proposal
+    - scan
+    - frame
+    - nimages
+    - width
+    - height
+    - rx
+    - ry
+    - rw
+    - rh
+
+- via: "reshape"
+  params:
+    shape:
+      - nimages
+      - width
+      - height
+
+- fanout:
+  - chain:
+    - via: [ "only", "image" ]
+    - via: [ "slice", 0 ]
+    - to: plot
+      params:
+        image: "111,None,[[rx,ry,rw,rh]]"
+
+  - chain:
+    - fanout:
+      - chain:
+        - via: slice
+          params:
+          - "0"
+          - "rx-rw/2:rx+rw/2"
+          - "ry-rh/2:ry+rh/2"
+
+        - via: [ "rename", "{}_roi" ]
+
+        - fanout:
+          - chain:              
+            - via: [ npfun, nanmax ]
+            - via: [ rename, '{}_max' ]
+          - chain:
+            - via: [ npfun, nansum ]
+            - via: [ rename, '{}_sum' ]
+
+      - chain:
+        - via: [ npfun, nanmax ]
+        - via: [ rename, '{}_max' ]
+
+      - chain:
+        - via: [ npfun, nansum ]
+        - via: [ rename, '{}_sum' ]
+
+      - chain:
+        - via: [ npfun, nanmin ]
+        - via: [ rename, '{}_min' ]
+
+    - fanout:
+        - to: ioc
+          params:
+            prefix: "KE:threshold_1:"
+        - via: idem
+
+# When working in "table" mode, we want only one single summary
+# to clotter up stdout -- this is because we want header and
+# rows to match.
+- to: summary
+  params:
+    mode: "table"

@@ -1,0 +1,41 @@
+#!/usr/local/bin/caspy -y
+
+chain:
+- from:
+  - epics
+  - KMC3:XPP:HARP:CH0_HISTOGRAM_SIGNAL
+  params:
+    delta: KMC3:XPP:HARP:CH0_HISTOGRAM_DELTA
+    offset: KMC3:XPP:HARP:CH0_HISTOGRAM_OFFSET
+    receiver: polling
+    
+- via:
+  - demote
+  - offset
+  - delta
+
+- fanout:
+  - to: 'plot'
+    params:
+      KMC3_XPP_HARP_CH0_HISTOGRAM_SIGNAL: 111,(offset,delta)
+
+  - chain:
+    - via: rename
+      params:
+        - "roi"
+    - via: slice
+      params:
+        - '1000:3000'
+    - via: npfun
+      params:
+        - sum
+    - fanout:
+      - to: summary
+      - chain:
+        - via: stack
+        - fanout:
+          - to: plot
+          - to: ioc
+            prefix: 'NEW:'
+
+    

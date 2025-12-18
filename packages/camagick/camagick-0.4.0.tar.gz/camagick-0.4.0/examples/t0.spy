@@ -1,0 +1,23 @@
+#!/usr/local/bin/caspy -y
+
+chain:
+- from:
+  - epics
+  - KMC3:XPP:HARP:CH0_HISTOGRAM_SIGNAL
+  params:
+    delta: KMC3:XPP:HARP:CH0_HISTOGRAM_DELTA
+    offset: KMC3:XPP:HARP:CH0_HISTOGRAM_OFFSET
+- via:
+  - demote
+  - delta
+  - offset
+- via:
+  - eval
+  - argmax({})*offset+delta
+- via:
+  - rename
+  - t0
+- via:
+  - stack
+- to:
+  - plot

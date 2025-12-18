@@ -1,0 +1,30 @@
+#!/usr/local/bin/caspy -y 
+
+chain:
+  - chain:
+      - from: epics
+        params:
+          image: 'KE:threshold_1:image'
+          nimages: 'KE:threshold_1:asize0'
+          width:   'KE:threshold_1:asize1'
+          height:  'KE:threshold_1:asize2'
+          prefix: 'KE:threshold_1:'
+          guide: 'KE:acquire==0'
+
+      - via: demote
+        params:
+          - scan
+          - frame
+          - nimages
+          - width
+          - height
+
+  - via: "reshape"
+    params:
+      shape: ["nimages", "width", "height"]
+
+  - via: [ "only", "image" ]
+
+  - via: [ "slice", "0" ]
+
+  - to: "plot"

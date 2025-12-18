@@ -1,0 +1,33 @@
+#!/usr/local/bin/caspy -y 
+
+chain:
+- from: epics
+  params:
+    ch1:      'KO:nils:ch1:signal'
+    ch2:      'KO:nils:ch2:signal'
+    ch3:      'KO:nils:ch3:signal'
+    ch4:      'KO:nils:ch4:signal'
+    xoffset:  'KO:nils:ch1:xoffset'
+    xdelta:   'KO:nils:ch1:xdelta'
+    scan:     'KE:ctrl:scan'
+    frame:    'KE:ctrl:frame'
+    proposal: 'KE:ctrl:proposal'
+    guide:    'KE:acquire==0'
+
+- via: demote
+  params:
+  - proposal
+  - scan
+  - frame
+
+- fanout:
+  - to: hdf5
+    params:
+      path: "/home/specuser/data/{proposal}/{proposal}-data.h5#r{scan:04d}/measurement/oszi_{tag}"
+      index: "frame"
+      mode: "a+"
+      strict: false
+
+  - to: summary
+    params:
+      mode: "table"
