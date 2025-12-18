@@ -1,0 +1,214 @@
+Metadata-Version: 2.4
+Name: piedomains
+Version: 0.5.0
+Summary: Predict categories based on domain names and their content
+Project-URL: Homepage, https://github.com/themains/piedomains
+Project-URL: Documentation, https://themains.github.io/piedomains/
+Project-URL: Repository, https://github.com/themains/piedomains
+Project-URL: Issues, https://github.com/themains/piedomains/issues
+Project-URL: Changelog, https://github.com/themains/piedomains/blob/main/CHANGELOG.md
+Author-email: Rajashekar Chintalapati <rajshekar.ch@gmail.com>, Gaurav Sood <gsood07@gmail.com>
+License: MIT License
+License-File: LICENSE
+Keywords: computer vision,content analysis,domain classification,machine learning,web scraping,website categorization
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Internet :: WWW/HTTP
+Classifier: Topic :: Scientific/Engineering :: Information Analysis
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Text Processing :: Markup :: HTML
+Classifier: Topic :: Utilities
+Requires-Python: <3.14,>=3.11
+Requires-Dist: beautifulsoup4>=4.10.0
+Requires-Dist: joblib>=1.2.0
+Requires-Dist: litellm>=1.55.0
+Requires-Dist: nltk>=3.8
+Requires-Dist: numpy>=1.24.0
+Requires-Dist: pandas>=2.0.0
+Requires-Dist: pillow>=10.0.0
+Requires-Dist: playwright>=1.40.0
+Requires-Dist: requests>=2.25.0
+Requires-Dist: scikit-learn>=1.3.0
+Requires-Dist: tensorflow>=2.12.0
+Requires-Dist: tqdm>=4.64.0
+Provides-Extra: dev
+Requires-Dist: black>=24.0; extra == 'dev'
+Requires-Dist: isort>=5.0; extra == 'dev'
+Requires-Dist: mypy>=1.0; extra == 'dev'
+Requires-Dist: pre-commit>=3.0; extra == 'dev'
+Requires-Dist: psutil>=5.9.0; extra == 'dev'
+Requires-Dist: pytest-cov>=4.0; extra == 'dev'
+Requires-Dist: pytest-mock>=3.10; extra == 'dev'
+Requires-Dist: pytest-xdist>=3.0; extra == 'dev'
+Requires-Dist: pytest>=7.0; extra == 'dev'
+Requires-Dist: ruff>=0.7.0; extra == 'dev'
+Provides-Extra: docs
+Requires-Dist: furo>=2024.1.29; extra == 'docs'
+Requires-Dist: myst-parser>=2.0; extra == 'docs'
+Requires-Dist: sphinx-autodoc-typehints>=1.25; extra == 'docs'
+Requires-Dist: sphinx-copybutton>=0.5; extra == 'docs'
+Requires-Dist: sphinx>=7.0; extra == 'docs'
+Provides-Extra: test
+Requires-Dist: psutil>=5.9.0; extra == 'test'
+Requires-Dist: pytest-cov>=4.0; extra == 'test'
+Requires-Dist: pytest-mock>=3.10; extra == 'test'
+Requires-Dist: pytest>=7.0; extra == 'test'
+Requires-Dist: ruff>=0.7.0; extra == 'test'
+Description-Content-Type: text/markdown
+
+# piedomains: Classify website content using ML Models or LLMs
+
+[![CI](https://github.com/themains/piedomains/actions/workflows/ci.yml/badge.svg)](https://github.com/themains/piedomains/actions/workflows/ci.yml)
+[![PyPI Version](https://img.shields.io/pypi/v/piedomains.svg)](https://pypi.org/project/piedomains)
+[![Downloads](https://pepy.tech/badge/piedomains)](https://pepy.tech/project/piedomains)
+[![Documentation](https://img.shields.io/badge/docs-github.io-blue)](https://themains.github.io/piedomains/)
+
+## 🚀 What's New in v0.5.0
+
+- **Playwright Migration**: Complete transition from Selenium to modern Playwright for faster, more reliable web content extraction
+- **12.8x Performance Boost**: Optimized parallel processing (13.2s → 1.0s per domain)
+- **Enhanced Docker Security**: Production-ready containerization with security sandboxing and resource limits
+- **Unified Content Pipeline**: Text and image extraction now use the same Playwright engine for consistency
+
+## Installation
+
+```bash
+pip install piedomains
+```
+
+Requires Python 3.11+
+
+## Basic Usage
+
+```python
+from piedomains import DomainClassifier
+
+classifier = DomainClassifier()
+result = classifier.classify(["cnn.com", "amazon.com", "wikipedia.org"])
+print(result[['domain', 'pred_label', 'pred_prob']])
+
+# Output:
+#        domain    pred_label  pred_prob
+# 0     cnn.com          news   0.876543
+# 1  amazon.com      shopping   0.923456
+# 2 wikipedia.org   education   0.891234
+```
+
+## Classification Methods
+
+```python
+# Combined text + image analysis (most accurate)
+result = classifier.classify(["github.com"])
+
+# Text-only classification (faster)
+result = classifier.classify_by_text(["news.google.com"])
+
+# Image-only classification
+result = classifier.classify_by_images(["instagram.com"])
+
+# Batch processing
+results = classifier.classify_batch(domains, method="text", batch_size=50)
+```
+
+## Historical Analysis
+
+```python
+# Analyze archived versions from archive.org
+old_result = classifier.classify(["facebook.com"], archive_date="20100101")
+```
+
+## LLM Classification
+
+```python
+# Configure LLM provider
+classifier.configure_llm(
+    provider="openai",
+    model="gpt-4o",
+    api_key="sk-...",
+    categories=["news", "shopping", "social", "tech"]
+)
+
+# LLM-powered classification
+result = classifier.classify_by_llm(["example.com"])
+
+# With custom instructions
+result = classifier.classify_by_llm(
+    ["site.com"],
+    custom_instructions="Classify by educational value"
+)
+```
+
+Set API keys via environment variables:
+```bash
+export OPENAI_API_KEY="sk-..."
+export ANTHROPIC_API_KEY="sk-ant-..."
+export GOOGLE_API_KEY="..."
+```
+
+## Categories
+
+41 categories: news, finance, shopping, education, government, adult content, gambling, social networks, search engines, and others based on Shallalist taxonomy.
+
+## Security & Docker
+
+**v0.5.0** includes production-ready Docker containerization for secure domain analysis:
+
+```bash
+# Build secure sandbox container
+docker build -t piedomains-sandbox .
+
+# Run with security constraints (2GB RAM, 2 CPU, read-only filesystem)
+docker run --rm --memory=2g --cpus=2 --read-only \
+  --tmpfs /tmp --tmpfs /var/tmp \
+  piedomains-sandbox python -c "
+from piedomains import DomainClassifier
+classifier = DomainClassifier()
+result = classifier.classify(['example.com'])
+print(result[['domain', 'pred_label']])
+"
+```
+
+**Batch Processing in Container:**
+```bash
+# Use the included secure classification script
+cd examples/sandbox
+echo -e "wikipedia.org\ngithub.com\ncnn.com" > domains.txt
+python3 secure_classify.py --file domains.txt
+```
+
+For testing, use known-safe domains: `["wikipedia.org", "github.com", "cnn.com"]`
+
+## Documentation
+
+- [API Reference](https://themains.github.io/piedomains/)
+- [Examples](examples/)
+- [Security Guide](examples/sandbox/)
+
+## Development
+
+```bash
+git clone https://github.com/themains/piedomains
+cd piedomains
+pip install -e ".[dev]"
+pytest tests/ -v
+```
+
+## License
+
+MIT License
+
+## Citation
+
+```bibtex
+@software{piedomains,
+  title={piedomains: AI-powered domain content classification},
+  author={Chintalapati, Rajashekar and Sood, Gaurav},
+  year={2024},
+  url={https://github.com/themains/piedomains}
+}
+```
