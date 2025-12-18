@@ -1,0 +1,126 @@
+Metadata-Version: 2.4
+Name: tatools01
+Version: 3.0.3
+Summary: Thư viện hữu ích của Tuấn Anh.
+Home-page: https://pypi.org/project/tatools01/
+Author: Tuấn Anh - Foxconn
+Author-email: nt.anh.fai@gmail.com
+License: MIT
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: ruamel.yaml
+Requires-Dist: python-docx
+Requires-Dist: markdown
+Requires-Dist: beautifulsoup4
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: summary
+
+# Giới thiệu
+
+tattools01 là 1 thư viện dùng để ghi tham số vào ổ cứng
+
+
+## Tinh năng
+
+### 1. Mục đích chính
+
+Tạo một **base class `TactParameters`** để quản lý parameters cho các module khác nhau, lưu trữ vào  **file YAML chung** .
+
+### 2. Cách hoạt động
+
+**Lần chạy đầu tiên (file YAML chưa tồn tại):**
+
+* Lấy giá trị **default** từ code
+* Tạo file YAML với các giá trị default
+
+**Các lần chạy sau (file YAML đã tồn tại):**
+
+* Đọc giá trị từ file YAML
+* **Giá trị trong file YAML là ưu tiên cao nhất** (user có thể sửa trực tiếp)
+* Nếu user **xóa một key** trong file → lấy giá trị default từ code
+* Nếu code **thêm key mới** → bổ sung vào file với giá trị default
+* Save lại file để đồng bộ
+
+### 3. Các kiểu dữ liệu cần hỗ trợ
+
+| Kiểu         | Ví dụ                            | Cách access          |
+| ------------- | ---------------------------------- | --------------------- |
+| Scalar        | `self.test1 = "123"`             | `obj.test1`         |
+| List          | `self.myList = [1, 2, 3]`        | `obj.myList[0]`     |
+| Dict thường | `self.myDict = {"key": "value"}` | `obj.myDict["key"]` |
+| Nested class  | `self.Minio = clsMinio()`        | `obj.Minio.IP`      |
+
+### 4. Quy tắc merge (QUAN TRỌNG)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Code default    +    File YAML    =    Kết quả cuối       │
+├─────────────────────────────────────────────────────────────┤
+│  có giá trị           có giá trị       → Dùng FILE         │
+│  có giá trị           không có key     → Dùng DEFAULT      │
+│  không có             có giá trị       → Dùng FILE         │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Deep merge cho nested object:**
+
+```yaml
+# Code default:
+Minio:
+  IP: "192.168.3.42:9000"
+  access_key: "admin"
+  secret_key: "Proton@2025"
+
+# File YAML (user chỉ sửa IP, xóa secret_key):
+Minio:
+  IP: "10.0.0.1:9000"
+  access_key: "admin"
+
+# Kết quả:
+Minio:
+  IP: "10.0.0.1:9000"      ← từ file (user sửa)
+  access_key: "admin"       ← từ file (giữ nguyên)
+  secret_key: "Proton@2025" ← từ default (user xóa → khôi phục)
+```
+
+### 5. Giữ nguyên TYPE sau khi load
+
+```python
+# Trước khi load:
+self.myDict = {"key": "value"}      # dict
+self.Minio = clsMinio()              # nested class
+
+# Sau khi load từ file:
+self.myDict["key"]                   # vẫn access bằng []
+self.Minio.IP                        # vẫn access bằng .
+```
+
+### 6. Nhiều module dùng chung 1 file
+
+```yaml
+# My_Project_Name.yml
+Module 01:
+    test1: "123"
+    myDict: {key1: value1}
+
+Module 02:
+    test1: "456"
+    test2: "New param"
+
+chatbotAPI:
+    Minio:
+        IP: "192.168.3.42:9000"
+```
+
+.
