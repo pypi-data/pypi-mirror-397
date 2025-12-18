@@ -1,0 +1,68 @@
+# This is a basic workflow to help you get started with Actions
+
+name: stage & preview workflow
+
+# Controls when the action will run.
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master, main ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  publish_dev_build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-versions: [ 3.9 ]
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-versions }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python environment
+        run: |
+          uv sync --extra dev
+
+      # - name: test with tox
+      #   run:
+      #     uv run tox
+
+      - name: Build wheels and source tarball
+        run: |
+          # For dev builds, append dev version suffix
+          current_version=$(grep '^version = ' pyproject.toml | head -1 | cut -d'"' -f2)
+          
+          # Fallback if grep doesn't find the version
+          if [ -z "$current_version" ]; then
+            current_version=$(uv run python -c "import credtools; print(credtools.__version__)")
+          fi
+          
+          dev_version="${current_version}.dev${GITHUB_RUN_NUMBER}"
+          
+          # Update version strings for dev build (handle both project and tool.poetry sections)
+          sed -i "s/^version = \".*\"/version = \"$dev_version\"/" pyproject.toml
+          sed -i "s/__version__ = \".*\"/__version__ = \"$dev_version\"/" credtools/__init__.py
+          
+          echo "Building dev version: $dev_version"
+          uv build
+
+      # - name: publish to Test PyPI
+      #   uses: pypa/gh-action-pypi-publish@master
+      #   with:
+      #     user: __token__
+      #     password: ${{ secrets.TEST_PYPI_API_TOKEN}}
+      #     repository_url: https://test.pypi.org/legacy/
+      #     skip_existing: true
