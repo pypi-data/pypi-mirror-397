@@ -1,0 +1,78 @@
+Metadata-Version: 2.4
+Name: pponnxocr
+Version: 0.1
+Summary: OCR based on onnxruntime with PaddleOCR models
+Home-page: https://github.com/hgjazhgj/pponnxcr
+Author: Elmyran
+Author-email: 198003617@qq.com
+License: GNU AGPLv3
+Classifier: Development Status :: 4 - Beta
+Classifier: Operating System :: OS Independent
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: GNU Affero General Public License v3
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Scientific/Engineering :: Image Recognition
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: onnxruntime
+Requires-Dist: numpy
+Requires-Dist: opencv-python
+Requires-Dist: shapely
+Requires-Dist: pyclipper
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: summary
+
+# pponnxcr - PaddlePaddle ONNXruntime OCR
+
+OCR based on ONNX Runtime with PaddleOCR models  
+Refractor by [@hgjazhgj](https://github.com/hgjazhgj/) for [ppocr-onnx](https://github.com/triwinds/ppocr-onnx) and implements:  
+
+- Update `rec` model to v3  
+- Remove all unnecessary components e.g. `draw-ocr`  
+- Add English, Japanese and TraditionalChinese language support  
+
+## Install
+
+```bash
+pip install pponnxcr
+```
+
+## Usage
+
+```python
+from pponnxcr import TextSystem
+import cv2
+
+ZHS = TextSystem('zhs')
+ZHT = TextSystem('zht')
+JA = TextSystem('ja')
+EN = TextSystem('en')
+
+img = cv2.imread('test.png')
+
+ZHS.ocr_single_line(img)
+ZHS.ocr_lines([img, ...])
+ZHS.detect_and_ocr(img)
+```
+
+## License
+
+[GNU AGPLv3](https://www.gnu.org/licenses/agpl-3.0.html)  
+
+Which means that unless commercially licensed, any modification or use of this project in any way requires open source  
+
+## Reference
+
+- [ppocr-onnx](https://github.com/triwinds/ppocr-onnx)  
+- [RapidOCR](https://github.com/RapidAI/RapidOCR)  
+- [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR)  
+- [Paddle2ONNX](https://github.com/PaddlePaddle/Paddle2ONNX)
