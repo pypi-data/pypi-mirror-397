@@ -1,0 +1,28 @@
+csbdeep>=0.8.2
+scikit-image
+imageio
+
+[:platform_system != "Darwin" or platform_machine == "arm64"]
+numba
+
+[:platform_system == "Darwin" and platform_machine != "arm64"]
+numba<=0.62.1
+llvmlite<=0.45.1
+
+[:python_version >= "3.9"]
+numpy<3
+
+[bioimageio]
+bioimageio.core>=0.5.0
+importlib-metadata
+
+[test]
+
+[test:python_version < "3.7"]
+pytest
+
+[test:python_version >= "3.7"]
+pytest>=7.2.0
+
+[tf1]
+csbdeep[tf1]>=0.8.2
