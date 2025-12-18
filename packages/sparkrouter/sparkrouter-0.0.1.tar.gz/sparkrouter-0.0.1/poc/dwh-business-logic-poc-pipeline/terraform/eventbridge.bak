@@ -1,0 +1,81 @@
+# EventBridge Rule to capture Glue job state changes
+# resource "aws_cloudwatch_event_rule" "glue_job_state_change" {
+#   name        = "${local.resource_prefix}-glue-job-events"
+#   description = "Capture Glue job state changes (start, success, failure)"
+#
+#   event_pattern = jsonencode({
+#     source      = ["aws.glue"]
+#     detail-type = ["Glue Job State Change"]
+#     detail = {
+#       state = [
+#         "STARTING",
+#         "RUNNING",
+#         "SUCCEEDED",
+#         "FAILED",
+#         "TIMEOUT",
+#         "STOPPED"
+#       ]
+#     }
+#   })
+#
+#   tags = merge(local.tags, {
+#     Name = "${local.resource_prefix}-glue-job-events"
+#   })
+# }
+#
+# # Target: Lambda function to process events
+# resource "aws_cloudwatch_event_target" "lambda_job_metrics" {
+#   rule      = aws_cloudwatch_event_rule.glue_job_state_change.name
+#   target_id = "ProcessJobMetrics"
+#   arn       = aws_lambda_function.job_metrics_processor.arn
+# }
+#
+# # Permission for EventBridge to invoke Lambda
+# resource "aws_lambda_permission" "allow_eventbridge" {
+#   statement_id  = "AllowExecutionFromEventBridge"
+#   action        = "lambda:InvokeFunction"
+#   function_name = aws_lambda_function.job_metrics_processor.function_name
+#   principal     = "events.amazonaws.com"
+#   source_arn    = aws_cloudwatch_event_rule.glue_job_state_change.arn
+# }
+#
+# # Optional: EventBridge rule for custom job metrics from job completion
+# # This captures the metrics JSON that your jobs publish
+# resource "aws_cloudwatch_event_rule" "custom_job_metrics" {
+#   name        = "${local.resource_prefix}-custom-job-metrics"
+#   description = "Capture custom job metrics from completed jobs"
+#
+#   event_pattern = jsonencode({
+#     source      = ["dwh.pipeline"]
+#     detail-type = ["Job Metrics"]
+#   })
+#
+#   tags = merge(local.tags, {
+#     Name = "${local.resource_prefix}-custom-job-metrics"
+#   })
+# }
+#
+# resource "aws_cloudwatch_event_target" "lambda_custom_metrics" {
+#   rule      = aws_cloudwatch_event_rule.custom_job_metrics.name
+#   target_id = "ProcessCustomMetrics"
+#   arn       = aws_lambda_function.job_metrics_processor.arn
+# }
+#
+# resource "aws_lambda_permission" "allow_eventbridge_custom" {
+#   statement_id  = "AllowExecutionFromEventBridgeCustom"
+#   action        = "lambda:InvokeFunction"
+#   function_name = aws_lambda_function.job_metrics_processor.function_name
+#   principal     = "events.amazonaws.com"
+#   source_arn    = aws_cloudwatch_event_rule.custom_job_metrics.arn
+# }
+#
+# # Outputs
+# output "glue_event_rule_arn" {
+#   value       = aws_cloudwatch_event_rule.glue_job_state_change.arn
+#   description = "EventBridge rule ARN for Glue job events"
+# }
+#
+# output "custom_metrics_rule_arn" {
+#   value       = aws_cloudwatch_event_rule.custom_job_metrics.arn
+#   description = "EventBridge rule ARN for custom job metrics"
+# }

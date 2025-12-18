@@ -1,0 +1,38 @@
+[flake8]
+# Maximum line length (PEP8 recommends 79, but 88-120 is common in modern projects)
+max-line-length = 120
+
+select = F,E,W,C,B,D
+
+# Ignore certain errors/warnings
+ignore =
+    # Line break before binary operator (compatibility with Black)
+    W503,
+    # Line too long (handled separately)
+    E501,
+    # Missing docstring
+    D100, D101, D102, D103,
+    # Whitespace issues
+    E203, W293
+
+# Exclude directories/files
+exclude =
+    .git,
+    __pycache__,
+    .pytest_cache,
+    venv,
+    env,
+    build,
+    dist,
+    *.pyc,
+    *.egg-info
+
+# Path to Python modules
+# Useful when Flake8 can't find your modules
+# application-import-names = yourpackagename
+
+# Maximum complexity for functions
+max-complexity = 10
+
+# Enable specific plugins if needed
+# plugins = flake8-docstrings,flake8-bugbear

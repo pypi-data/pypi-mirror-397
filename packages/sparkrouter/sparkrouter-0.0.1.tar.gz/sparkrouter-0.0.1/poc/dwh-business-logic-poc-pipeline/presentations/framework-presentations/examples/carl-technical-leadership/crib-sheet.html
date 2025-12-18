@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CARL Presentation Crib Sheet</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.4;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #f8986e 0%, #e67e22 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 1.8em;
+        }
+        
+        .header h2 {
+            margin: 5px 0 0 0;
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .navigation-info {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+        
+        .section {
+            border-bottom: 1px solid #eee;
+        }
+        
+        .section-header {
+            background: #34495e;
+            color: white;
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .section-header:hover {
+            background: #2c3e50;
+        }
+        
+        .section-header.active {
+            background: #f8986e;
+        }
+        
+        .toggle-icon {
+            font-size: 1.2em;
+            transition: transform 0.3s ease;
+        }
+        
+        .section-header.active .toggle-icon {
+            transform: rotate(180deg);
+        }
+        
+        .section-content {
+            padding: 20px;
+            display: none;
+        }
+        
+        .section-content.active {
+            display: block;
+        }
+        
+        .subsection {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-left: 4px solid #f8986e;
+            border-radius: 4px;
+        }
+        
+        .subsection h4 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+        
+        .key-message {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .key-message strong {
+            color: #2e7d32;
+        }
+        
+        .demo-command {
+            background: #2c3e50;
+            color: #00ff00;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+        }
+        
+        .nav-buttons {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .nav-btn {
+            background: #f8986e;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        
+        .nav-btn:hover {
+            background: #e67e22;
+        }
+        
+        .current-time {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: #2c3e50;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        li {
+            margin: 5px 0;
+        }
+        
+        .timing-badge {
+            background: #e67e22;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="current-time" id="currentTime"></div>
+    
+    <div class="nav-buttons">
+        <button class="nav-btn" onclick="expandAll()">Expand All</button>
+        <button class="nav-btn" onclick="collapseAll()">Collapse All</button>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>CARL Presentation Crib Sheet</h1>
+            <h2>Quick Reference for Second Monitor</h2>
+        </div>
+        
+        <div class="navigation-info">
+            <strong>Navigation:</strong> ← → for sections, ↑ ↓ for subsections | <strong>CARL Format:</strong> Dennis wisely recommended Context → Action → Result → Learning
+        </div>
+
+        <!-- Section 1: Title Slide -->
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <span>📋 SECTION 1: TITLE SLIDE ⏰ 2:30-2:32 PM (2 min)</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <div class="subsection">
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Dennis wisely recommended the CARL format"
+                    </div>
+                    <ul>
+                        <li>60 minutes total</li>
+                        <li>C→A→R→L Structure</li>
+                        <li>Technical Leadership audience</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Framework Discussion Topics -->
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <span>🗂️ SECTION 2: FRAMEWORK DISCUSSION TOPICS ⏰ 2:32-2:35 PM (3 min)</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <div class="subsection">
+                    <h4>Subsection 2.1: All Topics Available</h4>
+                    <div class="key-message">
+                        <strong>Hook:</strong> "We have 15+ topics we could cover, but let's focus on the biggest pain points"
+                    </div>
+                    <ul>
+                        <li>Show comprehensive topic overview (4 cards)</li>
+                        <li><strong>Transition:</strong> "All areas we could explore"</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 2.2: Today's Focus <span class="timing-badge">60 min</span></h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Given our time, let's focus on what hurts most today"
+                    </div>
+                    <ul>
+                        <li>Context (12 min): Architecture evolution, challenges</li>
+                        <li>Action (20 min): Framework solution, demo</li>
+                        <li>Results (15 min): Benefits and ROI</li>
+                        <li>Learning (10 min): Migration strategy</li>
+                        <li>Q&A (3 min): Discussion</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3: Context -->
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <span>📊 SECTION 3: CONTEXT - Why We Need to Act ⏰ 2:35-2:47 PM (12 min)</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <div class="subsection">
+                    <h4>Subsection 3.1: Context Title Slide</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Why We Need to Act"
+                    </div>
+                    <ul>
+                        <li>12 minutes total</li>
+                        <li>Set up the pain points</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 3.2: Architecture Evolution</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "I don't know exactly how we got here, but it was through many small decisions"
+                    </div>
+                    <ul>
+                        <li>Timeline: Early Phase → Growth → Specialization → Expansion → Current State</li>
+                        <li><strong>Key Insight:</strong> "Each decision was logical in isolation, but compound complexity emerged"</li>
+                        <li><strong>Additional Context:</strong> "Our development environment played a key role in some decisions - entire discussion for another day"</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 3.3: Lessons from Evolution</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "What We Learned"
+                    </div>
+                    <ul>
+                        <li>Separation of concerns is valuable</li>
+                        <li>Shared utilities reduce duplication, but at the expense of clarity</li>
+                        <li><strong>Challenge:</strong> "Show me all the steps to produce a simple microbatch request object - DRY is not necessarily wise"</li>
+                        <li>Specialized repositories enable expertise (in some cases to enable offshore development, like data quality)</li>
+                        <li>Configuration management is critical</li>
+                        <li><strong>Testing becomes exponentially harder</strong> (in some cases virtually impossible)</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 3.4: Current Complexity Example</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Look at how many different tasks it takes to execute one piece of business logic"
+                    </div>
+                    <ul>
+                        <li>Show Load Promotion DAG workflow</li>
+                        <li><strong>Emphasis:</strong> Count the number of separate tasks/operators required</li>
+                        <li><strong>Indirection Problem:</strong> "DAG → sql_harness_consumer.py → config.py → code/promotion_3_0/ → SQL files"</li>
+                        <li><strong>Config Indirection:</strong> "Same problem with config - get_env(), get_s3config_consumer(), get_redshift_role() - layers of utility functions"</li>
+                        <li><strong>Debugging Reality:</strong> "Each path points to a project folder in a separate repo, under which there is a config file, which then points to SQL files"</li>
+                        <li><strong>Key Point:</strong> "This is what it takes to load promotion data - count the tasks AND the layers of indirection"</li>
+                        <li><strong>Mental Load:</strong> "It's a lot to unravel and keep in your head when trying to debug what is happening"</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 3.5: Coordination Costs</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Current Multi-Repository Reality"
+                    </div>
+                    <ul>
+                        <li><strong>Deployment Burden:</strong> "3 repos means up to 3 PR requests - meticulously managing merges"</li>
+                        <li><strong>Micromanagement:</strong> "A ton of micromanagement with nothing but downsides wrt error"</li>
+                        <li><strong>Business Logic Atomicity:</strong> "Serious burden when trying to ensure a business logic process is deployed as a whole"</li>
+                        <li>Configuration management across multiple systems</li>
+                        <li>Production debugging spans multiple codebases</li>
+                        <li>New developer onboarding is complex</li>
+                        <li><strong>Result:</strong> Significant coordination overhead with high error risk</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 3.6: The Tipping Point</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "We've reached the complexity threshold"
+                    </div>
+                    <ul>
+                        <li><strong>Development Velocity:</strong> "Adding features takes longer than it should"</li>
+                        <li><strong>Metrics Reality:</strong> "If we tracked development metrics over time, you'd see direct correlation between complexity and time to develop/debug"</li>
+                        <li><strong>Honest Assessment:</strong> "Pretty sure we have not gotten more nimble with time"</li>
+                        <li>Debugging requires archaeological expeditions</li>
+                        <li>New team members struggle with distributed knowledge</li>
+                        <li>Schema changes ripple across repositories</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: Action -->
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <span>⚡ SECTION 4: ACTION - The Framework Solution ⏰ 2:47-3:04 PM (17 min)</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <div class="subsection">
+                    <h4>Subsection 4.1: Action Title Slide</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "The Framework Solution"
+                    </div>
+                    <ul>
+                        <li>20 minutes total</li>
+                        <li>Show the solution</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 4.2: Unified Framework Architecture</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Single repository replacing distributed complexity"
+                    </div>
+                    <ul>
+                        <li>Data Sources → Entry Points → Business Logic → Destinations</li>
+                        <li>4-column layout showing flow</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 4.3: Repository Structure</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Consolidated business logic with clear separation"
+                    </div>
+                    <ul>
+                        <li>jobs/ (Business logic)</li>
+                        <li>services/ (Core framework)</li>
+                        <li>schemas/ (DDL files)</li>
+                        <li>tests/ (Comprehensive coverage)</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 4.4: Key Architectural Principles</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Foundation principles"
+                    </div>
+                    <ul>
+                        <li>Single Repository: All business logic in one place</li>
+                        <li>Platform Abstraction: Same code runs everywhere</li>
+                        <li>Schema-Centric: DDL files drive all validation</li>
+                        <li>Factory Pattern: Clean dependency injection - <strong>enables local testing of complex logic</strong></li>
+                        <li><strong>Testing Standards:</strong> Mock, monkey patching, and patch are banned from this repository</li>
+                        <li><strong>Comprehensive Testing:</strong> Multi-tier validation approach (Unit → Functional → Integration)</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 4.5: Configuration Before vs After</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Everything the job does is visible in the DAG"
+                    </div>
+                    <ul>
+                        <li>Split screen comparison</li>
+                        <li>Current: 15+ scattered imports, hard-coded schemas, hidden config</li>
+                        <li>Framework: Minimal imports, DDL-driven, transparent parameters</li>
+                        <li><strong>Additional Note:</strong> "We have a job sensor as well, but that is all"</li>
+                        <li><strong>Benefit:</strong> "No more archaeological expeditions"</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 4.6: Platform Abstraction</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Same business logic runs everywhere"
+                    </div>
+                    <ul>
+                        <li>AWS Glue, Databricks, EMR, Docker</li>
+                        <li>Show business logic example</li>
+                        <li><strong>Platform Management:</strong> The generic_entry.py script manages handling minor differences between platform execution requirements</li>
+                        <li><strong>Benefit:</strong> "Debug locally, deploy anywhere"</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 4.7: Three-Tier Testing Architecture</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Business Logic is Sacred - Never mocked, always tested"
+                    </div>
+                    <ul>
+                        <li><strong>Unit:</strong> Simple tests - class variable and parameter validations, wiring validations</li>
+                        <li><strong>Functional:</strong> Mocks backend services only, and as minimally as possible</li>
+                        <li><strong>Integration:</strong> Production level tests. Only Redshift cannot be fully tested, and we substitute Postgres in its place. Proper Redshift testing requires a proper Redshift endpoint</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 4.8: Live Demo - Local Development</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Same business logic that runs in production"
+                    </div>
+                    <div class="demo-command">
+cd dwh-business-logic-poc<br>
+./functional-tests.sh tests/functional/dwh/jobs/load_promos/test_postgres_load_strategy.py
+                    </div>
+                    <ul>
+                        <li><strong>Environment Setup:</strong> Env setup is part of functional-tests.sh</li>
+                        <li><strong>Key Point:</strong> "No permissions needed - runs entirely locally"</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 4.9: Schema Validation in Action</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Framework catches issues before production"
+                    </div>
+                    <ul>
+                        <li><strong>Demo Steps:</strong>
+                            <ol>
+                                <li>Go to promotion_transform, modify line 2 from <code>.withColumn("promotioncode", col("name"))</code> to <code>.withColumn("promotion_code", col("name"))</code></li>
+                                <li>Rerun test: <code>./functional-tests.sh tests/functional/dwh/jobs/load_promos/test_postgres_load_strategy.py</code></li>
+                                <li>Show schema validation failure</li>
+                            </ol>
+                        </li>
+                        <li><strong>Key Point:</strong> "This would have been a production issue - now caught in development"</li>
+                        <li><strong>Future Enhancement:</strong> More precise error details will be added, so we know exactly which process failed, and against what schema</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 4.10: Version Management</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Complete isolation with instant rollback"
+                    </div>
+                    <ul>
+                        <li>MWAA Orchestration (Unchanged)</li>
+                        <li>S3 Deployment Structure (Complete Isolation)</li>
+                        <li>Benefits: Zero MWAA changes, Instant rollback, Parallel execution</li>
+                        <li><strong>Schema Management Note:</strong> Schema management is a little more difficult than presented. I did not get into it here, but there are strategies for tracking of schemas</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 5: Results -->
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <span>📈 SECTION 5: RESULTS - Expected Outcomes ⏰ 3:04-3:19 PM (15 min)</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <div class="subsection">
+                    <h4>Subsection 5.1: Results Title Slide</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Expected Outcomes"
+                    </div>
+                    <ul>
+                        <li>15 minutes total</li>
+                        <li>Show the benefits</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 5.2: Quantified Benefits</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Significant productivity gains across the board"
+                    </div>
+                    <ul>
+                        <li>Development Efficiency: Debugging faster, schema changes automated</li>
+                        <li>Quality Improvements: Test coverage comprehensive, production issues reduced</li>
+                        <li>Knowledge Capture: Domain knowledge captured in code, multi-audience documentation, context preservation</li>
+                        <li><strong>ROI:</strong> "Time savings compound across team"</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 5.3: Knowledge Repository Benefits</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Code becomes living documentation"
+                    </div>
+                    <ul>
+                        <li>Show business rule example with context and rationale</li>
+                        <li><strong>Key Point:</strong> "Code becomes living documentation"</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 5.4: Knowledge Impact</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Knowledge survives team changes"
+                    </div>
+                    <ul>
+                        <li>Current Challenges vs Framework Benefits</li>
+                        <li>Team departure, onboarding, business rules, domain expertise</li>
+                        <li><strong>Benefit:</strong> "Knowledge survives team changes"</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 5.5: Strategic Value</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Long-term strategic benefits"
+                    </div>
+                    <ul>
+                        <li>Platform Independence: Eliminate vendor lock-in</li>
+                        <li>Innovation Acceleration: No permission bottlenecks</li>
+                        <li>Organizational Maturity: Industry-standard practices</li>
+                        <li>Competitive Advantage: Faster time-to-market</li>
+                        <li><strong>Knowledge Preservation:</strong> Institutional memory survives</li>
+                        <li><strong>Ops Note:</strong> Ops still remains an issue. A topic for another conversation</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 6: Learning -->
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <span>🎯 SECTION 6: LEARNING - Migration Strategy ⏰ 3:19-3:24 PM (5 min)</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <div class="subsection">
+                    <h4>Subsection 6.1: Learning Title Slide</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Migration Strategy and Next Steps"
+                    </div>
+                    <ul>
+                        <li>10 minutes total</li>
+                        <li>Show the path forward</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 6.2: Three-Phase Migration Approach</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Zero-risk deployment, gradual adoption"
+                    </div>
+                    <ul>
+                        <li>Phase 1 (Months 1-2): Zero-Risk Deployment</li>
+                        <li>Phase 2 (Months 3-8): Strategic Migration</li>
+                        <li>Phase 3 (Months 9-12): Complete Migration</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 6.3: Risk Mitigation Strategy</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Minimal risk with proven approach"
+                    </div>
+                    <ul>
+                        <li>Technical Risks: LOW (POC proven, 95% test coverage)</li>
+                        <li>Business Risks: MINIMAL (Gradual migration, business logic preserved)</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 6.4: Training Strategy</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Comprehensive training program"
+                    </div>
+                    <ul>
+                        <li>Training Program: 4-week structured approach</li>
+                        <li>Target Audience: Senior devs, Mid-level, Junior, DevOps</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 6.5: Success Metrics</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Clear success criteria"
+                    </div>
+                    <ul>
+                        <li>Phase 1 Targets: Framework deployment, improved workflow</li>
+                        <li>Overall Targets: Debugging time, production issues, development velocity</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 6.6: Immediate Next Steps</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Ready to start immediately"
+                    </div>
+                    <ul>
+                        <li>1. Approve Architecture</li>
+                        <li>2. Allocate Resources</li>
+                        <li>3. Establish Metrics</li>
+                        <li>4. Begin Training</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 7: Questions & Discussion -->
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <span>❓ SECTION 7: QUESTIONS & DISCUSSION ⏰ 3:24-3:27 PM (3 min)</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <div class="subsection">
+                    <h4>Subsection 7.1: Questions Title Slide</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Questions & Discussion"
+                    </div>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 7.2: Technical Discussion Points</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Technical considerations"
+                    </div>
+                    <ul>
+                        <li>Architecture Decisions: Factory patterns, dependency injection</li>
+                        <li>Migration Priorities: Which jobs first?</li>
+                        <li>Team Structure: How to organize?</li>
+                        <li>Integration Points: Fit with existing infrastructure?</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 8: Conclusion -->
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <span>🎯 SECTION 8: CONCLUSION ⏰ 3:27-3:30 PM (3 min)</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <div class="subsection">
+                    <h4>Subsection 8.1: Conclusion Title Slide</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Conclusion"
+                    </div>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 8.2: The Business Case</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Strong business justification"
+                    </div>
+                    <ul>
+                        <li>Productivity Gains: Faster debugging, streamlined development</li>
+                        <li>Proven Approach: POC demonstrates feasibility</li>
+                        <li>Risk Mitigation: Gradual migration with rollback</li>
+                        <li>Strategic Value: Platform independence, innovation acceleration</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 8.3: The Technical Case</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Technical excellence"
+                    </div>
+                    <ul>
+                        <li>Architecture Maturity: Industry-standard patterns</li>
+                        <li>Quality Improvement: Comprehensive test coverage</li>
+                        <li>Developer Productivity: Faster development, onboarding</li>
+                        <li>Operational Excellence: Reduced maintenance overhead</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 8.4: The Organizational Case</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Organizational benefits"
+                    </div>
+                    <ul>
+                        <li>Knowledge Preservation: Institutional memory survives</li>
+                        <li>Team Scalability: Junior developers can write DAGs</li>
+                        <li>Innovation Enablement: Local development eliminates bottlenecks</li>
+                        <li>Competitive Advantage: Faster, more reliable delivery</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Subsection 8.5: Final Recommendation</h4>
+                    <div class="key-message">
+                        <strong>Key Message:</strong> "Approve framework deployment and begin Phase 1 migration immediately"
+                    </div>
+                    <ul>
+                        <li>95% Test Coverage</li>
+                        <li>12 Month Migration</li>
+                        <li><strong>CALL TO ACTION:</strong> Approve Phase 1 deployment</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Demo Preparation -->
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <span>🖥️ DEMO PREPARATION</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <div class="subsection">
+                    <h4>Files to Have Open</h4>
+                    <ul>
+                        <li>Current Load Promotion DAG (for comparison)</li>
+                        <li>Framework DAG example</li>
+                        <li>Schema validation error example</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Demo Talking Points</h4>
+                    <ol>
+                        <li><strong>Speed:</strong> "30 seconds to full environment"</li>
+                        <li><strong>Transparency:</strong> "Everything visible in configuration"</li>
+                        <li><strong>Validation:</strong> "Catches issues before production"</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comprehensive Q&A Reference -->
+        <div class="section">
+            <div class="section-header" onclick="toggleSection(this)">
+                <span>❓ COMPREHENSIVE Q&A REFERENCE</span>
+                <span class="toggle-icon">▼</span>
+            </div>
+            <div class="section-content">
+                <div class="subsection">
+                    <h4>"We just spent months building this code"</h4>
+                    <div class="key-message">
+                        <strong>Response:</strong> "And that investment in business logic is exactly what we want to preserve. The framework provides a better foundation for that logic, making it more maintainable and testable. Your domain expertise becomes more valuable, not obsolete."
+                    </div>
+                    <p><strong>Follow-up:</strong> Show preservation strategy - what gets kept vs. what gets enhanced.</p>
+                </div>
+                
+                <div class="subsection">
+                    <h4>"We don't have time for another rewrite"</h4>
+                    <div class="key-message">
+                        <strong>Response:</strong> "We're not proposing a rewrite. New development uses the framework immediately. Existing code migrates only when it needs changes anyway - when you're already touching it. Zero additional work for existing stable code."
+                    </div>
+                    <p><strong>Follow-up:</strong> Show 3-phase migration timeline - emphasize Phase 1 has zero impact on existing code.</p>
+                </div>
+                
+                <div class="subsection">
+                    <h4>"The current code works fine"</h4>
+                    <div class="key-message">
+                        <strong>Response:</strong> "It works, but at what cost? [Show concrete metrics: 4-6 hours debugging time, <20% test coverage, 3-5 production issues per month]. The framework reduces these costs significantly while preserving the business logic that works."
+                    </div>
+                    <p><strong>Follow-up:</strong> Demo the debugging comparison - same issue, 4 hours vs. 30 minutes.</p>
+                </div>
+                
+                <div class="subsection">
+                    <h4>"This will slow us down initially"</h4>
+                    <div class="key-message">
+                        <strong>Response:</strong> "Initially, yes - there's a learning curve. But within 2-3 months, development becomes faster due to better testing, clearer patterns, and easier debugging. The POC already proves this with 50% faster development time."
+                    </div>
+                    <p><strong>Follow-up:</strong> Show ROI timeline - short-term cost, long-term benefit.</p>
+                </div>
+                
+                <div class="subsection">
+                    <h4>"What if the framework doesn't work out?"</h4>
+                    <div class="key-message">
+                        <strong>Response:</strong> "The business logic is preserved and each version is completely isolated. Rollback is instant - just change a DAG configuration. No MWAA changes needed. The POC has already proven the framework's value with zero production issues."
+                    </div>
+                    <p><strong>Follow-up:</strong> Demo instant rollback capability and version isolation.</p>
+                </div>
+                
+                <div class="subsection">
+                    <h4>"Our code is too complex for this framework"</h4>
+                    <div class="key-message">
+                        <strong>Response:</strong> "Complex business logic is exactly what the framework handles best. The knowledge repository captures all that complexity with business context, making it manageable and transferable. Your complex domain expertise becomes an institutional asset, not a maintenance burden."
+                    </div>
+                    <p><strong>Follow-up:</strong> Demo knowledge repository showing complex business rules with context.</p>
+                </div>
+                
+                <div class="subsection">
+                    <h4>"We need to focus on delivery, not refactoring"</h4>
+                    <div class="key-message">
+                        <strong>Response:</strong> "This actually accelerates delivery. New features get built 50% faster with comprehensive testing. More importantly, you eliminate 6+ week permission bottlenecks that currently block delivery. Local development means immediate productivity."
+                    </div>
+                    <p><strong>Follow-up:</strong> Show permission bottleneck vs. framework development speed comparison.</p>
+                </div>
+                
+                <div class="subsection">
+                    <h4>"The team doesn't know this framework"</h4>
+                    <div class="key-message">
+                        <strong>Response:</strong> "The patterns are standard software engineering practices - factory pattern, dependency injection, comprehensive testing. Plus, the framework captures your domain expertise automatically, so new team members learn your business logic faster. It's professional development that preserves your knowledge."
+                    </div>
+                    <p><strong>Follow-up:</strong> Show knowledge repository demo - how domain expertise is preserved and shared.</p>
+                </div>
+                
+                <div class="subsection">
+                    <h4>"This seems over-engineered for our needs"</h4>
+                    <div class="key-message">
+                        <strong>Response:</strong> "The engineering matches the complexity of your business logic and organizational challenges. When you're spending 6+ weeks waiting for permissions to do a simple demo, that's a sign the current approach is under-engineered for the organizational reality. The framework solves process problems, not just technical ones."
+                    </div>
+                    <p><strong>Follow-up:</strong> Show permission bottleneck example and framework solution.</p>
+                </div>
+                
+                <div class="subsection">
+                    <h4>"We can't afford to introduce risk right now"</h4>
+                    <div class="key-message">
+                        <strong>Response:</strong> "The bigger risk is continuing with code that's difficult to debug and test. The framework actually reduces risk - each version is completely isolated, rollback is instant, and MWAA never needs to change. Plus, proper security separation reduces the risk of permission-related issues."
+                    </div>
+                    <p><strong>Follow-up:</strong> Show version isolation and organizational benefits demo.</p>
+                </div>
+                
+                <div class="subsection">
+                    <h4>Key Messages to Reinforce</h4>
+                    <ul>
+                        <li>"We're building on your investment, not replacing it"</li>
+                        <li>"Migration happens when you're already changing code anyway"</li>
+                        <li>"The framework makes your expertise more valuable, not obsolete"</li>
+                        <li>"We've proven this works - zero production issues in POC"</li>
+                        <li>"This solves the debugging and testing problems you face daily"</li>
+                        <li>"Version management eliminates MWAA deployment risk"</li>
+                        <li>"Rollback is instant - just change a configuration"</li>
+                        <li>"Your domain knowledge is captured and preserved forever"</li>
+                        <li>"Framework eliminates permission bottlenecks that block innovation"</li>
+                        <li>"We optimize for debugging, not just development"</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h4>If Multiple Objections Arise</h4>
+                    <div class="key-message">
+                        <strong>Acknowledge:</strong> "I'm hearing several concerns about disrupting existing work. Let me address the core issue: we're not asking you to throw away months of development. We're providing a better foundation for that valuable business logic."
+                    </div>
+                    <p><strong>Redirect:</strong> "The framework solves the problems you're dealing with right now - long debugging sessions, manual testing, production surprises. Let's focus on how it makes your daily work easier."</p>
+                    <p><strong>Offer Proof:</strong> "Rather than debate this theoretically, let's pick one problematic job and migrate it as a proof of concept. Measure the before/after debugging time, test coverage, and reliability."</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleSection(header) {
+            const content = header.nextElementSibling;
+            const isActive = header.classList.contains('active');
+            
+            if (isActive) {
+                header.classList.remove('active');
+                content.classList.remove('active');
+            } else {
+                header.classList.add('active');
+                content.classList.add('active');
+            }
+        }
+        
+        function expandAll() {
+            document.querySelectorAll('.section-header').forEach(header => {
+                header.classList.add('active');
+                header.nextElementSibling.classList.add('active');
+            });
+        }
+        
+        function collapseAll() {
+            document.querySelectorAll('.section-header').forEach(header => {
+                header.classList.remove('active');
+                header.nextElementSibling.classList.remove('active');
+            });
+        }
+        
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            document.getElementById('currentTime').textContent = timeString;
+        }
+        
+        // Update time every second
+        setInterval(updateTime, 1000);
+        updateTime();
+        
+        // Auto-expand first section
+        document.querySelector('.section-header').click();
+    </script>
+</body>
+</html>

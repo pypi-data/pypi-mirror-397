@@ -1,0 +1,203 @@
+# data aws_iam_policy_document "consumer_databricks_worker_policy" {
+#
+#   statement {
+#     sid    = "DatabricksSendEmail"
+#     effect = "Allow"
+#     actions = [
+#       "ses:SendRawEmail"
+#     ]
+#     resources = ["*"]
+#   }
+#
+#   statement {
+#     sid    = "DatabricksSendSNS"
+#     effect = "Allow"
+#     actions = [
+#       "sns:Publish"
+#     ]
+#     resources = ["*"]
+#   }
+#
+#   statement {
+#     effect = "Allow"
+#     actions = [
+#       "s3:ListAllMyBuckets",
+#       "s3:GetBucketLocation"
+#     ]
+#     resources = ["*"]
+#   }
+#   #
+#   # statement {
+#   #   effect = "Allow"
+#   #   actions = [
+#   #     "s3:PutObject"
+#   #   ]
+#   #   resources = [
+#   #     "arn:aws:s3:::${current_account_alias}-consumer-databricks-logs",
+#   #     "arn:aws:s3:::${current_account_alias}-consumer-databricks-logs/*"
+#   #   ]
+#   # }
+#
+#   statement {
+#     sid = "S3CodeReadAccess"
+#     effect = "Allow"
+#     actions = [
+#       "s3:Get*",
+#       "s3:List*",
+#     ]
+#     resources = [
+#       local.code_bucket_arn,
+#       "${local.code_bucket_arn}/*",
+#     ]
+#   }
+#
+#   statement {
+#     sid = "S3DataFullAccess"
+#     effect = "Allow"
+#     actions = [
+#       "s3:Get*",
+#       "s3:List*",
+#       "s3:Put*",
+#       "s3:*Object",
+#       "s3:Delete*",
+#     ]
+#     resources = [
+#       local.data_bucket_arn,
+#       "${local.data_bucket_arn}/*",
+#     ]
+#   }
+#
+#   # statement {
+#   #   effect = "Allow"
+#   #   actions = [
+#   #     "kms:GenerateDataKey",
+#   #     "kms:Encrypt",
+#   #     "kms:Decrypt"
+#   #   ]
+#   #   resources = [
+#   #     "arn:aws:kms:us-east-1:${current_account_id}:key/*",
+#   #   ]
+#   #   condition {
+#   #     test     = "StringEquals"
+#   #     variable = "aws:ResourceTag/Name"
+#   #     values   = ["dwh-s3"]
+#   #   }
+#   # }
+#
+#   # statement {
+#   #   effect = "Allow"
+#   #   actions = [
+#   #     "secretsmanager:GetResourcePolicy",
+#   #     "secretsmanager:GetSecretValue",
+#   #     "secretsmanager:DescribeSecret",
+#   #     "secretsmanager:ListSecretVersionIds"
+#   #   ]
+#   #   resources = [
+#   #     "arn:aws:secretsmanager:us-east-1:${current_account_id}:secret/*",
+#   #   ]
+#   #   condition {
+#   #     test     = "StringLike"
+#   #     variable = "aws:ResourceTag/Name"
+#   #     values   = ["*consumer*"]
+#   #   }
+#   #
+#   #   condition {
+#   #     test     = "StringLike"
+#   #     variable = "aws:ResourceTag/Role"
+#   #     values   = ["sfly_pipeline"]
+#   #   }
+#   #
+#   #   condition {
+#   #     test     = "StringLike"
+#   #     variable = "aws:ResourceTag/Environment"
+#   #     values   = [var.stage_name]
+#   #   }
+#   #   sid = "AllowRoleToListAndReadAuroraSecretsthroughdatabricks"
+#   # }
+#
+#   # statement {
+#   #   effect = "Allow"
+#   #   actions = [
+#   #     "ssm:DescribeParameters",
+#   #     "ssm:GetParameter",
+#   #     "ssm:GetParametersByPath"
+#   #   ]
+#   #   resources = [
+#   #     "arn:aws:ssm:us-east-1:${current_account_id}:parameter/dwh/airflow/*",
+#   #     "arn:aws:ssm:us-east-1:${current_account_id}:parameter/dwh/dwh-data-pipeline/*",
+#   #     "arn:aws:ssm:us-east-1:${current_account_id}:parameter/db/sqlserver/*"
+#   #   ]
+#   # }
+# }
+#
+# resource "aws_iam_policy" "databricks_worker" {
+#   name        = "${local.resource_prefix}-databricks-worker"
+#   description = "IAM policy for Databricks worker"
+#   policy      = data.aws_iam_policy_document.consumer_databricks_worker_policy.json
+#
+#   tags = merge(local.tags, {
+#     Name = "${local.resource_prefix}-databricks-worker"
+#   })
+# }
+#
+# data "aws_iam_policy_document" "databricks_role_document" {
+#   statement {
+#     effect = "Allow"
+#     actions = [
+#       "sts:AssumeRole"
+#     ]
+#     principals {
+#       type        = "Service"
+#       identifiers = ["ec2.amazonaws.com"]
+#     }
+#   }
+#
+#   # statement {
+#   #   effect = "Allow"
+#   #   actions = [
+#   #     "sts:AssumeRole",
+#   #   ]
+#   #   principals {
+#   #     type        = "AWS"
+#   #     identifiers = ["arn:aws:iam::790110701330:role/serverless-customer-resource-role"]
+#   #   }
+#   #   condition {
+#   #     test     = "StringEquals"
+#   #     variable = "sts:ExternalId"
+#   #     values   = [
+#   #       "databricks-serverless-699535865128654",
+#   #       "databricks-serverless-2016336835777548"
+#   #     ]
+#   #   }
+#   # }
+# }
+#
+# resource "aws_iam_role" "databricks_worker" {
+#   name               = "${local.resource_prefix}-databricks-worker"
+#   assume_role_policy = data.aws_iam_policy_document.databricks_role_document.json
+#   tags = merge(local.tags, {
+#     Name = "${local.resource_prefix}-databricks-worker"
+#   })
+# }
+#
+# resource "aws_iam_instance_profile" "databricks_worker" {
+#   name = "${local.resource_prefix}-databricks-worker"
+#   role = aws_iam_role.databricks_worker.name
+#   tags = merge(local.tags, {
+#     Name = "${local.resource_prefix}-databricks-worker"
+#   })
+# }
+#
+#
+# # resource "aws_iam_policy" "consumer_databricks_worker" {
+# #   name        = "consumer-databricks-worker"
+# #   description = "IAM policy for Databricks worker"
+# #   policy      = data.aws_iam_policy_document.consumer_databricks_worker_policy.json
+# # }
+# #
+# #
+# #
+# # resource "aws_iam_role_policy_attachment" "databricks_worker_policy" {
+# #   role       = aws_iam_role.databricks_worker.name
+# #   policy_arn = aws_iam_policy.consumer_databricks_worker.arn
+# # }

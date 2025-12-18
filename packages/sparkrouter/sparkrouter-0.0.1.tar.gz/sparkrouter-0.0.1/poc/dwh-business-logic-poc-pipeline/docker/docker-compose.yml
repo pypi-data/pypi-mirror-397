@@ -1,0 +1,226 @@
+services:
+
+  python-submit:
+#    container_name: python-runner
+    build:
+      context: ..
+      dockerfile: docker/python/Dockerfile
+    user: root
+    environment:
+      - PYTHONPATH=/app/src
+    volumes:
+      - ./python-data:/app/data
+      - ../scripts:/app/scripts
+      - ../src:/app/src
+
+  postgres:
+    container_name: postgres-local
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres_user
+      POSTGRES_PASSWORD: postgres_password
+      POSTGRES_DB: postgres_db
+    ports:
+      - "5432:5432"  # Redshift typically uses port 5439
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d
+    command: >
+      postgres
+      -c work_mem=256MB
+      -c maintenance_work_mem=256MB
+      -c max_stack_depth=2MB
+      -c statement_timeout=3600000
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres_user -d postgres_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  redshift:
+    container_name: redshift-local
+    image: postgres:12
+    environment:
+      POSTGRES_USER: redshift_user
+      POSTGRES_PASSWORD: redshift_password
+      POSTGRES_DB: redshift_db
+    ports:
+      - "5439:5432"  # Redshift typically uses port 5439
+    volumes:
+      - redshift_data:/var/lib/postgresql/data
+      - ./redshift/init:/docker-entrypoint-initdb.d
+    command: >
+      postgres
+      -c work_mem=256MB
+      -c maintenance_work_mem=256MB
+      -c max_stack_depth=2MB
+      -c statement_timeout=3600000
+
+  neo4j:
+    image: neo4j:5.19-community
+    container_name: neo4j
+    environment:
+      - NEO4J_AUTH=neo4j/your_password
+    ports:
+      - "7474:7474"   # HTTP
+      - "7687:7687"   # Bolt
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+
+  awscli:
+    image: amazon/aws-cli:latest
+    depends_on:
+      - localstack
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+    command: >
+      /bin/sh -c "
+        sleep 10
+        aws --endpoint-url=http://localstack:4566 --region us-east-1 s3 mb s3://test-s3-bucket || true
+        tail -f /dev/null
+      "
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio-local
+    ports:
+      - "9002:9000"   # Changed host port from 9000 to 9002
+      - "9003:9001"   # Changed host port from 9001 to 9003
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+
+  minio-setup:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    volumes:
+      - ../schemas:/schemas
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set minio http://minio:9000 minioadmin minioadmin;
+      mc mb minio/code-bucket || true;
+      mc cp --recursive /schemas/ minio/code-bucket/schemas/;
+      "
+
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+      - DEBUG=1
+      - DATA_DIR=/var/lib/localstack/data
+      - HOSTNAME_EXTERNAL=localstack
+      - DEFAULT_REGION=us-east-1
+      - AWS_DEFAULT_REGION=us-east-1
+      # Don't try to use Docker-in-Docker
+      - DISABLE_CONTAINER_PROVIDER=true
+    volumes:
+      - localstack-data:/var/lib/localstack
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+
+  spark:
+    build:
+      context: ../  # Set build context to project root
+      dockerfile: docker/spark/Dockerfile
+    environment:
+      - SPARK_MODE=master
+      - SPARK_MASTER_HOST=spark
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_USER=spark
+      - SPARK_LOCAL_DIRS=/data
+      - SPARK_CONF_DIR=/opt/bitnami/spark/conf
+      - SPARK_SUBMIT_OPTIONS=--conf spark.hadoop.fs.permissions.umask-mode=000 --conf spark.hadoop.fs.permissions.enabled=false --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000 --conf spark.hadoop.fs.s3a.access.key=minioadmin --conf spark.hadoop.fs.s3a.secret.key=minioadmin --conf spark.hadoop.fs.s3a.path.style.access=true --conf spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem
+      - SPARK_MASTER_OPTS=-Dspark.master.rest.enabled=true
+    ports:
+      - '8080:8080'
+      - '7077:7077'
+      - '6066:6066'
+    volumes:
+      - ./spark-data:/data
+    depends_on:
+      - minio
+
+  spark-worker:
+    build:
+      context: ../  # Set build context to project root
+      dockerfile: docker/spark/Dockerfile
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark:7077
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=1
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_USER=spark
+      - SPARK_LOCAL_DIRS=/data
+      - SPARK_CONF_DIR=/opt/bitnami/spark/conf
+      - SPARK_SUBMIT_OPTIONS=--conf spark.hadoop.fs.permissions.umask-mode=000 --conf spark.hadoop.fs.permissions.enabled=false --conf spark.hadoop.fs.s3a.endpoint=http://minio:9000 --conf spark.hadoop.fs.s3a.access.key=minioadmin --conf spark.hadoop.fs.s3a.secret.key=minioadmin --conf spark.hadoop.fs.s3a.path.style.access=true --conf spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem
+    volumes:
+      - ./spark-data:/data
+    depends_on:
+      - spark
+      - minio
+
+  spark-submit:
+    build:
+      context: ../  # Set build context to project root
+      dockerfile: docker/spark/Dockerfile
+    user: root
+    environment:
+      - SPARK_MODE=client
+      - SPARK_MASTER_URL=spark://spark:7077
+      - PYTHONPATH=/opt/bitnami/spark/src
+    volumes:
+      - ./spark-data:/opt/bitnami/spark/work
+      - ./spark:/opt/bitnami/spark/work/spark
+      - ../scripts:/opt/bitnami/spark/scripts
+      - ../src:/opt/bitnami/spark/src
+    entrypoint: ["/opt/bitnami/spark/work/spark/spark-submit.sh"]
+    command: >
+      bash -c "
+        /opt/bitnami/scripts/spark/entrypoint.sh /opt/bitnami/scripts/spark/run.sh
+      "
+    depends_on:
+      spark:
+        condition: service_started
+      spark-worker:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      minio-setup:
+        condition: service_completed_successfully
+
+volumes:
+  postgres_data:
+  redshift_data:
+  localstack-data:
+  minio_data:
+  python-packages:
+  neo4j-data:
+  neo4j-logs:
+  schemas_data:

@@ -1,0 +1,233 @@
+{
+  "event_type": "job_completed",
+  "job_name": "transform_images",
+  "job_run_id": "spark-application-1765821232483",
+  "timestamp": "2025-12-15T17:55:43.435127Z",
+  "status": "SUCCESS",
+  "failure_type": null,
+  "artifacts_available": true,
+  "artifacts": {},
+  "quality": {
+    "status": "GREEN",
+    "checks": [
+      {
+        "name": "drop_rate",
+        "status": "GREEN",
+        "value": 0.0,
+        "threshold": 0.05,
+        "message": null
+      },
+      {
+        "name": "min_records",
+        "status": "GREEN",
+        "value": 2010133.0,
+        "threshold": 0.0,
+        "message": null
+      }
+    ]
+  },
+  "metrics": {
+    "job_name": "transform_images",
+    "job_run_id": "spark-application-1765821232483",
+    "job_status": "SUCCESS",
+    "start_time": "2025-12-15T17:53:56.966688",
+    "end_time": "2025-12-15T17:55:43.434912",
+    "duration_seconds": 106.468224,
+    "service_provider": null,
+    "environment": null,
+    "region": null,
+    "created_by": "jclark",
+    "start_date": "2025-11-24T01:00Z",
+    "end_date": "2025-11-24T01:15Z",
+    "source_base_path": "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/source",
+    "sink_base_path": "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/nautilus/transformed_images",
+    "records_read": 2010154,
+    "records_written": 2010133,
+    "records_dropped": 21,
+    "bytes_written": 1162153371,
+    "phases": {
+      "extract": {
+        "start_time": "2025-12-15T17:53:56.966778",
+        "end_time": "2025-12-15T17:54:31.020235",
+        "duration_seconds": 34.053457
+      },
+      "transform": {
+        "start_time": "2025-12-15T17:54:31.020266",
+        "end_time": "2025-12-15T17:54:54.916902",
+        "duration_seconds": 23.896636
+      },
+      "load": {
+        "start_time": "2025-12-15T17:54:54.916932",
+        "end_time": "2025-12-15T17:55:40.306359",
+        "duration_seconds": 45.389427
+      }
+    },
+    "drop_reasons": [
+      {
+        "reason": "transform_decryption_failure",
+        "count": 21
+      }
+    ],
+    "payload": {
+      "extract": {
+        "partitions_requested": 3,
+        "partitions_found": 3,
+        "partitions_empty": 0,
+        "corrupt_records": 0,
+        "null_eventtime": 0,
+        "null_data": 0,
+        "records_after_filter": 2010154,
+        "min_event_time": "2025-11-24T01:00:00Z",
+        "max_event_time": "2025-11-24T01:14:54Z",
+        "event_time_range_hours": 0.24833333333333332
+      },
+      "transform": {
+        "records_input": 2010154,
+        "records_output": 2010133,
+        "decryption_failures": 21,
+        "null_critical_fields": 0,
+        "data_types": [
+          {
+            "name": "simplecollageparser",
+            "records": 9925,
+            "dropped": 0
+          },
+          {
+            "name": "nautilusphototileparser",
+            "records": 33,
+            "dropped": 0
+          },
+          {
+            "name": "bundledcollageparser",
+            "records": 82250,
+            "dropped": 0
+          },
+          {
+            "name": "matissecalendarparser",
+            "records": 226839,
+            "dropped": 0
+          },
+          {
+            "name": "nautiluscollageparser",
+            "records": 594,
+            "dropped": 0
+          },
+          {
+            "name": "photobook30parser",
+            "records": 788043,
+            "dropped": 21
+          },
+          {
+            "name": "nautilusbookparser",
+            "records": 902449,
+            "dropped": 0
+          }
+        ]
+      },
+      "load": {
+        "records_input": 2010133,
+        "partitions_written": 20,
+        "files_written": 25,
+        "cleanup_duration_seconds": 0.0,
+        "serialization_duration_seconds": 0.0,
+        "bytes_by_category": [
+          {
+            "category": "savedproject",
+            "bytes": 637580333
+          },
+          {
+            "category": "nautilus",
+            "bytes": 524573038
+          },
+          {
+            "category": "dropped",
+            "bytes": 9445
+          }
+        ],
+        "output_paths_by_category": [
+          {
+            "category": "savedproject",
+            "paths": [
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/savedproject/transformed_images/year=2025/month=11/day=24/hour=01/min=00/part-00000-9bbce6a6-9b63-4fdc-af3b-dbf718d7c8b7.c000.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/savedproject/transformed_images/year=2025/month=11/day=24/hour=01/min=05/part-00000-9bbce6a6-9b63-4fdc-af3b-dbf718d7c8b7.c000.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/savedproject/transformed_images/year=2025/month=11/day=24/hour=01/min=10/part-00000-9bbce6a6-9b63-4fdc-af3b-dbf718d7c8b7.c000.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/savedproject/transformed_images/year=2025/month=11/day=24/hour=01/min=00/part-00000-35733e91-ddca-4b8c-b50a-7c52eb3bfaf8.c000.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/savedproject/transformed_images/year=2025/month=11/day=24/hour=01/min=05/part-00001-35733e91-ddca-4b8c-b50a-7c52eb3bfaf8.c000.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/savedproject/transformed_images/year=2025/month=11/day=24/hour=01/min=05/part-00001-35733e91-ddca-4b8c-b50a-7c52eb3bfaf8.c001.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/savedproject/transformed_images/year=2025/month=11/day=24/hour=01/min=10/part-00002-35733e91-ddca-4b8c-b50a-7c52eb3bfaf8.c000.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/savedproject/transformed_images/year=2025/month=11/day=24/hour=01/min=10/part-00002-35733e91-ddca-4b8c-b50a-7c52eb3bfaf8.c001.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/savedproject/transformed_images/year=2025/month=11/day=24/hour=01/min=00/part-00000-11567f33-25b3-498e-878f-01c3f333a616.c000.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/savedproject/transformed_images/year=2025/month=11/day=24/hour=01/min=05/part-00000-11567f33-25b3-498e-878f-01c3f333a616.c000.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/savedproject/transformed_images/year=2025/month=11/day=24/hour=01/min=10/part-00000-11567f33-25b3-498e-878f-01c3f333a616.c000.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/savedproject/transformed_images/year=2025/month=11/day=24/hour=01/min=00/part-00000-fb464fcb-ac47-442f-a936-c32c41b9b454.c000.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/savedproject/transformed_images/year=2025/month=11/day=24/hour=01/min=05/part-00000-fb464fcb-ac47-442f-a936-c32c41b9b454.c000.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/savedproject/transformed_images/year=2025/month=11/day=24/hour=01/min=10/part-00000-fb464fcb-ac47-442f-a936-c32c41b9b454.c000.txt"
+            ]
+          },
+          {
+            "category": "nautilus",
+            "paths": [
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/nautilus/transformed_images/year=2025/month=11/day=24/hour=01/min=00/part-00000-8d32c571-6aee-44a9-910b-4aea37bcd89d.c000.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/nautilus/transformed_images/year=2025/month=11/day=24/hour=01/min=00/part-00000-8d32c571-6aee-44a9-910b-4aea37bcd89d.c001.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/nautilus/transformed_images/year=2025/month=11/day=24/hour=01/min=05/part-00001-8d32c571-6aee-44a9-910b-4aea37bcd89d.c000.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/nautilus/transformed_images/year=2025/month=11/day=24/hour=01/min=05/part-00001-8d32c571-6aee-44a9-910b-4aea37bcd89d.c001.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/nautilus/transformed_images/year=2025/month=11/day=24/hour=01/min=10/part-00002-8d32c571-6aee-44a9-910b-4aea37bcd89d.c000.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/nautilus/transformed_images/year=2025/month=11/day=24/hour=01/min=10/part-00002-8d32c571-6aee-44a9-910b-4aea37bcd89d.c001.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/nautilus/transformed_images/year=2025/month=11/day=24/hour=01/min=00/part-00000-a3ab3de4-ec05-4111-a2ef-11f65447ab22.c000.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/nautilus/transformed_images/year=2025/month=11/day=24/hour=01/min=05/part-00000-a3ab3de4-ec05-4111-a2ef-11f65447ab22.c000.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/nautilus/transformed_images/year=2025/month=11/day=24/hour=01/min=10/part-00000-a3ab3de4-ec05-4111-a2ef-11f65447ab22.c000.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/nautilus/transformed_images/year=2025/month=11/day=24/hour=01/min=00/part-00000-bf2d0644-04fd-447a-b993-52341886d100.c000.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/nautilus/transformed_images/year=2025/month=11/day=24/hour=01/min=05/part-00000-bf2d0644-04fd-447a-b993-52341886d100.c000.txt"
+            ]
+          },
+          {
+            "category": "dropped",
+            "paths": [
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/dropped/drop_phase=transform/drop_reason=transform_decryption_failure/year=2025/month=11/day=24/hour=01/min=00/part-00000-02b4163c-4df5-4383-b2b2-35115a574b63.c000.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/dropped/drop_phase=transform/drop_reason=transform_decryption_failure/year=2025/month=11/day=24/hour=01/min=05/part-00000-02b4163c-4df5-4383-b2b2-35115a574b63.c000.txt",
+              "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/dropped/drop_phase=transform/drop_reason=transform_decryption_failure/year=2025/month=11/day=24/hour=01/min=10/part-00000-02b4163c-4df5-4383-b2b2-35115a574b63.c000.txt"
+            ]
+          }
+        ],
+        "output_summary": [
+          {
+            "category": "nautilus",
+            "file_count": 11,
+            "bytes": 524573038,
+            "base_path": "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/nautilus/transformed_images"
+          },
+          {
+            "category": "savedproject",
+            "file_count": 14,
+            "bytes": 637580333,
+            "base_path": "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/savedproject/transformed_images"
+          },
+          {
+            "category": "dropped",
+            "file_count": 3,
+            "bytes": 9445,
+            "records": 21,
+            "base_path": "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/dropped"
+          }
+        ]
+      },
+      "dropped_records": {
+        "records_written": 21,
+        "files_written": 3,
+        "bytes_written": 9445,
+        "output_paths": [
+          "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/dropped/drop_phase=transform/drop_reason=transform_decryption_failure/year=2025/month=11/day=24/hour=01/min=00/part-00000-02b4163c-4df5-4383-b2b2-35115a574b63.c000.txt",
+          "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/dropped/drop_phase=transform/drop_reason=transform_decryption_failure/year=2025/month=11/day=24/hour=01/min=05/part-00000-02b4163c-4df5-4383-b2b2-35115a574b63.c000.txt",
+          "s3://sfly-aws-dwh-sandbox-jc-data-us-west-1/images/sink/dropped/drop_phase=transform/drop_reason=transform_decryption_failure/year=2025/month=11/day=24/hour=01/min=10/part-00000-02b4163c-4df5-4383-b2b2-35115a574b63.c000.txt"
+        ]
+      }
+    },
+    "resources": {
+      "spark_executor_count": 1,
+      "spark_executor_memory_gb": 10,
+      "spark_driver_memory_gb": 10,
+      "glue_dpu_seconds": 173.01084775
+    }
+  },
+  "error": null
+}

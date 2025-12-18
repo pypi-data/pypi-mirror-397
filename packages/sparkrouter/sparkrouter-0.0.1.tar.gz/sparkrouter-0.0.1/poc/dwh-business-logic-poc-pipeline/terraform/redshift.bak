@@ -1,0 +1,130 @@
+# resource "aws_security_group" "sg_redshift" {
+#   name        = "${local.resource_prefix}-sg-redshift"
+#   description = "Security group for Redshift database"
+#   vpc_id      = aws_vpc.poc_vpc.id  # Reference your existing VPC
+#
+#   ingress {
+#     from_port       = 5439
+#     to_port         = 5439
+#     protocol        = "tcp"
+#     # todo: limit this to glue
+#     cidr_blocks     = ["0.0.0.0/0"]
+#   }
+#
+#   ingress {
+#     from_port                = 5439
+#     to_port                  = 5439
+#     protocol                 = "tcp"
+#     security_groups          = [aws_security_group.sg_glue.id]
+#   }
+#
+#   egress {
+#     from_port   = 0
+#     to_port     = 0
+#     protocol    = "-1"
+#     cidr_blocks = ["0.0.0.0/0"]
+#   }
+#
+#   tags = merge(local.tags, {
+#     Name = "${local.resource_prefix}-sg-redshift"
+#   })
+# }
+#
+# # Cluster Subnet Group
+# resource "aws_redshift_subnet_group" "redshift_subnet_group" {
+#   name        = "${local.resource_prefix}-subnet-redshift"
+#   description = "Cluster group for analytics Redshift cluster"
+#   subnet_ids = [for s in values(aws_subnet.public) : s.id]
+#
+#   tags = merge(local.tags, {
+#     Name = "${local.resource_prefix}-subnet-redshift"
+#   })
+# }
+#
+# # Cluster Parameter Group
+# resource "aws_redshift_parameter_group" "dev-redshift-enc1-redshift-ssl-parameter-group" {
+#   name        = "${local.resource_prefix}-redshift-parameter-group"
+#   description = "Cluster parameter group for SSL"
+#   family      = "redshift-1.0"
+#   #
+#   # parameter {
+#   #   name  = "require_ssl"
+#   #   # value = "true"
+#   #   value = "false"
+#   # }
+#   # parameter {
+#   #   name  = "enable_user_activity_logging"
+#   #   value = "true"
+#   # }
+# #
+# #   parameter {
+# #     name  = "wlm_json_configuration"
+# #     value = jsonencode(
+# #       [
+# #         {
+# #           auto_wlm    = true
+# #           name        = "Default queue"
+# #           query_group = []
+# #           user_group  = []
+# #           user_role   = []
+# #         },
+# #         {
+# #           short_query_queue = true
+# #         },
+# #       ]
+# #     )
+# #   }
+#   tags = merge(local.tags, {
+#     Name = "${local.resource_prefix}-redshift-parameter-group"
+#   })
+#
+# }
+#
+# # Redshift Cluster
+# resource "aws_redshift_cluster" "dev-redshift-enc1" {
+#   cluster_identifier          = "${local.resource_prefix}-redshift"
+#   node_type                   = "ra3.xlplus"
+#   # node_type                   = "dc2.large"
+#   number_of_nodes             = 2                        # Number of nodes in the cluster
+#   database_name               = local.redshift_db_name        # Initial database name
+#   master_username             = local.redshift_usr      # Master username
+#   master_password             = local.redshift_pwd             # Master password selected as dummy. original password set on console.
+#   skip_final_snapshot         = true
+#   cluster_type                = "multi-node"             # Use "single-node" for single-node clusters
+#   port                        = 5439                     # Default Redshift port
+#   cluster_subnet_group_name    = aws_redshift_subnet_group.redshift_subnet_group.name
+#   cluster_parameter_group_name = aws_redshift_parameter_group.dev-redshift-enc1-redshift-ssl-parameter-group.name
+#   vpc_security_group_ids       = [aws_security_group.sg_redshift.id]
+#
+#   publicly_accessible         = true
+#   encrypted                   = true
+#
+#   automated_snapshot_retention_period = 1                # Retain snapshots for 1 day
+#   availability_zone_relocation_enabled = true
+#
+#   tags = merge(local.tags, {
+#     Name = "${local.resource_prefix}-redshift"
+#   })
+#
+#   lifecycle {
+#     ignore_changes = [master_password]
+#   }
+# }
+#
+# # Audit Logging for Redshift Cluster
+# resource "aws_redshift_logging" "redshift_logging" {
+#   cluster_identifier   = aws_redshift_cluster.dev-redshift-enc1.cluster_identifier
+#   log_destination_type = "cloudwatch"
+#   log_exports          = ["userlog", "useractivitylog", "connectionlog"]
+# }
+#
+#
+# output "redshift_jdbc_connection" {
+#   description = "Redshift connection string"
+#   value       = {
+#     username = local.redshift_usr
+#     password = local.redshift_pwd
+#     url = "jdbc:redshift://${aws_redshift_cluster.dev-redshift-enc1.endpoint}/${aws_redshift_cluster.dev-redshift-enc1.database_name}"
+#   }
+#   sensitive   = false
+# }
