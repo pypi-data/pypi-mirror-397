@@ -1,0 +1,597 @@
+Metadata-Version: 2.4
+Name: waveflowdb_client
+Version: 1.0.0
+Summary: VectorLake SDK — Deterministic backend engine powering agent workflows
+Author-email: "agentanalytics.ai" <nitin@agentanalytics.ai>
+License: MIT License
+        
+        Copyright (c) 2025 agentanalytics.ai
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Project-URL: Homepage, https://agentanalytics.ai
+Project-URL: Documentation, https://www.agentanalytics.ai/docs/waveflow-db
+Keywords: vector db,VECTOR QUERY LANGUAGE,waveflowdb,agentanalytics,VQL
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: requests
+Requires-Dist: numpy
+Requires-Dist: tqdm
+Dynamic: license-file
+
+# WaveflowDB SDK Starter
+
+A lightweight launcher script for interacting with **WaveflowDB** and performing **WaveQL (VQL) brace-based semantic retrieval**.
+
+This starter project demonstrates how to:
+* Configure and initialize a Vector Lake client
+* Ingest documents (direct or path-based)
+* Refresh documents
+* Run semantic chat (static + dynamic)
+* Retrieve matching documents
+* Query namespaces
+* Use **WaveQL-style logical filtering** for agentic retrieval
+
+---
+
+## 📌 Overview
+
+Vector Lake is an **agentic backend for enterprises to create AI products** enabling:
+* Natural-language structured filtering through **WaveQL (VQL)**
+* Hybrid ranking (Filter + Semantic)
+* Zero-schema ingestion (no JSON schemas required)
+* SQL-like logical joins on raw text
+* Automatic semantic fallback when filters are absent
+
+The included client class provides methods to interact with the **Vector Lake API**.
+
+---
+
+## 🚀 Getting Started
+
+### 1. Install Dependencies
+
+```bash
+pip install waveflowdb_client
+```
+
+### 2. Configure API Credentials
+
+Edit the configuration settings in your client application (e.g., `run.py`):
+
+```python
+API_KEY = "your_api_key_here"                 # Get from https://db.agentanalytics.ai/signup
+HOST = "https://waveflow-analytics.com"
+VECTOR_LAKE_PATH = "/path/to/your/documents"  # folder for path-based ingestion
+USER_ID = "your_email@example.com"            # your email id used for registration
+NAMESPACE = "your_namespace"                  # database created via UI
+```
+
+---
+
+## 🧠 Using WaveQL (VQL) Queries
+
+WaveQL enables natural language filtering using brace-based logical groups:
+
+```
+{clinical trials or observational studies} {type 2 diabetes} {India}
+```
+
+### Key Rules
+
+✔ Each `{}` is a logical filter group  
+✔ Groups combine with implicit AND  
+✔ Use AND, OR, () inside braces  
+✔ Multi-word phrases must use parentheses when operators are used
+
+### Examples
+
+| Correct | Incorrect |
+|---------|-----------|
+| `{(machine learning) or (deep learning)}` | `{machine learning or deep learning}` |
+| `{(product manager) or (data scientist)}` | `{product manager or Delhi}` |
+
+### Three-Tier Hybrid Ranking
+
+WaveQL supports three-tier hybrid ranking:
+
+- **Tier 1** — Filter + Semantic match (best)
+- **Tier 2** — Filter-only match
+- **Tier 3** — Semantic-only fallback
+
+---
+
+## 🧪 Using the Starter Script Functions
+
+The provided `run.py` script contains ready-to-use function wrappers for all API calls.
+
+### run.py Code Example
+
+```python
+"""
+run.py
+Simple launcher for Vector Lake SDK (v1.0.0)
+
+Allows you to:
+  - configure client (host, port, key)
+  - call ANY API: add, refresh, chat, match, health, namespace info, etc.
+"""
+
+from waveflowdb_client import Config, VectorLakeClient
+
+
+# -------------------------------------------------------
+# CONFIGURATION (EDIT THIS ONCE)
+# -------------------------------------------------------
+API_KEY = "your_api_key"  # visit https://db.agentanalytics.ai/signup
+HOST = "https://waveflow-analytics.com"       # OR "http://localhost"
+VECTOR_LAKE_PATH = "/path/to/documents"       # folder for path-based ingestion
+USER_ID = "your_email@example.com"            # your email id used for registration
+NAMESPACE = "your_namespace"                  # database created via UI
+
+
+# -------------------------------------------------------
+# INITIALIZE CLIENT
+# -------------------------------------------------------
+def get_client():
+    cfg = Config(
+        api_key=API_KEY,
+        host=HOST,
+        vector_lake_path=VECTOR_LAKE_PATH
+    )
+    return VectorLakeClient(cfg)
+
+
+client = get_client()
+
+
+# -------------------------------------------------------
+# READY-TO-USE ACTION FUNCTIONS
+# -------------------------------------------------------
+
+def run_health():
+    """Health check"""
+    print("\n--- HEALTH CHECK ---")
+    res = client.health_check(USER_ID, NAMESPACE)
+    print(res)
+
+
+def run_add_direct():
+    """Add docs using files_name + files_data"""
+    print("\n--- ADD DOCUMENTS (Direct Payload Mode) ---")
+    res = client.add_documents(
+        user_id=USER_ID,
+        vector_lake_description=NAMESPACE,
+        files_name=["test1.txt", "test2.txt"],
+        files_data=["hello world", "this is test doc 2"]
+    )
+    print(res)
+
+
+def run_add_path():
+    """Add docs by reading actual files from disk"""
+    print("\n--- ADD DOCUMENTS (Disk Path Mode) ---")
+    res = client.add_documents(
+        user_id=USER_ID,
+        vector_lake_description=NAMESPACE,
+        files=["file1.pdf"]   # must exist inside VECTOR_LAKE_PATH
+    )
+    print(res)
+
+
+def run_refresh_direct():
+    """Refresh docs using direct data (no disk read)"""
+    print("\n--- REFRESH DOCUMENTS (Direct Data Mode) ---")
+    res = client.refresh_documents(
+        user_id=USER_ID,
+        vector_lake_description=NAMESPACE,
+        files_name=["test1.txt"],
+        files_data=["UPDATED CONTENT FOR TEST1"]
+    )
+    print(res)
+
+
+def run_refresh_path():
+    """Refresh docs by reading actual files"""
+    print("\n--- REFRESH DOCUMENTS (Path Mode) ---")
+    res = client.refresh_documents(
+        user_id=USER_ID,
+        vector_lake_description=NAMESPACE,
+        files=["file1.pdf"]     # must exist
+    )
+    print(res)
+
+
+def run_chat_static(query):
+    """Chat with stored index"""
+    print("\n--- CHAT (STATIC MODE) ---")
+    res = client.get_matching_docs(
+        query=query,
+        user_id=USER_ID,
+        vector_lake_description=NAMESPACE,
+        pattern="static",
+        top_docs=5,
+        with_data=True  # Typically necessary for a chat response
+    )
+    print(res)
+
+
+def run_chat_dynamic(query):
+    """Chat using temporary files (dynamic mode)"""
+    print("\n--- CHAT (DYNAMIC MODE) ---")
+    res = client.get_matching_docs(
+        query=query,
+        user_id=USER_ID,
+        vector_lake_description=NAMESPACE,
+        pattern="dynamic",
+        files_name=["dyn1.txt"],
+        files_data=["This is dynamic content to summarize."],
+        with_data=True
+    )
+    print(res)
+
+
+def run_match_static(query):
+    """Top matching docs (static mode)"""
+    print("\n--- TOP MATCHING DOCS (STATIC) ---")
+    res = client.get_matching_docs(
+        query=query,
+        user_id=USER_ID,
+        vector_lake_description=NAMESPACE,
+        pattern="static",
+        top_docs=5,
+        threshold=0.1
+    )
+    print(res)
+
+
+def run_match_dynamic(query):
+    """Top matching docs (dynamic mode)"""
+    print("\n--- TOP MATCHING DOCS (DYNAMIC) ---")
+    res = client.get_matching_docs(
+        query=query,
+        user_id=USER_ID,
+        vector_lake_description=NAMESPACE,
+        pattern="dynamic",
+        files_name=["temp.txt"],
+        files_data=["Sample dynamic content"]
+    )
+    print(res)
+
+
+def run_match_with_data(query):
+    """Top matching docs including chunk data"""
+    print("\n--- TOP MATCHING DOCS (WITH DATA) ---")
+    res = client.get_matching_docs(
+        query=query,
+        user_id=USER_ID,
+        vector_lake_description=NAMESPACE,
+        pattern="static",
+        top_docs=5,
+        with_data=True
+    )
+    print(res)
+
+
+def run_namespace_details():
+    """Get namespace information"""
+    print("\n--- GET NAMESPACE DETAILS ---")
+    res = client.get_namespace_details(USER_ID, vector_lake_description=NAMESPACE)
+    print(res)
+
+
+def run_docs_info():
+    """List all stored docs + info"""
+    print("\n--- GET DOCS INFORMATION ---")
+    res = client.get_docs_information(USER_ID, NAMESPACE)
+    print(res)
+
+
+# -------------------------------------------------------
+# MAIN SELECTOR – RUN ANY FUNCTION YOU WANT
+# -------------------------------------------------------
+if __name__ == "__main__":
+    query = "YOUR QUERY HERE"  # Replace with a test query
+    
+    # --- UNCOMMENT ANY ONE OF THESE TO RUN THAT OPERATION ---
+    # run_health()
+    # run_add_direct()
+    # run_add_path()
+    # run_refresh_direct()
+    # run_refresh_path()
+    # run_chat_static(query)
+    # run_chat_dynamic(query)
+    # run_match_static(query)
+    # run_match_dynamic(query)
+    # run_match_with_data(query)
+    run_namespace_details()
+    # run_docs_info()
+```
+
+---
+
+## 📚 VectorLake Client API Reference
+
+The `VectorLakeClient` handles request construction, API key authentication (x-api-key header), and implements retries with exponential backoff for rate limit handling. All requests use the POST method.
+
+### 1. get_matching_docs
+
+Retrieves documents semantically similar to a query, supporting both static (indexed) and dynamic (user-provided) data.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `query` | str | Yes | The natural language query string to search for. |
+| `user_id` | str | Yes | The unique identifier for the user. |
+| `vector_lake_description` | str | Yes | The target namespace (vector lake) identifier. |
+| `pattern` | str | No (Default: "static") | Search mode: "static" for indexed docs, "dynamic" for user-provided files. |
+| `top_docs` | int | No (Default: 10) | The maximum number of matching documents to retrieve. |
+| `threshold` | float | No (Default: 0.2) | The similarity score threshold for filtering results. |
+| `files_name`/`files_data` | List[str] | No (Direct Mode) | Lists of file names and corresponding contents for dynamic search. |
+| `with_data` | bool | No (Default: False) | If True, the response includes the raw text content of the matching documents. |
+
+**HTTP Method:** POST  
+**URL Path:** Variable (ends with `/top_matching_docs` or `/top_matching_docs_with_data`)
+
+### 2. add_documents
+
+Uploads and processes new documents to be indexed. Supports direct upload of data or batched processing from the local filesystem.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `user_id` | str | Yes | The unique identifier for the user. |
+| `vector_lake_description` | str | Yes | The target namespace for document addition. |
+| `intelligent_segmentation` | bool | No (Default: True) | If True, the service segments the documents before embedding. |
+| `files_name`/`files_data` | List[str] | No (Direct Mode) | Names and contents for a single-request upload. Returns raw server response. |
+| `files` | List[str] | No (Batch Mode) | File paths to read from the local filesystem for concurrent processing. Returns a Batch Envelope. |
+| `max_workers` | int | No (Default: 5) | For batch mode, the maximum number of concurrent threads. |
+
+**HTTP Method:** POST  
+**URL Path:** Determined by `self.config.endpoints["add_docs"]`
+
+### 3. refresh_documents
+
+Updates existing documents in the VectorLake. Operates identically to `add_documents`.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `user_id` | str | Yes | The unique identifier for the user. |
+| `vector_lake_description` | str | Yes | The target namespace for document refreshment. |
+| Others | Varies | Varies | Identical to add_documents. |
+
+**HTTP Method:** POST  
+**URL Path:** Determined by `self.config.endpoints["refresh_docs"]`  
+**Description:** Updates or re-indexes documents in the specified vector lake namespace.
+
+### 4. health_check
+
+Checks the operational status of the VectorLake service.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `user_id` | str | Yes | The unique identifier for the user. |
+| `vector_lake_description` | str | Yes | The namespace to check the health for. |
+
+**HTTP Method:** POST  
+**URL Path:** Determined by `self.config.endpoints["health"]`  
+**Description:** Pings the backend service to check connectivity and status.
+
+### 5. get_namespace_details
+
+Retrieves information about the vector lake namespaces associated with a given user.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `user_id` | str | Yes | The unique identifier for the user. |
+| `vector_lake_description` | str | No | If provided, details for only this specific namespace are returned. |
+
+**HTTP Method:** POST  
+**URL Path:** Determined by `self.config.endpoints["get_namespace_details_by_userid"]`  
+**Description:** Fetches metadata about one or all vector lake namespaces belonging to the user.
+
+### 6. get_docs_information
+
+Retrieves metadata and information about the documents within a specified namespace, optionally filtered by a keyword.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `user_id` | str | Yes | The unique identifier for the user. |
+| `vector_lake_description` | str | Yes | The namespace to query. |
+| `keyword` | str | No | An optional keyword to filter the returned documents. |
+| `threshold` | int | No (Default: 70) | A threshold used for filtering documents. |
+
+**HTTP Method:** POST  
+**URL Path:** Determined by `self.config.endpoints["get_docs_information"]`  
+**Description:** Fetches document-level information within a specific vector lake.
+
+### 7. full_corpus_search
+
+Performs a simple keyword-based search across the documents in a namespace.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `user_id` | str | Yes | The unique identifier for the user. |
+| `vector_lake_description` | str | Yes | The namespace to search within. |
+| `keyword` | str | Yes | The search term to find in the document content or metadata. |
+| `top_docs` | int | No (Default: 10) | The maximum number of documents to return. |
+
+**HTTP Method:** POST  
+**URL Path:** Determined by `self.config.endpoints["full_corpus_search"]`  
+**Description:** Executes a full-text or keyword search across the entire document corpus.
+
+---
+
+## 🔍 WaveQL Query Syntax Guide
+
+### Syntax Rules
+
+#### Within Braces: Logical Operations
+
+| Pattern | Meaning | Valid? |
+|---------|---------|--------|
+| `{A and B}` | Both A and B must match | ✅ Yes |
+| `{A or B}` | Either A or B must match | ✅ Yes |
+| `{(A B) or C}` | Multi-word phrase A B, or C | ✅ Yes |
+| `{A B}` | Implicit AND: A and B | ✅ Yes |
+| `{product manager or Delhi}` | INCORRECT | ❌ No |
+| `{(product manager) or Delhi}` | Correct: phrase or term | ✅ Yes |
+
+**Critical Rule:** Multi-word phrases MUST be wrapped in parentheses when combined with OR/AND operators.
+
+**Examples:**
+
+✅ Correct:
+- `{(machine learning) or (deep learning)}`
+- `{(clinical trials) and diabetes}`
+- `{(product manager) or (data scientist)}`
+
+❌ Wrong:
+- `{machine learning or deep learning}` — Treats "machine" as separate term
+- `{product manager or Delhi}` — Ambiguous parsing
+
+#### Across Braces: Default AND Logic
+
+Multiple brace groups automatically combine with AND:
+
+```
+{(clinical trials) or (observational studies)} {type 2 diabetes} {India}
+```
+
+Evaluates as: `(Group1) AND (Group2) AND (Group3)`
+
+#### Implicit AND for Simple Phrases
+
+Without operators, multi-word terms are treated as AND:
+
+```
+{type 2 diabetes}  →  {type AND 2 AND diabetes}
+```
+
+This preserves the contextual meaning of multi-token phrases.
+
+### Three-Tier Result Prioritization
+
+The system combines filter matching with semantic search to produce ranked results:
+
+**Tier 1: Filter + Semantic Match (Highest Priority)**
+- Documents match BOTH filter criteria AND semantic relevance
+- Common chunks found in filter results AND semantic search
+- Highest confidence: Structure + Meaning aligned
+
+**Tier 2: Filter Match Only**
+- Documents match filter criteria
+- May have lower semantic relevance
+- Structured matches without semantic alignment
+
+**Tier 3: Semantic Match Only**
+- Documents are semantically relevant
+- Don't match filter criteria (or no filters applied)
+- Meaning-based matches without structural alignment
+
+### Query Examples by Domain
+
+**Healthcare:**
+```
+{diabetes} {(clinical trial)} {India}
+{(gene therapy)} {cancer}
+{antibiotics} {(respiratory infections)}
+```
+
+**Recruitment:**
+```
+{Python} {(machine learning)} {Delhi}
+{MBA} {(5 years)} {(product manager)}
+{(data engineer)} {AWS}
+```
+
+**Research:**
+```
+{genomics} {cancer}
+{CRISPR} {(plant biology)}
+{(drug discovery)} {2024}
+```
+
+**Business Intelligence:**
+```
+{(EV adoption)} {India}
+{(supply chain)} {pharma}
+{(AI investments)} {Europe}
+```
+
+### Filter Design Best Practices
+
+**DO:**
+- Use 1-2 keywords per brace
+- Wrap multi-word phrases in parentheses with operators
+- Keep filters domain-consistent
+- Trust semantic fallback for edge cases
+
+**DON'T:**
+- Use 5+ word phrases in filters
+- Mix unrelated domains (`{resume} {clinical trials}`)
+- Forget parentheses around multi-word phrases with OR/AND
+- Over-specify filters (system will fall back gracefully)
+
+---
+
+## 🎯 Key Advantages
+
+### No Schema Required: SQL-Like Queries on Unstructured Data
+
+Traditional systems (Azure Cognitive Search, Elasticsearch) require:
+1. Define rigid JSON schemas before ingestion
+2. Extract and map every field (skills, locations, dates)
+3. Maintain schema consistency across all documents
+4. Update schemas when new fields emerge
+
+**WaveflowDB Approach:**
+1. Upload raw, unstructured documents (PDFs, text, Word docs)
+2. No schema definition needed
+3. Query with SQL-like joins using natural language
+
+**Example Query:**
+```
+Find {(product manager) or (data scientist)} with {Python} and {MBA} in {Delhi}
+```
+
+This performs SQL-like logic WITHOUT requiring field extraction or schema definition.
+
+### Feature Comparison
+
+| Feature | Traditional JSON-Based | Brace-Based Filtering |
+|---------|------------------------|----------------------|
+| Data Ingestion | Extract, map, validate | Direct upload, no preprocessing |
+| Schema Definition | Required upfront | Not required |
+| Query Capability | Exact field matching | Semantic understanding + logical filtering |
+| Flexibility | Rigid, schema-bound | Adapts to any document structure |
+| Maintenance | High (schema updates) | Low (works on raw text) |
+| New Document Types | Requires schema update | Works immediately |
+
+---
+
+## 📧 Support
+
+For API or platform support, visit:  
+**https://db.agentanalytics.ai**
+
+---
+
+## 📄 License
+
+Copyright DIBR tech private ltd.
