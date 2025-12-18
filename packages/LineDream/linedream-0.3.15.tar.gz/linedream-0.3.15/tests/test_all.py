@@ -1,0 +1,131 @@
+import pathlib
+import re
+from LineDream import Line, Canvas, Rectangle, Square, Ellipse, Point, Group, Text, Arc, Circle
+
+GOLDEN_TEST_FILE = pathlib.Path(__file__).parent / 'test_master_output.svg'
+GENERATED_TEST_FILE = pathlib.Path(__file__).parent / 'test_output.svg'
+
+def normalize_floats(text, precision=12):
+	"""Normalize floating-point numbers in text to consistent precision."""
+	def round_match(match):
+		num = float(match.group(0))
+		# Round to precision decimal places, then remove trailing zeros
+		rounded = f"{num:.{precision}f}".rstrip('0').rstrip('.')
+		return rounded
+
+	# Match floating-point numbers (including scientific notation)
+	pattern = r'-?\d+\.\d+(?:[eE][+-]?\d+)?'
+	return re.sub(pattern, round_match, text)
+
+def test_all():
+
+	Canvas.width=200
+	Canvas.height=200
+	Canvas.background_color='beige'
+
+	pt = Point(100, 100)
+	pt.stroke_color = 'black'
+
+	pt2 = Point(100, 100)
+	pt2.stroke_color = 'black'
+	pt2.transform(20,5)
+
+	p=Line([(3, 3), (30, 20), (4, 18)])
+	p.close_path=True
+	p.fill_color='blue'
+	p.stroke_color='none'
+
+	p2=Line([(3, 3), (30, 20), (4, 18)])
+	p2.close_path=True
+	p2.fill_color='blue'
+	p2.stroke_color='none'
+	p2.transform(20,5)
+
+	r = Rectangle(130,130,20,15)
+	r.fill_color='green'
+
+	r = Rectangle(40,40,20,15)
+	r.fill_color='blue'
+	r.rotate(20)
+
+	r2 = Rectangle(130,130,20,15)
+	r2.fill_color='green'
+	r2.transform(20, 5)
+
+	s = Square(20, 170, 5)
+	s.stroke_color='yellow'
+	s.fill_color='red'
+
+	s2 = Square(20, 170, 5)
+	s2.stroke_color='yellow'
+	s2.fill_color='red'
+	s2.transform(20,5)
+
+	assert s2.center == (40.0, 175.0)
+	Point(*s2.center)
+
+	# s2.scale(2, 3, (s2.center[0] - 2, s2.center[1]- 2))
+
+	e = Ellipse(120, 30, 5, 8)
+	e.fill_color='orange'
+
+	e = Ellipse(5, 100, 20, 20, fill_color='red', stroke_color='white')
+	e.stroke_width=10
+
+	g = Group(id='test-id', label='inkscape-label')
+	g.add_item(Rectangle(180,180,15,15, stroke_color='black'))
+
+	e2 = Ellipse(120, 30, 5, 8)
+	e2.fill_color='orange'
+	e2.transform(20,5)
+	e2.scale(2.0)
+
+	Text("Hello", 30, 80)
+
+	# This will ensure that the arc starts in the middle of the square. Then, that the computed field start_cords
+	# matches the start/end the constructed the class.
+	s = Square(50,150,10, stroke_color='purple')
+	sa = Arc(s.c_x, s.c_y, 10, 0, 75, x_y_start_coords=True)
+	assert sa.start_coords == (s.c_x, s.c_y)
+	# This arc will start where the other one ends
+	Arc(*sa.end_coords, 10, 0, 90, x_y_start_coords=True)
+	# This will mirror the previous (because of the rotate(180)
+	Arc(*sa.end_coords, 10, 0, 90, x_y_start_coords=True).rotate(180)
+	a = Arc(*sa.end_coords, 10, 0, 90, x_y_start_coords=True).rotate(180).scale(1.2)
+
+	d =  Arc(100, 85, 10, 45, 210)
+	Circle(*d.start_coords, 1, stroke_color='red')
+	Circle(*d.end_coords, 1, stroke_color='blue')
+
+	Canvas.save(GENERATED_TEST_FILE)
+
+	assert Canvas.frame_index == 0
+
+	with open(GENERATED_TEST_FILE, 'r') as t:
+		with open(GOLDEN_TEST_FILE, 'r') as m:
+
+			t_l = t.readlines()
+			t_m = m.readlines()
+
+			zipped_lines = zip(t_l, t_m)
+
+			for idx, (test_line, master_line) in enumerate(zipped_lines):
+
+				test_line = test_line.lstrip().rstrip()
+				master_line = master_line.lstrip().rstrip()
+
+				# Normalize floating-point precision before comparison
+				test_line_normalized = normalize_floats(test_line)
+				master_line_normalized = normalize_floats(master_line)
+
+				if not (test_line_normalized == master_line_normalized):
+					print(f"Line {idx+1} Failed:")
+					print(f"   Master Line: {master_line}")
+					print(f"   Test Line:   {test_line}")
+					print(f"'Master Line' comes from {GOLDEN_TEST_FILE}")
+
+					assert test_line_normalized == master_line_normalized
+				# assert t.read() == m.read()
+
+if __name__ == '__main__':
+	test_all()
