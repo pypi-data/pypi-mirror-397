@@ -1,0 +1,77 @@
+Metadata-Version: 2.4
+Name: swgo-wave
+Version: 0.2.3
+Summary: Python bindings for the SWGO Waveform Library
+Author-Email: Johannes Bennemann <johannes.bennemann@mpi-hd.mpg.de>
+Maintainer-Email: Johannes Bennemann <johannes.bennemann@mpi-hd.mpg.de>
+License-Expression: MPL-2.0
+License-File: LICENSE
+Classifier: Development Status :: 4 - Beta
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: C++
+Classifier: Topic :: Scientific/Engineering :: Physics
+Classifier: Operating System :: POSIX :: Linux
+Project-URL: Homepage, https://gitlab.com/swgo-collaboration/simulation/swgo-waveform-library
+Requires-Python: >=3.9
+Requires-Dist: typing_extensions
+Requires-Dist: pyyaml
+Requires-Dist: numpy
+Description-Content-Type: text/markdown
+
+# Python Bindings for the SWGO Waveform Library
+
+This are the Python bindings for the SWGO Waveform Library.
+The bindings can be installed from PyPI:
+```bash
+pip install swgo-wave
+```
+If your operating system is not supported, you can install them manually:
+```bash
+git clone --recursive git@gitlab.com:swgo-collaboration/simulation/swgo-waveform-python-bindings.git
+cd swgo-waveform-python-bindings
+python -m pip install .
+```
+
+To simulate the FlashCam electronics, use:
+```python
+import libwaveform as wf
+
+fc = wf.make_flashcam()
+triggers = fc.simulate([...],1)
+
+for t in triggers:
+    # t.channel - int
+    # t.trigger_time_s - int (seconds since run start)
+    # t.trigger_time_ticks - int (ticks since last full second, tick = 4ns)
+    # t.baseline - float (ADC baseline)
+    # t.intsum - float (sum of waveform)
+    # t.waveform - list* of int
+```
+`make_flashcam()` creates a FlashCam object with the FlashCam default settings.
+You can directly create FlashCam instances by invoking its constructor `wf.FlashCam()`.
+Use `help(wf.FlashCam)` for the documentation of the constructor parameters.
+
+The trigger and waveform objects are native C++ objects.
+The waveform objects support the python list interface for integers.
+
+The MultiPMT electronics (which is not fully supported yet) can be simulated with:
+```python
+import libwaveform as wf
+
+mp = wf.make_multipmt()
+triggers = mp.simulate([...],1)
+
+for t in triggers:
+    # t.channel - int
+    # t.time - float (trigger time in seconds)
+    # t.time_over_threshold - float (in seconds)
+    # t.adc_sample - float (in LSB)
+```
+`make_multipmt()` creates a MultiPMT object with the MultiPMT default settings.
+You can directly create MultiPMT instances by invoking its constructor `wf.MultiPMT()`.
+Use `help(wf.MultiPMT)` for the documentation of the constructor parameters.
