@@ -1,0 +1,160 @@
+# deo-client
+
+[![PyPI version](https://badge.fury.io/py/deo-client.svg)](https://pypi.org/project/deo-client/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/deo-client.svg)](https://pypi.org/project/deo-client/)
+[![License](https://img.shields.io/pypi/l/deo-client.svg)](https://pypi.org/project/deo-client/)
+
+A Python client library for the [deo](https://github.com/myferr/deo) document database.
+
+## Installation
+
+```bash
+pip install deo-client
+```
+
+## Quick Start
+
+```python
+from deo_client import DeoClient
+
+# Initialize client
+client = DeoClient("http://localhost:6741")  # Default host
+
+# Create a database
+client.create_database("my_app")
+
+# Create a collection
+client.dbs["my_app"].create_collection("users")
+
+# Create a document
+user_collection = client.dbs["my_app"].collections["users"]
+user_collection.create_document({
+    "name": "John Doe",
+    "email": "john@example.com",
+    "age": 30
+})
+
+# List documents
+users = user_collection.list_documents()
+print(f"Found {len(users.data)} users")
+
+# Query with filters and sorting
+from deo_client.types import ListDocumentsOptions
+
+options = ListDocumentsOptions(
+    filters={"status": "active"},
+    sort_by="name",
+    order="asc",
+    limit=10
+)
+active_users = user_collection.list_documents(options)
+
+# Read, update, and delete documents
+user = user_collection.read_document("some-uuid")
+updated_user = user_collection.update_document("some-uuid", {"name": "Jane Doe"})
+user_collection.delete_document("some-uuid")
+```
+
+## API Reference
+
+### DeoClient
+
+Main client class for interacting with deo databases.
+
+#### Methods
+
+- `create_database(db_name: str) -> DeoResponse[None]`
+- `list_databases() -> DeoResponse[List[str]]`
+- `delete_database(db_name: str) -> DeoResponse[None]`
+- `dbs[db_name] -> Database` - Dynamic database access
+
+### Database
+
+Class for database operations and collection management.
+
+#### Methods
+
+- `create_collection(collection_name: str) -> DeoResponse[None]`
+- `list_collections() -> DeoResponse[List[str]]`
+- `delete_collection(collection_name: str) -> DeoResponse[None]`
+- `collections[collection_name] -> Collection` - Dynamic collection access
+
+### Collection
+
+Class for document operations within a collection.
+
+#### Methods
+
+- `create_document(document: Dict[str, Any]) -> DeoResponse[Document]`
+- `list_documents(options: Optional[ListDocumentsOptions] = None) -> DeoResponse[List[Document]]`
+- `read_document(document_id: str) -> DeoResponse[Document]`
+- `update_document(document_id: str, document: Dict[str, Any]) -> DeoResponse[Document]`
+- `delete_document(document_id: str) -> DeoResponse[None]`
+
+### ListDocumentsOptions
+
+Options for filtering and sorting document queries.
+
+#### Attributes
+
+- `filters: Optional[Dict[str, str]]` - Key-value filters
+- `sort_by: Optional[str]` - Field to sort by
+- `order: Optional[str]` - Sort order ("asc" or "desc")
+- `limit: Optional[int]` - Maximum number of documents
+- `offset: Optional[int]` - Number of documents to skip
+
+## Error Handling
+
+The client raises `DeoError` exceptions for API errors. All methods return `DeoResponse` objects with `success`, `message`, and `data` fields.
+
+```python
+from deo_client import DeoClient, DeoError
+
+client = DeoClient()
+
+try:
+    response = client.create_database("test")
+    if response.success:
+        print("Database created!")
+    else:
+        print(f"Error: {response.message}")
+except DeoError as e:
+    print(f"API Error: {e}")
+```
+
+## Type Safety
+
+This library is fully typed with comprehensive type hints. For the best development experience, use a type checker like mypy:
+
+```bash
+pip install mypy
+mypy your_script.py
+```
+
+## Development
+
+```bash
+# Clone the repository
+git clone https://github.com/myferr/deo.git
+cd deo/packages/pypi
+
+# Install development dependencies
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+
+# Run type checking
+mypy deo_client/
+
+# Run linting
+ruff check .
+```
+
+## License
+
+MIT License - see the [LICENSE](../../LICENSE) file for details.
+
+## Contributing
+
+Contributions are welcome! Please see the [main repository](https://github.com/myferr/deo) for contribution guidelines.
