@@ -1,0 +1,2 @@
+quiet = False
+scrapeGoogle = False
