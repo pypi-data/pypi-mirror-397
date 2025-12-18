@@ -1,0 +1,47 @@
+{
+  "name": "return_early",
+  "description": "Test early return from pipeline",
+  "version": "1.0.0",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "skip_processing": {
+        "type": "boolean"
+      },
+      "data": {
+        "type": "string"
+      }
+    },
+    "required": ["skip_processing", "data"]
+  },
+  "stages": {
+    "check_skip": {
+      "component": "conditional",
+      "config": {
+        "condition": "{{input.skip_processing}}"
+      }
+    },
+    "early_return": {
+      "component": "return",
+      "depends_on": ["check_skip"],
+      "skip_if": "{{not stages.check_skip.branch_taken}}",
+      "config": {
+        "return_value": {
+          "status": "skipped",
+          "message": "Processing was skipped as requested"
+        }
+      }
+    },
+    "actual_processing": {
+      "component": "generator",
+      "depends_on": ["check_skip"],
+      "skip_if": "{{stages.check_skip.branch_taken}}",
+      "config": {
+        "system_prompt": "Process the data.",
+        "user_prompt": "Process: {{input.data}}",
+        "max_tokens": 100
+      }
+    }
+  },
+  "output_stage": "actual_processing"
+}

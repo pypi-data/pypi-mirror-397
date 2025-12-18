@@ -1,0 +1,41 @@
+{
+  "name": "hello_world",
+  "description": "Simple smoke test pipeline with a single generator node",
+  "version": "1.0.0",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "topic": {
+        "type": "string",
+        "description": "Topic to greet about"
+      }
+    },
+    "required": ["topic"]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "greeting": {
+        "type": "string"
+      }
+    }
+  },
+  "stages": {
+    "generate_greeting": {
+      "component": "generator",
+      "config": {
+        "system_prompt": "You are a friendly assistant that creates warm greetings.",
+        "user_prompt": "Create a brief, friendly greeting about: {{input.topic}}",
+        "max_tokens": 100,
+        "temperature": 0.7
+      },
+      "inputs": {
+        "topic": "{{input.topic}}"
+      },
+      "outputs": {
+        "greeting": "{{output.content}}"
+      }
+    }
+  },
+  "output_stage": "generate_greeting"
+}

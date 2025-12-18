@@ -1,0 +1,63 @@
+{
+  "name": "trycatch_basic",
+  "description": "Test basic try-catch with error recovery",
+  "version": "1.0.0",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "should_fail": {
+        "type": "boolean"
+      },
+      "message": {
+        "type": "string"
+      }
+    },
+    "required": ["should_fail", "message"]
+  },
+  "stages": {
+    "safe_operation": {
+      "component": "trycatch",
+      "config": {
+        "error_scope": "continue"
+      },
+      "try_stages": {
+        "risky_operation": {
+          "component": "generator",
+          "config": {
+            "system_prompt": "{{#if input.should_fail}}INVALID_PROMPT_THAT_ERRORS{{else}}You are helpful.{{/if}}",
+            "user_prompt": "{{input.message}}",
+            "max_tokens": 100
+          }
+        }
+      },
+      "catch_stages": {
+        "handle_error": {
+          "component": "logger",
+          "config": {
+            "level": "WARNING",
+            "message": "Error occurred: {{error_message}}"
+          }
+        },
+        "provide_fallback": {
+          "component": "variable_set",
+          "depends_on": ["handle_error"],
+          "config": {
+            "variables": {
+              "fallback_response": "An error occurred, but we handled it gracefully."
+            }
+          }
+        }
+      },
+      "finally_stages": {
+        "cleanup": {
+          "component": "logger",
+          "config": {
+            "level": "INFO",
+            "message": "Operation completed (success or failure)"
+          }
+        }
+      }
+    }
+  },
+  "output_stage": "safe_operation"
+}

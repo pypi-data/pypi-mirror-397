@@ -1,0 +1,139 @@
+{
+  "id": "opportunity-analyzer",
+  "name": "Opportunity Analyzer",
+  "description": "Deep analysis of sales opportunities with competitive intelligence and risk assessment. Synthesizes multiple perspectives into actionable recommendations.",
+  "category": "salesforce",
+  "tags": [
+    "salesforce",
+    "crm",
+    "sales",
+    "opportunities",
+    "analysis"
+  ],
+  "difficulty": "advanced",
+  "use_cases": [
+    "Evaluate deal health and risks",
+    "Prepare for QBR presentations",
+    "Develop competitive win strategies",
+    "Identify at-risk deals early"
+  ],
+  "stages": [
+    {
+      "id": "analyze-deal",
+      "component_type": "generator",
+      "name": "Analyze Deal",
+      "config": {
+        "prompt": "Analyze this sales opportunity:\n\nOpportunity: {{input.opportunity_name}}\nAccount: {{input.account_name}}\nDeal Size: {{input.deal_value}}\nStage: {{input.current_stage}}\nClose Date: {{input.expected_close_date}}\nCompetitors: {{input.competitors}}\n\nDeal Notes:\n{{input.deal_notes}}\n\nProvide a comprehensive deal analysis covering:\n1. Deal Health Score (1-100)\n2. Win Probability Assessment\n3. Competitive Positioning\n4. Key Stakeholder Analysis\n5. Risk Factors\n6. Recommended Actions",
+        "system_prompt": "You are a senior sales strategist with expertise in complex B2B deals. Analyze opportunities objectively, identify hidden risks, and provide strategic recommendations that increase win probability."
+      },
+      "depends_on": [],
+      "position": {
+        "x": 100,
+        "y": 100
+      }
+    },
+    {
+      "id": "competitive-intel",
+      "component_type": "generator",
+      "name": "Competitive Analysis",
+      "config": {
+        "prompt": "Based on this opportunity:\n\nOpportunity: {{input.opportunity_name}}\nCompetitors: {{input.competitors}}\nDeal Notes:\n{{input.deal_notes}}\n\nProvide competitive intelligence:\n1. Competitor strengths and weaknesses\n2. Our differentiation points\n3. Potential competitor tactics to anticipate\n4. Recommended counter-strategies\n5. Competitive messaging recommendations",
+        "system_prompt": "You are a competitive intelligence analyst specializing in B2B software sales. Provide actionable competitive insights that help sales teams position against competitors effectively."
+      },
+      "depends_on": [],
+      "position": {
+        "x": 100,
+        "y": 250
+      }
+    },
+    {
+      "id": "critique-analysis",
+      "component_type": "critic",
+      "name": "Review Analyses",
+      "config": {
+        "content": "Deal Analysis:\n{{upstream.analyze-deal.content}}\n\nCompetitive Analysis:\n{{upstream.competitive-intel.content}}",
+        "criteria": "Review both analyses for:\n1. Consistency between assessments\n2. Missing perspectives or blind spots\n3. Actionability of recommendations\n4. Realistic assessment of risks\n5. Strategic coherence"
+      },
+      "depends_on": [
+        "analyze-deal",
+        "competitive-intel"
+      ],
+      "position": {
+        "x": 350,
+        "y": 175
+      }
+    },
+    {
+      "id": "synthesize",
+      "component_type": "synthesizer",
+      "name": "Synthesize Strategy",
+      "config": {
+        "sources": [
+          {
+            "label": "Deal Analysis",
+            "content": "{{upstream.analyze-deal.content}}"
+          },
+          {
+            "label": "Competitive Intel",
+            "content": "{{upstream.competitive-intel.content}}"
+          },
+          {
+            "label": "Review Feedback",
+            "content": "{{upstream.critique-analysis.feedback}}"
+          }
+        ],
+        "instructions": "Synthesize all analyses into a cohesive opportunity strategy document. Create an executive summary with:\n\n1. **Opportunity Score** (with rationale)\n2. **Top 3 Actions** (prioritized)\n3. **Key Risks & Mitigations**\n4. **Competitive Win Strategy**\n5. **Resource Requirements**\n6. **30-60-90 Day Plan**\n\nMake it actionable and suitable for leadership review."
+      },
+      "depends_on": [
+        "critique-analysis"
+      ],
+      "position": {
+        "x": 600,
+        "y": 175
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "opportunity_name": {
+        "type": "string",
+        "description": "Name of the opportunity"
+      },
+      "account_name": {
+        "type": "string",
+        "description": "Account/company name"
+      },
+      "deal_value": {
+        "type": "string",
+        "description": "Deal value/ACV"
+      },
+      "current_stage": {
+        "type": "string",
+        "description": "Current sales stage"
+      },
+      "expected_close_date": {
+        "type": "string",
+        "description": "Target close date"
+      },
+      "competitors": {
+        "type": "string",
+        "description": "Known competitors in the deal"
+      },
+      "deal_notes": {
+        "type": "string",
+        "description": "Detailed notes about the opportunity"
+      }
+    },
+    "required": [
+      "opportunity_name",
+      "deal_notes"
+    ]
+  },
+  "output_stage_id": "synthesize",
+  "example_input": {
+    "opportunity_id": "0065e00000XYZ789",
+    "salesforce_url": "https://mycompany.salesforce.com",
+    "access_token": "your-oauth-token-here"
+  }
+}

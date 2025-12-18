@@ -1,0 +1,60 @@
+{
+  "name": "two_stage_smoke_test",
+  "description": "Two-stage smoke test: Generator followed by Critic",
+  "version": "1.0.0",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "topic": {
+        "type": "string",
+        "description": "Topic for content generation"
+      }
+    },
+    "required": ["topic"]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "content": {
+        "type": "string"
+      },
+      "critique": {
+        "type": "string"
+      }
+    }
+  },
+  "stages": {
+    "generate_content": {
+      "component": "generator",
+      "config": {
+        "system_prompt": "You are a creative content writer.",
+        "user_prompt": "Write a short paragraph (2-3 sentences) about: {{input.topic}}",
+        "max_tokens": 200,
+        "temperature": 0.8
+      },
+      "inputs": {
+        "topic": "{{input.topic}}"
+      },
+      "outputs": {
+        "content": "{{output.content}}"
+      }
+    },
+    "critique_content": {
+      "component": "critic",
+      "depends_on": ["generate_content"],
+      "config": {
+        "system_prompt": "You are a constructive content critic.",
+        "user_prompt": "Review this content and provide brief feedback (1-2 sentences):\n\n{{stages.generate_content.content}}",
+        "max_tokens": 150,
+        "temperature": 0.5
+      },
+      "inputs": {
+        "content": "{{stages.generate_content.content}}"
+      },
+      "outputs": {
+        "critique": "{{output.content}}"
+      }
+    }
+  },
+  "output_stage": "critique_content"
+}
