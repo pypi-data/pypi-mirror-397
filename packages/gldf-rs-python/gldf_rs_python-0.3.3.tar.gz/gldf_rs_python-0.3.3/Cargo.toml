@@ -1,0 +1,112 @@
+[workspace]
+resolver = "2"
+members = ["crates/gldf-rs-python"]
+
+[workspace.package]
+version = "0.3.3"
+edition = "2021"
+authors = ["Holger Trahe <trahe@mac.com>"]
+license = "GPL-3.0-or-later"
+repository = "https://github.com/holg/gldf-rs"
+homepage = "https://github.com/holg/gldf-rs"
+
+[workspace.dependencies]
+# Core library
+gldf-rs = { version = "0.3.3", path = "crates/gldf-rs-lib", default-features = false }
+
+# Serialization
+quick-xml = { version = "0.37", features = ["serialize"] }
+serde = { version = "1.0", features = ["derive"] }
+serde-xml-rs = "0.6"
+serde_json = "1.0"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Async runtime
+async-std = "1.12"
+tokio = { version = "1", features = ["rt", "rt-multi-thread", "test-util", "macros"] }
+
+# HTTP client
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
+reqwest-wasm = { version = "0.11", features = ["blocking"] }
+
+# Compression - use zip 2.x for better compatibility
+zip = { version = "2", default-features = false, features = ["deflate"] }
+
+# Utilities
+base64 = "0.22"
+lazy_static = "1.5"
+regex = "1.10"
+
+# UI framework (egui)
+eframe = { version = "0.33", default-features = false, features = [
+  "accesskit",
+  "default_fonts",
+  "glow",
+  "persistence",
+] }
+egui_extras = { version = "0.33", features = ["all_loaders", "image", "svg"] }
+
+# Image processing
+image = { version = "0.25", default-features = false, features = ["jpeg", "png"] }
+resvg = "0.45"
+
+# 3D rendering
+three-d = { version = "0.18", default-features = true }
+three-d-asset = { version = "0.9", features = ["obj"] }
+
+# Bevy 3D engine
+bevy = { version = "0.15", default-features = false, features = [
+    "bevy_asset",
+    "bevy_render",
+    "bevy_core_pipeline",
+    "bevy_pbr",
+    "bevy_winit",
+    "bevy_gizmos",
+    "png",
+    "webgl2",
+    "x11",
+] }
+
+# eulumdat-bevy for lighting plugins
+eulumdat-bevy = "0.3.0"
+
+# Photometric data
+eulumdat = "0.3.0"
+l3d_rs = "0.2.3"
+# Unified lighting file conversion (ULD, ROLF -> GLDF) - not published yet
+# light-convert = { path = "../light-other-rs/crates/light-convert" }
+
+# File dialogs (native)
+rfd = "0.15"
+
+# WASM
+gloo = "0.11"
+gloo-file = { version = "0.3", features = ["futures"] }
+js-sys = "0.3"
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+wasm-bindgen-test = "0.3"
+web-sys = "0.3"
+yew = { version = "0.22", features = ["csr"] }
+
+# Leptos (for SSR-capable WASM)
+console_error_panic_hook = "0.1"
+leptos = { version = "0.7", features = ["csr"] }
+leptos_router = "0.7"
+
+# Python
+pyo3 = { version = "0.24", features = ["extension-module", "abi3-py38"] }
+pyo3-build-config = "0.24"
+
+# FFI (UniFFI)
+uniffi = { version = "0.28", features = ["cli"] }
+
+# Logging
+env_logger = "0.11"
+log = "0.4"
+
+# Build utilities
+version_check = "0.9"
