@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aws-tee"
+version = "0.1.0"
+description = "標準入力をそのまま標準出力に流しつつ、同じ内容を CloudWatch Logs と S3 に送る tee 風コマンド"
+readme = "README.md"
+requires-python = ">=3.7"
+license = "CC0-1.0"
+authors = [
+    {name = "n_h", email = "h.10x64@gmail.com"}
+]
+keywords = ["aws", "cloudwatch", "s3", "tee", "logging"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: System :: Logging",
+    "Topic :: Utilities",
+]
+
+dependencies = [
+    "cloudwatchlogs-s3-stream-descriptor",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+]
+
+[project.scripts]
+aws-tee = "aws_tee.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/h10x64/AWS-tee"
+Documentation = "https://github.com/h10x64/AWS-tee#readme"
+Repository = "https://github.com/h10x64/AWS-tee"
+Issues = "https://github.com/h10x64/AWS-tee/issues"
+"Bug Tracker" = "https://github.com/h10x64/AWS-tee/issues"
+
+[tool.setuptools]
+packages = ["aws_tee"]
+
+[tool.setuptools.package-data]
+aws_tee = ["*.conf.example"]
+
