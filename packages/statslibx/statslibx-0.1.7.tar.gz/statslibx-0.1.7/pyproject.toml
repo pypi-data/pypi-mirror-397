@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "statslibx"
+version = "0.1.7"
+description = "StatsLibx - Librería de estadística descriptiva e inferencial"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+
+authors = [
+    { name = "Emmanuel Ascendra Perez", email = "ascendraemmanuel@gmail.com" }
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12"
+]
+
+dependencies = [
+    "pandas>=1.5",
+    "polars>=0.20"
+]
+
+[project.optional-dependencies]
+viz = ["seaborn>=0.11", "plotly>=5.0"]
+advanced = ["scikit-learn>=1.0", "statsmodels>=0.13"]
+
+[project.scripts]
+statslibx = "statslibx.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
