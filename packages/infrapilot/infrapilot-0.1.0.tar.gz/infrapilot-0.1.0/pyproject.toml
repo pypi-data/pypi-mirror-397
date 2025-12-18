@@ -1,0 +1,67 @@
+[project]
+name = "infrapilot"
+version = "0.1.0"
+description = "InfraPilot CLI"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "keyring>=25.6.0",
+    "prompt-toolkit>=3.0.52",
+    "requests>=2.32.5",
+    "rich>=14.2.0",
+    "sqlmodel>=0.0.27",
+    "structlog>=25.5.0",
+    "starlette>=0.38.0",
+    "fastapi>=0.121.0",
+    "uvicorn>=0.38.0",
+    "sqlalchemy>=2.0.44",
+    "boto3>=1.41.5",
+    "botocore>=1.41.5",
+]
+
+[dependency-groups]
+dev = [
+    "black>=25.9.0",
+    "deptry>=0.24.0",
+    "flake8>=7.3.0",
+    "isort>=7.0.0",
+    "mypy>=1.18.2",
+    "pre-commit>=4.4.0",
+    "pytest>=9.0.0",
+    "ruff>=0.14.6",
+    "types-requests>=2.32.0",
+]
+
+[project.scripts]
+infrapilot = "infrapilot_cli.main:main"
+
+[tool.black]
+line-length = 100
+target-version = ["py313"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+lint.extend-select = ["E", "F", "W"]
+fix = true
+
+[tool.deptry]
+ignore = ["ruff", "deptry"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["infrapilot_cli*"]
+
+[tool.setuptools.package-data]
+"infrapilot_cli" = ["dist/**"]
+
+[tool.setuptools]
+include-package-data = true
+
+[build-system]
+requires = ["setuptools>=69.0", "wheel"]
+build-backend = "setuptools.build_meta"
