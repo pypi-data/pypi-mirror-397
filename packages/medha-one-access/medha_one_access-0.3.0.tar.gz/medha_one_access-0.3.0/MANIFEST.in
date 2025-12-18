@@ -1,0 +1,46 @@
+# Include important files in package distribution
+include README.md
+include LICENSE
+include CHANGELOG.md
+include pyproject.toml
+include setup.py
+
+# Include package data
+recursive-include medha_one_access/migrations *.py *.ini *.mako
+recursive-include medha_one_access *.py
+
+# Include documentation
+recursive-include docs *.rst *.py *.bat *.md
+recursive-include docs/_static *
+recursive-include docs/_templates *
+
+# Include examples
+recursive-include examples *.py *.md *.txt *.json
+
+# Include tests (optional - usually excluded from wheel)
+recursive-include tests *.py *.json *.txt
+
+# Exclude development and build files
+exclude .gitignore
+exclude .pre-commit-config.yaml
+exclude tox.ini
+exclude .coverage
+exclude pytest.ini
+
+# Exclude build artifacts
+prune build
+prune dist
+prune *.egg-info
+prune .git
+prune .github
+prune __pycache__
+prune .pytest_cache
+prune .mypy_cache
+prune .tox
+
+# Exclude editor files  
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.swp
+global-exclude *~
+global-exclude .DS_Store

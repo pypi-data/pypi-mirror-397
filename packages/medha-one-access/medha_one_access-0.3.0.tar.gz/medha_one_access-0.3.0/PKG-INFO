@@ -1,0 +1,1124 @@
+Metadata-Version: 2.4
+Name: medha-one-access
+Version: 0.3.0
+Summary: Enterprise access control system with BODMAS resolution
+Home-page: https://github.com/medhaone-analytics/medha-one-access
+Author: MedhaOne Analytics
+Author-email: MedhaOne Analytics <contactmedhaanalytics@gmail.com>
+Maintainer-email: MedhaOne Analytics <contactmedhaanalytics@gmail.com>
+License: MIT
+Project-URL: Homepage, https://github.com/medhaone-analytics/medha-one-access
+Project-URL: Documentation, https://medha-one-access.readthedocs.io/
+Project-URL: Repository, https://github.com/medhaone-analytics/medha-one-access
+Project-URL: Bug Reports, https://github.com/medhaone-analytics/medha-one-access/issues
+Project-URL: Changelog, https://github.com/medhaone-analytics/medha-one-access/blob/main/CHANGELOG.md
+Keywords: access-control,authorization,permissions,rbac,abac,bodmas,expressions,security,fastapi,sqlalchemy
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Security
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: System :: Systems Administration :: Authentication/Directory
+Classifier: Typing :: Typed
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: sqlalchemy[asyncio]>=2.0.0
+Requires-Dist: pydantic
+Requires-Dist: asyncpg>=0.28.0
+Requires-Dist: aiosqlite>=0.19.0
+Requires-Dist: cryptography
+Requires-Dist: alembic
+Requires-Dist: python-dateutil
+Requires-Dist: aiofiles>=23.0.0
+Requires-Dist: asyncio-throttle>=1.0.2
+Provides-Extra: api
+Requires-Dist: fastapi; extra == "api"
+Requires-Dist: uvicorn; extra == "api"
+Requires-Dist: python-multipart; extra == "api"
+Provides-Extra: cli
+Requires-Dist: click; extra == "cli"
+Requires-Dist: rich; extra == "cli"
+Requires-Dist: typer; extra == "cli"
+Provides-Extra: yaml
+Requires-Dist: pyyaml>=6.0; extra == "yaml"
+Provides-Extra: dev
+Requires-Dist: black; extra == "dev"
+Requires-Dist: flake8; extra == "dev"
+Requires-Dist: mypy; extra == "dev"
+Requires-Dist: sphinx; extra == "dev"
+Requires-Dist: sphinx-rtd-theme; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: aioresponses>=0.7.4; extra == "dev"
+Provides-Extra: all
+Requires-Dist: medha-one-access[api,cli,dev,yaml]; extra == "all"
+Dynamic: author
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-python
+
+# MedhaOne Access Control 🔐
+
+[![PyPI version](https://badge.fury.io/py/medha-one-access.svg)](https://badge.fury.io/py/medha-one-access)
+[![Python Support](https://img.shields.io/pypi/pyversions/medha-one-access.svg)](https://pypi.org/project/medha-one-access/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Tests](https://github.com/medhaone-analytics/medha-one-access/workflows/Tests/badge.svg)](https://github.com/medhaone-analytics/medha-one-access/actions)
+
+A comprehensive, enterprise-grade access control system with BODMAS-based resolution for managing users, resources, and permissions with sophisticated expression-based rules.
+
+## ✨ Features
+
+### Core Access Control
+- **BODMAS Resolution**: Predictable access resolution using mathematical precedence rules
+- **Expression-Based Access**: Intuitive mathematical expressions for complex access patterns (`user1+group1-user2`)
+- **Quoted Entity Support**: Handle entities with special characters using quotes (`"user-service-api"+"admin-panel"`)
+- **Time-Based Constraints**: Schedule access with date ranges, time windows, and day-of-week restrictions
+- **Hierarchical Organizations**: Support for manager-subordinate relationships and group hierarchies
+
+### Architecture & Performance
+- **Dual Architecture**: Both synchronous and asynchronous controllers for different use cases
+- **Background Task Processing**: Non-blocking operations with automatic recalculation
+- **Auto-Recalculation**: Intelligent background updates when users, groups, or rules change
+- **⚡ Advanced Caching**: Multi-level caching system with 10x performance improvements
+- **Connection Pooling**: Optimized database connections with configurable pool sizes
+
+### Integration & APIs  
+- **FastAPI Integration**: Both sync and async web API mounting options
+- **Comprehensive REST API**: 11 specialized router modules with 50+ endpoints
+- **Data Import/Export**: JSON-based bulk operations and backup capabilities
+- **CLI Tools**: Command-line interface for database management and operations
+- **Database Agnostic**: PostgreSQL (recommended) and SQLite support
+
+### Developer Experience
+- **Type Safety**: Full TypeScript-style type hints and py.typed support
+- **Comprehensive Audit**: Complete traceability of all access decisions (optional for performance)
+- **Version Compatibility**: Works with any existing FastAPI, SQLAlchemy, Pydantic versions
+- **Zero Conflicts**: Never upgrades/downgrades your existing packages
+
+## 🚀 Quick Start
+
+### Installation
+
+#### From PyPI
+
+```bash
+# Basic installation
+pip install medha-one-access
+
+# With FastAPI support
+pip install medha-one-access[api]
+
+# With CLI tools
+pip install medha-one-access[cli]
+
+# Full installation with all features
+pip install medha-one-access[all]
+```
+
+### Basic Usage
+
+#### Synchronous Controller (Recommended for most use cases)
+
+```python
+from medha_one_access import AccessController
+
+# Initialize the sync controller (includes background task processing)
+controller = AccessController(database_url="postgresql://user:pass@localhost/db")
+
+# Create users
+controller.create_user("alice", type="USER", email="alice@company.com")
+controller.create_user("developers", type="USERGROUP", expression="alice+bob+charlie")
+
+# Create resources
+controller.create_artifact("app-server", type="RESOURCE", description="Application Server")
+controller.create_artifact("dev-resources", type="RESOURCEGROUP", expression="app-server+database+cache")
+
+# Create access rules
+controller.create_access_rule(
+    rule_id="dev-access",
+    user_expression="developers", 
+    resource_expression="dev-resources",
+    permissions=["READ", "WRITE", "DEPLOY"]
+)
+
+# Check access
+has_access = controller.check_access("alice", "app-server", "READ")
+print(f"Alice can read app-server: {has_access}")
+
+# Get all access for a user (fast - no audit trail)
+user_access = controller.resolve_user_access("alice")
+print(f"Alice has access to: {list(user_access['resolved_access'].keys())}")
+
+# Get access with detailed audit trail (slower but comprehensive)
+user_access_with_audit = controller.resolve_user_access("alice", include_audit=True)
+print(f"Audit trail steps: {len(user_access_with_audit['audit_trail'])}")
+
+# Background processing - operations return immediately!
+controller.update_user("developers", {"expression": "alice+bob+charlie+new_dev"})
+# ↑ Returns immediately, recalculation happens in background
+
+# Optional cleanup (recommended for long-running applications)
+controller.close()
+```
+
+#### Asynchronous Controller (For high-performance async applications)
+
+```python
+from medha_one_access import AsyncAccessController
+
+# Initialize the async controller
+async def main():
+    controller = AsyncAccessController(database_url="postgresql://user:pass@localhost/db")
+    await controller.initialize()  # Required for async controller
+    
+    # All operations are async and return immediately
+    await controller.create_user({"id": "alice", "type": "USER"})
+    await controller.create_user({"id": "developers", "type": "USERGROUP", "expression": "alice+bob"})
+    
+    # Check access (async)
+    has_access = await controller.check_access("alice", "app-server", "READ")
+    print(f"Alice can read app-server: {has_access}")
+    
+    # Get user access with advanced background task management
+    user_access = await controller.get_user_access("alice", max_cache_age_minutes=60)
+    print(f"Alice has access to: {list(user_access['resolved_access'].keys())}")
+    
+    # Monitor background tasks
+    task_status = await controller.get_background_task_status()
+    print(f"Background tasks: {task_status}")
+    
+    # Cleanup
+    await controller.close()
+
+# Run async code
+import asyncio
+asyncio.run(main())
+```
+
+## 📚 Complete CRUD Operations
+
+### User Management
+
+The library provides complete CRUD (Create, Read, Update, Delete) operations for users and user groups:
+
+```python
+from medha_one_access import AccessController, LibraryConfig
+
+# Initialize with application filtering and performance optimization
+config = LibraryConfig(
+    database_url="postgresql://user:pass@localhost/db",
+    secret_key="your-secret-key",
+    application_name="MyApp",  # Optional: filters all operations by application
+    # 🚀 Performance optimization settings
+    enable_caching=True,        # Enable advanced caching (default: True)
+    cache_ttl=300,             # Cache TTL in seconds (default: 5 minutes)
+    enable_bulk_queries=True,   # Enable bulk operations (default: True) 
+    enable_audit_trail=False,   # Disable audit for speed (default: False)
+    max_pool_size=20,          # Database connection pool size (default: 20)
+    pool_recycle_time=3600,    # Pool recycle time in seconds (default: 1 hour)
+)
+controller = AccessController(config)
+
+# CREATE USER
+user = controller.create_user({
+    "id": "john.doe",
+    "type": "USER",
+    "email": "john.doe@company.com",
+    "first_name": "John",
+    "last_name": "Doe",
+    "department": "Engineering",
+    "role": "Senior Developer",
+    "active": True
+})
+
+# CREATE USER GROUP
+group = controller.create_user({
+    "id": "senior_developers",
+    "type": "USERGROUP",
+    "name": "Senior Developers",
+    "expression": "john.doe+jane.smith+alice.wilson",
+    "description": "Senior development team members",
+    "active": True
+})
+
+# GET USER
+user = controller.get_user("john.doe")
+print(f"Found user: {user.first_name} {user.last_name}")
+
+# UPDATE USER
+updated_user = controller.update_user("john.doe", {
+    "role": "Lead Developer",
+    "department": "Platform Engineering"
+})
+
+# DELETE USER
+success = controller.delete_user("john.doe")
+print(f"User deleted: {success}")
+
+# LIST USERS
+all_users = controller.list_users()                    # All users
+users_only = controller.list_users(user_type="USER")   # Individual users only
+groups_only = controller.list_users(user_type="USERGROUP")  # User groups only
+
+# Pagination
+paginated_users = controller.list_users(skip=0, limit=50)
+```
+
+### Artifact Management
+
+Complete CRUD operations for resources and resource groups:
+
+```python
+# CREATE ARTIFACT/RESOURCE
+artifact = controller.create_artifact({
+    "id": "sales_dashboard", 
+    "type": "RESOURCE",
+    "name": "Sales Analytics Dashboard",
+    "description": "Real-time sales performance dashboard",
+    "application": "Analytics",  # Optional - auto-set if application_name configured
+    "active": True
+})
+
+# CREATE ARTIFACT GROUP
+resource_group = controller.create_artifact({
+    "id": "analytics_suite",
+    "type": "RESOURCEGROUP", 
+    "name": "Analytics Suite",
+    "expression": "sales_dashboard+marketing_dashboard+financial_reports",
+    "description": "Complete analytics platform",
+    "active": True
+})
+
+# GET ARTIFACT
+artifact = controller.get_artifact("sales_dashboard")
+print(f"Found resource: {artifact.name}")
+
+# UPDATE ARTIFACT
+updated_artifact = controller.update_artifact("sales_dashboard", {
+    "name": "Enhanced Sales Dashboard",
+    "description": "Advanced sales analytics with ML insights",
+    "active": True
+})
+
+# DELETE ARTIFACT  
+success = controller.delete_artifact("sales_dashboard")
+print(f"Artifact deleted: {success}")
+
+# LIST ARTIFACTS
+all_artifacts = controller.list_artifacts()                           # All artifacts
+resources_only = controller.list_artifacts(artifact_type="RESOURCE") # Individual resources
+groups_only = controller.list_artifacts(artifact_type="RESOURCEGROUP") # Resource groups
+app_artifacts = controller.list_artifacts(application="Analytics")    # By application
+active_only = controller.list_artifacts(active=True)                 # Active only
+
+# Pagination
+paginated_artifacts = controller.list_artifacts(skip=0, limit=100)
+```
+
+### Access Rules Management
+
+Complete CRUD for access control rules:
+
+```python
+# CREATE ACCESS RULE
+rule = controller.create_access_rule({
+    "id": "analytics_access",
+    "name": "Analytics Team Access",
+    "user_expression": "data_analysts+senior_developers",
+    "resource_expression": "analytics_suite-sensitive_financial_data", 
+    "permissions": ["READ", "WRITE", "EXPORT"],
+    "application": "Analytics",
+    "active": True,
+    "time_constraints": {
+        "startTime": "08:00",
+        "endTime": "18:00",
+        "daysOfWeek": [1, 2, 3, 4, 5],  # Monday-Friday
+        "startDate": "2024-01-01",
+        "endDate": "2024-12-31"
+    }
+})
+
+# GET ACCESS RULE
+rule = controller.get_access_rule("analytics_access") 
+
+# UPDATE ACCESS RULE
+updated_rule = controller.update_access_rule("analytics_access", {
+    "permissions": ["READ", "WRITE", "EXPORT", "ADMIN"],
+    "user_expression": "data_analysts+senior_developers+team_leads"
+})
+
+# DELETE ACCESS RULE
+success = controller.delete_access_rule("analytics_access")
+
+# LIST ACCESS RULES
+all_rules = controller.list_access_rules()
+filtered_rules = controller.list_access_rules(
+    user_expression="developers",
+    resource_expression="dashboards", 
+    application="Analytics",
+    active=True,
+    skip=0,
+    limit=50
+)
+```
+
+### Application Filtering
+
+When `application_name` is configured, all operations are automatically filtered:
+
+```python
+# Configure with application filtering
+config = LibraryConfig(
+    database_url="postgresql://user:pass@localhost/db",
+    secret_key="your-secret-key", 
+    application_name="CRM"  # All operations filter by this application
+)
+controller = AccessController(config)
+
+# Create operations automatically set application field
+artifact = controller.create_artifact({
+    "id": "customer_dashboard",
+    "type": "RESOURCE",
+    "name": "Customer Dashboard"
+    # application="CRM" is automatically set
+})
+
+# List operations only return CRM application data
+crm_artifacts = controller.list_artifacts()  # Only CRM artifacts
+crm_rules = controller.list_access_rules()   # Only CRM access rules
+
+# Environment variable support
+# Set MEDHA_APPLICATION_NAME=CRM
+config = LibraryConfig.from_env()
+controller = AccessController(config)  # Auto-filters by CRM
+```
+
+### Batch Operations
+
+Efficient bulk operations for large datasets:
+
+```python
+# Batch create users
+users_data = [
+    {"id": f"user{i}", "type": "USER", "email": f"user{i}@company.com"} 
+    for i in range(100)
+]
+
+created_users = []
+for user_data in users_data:
+    try:
+        user = controller.create_user(user_data)
+        created_users.append(user)
+    except Exception as e:
+        print(f"Failed to create {user_data['id']}: {e}")
+
+# Upsert operation (create or update)
+user = controller.create_user({
+    "id": "existing_user",
+    "type": "USER", 
+    "email": "updated@company.com"
+}, upsert=True)  # Updates if exists, creates if not
+```
+
+## 🏗️ Architecture
+
+### BODMAS Resolution Priority
+
+The system resolves access using mathematical precedence rules:
+
+1. **UserGroup × ResourceGroup** (Highest Priority)
+2. **UserGroup × Individual Resource**  
+3. **Individual User × ResourceGroup**
+4. **Individual User × Individual Resource** (Lowest Priority)
+
+This ensures predictable and intuitive access resolution where group-level permissions take precedence over individual assignments.
+
+### Expression System
+
+Use mathematical-style expressions for flexible access definitions:
+
+#### Basic Expressions
+```python
+# Include specific users/resources
+"alice+bob+charlie"
+
+# Include groups and exclude individuals  
+"developers+admins-intern_user"
+
+# Complex nested expressions
+"senior_devs+(junior_devs-trainee)+alice"
+```
+
+#### Quoted Entity Support (v0.2.0+)
+Handle entities with special characters using quotes:
+
+```python
+# Entities with hyphens, spaces, and special characters
+'"user-service-api"+"admin-panel"+"database-server"'
+
+# Mixed quoted and unquoted entities
+'alice+"user-with-hyphens"+bob+"Service: Analytics"'
+
+# Entities with colons, commas, apostrophes
+'"Entity: Test"+"Entity, Demo"+"FD\'s Snapshot"'
+
+# Complex expressions with quoted entities
+'"analytics-team"+(developers-"intern-users")+"team-leads"'
+```
+
+#### Expression Validation
+The system automatically validates expressions and provides helpful error messages:
+
+```python
+# Validate expressions
+result = controller.validate_expression('"user-api"+"admin-panel"', "user")
+if result["valid"]:
+    print(f"Expression resolves to: {result['resolved_entities']}")
+else:
+    print(f"Validation error: {result['error']}")
+```
+
+### Time Constraints
+
+Schedule access with sophisticated time-based rules:
+
+```python
+controller.create_access_rule(
+    rule_id="business-hours-only",
+    user_expression="employees",
+    resource_expression="production-systems", 
+    permissions=["READ"],
+    time_constraints={
+        "startTime": "09:00",
+        "endTime": "17:00", 
+        "daysOfWeek": [1, 2, 3, 4, 5],  # Monday-Friday
+        "startDate": "2024-01-01",
+        "endDate": "2024-12-31"
+    }
+)
+```
+
+## 🔄 Background Processing & Auto-Recalculation
+
+### Automatic Background Recalculation
+
+The library automatically recalculates affected user access when data changes, ensuring consistency while maintaining performance:
+
+#### Sync Controller Background Processing
+
+```python
+from medha_one_access import AccessController, LibraryConfig
+
+# Configure background processing
+config = LibraryConfig(
+    database_url="postgresql://user:pass@localhost/db",
+    secret_key="your-secret-key",
+    # Background processing settings
+    enable_auto_recalculation=True,    # Enable auto-recalculation (default: True)
+    auto_recalc_mode="immediate",      # "immediate" or "batched" 
+    auto_recalc_batch_size=50,         # Batch size for batched mode
+    background_threads=3               # Thread pool size for background tasks
+)
+
+controller = AccessController(config)
+
+# Operations return immediately, recalculation happens in background
+controller.update_user("developers", {"expression": "alice+bob+new_dev"})
+# ↑ Returns immediately, affected users recalculated in background
+
+# Monitor background tasks
+task_count = controller.get_background_task_count()
+task_status = controller.get_background_task_status()
+
+print(f"Active background tasks: {task_count}")
+print(f"Task details: {task_status}")
+
+# Cleanup when done
+controller.close()  # Shuts down background thread pool
+```
+
+#### Async Controller Advanced Task Management
+
+```python
+from medha_one_access import AsyncAccessController, LibraryConfig
+
+async def main():
+    # Configure advanced background processing
+    config = LibraryConfig(
+        database_url="postgresql://user:pass@localhost/db",
+        secret_key="your-secret-key",
+        # Advanced async settings
+        background_workers=5,          # Number of background workers
+        max_queue_size=10000,         # Task queue size
+        enable_auto_recalculation=True
+    )
+
+    controller = AsyncAccessController(config)
+    await controller.initialize()
+
+    # All operations trigger intelligent background recalculation
+    await controller.update_user("team_leads", {"expression": "alice+bob+charlie"})
+    
+    # Advanced task monitoring
+    queue_stats = await controller.get_background_queue_stats()
+    task_status = await controller.get_background_task_status("task_id")
+    
+    print(f"Queue stats: {queue_stats}")
+    print(f"Task status: {task_status}")
+    
+    # Wait for specific tasks to complete (useful for testing)
+    await controller.wait_for_background_tasks(timeout=30)
+    
+    await controller.close()
+```
+
+### Configuration Options
+
+Control how background recalculation works:
+
+```python
+config = LibraryConfig(
+    # Auto-recalculation settings
+    enable_auto_recalculation=True,    # Enable/disable auto-recalculation
+    auto_recalc_mode="immediate",      # "immediate", "batched", or "disabled"
+    auto_recalc_batch_size=50,         # Users per batch in batched mode
+    
+    # Background processing (sync controller)
+    background_threads=3,              # Thread pool size
+    
+    # Background processing (async controller)  
+    background_workers=5,              # Worker count
+    max_queue_size=10000,             # Queue capacity
+)
+```
+
+### When Auto-Recalculation Triggers
+
+Background recalculation automatically triggers when:
+
+- **User Group Expressions Change**: Adding/removing users from groups
+- **User Deletions**: When user groups lose members
+- **Access Rule Changes**: When permissions are modified
+- **Artifact Changes**: When resource groups are updated
+- **Resource Deletions**: When resources are removed from groups
+
+## ⚡ Performance Configuration
+
+The library includes advanced performance optimizations for high-load production environments:
+
+### Performance Settings
+
+```python
+from medha_one_access import AccessController, LibraryConfig
+
+# High-performance configuration for production
+config = LibraryConfig(
+    database_url="postgresql://user:pass@localhost/db",
+    secret_key="your-secret-key",
+    
+    # 🚀 Performance optimization settings
+    enable_caching=True,        # LRU caching for expressions and queries
+    cache_ttl=300,             # Cache for 5 minutes (adjust based on data freshness needs)
+    enable_bulk_queries=True,   # Use bulk operations to reduce N+1 problems
+    enable_audit_trail=False,   # Disable for 2-3x faster resolution
+    max_pool_size=50,          # Increase for high concurrency (default: 20)
+    pool_recycle_time=1800,    # Recycle connections every 30 minutes
+)
+
+controller = AccessController(config)
+```
+
+### Environment Variables
+
+Configure performance settings via environment variables:
+
+```bash
+# Core settings
+export MEDHA_DATABASE_URL="postgresql://user:pass@localhost/db"
+export MEDHA_SECRET_KEY="your-secret-key"
+export MEDHA_APPLICATION_NAME="MyApp"
+
+# 🚀 Performance settings
+export MEDHA_ENABLE_CACHING=true           # Enable caching (default: true)
+export MEDHA_CACHE_TTL=300                # Cache TTL in seconds (default: 300)
+export MEDHA_ENABLE_BULK_QUERIES=true     # Enable bulk operations (default: true)
+export MEDHA_ENABLE_AUDIT_TRAIL=false     # Disable audit for speed (default: false)
+export MEDHA_MAX_POOL_SIZE=50             # Connection pool size (default: 20)
+export MEDHA_POOL_RECYCLE_TIME=1800       # Pool recycle seconds (default: 3600)
+
+# Load configuration from environment
+config = LibraryConfig.from_env()
+controller = AccessController(config)
+```
+
+### Performance Features
+
+#### 1. **Multi-Level Caching**
+- **Expression Parsing Cache**: 1000 parsed expressions cached
+- **Expression Validation Cache**: 500 validation results cached
+- **Session-Level Caching**: Eliminates repeated queries within operations
+- **Global Performance Cache**: 10,000 items with configurable TTL
+
+#### 2. **Database Optimizations**
+- **Strategic Indexes**: Added on all critical query columns
+- **Connection Pooling**: Optimized pool sizes and recycling
+- **Bulk Operations**: New methods to reduce N+1 query problems
+- **Query Pre-filtering**: Only processes relevant rules per application/user
+
+#### 3. **Algorithm Optimizations**
+- **Smart Rule Filtering**: Pre-filters rules before BODMAS processing
+- **Optional Audit Trail**: Disabled by default for 2-3x speed improvement
+- **Memoized Resolutions**: Caches resolved expressions across operations
+
+### Performance Benchmarks
+
+| Operation | Before | After | Improvement |
+|-----------|--------|-------|-------------|
+| **Simple access check** | ~5ms | ~0.5ms | **10x faster** |
+| **Complex group resolution** | ~500ms | ~50ms | **10x faster** |
+| **High-load scenarios** | 100 req/s | 1000+ req/s | **10x throughput** |
+| **Database queries** | 100+ per operation | 5-10 per operation | **90% reduction** |
+
+### Usage Recommendations
+
+#### High-Performance Mode (Production)
+```python
+config = LibraryConfig(
+    database_url="postgresql://...",
+    secret_key="...",
+    enable_caching=True,          # Enable all caching
+    enable_audit_trail=False,     # Disable for maximum speed
+    max_pool_size=50,            # Scale for high load
+)
+
+# Fast access resolution (no audit)
+access = controller.resolve_user_access("user@example.com")
+```
+
+#### Development Mode (Full Audit)
+```python
+config = LibraryConfig(
+    database_url="postgresql://...",
+    secret_key="...",
+    enable_audit_trail=True,      # Enable for debugging
+    cache_ttl=30,                # Short cache for testing
+)
+
+# Full audit trail for development
+access = controller.resolve_user_access("user@example.com", include_audit=True)
+print(access['audit_trail'])  # See detailed resolution steps
+```
+
+## 🌐 Comprehensive REST API
+
+### Available Endpoints
+
+The library provides 50+ REST API endpoints organized into 11 specialized routers:
+
+#### User Management (`/users`)
+```http
+POST   /users                     # Create user/user group
+GET    /users/{user_id}          # Get user details  
+PUT    /users/{user_id}          # Update user
+DELETE /users/{user_id}          # Delete user
+GET    /users                    # List users with filtering
+GET    /users/{user_id}/groups   # Get user's groups
+```
+
+#### Artifact Management (`/artifacts`)
+```http
+POST   /artifacts                     # Create artifact/resource group
+GET    /artifacts/{artifact_id}      # Get artifact details
+PUT    /artifacts/{artifact_id}      # Update artifact  
+DELETE /artifacts/{artifact_id}      # Delete artifact
+GET    /artifacts                    # List artifacts with filtering
+GET    /artifacts/{artifact_id}/groups # Get artifact's groups
+```
+
+#### Access Rules (`/access-rules`)
+```http
+POST   /access-rules                # Create access rule
+GET    /access-rules/{rule_id}      # Get access rule details
+PUT    /access-rules/{rule_id}      # Update access rule
+DELETE /access-rules/{rule_id}      # Delete access rule
+GET    /access-rules                # List access rules with filtering
+POST   /access-rules/validate-expression # Validate expressions
+```
+
+#### Access Resolution (`/access`)
+```http
+POST   /access/resolve/{user_id}    # Resolve all user access (BODMAS)
+POST   /access/check                # Check specific access
+GET    /access/user/{user_id}       # Get user access (alias)
+GET    /access/user/{user_id}/cached # Get cached user access (fast)
+GET    /access/resource/{resource_id} # Get resource access
+GET    /access/usergroup/{group_id} # Get user group access
+GET    /access/resourcegroup/{group_id} # Get resource group access
+```
+
+#### User Groups (`/usergroups`)
+```http
+GET    /usergroups/{group_id}           # Get user group details
+GET    /usergroups/{group_id}/members   # Get group members
+```
+
+#### Resource Groups (`/resourcegroups`)
+```http
+GET    /resourcegroups/{group_id}          # Get resource group details
+GET    /resourcegroups/{group_id}/contents # Get group contents
+```
+
+#### Access Summaries (`/summaries`)
+```http
+GET    /summaries/{user_id}           # Get access summary
+POST   /summaries/calculate/{user_id} # Calculate access summary
+GET    /summaries/stats/overview      # Get overview statistics
+```
+
+#### Data Import/Export (`/data`)
+```http
+POST   /data/import                   # Import data from JSON
+GET    /data/export                   # Export data to JSON
+POST   /data/validate                 # Validate data integrity
+GET    /data/health                   # Health check
+```
+
+#### Expression Tools (`/expressions`)
+```http
+POST   /expressions/validate          # Validate expressions
+```
+
+#### Reporting (`/reporting`)
+```http
+GET    /reporting/access-matrix        # Access control matrix
+GET    /reporting/user-permissions/{user_id} # User permission report
+```
+
+### API Examples
+
+```python
+import requests
+
+base_url = "http://localhost:8000/api/access"
+
+# Create a user group
+response = requests.post(f"{base_url}/users", json={
+    "id": "developers",
+    "type": "USERGROUP", 
+    "expression": '"alice"+"bob"+"charlie"',
+    "description": "Development team"
+})
+
+# Check access
+response = requests.post(f"{base_url}/access/check", json={
+    "user_id": "alice",
+    "resource_id": "api-server", 
+    "permission": "READ"
+})
+print(f"Has access: {response.json()['access_granted']}")
+
+# Get user access with caching
+response = requests.get(f"{base_url}/access/user/alice/cached?max_cache_age_minutes=30")
+user_access = response.json()
+print(f"Alice can access: {list(user_access['resolved_access'].keys())}")
+
+# Import bulk data
+with open("access_data.json", "r") as f:
+    data = json.load(f)
+response = requests.post(f"{base_url}/data/import", json=data)
+print(f"Import status: {response.json()}")
+```
+
+## 🔧 Advanced Usage
+
+### Database Setup
+
+```bash
+# Initialize database
+medha-access init-db --database-url postgresql://user:pass@localhost/db
+
+# Run migrations  
+medha-access migrate
+
+# Check database status
+medha-access status
+```
+
+### FastAPI Integration
+
+#### Synchronous Integration (Recommended)
+
+```python
+from fastapi import FastAPI
+from medha_one_access import LibraryConfig, mount_access_control_routes
+
+app = FastAPI(title="My API with Access Control")
+
+# Mount access control routes (sync version)
+controller = mount_access_control_routes(
+    app=app,
+    config=LibraryConfig(
+        database_url="postgresql://user:pass@localhost/db",
+        secret_key="your-secret-key",
+        api_prefix="/api/access",
+        application_name="MyApp"  # Optional: filters all operations
+    )
+)
+
+# Your API now has 50+ endpoints like:
+# POST /api/access/users                    - Create user
+# GET /api/access/users/{user_id}/access   - Get user access  
+# POST /api/access/check                   - Check access
+# GET /api/access/health                   - Health check
+# POST /api/access/data/import             - Import data
+# GET /api/access/reporting/access-matrix  - Access reports
+```
+
+#### Asynchronous Integration (High-Performance)
+
+```python
+from fastapi import FastAPI
+from medha_one_access import LibraryConfig, mount_async_access_control_routes
+
+app = FastAPI(title="High-Performance API with Access Control")
+
+@app.on_event("startup")
+async def startup():
+    # Mount async access control routes
+    global async_controller
+    async_controller = await mount_async_access_control_routes(
+        app=app,
+        config=LibraryConfig(
+            database_url="postgresql://user:pass@localhost/db",
+            secret_key="your-secret-key", 
+            api_prefix="/api/access",
+            application_name="MyApp",
+            # Performance settings
+            background_workers=5,      # Background task workers
+            max_pool_size=20,         # DB connection pool
+            enable_caching=True       # Advanced caching
+        )
+    )
+
+@app.on_event("shutdown") 
+async def shutdown():
+    await async_controller.close()
+
+# Async version provides the same 50+ endpoints with:
+# - Non-blocking background recalculation
+# - Advanced task queue management
+# - Real-time task monitoring
+# - Higher throughput and concurrency
+```
+
+### Django Integration
+
+```python
+from django.conf import settings
+from medha_one_access import AccessController
+
+# In your Django app
+controller = AccessController(database_url=settings.DATABASES['access_control'])
+
+def check_user_permission(request, resource_id, permission):
+    return controller.check_access(
+        user_id=request.user.username,
+        resource_id=resource_id,
+        permission=permission
+    )
+```
+
+### Docker Integration
+
+```dockerfile
+FROM python:3.11-slim
+
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY . /app
+WORKDIR /app
+CMD ["python", "app.py"]
+```
+
+**requirements.txt:**
+```txt
+medha-one-access[api]
+fastapi>=0.95.0
+uvicorn>=0.21.1
+```
+
+**Docker Compose Example:**
+```yaml
+version: '3.8'
+services:
+  app:
+    build: .
+    environment:
+      - MEDHA_DATABASE_URL=postgresql://user:pass@db:5432/access_db
+      - MEDHA_SECRET_KEY=your-secret-key
+    depends_on:
+      - db
+  
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: access_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+```
+
+### Batch Operations
+
+```python
+# Bulk user creation
+users = [
+    {"id": "alice", "type": "USER", "department": "Engineering"},
+    {"id": "bob", "type": "USER", "department": "Engineering"},
+    {"id": "charlie", "type": "USER", "department": "Marketing"},
+]
+
+for user_data in users:
+    controller.create_user(**user_data)
+
+# Import from JSON
+controller.import_data_from_file("access_data.json")
+
+# Export current state
+controller.export_data_to_file("backup.json")
+```
+
+## ⚙️ Configuration
+
+The library supports extensive configuration for any environment:
+
+### Programmatic Configuration
+
+```python
+from medha_one_access import LibraryConfig
+
+config = LibraryConfig(
+    # Required
+    database_url="postgresql://user:pass@localhost/db",
+    secret_key="your-secret-key",
+
+    # Custom branding (use your own prefix)
+    env_prefix="MYAPP_",              # Default: "MEDHA_"
+    api_prefix="/my-access-api",      # Default: "/access"
+    project_name="My Access Control", # Default: "Access Control Library"
+
+    # Performance tuning
+    max_pool_size=50,
+    global_cache_max_size=100000,
+    background_workers=10,
+)
+```
+
+### Environment Variables
+
+```bash
+export MYAPP_DATABASE_URL="postgresql://user:pass@localhost/db"
+export MYAPP_SECRET_KEY="your-secret-key"
+export MYAPP_API_PREFIX="/my-api"
+export MYAPP_MAX_POOL_SIZE=50
+```
+
+```python
+config = LibraryConfig.from_env(env_prefix="MYAPP_")
+```
+
+### YAML Configuration
+
+```yaml
+# config.yaml
+database_url: "postgresql://user:pass@localhost/db"
+secret_key: "your-secret-key"
+api_prefix: "/my-api"
+max_pool_size: 50
+enable_caching: true
+```
+
+```python
+config = LibraryConfig.from_file("config.yaml")
+```
+
+For complete configuration reference, see [docs/configuration.md](docs/configuration.md).
+
+## 📚 Documentation
+
+### Core Concepts
+
+- **Users**: Individual users or user groups with expression-based membership
+- **Artifacts**: Resources or resource groups with expression-based contents
+- **Access Rules**: Define permissions between user expressions and resource expressions
+- **Time Constraints**: Optional time-based restrictions on access rules
+- **Access Summaries**: Pre-calculated access data for performance optimization
+
+### Documentation Links
+
+- [Configuration Reference](docs/configuration.md) - All 40+ configurable parameters
+- [Security Guide](docs/security.md) - Security best practices
+- [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
+- [API Reference](docs/LIBRARY_API_REFERENCE.md) - Complete API documentation
+
+### Examples
+
+Check the [examples/](examples/) directory for:
+
+- Basic usage patterns
+- FastAPI integration
+- Django integration  
+- Complex expression examples
+- Time constraint scenarios
+- Migration from standalone application
+
+## 🧪 Development
+
+### Setup Development Environment
+
+```bash
+git clone https://github.com/medhaone-analytics/medha-one-access.git
+cd medha-one-access
+pip install -e .[dev]
+
+# Format and lint code
+black medha_one_access/
+flake8 medha_one_access/
+mypy medha_one_access/
+```
+
+### Code Quality
+
+```bash
+# Format code
+black medha_one_access/
+
+# Lint code  
+flake8 medha_one_access/
+
+# Type checking
+mypy medha_one_access/
+```
+
+## 📈 Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
+
+## 🔐 Security
+
+For security best practices and vulnerability reporting, see [SECURITY.md](SECURITY.md).
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.

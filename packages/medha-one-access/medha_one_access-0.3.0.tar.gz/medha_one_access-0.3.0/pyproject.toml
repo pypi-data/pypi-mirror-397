@@ -1,0 +1,173 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "medha-one-access"
+version = "0.3.0"
+description = "Enterprise access control system with BODMAS resolution"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "MedhaOne Analytics", email = "contactmedhaanalytics@gmail.com"},
+]
+maintainers = [
+    {name = "MedhaOne Analytics", email = "contactmedhaanalytics@gmail.com"},
+]
+keywords = [
+    "access-control", 
+    "authorization", 
+    "permissions", 
+    "rbac", 
+    "abac",
+    "bodmas",
+    "expressions",
+    "security",
+    "fastapi",
+    "sqlalchemy",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Systems Administration :: Authentication/Directory",
+    "Typing :: Typed",
+]
+
+dependencies = [
+    "sqlalchemy[asyncio]>=2.0.0",
+    "pydantic", 
+    "asyncpg>=0.28.0",
+    "aiosqlite>=0.19.0",
+    "cryptography",
+    "alembic",
+    "python-dateutil",
+    "aiofiles>=23.0.0",
+    "asyncio-throttle>=1.0.2",
+]
+
+[project.optional-dependencies]
+api = [
+    "fastapi",
+    "uvicorn",
+    "python-multipart",
+]
+cli = [
+    "click",
+    "rich",
+    "typer",
+]
+yaml = [
+    "pyyaml>=6.0",
+]
+dev = [
+    "black",
+    "flake8",
+    "mypy",
+    "sphinx",
+    "sphinx-rtd-theme",
+    "pytest-asyncio>=0.21.0",
+    "aioresponses>=0.7.4",
+]
+all = [
+    "medha-one-access[api,cli,yaml,dev]"
+]
+
+[project.urls]
+Homepage = "https://github.com/medhaone-analytics/medha-one-access"
+Documentation = "https://medha-one-access.readthedocs.io/"
+Repository = "https://github.com/medhaone-analytics/medha-one-access"
+"Bug Reports" = "https://github.com/medhaone-analytics/medha-one-access/issues"
+Changelog = "https://github.com/medhaone-analytics/medha-one-access/blob/main/CHANGELOG.md"
+
+[project.scripts]
+medha-access = "medha_one_access.cli.main:app"
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[tool.setuptools.packages.find]
+exclude = ["examples*", "docs*"]
+
+[tool.setuptools.package-data]
+medha_one_access = [
+    "migrations/alembic.ini",
+    "migrations/script.py.mako", 
+    "migrations/versions/*.py",
+    "py.typed",
+]
+
+# Black configuration
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | build
+  | dist
+  | migrations
+)/
+'''
+
+# Test configurations removed - using for internal distribution only
+
+# MyPy configuration
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "alembic.*",
+    "asyncpg.*",
+    "aiosqlite.*",
+    "aiofiles.*",
+    "asyncio_throttle.*",
+    "factory.*",
+]
+ignore_missing_imports = true
+
+# Flake8 configuration (in setup.cfg or tox.ini typically, but shown here for completeness)
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503"]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    "*.egg-info",
+    ".venv",
+    ".tox",
+    "migrations",
+]
