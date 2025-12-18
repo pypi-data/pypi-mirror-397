@@ -1,0 +1,69 @@
+[![Latest Version](https://img.shields.io/pypi/v/pyearcal.svg)](https://pypi.python.org/pypi/pyearcal/)
+
+pyearcal
+========
+Generate your year calendar in Python. The result is a PDF file with 12 pages containing an image and a grid of days.
+
+### Installation
+
+We recommend using [uv tool](https://uvtool.readthedocs.io/en/latest/) to use and/or install pyearcal as a tool.
+
+```
+uv tool install pyearcal
+```
+
+or you can use it without installation (via `uvx`)
+
+### Usage
+
+1. Prepare a directory with 12 images (different image providers are planned)
+2. Initialize calendar with all options.
+    * Language (locales for English, Czech, Slovak, Italian)
+    * Special days (national holidays are included + add your own)
+    * Fonts, colours
+3. Render it to PDF
+
+### Usage of the script
+
+```
+Usage: uvx pyearcal [OPTIONS] [OUTPUT]
+
+Options:
+  -s, --source PATH
+  -l, --locale [en|cs|it|sk]
+  -y, --year INTEGER
+  -f, --font TEXT
+  -d, --special-days TEXT
+  ```
+
+### Example code
+
+```python
+# Import important modules
+from pyearcal import YearCalendar
+from pyearcal.image_sources import UnsortedImageDirectory
+from datetime import date
+from pyearcal.l10n import CzechLocale
+
+year = date.today().year + 1
+
+# Use all pictures from "images" directory
+image_source = UnsortedImageDirectory("images")
+
+# Use Czech locale and holidays
+locale = CzechLocale()
+
+# Set a few special days
+special_days = [
+    date(year, 1, 31) # Guido van Rossum's birthday
+]
+
+calendar = YearCalendar(year, image_source, locale, special_days)
+calendar.render("calendar.pdf")
+```
+
+You can take **FlickrDownloader** as an inspiration for developing a more sophisticated image source.
+
+### Example with real pictures
+
+[India Faces Calendar 2014 (80 MB)](http://pyearcal.vzdusne.cz/calendar.pdf)
