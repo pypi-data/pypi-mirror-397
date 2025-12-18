@@ -1,0 +1,119 @@
+groups:
+- neurodata_type_def: Probe
+  neurodata_type_inc: Device
+  doc: Neural probe object according to probeinterface specification
+  attributes:
+  - name: ndim
+    dtype: int
+    default_value: 2
+    doc: dimension of the probe
+    required: false
+  - name: model_name
+    dtype: text
+    doc: model of the probe; e.g. 'Neuropixels 1.0'
+    required: false
+  - name: serial_number
+    dtype: text
+    doc: serial number of the probe
+    required: false
+  - name: unit
+    dtype: text
+    default_value: micrometer
+    doc: SI unit used to define the probe; e.g. 'meter'.
+    required: false
+  - name: annotations
+    dtype: text
+    doc: annotations attached to the probe
+    required: false
+  datasets:
+  - name: planar_contour
+    dtype: float
+    dims:
+    - - num_points
+      - x
+    - - num_points
+      - x, y
+    - - num_points
+      - x, y, z
+    shape:
+    - - null
+      - 1
+    - - null
+      - 2
+    - - null
+      - 3
+    doc: The planar polygon that outlines the probe contour.
+  groups:
+  - neurodata_type_inc: ContactTable
+    doc: Neural probe contacts according to probeinterface specification
+- neurodata_type_def: ContactTable
+  neurodata_type_inc: DynamicTable
+  doc: Neural probe contacts according to probeinterface specification
+  datasets:
+  - name: contact_position
+    neurodata_type_inc: VectorData
+    dtype: float
+    dims:
+    - - num_contacts
+      - x, y
+    - - num_contacts
+      - x, y, z
+    shape:
+    - - null
+      - 2
+    - - null
+      - 3
+    doc: position of the contact
+  - name: contact_shape
+    neurodata_type_inc: VectorData
+    dtype: text
+    doc: shape of the contact; e.g. 'circle'
+  - name: contact_id
+    neurodata_type_inc: VectorData
+    dtype: text
+    doc: unique ID of the contact
+    quantity: '?'
+  - name: shank_id
+    neurodata_type_inc: VectorData
+    dtype: text
+    doc: shank ID of the contact
+    quantity: '?'
+  - name: contact_plane_axes
+    neurodata_type_inc: VectorData
+    dtype: float
+    dims:
+    - - num_contacts
+      - v1, v2
+      - x,y
+    - - num_contacts
+      - v1,v2
+      - x, y, z
+    shape:
+    - - null
+      - 2
+      - 2
+    - - null
+      - 2
+      - 3
+    doc: the axes defining the contact plane
+    quantity: '?'
+  - name: radius
+    neurodata_type_inc: VectorData
+    dtype: float
+    doc: radius of a circular contact
+    quantity: '?'
+  - name: width
+    neurodata_type_inc: VectorData
+    dtype: float
+    doc: width of a rectangular or square contact
+    quantity: '?'
+  - name: height
+    neurodata_type_inc: VectorData
+    dtype: float
+    doc: height of a rectangular contact
+    quantity: '?'
+  - name: device_channel_index_pi
+    neurodata_type_inc: VectorData
+    dtype: int
+    doc: index of the channel connected to the contact
+    quantity: '?'
