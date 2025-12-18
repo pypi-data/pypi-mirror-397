@@ -1,0 +1,752 @@
+"""Main module."""
+
+import inspect
+import json
+import logging
+import os
+from copy import deepcopy
+from pathlib import Path
+from typing import Any, Callable, Dict, Optional
+
+import numpy as np
+import pandas as pd
+
+from credtools.cojo import conditional_selection
+from credtools.credibleset import CredibleSet, combine_creds
+from credtools.locus import LocusSet, load_locus_set
+from credtools.meta import meta
+from credtools.qc import locus_qc
+from credtools.wrappers import (
+    run_abf,
+    run_abf_cojo,
+    run_finemap,
+    run_multisusie,
+    run_rsparsepro,
+    run_susie,
+    run_susiex,
+)
+
+logger = logging.getLogger("CREDTOOLS")
+
+
+def _is_success(credible_set: CredibleSet, max_causal: int) -> bool:
+    """
+    Check if fine-mapping result is successful based on credible set count.
+
+    Parameters
+    ----------
+    credible_set : CredibleSet
+        The result from a fine-mapping tool.
+    max_causal : int
+        The max_causal parameter used for fine-mapping.
+
+    Returns
+    -------
+    bool
+        True if successful (0 < n_cs < max_causal), False otherwise.
+    """
+    return 0 < credible_set.n_cs < max_causal
+
+
+def _empty_credible_set(tool: str) -> CredibleSet:
+    """
+    Create an empty CredibleSet when all attempts fail.
+
+    Parameters
+    ----------
+    tool : str
+        The name of the fine-mapping tool.
+
+    Returns
+    -------
+    CredibleSet
+        Empty credible set with n_cs=0.
+    """
+    from credtools.constants import Method
+
+    return CredibleSet(
+        tool=tool,
+        n_cs=0,
+        coverage=0.95,
+        lead_snps=[],
+        snps=[],
+        cs_sizes=[],
+        pips=pd.Series(dtype=float),
+        parameters={"adaptive_failed": True},
+    )
+
+
+def _adaptive_fine_map(
+    locus, tool: str, initial_max_causal: int, tool_func, params: dict
+) -> CredibleSet:
+    """
+    Implement adaptive max_causal logic for fine-mapping tools.
+
+    Parameters
+    ----------
+    locus : Locus
+        The locus to fine-map.
+    tool : str
+        The fine-mapping tool name.
+    initial_max_causal : int
+        Initial max_causal value to try.
+    tool_func : Callable
+        The fine-mapping tool function.
+    params : dict
+        Parameters for the tool function.
+
+    Returns
+    -------
+    CredibleSet
+        Fine-mapping result or empty result if all attempts fail.
+    """
+    max_causal = initial_max_causal
+    logger.info(
+        f"Starting adaptive fine-mapping with {tool}, initial max_causal={max_causal}"
+    )
+
+    # Phase 1: Try initial max_causal and increase if needed
+    try:
+        result = tool_func(locus, max_causal=max_causal, **params)
+        logger.info(
+            f"Initial attempt: found {result.n_cs} credible sets with max_causal={max_causal}"
+        )
+
+        # Success case: found some credible sets but not saturated
+        if _is_success(result, max_causal):
+            logger.info(
+                f"Adaptive fine-mapping successful with max_causal={max_causal}"
+            )
+            return result
+
+        # Too many credible sets: increase max_causal
+        while result.n_cs >= max_causal and max_causal <= 20:
+            max_causal += 5
+            logger.info(
+                f"Too many credible sets found, increasing max_causal to {max_causal}"
+            )
+            try:
+                result = tool_func(locus, max_causal=max_causal, **params)
+                logger.info(
+                    f"Attempt with max_causal={max_causal}: found {result.n_cs} credible sets"
+                )
+                if result.n_cs < max_causal:
+                    logger.info(
+                        f"Adaptive fine-mapping successful after increasing max_causal to {max_causal}"
+                    )
+                    return result
+            except Exception as e:
+                logger.warning(f"Failed with max_causal={max_causal}: {e}")
+                break
+
+    except Exception as e:
+        logger.info(f"Initial attempt failed with max_causal={initial_max_causal}: {e}")
+
+    # Phase 2: If initial attempt failed, decrease max_causal
+    max_causal = initial_max_causal - 1
+    while max_causal >= 1:
+        logger.info(f"Trying reduced max_causal={max_causal}")
+        try:
+            result = tool_func(locus, max_causal=max_causal, **params)
+            logger.info(
+                f"Success with reduced max_causal={max_causal}, found {result.n_cs} credible sets"
+            )
+            return result
+        except Exception as e:
+            logger.info(f"Failed with max_causal={max_causal}: {e}")
+            max_causal -= 1
+
+    # All attempts failed
+    logger.warning(f"All adaptive attempts failed for {tool}, returning empty result")
+    return _empty_credible_set(tool)
+
+
+def _adaptive_fine_map_multi(
+    locus_set: LocusSet,
+    tool: str,
+    initial_max_causal: int,
+    tool_func: Callable,
+    params: dict,
+) -> CredibleSet:
+    """
+    Implement adaptive max_causal logic for multi-input fine-mapping tools.
+
+    This function applies the same adaptive algorithm as _adaptive_fine_map(),
+    but operates on a LocusSet instead of a single Locus. The algorithm:
+
+    Phase 1 (Increase): Start with initial_max_causal, if n_cs >= max_causal,
+                        increase by 5 (max 20)
+    Phase 2 (Decrease): If initial fails, decrease from initial-1 to 1
+
+    Parameters
+    ----------
+    locus_set : LocusSet
+        The locus set to fine-map (containing multiple loci/populations).
+    tool : str
+        The fine-mapping tool name ("multisusie" or "susiex").
+    initial_max_causal : int
+        Initial max_causal value to try.
+    tool_func : Callable
+        The fine-mapping tool function.
+    params : dict
+        Parameters for the tool function.
+
+    Returns
+    -------
+    CredibleSet
+        Fine-mapping result or empty result if all attempts fail.
+    """
+    max_causal = initial_max_causal
+    logger.info(
+        f"Starting adaptive fine-mapping with {tool} on {locus_set.n_loci} loci, "
+        f"initial max_causal={max_causal}"
+    )
+
+    # Phase 1: Try initial max_causal and increase if needed
+    try:
+        result = tool_func(locus_set, max_causal=max_causal, **params)
+        logger.info(
+            f"Initial attempt: found {result.n_cs} credible sets with max_causal={max_causal}"
+        )
+
+        # Success case: found some credible sets but not saturated
+        if _is_success(result, max_causal):
+            logger.info(
+                f"Adaptive fine-mapping successful with max_causal={max_causal}"
+            )
+            return result
+
+        # Too many credible sets: increase max_causal
+        while result.n_cs >= max_causal and max_causal <= 20:
+            max_causal += 5
+            logger.info(
+                f"Too many credible sets found, increasing max_causal to {max_causal}"
+            )
+            try:
+                result = tool_func(locus_set, max_causal=max_causal, **params)
+                logger.info(
+                    f"Attempt with max_causal={max_causal}: found {result.n_cs} credible sets"
+                )
+                if result.n_cs < max_causal:
+                    logger.info(
+                        f"Adaptive fine-mapping successful after increasing max_causal to {max_causal}"
+                    )
+                    return result
+            except Exception as e:
+                logger.warning(f"Failed with max_causal={max_causal}: {e}")
+                break
+
+    except Exception as e:
+        logger.info(f"Initial attempt failed with max_causal={initial_max_causal}: {e}")
+
+    # Phase 2: If initial attempt failed, decrease max_causal
+    max_causal = initial_max_causal - 1
+    while max_causal >= 1:
+        logger.info(f"Trying reduced max_causal={max_causal}")
+        try:
+            result = tool_func(locus_set, max_causal=max_causal, **params)
+            logger.info(
+                f"Success with reduced max_causal={max_causal}, found {result.n_cs} credible sets"
+            )
+            return result
+        except Exception as e:
+            logger.info(f"Failed with max_causal={max_causal}: {e}")
+            max_causal -= 1
+
+    # All attempts failed
+    logger.warning(f"All adaptive attempts failed for {tool}, returning empty result")
+    return _empty_credible_set(tool)
+
+
+def fine_map(
+    locus_set: LocusSet,
+    tool: str = "susie",
+    max_causal: int = 5,
+    adaptive_max_causal: bool = False,
+    set_L_by_cojo: bool = True,
+    p_cutoff: float = 5e-8,
+    collinear_cutoff: float = 0.9,
+    window_size: int = 10000000,
+    maf_cutoff: float = 0.01,
+    diff_freq_cutoff: float = 0.2,
+    combine_cred: str = "union",
+    combine_pip: str = "max",
+    jaccard_threshold: float = 0.1,
+    timeout_minutes: Optional[float] = None,
+    strategy: Optional[str] = None,  # Deprecated parameter
+    significant_threshold: float = 5e-8,
+    **kwargs,
+) -> CredibleSet:
+    """
+    Perform fine-mapping on a locus set.
+
+    Parameters
+    ----------
+    locus_set : LocusSet
+        Locus set to fine-mapping.
+    tool : str
+        Fine-mapping tool. Choose from ["abf", "abf_cojo", "finemap", "rsparsepro", "susie", "multisusie", "susiex"]
+        - Single-input tools (abf, abf_cojo, finemap, rsparsepro, susie): Process each locus individually
+        - Multi-input tools (multisusie, susiex): Process all loci together
+        When using single-input tools with multiple loci, results are automatically combined
+    combine_cred : str, optional
+        Method to combine credible sets, by default "union".
+        Options: "union", "intersection", "cluster".
+        "union":        Union of all credible sets to form a merged credible set.
+        "intersection": Frist merge the credible sets from the same tool,
+                        then take the intersection of all merged credible sets.
+                        no credible set will be returned if no common SNPs found.
+        "cluster":      Merge credible sets with Jaccard index > 0.1.
+    combine_pip : str, optional
+        Method to combine PIPs, by default "max".
+        Options: "max", "min", "mean", "meta".
+        "meta": PIP_meta = 1 - prod(1 - PIP_i), where i is the index of tools,
+                PIP_i = 0 when the SNP is not in the credible set of the tool.
+        "max":  Maximum PIP value for each SNP across all tools.
+        "min":  Minimum PIP value for each SNP across all tools.
+        "mean": Mean PIP value for each SNP across all tools.
+    jaccard_threshold : float, optional
+        Jaccard index threshold for the "cluster" method, by default 0.1.
+    timeout_minutes : Optional[float], optional
+        Maximum runtime per locus in minutes when running the FINEMAP tool. Defaults to 30 minutes for FINEMAP.
+        Ignored for other tools.
+    max_causal : int, optional
+        Maximum number of causal variants, by default 5.
+    adaptive_max_causal : bool, optional
+        Enable adaptive max_causal parameter tuning, by default False.
+        When True, automatically adjusts max_causal based on results:
+        - If credible sets >= max_causal, increase by 5 (up to 20)
+        - If convergence fails, decrease by 1 (down to 1)
+        Applies to: finemap, susie, rsparsepro (per-locus), multisusie, susiex (LocusSet-level).
+    strategy : str, optional
+        DEPRECATED. This parameter is no longer used and will be removed in a future version.
+        The strategy is now automatically determined based on the tool and data structure.
+    significant_threshold : float, optional
+        Minimum p-value required for variants to be considered significant. If no variants
+        pass this threshold, single-input tools return empty credible sets with zero posterior
+        probabilities. Defaults to 5e-8.
+    """
+    # Deprecation warning for strategy parameter
+    if strategy is not None:
+        import warnings
+
+        warnings.warn(
+            "The 'strategy' parameter is deprecated and will be removed in a future version. "
+            "The strategy is now automatically determined based on the tool and data structure.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+    kwargs.setdefault("significant_threshold", significant_threshold)
+
+    # Extract purity parameter for centralized filtering
+    purity_threshold = kwargs.get("purity", 0.0)
+
+    # Handle timeout defaults for FINEMAP
+    if timeout_minutes is None and tool == "finemap":
+        timeout_minutes = 30.0
+    if timeout_minutes is not None:
+        timeout_minutes = float(timeout_minutes)
+        if timeout_minutes <= 0:
+            raise ValueError("timeout_minutes must be a positive value.")
+        kwargs["timeout_minutes"] = timeout_minutes
+
+    # Define tool categories
+    single_input_tools = ["abf", "abf_cojo", "finemap", "rsparsepro", "susie"]
+    multi_input_tools = ["multisusie", "susiex"]
+
+    # Tool function mapping
+    tool_func_dict: Dict[str, Callable[..., Any]] = {
+        "abf": run_abf,
+        "abf_cojo": run_abf_cojo,
+        "finemap": run_finemap,
+        "rsparsepro": run_rsparsepro,
+        "susie": run_susie,
+        "multisusie": run_multisusie,
+        "susiex": run_susiex,
+    }
+
+    # Get tool-specific parameters
+    inspect_dict = {
+        "abf": set(inspect.signature(run_abf).parameters),
+        "abf_cojo": set(inspect.signature(run_abf_cojo).parameters),
+        "finemap": set(inspect.signature(run_finemap).parameters),
+        "rsparsepro": set(inspect.signature(run_rsparsepro).parameters),
+        "susie": set(inspect.signature(run_susie).parameters),
+        "multisusie": set(inspect.signature(run_multisusie).parameters),
+        "susiex": set(inspect.signature(run_susiex).parameters),
+    }
+    params_dict = {}
+    for t, args in inspect_dict.items():
+        params_dict[t] = {k: v for k, v in kwargs.items() if k in args}
+
+    # Automatic strategy selection based on tool type
+    if tool in multi_input_tools:
+        # Multi-input tools: directly process the entire LocusSet
+        logger.info(f"Using multi-input tool {tool} to process {locus_set.n_loci} loci")
+
+        # Use adaptive logic if enabled
+        if adaptive_max_causal:
+            combined = _adaptive_fine_map_multi(
+                locus_set,
+                tool,
+                max_causal,
+                tool_func_dict[tool],
+                params_dict[tool],
+            )
+        else:
+            combined = tool_func_dict[tool](
+                locus_set, max_causal=max_causal, **params_dict[tool]
+            )
+
+        combined.set_per_locus_results({})
+        return combined
+
+    elif tool in single_input_tools:
+        if locus_set.n_loci == 1:
+            # Single locus: direct analysis
+            logger.info(f"Using single-input tool {tool} for single locus")
+            locus = locus_set.loci[0]
+
+            # COJO analysis for max_causal if enabled (skip for abf_cojo as it handles its own)
+            if set_L_by_cojo and tool != "abf_cojo":
+                max_causal_cojo = len(
+                    conditional_selection(
+                        locus,
+                        p_cutoff=p_cutoff,
+                        collinear_cutoff=collinear_cutoff,
+                        window_size=window_size,
+                        maf_cutoff=maf_cutoff,
+                        diff_freq_cutoff=diff_freq_cutoff,
+                    )
+                )
+                if max_causal_cojo == 0:
+                    logger.warning(
+                        "No significant SNPs found by COJO, using max_causal=1"
+                    )
+                    max_causal_cojo = 1
+                max_causal = max_causal_cojo
+                logger.info(f"COJO determined max_causal={max_causal}")
+
+            # Use adaptive logic if enabled
+            if adaptive_max_causal and tool in ["finemap", "susie", "rsparsepro"]:
+                result = _adaptive_fine_map(
+                    locus,
+                    tool,
+                    max_causal,
+                    tool_func_dict[tool],
+                    params_dict[tool],
+                )
+            else:
+                result = tool_func_dict[tool](
+                    locus, max_causal=max_causal, **params_dict[tool]
+                )
+
+            # Set per-locus results and return
+            locus_id = getattr(locus, "locus_id", getattr(locus, "name", "locus_0"))
+            if hasattr(result, "copy"):
+                result_copy = result.copy()
+            else:
+                result_copy = deepcopy(result)
+            per_locus_results = {locus_id: result_copy}
+            if hasattr(result, "set_per_locus_results"):
+                result.set_per_locus_results(per_locus_results)
+            return result
+
+        else:
+            # Multiple loci: analyze each and combine results
+            logger.info(
+                f"Using single-input tool {tool} for {locus_set.n_loci} loci, "
+                f"will combine results using combine_cred={combine_cred}, combine_pip={combine_pip}"
+            )
+            all_creds = []
+            for i, locus in enumerate(locus_set.loci):
+                logger.info(f"Processing locus {i+1}/{locus_set.n_loci}")
+
+                # Optionally apply COJO for each locus
+                locus_max_causal = max_causal
+                if set_L_by_cojo and tool != "abf_cojo":
+                    locus_max_causal_cojo = len(
+                        conditional_selection(
+                            locus,
+                            p_cutoff=p_cutoff,
+                            collinear_cutoff=collinear_cutoff,
+                            window_size=window_size,
+                            maf_cutoff=maf_cutoff,
+                            diff_freq_cutoff=diff_freq_cutoff,
+                        )
+                    )
+                    if locus_max_causal_cojo == 0:
+                        logger.warning(
+                            f"No significant SNPs found by COJO for locus {i+1}, using max_causal=1"
+                        )
+                        locus_max_causal_cojo = 1
+                    locus_max_causal = locus_max_causal_cojo
+                    logger.info(
+                        f"COJO determined max_causal={locus_max_causal} for locus {i+1}"
+                    )
+
+                # Run fine-mapping for this locus
+                if adaptive_max_causal and tool in ["finemap", "susie", "rsparsepro"]:
+                    creds = _adaptive_fine_map(
+                        locus,
+                        tool,
+                        locus_max_causal,
+                        tool_func_dict[tool],
+                        params_dict[tool],
+                    )
+                else:
+                    creds = tool_func_dict[tool](
+                        locus, max_causal=locus_max_causal, **params_dict[tool]
+                    )
+                all_creds.append(creds)
+
+            # Combine results
+            logger.info("Combining credible sets from all loci")
+            # Collect LD matrices for purity calculation
+            ld_list = [locus.ld for locus in locus_set.loci if locus.ld is not None]
+            combined = combine_creds(
+                all_creds,
+                combine_cred=combine_cred,
+                combine_pip=combine_pip,
+                jaccard_threshold=jaccard_threshold,
+                ld_matrices=ld_list,
+                min_purity=purity_threshold,
+            )
+            per_locus_results = {
+                locus.locus_id: cred.copy()
+                for locus, cred in zip(locus_set.loci, all_creds)
+            }
+            combined.set_per_locus_results(per_locus_results)
+            return combined
+
+    else:
+        raise ValueError(
+            f"Tool {tool} not recognized. Available tools: {list(tool_func_dict.keys())}"
+        )
+
+
+def pipeline(
+    loci_df: pd.DataFrame,
+    meta_method: str = "meta_all",
+    skip_qc: bool = False,
+    tool: str = "susie",
+    outdir: str = ".",
+    calculate_lambda_s: bool = False,
+    strategy: Optional[str] = None,  # Deprecated parameter
+    **kwargs,
+):
+    """
+    Run whole fine-mapping pipeline on a list of loci.
+
+    Parameters
+    ----------
+    loci_df : pd.DataFrame
+        Dataframe containing the locus information.
+    meta_method : str, optional
+        Meta-analysis method, by default "meta_all"
+        Options: "meta_all", "meta_by_population", "no_meta".
+    skip_qc : bool, optional
+        Skip QC, by default False.
+    tool : str, optional
+        Fine-mapping tool, by default "susie".
+    calculate_lambda_s : bool, optional
+        Whether to calculate lambda_s parameter using estimate_s_rss function, by default False.
+    strategy : str, optional
+        DEPRECATED. This parameter is no longer used and will be removed in a future version.
+    """
+    import sys
+    from datetime import datetime
+
+    from credtools.utils import create_float_format_dict
+
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
+    # Initialize run summary
+    run_summary = {
+        "start_time": datetime.now().isoformat(),
+        "total_loci": 0,
+        "successful_loci": 0,
+        "failed_loci": 0,
+        "errors": [],
+        "tool": tool,
+        "meta_method": meta_method,
+        "parameters": kwargs,
+    }
+
+    # Collect all credible sets for summary
+    all_credible_sets = []
+
+    try:
+        locus_set = load_locus_set(loci_df, calculate_lambda_s=calculate_lambda_s)
+        run_summary["total_loci"] = locus_set.n_loci
+
+        # meta-analysis
+        locus_set = meta(locus_set, meta_method=meta_method)
+        logger.info(f"Meta-analysis complete, {locus_set.n_loci} loci loaded.")
+        logger.info(f"Save meta-analysis results to {outdir}.")
+
+        for locus in locus_set.loci:
+            out_prefix = f"{outdir}/{locus.prefix}"
+            locus.sumstats.to_csv(f"{out_prefix}.sumstat", sep="\t", index=False)
+            np.savez_compressed(
+                f"{out_prefix}.ld.npz", ld=locus.ld.r.astype(np.float16)
+            )
+            locus.ld.map.to_csv(f"{out_prefix}.ldmap", sep="\t", index=False)
+
+        # QC
+        if not skip_qc:
+            qc_metrics = locus_qc(locus_set)
+            logger.info(f"QC complete, {qc_metrics.keys()} metrics saved.")
+            for k, v in qc_metrics.items():
+                v.to_csv(
+                    f"{outdir}/{k}.txt", sep="\t", index=False, float_format="%.6f"
+                )
+
+        # fine-mapping
+        try:
+            creds = fine_map(locus_set, tool=tool, strategy=strategy, **kwargs)
+            run_summary["successful_loci"] = locus_set.n_loci
+
+            # Create enhanced PIPs DataFrame
+            enhanced_pips = creds.create_enhanced_pips_df(locus_set)
+
+            # Extract causal variants and create CS summary BEFORE formatting
+            # (formatting converts PIP to strings which breaks numeric comparisons)
+            locus_id = f"{locus_set.chrom}_{locus_set.start}_{locus_set.end}"
+            causal_variants = enhanced_pips[enhanced_pips["CRED"] != 0].copy()
+            if len(causal_variants) > 0:
+                causal_variants["locus_id"] = locus_id
+                all_credible_sets.append(causal_variants)
+
+            # Create credible sets summary (one row per CS)
+            cs_summary_list = []
+            if len(causal_variants) > 0:
+                from credtools.credibleset import calculate_cs_purity
+
+                for cs_id in sorted(causal_variants["CRED"].unique()):
+                    cs_snps = causal_variants[causal_variants["CRED"] == cs_id]
+                    lead_snp_idx = cs_snps["PIP"].idxmax()
+                    lead_snp = cs_snps.loc[lead_snp_idx, "SNPID"]
+                    cs_size = len(cs_snps)
+                    pip_01 = int((cs_snps["PIP"] >= 0.1).sum())
+                    pip_05 = int((cs_snps["PIP"] >= 0.5).sum())
+                    pip_09 = int((cs_snps["PIP"] >= 0.9).sum())
+
+                    # Calculate purity if LD is available
+                    # Use all LD matrices for multi-ancestry purity calculation
+                    purity = None
+                    ld_list = [locus.ld for locus in locus_set.loci if locus.ld is not None]
+                    if len(ld_list) > 0:
+                        cs_snp_ids = cs_snps["SNPID"].tolist()
+                        purity = calculate_cs_purity(ld_list, cs_snp_ids)
+
+                    cs_summary_list.append({
+                        "locus_id": locus_id,
+                        "cs_id": int(cs_id),
+                        "lead_snp": lead_snp,
+                        "cs_size": cs_size,
+                        "pip_01": pip_01,
+                        "pip_05": pip_05,
+                        "pip_09": pip_09,
+                        "purity": purity,
+                    })
+
+            # Get appropriate float formats for columns
+            format_dict = create_float_format_dict(enhanced_pips)
+
+            # Apply specific formats per column
+            for col, fmt in format_dict.items():
+                if col in enhanced_pips.columns:
+                    if fmt == "%.3e":
+                        enhanced_pips[col] = enhanced_pips[col].apply(
+                            lambda x: f"{x:.3e}" if pd.notna(x) else ""
+                        )
+                    elif fmt == "%.4f":
+                        enhanced_pips[col] = enhanced_pips[col].apply(
+                            lambda x: f"{x:.4f}" if pd.notna(x) else ""
+                        )
+
+            # Save formatted enhanced PIPs
+            output_file = f"{outdir}/pips.txt.gz"
+            enhanced_pips.to_csv(
+                output_file,
+                sep="\t",
+                index=False,
+                compression="gzip",
+            )
+
+            # Save causal variants
+            if len(causal_variants) > 0:
+                causal_variants.to_csv(
+                    f"{outdir}/causal_variants.txt.gz",
+                    sep="\t",
+                    index=False,
+                    compression="gzip",
+                )
+
+            if cs_summary_list:
+                cs_summary_df = pd.DataFrame(cs_summary_list)
+                cs_summary_df.to_csv(
+                    f"{outdir}/credible_sets_summary.txt.gz",
+                    sep="\t",
+                    index=False,
+                    compression="gzip",
+                )
+
+            # Save parameters (without lead_snps, snps, cs_sizes)
+            parameters_dict = {
+                "tool": creds.tool,
+                "n_cs": creds.n_cs,
+                "coverage": creds.coverage,
+                "parameters": creds.parameters,
+            }
+            with open(f"{outdir}/parameters.json", "w") as f:
+                json.dump(parameters_dict, f, indent=4)
+
+            logger.info(f"Fine-mapping complete, {creds.n_cs} credible sets saved.")
+
+        except Exception as e:
+            error_msg = f"Fine-mapping failed: {str(e)}"
+            logger.error(error_msg)
+            print(f"ERROR: {error_msg}", file=sys.stderr)
+            run_summary["failed_loci"] = locus_set.n_loci
+            run_summary["errors"].append(error_msg)
+
+    except Exception as e:
+        error_msg = f"Pipeline failed: {str(e)}"
+        logger.error(error_msg)
+        print(f"ERROR: {error_msg}", file=sys.stderr)
+        run_summary["errors"].append(error_msg)
+
+    finally:
+        # Generate run summary
+        run_summary["end_time"] = datetime.now().isoformat()
+        _generate_run_summary(run_summary, f"{outdir}/run_summary.log")
+
+    return
+
+
+def _generate_run_summary(run_summary: dict, output_file: str):
+    """Generate run summary log file."""
+    with open(output_file, "w") as f:
+        f.write("=== CREDTOOLS FINE-MAPPING RUN SUMMARY ===\n")
+        f.write(f"Start Time: {run_summary['start_time']}\n")
+        f.write(f"End Time: {run_summary['end_time']}\n")
+        f.write(f"Total Loci: {run_summary['total_loci']}\n")
+        f.write(f"Successful: {run_summary['successful_loci']}\n")
+        f.write(f"Failed: {run_summary['failed_loci']}\n")
+        f.write("\n")
+
+        if run_summary["errors"]:
+            f.write("Error Details:\n")
+            for error in run_summary["errors"]:
+                f.write(f"  - {error}\n")
+            f.write("\n")
+
+        f.write("Parameters Used:\n")
+        f.write(f"  Tool: {run_summary['tool']}\n")
+        f.write(f"  Meta Method: {run_summary['meta_method']}\n")
+        for key, value in run_summary["parameters"].items():
+            f.write(f"  {key}: {value}\n")
