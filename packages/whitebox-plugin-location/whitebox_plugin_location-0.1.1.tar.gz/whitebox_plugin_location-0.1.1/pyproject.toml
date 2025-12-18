@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "whitebox-plugin-location"
+version = "0.1.1"
+description = "A plugin for Whitebox that provides location utilities and extensions"
+authors = ["Milos <hello@klined.org>", "WhiteBox <contact@whitebox.aero>"]
+license = "GNU Affero General Public License v3"
+readme = "README.md"
+include = [
+    { path = "whitebox_test_plugin_location", format = "wheel" }
+]
+
+[tool.poetry.dependencies]
+python = ">=3.10.0"
+
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.6.5"
+coverage = "^7.6.1"
+
+[tool.poetry.plugins."whitebox.plugin"]
+whitebox_plugin_location = "whitebox_plugin_location.apps:WhiteboxPluginLocationConfig"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
