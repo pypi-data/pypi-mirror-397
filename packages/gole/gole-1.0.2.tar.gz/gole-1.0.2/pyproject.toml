@@ -1,0 +1,415 @@
+[build-system]
+requires = ["poetry-core>=2.1.1,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[project]
+name = "gole"
+version = "1.0.2"
+description = "Terminal Text Editor"
+authors = [
+    { name = "taconi", email = "igor.taconi@protonmail.com" },
+]
+license = { file = "LICENSE" }
+readme = "README.md"
+keywords = ["tui", "terminal", "textual", "cli", "developer-tool"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Text Editors",
+]
+requires-python = "~=3.12"
+dependencies = [
+     "textual[syntax] (>=6.0.0,<7.0.0)",
+     "cyclopts (>=3.24.0,<4.0.0)",
+     "pydantic-settings (>=2.11.0,<3.0.0)",
+     "platformdirs (>=4.5.0,<5.0.0)",
+     "tomlkit (>=0.13.3,<0.14.0)",
+     "typing-extensions (>=4.15.0,<5.0.0)",
+     "textual-fspicker (>=0.6.0,<0.7.0)",
+     "aiopathlib (>=0.6.0,<0.7.0)",
+     "pyperclip (>=1.11.0,<2.0.0)",
+     "asyncer (>=0.0.11,<0.0.12)",
+     "async-tinydb (>=1.7.3,<2.0.0)",
+     "textual-autocomplete (>=4.0.6,<5.0.0)",
+     # "tree-sitter-languages (>=1.10.2,<2.0.0)",
+     "tree-sitter-lua (>=0.2.0,<0.3.0)",
+     "tree-sitter-make (>=1.1.1,<2.0.0)",
+     "tree-sitter-elixir (>=0.3.4,<0.4.0)",
+     "tree-sitter-objc (>=3.0.2,<4.0.0)",
+     "tree-sitter-cpp (>=0.23.4,<0.24.0)",
+     "tree-sitter-haskell (>=0.23.1,<0.24.0)",
+     "tree-sitter-jsdoc (>=0.25.0,<0.26.0)",
+     "tree-sitter-ruby (>=0.23.1,<0.24.0)",
+     "tree-sitter-scala (>=0.24.0,<0.25.0)",
+     "tree-sitter-bicep (>=1.1.0,<2.0.0)",
+     "tree-sitter-fortran (>=0.5.1,<0.6.0)",
+     "tree-sitter-glsl (>=0.2.0,<0.3.0)",
+     "tree-sitter-less (>=1.0.0,<2.0.0)",
+     "tree-sitter-agda (>=1.3.3,<2.0.0)",
+     "tree-sitter-arduino (>=0.24.0,<0.25.0)",
+     "tree-sitter-zig (>=1.1.2,<2.0.0)",
+     "tree-sitter-nix (>=0.1.0,<0.2.0)",
+     "tree-sitter-luau (>=1.2.0,<2.0.0)",
+     "tree-sitter-requirements (>=0.5.0,<0.6.0)",
+     "tree-sitter-dockerfile (>=0.2.0,<0.3.0)",
+]
+
+[project.scripts]
+gole = "gole.cli:app"
+
+[project.urls]
+Homepage = "https://gole.codeberg.page/gole"
+Documentation = "https://gole.codeberg.page/gole"
+Repository = "https://codeberg.org/gole/gole"
+"Contributor Guide" = "https://gole.codeberg.page/gole/contributing"
+Changelog = "https://gole.codeberg.page/gole/changelog/"
+Issues = "https://codeberg.org/gole/gole/issues"
+
+[dependency-groups]
+dev = [
+    "textual-dev (>=1.8.0,<2.0.0)",
+    "poethepoet (>=0.37.0,<0.38.0)",
+    "pre-commit (>=4.4.0,<5.0.0)",
+    "pre-commit-update (>=0.9.0,<0.10.0)",
+    "nox (>=2025.11.12,<2026.0.0)",
+    "towncrier (>=25.8.0,<26.0.0)",
+    "ipython (>=9.7.0,<10.0.0)",
+    "ipdb (>=0.13.13,<0.14.0)"
+]
+
+style = [
+    "mypy (>=1.18.2,<2.0.0)",
+    "autoflake (>=2.3.1,<3.0.0)",
+    "black (>=25.11.0,<26.0.0)",
+    "isort (>=7.0.0,<8.0.0)",
+    "flake8 (>=7.3.0,<8.0.0)",
+]
+
+build = [
+    "briefcase (>=0.3.25,<0.4.0)",
+]
+
+tests = [
+    "pytest (>=8.4.2,<10.0.0)",
+    "pytest-cov (>=7.0.0,<8.0.0)",
+    "pytest-asyncio (>=1.3.0,<2.0.0)",
+    "pytest-textual-snapshot (>=1.1.0,<2.0.0)",
+    "faker (>=38.0.0,<39.0.0)",
+    "pytest-xdist[psutil] (>=3.8.0,<4.0.0)",
+    "ipdb (>=0.13.13,<0.14.0)",
+    "pytest-env (>=1.2.0,<2.0.0)",
+]
+
+doc = [
+    "mkdocs-material (>=9.7.0,<10.0.0)",
+    "mkdocstrings-python (>=1.19.0,<2.0.0)",
+    "mkdocs-towncrier (>=0.1.5,<0.2.0)"
+]
+
+[tool.poetry.requires-plugins]  # Poetry dependencies
+poethepoet = { version = ">=0.33.0,<1.0.0", extras = ["poetry_plugin"] }
+poetry-plugin-shell = { version = ">=1.0.1,<2.0.0" }
+
+# Tasks managers
+
+#-- with nox > pipx install nox
+#  $ nox -s <task>
+
+#-- with poetry > pipx install poetry
+# $ poetry install
+# $ poetry <task>
+
+#-- with poe > pipx install poetry
+# $ poetry install
+# $ poetry shell
+# $ poe <task>
+
+#-- with pipx | uv | pdm | hatch
+#  $ pipx run noxfile.py -s <task>
+#  $ uv run noxfile.py -s <task>
+#  $ pdm run noxfile.py -s <task>
+#  $ hatch run noxfile.py -s <task>
+
+[tool.poe]
+poetry_command = ""
+
+[tool.poe.poetry_hooks]
+post_build = "_build-local"
+# pre_add = "l"
+# post_add = "i"
+pre_test = "clean"
+
+[tool.poe.tasks]
+_pre-commit-install = { cmd = "pre-commit install" }
+_build-local =  { sequence = ["_build-app", "_build-pkg"] }
+_build-app = { cmd = "briefcase build --no-input" }
+_build-pkg = { cmd = "briefcase package" }
+
+_build.sequence = ["_build-app --target ${target}", "_build-pkg --target ${target}"]
+_build.args = [{ name = "target", options = ["--target", "-t"], help = "Container image" }]
+
+l = { help = "shortcut for 'poetry lock'", cmd = "poetry lock" }
+i = { help = "shortcut for 'poetry install'", cmd = "poetry install" }
+r = { help = "shortcut for 'poetry remove'", cmd = "poetry remove" }
+
+gole = { script = "gole.cli:app" }
+dev = { cmd = "textual run --dev gole.app:Gole" }
+console = { cmd = "textual console" }
+web = { cmd = "textual serve --dev 'poetry gole'" }
+
+[tool.poe.tasks.all]
+help = "poetry lock > poetry install > poetry fmt > poetry pre-commit > poetry build-all"
+sequence = ["l", "i", "fmt", "pre-commit", "build-all"]
+
+[tool.poe.tasks.doc]
+help = "Serve documentation"
+cmd = "mkdocs serve"
+
+[tool.poe.tasks.doc-build]
+help = "Build documentation"
+cmd = "mkdocs build --strict"
+
+[tool.poe.tasks.doc-deploy]
+help = "Serve documentation"
+cmd = "mkdocs gh-deploy -b pages --strict --force"
+
+[tool.poe.tasks.test]
+help = "Run tests"
+cmd = "pytest tests/"
+
+[tool.poe.tasks.snaps]
+help = "Update snapshots"
+ref = "test --snapshot-update -m snap"
+
+
+[tool.poe.tasks.build-dev]
+help = "Run application in development mode."
+cmd = "briefcase dev"
+
+[tool.poe.tasks.build-all]
+help = "Build all linux."
+sequence = ["build-almalinux", "build-arch", "build-debian", "build-fedora", "build-manjaro", "build-opensuse", "build-rhel", "build-ubuntu"]
+
+[tool.poe.tasks.build-almalinux]
+help = "Build AlmaLinux app."
+ref = "_build -t  docker.io/almalinux:9"
+
+[tool.poe.tasks.build-arch]
+help = "Build Arch app."
+ref = "_build -t  docker.io/archlinux"
+
+[tool.poe.tasks.build-debian]
+help = "Build Debian (trixie) app."
+sequence = ["_build -t docker.io/debian:bookworm", "_build -t docker.io/debian:trixie"]
+
+[tool.poe.tasks.build-fedora]
+help = "Build Fedora (40/41/42) app."
+sequence = ["_build -t docker.io/fedora:40", "_build -t docker.io/fedora:41", "_build -t docker.io/fedora:42"]
+
+[tool.poe.tasks.build-manjaro]
+help = "Build Manjaro app."
+ref = "_build -t docker.io/manjarolinux/base"
+
+[tool.poe.tasks.build-opensuse]
+help = "Build OpenSUSE app."
+ref = "_build -t docker.io/opensuse/tumbleweed"
+
+[tool.poe.tasks.build-rhel]
+help = "Build rhel app."
+ref = "_build -t docker.io/redhat/ubi9:9.5"
+
+[tool.poe.tasks.build-ubuntu]
+help = "Build Ubuntu (noble/oracular) app."
+sequence = ["_build -t docker.io/ubuntu:noble"]
+
+[tool.poe.tasks.pre-commit]
+help = "Run the pre-commit."
+cmd = "pre-commit run --all-files"
+deps = ["_pre-commit-install"]
+
+[tool.poe.tasks.lint]
+help = "Style check."
+sequence = [
+    "flake8 gole",
+    "autoflake --recursive --check-diff gole",
+    "isort --diff --check-only gole",
+    "black --diff --check gole",
+    "mypy gole",
+]
+default_item_type = "cmd"
+
+[tool.poe.tasks.fmt]
+help = "File formatting"
+sequence = [
+    "autoflake -ri gole",
+    "isort gole",
+    "black gole",
+]
+default_item_type = "cmd"
+
+[tool.poe.tasks.log]
+help = "Wrapper to the towncrier"
+cmd = "towncrier"
+
+[tool.poe.tasks.clean]
+help = "Remove cache dirs"
+script = """
+poethepoet.scripts:rm(
+    '.mypy_cache', '.pytest_cache', './**/__pycache__', '__pycache__',
+    'dist', 'build', '*.dist-info', 'logs', 'htmlcov', 'site',
+    'snapshot_report.html',
+)
+"""
+
+# Tests
+
+[tool.pytest.ini_options]
+# pythonpath = '.'
+asyncio_mode = "auto"
+addopts = '-n auto -vv -p no:warnings --pdbcls=IPython.terminal.debugger:TerminalPdb --cov-report=html --cov-report=term --cov-config=pyproject.toml --cov=gole'
+env = [
+  "LANG=en_US.UTF-8",
+]
+
+[tool.coverage.run]
+source = ["gole"]
+relative_files = true
+concurrency = ["thread"]
+
+[tool.coverage.report]
+sort = "-Cover"
+exclude_lines = [
+  "no cov",
+  "if TYPE_CHECKING:",
+  "pragma: no cover",
+  "def __repr__",
+  "if self.debug",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if 0:",
+  "if __name__ == .__main__.:",
+  "@(abc.)?abstractmethod",
+]
+
+# Style configs
+[[tool.mypy.overrides]]
+module = ["dynaconf"]
+ignore_missing_imports = true
+
+[tool.autoflake]
+remove_rhs_for_unused_variables = true
+remove_all_unused_imports = true
+remove_unused_variables = true
+remove_duplicate_keys = true
+
+[tool.black]
+line-length = 79
+target-version = ["py312", "py313"]
+skip-string-normalization = true
+
+[tool.isort]
+py_version = "312"
+multi_line_output = 3
+include_trailing_comma = true
+use_parentheses = true
+ensure_newline_before_comments = true
+
+
+# Changelog
+[tool.towncrier]
+package = "gole"
+directory = "changelog.d"
+filename = "CHANGELOG.md"
+start_string = "<!-- towncrier release notes start -->\n"
+underlines = ["", "", ""]
+title_format = "## [{version}](https://codeberg.org/gole/gole/src/tag/{version}) - {project_date}"
+issue_format = "[#{issue}](https://codeberg.org/gole/gole/issues/{issue})"
+type = [
+    { directory = "breaking", name = "Breaking Change", showcontent = true },
+    { directory = "security", name = "Security", showcontent = true },
+    { directory = "removed", name = "Removed", showcontent = true },
+    { directory = "deprecated", name = "Deprecated", showcontent = true },
+    { directory = "added", name = "Added", showcontent = true },
+    { directory = "changed", name = "Changed", showcontent = true },
+    { directory = "fixed", name = "Fixed", showcontent = true },
+]
+
+
+# Builder
+[tool.briefcase]
+project_name = "gole"
+bundle = "org.coberberg"
+# version = "0.0.2"
+url = "https://codeberg.org/gole/gole"
+license.file = "LICENSE"
+author = "taconi"
+author_email = "igor.taconi@protonmail.com"
+
+[tool.briefcase.app.gole]
+formal_name = "gole"
+description = "A simple editor for simple things"
+long_description = """More details about the app should go here.
+"""
+
+sources = ["gole"]
+test_sources = ["tests"]
+console_app = true
+
+iOS = { supported = false }
+android = { supported = false }
+web = { supported = false }
+
+[tool.briefcase.app.gole.windows]
+system_installer = false
+requires = []  # Add your Windows-specific app requirements here
+
+[tool.briefcase.app.gole.macOS]
+universal_build = true
+requires = []  # Add your macOS-specific app requirements here
+
+[tool.briefcase.app.gole.linux.system.debian]
+system_section = "editors"
+
+[tool.briefcase.app.gole.linux.system.debian.bookworm]
+system_runtimes = ["python3"]
+system_runtime_requires = ["python3"]
+
+[tool.briefcase.app.gole.linux.system.debian.trixie]
+system_runtimes = ["python3.13"]
+system_runtime_requires = ["python3.13"]
+
+[tool.briefcase.app.gole.linux.system.ubuntu]
+system_section = "editors"
+
+[tool.briefcase.app.gole.linux.system.ubuntu.noble]
+system_runtimes = ["python3.12"]
+system_runtime_requires = ["python3.12"]
+
+[tool.briefcase.app.gole.linux.system.ubuntu.oracular]
+system_runtimes = ["python3.13"]
+system_runtime_requires = ["python3.13"]
+
+[tool.briefcase.app.gole.linux.system.rhel]
+system_requires = ["python3.12"]
+system_runtime_requires = ["python3.12"]
+
+[tool.briefcase.app.gole.linux.system.arch]
+system_requires = ["python"]
+system_runtime_requires = ["python"]
+
+[tool.briefcase.app.gole.linux.system.manjaro]
+system_requires = []
+system_runtime_requires = []
+
+[tool.briefcase.app.gole.linux.system.fedora]
+system_requires = ["python3.13"]
+system_runtime_requires = ["python3.13"]
+
+[tool.briefcase.app.gole.linux.system.opensuse-tumbleweed]
+system_requires = ["python3"]
+system_runtime_requires = ["python3"]
