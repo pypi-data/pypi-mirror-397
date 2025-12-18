@@ -1,0 +1,111 @@
+[project]
+name = "waccy"
+version = "0.0.2"
+description = "Intelligent financial modeling platform for small businesses"
+readme = "README.md"
+requires-python = ">=3.13"
+license = { text = "MIT" }
+authors = [
+    { name = "WACCY Contributors" }
+]
+keywords = ["finance", "financial-modeling", "accounting", "valuation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Financial and Insurance Industry",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Office/Business :: Financial",
+]
+dependencies = [
+    "numpy>=2.3.5",
+    "pandera>=0.27.0",
+    "polars>=1.36.1",
+    "pydantic>=2.12.5",
+]
+
+[project.optional-dependencies]
+# Note: During development in monorepo, install extensions with:
+#   uv pip install -e extensions/waccy-quickbooks -e extensions/waccy-edgar
+# When published to PyPI, these reference published packages
+quickbooks = ["waccy-quickbooks>=0.0.1"]
+edgar = ["waccy-edgar>=0.0.1"]
+
+[project.scripts]
+waccy = "waccy.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/DecisionNerd/waccy"
+Repository = "https://github.com/DecisionNerd/waccy"
+Issues = "https://github.com/DecisionNerd/waccy/issues"
+Documentation = "https://github.com/DecisionNerd/waccy#readme"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/waccy"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-cov>=6.0.0",
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+]
+docs = [
+    "mkdocs>=1.6.1",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "ARG", # flake8-unused-arguments
+    "SIM", # flake8-simplify
+    "TCH", # flake8-type-checking
+    "PTH", # flake8-use-pathlib
+    "ERA", # eradicate
+    "PL",  # Pylint
+    "PERF", # Perflint
+    "RET", # flake8-return
+    "RUF", # Ruff-specific rules
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+    "PLR0913", # too many arguments (sometimes necessary)
+    "PLR2004", # magic value (sometimes acceptable)
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint.isort]
+known-first-party = ["waccy"]
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
