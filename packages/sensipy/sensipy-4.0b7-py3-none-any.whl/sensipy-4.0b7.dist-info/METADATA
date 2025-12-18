@@ -1,0 +1,112 @@
+Metadata-Version: 2.4
+Name: sensipy
+Version: 4.0b7
+Summary: Toolkit for simulating gamma-ray follow-up observations of time-variable astrophysical sources.
+Keywords: gamma-ray,astronomy,astrophysics,cherenkov,gamma-ray astronomy
+Author: Jarred Green, Barbara Patricelli, Antonio Stamerra, Monica Seglar-Arroyo
+Author-email: Jarred Green <jgreen@mpp.mpg.de>, Barbara Patricelli <barbara.patricelli@inaf.it>, Antonio Stamerra <antonio.stamerra@inaf.it>, Monica Seglar-Arroyo <mseglar@ifae.es>
+License-Expression: Apache-2.0
+License-File: LICENSE
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Scientific/Engineering :: Astronomy
+Classifier: Topic :: Scientific/Engineering :: Physics
+Requires-Dist: astropy>=6.0
+Requires-Dist: matplotlib>=3.8
+Requires-Dist: pandas>=2.3.3
+Requires-Dist: pydantic>=2.12.0
+Requires-Dist: scipy>=1.16.2
+Requires-Dist: seaborn>=0.13.0
+Requires-Dist: tqdm>=4.67.1
+Requires-Dist: gammapy>=2.0
+Requires-Dist: pyarrow>=21.0.0
+Requires-Dist: numpy>=1.26.4
+Requires-Dist: types-seaborn>=0.13.2.20250914
+Requires-Dist: pandas-stubs>=2.3.2.250926
+Requires-Dist: scipy-stubs>=1.16.3.0
+Requires-Dist: pytest-xdist[psutil]>=3.8.0
+Requires-Dist: types-tqdm>=4.67.0.20250809
+Requires-Python: >=3.11
+Project-URL: Documentation, https://sensipy.vercel.app/
+Project-URL: Source, https://github.com/astrojarred/sensipy
+Project-URL: Tracker, https://github.com/astrojarred/sensipy/issues
+Description-Content-Type: text/markdown
+
+# sensipy
+
+[![Status](https://img.shields.io/badge/status-active-success.svg)]()
+[![Build Status](https://img.shields.io/github/actions/workflow/status/astrojarred/sensipy/ci.yml)](https://github.com/astrojarred/sensipy/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/sensipy.svg)](https://pypi.org/project/sensipy/)
+[![GitHub Issues](https://img.shields.io/github/issues/astrojarred/sensipy.svg)](https://github.com/astrojarred/sensipy/issues)
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/astrojarred/sensipy.svg)](https://github.com/astrojarred/sensipy/pulls)
+[![License](https://img.shields.io/github/license/astrojarred/sensipy)](LICENSE)
+
+Sensipy is a Python toolkit for simulating gamma-ray follow-up observations of time-variable astrophysical sources. First built for CTAO-style analyses, it builds on top of [`gammapy`](https://gammapy.org/) and streamlines everything from IRF handling to exposure lookups.
+
+The full documentation is available at [sensipy.vercel.app](https://sensipy.vercel.app/).
+
+<img src="https://raw.githubusercontent.com/astrojarred/sensipy/main/images/sensipy-logo.svg" alt="Sensipy logo" style="max-width: min(60%, 800px); display: block; margin: 0 auto;">
+
+## Features
+
+- Sensitivity and exposure-time calculations powered by `gammapy`.
+- Calculate differential or integral sensitivity curves for gamma-ray observatories using instrument response functions and spectral models.
+- Easily simulate the observation time needed to detect a source with a given spectral model at a specified significance level.
+- Follow-up utilities (`sensipy.followup`) for quick-look assessments.
+- Ships with ready-to-use EBL models.
+- CTAO-first workflow that loads IRFs, applies EBL absorption models, and simulates detectability curves.
+
+## Installation
+
+Sensipy requires Python 3.11+.
+
+```bash
+# Recommended: uv
+uv add sensipy
+
+# or pip
+pip install sensipy
+```
+
+Using conda? Create/activate an environment, ensure `pip` is available, then run `pip install sensipy`.
+
+Run the unit tests with `uv run pytest` (or `pytest` in any configured environment) to verify the installation.
+
+## Documentation
+
+Full documentation, tutorials, and the API reference live on [the docs](sensipy.vercel.app) (source in `docs/`). To work on the site locally:
+
+```bash
+cd docs
+bun install
+bun dev
+```
+
+Key sections include:
+
+- Getting started guides for installation, setup, spectral/EBL models, and sensitivity calculations.
+- Tutorials that walk through the full workflow (loading IRFs, simulating observations, running follow-ups).
+- API reference material for core modules such as `ctaoirf`, `sensitivity`, `followup`, and `source`.
+
+## Contributing
+
+Contributions are welcome! Please:
+
+- Open an issue for bugs or feature proposals.
+- Keep changes tested via `uv run pytest` or `uv run pytest -n 4` for faster testing in parallel.
+- Check for type errors with `uv run mypy src/sensipy`.
+- Follow the existing code style and type-checking expectations (`ruff`, `mypy`, etc.).
+
+## License
+
+Sensipy is distributed under the [Apache 2.0 License](LICENSE).
+
+
+
+
