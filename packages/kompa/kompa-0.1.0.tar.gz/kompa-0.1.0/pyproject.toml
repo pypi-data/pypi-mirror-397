@@ -1,0 +1,71 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kompa"
+version = "0.1.0"
+description = "Compression-based k-nearest neighbors classifier for biological sequence classification"
+readme = "README.md"
+authors = [
+    {name = "Dániel Májer"}
+]
+license = "MIT"
+license-files = ["LICENSE"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+keywords = ["bioinformatics", "sequence-classification", "compression", "knn", "ncd"]
+requires-python = ">=3.9"
+dependencies = [
+    "lz4>=4.0.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
+
+[tool.coverage.run]
+source = ["kompa"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/.venv/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+precision = 2
+show_missing = true
+skip_covered = false
+
+[project.urls]
+Homepage = "https://github.com/heloint/kompa"
+Repository = "https://github.com/heloint/kompa"
+Issues = "https://github.com/heloint/kompa/issues"
+
+[project.scripts]
+kompa = "kompa.__main__:main"
+
+[tool.setuptools]
+packages = ["kompa"]
+
+[tool.setuptools.package-data]
+kompa = ["py.typed"]
