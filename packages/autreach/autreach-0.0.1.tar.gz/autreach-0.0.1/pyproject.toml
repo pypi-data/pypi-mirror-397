@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "autreach"
+version = "0.0.1"
+description = "Automate LinkedIn job discovery and personalized outreach with a real-time control dashboard."
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+    {name = "Aryan Khurana"},
+]
+license = {text = "MIT"}
+dependencies = [
+    "colorama>=0.4.6",
+    "fastapi[standard]>=0.115.12",
+    "pydantic-settings>=2.9.1",
+    "selenium>=4.32.0",
+    "sqlmodel>=0.0.14",
+    "typer>=0.9.0",
+    "uvicorn>=0.27.0",
+]
+
+[project.scripts]
+autreach = "autreach.cli.main:main"
+
+[tool.hatchling.build.targets.wheel]
+packages = ["src/autreach"]
+
+[tool.hatchling.build.targets.wheel.sources]
+"src" = ""
+
+[tool.hatchling.build.targets.sdist]
+exclude = [
+    "studio-ui/**/*",
+    "node_modules/**/*",
+    ".github/**/*",
+    ".cursor/**/*",
+    "docs/**/*",
+    "scripts/**/*",
+]
+
+[tool.hatch.build.hooks.custom]
+path = "hatch_build.py"
+
+[dependency-groups]
+dev = [
+    "hatchling>=1.0.0",
+    "ruff>=0.11.8",
+]
