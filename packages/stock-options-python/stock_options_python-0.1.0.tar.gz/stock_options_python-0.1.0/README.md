@@ -1,0 +1,94 @@
+# stock-options-python
+
+Fast Python bindings for option pricing Greeks calculations, powered by Rust.
+
+## Installation
+
+```bash
+pip install stock-options-python
+```
+
+Or build from source:
+
+```bash
+pip install maturin
+maturin develop
+```
+
+## Usage
+
+```python
+import stock_options_python as sop
+
+# Option parameters
+s = 100.0      # Current stock price
+k = 105.0      # Strike price
+t = 0.5        # Time to expiration (years)
+r = 0.05       # Risk-free rate (5%)
+sigma = 0.2    # Volatility (20%)
+q = 0.01       # Dividend yield (1%)
+
+# Black-Scholes (European options)
+delta = sop.bs_delta(s, k, t, r, sigma, q, option_type='call')
+print(f"Call Delta: {delta:.4f}")
+
+# Get all Greeks at once
+greeks = sop.bs_greeks(s, k, t, r, sigma, q, option_type='call')
+print(f"Delta: {greeks.delta:.4f}")
+print(f"Gamma: {greeks.gamma:.4f}")
+print(f"Theta: {greeks.theta:.4f} (per day)")
+print(f"Vega:  {greeks.vega:.4f}")
+print(f"Rho:   {greeks.rho:.4f}")
+
+# Bjerksund-Stensland (American options)
+am_greeks = sop.am_greeks(s, k, t, r, sigma, q, option_type='put')
+print(f"\nAmerican Put Delta: {am_greeks.delta:.4f}")
+```
+
+## API Reference
+
+### Black-Scholes Functions (European Options)
+
+| Function | Description |
+|----------|-------------|
+| `bs_delta(s, k, t, r, sigma, q=0, option_type='call')` | Delta - sensitivity to underlying price |
+| `bs_gamma(s, k, t, r, sigma, q=0)` | Gamma - rate of change of delta |
+| `bs_theta(s, k, t, r, sigma, q=0, option_type='call')` | Theta - time decay (per day) |
+| `bs_vega(s, k, t, r, sigma, q=0)` | Vega - sensitivity to volatility |
+| `bs_rho(s, k, t, r, sigma, q=0, option_type='call')` | Rho - sensitivity to interest rate |
+| `bs_greeks(s, k, t, r, sigma, q=0, option_type='call')` | All Greeks at once |
+
+### Bjerksund-Stensland Functions (American Options)
+
+| Function | Description |
+|----------|-------------|
+| `am_delta(s, k, t, r, sigma, q=0, option_type='call')` | Delta |
+| `am_gamma(s, k, t, r, sigma, q=0, option_type='call')` | Gamma |
+| `am_theta(s, k, t, r, sigma, q=0, option_type='call')` | Theta (per day) |
+| `am_vega(s, k, t, r, sigma, q=0, option_type='call')` | Vega |
+| `am_rho(s, k, t, r, sigma, q=0, option_type='call')` | Rho |
+| `am_greeks(s, k, t, r, sigma, q=0, option_type='call')` | All Greeks at once |
+
+### Parameters
+
+| Parameter | Description |
+|-----------|-------------|
+| `s` | Current price of the underlying asset |
+| `k` | Strike price of the option |
+| `t` | Time to expiration in years |
+| `r` | Risk-free interest rate (e.g., 0.05 for 5%) |
+| `sigma` | Volatility (e.g., 0.2 for 20%) |
+| `q` | Dividend yield (e.g., 0.01 for 1%), default 0 |
+| `option_type` | `'call'` or `'put'`, default `'call'` |
+
+## Performance
+
+This library uses Rust for calculations, providing significant performance improvements over pure Python implementations, especially for batch calculations.
+
+## License
+
+BSD 3-Clause License
+
+## Credits
+
+Built on top of the [stock-options](https://crates.io/crates/stock-options) Rust crate.
