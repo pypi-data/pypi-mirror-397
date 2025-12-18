@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hixbe-time"
+version = "1.0.0"
+description = "High-precision NTP time synchronization package with CLI tools"
+readme = "README.md"
+authors = [
+    {name = "Hixbe", email = "info@hixbe.com"}
+]
+license = {text = "MIT"}
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Networking :: Time Synchronization",
+]
+keywords = [
+    "ntp",
+    "network-time-protocol",
+    "time",
+    "synchronization",
+    "time-server",
+    "hixbe"
+]
+
+[project.urls]
+Homepage = "https://github.com/hixbehq/python-time"
+Repository = "https://github.com/hixbehq/python-time.git"
+Issues = "https://github.com/hixbehq/python-time/issues"
+
+[project.scripts]
+hixbe-time = "hixbe_time.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["hixbe_time*"]
+exclude = ["tests*", "docs*"]
+
+[tool.setuptools.package-data]
+hixbe_time = ["py.typed"]
