@@ -1,0 +1,291 @@
+# Copyright (C) 2025 Xiaoyang Chen - All Rights Reserved
+# Licensed under the GNU GENERAL PUBLIC LICENSE Version 3
+# Repository: https://github.com/xychcz/S3Fit
+# Contact: s3fit@xychen.me
+
+import numpy as np
+np.set_printoptions(linewidth=10000)
+from copy import deepcopy as copy
+from astropy.io import fits
+import astropy.units as u
+import astropy.constants as const
+from astropy.cosmology import Planck18 as cosmo
+from scipy.interpolate import RegularGridInterpolator
+
+from ..auxiliary_func import print_log
+
+class TorusFrame(object): 
+    def __init__(self, filename=None, cframe=None, v0_redshift=None, 
+                 w_min=None, w_max=None, lum_norm=None, flux_scale=None, 
+                 verbose=True, log_message=[]): 
+
+        self.filename = filename        
+        self.cframe = cframe 
+        self.v0_redshift = v0_redshift        
+        self.w_min = w_min # currently not used
+        self.w_max = w_max # currently not used
+        self.flux_scale = flux_scale
+        self.lum_norm = lum_norm if lum_norm is not None else 1e10 # normlize model by 1e10 Lsun
+        self.verbose = verbose
+        self.log_message = log_message
+                
+        self.num_comps = self.cframe.num_comps
+        self.num_coeffs_c = np.ones(self.num_comps, dtype='int') # one independent element per component since disc and torus are tied
+        self.num_coeffs = self.num_coeffs_c.sum()
+
+        # currently do not consider negative SED 
+        self.mask_absorption_e = np.zeros((self.num_coeffs), dtype='bool')
+
+        self.read_skirtor()
+
+        # to be compatible with old version <= 2.2.4
+        if len(self.cframe.par_index_cp[0]) == 0:
+            self.cframe.par_name_cp = np.array([['voff', 'opt_depth_9.7', 'opening_angle', 'radii_ratio', 'inclination'] for i_comp in range(self.num_comps)])
+            self.cframe.par_index_cp = [{'voff': 0, 'opt_depth_9.7': 1, 'opening_angle': 2, 'radii_ratio': 3, 'inclination': 4} for i_comp in range(self.num_comps)]
+
+        if self.verbose:
+            print_log(f"SKIRTor torus model components: {np.array([self.cframe.info_c[i_comp]['mod_used'] for i_comp in range(self.num_comps)]).T}", self.log_message)
+        
+    def read_skirtor(self): 
+        # https://sites.google.com/site/skirtorus/sed-library
+        # skirtor_disc = np.loadtxt(self.file_disc) # [n_wave_ini+6, n_tau*n_oa*n_rrat*n_incl+1]
+        # skirtor_torus = np.loadtxt(self.file_dust) # [n_wave_ini+6, n_tau*n_oa*n_rrat*n_incl+1]
+        skirtor_lib = fits.open(self.filename)
+        skirtor_disc = skirtor_lib[0].data[0]
+        skirtor_torus = skirtor_lib[0].data[1]
+
+        wave = skirtor_disc[6:-1,0] # 1e-3 to 1e3 um; omit the last one with zero-value SED
+        n_tau = 5; tau = np.array([ 3, 5, 7, 9, 11 ])
+        n_oa = 8; oa = np.array([ 10, 20, 30, 40, 50, 60, 70, 80 ])
+        n_rrat = 3; rrat = np.array([ 10, 20, 30 ])
+        n_incl = 10; incl = np.array([ 0, 10, 20, 30, 40, 50, 60, 70, 80, 90 ])
+                
+        disc  = np.zeros([n_tau, n_oa, n_rrat, n_incl, len(wave)]) 
+        torus = np.zeros([n_tau, n_oa, n_rrat, n_incl, len(wave)]) 
+        mass  = np.zeros([n_tau, n_oa, n_rrat]) # torus dust mass
+        eb    = np.zeros([n_tau, n_oa, n_rrat]) 
+        # All spectra are given in erg/s/um, normalized to disc lum of 1 Lsun
+        # Not that the spectra in lum unit should be considered as flux * 4pi * dl2, 
+        # where flux is depended on viewing angle and 
+        # the 1 Lsun normalization is integrated with anisotropic flux function.
+        # Dust mass in Msun
+        # eb is energy balance ratio of torus, i.e., inclination integrated Lum_torus/Lum_AGN(intrinsic)
+
+        for i_tau in range(n_tau):
+            for i_oa in range(n_oa):
+                for i_rrat in range(n_rrat):
+                    for i_incl in range(n_incl):
+                        mask = skirtor_disc[0,:] == tau[i_tau] 
+                        mask &= skirtor_disc[1,:] == oa[i_oa] 
+                        mask &= skirtor_disc[2,:] == rrat[i_rrat] 
+                        mask &= skirtor_disc[3,:] == incl[i_incl] 
+                        mass[i_tau, i_oa, i_rrat] = skirtor_torus[4,mask][0]
+                        eb[i_tau, i_oa, i_rrat] = skirtor_torus[5,mask][0]
+                        disc[i_tau, i_oa, i_rrat, i_incl, :] = skirtor_disc[6:-1,mask][:,0]
+                        torus[i_tau, i_oa, i_rrat, i_incl, :] = skirtor_torus[6:-1,mask][:,0]
+                        # in the original library the torus sed and mass is normalized to Lum_AGN of 1 Lsun, 
+                        # here renormlized them to Lum_Torus of self.lum_norm Lsun (i.e., Lum_AGN = self.lum_norm Lsun / EB_Torus) 
+                        disc[i_tau, i_oa, i_rrat, i_incl, :]  *= self.lum_norm / eb[i_tau, i_oa, i_rrat]
+                        torus[i_tau, i_oa, i_rrat, i_incl, :] *= self.lum_norm / eb[i_tau, i_oa, i_rrat]
+                        mass[i_tau, i_oa, i_rrat] *= self.lum_norm / eb[i_tau, i_oa, i_rrat]
+        
+        # convert unit: 1 erg/s/um -> flux_scale * erg/s/AA/cm2
+        wave *= 1e4
+        lum_dist = cosmo.luminosity_distance(self.v0_redshift).to('cm').value
+        lum_area = 4*np.pi * lum_dist**2 # in cm2
+        disc *= 1e-4 / lum_area / self.flux_scale
+        torus *= 1e-4 / lum_area / self.flux_scale
+        disc[disc <= 0]   = disc[disc>0].min()
+        torus[torus <= 0] = torus[torus>0].min()
+        
+        # for interpolation
+        ini_pars = (tau, oa, rrat, incl, np.log10(wave))    
+        fun_logdisc = RegularGridInterpolator(ini_pars, np.log10(disc), method='linear', bounds_error=False)
+        fun_logtorus = RegularGridInterpolator(ini_pars, np.log10(torus), method='linear', bounds_error=False)
+        # set bounds_error=False to avoid error by slight exceeding of x-val generated by least_square func
+        # but do not use pars outside of initial range
+        ini_pars = (tau, oa, rrat)    
+        fun_mass = RegularGridInterpolator(ini_pars, mass, method='linear', bounds_error=False)
+        fun_eb = RegularGridInterpolator(ini_pars, eb, method='linear', bounds_error=False)
+
+        self.skirtor = {'tau':tau, 'oa':oa, 'rratio':rrat, 'incl':incl, 
+                        'wave':wave, 'log_wave':np.log10(wave), 
+                        'disc':disc, 'fun_logdisc':fun_logdisc, 
+                        'torus':torus, 'fun_logtorus':fun_logtorus, 
+                        'mass':mass, 'fun_mass':fun_mass, 
+                        'eb':eb, 'fun_eb':fun_eb } 
+        
+    def get_info(self, tau, oa, rratio):
+        fun_mass = self.skirtor['fun_mass']
+        fun_eb = self.skirtor['fun_eb']
+        gen_pars = np.array([tau, oa, rratio])
+        gen_mass = fun_mass(gen_pars)
+        gen_eb   = fun_eb(gen_pars)
+        return gen_mass, gen_eb
+
+    def models_unitnorm_obsframe(self, wavelength, input_pars, if_pars_flat=True, mask_lite_e=None, conv_nbin=None):
+        # conv_nbin is not used for emission lines, it is added to keep a uniform format with other models
+        # par: voff (to adjust redshift), tau, oa, rratio, incl
+        # comps: 'disc', 'torus'
+        if if_pars_flat: 
+            par_cp = self.cframe.flat_to_arr(input_pars)
+        else:
+            par_cp = copy(input_pars)
+
+        for i_comp in range(par_cp.shape[0]):
+            voff   = par_cp[i_comp, self.cframe.par_index_cp[i_comp]['voff']]
+            tau    = par_cp[i_comp, self.cframe.par_index_cp[i_comp]['opt_depth_9.7']]
+            oa     = par_cp[i_comp, self.cframe.par_index_cp[i_comp]['opening_angle']]
+            rratio = par_cp[i_comp, self.cframe.par_index_cp[i_comp]['radii_ratio']]
+            incl   = par_cp[i_comp, self.cframe.par_index_cp[i_comp]['inclination']]
+            
+            # interpolate model for given pars in initial wavelength (rest)
+            ini_logwave = self.skirtor['log_wave'].copy()
+            fun_logdisc = self.skirtor['fun_logdisc']
+            fun_logtorus = self.skirtor['fun_logtorus']
+            gen_pars = np.array([[tau, oa, rratio, incl, w] for w in ini_logwave]) # gen: generated
+            if np.isin('disc', self.cframe.info_c[i_comp]['mod_used']):
+                gen_logdisc = fun_logdisc(gen_pars)
+            if np.isin('dust', self.cframe.info_c[i_comp]['mod_used']):
+                gen_logtorus = fun_logtorus(gen_pars)    
+
+            # redshifted to obs-frame
+            ret_logwave = np.log10(wavelength) # in AA
+            z_ratio = (1 + self.v0_redshift) * (1 + voff/299792.458) # (1+z) = (1+zv0) * (1+v/c)            
+            ini_logwave += np.log10(z_ratio)
+            if np.isin('disc', self.cframe.info_c[i_comp]['mod_used']):
+                gen_logdisc -= np.log10(z_ratio)
+                ret_logdisc  = np.interp(ret_logwave, ini_logwave, gen_logdisc, 
+                                         left=np.minimum(gen_logdisc.min(),-100), right=np.minimum(gen_logdisc.min(),-100))
+            if np.isin('dust', self.cframe.info_c[i_comp]['mod_used']):
+                gen_logtorus -= np.log10(z_ratio)
+                ret_logtorus = np.interp(ret_logwave, ini_logwave, gen_logtorus, 
+                                         left=np.minimum(gen_logtorus.min(),-100), right=np.minimum(gen_logtorus.min(),-100))
+                
+            # extended to longer wavelength
+            mask_w = ret_logwave > ini_logwave[-1]
+            if np.sum(mask_w) > 0:
+                if np.isin('disc', self.cframe.info_c[i_comp]['mod_used']):
+                    index = (gen_logdisc[-2]-gen_logdisc[-1]) / (ini_logwave[-2]-ini_logwave[-1])
+                    ret_logdisc[mask_w] = gen_logdisc[-1] + index * (ret_logwave[mask_w]-ini_logwave[-1])
+                if np.isin('dust', self.cframe.info_c[i_comp]['mod_used']):
+                    index = (gen_logtorus[-2]-gen_logtorus[-1]) / (ini_logwave[-2]-ini_logwave[-1])
+                    ret_logtorus[mask_w] = gen_logtorus[-1] + index * (ret_logwave[mask_w]-ini_logwave[-1])
+                    
+            if np.isin('disc', self.cframe.info_c[i_comp]['mod_used']):
+                ret_disc = 10.0**ret_logdisc
+                ret_disc[ret_logdisc <= -100] = 0
+            if np.isin('dust', self.cframe.info_c[i_comp]['mod_used']):
+                ret_torus = 10.0**ret_logtorus
+                ret_torus[ret_logtorus <= -100] = 0
+                
+            obs_flux_scomp_ew = np.zeros_like(ret_logwave)
+            if np.isin('disc', self.cframe.info_c[i_comp]['mod_used']): obs_flux_scomp_ew += ret_disc
+            if np.isin('dust', self.cframe.info_c[i_comp]['mod_used']): obs_flux_scomp_ew += ret_torus
+                
+            obs_flux_scomp_ew = np.vstack((obs_flux_scomp_ew))
+            obs_flux_scomp_ew = obs_flux_scomp_ew.T # add .T for a uniform format with other models with n_coeffs > 1
+            
+            if i_comp == 0: 
+                obs_flux_mcomp_ew = obs_flux_scomp_ew
+            else:
+                obs_flux_mcomp_ew = np.vstack((obs_flux_mcomp_ew, obs_flux_scomp_ew))
+
+        if mask_lite_e is not None:
+            obs_flux_mcomp_ew = obs_flux_mcomp_ew[mask_lite_e,:]
+
+        return obs_flux_mcomp_ew
+
+    ##########################################################################
+    ########################### Output functions #############################
+
+    def extract_results(self, ff=None, step=None, print_results=True, return_results=False, show_average=False):
+        if (step is None) | (step == 'best') | (step == 'final'):
+            step = 'joint_fit_3' if ff.have_phot else 'joint_fit_2'
+        if (step == 'spec+SED'):  step = 'joint_fit_3'
+        if (step == 'spec') | (step == 'pure-spec'): step = 'joint_fit_2'
+        
+        best_chi_sq_l = copy(ff.output_s[step]['chi_sq_l'])
+        best_par_lp   = copy(ff.output_s[step]['par_lp'])
+        best_coeff_le = copy(ff.output_s[step]['coeff_le'])
+
+        mod = 'torus'
+        fp0, fp1, fe0, fe1 = ff.search_model_index(mod, ff.full_model_type)
+        num_loops = ff.num_loops
+        comp_c = self.cframe.comp_c
+        par_name_cp = self.cframe.par_name_cp
+        num_comps = self.cframe.num_comps
+        num_pars_per_comp = self.cframe.num_pars_c_max
+        num_coeffs_per_comp = self.num_coeffs_c[0] # components share the same num_coeffs
+
+        # list the properties to be output
+        val_names = ['log_lum']
+
+        # format of results
+        # output_c['comp']['par_lp'][i_l,i_p]: parameters
+        # output_c['comp']['coeff_le'][i_l,i_e]: coefficients
+        # output_c['comp']['values']['name_l'][i_l]: calculated values
+        output_c = {}
+        for i_comp in range(num_comps): 
+            output_c[comp_c[i_comp]] = {} # init results for each comp
+            output_c[comp_c[i_comp]]['par_lp']   = best_par_lp[:, fp0:fp1].reshape(num_loops, num_comps, num_pars_per_comp)[:, i_comp, :]
+            output_c[comp_c[i_comp]]['coeff_le'] = best_coeff_le[:, fe0:fe1].reshape(num_loops, num_comps, num_coeffs_per_comp)[:, i_comp, :]
+            output_c[comp_c[i_comp]]['values'] = {}
+            for val_name in par_name_cp[i_comp].tolist() + val_names:
+                output_c[comp_c[i_comp]]['values'][val_name] = np.zeros(num_loops, dtype='float')
+        output_c['sum'] = {}
+        output_c['sum']['values'] = {} # only init values for sum of all comp
+        for val_name in val_names:
+            output_c['sum']['values'][val_name] = np.zeros(num_loops, dtype='float')
+
+        for i_comp in range(num_comps): 
+            for i_par in range(num_pars_per_comp):
+                output_c[comp_c[i_comp]]['values'][par_name_cp[i_comp,i_par]] = output_c[comp_c[i_comp]]['par_lp'][:, i_par]
+            for i_loop in range(num_loops):
+                # par_p = output_c[comp_c[i_comp]]['par_lp'][i_loop]
+                coeff_e = output_c[comp_c[i_comp]]['coeff_le'][i_loop]
+                output_c[comp_c[i_comp]]['values']['log_lum'][i_loop] = np.log10(coeff_e[0]*self.lum_norm)
+                output_c['sum']['values']['log_lum'][i_loop] = coeff_e[0]*self.lum_norm
+        output_c['sum']['values']['log_lum'] = np.log10(output_c['sum']['values']['log_lum'])
+
+        self.output_c = output_c # save to model frame
+        self.num_loops = num_loops # for print_results
+        self.spec_flux_scale = ff.spec_flux_scale # to calculate luminosity in printing
+
+        if print_results: self.print_results(log=ff.log_message, show_average=show_average)
+        if return_results: return output_c
+
+    def print_results(self, log=[], show_average=False):
+        mask_l = np.ones(self.num_loops, dtype='bool')
+        if not show_average: mask_l[1:] = False
+
+        if self.cframe.num_comps > 1:
+            num_comps = len([*self.output_c])
+        else:
+            num_comps = 1
+
+        print_log('', log)
+        msg = ''
+        for i_comp in range(num_comps):
+            tmp_values_vl = self.output_c[[*self.output_c][i_comp]]['values']
+            if i_comp < self.cframe.num_comps:
+                print_log(f'Best-fit properties of torus component: <{self.cframe.comp_c[i_comp]}>', log)
+                print_log(f'[Note] velocity shift (i.e., redshift) is tied following the input model_config.', log)
+                # msg  = f'| Voff (km/s)           = {tmp_values_vl["voff"][mask_l].mean():10.4f}'
+                # msg += f' +/- {tmp_values_vl["voff"].std():<8.4f}|\n'
+                msg += f'| Optical depth at 9.7 um = {tmp_values_vl["opt_depth_9.7"][mask_l].mean():10.4f}'
+                msg += f' +/- {tmp_values_vl["opt_depth_9.7"].std():<8.4f}|\n'
+                msg += f'| Out/in radii ratio      = {tmp_values_vl["radii_ratio"][mask_l].mean():10.4f}'
+                msg += f' +/- {tmp_values_vl["radii_ratio"].std():<8.4f}|\n'
+                msg += f'| Half OpenAng (degree)   = {tmp_values_vl["opening_angle"][mask_l].mean():10.4f}'
+                msg += f' +/- {tmp_values_vl["opening_angle"].std():<8.4f}|\n'
+                msg += f'| Inclination (degree)    = {tmp_values_vl["inclination"][mask_l].mean():10.4f}'
+                msg += f' +/- {tmp_values_vl["inclination"].std():<8.4f}|\n'
+            else:
+                print_log(f'Best-fit stellar properties of the sum of all components.', log)
+            msg += f'| log Lum of torus (Lsun) = {tmp_values_vl["log_lum"][mask_l].mean():10.4f}'
+            msg += f' +/- {tmp_values_vl["log_lum"].std():<8.4f}|'
+            bar = '=' * len(msg.split('|\n')[-1])
+            print_log(bar, log)
+            print_log(msg, log)
+            print_log(bar, log)
