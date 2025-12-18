@@ -1,0 +1,158 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hct-mcp-signals"
+version = "0.8.0"
+description = "HCT Coordination Signals Extension for MCP - Adds urgency, timing, and approval semantics"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.9"
+authors = [
+    { name = "Stefan Wiest", email = "mail@stefanwiest.de" }
+]
+keywords = ["mcp", "model-context-protocol", "agents", "coordination", "hct", "multi-agent"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = [
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "mypy>=1.0.0",
+    "ruff>=0.1.0",
+    "black>=23.0.0",
+    "pre-commit>=3.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/stefanwiest/hct-mcp-signals"
+Documentation = "https://github.com/stefanwiest/hct-mcp-signals#readme"
+Repository = "https://github.com/stefanwiest/hct-mcp-signals"
+Changelog = "https://github.com/stefanwiest/hct-mcp-signals/blob/main/CHANGELOG.md"
+Issues = "https://github.com/stefanwiest/hct-mcp-signals/issues"
+
+# ============================================================================
+# Build Configuration
+# ============================================================================
+[tool.hatch.build.targets.wheel]
+packages = ["hct_mcp_signals"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "hct_mcp_signals/**/*.py",
+    "hct_mcp_signals/py.typed",
+    "LICENSE",
+    "README.md",
+
+]
+
+# ============================================================================
+# Test Configuration
+# ============================================================================
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = [
+    "-v",
+    "--strict-markers",
+    "--cov=hct_mcp_signals",
+    "--cov-report=term-missing",
+]
+
+[tool.coverage.run]
+source = ["hct_mcp_signals"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+
+# ============================================================================
+# Type Checking
+# ============================================================================
+[tool.mypy]
+python_version = "0.8.0"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+show_error_codes = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+# ============================================================================
+# Formatting (Black)
+# ============================================================================
+[tool.black]
+line-length = 88
+target-version = ["py39", "py310", "py311", "py312"]
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+    | \.mypy_cache
+    | \.ruff_cache
+    | \.venv
+    | dist
+    | build
+)/
+'''
+
+# ============================================================================
+# Linting (Ruff - replaces flake8, isort, pyupgrade)
+# ============================================================================
+[tool.ruff]
+target-version = "0.8.0"
+line-length = 88
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "ARG",    # flake8-unused-arguments
+    "SIM",    # flake8-simplify
+    "PTH",    # flake8-use-pathlib
+    "RUF",    # ruff-specific
+]
+ignore = [
+    "E501",   # line too long (handled by black)
+    "B008",   # do not perform function calls in argument defaults
+]
+
+[tool.ruff.isort]
+known-first-party = ["hct_mcp_signals"]
+
+[tool.ruff.per-file-ignores]
+"tests/*" = ["ARG001", "S101"]
