@@ -1,0 +1,257 @@
+Metadata-Version: 2.4
+Name: Karboni
+Version: 0.1.0a1
+Summary: Mirror a Zotero library into a SQL database
+Project-URL: Documentation, https://github.com/whiskyechobravo/karboni/blob/main/README.md
+Project-URL: Code, https://github.com/whiskyechobravo/karboni
+Project-URL: Changes, https://github.com/whiskyechobravo/karboni/blob/main/CHANGELOG.md
+Project-URL: Issues, https://github.com/whiskyechobravo/karboni/issues
+Author-email: David Lesieur <karboni@whiskyechobravo.com>
+License-Expression: GPL-3.0-only
+License-File: LICENSE.txt
+Keywords: academia,zotero
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: Science/Research
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Classifier: Topic :: Database :: Front-Ends
+Classifier: Topic :: Education
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.11
+Requires-Dist: anyio>=4.9.0
+Requires-Dist: click-option-group>=0.5.7
+Requires-Dist: click>=8.2.1
+Requires-Dist: colorlog>=6.10.1
+Requires-Dist: httpx>=0.28.1
+Requires-Dist: python-dotenv>=1.1.1
+Requires-Dist: sqlalchemy>=2.0.41
+Provides-Extra: dev
+Requires-Dist: mypy>=1.16.1; extra == 'dev'
+Requires-Dist: pre-commit>=4.2.0; extra == 'dev'
+Requires-Dist: rope>=1.13.0; extra == 'dev'
+Requires-Dist: ruff>=0.12.11; extra == 'dev'
+Description-Content-Type: text/markdown
+
+# Karboni
+
+Mirror a Zotero library into a SQL database.
+
+
+## Features
+
+- Fast one-way synchronization from Zotero to a SQL database.
+- Fetch library items, collections, tags, saved searches metadata.
+- Download file attachments.
+- Fetch formatted references in multiple bibliographic styles, for multiple
+  locales.
+- Fetch multiple export formats.
+- Fetch the full text content of items.
+- Fetch the labels of item types, field names and creator types, for multiple
+  locales.
+- Python API for managing synchronization.
+- Command line interface for managing synchronization.
+- Support for a wide range of database systems (through SQLAlchemy).
+
+
+## Installation
+
+It is recommended that you install the package in a virtual environment.
+
+The installation steps might look like the following. Replace `DIR` with the
+desired path for your new virtual environment.
+
+### Unix/macOS
+
+Create the virtual environment:
+
+```sh
+python3 -m venv DIR
+```
+
+Activate the virtual environment:
+
+```sh
+source DIR/bin/activate
+```
+
+Install Karboni:
+
+```sh
+python3 -m pip install karboni
+```
+
+### Windows
+
+Create the virtual environment:
+
+```
+py -m venv DIR
+```
+
+Activate the virtual environment:
+
+```
+DIR\Scripts\activate
+```
+
+Install Karboni:
+
+```
+py -m pip install karboni
+```
+
+
+## Command line interface
+
+In order to use the command line interface, you must first configure your Zotero
+credentials. With a text editor, create a `.env` file in your working directory
+with the following content:
+
+```
+ZOTERO_LIBRARY_PREFIX=your_library_prefix
+ZOTERO_LIBRARY_ID=your_library_id
+ZOTERO_API_KEY=your_api_key
+```
+
+Replace `your_library_prefix` with `users` for a personal library, or `groups`
+for a group library.
+
+Replace `your_library_id` with the identifier of your library. For a personal
+library the value is your user ID, as found on
+https://www.zotero.org/settings/keys (you must be logged-in). For a group
+library this value is the group ID of the library, as found in the URL of the
+library (e.g., the groupID of the library at
+`https://www.zotero.org/groups/1234567/example` is `1234567`).
+
+Replace `your_api_key` with your Zotero API key. You may create one for your
+library on https://www.zotero.org/settings/keys/new (you must be logged-in).
+Karboni does not need to write to your library. Thus, we recommend that your API
+key be read-only, and that it does not grant any more access to your Zotero data
+than strictly necessary.
+
+By default, Karboni commands will manage data in a `data/karboni` directory
+under your current directory, and use SQLite as the relational database. You may
+change those defaults by setting the following variables in your `.env` file:
+
+- `KARBONI_DATA_PATH`. Defaults to
+  `./data/karboni/ZOTERO_LIBRARY_PREFIX-ZOTERO_LIBRARY_ID/`.
+- `KARBONI_DATABASE_URL`. Defaults to
+  `sqlite:///data/karboni/ZOTERO_LIBRARY_PREFIX-ZOTERO_LIBRARY_ID/library.sqlite`.
+  For other relational databases, see the [SQLAlchemy documentation on database
+  URLs](https://docs.sqlalchemy.org/en/20/core/engines.html#database-urls).
+  While SQLite support is readily available through the Python standard library,
+  other database backends usually require that you install additional Python
+  packages.
+
+Once the required variables have been set, you may use Karboni commands. If you
+have installed Karboni in a virtual environment, make sure it is active before
+attempting to use the commands (see the activation command in the Installation
+section). Some example commands below.
+
+Initialize the mirror database (create the tables):
+
+```sh
+karboni init
+```
+
+Synchronize from Zotero:
+
+```sh
+karboni sync
+```
+
+List the available commands and general options:
+
+```sh
+karboni --help
+```
+
+List the options of a specific command:
+
+```sh
+karboni COMMAND --help
+```
+
+A more complex example, synchronizing from Zotero with some data options enabled
+— format references in APA and Vancouver styles, fetch BibTeX and RIS formats,
+download file attachments, fetch any available full text:
+
+```sh
+karboni sync --style apa --style vancouver --export-format bibtex --export-format ris --files --fulltext
+```
+
+Karboni performs incremental synchronization by default, but for it to work you
+must use the same data options on subsequent invocations of the `karboni sync`
+command. If you wish to re-synchronize with different data options, add the
+`--full` option to your command to require a full synchronization. For example:
+
+```sh
+karboni sync --style apa-5th-edition --full
+```
+
+For the formatting styles available for the `--style` option, refer to the
+[Zotero Style Repository](https://www.zotero.org/styles/).
+
+For the export formats available for the `--export-format` option, refer to the
+[Zotero API documentation on export
+formats](https://www.zotero.org/support/dev/web_api/v3/basics#item_export_formats).
+
+For the locales available for the `--locale` option, refer to the [Citation
+Style Language locales](https://github.com/citation-style-language/locales).
+Note that some styles use a fixed locale and will ignore the `--locale` option.
+
+
+## Python interface
+
+The `karboni` Python module provides the main entry points, with functions such
+as `initialize()` and `synchronize()`.
+
+If you wish to use the SQLAlchemy ORM to query the database, you might want to
+import models from `karboni.database.schema`.
+
+
+## Design choices
+
+Here are some of the design choices that have guided the development of Karboni:
+
+- Perform Zotero API requests and file IO asynchronously to minimize idle time.
+- Use SQLite as the baseline database system (reducing the need for additional
+  dependencies), but interface it through SQLAlchemy in order to support other
+  databases as well.
+- Since Karboni itself only needs a few simple database operations, encapsulate
+  SQLAlchemy under a thin abstraction layer to decouple the synchronization
+  process from the database toolkit.
+- Stay close to the Zotero schema. Store data in the JSON format provided by the
+  Zotero API whenever possible, for consistency and better adaptability to
+  future Zotero schema changes. Add SQL columns where they can be useful to the
+  synchronization process or to allow basic queries.
+- Don't fuss too much with database-level referential integrity constraints.
+  Leave that to Zotero. In particular, the keys of parent items and parent
+  collections are not validated (this simplifies the synchronization process).
+- Don't worry about database schema migrations. The database is just a mirror,
+  thus its tables can be wiped when necessary and re-synchronized from Zotero.
+- Synchronization of file attachments is not atomic. If library synchronization
+  finishes but file downloads fail, we accept that and don't rollback the
+  database changes.
+
+
+## Known limitations
+
+- Database operations are synchronous because SQLAlchemy cannot (at least not
+  easily) share a session between concurrent tasks.
+- During transactions, SQLite locks database access from other threads or
+  processes. When synchronizing from Zotero, Karboni applies all changes in a
+  single transaction (to allow rollback in case of failure), which means the
+  database can remain locked for some time. To ensure availability during
+  synchronization, use a database system that has more advanced locking
+  mechanisms (such as PostgreSQL or MySQL).
+- Python 3.11+ is required (it facilitates exception handling with asynchronous
+  tasks).
