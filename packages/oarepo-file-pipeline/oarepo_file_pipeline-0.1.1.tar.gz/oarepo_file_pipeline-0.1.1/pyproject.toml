@@ -1,0 +1,55 @@
+[project]
+name = "oarepo-file-pipeline"
+dynamic = ["version"]
+description = "File pipeline"
+readme = "README.md"
+authors = [
+    { name = "Arsenii Pogodin", email = "xsenyaaax@gmail.com" },
+]
+requires-python = ">=3.13,<3.15"
+dependencies = [
+    "oarepo[rdm,tests]>=14.0.0,<15.0.0",
+    "oarepo-runtime>=2.0.0dev5,<3.0.0",
+    "oarepo-model>=0.1.0dev17,<1.0.0",
+    "joserfc",
+]
+
+[project.optional-dependencies]
+tests = [
+    "deepmerge",
+    "pytest-invenio",
+    "pytest-oarepo"
+]
+oarepo14 = [
+    "oarepo[rdm]>=14,<15",
+]
+
+[project.entry-points."invenio_base.apps"]
+oarepo_file_pipeline = "oarepo_file_pipeline.ext:OARepoFilePipeline"
+
+[project.entry-points."invenio_base.api_apps"]
+oarepo_file_pipeline = "oarepo_file_pipeline.ext:OARepoFilePipeline"
+
+[project.entry-points."oarepo.file.pipelines"]
+zip_pipelines = "oarepo_file_pipeline.pipeline_generators.zip:ZipGenerator"
+image_pipelines = "oarepo_file_pipeline.pipeline_generators.image:ImageGenerator"
+c4gh_pipeline = "oarepo_file_pipeline.pipeline_generators.crypt4gh:Crypt4GHGenerator"
+
+
+[project.urls]
+Homepage = "https://github.com/oarepo/oarepo-file-pipeline"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "oarepo_file_pipeline/__init__.py"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]
