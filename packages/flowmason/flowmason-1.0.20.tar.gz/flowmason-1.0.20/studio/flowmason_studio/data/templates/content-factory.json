@@ -1,0 +1,274 @@
+{
+  "id": "content-factory",
+  "name": "Content Factory",
+  "description": "A parallel content generation system that creates multiple variations of content, evaluates quality, selects the best, and produces polished final output. Demonstrates parallel generation, quality filtering, selection, and refinement patterns.",
+  "category": "content",
+  "tags": [
+    "content",
+    "parallel",
+    "quality",
+    "selection",
+    "generation",
+    "advanced"
+  ],
+  "difficulty": "advanced",
+  "use_cases": [
+    "A/B testing content variations",
+    "High-quality content production at scale",
+    "Marketing copy optimization",
+    "Social media content generation",
+    "Product description generation"
+  ],
+  "stages": [
+    {
+      "id": "brief-analyzer",
+      "component_type": "generator",
+      "name": "Analyze Brief",
+      "config": {
+        "prompt": "Analyze this content brief and extract key requirements:\n\nBrief: {{input.brief}}\nTarget Audience: {{input.audience}}\nTone: {{input.tone}}\nGoals: {{input.goals}}\n\nProvide:\n1. Key messages to convey\n2. Emotional triggers to use\n3. Call-to-action recommendations\n4. SEO keywords if applicable\n5. Content structure recommendations",
+        "system_prompt": "You are a content strategist expert. Analyze briefs thoroughly and extract actionable insights for content creation."
+      },
+      "depends_on": [],
+      "position": {
+        "x": 100,
+        "y": 250
+      }
+    },
+    {
+      "id": "variation-professional",
+      "component_type": "generator",
+      "name": "Professional Variation",
+      "config": {
+        "prompt": "Create content based on this brief using a PROFESSIONAL tone:\n\nBrief Analysis: {{upstream.brief-analyzer.content}}\nOriginal Brief: {{input.brief}}\n\nWrite polished, authoritative content that establishes credibility.",
+        "system_prompt": "You write professional, polished content. Use formal language, industry terminology, and authoritative voice. Be precise and credible."
+      },
+      "depends_on": [
+        "brief-analyzer"
+      ],
+      "position": {
+        "x": 400,
+        "y": 50
+      }
+    },
+    {
+      "id": "variation-casual",
+      "component_type": "generator",
+      "name": "Casual Variation",
+      "config": {
+        "prompt": "Create content based on this brief using a CASUAL, FRIENDLY tone:\n\nBrief Analysis: {{upstream.brief-analyzer.content}}\nOriginal Brief: {{input.brief}}\n\nWrite approachable, conversational content that feels like a friend giving advice.",
+        "system_prompt": "You write casual, friendly content. Use conversational language, relatable examples, and warm tone. Be approachable and engaging."
+      },
+      "depends_on": [
+        "brief-analyzer"
+      ],
+      "position": {
+        "x": 400,
+        "y": 175
+      }
+    },
+    {
+      "id": "variation-persuasive",
+      "component_type": "generator",
+      "name": "Persuasive Variation",
+      "config": {
+        "prompt": "Create content based on this brief using a PERSUASIVE, COMPELLING tone:\n\nBrief Analysis: {{upstream.brief-analyzer.content}}\nOriginal Brief: {{input.brief}}\n\nWrite content that drives action using proven persuasion techniques.",
+        "system_prompt": "You write highly persuasive content. Use power words, social proof references, urgency, and clear CTAs. Focus on benefits over features."
+      },
+      "depends_on": [
+        "brief-analyzer"
+      ],
+      "position": {
+        "x": 400,
+        "y": 300
+      }
+    },
+    {
+      "id": "variation-storytelling",
+      "component_type": "generator",
+      "name": "Storytelling Variation",
+      "config": {
+        "prompt": "Create content based on this brief using a STORYTELLING approach:\n\nBrief Analysis: {{upstream.brief-analyzer.content}}\nOriginal Brief: {{input.brief}}\n\nWrite narrative-driven content that engages through story and emotion.",
+        "system_prompt": "You write story-driven content. Use narrative structure, vivid descriptions, relatable characters/scenarios, and emotional hooks. Make the reader feel."
+      },
+      "depends_on": [
+        "brief-analyzer"
+      ],
+      "position": {
+        "x": 400,
+        "y": 425
+      }
+    },
+    {
+      "id": "quality-scorer-1",
+      "component_type": "critic",
+      "name": "Score Professional",
+      "config": {
+        "content": "{{upstream.variation-professional.content}}",
+        "criteria": "Score this content (0-100) on:\n1. Clarity (0-20)\n2. Engagement (0-20)\n3. Brand alignment (0-20)\n4. Call-to-action strength (0-20)\n5. Grammar/polish (0-20)\n\nProvide total score and brief justification."
+      },
+      "depends_on": [
+        "variation-professional"
+      ],
+      "position": {
+        "x": 650,
+        "y": 50
+      }
+    },
+    {
+      "id": "quality-scorer-2",
+      "component_type": "critic",
+      "name": "Score Casual",
+      "config": {
+        "content": "{{upstream.variation-casual.content}}",
+        "criteria": "Score this content (0-100) on:\n1. Clarity (0-20)\n2. Engagement (0-20)\n3. Brand alignment (0-20)\n4. Call-to-action strength (0-20)\n5. Grammar/polish (0-20)\n\nProvide total score and brief justification."
+      },
+      "depends_on": [
+        "variation-casual"
+      ],
+      "position": {
+        "x": 650,
+        "y": 175
+      }
+    },
+    {
+      "id": "quality-scorer-3",
+      "component_type": "critic",
+      "name": "Score Persuasive",
+      "config": {
+        "content": "{{upstream.variation-persuasive.content}}",
+        "criteria": "Score this content (0-100) on:\n1. Clarity (0-20)\n2. Engagement (0-20)\n3. Brand alignment (0-20)\n4. Call-to-action strength (0-20)\n5. Grammar/polish (0-20)\n\nProvide total score and brief justification."
+      },
+      "depends_on": [
+        "variation-persuasive"
+      ],
+      "position": {
+        "x": 650,
+        "y": 300
+      }
+    },
+    {
+      "id": "quality-scorer-4",
+      "component_type": "critic",
+      "name": "Score Storytelling",
+      "config": {
+        "content": "{{upstream.variation-storytelling.content}}",
+        "criteria": "Score this content (0-100) on:\n1. Clarity (0-20)\n2. Engagement (0-20)\n3. Brand alignment (0-20)\n4. Call-to-action strength (0-20)\n5. Grammar/polish (0-20)\n\nProvide total score and brief justification."
+      },
+      "depends_on": [
+        "variation-storytelling"
+      ],
+      "position": {
+        "x": 650,
+        "y": 425
+      }
+    },
+    {
+      "id": "best-selector",
+      "component_type": "selector",
+      "name": "Select Best Content",
+      "config": {
+        "options": [
+          "PROFESSIONAL:\n{{upstream.variation-professional.content}}\n\nSCORE: {{upstream.quality-scorer-1.feedback}}",
+          "CASUAL:\n{{upstream.variation-casual.content}}\n\nSCORE: {{upstream.quality-scorer-2.feedback}}",
+          "PERSUASIVE:\n{{upstream.variation-persuasive.content}}\n\nSCORE: {{upstream.quality-scorer-3.feedback}}",
+          "STORYTELLING:\n{{upstream.variation-storytelling.content}}\n\nSCORE: {{upstream.quality-scorer-4.feedback}}"
+        ],
+        "criteria": "Select the content variation with the highest quality score. Consider both the numerical score and the qualitative feedback. If scores are close, prefer the style that best matches the original brief's goals."
+      },
+      "depends_on": [
+        "quality-scorer-1",
+        "quality-scorer-2",
+        "quality-scorer-3",
+        "quality-scorer-4"
+      ],
+      "position": {
+        "x": 900,
+        "y": 200
+      }
+    },
+    {
+      "id": "final-polish",
+      "component_type": "improver",
+      "name": "Final Polish",
+      "config": {
+        "content": "{{upstream.best-selector.selected}}",
+        "feedback": "{{upstream.best-selector.reasoning}}",
+        "instructions": "Take the selected best content and apply final polish:\n1. Ensure perfect grammar and punctuation\n2. Optimize for readability\n3. Strengthen the hook and CTA\n4. Add any missing elements from the original brief\n5. Make it publication-ready"
+      },
+      "depends_on": [
+        "best-selector"
+      ],
+      "position": {
+        "x": 1150,
+        "y": 150
+      }
+    },
+    {
+      "id": "metadata-extractor",
+      "component_type": "generator",
+      "name": "Extract Metadata",
+      "config": {
+        "prompt": "Extract metadata from this content for CMS/publishing:\n\n{{upstream.final-polish.improved}}\n\nProvide as JSON:\n- title: compelling headline\n- meta_description: SEO description (155 chars max)\n- keywords: array of 5-10 SEO keywords\n- word_count: number\n- reading_time: estimated minutes\n- tone: detected tone\n- cta_type: type of call-to-action used",
+        "system_prompt": "You are a content metadata specialist. Extract accurate, SEO-optimized metadata."
+      },
+      "depends_on": [
+        "final-polish"
+      ],
+      "position": {
+        "x": 1150,
+        "y": 300
+      }
+    },
+    {
+      "id": "format-output",
+      "component_type": "json-transform",
+      "name": "Format Final Output",
+      "config": {
+        "template": {
+          "content": "{{upstream.final-polish.improved}}",
+          "metadata": "{{upstream.metadata-extractor.content}}",
+          "selection_reasoning": "{{upstream.best-selector.reasoning}}",
+          "variations_evaluated": 4
+        }
+      },
+      "depends_on": [
+        "metadata-extractor"
+      ],
+      "position": {
+        "x": 1400,
+        "y": 225
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "brief": {
+        "type": "string",
+        "description": "The content brief describing what to create"
+      },
+      "audience": {
+        "type": "string",
+        "description": "Target audience description"
+      },
+      "tone": {
+        "type": "string",
+        "description": "Preferred tone (will generate multiple variations)"
+      },
+      "goals": {
+        "type": "string",
+        "description": "Business goals for the content"
+      }
+    },
+    "required": [
+      "brief"
+    ]
+  },
+  "output_stage_id": "format-output",
+  "example_input": {
+    "brief": "Create marketing copy for our new project management SaaS tool that helps teams collaborate better",
+    "audience": "Small business owners and team leads",
+    "tone": "professional but approachable",
+    "goals": "Drive sign-ups for free trial, highlight key differentiators"
+  }
+}
