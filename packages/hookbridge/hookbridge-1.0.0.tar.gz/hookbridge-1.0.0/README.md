@@ -1,0 +1,207 @@
+# HookBridge Python SDK
+
+Official HookBridge SDK for Python. Send webhooks with guaranteed delivery, automatic retries, and full observability.
+
+## Installation
+
+```bash
+pip install hookbridge
+```
+
+## Quick Start
+
+```python
+from hookbridge import HookBridge
+
+client = HookBridge(api_key="hb_live_xxxxxxxxxxxxxxxxxxxx")
+
+# Send a webhook
+result = client.send(
+    endpoint="https://customer.app/webhooks",
+    payload={
+        "event": "order.created",
+        "order_id": "ord_12345",
+        "amount": 99.99
+    }
+)
+
+print("Message ID:", result.message_id)
+```
+
+## Features
+
+- **Guaranteed Delivery**: Webhooks are stored durably before acknowledgment
+- **Automatic Retries**: Intelligent retry with exponential backoff
+- **Idempotency**: Prevent duplicate webhook sends
+- **Full Observability**: Query logs, metrics, and message status
+- **Type Safety**: Full type hints with mypy support
+- **Async Support**: Both sync and async clients available
+
+## Usage
+
+### Send a Webhook
+
+```python
+result = client.send(
+    endpoint="https://customer.app/webhooks",
+    payload={"event": "user.created", "user_id": "usr_123"},
+    headers={"X-Tenant-Id": "tenant_abc"},
+    idempotency_key="user-123-created"
+)
+```
+
+### Check Message Status
+
+```python
+message = client.get_message(result.message_id)
+print(message.status)  # 'queued', 'succeeded', 'pending_retry', 'failed_permanent'
+```
+
+### Query Delivery Logs
+
+```python
+from datetime import datetime
+
+logs = client.get_logs(
+    status="failed_permanent",
+    start_time=datetime(2025, 1, 1),
+    limit=100
+)
+
+for msg in logs.messages:
+    print(msg.message_id, msg.last_error)
+```
+
+### Get Metrics
+
+```python
+metrics = client.get_metrics("24h")
+print(f"Success rate: {metrics.success_rate * 100:.1f}%")
+print(f"Average latency: {metrics.avg_latency_ms}ms")
+```
+
+### Replay Failed Messages
+
+```python
+# Replay a specific message
+client.replay(message_id)
+
+# Or replay from the Dead Letter Queue
+dlq = client.get_dlq_messages()
+for msg in dlq.messages:
+    client.replay_from_dlq(msg.message_id)
+```
+
+### Manage Retries
+
+```python
+# Cancel a pending retry (moves to DLQ)
+client.cancel_retry(message_id)
+
+# Trigger immediate retry for a pending message
+client.retry_now(message_id)
+```
+
+### API Key Management
+
+```python
+# List API keys
+keys = client.list_api_keys()
+
+# Create a new API key
+new_key = client.create_api_key(mode="live", label="Production backend")
+print("Save this key:", new_key.key)  # Only shown once!
+
+# Delete an API key
+client.delete_api_key("key_abc123")
+```
+
+## Async Usage
+
+```python
+from hookbridge import AsyncHookBridge
+
+async with AsyncHookBridge(api_key="hb_live_xxx") as client:
+    result = await client.send(
+        endpoint="https://customer.app/webhooks",
+        payload={"event": "order.created"}
+    )
+```
+
+## Configuration
+
+```python
+client = HookBridge(
+    # Required: Your API key
+    api_key="hb_live_xxxxxxxxxxxxxxxxxxxx",
+
+    # Optional: Custom base URL (default: https://api.hookbridge.io)
+    base_url="https://api.hookbridge.io",
+
+    # Optional: Request timeout in seconds (default: 30)
+    timeout=30.0,
+
+    # Optional: Number of retries for failed requests (default: 3)
+    retries=3
+)
+```
+
+## Error Handling
+
+```python
+from hookbridge import (
+    HookBridge,
+    AuthenticationError,
+    ValidationError,
+    RateLimitError,
+    NotFoundError,
+    IdempotencyError
+)
+
+try:
+    client.send(...)
+except AuthenticationError:
+    print("Invalid API key")
+except ValidationError as e:
+    print(f"Invalid request: {e}")
+except RateLimitError as e:
+    print(f"Rate limited. Retry after {e.retry_after}s")
+except IdempotencyError:
+    print("Duplicate request with different payload")
+```
+
+## Webhook Delivery
+
+When HookBridge delivers your webhook, it includes these headers:
+
+- `X-Webhook-Signature`: HMAC-SHA256 signature for verification
+- `X-Webhook-Id`: Message ID for tracking
+- `X-Webhook-Timestamp`: Unix timestamp of the send request
+- Any custom headers you specified
+
+### Retry Behavior
+
+- **Fast retries** (for 429 responses): 30s, 60s, 120s, 240s, 300s
+- **Slow retries** (for other errors): 30m, 2h, 6h, 12h, 24h, 48h, 72h, 96h
+- Maximum 8 total attempts before moving to the Dead Letter Queue
+
+## Context Manager Support
+
+```python
+# Sync
+with HookBridge(api_key="...") as client:
+    client.send(...)
+
+# Async
+async with AsyncHookBridge(api_key="...") as client:
+    await client.send(...)
+```
+
+## Requirements
+
+- Python 3.9 or later
+- httpx
+
+## License
+
+MIT
