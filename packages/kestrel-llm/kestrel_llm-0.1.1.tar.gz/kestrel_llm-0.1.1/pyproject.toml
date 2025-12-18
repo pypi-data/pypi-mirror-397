@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kestrel-llm"
+version = "0.1.1"
+description = "Utilities to verify and maintain LLM.txt files (coverage, sorting, symbols blocks)."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "kestrel-llm contributors" }]
+license = { text = "MIT" }
+classifiers = [
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Documentation",
+    "Topic :: Software Development :: Quality Assurance",
+]
+
+
+[project.optional-dependencies]
+dev = [
+    "ty>=0.0.2",
+    "pytest>=8",
+    "ruff>=0.5",
+]
+
+[project.scripts]
+llm-check = "llm_txt_tools.cli:llm_check_main"
+llm-fix = "llm_txt_tools.cli:llm_fix_main"
+llm-sync = "llm_txt_tools.cli:llm_sync_main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
