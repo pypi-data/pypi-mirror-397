@@ -1,0 +1,90 @@
+# Outlook Account Generator (API Wrapper)
+
+[![Python](https://img.shields.io/badge/Python-3.6%2B-blue)](https://www.python.org/)
+[![API Status](https://img.shields.io/badge/API-Active-success)](https://rapidapi.com/EymenTakak/api/temp-outlook-api)
+[![License](https://img.shields.io/badge/License-MIT-green)](https://opensource.org/licenses/MIT)
+
+A lightweight Python library to generate **real Microsoft Outlook & Hotmail** email addresses instantly. 
+Unlike standard temp-mail services, these domains have high trust scores on major platforms.
+
+This library allows you to access inboxes via JSON to **fetch OTP codes automatically**. 
+**No Selenium, Puppeteer, or headless browsers required.**
+
+## 🚀 Features
+
+* **Real Domains:** Generates `@outlook.com` and `@hotmail.com` addresses.
+* **JSON Inbox:** Fetch emails and verification codes via a simple method.
+* **Secure:** Uses encrypted tokens for session management.
+* **Fast:** Purely request-based (Lightweight & Fast).
+
+## 📦 Installation
+
+You can install the package via pip:
+
+```bash
+pip install outlook-account-generator
+```
+
+## 🔑 API Key Required
+
+To use this library, you need an API Key.
+👉 **[Get your Free API Key Here](https://rapidapi.com/EymenTakak/api/temp-outlook-api)**
+
+## ⚡ Quick Start Guide
+
+### 1. Initialize the Client
+
+First, import the library and initialize it with your RapidAPI Key.
+
+```python
+from outlook_account_generator import OutlookGen
+
+# Replace with your actual API Key
+API_KEY = "YOUR_RAPIDAPI_KEY_HERE"
+api = OutlookGen(API_KEY)
+```
+
+### 2. Generate a New Account
+
+You can choose between `outlook` or `hotmail`.
+
+```python
+# Create a new Outlook account
+try:
+    account = api.create_account("outlook")
+
+    email = account['email']
+    token = account['enc_token']
+
+    print(f"✅ Generated Email: {email}")
+
+except Exception as e:
+    print(f"Error: {e}")
+```
+
+### 3. Wait for OTP / Email
+
+Use the `wait_for_otp` helper function to automatically poll the inbox until a message arrives.
+
+```python
+print(f"[*] Waiting for email on {email}...")
+
+# Checks inbox every 5 seconds, times out after 60 seconds
+email_data = api.wait_for_otp(email, token, timeout=60)
+
+if email_data:
+    print("\n📩 New Email Received:")
+    print(f"From: {email_data['sender']}")
+    print(f"Subject: {email_data['title']}")
+    print(f"Body: {email_data['content']}") # Content is HTML-stripped
+else:
+    print("❌ No email received within timeout.")
+```
+
+## ⚖️ Disclaimer
+
+This tool is designed for educational purposes, software testing, and automation development. 
+Please refer to the [RapidAPI Terms](https://rapidapi.com/EymenTakak/api/temp-outlook-api) for usage limits.
+
+---
+[Get Premium Access](https://rapidapi.com/EymenTakak/api/temp-outlook-api)
