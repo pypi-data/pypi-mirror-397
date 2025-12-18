@@ -1,0 +1,69 @@
+[project]
+name = "rayel-rpa-executor"
+version = "0.5.49"
+description = "Distributed task scheduler and RPA executor with FastAPI and browser pool management"
+license = {text = "Apache-2.0"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "requests>=2.32.3",
+    "pydantic>=2.7.4",
+    "pydantic-settings>=2.0.0",
+    "protobuf==5.27.2",
+    "grpcio>=1.66.2",
+    "prometheus-client>=0.20.0",
+    "psutil>=5.9.0",
+    "python-dotenv>=1.0.1",
+    "aiohttp>=3.10.9",
+    "GitPython>=3.1.0",
+    "playwright>=1.55.0",
+    "fastapi>=0.122.0",
+    "uvicorn[standard]>=0.38.0",
+    "apscheduler>=3.11.1",
+    "persist-queue>=1.1.0",
+    # Phase 2: 分层环境依赖解析（Python 3.11+ 内置 tomllib）
+    "tomli>=2.0.0; python_version < '3.11'",
+]
+requires-python = ">=3.12"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["snailjob", "executor"]
+
+[[tool.uv.index]]
+url = "https://mirrors.aliyun.com/pypi/simple"
+default = true
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.3.0",
+    "grpcio-tools>=1.66.2",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+exclude = [
+    "snailjob/grpc/snailjob_pb2_grpc.py",
+    "snailjob/grpc/snailjob_pb2.py",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
