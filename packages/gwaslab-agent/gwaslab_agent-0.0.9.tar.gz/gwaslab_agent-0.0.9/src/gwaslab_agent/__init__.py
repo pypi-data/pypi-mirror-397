@@ -1,0 +1,2 @@
+from gwaslab_agent.sumstat_agent import SmartSumstats
+from gwaslab_agent.a_path_manager import PathManager
