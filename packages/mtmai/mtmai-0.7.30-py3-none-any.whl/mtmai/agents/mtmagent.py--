@@ -1,0 +1,185 @@
+"""
+mtmai范例Agent - 基于autogen v0.7.2架构重构
+
+展示如何使用新的Agent架构：
+- 继承MtBaseAgent基类
+- 实现统一的execute方法
+- 支持统一的请求响应格式
+- 可从多种入口调用（HTTP、消息队列等）
+"""
+
+from typing import Optional, Dict, Any, List
+from loguru import logger
+from mtmai.agents._mtbase_agent import MtBaseAgent, AgentRequest, AgentResponse
+from mtmai.db.db import get_async_session
+from mtmai.db.models import MtTaskStep
+from autogen_core.models import ChatCompletionClient
+from autogen_core.tools import BaseTool
+from autogen_core.memory import Memory
+
+
+class MtmaiAgent(MtBaseAgent):
+    """
+    mtmai范例Agent
+
+    功能：
+    - 展示新架构的使用方法
+    - 支持任务步骤记录
+    - 可扩展的工具和记忆功能
+    """
+
+    def __init__(
+        self,
+        name: str = "MtmaiAgent",
+        description: str = "mtmai范例Agent，展示新架构的使用方法",
+        model_client: Optional[ChatCompletionClient] = None,
+        tools: Optional[List[BaseTool]] = None,
+        memory: Optional[List[Memory]] = None,
+        site_url: str = "https://colab-3600.yuepa8.com",
+        entry_url: str = "/api/automation",
+    ):
+        super().__init__(
+            name=name,
+            description=description,
+            model_client=model_client,
+            tools=tools,
+            memory=memory,
+        )
+        self.site_url = site_url
+        self.entry_url = entry_url
+
+    async def execute(self, request: AgentRequest) -> AgentResponse:
+        """
+        执行Agent任务
+
+        Args:
+            request: 统一的Agent请求格式
+
+        Returns:
+            AgentResponse: 统一的Agent响应格式
+        """
+        try:
+            logger.info(f"MtmaiAgent开始执行任务: {request.task}")
+
+            # 记录任务开始
+            await self._log_step("task_start", {
+                "task": request.task,
+                "context": request.context,
+                "agent_name": self.name
+            })
+
+            # 根据任务类型执行不同逻辑
+            if "浏览" in request.task or "browse" in request.task.lower():
+                result = await self._handle_browse_task(request)
+            elif "分析" in request.task or "analyze" in request.task.lower():
+                result = await self._handle_analyze_task(request)
+            else:
+                result = await self._handle_general_task(request)
+
+            # 记录任务完成
+            await self._log_step("task_complete", {
+                "result": result,
+                "agent_name": self.name
+            })
+
+            return AgentResponse(
+                success=True,
+                result=result,
+                metadata={
+                    "agent_name": self.name,
+                    "task_type": self._get_task_type(request.task),
+                    "site_url": self.site_url,
+                }
+            )
+
+        except Exception as e:
+            logger.error(f"MtmaiAgent执行失败: {e}")
+            await self._log_step("task_error", {
+                "error": str(e),
+                "agent_name": self.name
+            })
+
+            return AgentResponse(
+                success=False,
+                error=str(e),
+                metadata={"agent_name": self.name}
+            )
+
+    async def _handle_browse_task(self, request: AgentRequest) -> str:
+        """处理浏览类任务"""
+        target_url = f"{self.site_url}{self.entry_url}"
+        logger.info(f"处理浏览任务，目标URL: {target_url}")
+
+        # 这里可以集成浏览器自动化工具
+        # 目前返回模拟结果
+        return f"已浏览 {target_url}，发现相关内容并按照提示执行了任务。"
+
+    async def _handle_analyze_task(self, request: AgentRequest) -> str:
+        """处理分析类任务"""
+        logger.info("处理分析任务")
+
+        # 这里可以集成数据分析工具
+        # 目前返回模拟结果
+        return f"已完成对 '{request.task}' 的分析，生成了详细报告。"
+
+    async def _handle_general_task(self, request: AgentRequest) -> str:
+        """处理通用任务"""
+        logger.info("处理通用任务")
+
+        # 如果有model_client，可以调用LLM处理
+        if self.model_client:
+            # 创建autogen agent并处理
+            agent = self._create_autogen_agent()
+            # 这里可以使用autogen的团队聊天功能
+            return f"通过AI助手处理了任务: {request.task}"
+        else:
+            return f"已接收并处理任务: {request.task}"
+
+    def _get_task_type(self, task: str) -> str:
+        """识别任务类型"""
+        if "浏览" in task or "browse" in task.lower():
+            return "browse"
+        elif "分析" in task or "analyze" in task.lower():
+            return "analyze"
+        else:
+            return "general"
+
+    async def _log_step(self, step_type: str, data: Dict[str, Any]):
+        """记录任务步骤到数据库"""
+        try:
+            async with get_async_session() as session:
+                task_step = MtTaskStep(data={
+                    "step_type": step_type,
+                    "timestamp": str(logger._core.clock.now()),
+                    **data
+                })
+                session.add(task_step)
+                await session.commit()
+                await session.refresh(task_step)
+                logger.debug(f"已记录任务步骤: {step_type}")
+        except Exception as e:
+            logger.warning(f"记录任务步骤失败: {e}")
+
+
+# 工厂函数，方便创建Agent实例
+def create_mtmai_agent(
+    config: Optional[Dict[str, Any]] = None
+) -> MtmaiAgent:
+    """
+    创建MtmaiAgent实例的工厂函数
+
+    Args:
+        config: 可选的配置字典
+
+    Returns:
+        MtmaiAgent: 配置好的Agent实例
+    """
+    if config is None:
+        config = {}
+
+    return MtmaiAgent(
+        name=config.get("name", "MtmaiAgent"),
+        description=config.get("description", "mtmai范例Agent"),
+        site_url=config.get("site_url", "https://colab-3600.yuepa8.com"),
+        entry_url=config.get("entry_url", "/api/automation"),
+    )
