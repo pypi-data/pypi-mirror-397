@@ -1,0 +1,96 @@
+---
+- block:
+    - name: Create temporary build directory
+      tempfile:
+        state: directory
+        suffix: srpms
+      register: srpm_directory
+      when: build_package_srpm_directory is not defined
+
+    - include_role:
+        name: build_srpm
+      vars:
+        build_srpm_output_dir: "{{ build_package_srpm_directory | default(srpm_directory.path) }}"
+
+- name: Define Copr project user
+  set_fact:
+    build_package_project_user: "{{ copr_scratch_user | default(copr_project_user) }}"
+
+- when: build_package_scratch | bool
+  block:
+    - name: Define Copr scratch project name
+      set_fact:
+        build_package_project_name: "{{ copr_scratch_project | default(copr_project['copr_project_name'] + '-scratch-' + (999999999 | random | to_uuid)) }}"
+
+    - include_role:
+        name: copr_project
+      vars:
+        copr_project_user: "{{ build_package_project_user }}"
+        copr_project_name: "{{ build_package_project_name }}"
+        copr_project_chroots: "{{ copr_project['copr_project_chroots'] }}"
+        copr_project_description: "{{ copr_project['copr_project_description'] | default('') }}"
+        copr_project_delete_after_days: "4"
+        copr_project_unlisted_on_homepage: "{{ copr_project['copr_project_unlisted_on_homepage'] | default(true) }}"
+        copr_project_copr_config: "{{ build_package_copr_config | default('') }}"
+
+- name: 'Run build'
+  copr_build:
+    user: "{{ build_package_project_user }}"
+    project: "{{ build_package_project_name | default(copr_project['copr_project_name']) }}"
+    srpm: "{{ srpm_build.path }}"
+    chroot: "{{ chroot }}"
+    config_file: "{{ build_package_copr_config | default(omit) }}"
+    force: "{{ build_package_copr_rebuild }}"
+  register: copr_builds
+  ignore_errors: "{{ build_package_skip_failed_build | default(false) }}"
+  loop: "{{ copr_project['copr_project_chroots'] | map(attribute='name') | list }}"
+  loop_control:
+    loop_var: chroot
+
+- name: 'Created tasks'
+  when: copr_builds is changed
+  debug:
+    msg: "{{ copr_builds['results'] | selectattr('build_urls', 'defined') | map(attribute='build_urls') | list | flatten }}"
+
+- name: 'Wait for tasks to finish'
+  when:
+    - build_package_wait|bool
+    - copr_builds is changed
+  block:
+    - name: "Watch copr build(s)"
+      command:
+        "copr-cli {{ '--config ' + build_package_copr_config if build_package_copr_config is defined else '' }} watch-build {{ copr_build_ids | join(' ') }}"
+      ignore_errors: true
+      register: build_package_copr_status
+      changed_when: false
+      vars:
+        copr_build_ids: "{{ copr_builds['results'] | selectattr('builds', 'defined') | map(attribute='builds') | list | flatten }}"
+
+    - name: 'Failed build'
+      fail:
+        msg: "The build in Copr has failed"
+      when: (build_package_copr_status is failed)
+
+- when:
+    - build_package_archive_build_info
+    - copr_builds is changed
+  block:
+    - name: Create build info directory
+      file:
+        path: "{{ inventory_dir }}/copr_build_info"
+        state: directory
+        mode: '0755'
+
+    - name: 'Write out build info'
+      when:
+        - build_package_archive_build_info
+      copy:
+        dest: "{{ inventory_dir }}/copr_build_info/{{ inventory_hostname }}"
+        content: "{{ copr_builds | to_yaml }}"
+        mode: '0644'
+
+- name: 'Download builds'
+  include_tasks: download_rpms.yml
+  when: build_package_download_rpms|bool
+  vars:
+    chroots: "{{ copr_project['copr_project_chroots'] | map(attribute='name') | list }}"

@@ -1,0 +1,16 @@
+---
+- name: Update a spec file's release and changelog fields
+  hosts:
+    - packages
+  serial: 1
+  gather_facts: false
+  vars:
+    changelog: rebuilt
+  roles:
+    - spec_file
+  tasks:
+    - name: 'Bump release'
+      command: "rpmdev-bumpspec {{ spec_file_path | basename }} -c \"{{ changelog }}\""
+      args:
+        chdir: "{{ spec_file_path | dirname }}"
+      changed_when: true

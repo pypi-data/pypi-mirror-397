@@ -1,0 +1,20 @@
+---
+- name: 'Create Copr repo'
+  copr_repo:
+    repo_name: "{{ copr_repo_name }}"
+    chroots: "{{ copr_repo_chroots | map(attribute='name') }}"
+    description: "{{ copr_repo_description | default(omit) }}"
+    delete_after_days: "{{ copr_repo_delete_after_days | default(omit) }}"
+    unlisted_on_homepage: "{{ copr_repo_unlisted_on_homepage | default(omit) }}"
+  register: create_output
+
+- name: Configure chroots
+  copr_chroot:
+    repo_name: "{{ copr_repo_name }}"
+    chroot: "{{ chroot.name }}"
+    external_repos: "{{ chroot.external_repos | default(omit) }}"
+    buildroot_packages: "{{ chroot.buildroot_packages | default(omit) }}"
+    modules: "{{ chroot.modules | default(omit) }}"
+  loop: "{{ copr_repo_chroots }}"
+  loop_control:
+    loop_var: chroot

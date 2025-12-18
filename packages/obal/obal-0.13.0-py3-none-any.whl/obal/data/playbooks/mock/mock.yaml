@@ -1,0 +1,15 @@
+---
+- name: Build SRPM
+  hosts:
+    - packages
+  serial: 1
+  gather_facts: false
+  roles:
+    - build_srpm
+
+- name: Build RPM with mock
+  hosts:
+    - packages
+  gather_facts: false
+  roles:
+    - mock

@@ -1,0 +1,55 @@
+Metadata-Version: 2.4
+Name: obal
+Version: 0.13.0
+Summary: packaging wrapper using ansible
+Home-page: https://github.com/theforeman/obal
+Author: The Foreman Project
+Author-email: foreman-dev@googlegroups.com
+Keywords: ansible foreman packaging koji brew mock
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Build Tools
+Classifier: License :: OSI Approved :: GNU General Public License v2 (GPLv2)
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: obsah>=0.0.3
+Provides-Extra: argcomplete
+Requires-Dist: argcomplete; extra == "argcomplete"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: license-file
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: summary
+
+# obal - packaging wrapper using Ansible
+
+[![Documentation Status](https://readthedocs.org/projects/obal/badge/?version=latest)](https://obal.readthedocs.io/en/latest/)
+
+`obal` is an Ansible wrapper with a set of Ansible playbooks to ease maintanance of packaging repositories like [`foreman-packaging`](https://github.com/theforeman/foreman-packaging) and [`pulp-packaging`](https://github.com/pulp/pulp-packaging).
+
+All `obal` actions should also work with plain Ansible when called like `ansible-playbook <action_playbook>.yml -l <package>` instead of `obal <action> <package>`.
+
+## necessary tools
+
+- `python` 3.9+
+- `ansible`
+
+## Using Obal via Container
+
+Obal and all it's required packages are available in a container that can be used locally or in build environments. The users Koji credentials and configuration must be mounted into the container alongside of mounting the packaging project into `/opt/packaging` to work. Note the examples below assume SELinux is disabled.
+
+To run (or sub `docker` for `podman`):
+
+    podman run -v `pwd`:/opt/packaging -v ~/.koji:/root/.koji obal:latest scratch katello
