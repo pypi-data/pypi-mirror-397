@@ -1,0 +1,338 @@
+name: new_models
+type: configurable_config
+parameters:
+  - name: variables
+    value:
+      - name: output_llm
+        class: output_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: max_tokens
+            type: configurable
+          - key: temperature
+            value: temperature
+            type: configurable
+          - key: top_p
+            value: top_p
+            type: configurable
+          - key: model_kwargs
+            value: model_kwargs
+            type: configurable
+            cast_to_dict: true
+      - name: extractor_output_llm
+        class: output_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: max_tokens
+            type: configurable
+          - key: temperature
+            value: temperature
+            type: configurable
+          - key: top_p
+            value: top_p
+            type: configurable
+      - name: chat_assistant_llm
+        class: output_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: max_tokens
+            type: configurable
+          - key: temperature
+            value: temperature
+            type: configurable
+          - key: top_p
+            value: top_p
+            type: configurable
+      - name: confirm_intent_llm
+        class: sql_or_api_analysis_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: max_tokens
+            type: configurable
+          - key: temperature
+            value: temperature
+            type: configurable
+          - key: top_p
+            value: top_p
+            type: configurable
+      - name: related_question_llm
+        class: output_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: max_tokens
+            type: configurable
+          - key: temperature
+            value: temperature
+            type: configurable
+          - key: top_p
+            value: top_p
+            type: configurable
+      - name: doc_summary_llm
+        class: doc_summary_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: 4096
+            type: int
+          - key: temperature
+            value: 0.0
+            type: float
+          - key: streaming
+            value: true
+            type: bool
+          - key: top_p
+            value: 0.95
+            type: float
+      - name: sql_generation_llm
+        class: sql_or_api_analysis_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: max_tokens
+            type: configurable
+          - key: temperature
+            value: temperature
+            type: configurable
+          - key: top_p
+            value: top_p
+            type: configurable
+      - name: sql_to_text_llm
+        class: output_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: max_tokens
+            type: configurable
+          - key: temperature
+            value: temperature
+            type: configurable
+          - key: top_p
+            value: top_p
+            type: configurable
+      - name: metric_to_text_llm
+        class: sql_or_api_analysis_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: max_tokens
+            type: configurable
+          - key: temperature
+            value: temperature
+            type: configurable
+          - key: top_p
+            value: top_p
+            type: configurable
+      - name: api_analysis_llm
+        class: output_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: max_tokens
+            type: configurable
+          - key: temperature
+            value: temperature
+            type: configurable
+          - key: top_p
+            value: top_p
+            type: configurable
+      - name: text2api_llm
+        class: sql_or_api_analysis_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: max_tokens
+            type: configurable
+          - key: temperature
+            value: temperature
+            type: configurable
+          - key: top_p
+            value: top_p
+            type: configurable
+      - name: api_to_text_llm
+        class: output_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: max_tokens
+            type: configurable
+          - key: temperature
+            value: temperature
+            type: configurable
+          - key: top_p
+            value: top_p
+            type: configurable
+      - name: table_to_chart_llm
+        class: sql_or_api_analysis_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: max_tokens
+            type: configurable
+          - key: temperature
+            value: temperature
+            type: configurable
+          - key: top_p
+            value: top_p
+            type: configurable
+      - name: attachment_intent_llm
+        class: output_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: max_tokens
+            type: configurable
+          - key: temperature
+            value: temperature
+            type: configurable
+          - key: top_p
+            value: top_p
+            type: configurable
+      - name: text2cypher_llm
+        class: sql_or_api_analysis_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: max_tokens
+            type: configurable
+          - key: temperature
+            value: temperature
+            type: configurable
+          - key: top_p
+            value: top_p
+            type: configurable
+      - name: chat_assistant_summary_llm
+        class: sql_or_api_analysis_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: max_tokens
+            type: configurable
+          - key: temperature
+            value: 0.01
+            type: float
+          - key: top_p
+            value: top_p
+            type: configurable
+      - name: knowledge_operation_llm
+        class: output_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: max_tokens
+            type: configurable
+          - key: temperature
+            value: temperature
+            type: configurable
+          - key: top_p
+            value: top_p
+            type: configurable
+      - name: free_mode_llm
+        class: output_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: max_tokens
+            type: configurable
+          - key: temperature
+            value: temperature
+            type: configurable
+          - key: top_p
+            value: top_p
+            type: configurable
+  - name: configurables
+    value:
+      #- name: 自由生成大模型
+      #  id: free_mode_llm
+      #  description: 选择用于支撑当前聊天助手的后台大模型
+      #  type: single-option
+      #  default: moonshot-v1-8k
+      #  cast_fn: str
+      #  options: 
+      #    default_llm: default_llm
+      - name: 选择大模型
+        id: chat_assistant_llm
+        description: 选择用于支撑当前聊天助手的后台大模型
+        type: single-option
+        default: default_llm
+        cast_fn: str
+        options: 
+          default_llm: default_llm
+      - name: 用于知识库润色的大模型
+        id: output_llm
+        description: 基于用户问题对知识库内文档、问答对中的文本进行分析，并将最终结果进行润色、评估的大模型。如有敏感数据建议使用私有化大模型。
+        type: single-option
+        default: default_llm
+        cast_fn: str
+        options: 
+          default_llm: default_llm
+      - name: 选择用于生成SQL与API调用命令的大模型
+        id: sql_or_api_analysis_llm
+        description: |
+          基于用户问题将相关的数据源元数据、API Schema信息发送给大模型，以生成SQL语句、API调用命令。
+          建议使用更大参数量的模型以保障SQL生成的准确性，该大模型不会接收到具体SQL与API的返回，但您仍需要注意此操作的数据安全策略是否合规。
+        type: single-option
+        default: default_llm
+        cast_fn: str
+        options: 
+          default_llm: default_llm
+      - name: 用于生成关联问的大模型
+        id: related_question_llm
+        description: |
+          用于结合问答上下文、问答集，生成关联问的大模型。如有上下文中包含敏感数据建议使用私有化大模型。
+        type: single-option
+        default: default_llm
+        cast_fn: str
+        options: 
+          default_llm: default_llm
+      - name: 用于长文本处理的大模型
+        id: doc_summary_llm
+        description: |
+          用于做长文本总结或回答的大模型。
+        type: single-option
+        default: default_llm
+        cast_fn: str
+        options:
+          default_llm: default_llm
+      - name: temperature
+        id: temperature
+        description: 用于控制大模型的随机性。
+        type: value
+        default: 0
+        cast_fn: float
+      - name: max_tokens
+        id: max_tokens
+        description: 用于控制大模型的最大输出token数。
+        type: value
+        default: 1000
+        cast_fn: int
+      - name: top_p
+        id: top_p
+        description: 用于控制大模型的随机性。
+        type: value
+        default: 1
+        cast_fn: float
+      - name: model_kwargs
+        id: model_kwargs
+        description: 
+        type: multiple-option
+        default: 
+          - doubao_enable_thinking
+          - qwen_enable_thinking
+        options:
+          doubao_enable_thinking: '{"thinking":{"type": "enabled"}}'
+          doubao_disable_thinking: '{"thinking":{"type": "disabled"}}'
+          qwen_enable_thinking: '{"enable_thinking":True}'
+          qwen_disable_thinking: '{"enable_thinking":False}'
+        cast_fn: eval
+      
+  - name: mappings
+    value:
+      default_llm:
+        type: class
+        class: EKCLLM
+      

@@ -1,0 +1,33 @@
+{
+  "type": "object",
+  "properties": {
+    "intent": {
+      "type": "string",
+      "description": "用户的意图。判断用户的问题是哪一种意图。definition表示用户希望询问指标定义或指标的元信息（如查找指标的维度信息，计算规则，模型信息）；query表示用户希望查询指标的值或某个维度下前N个数据；root cause analysis表示用户希望从总体上分析指标，用户的问题中必须包含“分析”这个词时才可以选择总体分析。dimension_analysis表示只对指标做维度分析。link_analysis表示对指标做链路穿透分析。lineage_analysis表示对指标做血缘分析。rank表示用户希望查询某一个维度值在该维度中的排名，rank意图只能查询单个维度的值排名，无法查询前N个排名。scroll表示从指标库里取出所有指标。示例：有哪些和财务相关的指标（scroll）；指标库里有哪些我能问的指标（scroll）；指标值最多的前三名（query）；有哪些和财务相关的指标（definition）；哪些指标包含部门维度（definition）；某某指标包含哪些维度（definition）；xx指标的趋势、走势、变化规律是什么？xxx指标xx维度是多少？（query）；2024年1-8月累计收入是多少？（query）；2024年外部项目收入的前五个部门是哪些？（query）；2024年12月，营业收入排名前十的客户（query）；影响资产负债率最大的因素和维度是什么？（dimension_analysis）；对不良贷款率做链路分析（link_analysis）；对不良贷款率做血缘分析（lineage_analysis）；分析某指标1月到8月的变化（root cause analysis）；在所有部门中营业一部的存款余额排名是第几？（rank）；2024年A产品的销量总量的排名。（rank）；xx指标在xx口径下是多少？（query）",
+      "enum": [
+        "definition",
+        "query",
+        "root cause analysis",
+        "dimension_analysis",
+        "link_analysis",
+        "lineage_analysis",
+        "rank",
+        "scroll"
+      ]
+    },
+    "metric": {
+      "type": "array",
+      "description": "用户的问题中涉及到的指标的名称。指标名称中请不要包含时间限定或者条件限定。",
+      "items": {
+        "type": "string"
+      }
+    },
+    "clarify_choices":{
+      "type": "array",
+      "description": "当前的系统不支持多个意图或问题。如果用户的问题涉及到多个意图，例如：“指标xxx的值是多少，请分析这个指标”，“指标xxx的值是多少，它的定义是什么”，“指标A是多少？指标B是多少？”那么请根据用户的输入，拆分成一组（不超过5个）候选问题，每个候选问题都应该是一个单一的意图。否则请不要生成clarify_choices字段。",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

@@ -1,0 +1,399 @@
+name: prompts_plugins
+type: configurable_config
+parameters:
+  - name: variables
+    value: 
+      - name: device_query_clarify_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - chat_history
+          - key: template
+            type: mapping
+            value: device_query_clarify_template
+      - name: custom_tags_clarify_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - chat_history
+          - key: template
+            type: mapping
+            value: custom_tags_clarify_template
+      - name: user_problem_clarify_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - chat_history
+          - key: template
+            type: mapping
+            value: user_problem_clarify_template
+      - name: reserve_meeting_room_state_clarify_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - current_time_info
+              - chat_history
+          - key: template
+            type: mapping
+            value: reserve_meeting_room_state_clarify_template
+      - name: reserve_meeting_room_confirm_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - current_time_info
+              - chat_history
+          - key: template
+            type: mapping
+            value: reserve_meeting_room_confirm_template
+      - name: sino_user_intent_prompt_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - chat_history
+              - question
+              - current_time_info
+          - key: template
+            type: mapping
+            value: sino_user_intent_prompt_template
+      - name: sino_find_best_doc_prompt_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - question
+              - chat_history
+              - candidate_filenames
+              - current_time_info
+          - key: template
+            type: mapping
+            value: sino_find_best_doc_prompt_template
+      - name: sino_llm_response_prompt
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - chat_history
+              - question
+              - current_time_info
+          - key: template
+            type: mapping
+            value: sino_llm_response_prompt
+      - name: sino_get_customtags_prompt
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - chat_history
+              - question
+              - current_time_info
+          - key: template
+            type: mapping
+            value: sino_get_customtags_prompt
+      - name: sino_summary_response_prompt
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - summary
+              - question
+              - chat_history
+          - key: template
+            type: mapping
+            value: sino_summary_response_prompt
+      - name: sino_summary_response_direct_prompt
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - doc_fulltext
+              - question
+              - chat_history
+          - key: template
+            type: mapping
+            value: sino_summary_response_direct_prompt
+  - name: configurables
+    value:
+  - name: mappings
+    value: 
+      device_query_clarify_template:
+        type: kwargs
+        template:
+          type: str
+          value: |-
+            你是设备维修助手，下面是你和用户的对话记录，请基于所给的对话记录，判断用户意图，即用户是否想要咨询设备维修事宜。
+            如果尚不清楚用户想要咨询设备维修，请输出"0."，然后输出基于你内置知识的不超过50字的回答。
+            如果用户想要开始设备维修咨询，请输出"1."，，不要输出别的内容。
+            <<<对话记录：
+            {chat_history}
+            >>>
+
+            用户的意图是:
+      custom_tags_clarify_template:
+        type: kwargs
+        template:
+          type: str
+          value: |-
+            你是设备维修助手，下面是你和用户的对话记录，请试图从对话记录里提取出用户的完整设备型号。
+            如果不能提取出用户的设备型号，则输出"0."。
+            如果能提取出用户的设备型号，则输出"1."，然后输出用户的完整设备型号。
+            <<<对话记录：
+            {chat_history}
+            >>>
+
+            用户的设备型号为：
+      user_problem_clarify_template:
+        type: kwargs
+        template:
+          type: str
+          value: |-
+            你是设备维修助手，下面是你和用户的对话记录，请基于所给的对话记录，判断你是否已经清晰地知道用户使用设备中碰到的具体问题。
+            如果你尚不清楚用户想咨询的使用设备中碰到的具体问题，请输出"0."。
+            如果你已清楚地知道用户使用设备中碰到的具体问题，请输出"1."，然后输出用户的具体问题描述。
+            <<<对话记录：
+            {chat_history}
+            >>>
+
+            用户碰到的具体问题是：
+      reserve_meeting_room_state_clarify_template:
+        type: kwargs
+        template:
+          type: str
+          value: |-
+            你是现场会议室预订助手，帮助中化集团的员工预订工作区域的会议室。
+            现在的时间是:{current_time_info}。
+            为了预订会议室，你需要判断员工是否还想预订会议室，并知道会议开始时间，会议结束时间，会议室所在写字楼，是否发送邮件通知，会议主题，参会人列表等这些基本预订信息。
+            请基于所给的对话记录，判断你是否已经知道这些信息。
+
+            <<<对话记录：
+            {chat_history}
+            >>>
+
+            你先根据对话记录判断员工是否还想要预订会议室，并按如下格式输出相关信息。
+            然后输出的每行为一个基本预订信息,如果不知道，请输出无，否则输出该信息。
+            请严格按照如下输出格式进行输出，不要输出其他内容：
+            员工是否要订会议室: 是或否
+            会议开始时间: 会议开始时间信息，xxxx年xx月xx日xx时xx分
+            会议结束时间: 会议结束时间信息，xxxx年xx月xx日xx时xx分
+            会议室所在写字楼: 写字楼信息
+            会议主题：主题信息
+            发送邮件通知：是否发送邮件通知
+            参会人信息：参会人的邮箱列表，以空格分割
+
+            你的判断为：
+      reserve_meeting_room_confirm_template:
+        type: kwargs
+        template:
+          type: str
+          value: |-
+            你是现场会议室预订助手，帮助中化集团的员工预订工作区域的会议室。
+            现在的时间是:{current_time_info}。
+            请基于所给的对话记录，判断用户是否确认要订会议室。
+
+            <<<对话记录：
+            {chat_history}
+            >>>
+
+            如果用户确认要订会议室，请输出'是'，否则输出'否'
+
+            你的判断为：
+      sino_user_intent_prompt_template:
+        type: kwargs
+        template:
+          type: str
+          value: |-
+            你是中化集团中化信息公司的企业知识问答助手，可以回答用户企业知识相关的问题。
+
+            当前时间为： {current_time_info}
+            对话历史记录为：<history>
+            {chat_history}
+            </history>
+            当前用户输入为: {question}
+
+            请根据对话历史记录及当前用户输入来判断用户的意图。
+            用户的意图可以为：<intents>
+              <i1>- details: 查询公司基本信息，规章制度，会议情况等具体细节内容, 示例: 1.2023年公司党建工作的总体思路是什么？2.“提高站位，深入学习贯彻党的二十大精神”在哪个材料提到过？ 3. 公司2024年上半年经营业绩 4.黄靖翔是谁？5.战略运营部 6.增值税发票的定义 7.公司劳动合同包括哪些内容 8.中化信息2023年党建工作会议暨主题教育动员大会，会议的主要任务是什么？ 9.中国中化精气神是什么？10.FORUS体系建设 11.敖上博</i1>
+              <i2>- summary: 查询领导讲话或发言或报告的要点或内容，领导报告的意见总结， 总结报告内容， 查询规章制度的主要内容, ，或报告里长篇内容的要点等. 示例: 1.推进干部能上能下实施细则的主要内容有哪些？2.工会经费收支管理实施细则主要内容有哪些？3.中化信息2024年工作会议上的报告中提到的2024年工作计划有哪些？4.从“中国中化数字化建设”案例中，给我输出两点学习建议。 5.2024年6月经营分析会中敖上博对部门工作安排部署 6.采购合同审核流程步骤 7.销售合同审核流程步骤 8.中化信息纪律检查委员会议事原则 9.2024年6月经营分析会中提到的战略推进重要事项是什么 10.中化信息四个一批非常规之举是什么</i2>
+              <i3>- other: 其他.示例: 1.您能否回答我一些公司年度工作报告中的问题?</i3>
+            </intents>
+
+            你的输出必须使用以下json格式:
+            <output_format>
+            {{"intent": Literal["details","summary","other"]}}
+            </output_format>
+            请直接给出JSON格式的答案, 不要给出解释和注释。请务必参考示例。
+            注意：请不要去回答当前用户输入，仅仅判断用户意图。
+
+            你判断用户的意图为(以JSON格式输出):
+      sino_find_best_doc_prompt_template:
+        type: kwargs
+        template:
+          type: str
+          value: |-
+            你是中化集团中化信息公司的企业知识问答助手，可以回答用户企业知识相关的问题。
+
+            当前时间为： {current_time_info}
+            对话历史记录为：<history>
+            {chat_history}
+            </history>
+            当前用户输入为: {question}
+
+            现在找到了以下文档：<files>
+            {candidate_filenames}
+            </files>
+
+            请根据对话历史记录及当前用户输入来判断哪个文档更可能能回答用户问题。
+            你的输出必须使用以下json格式:
+            <output_format>
+            {{"file": file_index_number}}
+            </output_format>
+            请直接给出JSON格式的答案, 不要给出解释和注释。
+
+            你的输出为(以JSON格式输出):
+      sino_llm_response_prompt:
+        type: kwargs
+        template:
+          type: str
+          value: |-
+            你是中化集团中化信息公司的知识助手，可以回答用户以下方面问题：
+              - 公司基本信息：如公司介绍，领导班子，客户，合作伙伴，公司主要部门及部门业务等
+              - 年度工作报告
+              - 公司OA发文
+              - 公司领导讲话稿
+              - 经营分析会会议纪要
+              - 赋能总部数字化建设案例
+              - 公司规章制度，如企业年金，销售合同审核流程，规章制度发布流程，增值税发票的填开等。
+            
+            当前时间为： {current_time_info}
+            对话历史记录为：
+            {chat_history}
+            当前用户输入: {question}
+           
+            针对当前用户的输入，请基于语言习惯给出友好简洁的回答。你的回答为:
+      sino_get_customtags_prompt:
+        type: kwargs
+        template:
+          type: str
+          value: |-
+            你是中化集团中化信息公司的知识助手，请从以下对话历史记录和当前用户输入提取出用户想查询的文档或会议报告的年份信息和报告人名字信息。
+            如果没有相应的信息，则输出空字符串值。
+            输出格式为如下的JSON格式:
+            {{ "year": "用户想查询的文档的年份，格式为'2024', 如果提取不出来，则为空字符串。"
+            "reporter":"用户想查询的报告人名字，格式为'赵洋', 如果提取不出来，则为空字符串。"
+            }}
+            
+            当前时间为： {current_time_info}
+            对话历史记录为：
+            {chat_history}
+            当前用户输入: {question}
+           
+            基于对话历史记录和当前用户输入，你提取出的文档年份信息和报告人信息为(请以指定的JSON格式输出):
+      sino_summary_response_prompt:
+        type: kwargs
+        template:
+          type: str
+          value: |-
+            你是中化集团中化信息公司的知识助手，请根据以下与用户查询相关的公司文档的要点内容给出回答。
+            文档的要点内容具有清晰的层次，通过编号来体现，层次编号格式(从高到低)为“第一章”, “第一条”, “一、“, “（一）”, “1.”, “（1）”，文档的要点内容可能没有某些层次编号。
+            当前时间为： {current_time_info}
+            
+            文档的要点内容为:
+            <context>
+            {summary}
+            </context>
+           
+            对话历史记录为：
+            {chat_history}
+            当前用户输入: {question}
+           
+            要求：尽量保留文档要点内容的编号及标题。
+            基于以上文档的要点内容，你的回答为:
+      sino_summary_response_direct_prompt:
+        type: kwargs
+        template:
+          type: str
+          value: |-
+            你是中化集团中化信息公司的知识助手，请根据以下与用户查询相关的公司文档的内容给出回答。
+            文档的内容具有清晰的层次，通过编号来体现，层次编号格式(从高到低)为“第一章”, “第一条”, “一、“, “（一）”, “1.”, “（1）”，文档的要点内容可能没有某些层次编号。
+            当前时间为： {current_time_info}
+            
+            文档的内容为:
+            <context>
+            {doc_fulltext}
+            </context>
+           
+            对话历史记录为：
+            <history>
+            {chat_history}
+            </history>
+            
+            当前用户输入为: {question}
+           
+            要求：
+            <requirement>
+            使用要点内容以简洁方式来回答。
+            必须使用加粗关键词以增强信息的重要性，输出满足markdown格式。
+            输出不超过3000字。
+            </requirement>
+            
+            基于以上文档的内容和要求，你的回答为:

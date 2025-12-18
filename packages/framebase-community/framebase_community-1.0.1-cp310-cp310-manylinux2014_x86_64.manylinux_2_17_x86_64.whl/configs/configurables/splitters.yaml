@@ -1,0 +1,39 @@
+name: splitters
+type: configurable_config
+parameters:
+  - name: configurables
+    value:
+      parameters:
+        - name: RecursiveCharacterTextSplitterByToken
+          value:
+            configs:
+              - name: separators
+                type: value
+                cast_fn: str
+                default: '["\n\n\n","\n\n","\n"," ",""]'
+              - name: chunk_size
+                type: value
+                cast_fn: int
+                default: 400
+              - name: chunk_overlap
+                type: value
+                cast_fn: int
+                default: 50
+              - name: keep_separator
+                type: value
+                cast_fn: str
+                default: false
+              - name: add_start_index
+                type: value
+                cast_fn: str
+                default: false
+              - name: strip_whitespace
+                type: value
+                cast_fn: str
+                default: true
+
+  - name: defaults
+    value:
+      parameters:
+        - name: default
+          value: RecursiveCharacterTextSplitterByToken

@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "properties": {
+    "intent": {
+      "type": "string",
+      "description": "用户的意图。判断用户的问题是哪一种意图。definition表示用户希望询问指标定义或指标的元信息；query表示用户希望查询指标的值。",
+      "enum": [
+        "definition",
+        "query"
+      ],
+      "examples": {
+        "definition": [
+          "有哪些和财务相关的指标",
+          "哪些指标包含部门维度"
+        ],
+        "query": [
+          "2024年1-8月累计收入是多少？"
+        ]
+      }
+    },
+    "metric": {
+      "type": "array",
+      "description": "用户的问题中涉及到的指标的名称。指标名称中请不要包含时间限定或者条件限定。",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

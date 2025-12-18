@@ -1,0 +1,176 @@
+name: additionals
+type: configurable_config
+parameters:
+  - name: variables
+    value: []
+  - name: configurables
+    value:
+      - name: API 调用  
+        id: api_call_strategy
+        description: "外部API服务调用的策略。"
+        type: single-option
+        default: call_result
+        cast_fn: str
+        options:
+          call_result: &call_result 调用API并对返回结果进行再处理
+          curl: &curl 仅输出curl命令
+      - name: 携带上下文轮数
+        id: multi_round_num
+        description: "配置需要大模型记住的上下文对话历史轮数，多轮情况下会便提高多轮对话的相关性并支持系统在调用API时主动的澄清反问，但消耗的Token也越多。"
+        type: value
+        default: 5
+        cast_fn: str
+
+      - name: 自定义关键词
+        id: user_dict
+        description: "配置自定义关键词，提升召回率"
+        type: value
+        default: ''
+        cast_fn: str
+      - name: 重复检测系数
+        id: duplicated_threashold
+        description: "在检测窗口中重复的内容超过系数时，会触发重复检测"
+        type: value
+        default: 0.55
+        cast_fn: float
+      - name: 重复检测窗口大小
+        id: duplicated_window_size
+        description: "在检测窗口中重复的内容超过系数时，会触发重复检测"
+        type: value
+        default: 40
+        cast_fn: int
+      - name: 数据库查询最大行数
+        id: sql_config_limit
+        description: ""
+        type: value
+        default: 20
+        cast_fn: int
+      - name: 数据展示样式
+        id: data_display_style
+        description: ""
+        type: single-option
+        default: full_style
+        cast_fn: str
+        options:
+          "full_style": full_style
+          "chart_style_only": chart_style_only 
+      - name: 图表展示最大行数
+        id: display_max_lines
+        description: ""
+        type: value
+        default: 4
+        cast_fn: int
+      - name: 图表展示最大列数
+        id: display_max_columns
+        description: ""
+        type: value
+        default: 4
+        cast_fn: int
+      - name: 图表最多图例个数
+        id: display_max_legends
+        description: ""
+        type: value
+        default: 100
+        cast_fn: int
+      - name: 数据库查询offset
+        id: sql_config_offset
+        description: ""
+        type: value
+        default: 0
+        cast_fn: int
+      - name: 指标意图最大个数
+        id: metric_intent_max_num
+        description: ""
+        type: value
+        default: 5
+        cast_fn: int
+      - name: 显示文中回答角标
+        id: response_subscript_enabled
+        description: "控制文中回答中是否显示来源角标<sup>1</sup>"
+        type: single-option
+        default: "true"
+        cast_fn: str
+        options:
+          "true": "true"
+          "false": "false"
+      - name: 是否开启意图澄清
+        id: clarify
+        description: ""
+        type: single-option
+        default: "off"
+        cast_fn: str
+        options:
+          "on": "on"
+          "off": "off"
+      - name: 是否开启分词网络搜索
+        id: segmentation_web_search
+        description: ""
+        type: single-option
+        default: "on"
+        cast_fn: str
+        options:
+          "on": "on"
+          "off": "off"
+      - name: text2cypher是否结果润色
+        id: text2cypher_result_polish
+        description: ""
+        type: single-option
+        default: "on"
+        cast_fn: str
+        options:
+          "on": "on"
+          "off": "off"
+      - name: 是否开启图文混合回答模式
+        id: image_text_mix_response_enabled
+        description: ""
+        type: single-option
+        default: "on"
+        cast_fn: str
+        options:
+          "on": "on"
+          "off": "off"
+      - name: 候选问题最大个数
+        id: metric_candiates_max_number
+        description: ""
+        type: value
+        default: 5
+        cast_fn: int
+      - name: 候选指标功能
+        id: metric_candiates_enabled
+        description: ""
+        type: single-option
+        default: "on"
+        cast_fn: str
+        options:
+          "on": "on"
+          "off": "off"
+      - name: 指标问答模式（单指标/多指标）
+        id: metric_pick_mode
+        description: ""
+        type: single-option
+        default: "single"
+        cast_fn: str
+        options:
+          "single": "single"
+          "multiple": "multiple"
+      - name: 指标异常信息提示模式
+        id: metric_dimension_warning_mode
+        description: ""
+        type: single-option
+        default: "abnormal_metric_and_dimension_message"
+        cast_fn: str
+        options:
+          "all": "all"
+          "only_abnormal_metric_message": "only_abnormal_metric_message"
+          "abnormal_metric_and_dimension_message": "abnormal_metric_and_dimension_message"
+          "abnormal_metric_and_dimension_details": "abnormal_metric_and_dimension_details"
+          "none": "none"
+
+  - name: mappings
+    value: 
+      *curl: 
+        type: str
+        value: curl
+      *call_result: 
+        type: str
+        value: call_result

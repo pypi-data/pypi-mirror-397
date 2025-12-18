@@ -1,0 +1,166 @@
+name: service
+type: service_config
+parameters:
+  - name: build_version
+    value: 1.5.10
+  - name: build_date
+    value: 2025.9.1
+  - name: minio_endpoint
+    value: 172.31.16.5:19000
+  - name: minio_access_key
+    value: fabarta
+  - name: minio_secret_key
+    value: 2024Work@fabarta!&#
+  - name: minio_bucket_name
+    value: ekc-bucket
+  - name: workflow_temp_bucket_name
+    value: workflow-temp-bucket
+  - name: redis_host
+    value: 172.31.16.5
+  - name: redis_port
+    value: 16379
+  - name: redis_username
+    value: default
+  - name: redis_password
+    value: 3KYaoWWwuW90wp44wjpasdsIKp21fpzrsfPYAo0O
+  - name: redis_db
+    value: 0
+  - name: redis_pool_max_connections
+    value: 300
+  - name: redis_cluster
+    value: 0
+  - name: redis_sentinel_servers
+    value:
+      - ["180.101.202.39", 36379]
+      - ["117.80.237.31", 36379]
+      - ["117.80.237.31", 36380]
+  - name: redis_cluster_service_name
+    value: mymaster
+  - name: access_token
+    value: c52596a4-e5a2-4851-a9e9-c0b65abcd11c
+  - name: logger
+    value:
+      - local
+  - name: log_level
+    value: 10
+  - name: log_length
+    value: 10000
+  - name: rabbitmq_host
+    value: 172.31.16.5
+  - name: rabbitmq_port
+    value: 25672
+  - name: rabbitmq_username
+    value: ekc_user
+  - name: rabbitmq_password
+    value: 2024Work@fabarta
+  - name: rabbitmq_vhost
+    value: /
+  - name: doc_parser_mode
+    value: True
+  - name: doc_extract_mode
+    value: True
+  - name: doc_exchange
+    value: ekcToLLMExchange
+  - name: doc_routing
+    value: ekc.document
+  #- name: doc_exchange
+  #  value: localtest
+  #- name: doc_routing
+  #  value: localtest.document
+  - name: doc_status_exchange
+    value: LLMToEkcDocExchange
+  - name: doc_status_routing
+    value: ekc.document
+  #- name: doc_status_exchange
+  #  value: localtest
+  #- name: doc_status_routing
+  #  value: localtest.status
+  - name: qa_exchange
+    value: ekcToLLMExchange
+  - name: qa_routing
+    value: ekc.qa
+  - name: shots_exchange
+    value: ekcToLLMExchange
+  - name: shots_routing
+    value: ekc.shots
+  - name: metric_exchange
+    value: ekcToLLMExchange
+  - name: metric_routing
+    value: ekc.metrics
+  - name: website_exchange
+    value: ekcToLLMExchange
+  - name: website_routing
+    value: ekc.website
+  - name: website_status_exchange
+    value: LLMToEkcExchange
+  - name: website_status_routing
+    value: ekc.website
+  - name: keyinfo_exchange
+    value: ekcToLLMExchange
+  - name: keyinfo_routing
+    value: ekc.keyinfo
+  - name: keyinfo_status_exchange
+    value: LLMToEkcExchange
+  - name: keyinfo_status_routing
+    value: ekc.keyinfo
+  #- name: qa_exchange
+  #  value: localtest
+  #- name: qa_routing
+  #  value: localtest.qa
+  - name: qa_status_exchange
+    value: LLMToEkcExchange
+  - name: qa_status_routing
+    value: ekc.qa
+  - name: arcvector_host
+    value: 172.31.16.5
+  - name: arcvector_port
+    value: 8073
+  - name: arcvector_api_key
+    value: sldu92j89dbk3mcnnbow283b77wbnxoqopvmzi8yvzpgiso
+  - name: use_redis_for_config_info
+    value: disable
+  - name: LANGFUSE_PUBLIC_KEY
+    value: pk-lf-8799efe5-6a16-4d1d-b75d-78f208661c1f
+  - name: LANGFUSE_SECRET_KEY
+    value: sk-lf-a9fcb0b1-ed6c-46e3-b201-262653fa9fcb
+  - name: LANGFUSE_HOST
+    value: http://172.31.16.5:8054
+  - name: opensearch_cluster
+    value: 0
+  - name: opensearch_hosts
+    value:
+      - host: 172.31.16.5
+        port: 9200
+  - name: opensearch_host
+    value: 172.31.16.5:9200
+  - name: opensearch_user
+    value: admin
+  - name: opensearch_passwd
+    value: WorkAtFabarta2022
+  - name: opensearch_index
+    value: ekc_document_index
+  - name: opensearch_https
+    value: False
+  - name: ocr_service_endpoint
+    value: http://host.docker.internal:8065/v1/ocr
+  - name: heartbeat_interval
+    value: 5 # 心跳间隔（秒）
+  - name: heartbeat_exchange
+    value: LLMToEkcExchange # 心跳交换机名称
+  - name: loader_heartbeat_routing
+    value: ekc.loader.heartbeat
+  - name: extractor_heartbeat_routing
+    value: ekc.extractor.heartbeat
+  - name: enhanced_pdf_task_limit
+    value: 3
+  - name: kb_task_limit
+    value: 3
+  - name: retry_backoff
+    value: 3 # 指数退避系数（默认 base=2）
+  - name: retry_backoff_max
+    value: 5 # 最大退避时间（秒）
+  - name: dlq
+    value:
+      process:
+        interval: 86400 # 处理间隔(1天)
+        batch_size: 100 # 单次处理数量

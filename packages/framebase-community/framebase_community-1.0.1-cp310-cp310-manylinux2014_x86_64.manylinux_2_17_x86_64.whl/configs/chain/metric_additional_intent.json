@@ -1,0 +1,107 @@
+{
+  "type": "object",
+  "properties": {
+    "aggregation": {
+      "type": "string",
+      "title": "聚合方式",
+      "description": "请选择合适的时间聚合方式。NONE表示不对数据做聚合。对于对比类的意图，aggregation设置为NONE。查询各个月、各年、每天等时间时，aggregation设置为NONE。",
+      "enum": [
+        "SUM",
+        "NONE",
+        "AVG",
+        "MAX",
+        "MIN"
+      ]
+    },
+    "metricValueFilters": {
+      "type": "object",
+      "title": "指标过滤条件",
+      "description": "请根据用户的问题，对指标的值，生成合适的过滤条件。可以为空。metricValueFilters只能对指标值生效，对其他的维度不会生效。重要规则：1. 只有当用户明确给出具体的指标值进行比较时（如\"大于100\"、\"超过50%\"、\"等于1000\"等），才需要生成metricValueFilters。如果用户只是说\"达到预期\"、\"超过预期\"、\"是否达标\"等没有具体数值的表达，则不要生成metricValueFilters，返回空对象。如果用户问题中没有明确对指标值进行比较，则不要生成metricValueFilters，返回空对象。2. 如果用户问题中包含任何时间信息（包括某年、某月、某年某月、当月、本月、今年等时间表达），则绝对不要生成metricValueFilters，返回空对象。3. 如果用户只是询问指标的值或统计信息，则不要生成metricValueFilters。4. 任何时间相关的数字（包括单独数字、年月组合数字如202501等）都不是指标值，不要生成metricValueFilters。5. 指标名称和维度值中的数字不是指标值，绝对不要使用指标名称或维度值中的任何信息来生成metricValueFilters。",
+      "properties": {
+        "should": {
+          "type": "array",
+          "description": "Optional，也可以为空，表示或",
+          "items": {
+            "$ref": "#/definitions/metricValueConditions"
+          }
+        },
+        "must": {
+          "type": "array",
+          "description": "Optional，也可以为空，表示与",
+          "items": {
+            "$ref": "#/definitions/metricValueConditions"
+          }
+        },
+        "must_not": {
+          "type": "array",
+          "description": "Optional，也可以为空，表示非",
+          "items": {
+            "$ref": "#/definitions/metricValueConditions"
+          }
+        }
+      }
+    },
+    "sorting": {
+      "type": "array",
+      "description": "对指标查询的结果做排序。注意时间已经是默认升序排列的。当用户希望查询最高、最低、最大、最小等“极值”的意图时，请将columnType设置为METRIC_VALUE。如果用户没有明确要求，不要生成sorting。注意，对于对比类型的问题，不要主动添加sorting。",
+      "items": {
+        "type": "object",
+        "properties": {
+          "columnType": {
+            "type": "string",
+            "description": "要排序的列的类型。指标查询后会返回三种类型的列，分别是指标值，时间。",
+            "enum": [
+              "METRIC_VALUE",
+              "TIME"
+            ]
+          },
+          "order": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ]
+          }
+        }
+      }
+    },
+    "metricValueConditions": {
+      "type": "object",
+      "description": "Optional。对指标的值进行过滤。每个指标有且仅有一列指标值。请根据用户的需求，对指标值选择合适的过滤条件。",
+      "properties": {
+        "operator": {
+          "type": "string",
+          "description": "比较符",
+          "enum": [
+            "=",
+            "!=",
+            ">",
+            ">=",
+            "<",
+            "<="
+          ]
+        },
+        "value": {
+          "type": "number",
+          "title": "指标的值",
+          "description": "指标的值，用来生成where条件。对于百分比类型，将指标的值除100转换为对应数值大小；以大于号为例，比较的方向是[指标的值] > value。重要：请根据指标的单位来确定value的值。如果用户问题中的单位与指标的单位一致则直接使用数值部分，不要进行单位转换。只有当用户问题中的单位与指标单位不一致时，才需要进行单位转换：正确转换中文数字单位（如\"万\"=10000，\"千万\"=10000000，\"亿\"=100000000）和英文缩写（如\"w\"=10000，\"k\"=1000，\"m\"=1000000）为实际数值，然后根据指标单位进行相应调整。"
+  },
+        "nestedFilters": {
+          "$ref": "#/properties/metricValueFilters"
+        }
+      }
+    },
+    "limit_prethinking": {
+      "type": "string",
+      "description": "请给出你的思考。请根据以下规则判断limit的值应该是什么：1.显式声明。用户的问题中出现“前N个”、“后N个”、“最高N个”、“最低N个”、“最大N个”、“最小N个”等词时，请将limit设置为N。2.隐式声明。用户的问题中明确出现”最好“，”最高“，”最多“等“最值”的意图时，请将limit设置为1，注意“大于“，”小于“，“逾”等属于“固定值比较“意图不要给出limit。3.其他情况。用户没有明确要求返回固定行数的数据时，请不要给出limit。对于对比类型的问题，不要主动设置limit。对于“截止xxx年xx月”等截止/截至类型的问题，不要给出limit。"
+    },
+    "limit":{
+"type": "integer",
+"description": "请根据limit_prethinking，设置limit"
+    },
+    "offset": {
+      "type": "integer",
+      "description": "指标查询返回结果的offset。用户明确要求返回特定分页的数据时，请设置offset。否则不要生成offset。如果用户要查询“最新、最近”的数据，那么不需要设置limit。"
+    }
+  }
+}

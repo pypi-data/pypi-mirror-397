@@ -1,0 +1,283 @@
+{
+    "type": "object",
+    "properties": {
+        "windowDate": {
+            "type": "string",
+            "title": "日期粒度",
+            "description": "表示查询结果需要聚合的时间单位，即数据以什么频率展示（如每日、每月等）。必须根据用户问题的意图选择，若问题未明确说明，需根据常识或数据默认粒度推断。",
+            "enum": [
+                "DAY",
+                "MONTH",
+                "QUARTER",
+                "YEAR"
+            ]
+        }
+    },
+    "oneOf": [
+        {
+            "timeInfo": {
+                "type": "object",
+                "description": "存放时间条件的对象,如果问题里没有比较意图时，用这种表达方式",
+                "oneOf": [
+                    {
+                        "type": {
+                            "type": "string",
+                            "description": "时间类型，range表示时间段，single表示单个时间点,multi表示多个时间点",
+                            "enum": [
+                                "range"
+                            ]
+                        },
+                        "startDate": {
+                            "type": "string",
+                            "description": "当时间类型type是range时，时间段的开始时间"
+                        },
+                        "endDate": {
+                            "type": "string",
+                            "description": "当时间类型type是range时，时间段的结束时间。"
+                        }
+                    },
+                    {
+                        "type": {
+                            "type": "string",
+                            "description": "时间类型，range表示时间段，single表示单个时间点,multi表示多个时间点",
+                            "enum": [
+                                "single",
+                                "multi"
+                            ]
+                        },
+                        "timeFilter": {
+                            "type": "array",
+                            "description": "当时间段不能表达出问题里的时间时，使用此字段。把问题里涉及到的时间都列出来。允许包含<LATEST>（表示最新数据日期），用于未指定具体时间的场景",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "comparisonTimeInfo": {
+                "type": "object",
+                "description": "如果问题里有比较意图时，用这种表达方式",
+                "properties": {
+                    "dimensionComparisons": {
+                        "type": "array",
+                        "title": "维度对比",
+                        "description": "如果用户的问题中提到了多个维度值，这些维度值需要对比的话，请把需要对比的纬度值写在dimensionComparisons中。",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "timeComparisons": {
+                        "type": "object",
+                        "description": "比较多个时间的数据",
+                        "oneOf": [
+                            {
+                                "type": "object",
+                                "title": "按周期比较指标。可以计算同比和环比.",
+                                "properties": {
+                                    "timeInfo": {
+                                        "type": "object",
+                                        "description": "表示对哪个、哪些、或者哪段日期做同比或者环比的计算",
+                                        "oneOf": [
+                                            {
+                                                "type": {
+                                                    "type": "string",
+                                                    "description": "时间类型，range表示时间段，single表示单个时间点,multi表示多个时间点",
+                                                    "enum": [
+                                                        "range"
+                                                    ]
+                                                },
+                                                "startDate": {
+                                                    "type": "string",
+                                                    "description": "当时间类型type是range时，时间段的开始时间"
+                                                },
+                                                "endDate": {
+                                                    "type": "string",
+                                                    "description": "当时间类型type是range时，时间段的结束时间"
+                                                }
+                                            },
+                                            {
+                                                "type": {
+                                                    "type": "string",
+                                                    "description": "时间类型，range表示时间段，single表示单个时间点,multi表示多个时间点",
+                                                    "enum": [
+                                                        "single",
+                                                        "multi"
+                                                    ]
+                                                },
+                                                "timeFilter": {
+                                                    "type": "array",
+                                                    "description": "当时间段不能表达出问题里的时间时，使用此字段。把问题里涉及到的时间都列出来。",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    "comparisonType": {
+                                        "type": "string",
+                                        "default": "period"
+                                    },
+                                    "comparisonTimeUnit": {
+                                        "type": "string",
+                                        "title": "周期比较的时间单位",
+                                        "description": "同比（YEAR）指与上一年同一月、同一日的时间点比较（如 2025-07-29 的同比为 2024-07-29）；环比（MONTH）指与上一个月同一日比较（如 2025-07-29 的环比为 2025-06-29）",
+                                        "enum": [
+                                            "DAY",
+                                            "MONTH",
+                                            "QUARTER",
+                                            "YEAR"
+                                        ]
+                                    },
+                                    "comparisonInterval": {
+                                        "type": "integer",
+                                        "title": "周期比较的时间间隔",
+                                        "description": "计算环比时，comparisonTimeUnit设置为MONTH，comparisonInterval设置为1；计算同比时，comparisonTimeUnit设置为YEAR，comparisonInterval设置为1"
+                                    },
+                                    "valueFilter": {
+                                        "type": "object",
+                                        "description": "计算同比或环比时，可以对指标的差值做过滤。",
+                                        "properties": {
+                                            "should": {
+                                                "type": "array",
+                                                "description": "Optional，也可以为空",
+                                                "items": {
+                                                    "$ref": "#/definitions/periodValueConditions"
+                                                }
+                                            },
+                                            "must": {
+                                                "type": "array",
+                                                "description": "Optional，也可以为空",
+                                                "items": {
+                                                    "$ref": "#/definitions/periodValueConditions"
+                                                }
+                                            },
+                                            "must_not": {
+                                                "type": "array",
+                                                "description": "Optional，也可以为空",
+                                                "items": {
+                                                    "$ref": "#/definitions/periodValueConditions"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "ratioFilter": {
+                                        "type": "object",
+                                        "description": "计算同比或环比时，可以对指标的增长率做过滤。",
+                                        "properties": {
+                                            "should": {
+                                                "type": "array",
+                                                "description": "Optional，也可以为空",
+                                                "items": {
+                                                    "$ref": "#/definitions/periodRatioConditions"
+                                                }
+                                            },
+                                            "must": {
+                                                "type": "array",
+                                                "description": "Optional，也可以为空",
+                                                "items": {
+                                                    "$ref": "#/definitions/periodRatioConditions"
+                                                }
+                                            },
+                                            "must_not": {
+                                                "type": "array",
+                                                "description": "Optional，也可以为空",
+                                                "items": {
+                                                    "$ref": "#/definitions/periodRatioConditions"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                "type": "object",
+                                "description": "计算不同日期的指对比。sourceDataDate和targetDataDate是两个日期列表，支持一对一、一对多、多对一的日期查询，但是不支持多对多的日期比较。当用户问题无法用同比环比方式表达时，可以用这种方式。",
+                                "properties": {
+                                    "comparisonType": {
+                                        "type": "string",
+                                        "default": "fixedDate"
+                                    },
+                                    "sourceDataDate": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "参与比较的日期1列表，不能为空。允许包含<LATEST>（表示最新数据日期），用于未指定具体时间的场景。 使用比较时，把大的日期放到这里。"
+                                    },
+                                    "targetDataDate": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "description": "参与比较的日期2列表。使用比较时，把小的日期放到这里。"
+                                    }
+                                },
+                                "required": [
+                                    "comparisonType",
+                                    "sourceDataDate",
+                                    "targetDataDate"
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "definitions": {
+                    "periodValueConditions": {
+                        "type": "object",
+                        "description": "Optional。在计算同环比时，可以对同环比的差值做过滤。",
+                        "properties": {
+                            "operator": {
+                                "type": "string",
+                                "description": "比较符",
+                                "enum": [
+                                    "=",
+                                    "!=",
+                                    ">",
+                                    ">=",
+                                    "<",
+                                    "<="
+                                ]
+                            },
+                            "value": {
+                                "type": "number",
+                                "title": "比较的值。与同环比的差值比较，用来生成sql查询时的where条件。以大于号为例，比较的方向是[差值] > value。"
+                            },
+                            "nestedFilters": {
+                                "$ref": "#/properties/timeComparisons/oneOf/0/properties/valueFilter"
+                            }
+                        }
+                    },
+                    "periodRatioConditions": {
+                        "type": "object",
+                        "description": "Optional。在计算同环比时，可以对同环比的比例做过滤。",
+                        "properties": {
+                            "operator": {
+                                "type": "string",
+                                "description": "比较符",
+                                "enum": [
+                                    "=",
+                                    "!=",
+                                    ">",
+                                    ">=",
+                                    "<",
+                                    "<="
+                                ]
+                            },
+                            "value": {
+                                "type": "string",
+                                "title": "比较的值。与同环比的比例做比较。以大于号为例，比较的方向是[比例] > value"
+                            },
+                            "nestedFilters": {
+                                "$ref": "#/properties/timeComparisons/oneOf/0/properties/ratioFilter"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+}

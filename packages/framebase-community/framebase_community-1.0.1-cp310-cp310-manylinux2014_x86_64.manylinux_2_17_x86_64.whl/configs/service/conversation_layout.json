@@ -1,0 +1,75 @@
+{
+  "type": "object",
+  "properties": {
+    "llm_configurable": {
+      "$ref": "#/definitions/llm_configurable"
+    },
+    "strategy_configurable": {
+      "$ref": "#/definitions/strategy_configurable"
+    }
+  },
+  "definitions": {
+    "strategy_configurable": {
+        "title": "策略配置",
+        "type": "object",
+        "description":"系统的回答策略，用于提高系统回答的准确性。",
+        "definitions": {},
+        "properties": {
+          "answer_prompt_template": {
+              "$ref": "#/definitions/langchain_configurables/definitions/Configurable/properties/answer_prompt_template",
+              "ui:options": {
+                "type": "textarea",
+                "autosize": {
+                    "minRows": 6,
+                    "maxRows": 15
+                }
+            },
+            "ui:widget": "TextAreaWidget"
+          },
+          "answer_priority": {
+            "$ref": "#/definitions/langchain_configurables/definitions/Configurable/properties/answer_priority"
+          },
+          "api_call_strategy":{
+            "$ref": "#/definitions/langchain_configurables/definitions/Configurable/properties/api_call_strategy"
+          },
+          "multi_round_num": {
+            "$ref": "#/definitions/langchain_configurables/definitions/Configurable/properties/multi_round_num",
+            "pattern": "^([0-9]|10)$",
+            "err:pattern": "请输入0～10之间的数字。"
+
+          },
+          "response_subscript_enabled":{
+            "$ref": "#/definitions/langchain_configurables/definitions/Configurable/properties/response_subscript_enabled"
+          }
+        }
+    },
+    "llm_configurable": {
+      "title": "大模型选择",
+      "description":"选择并配置当前知识应用所使用的后台大模型。",
+      "type": "object",
+      "definitions": {},
+      "properties": {
+        "output_llm": {
+          "$ref": "#/definitions/langchain_configurables/definitions/Configurable/properties/output_llm"
+        },
+        "sql_or_api_analysis_llm": {
+          "$ref": "#/definitions/langchain_configurables/definitions/Configurable/properties/sql_or_api_analysis_llm"
+        },
+        "related_question_llm": {
+          "$ref": "#/definitions/langchain_configurables/definitions/Configurable/properties/related_question_llm"
+        },
+        "doc_summary_llm": {
+          "$ref": "#/definitions/langchain_configurables/definitions/Configurable/properties/doc_summary_llm"
+        },
+        "free_mode":{
+          "$ref": "#/definitions/langchain_configurables/definitions/Configurable/properties/free_mode"
+        }
+      }
+    },
+    "langchain_configurables": {}
+  },
+  "ui:order": [
+    "strategy_configurable",
+    "llm_configurable"
+  ]
+}
