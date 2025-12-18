@@ -1,0 +1,70 @@
+```markdown
+# particlespell
+
+A lightweight, PDG-powered particle data tool with multi-variant name support and real-time data synchronization.
+
+## Overview
+particlespell simplifies particle property retrieval by unifying local fast lookup and PDG's authoritative API. It natively supports multiple particle name variants (LaTeX, EvtGen, Unicode, etc.) and automatically fetches updated data from PDG, making particle physics data access intuitive and efficient.
+
+## Installation
+Requires Python 3.12+:
+```bash
+pip install particlespell
+```
+
+## Quick Start
+```python
+from particlespell import Particle
+
+# 1. Query by name (supports multiple variants)
+p = Particle(name="π⁺")  # Or "pi+", "\\pi^+", "pi_plus", "π<sup>+</sup>"
+print(f"Mass: {p.mass} ± {p.mass_err} MeV/c²")
+print(f"Lifetime: {p.lifetime} s")
+print(f"Quantum J/P: {p.quantum_J}/{p.quantum_P}")
+
+# 2. Query by PDG MCID
+p_proton = Particle(mcid=2212)
+print(f"Name: {p_proton.name}, Charge: {p_proton.charge}")
+
+# 3. Access decay properties
+print("Top 2 branching fractions:")
+for bf in p.branching_fractions[:2]:
+    print('%-60s    %4s    %s' % (
+        bf.get('description', ''),
+        bf.get('is_limit', ''),
+        bf.get('value', '')
+    ))
+```
+
+## Core Features
+- **Multi-Variant Name Compatibility**: Seamlessly match particles by standard name, LaTeX, EvtGen, HTML, Unicode, or custom aliases.
+- **Comprehensive Particle Properties**: Retrieve mass, lifetime, charge, branching fractions, quantum numbers (J/P/C/I/G), and particle type flags (baryon/meson/lepton/etc.).
+- **PDG Data Synchronization**: Automatically supplements local data with up-to-date PDG API results, with built-in caching to avoid redundant requests.
+- **Dual Query Modes**: Look up particles by name (flexible) or PDG MCID (precise).
+- **Robust Fallback**: Retains local data access even if PDG API is unavailable.
+
+## Key Properties
+| Category | Properties |
+|----------|------------|
+| Basic Info | `name`, `mcid`, `programmatic_name`, `latex_name`, `evtgen_name` |
+| Dynamic Data | `mass`/`mass_err`, `lifetime`/`lifetime_err`, `width`/`width_err` |
+| Decay Data | `branching_fractions`, `inclusive_branching_fractions`, `exclusive_branching_fractions` |
+| Classification | `charge`, `is_baryon`, `is_meson`, `is_lepton`, `is_boson`, `is_quark` |
+| Quantum Numbers | `quantum_J`, `quantum_P`, `quantum_C`, `quantum_I`, `quantum_G` |
+
+## Dependencies
+- `pdg >= 0.1.4` (PDG official API client)
+- `particle >= 0.25.3` (particle name variant support)
+- Python 3.12+
+
+## Contributors
+- Zhang Bolun ([zhangbolun@ihep.ac.cn](mailto:zhangbolun@ihep.ac.cn))
+- Liao Yipu ([liaoyp@ihep.ac.cn](mailto:liaoyp@ihep.ac.cn))
+
+## License
+Copyright (c) 2025 Zhang Bolun, Liao Yipu
+
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for full details.  
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, subject to the following conditions:  
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+```

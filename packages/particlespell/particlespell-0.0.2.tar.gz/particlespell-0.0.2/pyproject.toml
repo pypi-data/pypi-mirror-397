@@ -1,0 +1,56 @@
+[build-system]
+# 构建依赖：Hatchling（版本≥1.26，支持PEP639许可证配置）
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[project]
+# 包名：全小写，符合PyPI规范
+name = "particlespell"
+# 版本：首次发布用0.0.1（后续更新需递增）
+version = "0.0.2"
+# 作者信息（必填）
+authors = [
+  { name="zhangbolun", email="zhangbolun@ihep.ac.cn" },
+]
+# 简短描述（突出核心特色）
+description = "PDG-powered particle data tool with multi-name variant support"
+# 详细描述（读取README.md）
+readme = "README.md"
+# 支持的Python版本
+requires-python = ">=3.12"
+# 分类器（版本与requires-python匹配）
+classifiers = [
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Physics"
+]
+# 许可证（SPDX标准）
+license = "MIT"
+# 许可证文件路径
+license-files = ["LICENSE"]
+
+# 依赖包（指定版本范围，避免冲突）
+dependencies = [
+  "pdg >= 0.1.4",
+  "particle >= 0.25.3",
+]
+
+# 项目链接（可选，删除注释后填写）
+# [project.urls]
+# Homepage = "https://github.com/waxiliwwww/particlespell"
+# Issues = "你的项目Issue地址"
+
+# 构建配置（核心修正：区块头单行完整写法）
+[tool.hatch.build]
+sources = ["src"]  # 告诉Hatchling源码根目录是src（必须）
+include = [
+  "**/*.py",    # 包含所有Python文件
+  "**/*.json",  # 包含JSON文件（末尾加逗号，避免后续加行出错）
+]
+# 排除无关文件
+exclude = [
+  "**/__pycache__",
+  "tests/*",    # 末尾加逗号，语法更健壮
+]
