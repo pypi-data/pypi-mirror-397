@@ -1,0 +1,974 @@
+{
+  "info": {
+    "name": "FlowMason API",
+    "description": "Complete API collection for FlowMason - the visual pipeline orchestration platform for AI workflows.\n\nThis collection covers all API endpoints:\n- Health Check\n- Registry API (components, packages)\n- Pipelines API (CRUD, validate, test, publish, clone)\n- Execution API (run, runs, trace)\n- Providers API (LLM providers)\n- Templates API (pre-built pipelines)\n\nBase URL: http://localhost:8999/api/v1",
+    "_postman_id": "flowmason-api-collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8999",
+      "type": "string"
+    },
+    {
+      "key": "api_base",
+      "value": "{{base_url}}/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "pipeline_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "run_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Check the health status of the FlowMason server."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Registry API",
+      "description": "Manage component packages in the registry.",
+      "item": [
+        {
+          "name": "List All Components",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/registry/components",
+              "host": ["{{api_base}}"],
+              "path": ["registry", "components"]
+            },
+            "description": "List all registered components (nodes and operators)."
+          },
+          "response": []
+        },
+        {
+          "name": "List Node Components",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/registry/components?kind=node",
+              "host": ["{{api_base}}"],
+              "path": ["registry", "components"],
+              "query": [
+                {
+                  "key": "kind",
+                  "value": "node"
+                }
+              ]
+            },
+            "description": "List all node components (LLM-powered)."
+          },
+          "response": []
+        },
+        {
+          "name": "List Operator Components",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/registry/components?kind=operator",
+              "host": ["{{api_base}}"],
+              "path": ["registry", "components"],
+              "query": [
+                {
+                  "key": "kind",
+                  "value": "operator"
+                }
+              ]
+            },
+            "description": "List all operator components (data transformations)."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Component Details - Generator",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/registry/components/generator",
+              "host": ["{{api_base}}"],
+              "path": ["registry", "components", "generator"]
+            },
+            "description": "Get detailed information about the generator component."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Component Details - JSON Transform",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/registry/components/json_transform",
+              "host": ["{{api_base}}"],
+              "path": ["registry", "components", "json_transform"]
+            },
+            "description": "Get detailed information about the json_transform operator."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Component Details - Critic",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/registry/components/critic",
+              "host": ["{{api_base}}"],
+              "path": ["registry", "components", "critic"]
+            },
+            "description": "Get detailed information about the critic node."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Component Details - Conditional",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/registry/components/conditional",
+              "host": ["{{api_base}}"],
+              "path": ["registry", "components", "conditional"]
+            },
+            "description": "Get detailed information about the conditional control flow component."
+          },
+          "response": []
+        },
+        {
+          "name": "Registry Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/registry/stats",
+              "host": ["{{api_base}}"],
+              "path": ["registry", "stats"]
+            },
+            "description": "Get statistics about registered components."
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Registry",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/registry/refresh",
+              "host": ["{{api_base}}"],
+              "path": ["registry", "refresh"]
+            },
+            "description": "Rescan the packages directory and reload all packages."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Pipelines API",
+      "description": "Create and manage pipelines.",
+      "item": [
+        {
+          "name": "List All Pipelines",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/pipelines",
+              "host": ["{{api_base}}"],
+              "path": ["pipelines"]
+            },
+            "description": "List all pipelines."
+          },
+          "response": []
+        },
+        {
+          "name": "List Demo Pipelines",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/pipelines?category=demo",
+              "host": ["{{api_base}}"],
+              "path": ["pipelines"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "demo"
+                }
+              ]
+            },
+            "description": "List demo pipelines."
+          },
+          "response": []
+        },
+        {
+          "name": "List Benchmark Pipelines",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/pipelines?category=benchmark",
+              "host": ["{{api_base}}"],
+              "path": ["pipelines"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "benchmark"
+                }
+              ]
+            },
+            "description": "List benchmark pipelines."
+          },
+          "response": []
+        },
+        {
+          "name": "List Real AI Pipelines",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/pipelines?category=real-ai",
+              "host": ["{{api_base}}"],
+              "path": ["pipelines"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "real-ai"
+                }
+              ]
+            },
+            "description": "List real AI pipelines (use actual LLM providers)."
+          },
+          "response": []
+        },
+        {
+          "name": "Search Pipelines",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/pipelines?search=content",
+              "host": ["{{api_base}}"],
+              "path": ["pipelines"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "content"
+                }
+              ]
+            },
+            "description": "Search pipelines by name or description."
+          },
+          "response": []
+        },
+        {
+          "name": "Create Pipeline",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.id) {",
+                  "    pm.collectionVariables.set('pipeline_id', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Pipeline\",\n  \"description\": \"A simple test pipeline created via Postman\",\n  \"category\": \"test\",\n  \"stages\": [\n    {\n      \"id\": \"log_start\",\n      \"component_type\": \"logger\",\n      \"name\": \"Log Start\",\n      \"config\": {},\n      \"input_mapping\": {\n        \"message\": \"Pipeline started\",\n        \"level\": \"info\"\n      },\n      \"depends_on\": [],\n      \"position\": {\"x\": 0, \"y\": 0}\n    },\n    {\n      \"id\": \"transform\",\n      \"component_type\": \"json_transform\",\n      \"name\": \"Transform Data\",\n      \"config\": {},\n      \"input_mapping\": {\n        \"data\": {\"test\": \"value\"},\n        \"mapping\": {\"output\": \"data.test\"}\n      },\n      \"depends_on\": [\"log_start\"],\n      \"position\": {\"x\": 250, \"y\": 0}\n    }\n  ],\n  \"output_stage_id\": \"transform\",\n  \"tags\": [\"test\", \"postman\"]\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/pipelines",
+              "host": ["{{api_base}}"],
+              "path": ["pipelines"]
+            },
+            "description": "Create a new pipeline."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pipeline",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/pipelines/{{pipeline_id}}",
+              "host": ["{{api_base}}"],
+              "path": ["pipelines", "{{pipeline_id}}"]
+            },
+            "description": "Get a specific pipeline by ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Pipeline",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Test Pipeline\",\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/pipelines/{{pipeline_id}}",
+              "host": ["{{api_base}}"],
+              "path": ["pipelines", "{{pipeline_id}}"]
+            },
+            "description": "Update a pipeline (partial update supported)."
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Pipeline",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/pipelines/{{pipeline_id}}/validate",
+              "host": ["{{api_base}}"],
+              "path": ["pipelines", "{{pipeline_id}}", "validate"]
+            },
+            "description": "Validate a pipeline configuration without executing."
+          },
+          "response": []
+        },
+        {
+          "name": "Clone Pipeline",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Cloned Pipeline\"\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/pipelines/{{pipeline_id}}/clone",
+              "host": ["{{api_base}}"],
+              "path": ["pipelines", "{{pipeline_id}}", "clone"]
+            },
+            "description": "Clone an existing pipeline."
+          },
+          "response": []
+        },
+        {
+          "name": "Test Pipeline",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sample_input\": {}\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/pipelines/{{pipeline_id}}/test",
+              "host": ["{{api_base}}"],
+              "path": ["pipelines", "{{pipeline_id}}", "test"]
+            },
+            "description": "Run a test execution of the pipeline."
+          },
+          "response": []
+        },
+        {
+          "name": "Publish Pipeline",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"test_run_id\": \"test_abc123\"\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/pipelines/{{pipeline_id}}/publish",
+              "host": ["{{api_base}}"],
+              "path": ["pipelines", "{{pipeline_id}}", "publish"]
+            },
+            "description": "Publish a pipeline (requires successful test run)."
+          },
+          "response": []
+        },
+        {
+          "name": "Unpublish Pipeline",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/pipelines/{{pipeline_id}}/unpublish",
+              "host": ["{{api_base}}"],
+              "path": ["pipelines", "{{pipeline_id}}", "unpublish"]
+            },
+            "description": "Revert a published pipeline to draft status."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Pipeline",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/pipelines/{{pipeline_id}}",
+              "host": ["{{api_base}}"],
+              "path": ["pipelines", "{{pipeline_id}}"]
+            },
+            "description": "Delete a pipeline."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Execution API",
+      "description": "Run pipelines and manage execution runs.",
+      "item": [
+        {
+          "name": "Run Pipeline",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.id) {",
+                  "    pm.collectionVariables.set('run_id', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inputs\": {},\n  \"options\": {\n    \"timeout_seconds\": 120\n  }\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/pipelines/{{pipeline_id}}/run",
+              "host": ["{{api_base}}"],
+              "path": ["pipelines", "{{pipeline_id}}", "run"]
+            },
+            "description": "Execute a pipeline."
+          },
+          "response": []
+        },
+        {
+          "name": "Run Pipeline with Inputs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inputs\": {\n    \"text\": \"Hello, FlowMason!\",\n    \"topic\": \"AI in Enterprise\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/pipelines/{{pipeline_id}}/run",
+              "host": ["{{api_base}}"],
+              "path": ["pipelines", "{{pipeline_id}}", "run"]
+            },
+            "description": "Execute a pipeline with custom inputs."
+          },
+          "response": []
+        },
+        {
+          "name": "List Runs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/runs",
+              "host": ["{{api_base}}"],
+              "path": ["runs"]
+            },
+            "description": "List all execution runs."
+          },
+          "response": []
+        },
+        {
+          "name": "List Completed Runs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/runs?status=completed",
+              "host": ["{{api_base}}"],
+              "path": ["runs"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "completed"
+                }
+              ]
+            },
+            "description": "List completed execution runs."
+          },
+          "response": []
+        },
+        {
+          "name": "List Failed Runs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/runs?status=failed",
+              "host": ["{{api_base}}"],
+              "path": ["runs"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "failed"
+                }
+              ]
+            },
+            "description": "List failed execution runs."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Run Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/runs/{{run_id}}",
+              "host": ["{{api_base}}"],
+              "path": ["runs", "{{run_id}}"]
+            },
+            "description": "Get the status of a specific run."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Run Trace",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/runs/{{run_id}}/trace",
+              "host": ["{{api_base}}"],
+              "path": ["runs", "{{run_id}}", "trace"]
+            },
+            "description": "Get the execution trace (stage-by-stage details) of a run."
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel Run",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/runs/{{run_id}}/cancel",
+              "host": ["{{api_base}}"],
+              "path": ["runs", "{{run_id}}", "cancel"]
+            },
+            "description": "Cancel a running execution."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Run",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/runs/{{run_id}}",
+              "host": ["{{api_base}}"],
+              "path": ["runs", "{{run_id}}"]
+            },
+            "description": "Delete a run record."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Providers API",
+      "description": "Manage LLM providers.",
+      "item": [
+        {
+          "name": "List Providers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/providers",
+              "host": ["{{api_base}}"],
+              "path": ["providers"]
+            },
+            "description": "List all available LLM providers."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Provider Models - Anthropic",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/providers/anthropic/models",
+              "host": ["{{api_base}}"],
+              "path": ["providers", "anthropic", "models"]
+            },
+            "description": "List available models for Anthropic provider."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Provider Models - OpenAI",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/providers/openai/models",
+              "host": ["{{api_base}}"],
+              "path": ["providers", "openai", "models"]
+            },
+            "description": "List available models for OpenAI provider."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Provider Models - Google",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/providers/google/models",
+              "host": ["{{api_base}}"],
+              "path": ["providers", "google", "models"]
+            },
+            "description": "List available models for Google provider."
+          },
+          "response": []
+        },
+        {
+          "name": "Test Provider Connection - Anthropic",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{api_base}}/providers/anthropic/test",
+              "host": ["{{api_base}}"],
+              "path": ["providers", "anthropic", "test"]
+            },
+            "description": "Test connection to Anthropic provider."
+          },
+          "response": []
+        },
+        {
+          "name": "Test Provider Connection - OpenAI",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{api_base}}/providers/openai/test",
+              "host": ["{{api_base}}"],
+              "path": ["providers", "openai", "test"]
+            },
+            "description": "Test connection to OpenAI provider."
+          },
+          "response": []
+        },
+        {
+          "name": "List Provider Capabilities",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/providers/capabilities",
+              "host": ["{{api_base}}"],
+              "path": ["providers", "capabilities"]
+            },
+            "description": "List all provider capabilities."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Templates API",
+      "description": "Pre-built pipeline templates.",
+      "item": [
+        {
+          "name": "List Templates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/templates",
+              "host": ["{{api_base}}"],
+              "path": ["templates"]
+            },
+            "description": "List all available pipeline templates."
+          },
+          "response": []
+        },
+        {
+          "name": "List Templates by Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/templates?category=getting-started",
+              "host": ["{{api_base}}"],
+              "path": ["templates"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "getting-started"
+                }
+              ]
+            },
+            "description": "List templates filtered by category."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Template Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/templates/hello-world",
+              "host": ["{{api_base}}"],
+              "path": ["templates", "hello-world"]
+            },
+            "description": "Get detailed information about a specific template."
+          },
+          "response": []
+        },
+        {
+          "name": "Instantiate Template",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/templates/hello-world/instantiate?name=My%20New%20Pipeline",
+              "host": ["{{api_base}}"],
+              "path": ["templates", "hello-world", "instantiate"],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "My New Pipeline"
+                }
+              ]
+            },
+            "description": "Create a new pipeline from a template."
+          },
+          "response": []
+        },
+        {
+          "name": "List Template Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/templates/categories/list",
+              "host": ["{{api_base}}"],
+              "path": ["templates", "categories", "list"]
+            },
+            "description": "List all template categories."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Real AI Pipeline Examples",
+      "description": "Examples of running real AI pipelines with actual LLM calls.",
+      "item": [
+        {
+          "name": "1. Find Content Creation Pipeline",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.items && jsonData.items.length > 0) {",
+                  "    var pipeline = jsonData.items.find(p => p.name.includes('Content Creation'));",
+                  "    if (pipeline) {",
+                  "        pm.collectionVariables.set('pipeline_id', pipeline.id);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/pipelines?category=real-ai",
+              "host": ["{{api_base}}"],
+              "path": ["pipelines"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "real-ai"
+                }
+              ]
+            },
+            "description": "Find the Content Creation pipeline in the real-ai category."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Run Content Creation Pipeline",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.id) {",
+                  "    pm.collectionVariables.set('run_id', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inputs\": {}\n}"
+            },
+            "url": {
+              "raw": "{{api_base}}/pipelines/{{pipeline_id}}/run",
+              "host": ["{{api_base}}"],
+              "path": ["pipelines", "{{pipeline_id}}", "run"]
+            },
+            "description": "Execute the Content Creation pipeline with real AI."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Check Run Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/runs/{{run_id}}",
+              "host": ["{{api_base}}"],
+              "path": ["runs", "{{run_id}}"]
+            },
+            "description": "Check the status of the pipeline run."
+          },
+          "response": []
+        },
+        {
+          "name": "4. Get Execution Trace",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base}}/runs/{{run_id}}/trace",
+              "host": ["{{api_base}}"],
+              "path": ["runs", "{{run_id}}", "trace"]
+            },
+            "description": "Get detailed trace of each stage execution."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

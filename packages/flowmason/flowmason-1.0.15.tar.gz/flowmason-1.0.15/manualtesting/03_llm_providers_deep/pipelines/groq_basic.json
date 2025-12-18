@@ -1,0 +1,26 @@
+{
+  "name": "groq_basic",
+  "description": "Test basic Groq Llama generation",
+  "version": "1.0.0",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "prompt": {"type": "string"}
+    },
+    "required": ["prompt"]
+  },
+  "stages": {
+    "generate": {
+      "component": "generator",
+      "config": {
+        "provider": "groq",
+        "model": "llama-3.1-70b-versatile",
+        "system_prompt": "You are a helpful assistant. Be concise.",
+        "user_prompt": "{{input.prompt}}",
+        "max_tokens": 150,
+        "temperature": 0.7
+      }
+    }
+  },
+  "output_stage": "generate"
+}

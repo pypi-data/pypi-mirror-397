@@ -1,0 +1,130 @@
+{
+  "id": "research-synthesizer",
+  "name": "Research Synthesizer",
+  "description": "Analyze multiple sources and synthesize findings into a comprehensive research report. Great for market research, competitive analysis, or topic exploration.",
+  "category": "analysis",
+  "tags": [
+    "research",
+    "analysis",
+    "synthesis",
+    "reports"
+  ],
+  "difficulty": "intermediate",
+  "use_cases": [
+    "Synthesize research from multiple sources",
+    "Create comprehensive analysis reports",
+    "Market and competitive research",
+    "Literature reviews"
+  ],
+  "stages": [
+    {
+      "id": "analyze-source1",
+      "component_type": "generator",
+      "name": "Analyze Source 1",
+      "config": {
+        "prompt": "Analyze the following source material:\n\n{{input.source1}}\n\nExtract:\n1. Key findings and insights\n2. Main arguments or claims\n3. Supporting evidence\n4. Limitations or biases\n5. Relevance to: {{input.research_question}}",
+        "system_prompt": "You are a research analyst. Extract key insights from source material objectively and thoroughly."
+      },
+      "depends_on": [],
+      "position": {
+        "x": 100,
+        "y": 50
+      }
+    },
+    {
+      "id": "analyze-source2",
+      "component_type": "generator",
+      "name": "Analyze Source 2",
+      "config": {
+        "prompt": "Analyze the following source material:\n\n{{input.source2}}\n\nExtract:\n1. Key findings and insights\n2. Main arguments or claims\n3. Supporting evidence\n4. Limitations or biases\n5. Relevance to: {{input.research_question}}",
+        "system_prompt": "You are a research analyst. Extract key insights from source material objectively and thoroughly."
+      },
+      "depends_on": [],
+      "position": {
+        "x": 100,
+        "y": 175
+      }
+    },
+    {
+      "id": "analyze-source3",
+      "component_type": "generator",
+      "name": "Analyze Source 3",
+      "config": {
+        "prompt": "Analyze the following source material:\n\n{{input.source3}}\n\nExtract:\n1. Key findings and insights\n2. Main arguments or claims\n3. Supporting evidence\n4. Limitations or biases\n5. Relevance to: {{input.research_question}}",
+        "system_prompt": "You are a research analyst. Extract key insights from source material objectively and thoroughly."
+      },
+      "depends_on": [],
+      "position": {
+        "x": 100,
+        "y": 300
+      }
+    },
+    {
+      "id": "synthesize",
+      "component_type": "synthesizer",
+      "name": "Synthesize Research",
+      "config": {
+        "sources": [
+          {
+            "label": "Source 1 Analysis",
+            "content": "{{upstream.analyze-source1.content}}"
+          },
+          {
+            "label": "Source 2 Analysis",
+            "content": "{{upstream.analyze-source2.content}}"
+          },
+          {
+            "label": "Source 3 Analysis",
+            "content": "{{upstream.analyze-source3.content}}"
+          }
+        ],
+        "instructions": "Synthesize the analyses into a comprehensive research report addressing: {{input.research_question}}\n\nStructure:\n1. Executive Summary\n2. Key Findings (with evidence)\n3. Points of Agreement\n4. Points of Disagreement\n5. Gaps in the Research\n6. Conclusions\n7. Recommendations for Further Research"
+      },
+      "depends_on": [
+        "analyze-source1",
+        "analyze-source2",
+        "analyze-source3"
+      ],
+      "position": {
+        "x": 400,
+        "y": 175
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "research_question": {
+        "type": "string",
+        "description": "The research question to address"
+      },
+      "source1": {
+        "type": "string",
+        "description": "First source material (text, article, data)"
+      },
+      "source2": {
+        "type": "string",
+        "description": "Second source material"
+      },
+      "source3": {
+        "type": "string",
+        "description": "Third source material"
+      }
+    },
+    "required": [
+      "research_question",
+      "source1"
+    ]
+  },
+  "output_stage_id": "synthesize",
+  "example_input": {
+    "topic": "Impact of AI on Healthcare",
+    "sources": [
+      "Recent studies show AI diagnostic tools achieve 95% accuracy in detecting certain cancers.",
+      "Healthcare AI market expected to reach $45B by 2026.",
+      "Concerns remain about data privacy and algorithmic bias in medical AI.",
+      "Several hospitals report 30% reduction in diagnostic time using AI-assisted imaging."
+    ],
+    "focus_areas": "clinical applications, market trends, challenges"
+  }
+}
