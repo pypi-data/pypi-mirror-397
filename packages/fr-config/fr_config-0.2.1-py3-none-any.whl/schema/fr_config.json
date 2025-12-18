@@ -1,0 +1,54 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "__version__": 1,
+    "type": "object",
+    "$defs": {
+        "cascader": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+                "type": {
+                    "type": "string"
+                },
+                "length": {"type": "integer", "minimum": 0},
+                "cascade": {
+                    "type": "string",
+                    "enum": ["append", "prepend", "update", "replace"]
+                },
+                "unique": {
+                    "type": "boolean"
+                },
+                "compare": {
+                    "type": "string"
+                },
+                "items": {
+                    "each": {"$ref": "#/$defs/cascader" }
+                }
+            }
+        }
+    },
+    "properties": {
+        "__version__": {"type": "integer"},
+        "__types__": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "object",
+                "required": ["type"],
+                "properties": {
+                    "type": { "type": "string" }
+                },
+                "additionalProperties": {
+                    "type": "object",
+                    "required": ["type"],
+                    "properties": {
+                        "type": {"type": "string"},
+                        "enum": {"type": "array"}
+                    }
+                }
+            }
+        }
+    },
+    "patternProperties": {
+        "^[a-zA-Z].*$": { "$ref": "#/$defs/cascader" }
+    }
+}
