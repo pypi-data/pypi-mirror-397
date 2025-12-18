@@ -1,0 +1,120 @@
+{
+  "id": "multi-draft-selector",
+  "name": "Multi-Draft Selector",
+  "description": "Generate multiple draft variations and automatically select the best one. Uses the best-of-3 pattern with parallel generation followed by intelligent selection.",
+  "category": "content",
+  "tags": [
+    "content",
+    "selection",
+    "quality",
+    "best-of-n"
+  ],
+  "difficulty": "advanced",
+  "use_cases": [
+    "Get the best output from multiple attempts",
+    "A/B test different approaches",
+    "Maximize content quality through selection"
+  ],
+  "stages": [
+    {
+      "id": "draft1",
+      "component_type": "generator",
+      "name": "Draft 1 (Creative)",
+      "config": {
+        "prompt": "{{input.prompt}}",
+        "system_prompt": "You are a creative writer. Take bold, imaginative approaches. Think outside the box and surprise the reader."
+      },
+      "depends_on": [],
+      "position": {
+        "x": 100,
+        "y": 50
+      },
+      "llm_settings": {
+        "temperature": 0.9
+      }
+    },
+    {
+      "id": "draft2",
+      "component_type": "generator",
+      "name": "Draft 2 (Balanced)",
+      "config": {
+        "prompt": "{{input.prompt}}",
+        "system_prompt": "You are a skilled writer. Balance creativity with clarity. Aim for engaging but accessible content."
+      },
+      "depends_on": [],
+      "position": {
+        "x": 100,
+        "y": 175
+      },
+      "llm_settings": {
+        "temperature": 0.7
+      }
+    },
+    {
+      "id": "draft3",
+      "component_type": "generator",
+      "name": "Draft 3 (Precise)",
+      "config": {
+        "prompt": "{{input.prompt}}",
+        "system_prompt": "You are a precise, analytical writer. Focus on accuracy, clarity, and logical structure. Avoid unnecessary flourishes."
+      },
+      "depends_on": [],
+      "position": {
+        "x": 100,
+        "y": 300
+      },
+      "llm_settings": {
+        "temperature": 0.3
+      }
+    },
+    {
+      "id": "select",
+      "component_type": "selector",
+      "name": "Select Best Draft",
+      "config": {
+        "options": [
+          {
+            "label": "Creative Draft",
+            "content": "{{upstream.draft1.content}}"
+          },
+          {
+            "label": "Balanced Draft",
+            "content": "{{upstream.draft2.content}}"
+          },
+          {
+            "label": "Precise Draft",
+            "content": "{{upstream.draft3.content}}"
+          }
+        ],
+        "criteria": "Select the option that best addresses the original request. Consider: clarity, engagement, accuracy, and overall quality. The selected option should be the most effective at achieving the intended purpose."
+      },
+      "depends_on": [
+        "draft1",
+        "draft2",
+        "draft3"
+      ],
+      "position": {
+        "x": 400,
+        "y": 175
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "prompt": {
+        "type": "string",
+        "description": "The writing prompt or task"
+      }
+    },
+    "required": [
+      "prompt"
+    ]
+  },
+  "output_stage_id": "select",
+  "example_input": {
+    "topic": "Why Learning a Second Language Matters",
+    "style": "persuasive",
+    "audience": "young professionals"
+  }
+}
