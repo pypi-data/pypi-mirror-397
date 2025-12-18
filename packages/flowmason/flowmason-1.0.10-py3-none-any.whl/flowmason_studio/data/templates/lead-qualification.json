@@ -1,0 +1,107 @@
+{
+  "id": "lead-qualification",
+  "name": "Lead Qualification Pipeline",
+  "description": "Analyze and score sales leads for qualification. Processes lead data, evaluates fit, and provides actionable recommendations for sales teams.",
+  "category": "salesforce",
+  "tags": [
+    "salesforce",
+    "crm",
+    "leads",
+    "qualification",
+    "sales"
+  ],
+  "difficulty": "intermediate",
+  "use_cases": [
+    "Automatically score inbound leads",
+    "Prioritize sales outreach",
+    "Identify high-value prospects",
+    "Reduce manual lead qualification time"
+  ],
+  "stages": [
+    {
+      "id": "analyze",
+      "component_type": "generator",
+      "name": "Analyze Lead",
+      "config": {
+        "prompt": "Analyze the following lead information and provide a qualification assessment:\n\nCompany: {{input.company_name}}\nIndustry: {{input.industry}}\nCompany Size: {{input.company_size}}\nJob Title: {{input.job_title}}\nLead Source: {{input.lead_source}}\nNotes: {{input.notes}}\n\nProvide:\n1. Lead Score (1-100)\n2. Qualification Status (Hot/Warm/Cold)\n3. Key Strengths (what makes this lead promising)\n4. Potential Concerns (risks or gaps)\n5. Recommended Next Steps (specific actions)\n6. Ideal Product Fit (if applicable)",
+        "system_prompt": "You are an expert sales qualification analyst with deep knowledge of B2B sales processes. Analyze leads objectively based on BANT criteria (Budget, Authority, Need, Timeline) and company fit. Be specific and actionable in your recommendations."
+      },
+      "depends_on": [],
+      "position": {
+        "x": 150,
+        "y": 150
+      }
+    },
+    {
+      "id": "critique",
+      "component_type": "critic",
+      "name": "Review Analysis",
+      "config": {
+        "content": "{{upstream.analyze.content}}",
+        "criteria": "Review this lead qualification for:\n1. Accuracy of scoring based on provided information\n2. Completeness of analysis\n3. Actionability of recommendations\n4. Any bias or assumptions made without evidence\n\nSuggest any improvements or additional considerations."
+      },
+      "depends_on": [
+        "analyze"
+      ],
+      "position": {
+        "x": 400,
+        "y": 150
+      }
+    },
+    {
+      "id": "finalize",
+      "component_type": "improver",
+      "name": "Finalize Report",
+      "config": {
+        "content": "{{upstream.analyze.content}}",
+        "feedback": "{{upstream.critique.feedback}}",
+        "instructions": "Create a final, polished lead qualification report that addresses the review feedback. Format for easy reading by sales reps.\n\nOutput a structured report with clear sections and a summary at the top."
+      },
+      "depends_on": [
+        "critique"
+      ],
+      "position": {
+        "x": 650,
+        "y": 150
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "company_name": {
+        "type": "string",
+        "description": "Name of the company"
+      },
+      "industry": {
+        "type": "string",
+        "description": "Industry or sector"
+      },
+      "company_size": {
+        "type": "string",
+        "description": "Number of employees or revenue range"
+      },
+      "job_title": {
+        "type": "string",
+        "description": "Job title of the lead contact"
+      },
+      "lead_source": {
+        "type": "string",
+        "description": "How the lead was acquired (e.g., 'Website Form', 'Trade Show')"
+      },
+      "notes": {
+        "type": "string",
+        "description": "Any additional context or notes about the lead"
+      }
+    },
+    "required": [
+      "company_name"
+    ]
+  },
+  "output_stage_id": "finalize",
+  "example_input": {
+    "salesforce_url": "https://mycompany.salesforce.com",
+    "lead_id": "00Q5e000001abc123",
+    "access_token": "your-oauth-token-here"
+  }
+}
