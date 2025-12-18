@@ -1,0 +1,22 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:plone="http://namespaces.plone.org/plone"
+    i18n_domain="interaktiv.alttexts"
+    >
+
+  <include
+      package="plone.behavior"
+      file="meta.zcml"
+      />
+
+  <plone:behavior
+      name="interaktiv.alttexts.behavior.alt_text"
+      title="Image Alt Text"
+      description="Adds Image Alt Text Behavior"
+      factory=".alt_text.AltTextAdapter"
+      provides=".alt_text.IAltTextBehavior"
+      for=".alt_text.IAltTextMarker"
+      marker=".alt_text.IAltTextMarker"
+      />
+
+</configure>
