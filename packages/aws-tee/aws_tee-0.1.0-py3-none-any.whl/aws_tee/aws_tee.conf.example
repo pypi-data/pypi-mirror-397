@@ -1,0 +1,22 @@
+# aws_tee 用コンフィグ（dotenv形式）
+#
+# somecmd | aws_tee my_command で実行した場合、
+# - CloudWatch Logs: LOG_GROUP_NAME / LOG_STREAM_NAME に1行ごとのJSONログを送信
+# - S3: S3_BUCKET_NAME / S3_KEY_BASE / S3_SUFFIX から生成したキーに生ログを保存
+#
+# S3_KEY_BASE には %YYYYMMDD% などの日付プレースホルダに加え、
+# 実行時に指定したコマンド名を埋め込むための %CMD_NAME% を利用できます。
+
+# CloudWatch Logs 設定
+LOG_GROUP_NAME=aws-tee-log-group
+LOG_STREAM_NAME=aws-tee-stream-%YYYYMMDDhhmmssSSS%
+
+# S3 設定
+S3_BUCKET_NAME=your-aws-tee-bucket
+S3_KEY_BASE=logs/%YYYYMMDD%/aws_tee/%CMD_NAME%
+S3_SUFFIX=.log
+
+# AWS リージョン（必須）
+AWS_REGION=ap-northeast-1
+
+
