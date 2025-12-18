@@ -1,0 +1,91 @@
+Metadata-Version: 2.1
+Name: neuratensor
+Version: 1.0.0
+Summary: Production neuromorphic inference SDK with CUDA acceleration
+Home-page: https://neuramorphic.ai
+Author: Neuramorphic, Inc.
+Author-email: info@neuramorphic.ai
+License: Proprietary
+Project-URL: Documentation, https://docs.neuramorphic.ai
+Project-URL: Source, https://github.com/neuramorphic/neuratensor-sdk
+Project-URL: Bug Reports, https://github.com/neuramorphic/neuratensor-sdk/issues
+Keywords: neuromorphic,snn,ssm,cuda,inference,deep-learning,ai
+Platform: Linux
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: License :: Other/Proprietary License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Environment :: GPU :: NVIDIA CUDA
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: torch >=2.0.0
+Requires-Dist: numpy >=1.19.0
+Provides-Extra: cli
+Requires-Dist: click >=8.0.0 ; extra == 'cli'
+Provides-Extra: dev
+Requires-Dist: pytest >=7.0.0 ; extra == 'dev'
+Requires-Dist: black >=22.0.0 ; extra == 'dev'
+Requires-Dist: flake8 >=4.0.0 ; extra == 'dev'
+
+# NeuraTensor SDK
+
+**Production neuromorphic inference at 8ms latency**
+
+NeuraTensor is a high-performance neuromorphic inference SDK featuring a proprietary fused SNN-SSM architecture with CUDA acceleration.
+
+## ⚡ Performance
+
+- **8.13ms latency** (64M model, Jetson AGX Orin)
+- **123 seq/s throughput**
+- **120x faster** than PyTorch baseline
+- Sub-10ms real-time inference
+
+## �� Quick Start
+
+```bash
+pip install neuratensor
+```
+
+```python
+from neuratensor import NeuraTensor, NeuraTensorConfig
+
+# Load model
+config = NeuraTensorConfig.preset("64m")
+model = NeuraTensor(config).cuda().half()
+
+# Inference
+output = model(input_ids)
+# ✅ 8ms latency, 64M params, 123 seq/s
+```
+
+## 📊 Models
+
+| Model | Parameters | Latency | Use Case |
+|-------|-----------|---------|----------|
+| 64M   | 64M | 8ms | Edge, real-time |
+| 256M  | 256M | ~15ms | Balanced |
+| 1B    | 1B | ~35ms | Quality |
+
+## 🔧 Requirements
+
+- NVIDIA GPU (CUDA 11.4+, SM 7.0+)
+- Python 3.8+
+- PyTorch 2.0+
+
+## 📚 Documentation
+
+- [Distribution Guide](DISTRIBUTION_GUIDE.md)
+- [Patent Notice](PATENT_NOTICE.txt)
+
+## 📄 License
+
+Proprietary. Binary distribution only.
+
+**© 2024-2025 Neuramorphic, Inc.**
