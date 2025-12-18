@@ -1,0 +1,339 @@
+# Copyright 2018 by Teradata Corporation. All rights reserved.
+
+class TeradataTypeResolver:
+    """Type Resolver for Teradata Data Types.
+
+    For dynamically instantiating instances of TypeEngine (subclasses).
+    This class mimics the design of SQLAlchemy's TypeCompiler and in fact
+    takes advantage of the compiler's visitor double-dispatch mechanism.
+    This is accomplished by having the main process method redirect to the
+    passed in type_'s corresponding visit method defined by the TypeResolver
+    below.
+    """
+
+    def _clean_kwargs(self, kwargs):
+        """Clean all string keyword arguments by stripping trailing spaces.
+        """
+        return {key: value.rstrip() if isinstance(value, str) else value for key, value in kwargs.items()}
+
+    def process(self, type_, **kw):
+        """Resolves the type.
+
+        Instantiate the type and populate its relevant attributes with the
+        appropriate keyword arguments.
+
+        Args:
+            type_: The type to be resolved (instantiated).
+
+            **kw:  Keyword arguments used for populating the attributes of the
+                   type being resolved.
+
+        Returns:
+            An instance of type_ correctly populated with the appropriate
+            keyword arguments.
+        """
+        # Clean all keyword arguments before dispatching
+        kw = self._clean_kwargs(kw)
+
+        return getattr(self, 'visit_' + type_.__visit_name__)(type_, **kw)
+
+    def visit_INTEGER(self, type_, **kw):
+        return type_()
+
+    def visit_SMALLINT(self, type_, **kw):
+        return type_()
+
+    def visit_BIGINT(self, type_, **kw):
+        return type_()
+
+    def visit_DECIMAL(self, type_, **kw):
+        return type_(precision=kw['prec'], scale=kw['scale'])
+
+    def visit_DATE(self, type_, **kw):
+        return type_()
+
+    def _resolve_type_interval(self, type_, **kw):
+        return type_(precision=kw['prec'], frac_precision=kw['scale'])
+
+    def visit_INTERVAL_YEAR(self, type_, **kw):
+        return self._resolve_type_interval(type_, **kw)
+
+    def visit_INTERVAL_YEAR_TO_MONTH(self, type_, **kw):
+        return self._resolve_type_interval(type_, **kw)
+
+    def visit_INTERVAL_MONTH(self, type_, **kw):
+        return self._resolve_type_interval(type_, **kw)
+
+    def visit_INTERVAL_DAY(self, type_, **kw):
+        return self._resolve_type_interval(type_, **kw)
+
+    def visit_INTERVAL_DAY_TO_HOUR(self, type_, **kw):
+        return self._resolve_type_interval(type_, **kw)
+
+    def visit_INTERVAL_DAY_TO_MINUTE(self, type_, **kw):
+        return self._resolve_type_interval(type_, **kw)
+
+    def visit_INTERVAL_DAY_TO_SECOND(self, type_, **kw):
+        return self._resolve_type_interval(type_, **kw)
+
+    def visit_INTERVAL_HOUR(self, type_, **kw):
+        return self._resolve_type_interval(type_, **kw)
+
+    def visit_INTERVAL_HOUR_TO_MINUTE(self, type_, **kw):
+        return self._resolve_type_interval(type_, **kw)
+
+    def visit_INTERVAL_HOUR_TO_SECOND(self, type_, **kw):
+        return self._resolve_type_interval(type_, **kw)
+
+    def visit_INTERVAL_MINUTE(self, type_, **kw):
+        return self._resolve_type_interval(type_, **kw)
+
+    def visit_INTERVAL_MINUTE_TO_SECOND(self, type_, **kw):
+        return self._resolve_type_interval(type_, **kw)
+
+    def visit_INTERVAL_SECOND(self, type_, **kw):
+        return self._resolve_type_interval(type_, **kw)
+
+    def visit_PERIOD_DATE(self, type_, **kw):
+        return type_(format=kw['fmt'])
+
+    def visit_PERIOD_TIME(self, type_, **kw):
+        tz = kw['typecode'] == 'PZ'
+        return type_(format=kw['fmt'], frac_precision=kw['scale'], timezone=tz)
+
+    def visit_PERIOD_TIMESTAMP(self, type_, **kw):
+        tz = kw['typecode'] == 'PM'
+        return type_(format=kw['fmt'], frac_precision=kw['scale'], timezone=tz)
+
+    def visit_TIME(self, type_, **kw):
+        tz = kw['typecode'] == 'TZ'
+        return type_(precision=kw['scale'], timezone=tz)
+
+    def visit_TIMESTAMP(self, type_, **kw):
+        tz = kw['typecode'] == 'SZ'
+        return type_(precision=kw['scale'], timezone=tz)
+
+    def _resolve_type_string(self, type_, **kw):
+        return type_(
+            length=int(kw['length'] / 2) if
+                   (kw['chartype'] == 'UNICODE' or kw['chartype'] == 'GRAPHIC')
+                    else kw['length'],
+            charset=kw['chartype'])
+
+    def visit_CHAR(self, type_, **kw):
+        return self._resolve_type_string(type_, **kw)
+
+    def visit_VARCHAR(self, type_, **kw):
+        return self._resolve_type_string(type_, **kw)
+
+    def visit_CLOB(self, type_, **kw):
+        return self._resolve_type_string(type_, **kw)
+
+    def visit_BYTEINT(self, type_, **kw):
+        return type_()
+
+    def visit_FLOAT(self, type_, **kw):
+        return type_()
+
+    def _resolve_type_binary(self, type_, **kw):
+        return type_(length=kw['length'])
+
+    def visit_BYTE(self, type_, **kw):
+        return self._resolve_type_binary(type_, **kw)
+
+    def visit_VARBYTE(self, type_, **kw):
+        return self._resolve_type_binary(type_, **kw)
+
+    def visit_BLOB(self, type_, **kw):
+        # TODO Multiplier of BLOB currently not recovered when reflected
+        return self._resolve_type_binary(type_, **kw)
+
+    def visit_NUMBER(self, type_, **kw):
+        return type_(precision=kw['prec'], scale=kw['scale'])
+
+    def visit_XML(self, type_, **kw):
+        return type_(maximum_length=kw['length'], inline_length=kw['inline_length'])
+
+    def visit_JSON(self, type_, **kw):
+        return type_(max_length=kw['length'],
+                     inline_length=kw['inline_length'], charset=kw['chartype'],
+                     storage_format=kw['storage_format'])
+
+    def visit_TDUDT(self, type_, **kw):
+        return type_(type_name=kw['col_udt_name'])
+
+    def visit_GEOMETRY(self, type_, **kw):
+        return type_(max_length=kw['length'],
+                     inline_length=kw['inline_length'])
+
+    def visit_MBR(self, type_, **kw):
+        return type_()
+
+    def visit_MBB(self, type_, **kw):
+        return type_()
+
+    def visit_VECTOR(self, type_, **kw):
+        return type_()
+
+    def visit_VECTOR32(self, type_, **kw):
+        return type_()
+
+    def visit_ARRAY_INTEGER(self, type_, **kw):
+        return type_(scope=kw.get('array_col_scope'), 
+                     default_null=kw.get('array_default_null', False))
+
+    def visit_ARRAY_SMALLINT(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False))
+    
+    def visit_ARRAY_BYTEINT(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False))
+    
+    def visit_ARRAY_BIGINT(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False))
+    
+    def visit_ARRAY_DATE(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False))
+    
+    def visit_ARRAY_TIME(self, type_, **kw):
+        tz = kw['array_col_element'] == 'TZ'
+        return type_(scope=kw.get('array_col_scope'),
+                     default_null=kw.get('array_default_null', False),
+                     timezone=tz)
+    
+    def visit_ARRAY_TIMESTAMP(self, type_, **kw):
+        tz = kw['array_col_element'] == 'SZ'
+        return type_(scope=kw.get('array_col_scope'),
+                     default_null=kw.get('array_default_null', False),
+                     timezone=tz)
+    
+    def visit_ARRAY_INTERVAL_YEAR(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False),
+                     precision=kw['array_col_element_precision'])
+    
+    def visit_ARRAY_INTERVAL_YEAR_TO_MONTH(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False),
+                     precision=kw['array_col_element_precision'])
+    
+    def visit_ARRAY_INTERVAL_MONTH(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False),
+                     precision=kw['array_col_element_precision'])
+    
+    def visit_ARRAY_INTERVAL_DAY(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False),
+                     precision=kw['array_col_element_precision'])
+    
+    def visit_ARRAY_INTERVAL_DAY_TO_HOUR(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False),
+                     precision=kw['array_col_element_precision'])
+    
+    def visit_ARRAY_INTERVAL_DAY_TO_MINUTE(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False),
+                     precision=kw['array_col_element_precision'])
+    
+    def visit_ARRAY_INTERVAL_DAY_TO_SECOND(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False),
+                     precision=kw['array_col_element_precision'],
+                     frac_precision=kw['array_col_element_scale'])
+    
+    def visit_ARRAY_INTERVAL_HOUR(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False),
+                     precision=kw['array_col_element_precision'])
+    
+    def visit_ARRAY_INTERVAL_HOUR_TO_MINUTE(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False),
+                     precision=kw['array_col_element_precision'])
+    
+    def visit_ARRAY_INTERVAL_HOUR_TO_SECOND(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False),
+                     precision=kw['array_col_element_precision'],
+                     frac_precision=kw['array_col_element_scale'])
+    
+    def visit_ARRAY_INTERVAL_MINUTE(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False),
+                     precision=kw['array_col_element_precision'])
+    
+    def visit_ARRAY_INTERVAL_MINUTE_TO_SECOND(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False),
+                     precision=kw['array_col_element_precision'],
+                     frac_precision=kw['array_col_element_scale'])
+    
+    def visit_ARRAY_INTERVAL_SECOND(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False),
+                     precision=kw['array_col_element_precision'],
+                     frac_precision=kw['array_col_element_scale'])
+    
+    def visit_ARRAY_FLOAT(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False))
+    
+    def visit_ARRAY_DECIMAL(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False),
+                     precision=kw['array_col_element_precision'],
+                     scale=kw['array_col_element_scale'])
+
+    def visit_ARRAY_CHAR(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False),
+                     length=int(kw['array_col_element_length'] / 2) if
+                            (kw['chartype'] == 'UNICODE' or kw['chartype'] == 'GRAPHIC')
+                            else kw['array_col_element_length'],
+                     charset=kw['chartype'])
+    
+    def visit_ARRAY_BYTE(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False),
+                     length=kw['array_col_element_length'])
+    
+    def visit_ARRAY_VARCHAR(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False),
+                     length=int(kw['array_col_element_length'] / 2) if
+                            (kw['chartype'] == 'UNICODE' or kw['chartype'] == 'GRAPHIC')
+                            else kw['array_col_element_length'],
+                     charset=kw['chartype'])
+    
+    def visit_ARRAY_VARBYTE(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False),
+                     length=kw['array_col_element_length'])
+    
+    def visit_ARRAY_NUMBER(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False),
+                     precision=kw['array_col_element_precision'],
+                     scale=kw['array_col_element_scale'])
+    
+    def visit_ARRAY_PERIOD_DATE(self, type_, **kw):
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False),
+                     format=kw['fmt'])
+    
+    def visit_ARRAY_PERIOD_TIME(self, type_, **kw):
+        tz = kw['array_col_element'] == 'PZ'
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False),
+                     format=kw['fmt'], frac_precision=kw['array_col_element_scale'], timezone=tz)
+    
+    def visit_ARRAY_PERIOD_TIMESTAMP(self, type_, **kw):
+        tz = kw['array_col_element'] == 'PM'
+        return type_(scope=kw.get("array_col_scope"),
+                     default_null=kw.get("array_default_null", False),
+                     format=kw['fmt'], frac_precision=kw['array_col_element_scale'], timezone=tz)
