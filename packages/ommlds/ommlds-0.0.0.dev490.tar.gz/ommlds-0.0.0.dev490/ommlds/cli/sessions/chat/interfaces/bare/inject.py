@@ -1,0 +1,38 @@
+from omlish import inject as inj
+from omlish import lang
+
+from ..base import ChatInterface
+from ..configs import InterfaceConfig
+
+
+with lang.auto_proxy_import(globals()):
+    from .....inputs import asyncs as _inputs_asyncs
+    from .....inputs import sync as _inputs_sync
+    from . import interactive as _interactive
+    from . import oneshot as _oneshot
+
+
+##
+
+
+def bind_bare(cfg: InterfaceConfig = InterfaceConfig()) -> inj.Elements:
+    els: list[inj.Elemental] = []
+
+    if cfg.interactive:
+        els.extend([
+            inj.bind(_interactive.InteractiveBareChatInterface, singleton=True),
+            inj.bind(ChatInterface, to_key=_interactive.InteractiveBareChatInterface),
+        ])
+
+        els.extend([
+            inj.bind(_inputs_sync.SyncStringInput, to_const=_inputs_sync.InputSyncStringInput(use_readline=cfg.use_readline)),  # noqa
+            inj.bind(_inputs_asyncs.AsyncStringInput, to_ctor=_inputs_asyncs.ThreadAsyncStringInput, singleton=True),
+        ])
+
+    else:
+        els.extend([
+            inj.bind(_oneshot.OneshotBareChatInterface, singleton=True),
+            inj.bind(ChatInterface, to_key=_oneshot.OneshotBareChatInterface),
+        ])
+
+    return inj.as_elements(*els)
