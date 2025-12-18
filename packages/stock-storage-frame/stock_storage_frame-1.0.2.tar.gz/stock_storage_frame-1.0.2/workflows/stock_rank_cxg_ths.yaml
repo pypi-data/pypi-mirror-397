@@ -1,0 +1,27 @@
+name: "stock_rank_cxg_ths"
+description: "同花顺-数据中心-技术选股-创新高"
+schedule: "40 20 * * *"  # 每天20:20执行
+
+# 条件配置（可选），判定是否是交易日，只有定时任务才判断
+condition:
+  script: "./scripts/condition_trade_day.py"
+
+# 数据采集配置
+collector:
+  name: "akshare1"
+  type: "akshare"
+  method: "stock_rank_cxg_ths"
+  config:
+    symbol: "创月新高"
+
+# 数据处理配置
+processor:
+  # 使用Python脚本处理数据
+  script: "./scripts/process_add_date.py"
+
+# 数据存储配置
+storage:
+  name: "mysql1"
+  type: "mysql"
+  config:
+    table_name: "stock_rank_cxg_ths"

@@ -1,0 +1,29 @@
+name: "stock_dzjy_mrmx"
+description: "东方财富网-数据中心-大宗交易-每日明细"
+schedule: "10 21 * * *"  # 每天20:20执行
+
+# 条件配置（可选），判定是否是交易日，只有定时任务才判断
+condition:
+  script: "./scripts/condition_trade_day.py"
+
+# 数据采集配置
+collector:
+  name: "akshare1"
+  type: "akshare"
+  method: "stock_dzjy_mrmx"
+  config:
+    symbol: "A股"
+    start_date: "{{ today:YYYYMMDD }}"
+    end_date: "{{ today:YYYYMMDD }}"
+
+# 数据处理配置
+processor:
+  # 使用Python脚本处理数据
+  script: "./scripts/process_add_date.py"
+
+# 数据存储配置
+storage:
+  name: "mysql1"
+  type: "mysql"
+  config:
+    table_name: "stock_dzjy_mrmx"

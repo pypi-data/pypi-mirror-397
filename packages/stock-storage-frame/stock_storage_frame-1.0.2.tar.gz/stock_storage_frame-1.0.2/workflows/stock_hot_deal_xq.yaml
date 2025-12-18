@@ -1,0 +1,23 @@
+name: "stock_hot_deal_xq"
+description: "雪球-沪深股市-热度排行榜-交易排行榜"
+schedule: "50 20 * * *"  # 每天20:20执行
+
+# 数据采集配置
+collector:
+  name: "akshare1"
+  type: "akshare"
+  method: "stock_hot_deal_xq"
+  config:
+    symbol: "最热门"
+
+# 数据处理配置
+processor:
+  # 使用Python脚本处理数据
+  script: "./scripts/process_stock_hot_deal_xq.py"
+
+# 数据存储配置
+storage:
+  name: "mysql1"
+  type: "mysql"
+  config:
+    table_name: "stock_hot_xq"

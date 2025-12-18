@@ -1,0 +1,21 @@
+name: "stock_info_global_ths"
+description: "全球财经直播-同花顺财经，单次返回最近 20 条新闻数据"
+schedule: "*/30 * * * *"  # 每天20:20执行
+
+# 数据采集配置
+collector:
+  name: "akshare1"
+  type: "akshare"
+  method: "stock_info_global_ths"
+
+# 数据处理配置
+processor:
+  # 使用Python脚本处理数据
+  script: "./scripts/process_add_date.py"
+
+# 数据存储配置
+storage:
+  name: "mysql1"
+  type: "mysql"
+  config:
+    table_name: "stock_info_global"

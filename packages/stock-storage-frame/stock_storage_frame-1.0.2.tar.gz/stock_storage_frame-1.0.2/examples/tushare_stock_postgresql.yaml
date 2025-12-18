@@ -1,0 +1,32 @@
+# workflow: daily_stock_data_postgresql.yaml
+name: "daily_stock_data_postgresql"
+description: "每日股票数据采集和处理（PostgreSQL存储）"
+schedule: "0 18 * * *"  # 每天18:00执行
+
+# 数据采集配置
+collector:
+  name: "tushare1"
+  type: "tushare"
+  method: "daily"
+  config:
+    ts_code: "000001.SZ"
+    start_date: "20240101"
+    end_date: "20251001"
+
+# 数据处理配置
+processor:
+  # 使用Python脚本处理数据
+  script: "./scripts/process_data_fill.py"
+
+# 数据存储配置
+storage:
+  name: "postgresql1"
+  type: "postgresql"
+  config:
+    host: "localhost"
+    port: 5432
+    database: "stock_data"
+    username: "postgres"
+    password: "your_password"  # 请替换为实际密码
+    schema: "public"  # 可选，默认为public
+    table_name: "daily_stock_data"
