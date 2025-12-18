@@ -1,0 +1,71 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sfn_blueprint"
+version = "0.6.20"
+authors = [
+    { name = "Rajesh Darak", email = "rajesh@stepfuction.ai" },
+]
+description = "sfn-blueprint is a modular framework that enables rapid building of AI Agents, offering both flexibility and ease of customization."
+readme = "README.md"
+requires-python = ">=3.10, <3.13" 
+license = "MIT" 
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10", 
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    # "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    # "sfn-llm-client==0.3.3",  # Now integrated locally
+    # "numpy>=2.0.0",
+    "openai",
+    "python-dotenv",
+    "textblob",
+    "scikit-learn",
+    "nltk",
+    "spacy",
+    "pyyaml>=6.0",
+    "pytest",
+    "cloudpickle",
+    "dask[dataframe]>=2024.8.0",
+    "dask[delayed]>=2024.8.0",
+    "openpyxl",
+    "snowflake-connector-python>=3.17.0",
+    "snowflake-ml-python>=1.9.0",
+    "snowflake-snowpark-python>=1.26.0",
+    "mlflow-tracing",
+    # Add dependencies from sfn-llm-client that are now needed
+    "langgraph",
+    "aiohttp",
+    "dataclasses_json",
+    "tiktoken",
+    "anthropic",
+    "transformers >= 4.46.2",
+    "langchain-openai",
+    "langchain-community ",
+    "pydantic",
+    "langchain-core",
+    "StrEnum"
+]
+
+# dynamic = ["dependencies"]
+# [tool.setuptools.dynamic]
+# dependencies = {file = ["requirements-dev.txt"]}
+
+
+[project.urls]
+Homepage = "https://github.com/iamrajeshdaraksfn/sfn_blueprint"
+Repository = "https://github.com/iamrajeshdaraksfn/sfn_blueprint"
+
+[tool.setuptools.package-data]
+sfn_blueprint = ["config/*.json"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["sfn_blueprint*"] 
