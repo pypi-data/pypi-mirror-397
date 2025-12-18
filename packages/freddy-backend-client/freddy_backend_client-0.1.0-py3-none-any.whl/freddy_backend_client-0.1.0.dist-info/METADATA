@@ -1,0 +1,490 @@
+Metadata-Version: 2.4
+Name: freddy-backend-client
+Version: 0.1.0
+Summary: Python client for Freddy Backend API
+Author-email: Ananthu <ananthu.mn@aitronos.com>
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/Aitronos-Development/freddy-backend-client
+Project-URL: Documentation, https://github.com/Aitronos-Development/freddy-backend-client/blob/main/README.md
+Project-URL: Repository, https://github.com/Aitronos-Development/freddy-backend-client
+Keywords: freddy,api,client,backend
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: httpx>=0.20.0
+Requires-Dist: attrs>=21.3.0
+Requires-Dist: python-dateutil>=2.8.0
+Dynamic: license-file
+
+# Freddy Backend Client
+
+A comprehensive Python client library for interacting with the Freddy Backend API. This client provides both synchronous and asynchronous support for all API endpoints.
+
+## Features
+
+- 🔐 **Authentication & Authorization** - Login, signup, email verification, and session management
+- 🤖 **AI Assistants** - Create and manage AI assistants with custom configurations
+- 💬 **Chat & Messaging** - Send messages, manage threads, and handle streaming responses
+- 📊 **Analytics & Usage Tracking** - Monitor API usage, limits, and performance metrics
+- 🔑 **API Key Management** - Create, rotate, and manage API keys with granular controls
+- 👥 **Organization & User Management** - Manage organizations, members, and invitations
+- 📁 **File Management** - Upload, download, and manage files and vector stores
+- 🛠️ **Tools & MCP Configurations** - Configure and manage system tools and connectors
+- 📋 **Rules & Access Control** - Define and manage entity rules and access rights
+- 🏥 **Health Monitoring** - Check system health and component status
+- 🔄 **Async Support** - Full async/await support for all endpoints
+
+## Installation
+
+```bash
+pip install freddy-backend-client
+```
+
+## Quick Start
+
+### Basic Usage (Synchronous)
+
+```python
+from freddy_client import AuthenticatedClient
+from freddy_client.api.authentication import login_v1_auth_login_post
+from freddy_client.models import LoginRequest, DeviceInformation
+
+# Create an unauthenticated client for login
+client = Client(base_url="https://api.freddy.example.com")
+
+# Login
+login_request = LoginRequest(
+    email_or_username="user@example.com",
+    password="your_password",
+    device_information=DeviceInformation(
+        device="Chrome Browser",
+        device_id="device-123",
+        operating_system="macOS",
+        platform="web"
+    )
+)
+
+response = login_v1_auth_login_post.sync(client=client, body=login_request)
+print(f"Login successful! Token: {response.access_token}")
+
+# Create authenticated client
+auth_client = AuthenticatedClient(
+    base_url="https://api.freddy.example.com",
+    token=response.access_token
+)
+
+# Now you can make authenticated requests
+from freddy_client.api.user_management import get_current_user_profile_v1_user_me_get
+
+user_profile = get_current_user_profile_v1_user_me_get.sync(client=auth_client)
+print(f"Welcome, {user_profile.username}!")
+```
+
+### Async Usage
+
+```python
+import asyncio
+from freddy_client import AuthenticatedClient
+from freddy_client.api.authentication import login_v1_auth_login_post
+from freddy_client.models import LoginRequest, DeviceInformation
+
+async def main():
+    client = Client(base_url="https://api.freddy.example.com")
+    
+    login_request = LoginRequest(
+        email_or_username="user@example.com",
+        password="your_password",
+        device_information=DeviceInformation(
+            device="Chrome Browser",
+            device_id="device-123",
+            operating_system="macOS",
+            platform="web"
+        )
+    )
+    
+    # Async login
+    response = await login_v1_auth_login_post.asyncio(client=client, body=login_request)
+    
+    # Create authenticated client
+    auth_client = AuthenticatedClient(
+        base_url="https://api.freddy.example.com",
+        token=response.access_token
+    )
+    
+    # Make async requests
+    from freddy_client.api.user_management import get_current_user_profile_v1_user_me_get
+    user_profile = await get_current_user_profile_v1_user_me_get.asyncio(client=auth_client)
+    print(f"Welcome, {user_profile.username}!")
+
+asyncio.run(main())
+```
+
+### Context Manager Support
+
+```python
+# Synchronous context manager
+with AuthenticatedClient(base_url="https://api.freddy.example.com", token="your_token") as client:
+    # Make requests
+    pass
+
+# Async context manager
+async with AuthenticatedClient(base_url="https://api.freddy.example.com", token="your_token") as client:
+    # Make async requests
+    pass
+```
+
+## API Categories
+
+### Authentication
+- Login and signup
+- Email verification and validation
+- Two-factor authentication (2FA)
+- Session management
+- Device tracking
+
+### Assistants
+- Create, update, and delete assistants
+- Configure assistant capabilities and tools
+- Manage assistant metadata and settings
+
+### Chat & Messaging
+- Send chat messages with streaming support
+- Manage conversation threads
+- Handle tool calls and reasoning
+- Configure temperature, top_p, and other parameters
+
+### Organizations
+- Create and manage organizations
+- Organization settings and preferences
+- Member management
+
+### API Keys
+- Create and rotate API keys
+- Activate, deactivate, and pause keys
+- Monitor key usage and limits
+
+### Analytics
+- Daily, monthly, and yearly usage reports
+- API key usage tracking
+- Usage benchmarks and optimization
+- Usage heatmaps and trends
+- Dashboard data
+
+### Files & Vector Stores
+- Upload and manage files
+- Create and manage vector stores
+- Vector store file operations
+- File search capabilities
+
+### User Management
+- User profiles and settings
+- Profile image management
+- User preferences
+- Crew management (teams)
+
+### Rules & Access Control
+- Entity rules management
+- Access rights and permissions
+- Rule attachments and operations
+- Rule statistics
+
+### Tools & Connectors
+- System tools listing
+- Personal connectors management
+- MCP (Model Context Protocol) configurations
+- Tool capabilities and configurations
+
+### Health & Monitoring
+- System health checks
+- Component status monitoring
+- Detailed health diagnostics
+
+### Reference Data
+- Country information
+- Pricing tiers
+- Model information
+- Icon management
+
+### Admin Operations
+- Cache management
+- Limit invalidation
+- System administration
+
+## Advanced Configuration
+
+### Custom Timeouts
+
+```python
+import httpx
+
+client = AuthenticatedClient(
+    base_url="https://api.freddy.example.com",
+    token="your_token",
+    timeout=httpx.Timeout(30.0, connect=10.0)
+)
+```
+
+### Custom Headers
+
+```python
+client = AuthenticatedClient(
+    base_url="https://api.freddy.example.com",
+    token="your_token",
+    headers={"X-Custom-Header": "value"}
+)
+
+# Add headers dynamically
+client = client.with_headers({"X-Another-Header": "another_value"})
+```
+
+### SSL Configuration
+
+```python
+# Disable SSL verification (not recommended for production)
+client = AuthenticatedClient(
+    base_url="https://api.freddy.example.com",
+    token="your_token",
+    verify_ssl=False
+)
+```
+
+### Follow Redirects
+
+```python
+client = AuthenticatedClient(
+    base_url="https://api.freddy.example.com",
+    token="your_token",
+    follow_redirects=True
+)
+```
+
+### Custom HTTPX Client
+
+```python
+import httpx
+
+custom_client = httpx.Client(
+    # Your custom configuration
+)
+
+client = AuthenticatedClient(
+    base_url="https://api.freddy.example.com",
+    token="your_token"
+).set_httpx_client(custom_client)
+```
+
+## Error Handling
+
+```python
+from freddy_client import errors
+import httpx
+
+try:
+    response = some_api_call.sync(client=client)
+except errors.UnexpectedStatus as e:
+    print(f"Unexpected status code: {e.status_code}")
+    print(f"Response content: {e.content}")
+except httpx.TimeoutException:
+    print("Request timed out")
+except httpx.HTTPError as e:
+    print(f"HTTP error occurred: {e}")
+```
+
+### Raise on Unexpected Status
+
+```python
+# Enable automatic exception raising for unexpected status codes
+client = AuthenticatedClient(
+    base_url="https://api.freddy.example.com",
+    token="your_token",
+    raise_on_unexpected_status=True
+)
+```
+
+## Examples
+
+### Creating an Assistant
+
+```python
+from freddy_client.api.assistants import create_assistant_v1_assistants_post
+from freddy_client.models import AssistantCreate
+
+assistant_data = AssistantCreate(
+    name="My Assistant",
+    model="gpt-4o",
+    instructions="You are a helpful assistant.",
+    temperature=0.7
+)
+
+assistant = create_assistant_v1_assistants_post.sync(
+    client=auth_client,
+    body=assistant_data
+)
+print(f"Created assistant: {assistant.id}")
+```
+
+### Sending a Chat Message
+
+```python
+from freddy_client.api.streamline import chat_v1_chat_post
+from freddy_client.models import ChatRequest, InputMessage
+
+chat_request = ChatRequest(
+    inputs=[
+        InputMessage(role="user", content="Hello, how are you?")
+    ],
+    organization_id="org_123",
+    model="gpt-4o",
+    temperature=0.7,
+    stream=False
+)
+
+response = chat_v1_chat_post.sync(
+    client=auth_client,
+    body=chat_request
+)
+print(f"Response: {response.content}")
+```
+
+### Managing API Keys
+
+```python
+from freddy_client.api.api_keys import (
+    create_api_key_v1_organizations_org_id_api_keys_post,
+    list_api_keys_v1_organizations_org_id_api_keys_get,
+    rotate_api_key_v1_organizations_org_id_api_keys_key_id_rotate_post
+)
+from freddy_client.models import ApiKeyCreate
+
+# Create a new API key
+new_key = ApiKeyCreate(
+    name="Production API Key",
+    scopes=["read", "write"]
+)
+
+api_key = create_api_key_v1_organizations_org_id_api_keys_post.sync(
+    client=auth_client,
+    org_id="org_123",
+    body=new_key
+)
+print(f"Created API key: {api_key.key}")
+
+# List all API keys
+keys = list_api_keys_v1_organizations_org_id_api_keys_get.sync(
+    client=auth_client,
+    org_id="org_123"
+)
+
+# Rotate an API key
+rotated = rotate_api_key_v1_organizations_org_id_api_keys_key_id_rotate_post.sync(
+    client=auth_client,
+    org_id="org_123",
+    key_id="key_456"
+)
+```
+
+### Getting Analytics
+
+```python
+from freddy_client.api.analytics_usage import (
+    get_usage_dashboard_v1_analytics_usage_dashboard_org_id_get,
+    get_daily_usage_v1_analytics_usage_daily_org_id_get
+)
+
+# Get usage dashboard
+dashboard = get_usage_dashboard_v1_analytics_usage_dashboard_org_id_get.sync(
+    client=auth_client,
+    org_id="org_123"
+)
+
+# Get daily usage
+daily_usage = get_daily_usage_v1_analytics_usage_daily_org_id_get.sync(
+    client=auth_client,
+    org_id="org_123",
+    start_date="2024-01-01",
+    end_date="2024-01-31"
+)
+```
+
+## Development
+
+### Requirements
+
+- Python 3.8+
+- httpx >= 0.20.0
+- attrs >= 21.3.0
+- python-dateutil >= 2.8.0
+
+### Building from Source
+
+```bash
+git clone https://github.com/yourusername/freddy-backend-client.git
+cd freddy-backend-client
+pip install -e .
+```
+
+### Running Tests
+
+```bash
+pytest
+```
+
+## Type Hints
+
+This library is fully typed and includes a `py.typed` marker for type checkers like mypy:
+
+```python
+from freddy_client import AuthenticatedClient
+from freddy_client.models import LoginResponse
+
+# Type checkers will understand these types
+client: AuthenticatedClient = AuthenticatedClient(
+    base_url="https://api.freddy.example.com",
+    token="your_token"
+)
+
+response: LoginResponse = login_v1_auth_login_post.sync(client=client, body=login_request)
+```
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Support
+
+For issues, questions, or contributions, please contact:
+- **Email**: ananthu.mn@aitronos.com
+- **Organization**: Aitronos
+
+## Changelog
+
+### 0.1.0 (Current)
+- Initial release
+- Full API coverage for Freddy Backend
+- Synchronous and asynchronous support
+- Type hints and documentation
+- Context manager support
+- Comprehensive error handling
+
+## Related Projects
+
+- [Freddy Backend API](https://api.freddy.example.com/docs) - Official API documentation
+- [Freddy Web Client](https://freddy.example.com) - Web interface
+
+## Acknowledgments
+
+This client library is auto-generated from the Freddy Backend OpenAPI specification and maintained by the Aitronos team.
+
