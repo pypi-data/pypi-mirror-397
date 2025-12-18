@@ -1,0 +1,68 @@
+Metadata-Version: 2.4
+Name: pystave
+Version: 1.1.0
+Summary: musical stave trainer
+Home-page: https://bitbucket.org/jezhill/pystave
+Author: Jeremy Hill
+Author-email: jezhill@gmail.com
+License: GPLv3+
+Classifier: License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Description-Content-Type: text/markdown
+License-File: LICENSE
+License-File: COPYING
+Requires-Dist: pygame
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: summary
+
+This is a Python program that helps you practice sight-reading by flashing up
+notes on a stave (treble and/or bass clef). You will have a certain number of
+seconds to correctly identify each note. With the appropriate MIDI adapter
+plugged in, the `-m` command-line option (see below) allows you to respond
+using your instrument.  Failing that, respond with keys `A`, `B`, `C`, `D`,
+`E`, `F`, or `G` on your computer keyboard. In either case, press `Q` to quit
+the program.
+
+Install with `python -m pip install pystave`. This will install both the
+`pystave` package and, if you do not already have it, its dependency `pygame`.
+
+You can run the game from the command-line with `python -m pystave ` followed
+by whatever command-line options you want.
+
+On Windows, the simplest way to set it up is to find `NoteTrainer.exe` in the
+`Scripts` directory of your Python distribution (or virtual environment), and
+make a shortcut to that. In the "Target" field of the "Properties" dialog for
+the shortcut, you can add any command-line options you want to add. Launch the
+game from that shortcut.
+
+The game's command-line options are as follows:
+
+	 -m N             Listen to midi channel `N` (default 0, meaning no midi
+	--midichannel=N   input). It may take some trial and error to find the
+	                  number that corresponds to the correct channel of your
+	                  USB MIDI adapter.
+	
+	 -s X             Scale the size of the window by factor `X` (default 1).
+	--size=X
+	
+	
+	 -t T             Set the time limit for responding to `T` seconds
+	--timelimit=T     (default 4).
+
+	
+	
+	 -c C             Include clef `C`. Possible values are `bass` and
+	--clef=C          `treble`. The default is to test both (choose randomly
+	                  each time around) which is equivalent to supplying
+	                  `-c treble -c bass` or `-c bass,treble`.
+
+
