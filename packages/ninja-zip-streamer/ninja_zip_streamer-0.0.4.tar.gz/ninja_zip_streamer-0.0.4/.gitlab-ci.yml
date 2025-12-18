@@ -1,0 +1,20 @@
+include:
+  - project: "teledec/pycode-quality"
+    ref: "main"
+    file:
+      - ".gitlab/ci/static-analysis.yml"
+      - ".gitlab/ci/pip.yml"
+   
+variables:
+  PYTHON_IMG: python:3.12-slim
+  PIP_PACKAGE_URL: "https://upload.pypi.org/legacy/"
+  TWINE_USERNAME: __token__
+  TWINE_PASSWORD: ${PYPI_TOKEN}
+
+stages:
+  - Static Analysis
+  - Pip
+
+.static_analysis_base:
+  allow_failure: true
+
