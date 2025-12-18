@@ -1,0 +1,79 @@
+Metadata-Version: 2.4
+Name: qrek
+Version: 0.0.2
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Rust
+Classifier: Topic :: Security :: Cryptography
+Summary: Quantum-Resilient Encryption Kit - Python SDK
+Keywords: cryptography,quantum,encryption,security,entropy
+Author: qREK Team
+License: MIT OR Apache-2.0
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown; charset=UTF-8; variant=GFM
+Project-URL: Homepage, https://github.com/qsegroup/qREK
+Project-URL: Repository, https://github.com/qsegroup/qREK
+Project-URL: Documentation, https://github.com/qsegroup/qREK/tree/main/docs
+
+# qREK Python SDK
+
+Python bindings for qREK - Quantum-Resilient Encryption Kit.
+
+## Installation
+
+```bash
+pip install qrek
+```
+
+## Quick Start
+
+**Requires**: `QREK_API_TOKEN` environment variable set with your QSE API token.
+
+```python
+import os
+from qrek_python import PyQrekClient
+
+# Set API token (or export QREK_API_TOKEN environment variable)
+# os.environ['QREK_API_TOKEN'] = 'your-qse-api-token'
+
+# Initialize client (uses QREK_API_TOKEN from environment)
+client = PyQrekClient()  # Or: PyQrekClient('your-token')
+
+# Generate AES-256 key with REAL quantum entropy
+aes_result = client.generate_aes_key()
+print(f"AES Key: {aes_result['key_base64']}")
+print(f"Entropy ID: {aes_result['entropy_id']}")
+print(f"Signature verified: {aes_result['signature_verified']}")
+
+# Generate RSA keypair
+rsa_result = client.generate_rsa_keypair(4096)
+print(f"Private Key:\n{rsa_result['private_key_pem']}")
+```
+
+## Features
+
+- AES-256 key generation with **real quantum entropy** from QSE API
+- RSA (2048/3072/4096) keypair generation
+- Ed25519 signature verification on all entropy
+- File encryption with provenance tracking
+- Stream encryption for large files
+- Full provenance tracking (WHO/WHEN/WHY/ENTROPY_ID)
+- **100% production-ready** - real QSE API integration
+
+## Documentation
+
+See main repository: https://github.com/qsegroup/qREK
+
+## License
+
+MIT OR Apache-2.0
+
+
