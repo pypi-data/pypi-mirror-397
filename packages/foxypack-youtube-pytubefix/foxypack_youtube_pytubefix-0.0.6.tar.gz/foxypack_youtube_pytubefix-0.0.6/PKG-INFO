@@ -1,0 +1,56 @@
+Metadata-Version: 2.4
+Name: foxypack-youtube-pytubefix
+Version: 0.0.6
+Summary: YouTube Support Library for foxypack
+Author-email: shapdi <shapranov.work@gmail.com>
+License: MIT
+Project-URL: repository, https://github.com/ShapDi/foxypack-youtube-pytubefix
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: foxypack>=0.0.11
+Requires-Dist: pytubefix>=10.3.6
+Requires-Dist: regex>=2025.9.18
+Requires-Dist: beautifulsoup4>=4.14.2
+Requires-Dist: foxy-entities>=0.0.3
+Provides-Extra: dev
+Requires-Dist: ruff>=0.13.3; extra == "dev"
+Requires-Dist: mypy>=1.19.0; extra == "dev"
+Requires-Dist: types-regex>=2025.11.3.20251106; extra == "dev"
+Provides-Extra: test
+Requires-Dist: pytest>=9.0.2; extra == "test"
+Dynamic: license-file
+
+# foxypack-youtube-pytubefix
+
+### Foxy interface library, entity balancing core, and shared parser
+
+### Basic usage
+
+#### Add a module to the FoxyPack controller for analyzing a set of social media links and getting analytics by link
+
+~~~python
+
+from foxypack import FoxyPack
+from foxypack_youtube_pytubefix import FoxyYouTubeAnalysis
+
+parser = FoxyPack().with_foxy_analysis(FoxyYouTubeAnalysis())
+
+parser.get_analysis("https://youtu.be/-3eMzaP9XOM")
+
+~~~
+
+#### Add a module to the FoxyPack controller to collect statistics on a set of social media links and getting analytics by link and getting statistics by link by link
+
+~~~python
+
+from foxypack import FoxyPack
+from foxypack_youtube_pytubefix import YouTubeVideo
+
+parser = FoxyPack().with_foxy_stat(
+    YouTubeVideo()
+)
+
+parser.get_statistics("https://youtu.be/-3eMzaP9XOM")
+
+~~~
