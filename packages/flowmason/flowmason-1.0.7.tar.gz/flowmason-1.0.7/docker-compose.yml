@@ -1,0 +1,46 @@
+# FlowMason Studio - Docker Compose Configuration
+#
+# Quick start:
+#   docker-compose up
+#
+# With custom pipeline directory:
+#   PIPELINES_DIR=/path/to/my/pipelines docker-compose up
+#
+# Development mode (with hot reload):
+#   docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+version: '3.8'
+
+services:
+  studio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: flowmason/studio:latest
+    container_name: flowmason-studio
+    ports:
+      - "${FLOWMASON_PORT:-8999}:8999"
+    environment:
+      - FLOWMASON_HOST=0.0.0.0
+      - FLOWMASON_PORT=8999
+      # LLM Provider API Keys (optional - can also be set in Studio UI)
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      # Database location (SQLite by default)
+      - FLOWMASON_DB_PATH=/app/data/flowmason.db
+    volumes:
+      # Persist Studio data (runs, settings, etc.)
+      - flowmason-data:/app/data
+      # Mount local pipeline directory (optional)
+      - ${PIPELINES_DIR:-./pipelines}:/app/pipelines:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8999/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  flowmason-data:
+    driver: local

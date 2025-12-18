@@ -1,0 +1,252 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: pipelineruns.flowmason.io
+  annotations:
+    description: "FlowMason PipelineRun - An execution instance of a Pipeline"
+spec:
+  group: flowmason.io
+  scope: Namespaced
+  names:
+    kind: PipelineRun
+    listKind: PipelineRunList
+    plural: pipelineruns
+    singular: pipelinerun
+    shortNames:
+      - fmpr
+      - run
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Pipeline
+          type: string
+          jsonPath: .spec.pipelineRef
+        - name: Status
+          type: string
+          jsonPath: .status.phase
+        - name: Duration
+          type: string
+          jsonPath: .status.duration
+        - name: Started
+          type: date
+          jsonPath: .status.startTime
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      schema:
+        openAPIV3Schema:
+          type: object
+          required:
+            - spec
+          properties:
+            spec:
+              type: object
+              required:
+                - pipelineRef
+              properties:
+                # Reference to Pipeline
+                pipelineRef:
+                  type: string
+                  description: "Name of the Pipeline to run"
+
+                # Input data
+                inputs:
+                  type: object
+                  description: "Input data for the pipeline"
+                  x-kubernetes-preserve-unknown-fields: true
+
+                # Input from ConfigMap/Secret
+                inputsFrom:
+                  type: object
+                  properties:
+                    configMapRef:
+                      type: string
+                      description: "ConfigMap containing inputs"
+                    secretRef:
+                      type: string
+                      description: "Secret containing inputs"
+
+                # Override settings from Pipeline
+                timeout:
+                  type: string
+                  description: "Override execution timeout"
+
+                retries:
+                  type: integer
+                  description: "Override retry count"
+
+                # Additional environment variables
+                env:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - name
+                    properties:
+                      name:
+                        type: string
+                      value:
+                        type: string
+                      valueFrom:
+                        type: object
+                        properties:
+                          secretKeyRef:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                              key:
+                                type: string
+
+                # Service account
+                serviceAccountName:
+                  type: string
+                  description: "Service account to use for execution"
+
+                # Node selector
+                nodeSelector:
+                  type: object
+                  description: "Node selector for pod placement"
+                  additionalProperties:
+                    type: string
+
+                # Tolerations
+                tolerations:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      key:
+                        type: string
+                      operator:
+                        type: string
+                      value:
+                        type: string
+                      effect:
+                        type: string
+                      tolerationSeconds:
+                        type: integer
+
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  description: "Current phase of the run"
+                  enum:
+                    - Pending
+                    - Running
+                    - Succeeded
+                    - Failed
+                    - Cancelled
+                    - TimedOut
+
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      reason:
+                        type: string
+                      message:
+                        type: string
+
+                startTime:
+                  type: string
+                  format: date-time
+                  description: "Execution start time"
+
+                completionTime:
+                  type: string
+                  format: date-time
+                  description: "Execution completion time"
+
+                duration:
+                  type: string
+                  description: "Total execution duration"
+
+                # Stage statuses
+                stages:
+                  type: array
+                  description: "Status of each stage"
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      phase:
+                        type: string
+                        enum:
+                          - Pending
+                          - Running
+                          - Succeeded
+                          - Failed
+                          - Skipped
+                      startTime:
+                        type: string
+                        format: date-time
+                      completionTime:
+                        type: string
+                        format: date-time
+                      duration:
+                        type: string
+                      error:
+                        type: string
+                      outputPreview:
+                        type: string
+
+                # Results
+                output:
+                  type: object
+                  description: "Pipeline output data"
+                  x-kubernetes-preserve-unknown-fields: true
+
+                # Error information
+                error:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                    stage:
+                      type: string
+                    details:
+                      type: string
+
+                # Execution metrics
+                metrics:
+                  type: object
+                  properties:
+                    totalTokens:
+                      type: integer
+                    totalCost:
+                      type: string
+                    stagesCompleted:
+                      type: integer
+                    stagesTotal:
+                      type: integer
+
+                # Pod reference
+                podName:
+                  type: string
+                  description: "Name of the executor pod"
+
+                # Run ID for correlation
+                runId:
+                  type: string
+                  description: "Internal run identifier"
+
+                observedGeneration:
+                  type: integer
