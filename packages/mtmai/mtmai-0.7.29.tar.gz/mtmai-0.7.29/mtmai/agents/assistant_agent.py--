@@ -1,0 +1,127 @@
+from typing import Any, Dict, List, Optional, Sequence
+from loguru import logger
+from autogen_agentchat.teams import RoundRobinGroupChat
+from autogen_agentchat.conditions import MaxMessageTermination
+from autogen_core.models import ChatCompletionClient
+from autogen_core.tools import BaseTool
+from autogen_core.memory import Memory
+from autogen_ext.models.openai import OpenAIChatCompletionClient
+from mtmai.agents._mtbase_agent import MtBaseAgent, AgentRequest, AgentResponse
+from mtmai.core.ai_config import ai_config_manager
+
+
+class AssistantAgent(MtBaseAgent):
+    """
+    通用助手Agent，基于autogen v0.7.2架构
+
+    功能：
+    - 提供通用的AI助手服务
+    - 支持工具调用
+    - 支持记忆功能
+    - 统一的请求响应格式
+    """
+
+    DEFAULT_DESCRIPTION = "An agent that provides assistance with ability to use tools."
+    DEFAULT_SYSTEM_MESSAGE = "You are a helpful AI assistant. Solve tasks using your tools. Reply with TERMINATE when the task has been completed."
+
+    def __init__(
+        self,
+        name: str = "AssistantAgent",
+        description: str = None,
+        model_client: Optional[ChatCompletionClient] = None,
+        tools: Optional[List[BaseTool]] = None,
+        memory: Optional[Sequence[Memory]] = None,
+        system_message: Optional[str] = None,
+        max_turns: int = 10,
+    ):
+        super().__init__(
+            name=name,
+            description=description or self.DEFAULT_DESCRIPTION,
+            model_client=model_client,
+            tools=tools,
+            memory=memory,
+        )
+        self.system_message = system_message or self.DEFAULT_SYSTEM_MESSAGE
+        self.max_turns = max_turns
+
+    async def execute(self, request: AgentRequest) -> AgentResponse:
+        """
+        执行助手任务
+
+        Args:
+            request: 包含任务描述和配置的请求
+
+        Returns:
+            AgentResponse: 执行结果
+        """
+        try:
+            # 获取或创建模型客户端
+            if not self.model_client:
+                self.model_client = await self._create_model_client(request.config)
+
+            # 创建autogen agent
+            agent = self._create_autogen_agent(
+                system_message=self.system_message
+            )
+
+            # 创建团队聊天
+            termination = MaxMessageTermination(max_messages=self.max_turns)
+            team = RoundRobinGroupChat([agent], termination_condition=termination)
+
+            # 执行任务
+            result = await team.run(task=request.task)
+
+            # 提取响应
+            if result.messages:
+                last_message = result.messages[-1]
+                if hasattr(last_message, 'content'):
+                    response_content = last_message.content
+                else:
+                    response_content = str(last_message)
+            else:
+                response_content = "抱歉，我无法处理您的请求。"
+
+            return AgentResponse(
+                success=True,
+                result=response_content,
+                metadata={
+                    "agent_name": self.name,
+                    "message_count": len(result.messages) if result.messages else 0,
+                }
+            )
+
+        except Exception as e:
+            logger.error(f"AssistantAgent执行失败: {e}")
+            return AgentResponse(
+                success=False,
+                error=str(e),
+                metadata={"agent_name": self.name}
+            )
+
+    async def _create_model_client(self, config: Optional[Dict[str, Any]] = None) -> ChatCompletionClient:
+        """根据配置创建模型客户端"""
+        if config:
+            provider = config.get("provider", "openai")
+            model_name = config.get("model_name", "gpt-4o-mini")
+            api_key = config.get("api_key")
+            base_url = config.get("base_url")
+        else:
+            # 使用默认配置
+            ai_config = await ai_config_manager.load_config()
+            provider_config = ai_config.get_provider("openai")
+            if not provider_config:
+                raise ValueError("未找到OpenAI提供商配置")
+
+            provider = "openai"
+            model_name = "gpt-4o-mini"
+            api_key = provider_config.api_key
+            base_url = provider_config.base_url
+
+        if not api_key:
+            raise ValueError(f"未配置{provider} API密钥")
+
+        return OpenAIChatCompletionClient(
+            model=model_name,
+            api_key=api_key,
+            base_url=base_url
+        )
