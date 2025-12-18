@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "synbio_buildcompiler"
+version = "0.0.b1"
+description = "BuildCompiler is a package to decouple the design and build stages"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "LICENSE.md"}
+keywords = ["SBOL", "genetic", "automation", "build", "synthetic biology"]
+authors = [
+  { name="Gonzalo Vidal", email="gonzalo.vidalpena@colorado.edu" },
+  { name="Ryan Greer", email="ryan.greer@colorado.edu" }
+]
+maintainers = [
+  { name = "Ryan Greer", email = "ryan.greer@colorado.edu" }
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "sbol2",
+    "biopython", 
+    "pydna"
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest < 5.0.0",
+  "pytest-cov[all]"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/MyersResearchGroup/BuildCompiler"
+"Bug Tracker" = "https://github.com/MyersResearchGroup/BuildCompiler/issues"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.0",
+]
