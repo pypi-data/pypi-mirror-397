@@ -1,0 +1,92 @@
+name: Check Code Quality
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        ref: ${{ github.head_ref }}
+
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        enable-cache: true
+
+    - name: Set up Python
+      run: uv python install 3.10
+
+    - name: Run formatter
+      run: make format
+
+    - name: Commit changes
+      run: |
+        if [ -n "$(git status --porcelain)" ]; then
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add .
+          git commit -m "🎨 Format code with ruff"
+          git push
+        fi
+
+  lint:
+    needs: format  # formatジョブの完了後に実行
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        ref: ${{ github.head_ref }}
+
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        enable-cache: true
+
+    - name: Set up Python ${{ matrix.python-version }}
+      run: uv python install ${{ matrix.python-version }}
+
+    - name: Run linter
+      run: make lint
+
+  test:
+    needs: format  # formatジョブの完了後に実行
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        ref: ${{ github.head_ref }}
+
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        enable-cache: true
+
+    - name: Set up Python ${{ matrix.python-version }}
+      run: uv python install ${{ matrix.python-version }}
+
+    - name: Run tests with coverage
+      run: make test-cov
+
+    - name: Upload coverage report
+      if: matrix.python-version == '3.10'
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: htmlcov/
+        retention-days: 7
