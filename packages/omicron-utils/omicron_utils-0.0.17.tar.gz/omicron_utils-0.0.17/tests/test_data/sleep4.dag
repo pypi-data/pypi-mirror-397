@@ -1,0 +1,23 @@
+
+job sleeper {
+accounting_group = ligo.dev.o4.detchar.transient.omicron
+accounting_group_user = joseph.areeda
+
+arguments = "120"
+executable = /bin/sleep
+
+error = sleep-job-$(ClusterID).err
+log = sleep-job-$(ClusterID).log
+output = sleep-job-$(ClusterID).out
+
+batch_name = "sleep4 dag $(ClusterID)"
+
+request_cpus = 1
+request_disk = 1GB
+request_memory = 400MB
+
+universe = vanilla
+
+queue
+
+}
