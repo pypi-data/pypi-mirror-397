@@ -1,0 +1,95 @@
+Metadata-Version: 2.4
+Name: cached-sentence-transformer
+Version: 0.1.0
+Summary: PostgreSQL-backed embedding cache for SentenceTransformers
+License: MIT License
+        
+        Copyright (c) 2025 Prasanna L S
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Project-URL: Homepage, https://github.com/prasanna/cached-sentence-transformer
+Project-URL: Repository, https://github.com/prasanna/cached-sentence-transformer
+Project-URL: Issues, https://github.com/prasanna/cached-sentence-transformer/issues
+Keywords: embeddings,nlp,sentence-transformers,postgres,cache
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy>=1.23
+Requires-Dist: torch
+Requires-Dist: sentence-transformers>=2.2
+Requires-Dist: psycopg2-binary>=2.9
+Requires-Dist: tqdm>=4.60
+Requires-Dist: python-dotenv>=1.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0; extra == "dev"
+Requires-Dist: ruff>=0.6.0; extra == "dev"
+Requires-Dist: build>=1.0; extra == "dev"
+Requires-Dist: twine>=5.0; extra == "dev"
+Dynamic: license-file
+
+# Cached Sentence Transformer
+
+PostgreSQL-backed embedding cache for [SentenceTransformers](https://www.sbert.net/).
+
+This package provides a small wrapper that caches computed sentence embeddings in a Postgres
+table keyed by a stable hash of `(model, normalize flag, text)`, so repeated runs can reuse
+stored vectors instead of recomputing them.
+
+## Installation
+
+```bash
+pip install cached-sentence-transformer
+```
+
+## Quickstart
+
+```python
+from cached_sentence_transformer import CachedSentenceTransformer
+
+st = CachedSentenceTransformer(
+    model_name_or_path="sentence-transformers/all-MiniLM-L6-v2",
+    pg_dsn="host=localhost port=5432 dbname=mydb user=myuser password=mypassword",
+)
+
+emb = st.encode(["hello", "world"], normalize_embeddings=True)
+st.close()
+```
+
+## Environment-based DSN
+
+If you do not pass `pg_dsn`, the wrapper will attempt to build it from environment variables
+(auto loads environment variables in the .env file in the current working directory) and
+will fail fast if any are missing:
+
+- `PSQL_HOST_NAME`
+- `PSQL_PORT`
+- `PSQL_DBNAME`
+- `PSQL_USER`
+- `PSQL_PASSWORD`
