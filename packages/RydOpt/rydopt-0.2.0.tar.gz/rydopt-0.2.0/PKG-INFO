@@ -1,0 +1,116 @@
+Metadata-Version: 2.3
+Name: RydOpt
+Version: 0.2.0
+Summary: Multiqubit Rydberg Gate Optimizer
+Author: David F. Locher, Sebastian Weber, Jakob Holschbach
+License: MIT License
+         
+         Copyright (c) 2025, David Locher, Sebastian Weber, Jakob Holschbach
+         
+         Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+         
+         The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+         
+         THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: MacOS
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Scientific/Engineering :: Physics
+Classifier: Topic :: Scientific/Engineering :: Quantum Computing
+Requires-Dist: diffrax>=0.5.0
+Requires-Dist: jax>=0.4.28
+Requires-Dist: jaxlib>=0.4.28
+Requires-Dist: matplotlib>=3.9.0
+Requires-Dist: numpy>=2.0.2
+Requires-Dist: optax>=0.2.2
+Requires-Dist: qutip>=5.1.0
+Requires-Dist: tqdm>=4.65.0
+Requires-Dist: typing-extensions>=4.15.0
+Requires-Dist: jax[cuda12]>=0.4.28 ; extra == 'cuda12'
+Requires-Dist: pytest>=8.4.2 ; extra == 'dev'
+Requires-Dist: sphinx==8.1.3 ; extra == 'dev'
+Requires-Dist: sphinx-rtd-theme>=3.0.2 ; extra == 'dev'
+Requires-Dist: sphinx-autobuild>=2024.10.3 ; extra == 'dev'
+Requires-Dist: sphinxcontrib-napoleon>=0.7 ; extra == 'dev'
+Requires-Dist: nbsphinx>=0.9.7 ; extra == 'dev'
+Requires-Dist: sphinx-tabs>=3.4.7 ; extra == 'dev'
+Requires-Dist: sphinx-copybutton>=0.5.2 ; extra == 'dev'
+Requires-Dist: notebook>=7.5.0 ; extra == 'dev'
+Requires-Dist: ipykernel>=7.1.0 ; extra == 'dev'
+Requires-Dist: ipywidgets>=8.1.8 ; extra == 'dev'
+Requires-Dist: nbmake>=1.5.5 ; extra == 'dev'
+Maintainer: Sebastian Weber, David F. Locher
+Maintainer-email: Sebastian Weber <seweber@posteo.de>, David F. Locher <david.locher@rwth-aachen.de>
+Requires-Python: >=3.10
+Provides-Extra: cuda12
+Provides-Extra: dev
+Description-Content-Type: text/markdown
+
+RydOpt - A Multiqubit Rydberg Gate Optimizer
+============================================
+
+[![docs](https://readthedocs.org/projects/rydopt/badge/?version=latest)](http://rydopt.readthedocs.io)
+[![tests](https://github.com/dflocher/rydopt/actions/workflows/tests.yml/badge.svg)](https://github.com/dflocher/rydopt/actions/workflows/tests.yml)
+[![pypi](https://img.shields.io/pypi/v/rydopt.svg?style=flat)](https://pypi.org/project/rydopt/)
+
+RydOpt is a Python package for the optimization of laser pulses implementing two- and multiqubit Rydberg gates
+in neutral atom quantum computing platforms. The optimization methods support GPUs and multi-core CPUs, using an
+efficient implementation based on JAX.
+
+Install the software with pip (requires Python ≥ 3.10; for enabling GPU support and tips, see our [extended installation instructions](https://rydopt.readthedocs.io/en/latest/install.html)):
+
+```bash
+pip install rydopt
+```
+
+Documentation and Minimal Usage Example
+---------------------------------------
+
+The package documentation can be found at https://rydopt.readthedocs.io/.
+
+To get an idea how the software is used, we provide in the following a minimal usage example.
+The code optimizes a pulse to realize a CZ gate on two atoms in the perfect blockade regime.
+
+```python
+import rydopt as ro
+import numpy as np
+
+# Want to perform a CZ gate on two atoms in the perfect blockade regime; no Rydberg state decay
+gate = ro.gates.TwoQubitGate(phi=None, theta=np.pi, Vnn=float("inf"), decay=0.0)
+
+# Pulse ansatz: constant detuning, sweep of the laser phase according to sin_crab ansatz
+pulse_ansatz = ro.pulses.PulseAnsatz(detuning_ansatz=ro.pulses.const, phase_ansatz=ro.pulses.sin_crab)
+
+# Initial pulse parameter guess
+initial_params = (7.0, [0.0], [0.0, 0.0], [])
+
+# Optimize the pulse parameters
+opt_result = ro.optimization.optimize(gate, pulse_ansatz, initial_params, tol=1e-10)
+optimized_params = opt_result.params
+
+# Plot the pulse
+ro.characterization.plot_pulse(pulse_ansatz, optimized_params)
+```
+
+Citing RydOpt
+-------------
+
+If you find this library useful for your research, please cite:
+> David F. Locher, Josias Old, Katharina Brechtelsbauer, Jakob Holschbach, Hans Peter Büchler, Sebastian Weber, Markus Müller,
+*Multiqubit Rydberg Gates for Quantum Error Correction*, [arXiv:2512.00843](https://doi.org/10.48550/arXiv.2512.00843)
+
+License
+-------
+
+The RydOpt software is licensed under the [MIT License](https://opensource.org/licenses/MIT).
