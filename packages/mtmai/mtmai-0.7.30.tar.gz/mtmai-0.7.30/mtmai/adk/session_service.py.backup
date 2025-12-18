@@ -1,0 +1,295 @@
+from __future__ import annotations
+import datetime
+from dateutil import parser
+import asyncio
+import copy
+from datetime import datetime
+from datetime import timezone
+import json
+import logging
+import pickle
+from typing import Any
+from typing import Optional
+import uuid
+
+from google.genai import types
+from typing_extensions import override
+from google.adk.sessions import _session_util
+from google.adk.events.event import Event
+
+# from google.adk.events.event_actions import EventActions
+from google.adk.sessions.base_session_service import BaseSessionService
+from google.adk.sessions.base_session_service import GetSessionConfig
+from google.adk.sessions.base_session_service import ListSessionsResponse
+from google.adk.sessions.session import Session
+from google.adk.sessions.state import State
+
+# from mtmai.clients.mtgate_api.models.adk_event import AdkEvent
+from mtmai.mtgateapi.mtgate_client.client import Client
+from mtmai.mtgateapi.mtgate_client.api.adk import (
+    adk_events_append,
+    adk_session_create,
+    adk_session_get,
+)
+from mtmai.mtgateapi.mtgate_client.models.adk_event import AdkEvent
+from mtmai.mtgateapi.mtgate_client.models.adk_events_append_body import (
+    AdkEventsAppendBody,
+)
+from mtmai.mtgateapi.mtgate_client.models.adk_session_create_body import (
+    AdkSessionCreateBody,
+)
+
+logger = logging.getLogger("mtmai.adk." + __name__)
+
+DEFAULT_MAX_KEY_LENGTH = 128
+DEFAULT_MAX_VARCHAR_LENGTH = 256
+
+
+class MtAdkSessionService(BaseSessionService):
+    """A session service that uses a database for storage."""
+
+    def __init__(self, base_url: str, **kwargs: Any):
+        logger.info(f"MtAdkSessionService init with base_url:{base_url}")
+        self.client = Client(base_url=base_url)
+        self.client.raise_on_unexpected_status = True
+
+    @override
+    async def create_session(
+        self,
+        *,
+        app_name: str,
+        user_id: str,
+        state: Optional[dict[str, Any]] = None,
+        session_id: Optional[str] = None,
+    ) -> Session:
+        response = await adk_session_create.asyncio_detailed(
+            client=self.client,
+            body=AdkSessionCreateBody(
+                agent_name=app_name,
+                state=state or {},
+                user_id=user_id,
+            ),
+        )
+
+        session = Session(
+            id=response.parsed.id,  # type: ignore
+            app_name=response.parsed.app_name,  # type: ignore
+            user_id=response.parsed.user_id,  # type: ignore
+            state=response.parsed.state,  # type: ignore
+            events=response.parsed.events,  # type: ignore
+            # TODO: last_update_time 需要处理.
+            # last_update_time= response.parsed.last_update_time
+        )
+        return session
+
+    @override
+    async def get_session(
+        self,
+        *,
+        app_name: str,
+        user_id: str,
+        session_id: str,
+        config: Optional[GetSessionConfig] = None,
+    ) -> Optional[Session]:
+        logger.info(f"MtAdkSessionService get_session {app_name}:{session_id}")
+        result = await adk_session_get.asyncio_detailed(
+            id=session_id, client=self.client
+        )
+        # logger.info("content:", str(result.content))
+        if result.parsed is None:
+            raise ValueError(f"获取 session 数据失败 session_id: {session_id}")
+
+        # print("result.parsed", result.parsed)
+        session_data = result.parsed.data
+        # session_data.update_at
+        # format_string = "%Y-%m-%dT%H:%M:%S.%fZ"
+        # dt_object = parser.parse(session_data.update_at)
+        session = Session(
+            app_name=app_name,
+            user_id=session_data.user_id,  # type: ignore
+            id=session_data.id,  # type: ignore
+            state=session_data.state,
+            # events=data.events,
+            # last_update_time=session_data.update_at.timestamp(),  # .update_at,
+        )
+
+        return session
+
+    @override
+    async def list_sessions(
+        self, *, app_name: str, user_id: Optional[str] = None
+    ) -> ListSessionsResponse:
+        # await self._ensure_tables_created()
+        async with self.database_session_factory() as sql_session:
+            stmt = select(StorageSession).filter(StorageSession.app_name == app_name)
+            if user_id is not None:
+                stmt = stmt.filter(StorageSession.user_id == user_id)
+
+            result = await sql_session.execute(stmt)
+            results = result.scalars().all()
+
+            # Fetch app state from storage
+            storage_app_state = await sql_session.get(StorageAppState, (app_name))
+            app_state = storage_app_state.state if storage_app_state else {}
+
+            # Fetch user state(s) from storage
+            user_states_map = {}
+            if user_id is not None:
+                storage_user_state = await sql_session.get(
+                    StorageUserState, (app_name, user_id)
+                )
+                if storage_user_state:
+                    user_states_map[user_id] = storage_user_state.state
+            else:
+                user_state_stmt = select(StorageUserState).filter(
+                    StorageUserState.app_name == app_name
+                )
+                user_state_result = await sql_session.execute(user_state_stmt)
+                all_user_states_for_app = user_state_result.scalars().all()
+                for storage_user_state in all_user_states_for_app:
+                    user_states_map[storage_user_state.user_id] = (
+                        storage_user_state.state
+                    )
+
+            sessions = []
+            for storage_session in results:
+                session_state = storage_session.state
+                user_state = user_states_map.get(storage_session.user_id, {})
+                merged_state = _merge_state(app_state, user_state, session_state)
+                sessions.append(storage_session.to_session(state=merged_state))
+            return ListSessionsResponse(sessions=sessions)
+
+    @override
+    async def delete_session(
+        self, app_name: str, user_id: str, session_id: str
+    ) -> None:
+        await self._ensure_tables_created()
+        async with self.database_session_factory() as sql_session:
+            stmt = delete(StorageSession).where(
+                StorageSession.app_name == app_name,
+                StorageSession.user_id == user_id,
+                StorageSession.id == session_id,
+            )
+            await sql_session.execute(stmt)
+            await sql_session.commit()
+
+    @override
+    async def append_event(self, session: Session, event: Event) -> Event:
+        # await self._ensure_tables_created()
+        if event.partial:
+            return event
+
+        # Trim temp state before persisting
+        event = self._trim_temp_delta_state(event)
+
+        # 1. Check if timestamp is stale
+        # 2. Update session attributes based on event config
+        # 3. Store event to table
+        # async with self.database_session_factory() as sql_session:
+        #     storage_session = await sql_session.get(
+        #         StorageSession, (session.app_name, session.user_id, session.id)
+        #     )
+
+        #     if storage_session.update_timestamp_tz > session.last_update_time:
+        #         raise ValueError(
+        #             "The last_update_time provided in the session object"
+        #             f" {datetime.fromtimestamp(session.last_update_time):'%Y-%m-%d %H:%M:%S'} is"
+        #             " earlier than the update_time in the storage_session"
+        #             f" {datetime.fromtimestamp(storage_session.update_timestamp_tz):'%Y-%m-%d %H:%M:%S'}."
+        #             " Please check if it is a stale session."
+        #         )
+
+        #     # Fetch states from storage
+        #     storage_app_state = await sql_session.get(
+        #         StorageAppState, (session.app_name)
+        #     )
+        #     storage_user_state = await sql_session.get(
+        #         StorageUserState, (session.app_name, session.user_id)
+        #     )
+
+        #     # Extract state delta
+        #     if event.actions and event.actions.state_delta:
+        #         state_deltas = _session_util.extract_state_delta(
+        #             event.actions.state_delta
+        #         )
+        #         app_state_delta = state_deltas["app"]
+        #         user_state_delta = state_deltas["user"]
+        #         session_state_delta = state_deltas["session"]
+        #         # Merge state and update storage
+        #         if app_state_delta:
+        #             storage_app_state.state = storage_app_state.state | app_state_delta
+        #         if user_state_delta:
+        #             storage_user_state.state = (
+        #                 storage_user_state.state | user_state_delta
+        #             )
+        #         if session_state_delta:
+        #             storage_session.state = storage_session.state | session_state_delta
+
+        #     if storage_session._dialect_name == "sqlite":
+        #         update_time = datetime.utcfromtimestamp(event.timestamp)
+        #     else:
+        #         update_time = datetime.fromtimestamp(event.timestamp)
+        #     storage_session.update_time = update_time
+        #     sql_session.add(StorageEvent.from_event(session, event))
+
+        #     await sql_session.commit()
+        #     await sql_session.refresh(storage_session)
+
+        #     # Update timestamp with commit time
+        #     session.last_update_time = storage_session.update_timestamp_tz
+        # dict1 = event.dict()
+        adk_event = AdkEvent.from_dict(event.model_dump())
+        logger.info(f"[append_event] {adk_event}")
+
+        try:
+            adk_event_append_resp = await adk_events_append.asyncio(
+                client=self.client,
+                body=AdkEventsAppendBody(
+                    session_id=session.id,
+                    event=adk_event,
+                ),
+            )
+            logger.info(f"adk_event_append_resp: {adk_event_append_resp}")
+        except Exception as e:
+            logger.info(
+                "[append_event error]=================================================="
+            )
+            print(e)
+        # Also update the in-memory session
+        await super().append_event(session=session, event=event)
+        return event
+
+
+def _merge_state(
+    app_state: dict[str, Any],
+    user_state: dict[str, Any],
+    session_state: dict[str, Any],
+) -> dict[str, Any]:
+    """Merge app, user, and session states into a single state dictionary."""
+    merged_state = copy.deepcopy(session_state)
+    for key in app_state.keys():
+        merged_state[State.APP_PREFIX + key] = app_state[key]
+    for key in user_state.keys():
+        merged_state[State.USER_PREFIX + key] = user_state[key]
+    return merged_state
+
+
+# def to_session(
+#     self,
+#     state: dict[str, Any] | None = None,
+#     events: list[Event] | None = None,
+# ) -> Session:
+#     """Converts the storage session to a session object."""
+#     if state is None:
+#         state = {}
+#     if events is None:
+#         events = []
+
+#     return Session(
+#         app_name=self.app_name,
+#         user_id=self.user_id,
+#         id=self.id,
+#         state=state,
+#         events=events,
+#         last_update_time=self.update_timestamp_tz,
+#     )
