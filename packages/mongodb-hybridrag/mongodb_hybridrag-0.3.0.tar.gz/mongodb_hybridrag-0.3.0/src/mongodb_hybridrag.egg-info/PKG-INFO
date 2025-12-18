@@ -1,0 +1,253 @@
+Metadata-Version: 2.4
+Name: mongodb-hybridrag
+Version: 0.3.0
+Summary: State-of-the-art RAG system with MongoDB Atlas and Voyage AI
+Author-email: MongoDB <devrel@mongodb.com>
+License: Apache-2.0
+Project-URL: Homepage, https://github.com/romiluz13/Hybrid-Search-RAG
+Project-URL: Documentation, https://github.com/romiluz13/Hybrid-Search-RAG#readme
+Project-URL: Repository, https://github.com/romiluz13/Hybrid-Search-RAG
+Project-URL: Issues, https://github.com/romiluz13/Hybrid-Search-RAG/issues
+Keywords: rag,retrieval-augmented-generation,mongodb,atlas,vector-search,voyage-ai,knowledge-graph,llm,ai
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Database
+Classifier: Typing :: Typed
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy>=1.24.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: pydantic-settings>=2.0.0
+Requires-Dist: voyageai>=0.3.0
+Requires-Dist: anthropic>=0.39.0
+Requires-Dist: openai>=1.0.0
+Requires-Dist: google-generativeai>=0.8.0
+Requires-Dist: pymongo>=4.6.0
+Requires-Dist: motor>=3.3.0
+Requires-Dist: tiktoken>=0.8.0
+Requires-Dist: tenacity>=9.0.0
+Requires-Dist: aioboto3>=13.2.0
+Requires-Dist: aiohttp>=3.11.9
+Provides-Extra: api
+Requires-Dist: fastapi>=0.109.0; extra == "api"
+Requires-Dist: uvicorn>=0.27.0; extra == "api"
+Provides-Extra: ui
+Requires-Dist: chainlit>=1.0.0; extra == "ui"
+Requires-Dist: pymupdf>=1.23.0; extra == "ui"
+Provides-Extra: observability
+Requires-Dist: langfuse>=2.0.0; extra == "observability"
+Provides-Extra: evaluation
+Requires-Dist: ragas>=0.2.0; extra == "evaluation"
+Requires-Dist: datasets>=2.14.0; extra == "evaluation"
+Requires-Dist: langchain-openai>=0.2.0; extra == "evaluation"
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.23.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: black>=24.0.0; extra == "dev"
+Requires-Dist: isort>=5.13.0; extra == "dev"
+Requires-Dist: mypy>=1.8.0; extra == "dev"
+Requires-Dist: ruff>=0.2.0; extra == "dev"
+Provides-Extra: all
+Requires-Dist: mongodb-hybridrag[api,dev,evaluation,observability,ui]; extra == "all"
+Dynamic: license-file
+
+# HybridRAG
+
+State-of-the-art Retrieval-Augmented Generation (RAG) system powered by MongoDB Atlas and Voyage AI.
+
+## Features
+
+- **MongoDB Atlas Storage** - Unified vector, graph, and key-value storage
+- **Voyage AI Embeddings** - High-quality embeddings with voyage-3-large (1024 dimensions)
+- **Voyage AI Reranking** - Precision reranking with rerank-2.5
+- **Multi-Provider LLM Support** - Claude, GPT-4, and Gemini
+- **Knowledge Graph Construction** - Automatic entity and relationship extraction
+- **Entity Boosting** - Enhanced retrieval through entity-aware reranking
+- **Implicit Semantic Expansion** - Find related concepts via vector similarity
+- **Conversation Memory** - Multi-turn conversation support with MongoDB-backed sessions
+- **Hybrid Search** - Combined vector and text search with MongoDB $rankFusion
+
+## Quick Start
+
+### Prerequisites
+
+- Python 3.11+
+- MongoDB Atlas cluster with Vector Search enabled
+- Voyage AI API key
+- LLM API key (Anthropic, OpenAI, or Google)
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/romiluz13/Hybrid-Search-RAG.git
+cd hybridrag
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -e .
+```
+
+### Configuration
+
+Create a `.env` file with your credentials:
+
+```bash
+# MongoDB Atlas
+MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net
+MONGODB_DATABASE=hybridrag
+
+# Voyage AI
+VOYAGE_API_KEY=pa-xxxxxxxxxxxxx
+
+# LLM Provider (choose one)
+ANTHROPIC_API_KEY=sk-ant-xxxxxxxxxxxxx
+# OPENAI_API_KEY=sk-xxxxxxxxxxxxx
+# GEMINI_API_KEY=xxxxxxxxxxxxx
+
+# Optional: Langfuse Observability
+# LANGFUSE_PUBLIC_KEY=pk-lf-xxxxxxxxxxxxx
+# LANGFUSE_SECRET_KEY=sk-lf-xxxxxxxxxxxxx
+```
+
+### Basic Usage
+
+```python
+import asyncio
+from hybridrag import create_hybridrag, Settings
+
+async def main():
+    # Initialize HybridRAG
+    settings = Settings(
+        mongodb_database="my_database",
+        llm_provider="anthropic",  # or "openai", "gemini"
+    )
+    rag = await create_hybridrag(settings)
+
+    # Ingest documents
+    await rag.ingest("path/to/document.pdf")
+
+    # Query with conversation memory
+    session_id = await rag.create_conversation_session()
+
+    result = await rag.query_with_memory(
+        query="What is this document about?",
+        session_id=session_id,
+        mode="mix",  # Combines knowledge graph and vector search
+    )
+
+    print(result["answer"])
+
+asyncio.run(main())
+```
+
+## Query Modes
+
+| Mode | Description | Best For |
+|------|-------------|----------|
+| `mix` | Knowledge graph + vector search (recommended) | General queries |
+| `local` | Entity-focused retrieval | Specific entity queries |
+| `global` | Community summaries | High-level overview |
+| `hybrid` | Local + global | Comprehensive answers |
+| `naive` | Vector search only | Simple similarity search |
+
+## API Server
+
+Start the FastAPI server:
+
+```bash
+uvicorn src.hybridrag.api.main:app --reload
+```
+
+### Endpoints
+
+- `POST /query` - Query the RAG system
+- `POST /ingest` - Ingest documents
+- `POST /sessions` - Create conversation session
+- `GET /sessions/{id}/history` - Get conversation history
+- `GET /health` - Health check
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        HybridRAG                            │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │   Voyage    │  │   Claude/   │  │    MongoDB Atlas    │  │
+│  │  Embeddings │  │  GPT/Gemini │  │  (Vector + Graph)   │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │                   Enhancements                          ││
+│  │  • Entity Boosting  • Implicit Expansion  • Reranking   ││
+│  └─────────────────────────────────────────────────────────┘│
+├─────────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │                 Conversation Memory                     ││
+│  │           MongoDB-backed session storage                ││
+│  └─────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Configuration Options
+
+```python
+from hybridrag import Settings
+
+settings = Settings(
+    # MongoDB
+    mongodb_database="hybridrag",
+
+    # Embedding
+    embedding_model="voyage-3-large",
+    embedding_dimensions=1024,
+
+    # Reranking
+    rerank_model="rerank-2.5",
+    rerank_top_k=10,
+
+    # LLM
+    llm_provider="anthropic",  # "openai", "gemini"
+    llm_model="claude-sonnet-4-20250514",
+
+    # Query defaults
+    default_query_mode="mix",
+    chunk_top_k=10,
+    entity_top_k=60,
+)
+```
+
+## Development
+
+```bash
+# Run tests
+pytest tests/ -v
+
+# Type checking
+mypy src/
+
+# Format code
+black src/ tests/
+isort src/ tests/
+```
+
+## Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## License
+
+Apache License 2.0 - see [LICENSE](LICENSE) for details.
