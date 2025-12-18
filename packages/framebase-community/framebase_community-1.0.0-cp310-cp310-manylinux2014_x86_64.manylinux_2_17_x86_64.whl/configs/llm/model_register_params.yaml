@@ -1,0 +1,520 @@
+name: model_register_params
+type: llm_config
+parameters:
+  - name: Azure
+    llm_class: AzureChatOpenAI
+    embedding_class: AzureOpenAIEmbeddings
+    provider: azure_openai
+    provider_type: customizable-model
+    llm_register_params:
+      service_name:
+        type: text-input
+        zh_label: "服务名称"
+        en_label: "Service Name"
+        required: true
+        is_public: true
+        default: ""
+      model_name:
+        type: text-input
+        zh_label: "大模型名称(部署名称)"
+        en_label: "Model Name"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "model"
+      max_tokens:
+        type: text-input
+        zh_label: "上下文长度"
+        en_label: "Context Length"
+        required: true
+        is_public: true
+        default: ""
+        dify_mapping_param: "credentials.context_size"
+      azure_endpoint:
+        type: text-input
+        zh_label: "API 域名"
+        en_label: "Service Endpoint"
+        required: true
+        is_public: false
+        default: "https://api.openai.com/v1/engines"
+        dify_mapping_param: "credentials.openai_api_base"
+      openai_api_key:
+       # dify参考
+        # `text-input` 文本输入组件
+        # `number-input` 数字输入组件（包含小数）
+        # `secret-input` 密码输入组件
+        # `select` 单选下拉
+        # `radio` Radio 组件
+        # `switch` 开关组件，仅支持 `true` 和 `false`
+        type: secret-input
+        zh_label: "API Key"
+        en_label: "API Key"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.openai_api_key"
+      openai_api_version:
+        type: text-input
+        zh_label: "API 版本"
+        en_label: "API Version"
+        required: true
+        is_public: false
+        default: "2021-08-01"
+        dify_mapping_param: "credentials.openai_api_version"
+      model_version:
+        type: select
+        options:
+          - gpt-35-turbo
+          - gpt-35-tubo-0125
+          - gpt-4
+          - gpt-4o
+        zh_label: "基础模型"
+        en_label: "Base Model"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.base_model_name"
+    embedding_register_params:
+      service_name:
+        type: text-input
+        zh_label: "服务名称"
+        en_label: "Service Name"
+        required: true
+        is_public: true
+        default: ""
+      max_tokens:
+        type: number-input
+        zh_label: "模型上下文长度"
+        en_label: "Max Token Length"
+        required: true
+        is_public: true
+        default: ""
+      dimension:
+        type: text-input
+        zh_label: "生成向量的维度"
+        en_label: "Vector Dimension"
+        required: true
+        is_public: true
+        default: ""
+      deployment:
+        type: text-input
+        zh_label: "部署名称"
+        en_label: "Deployment Name"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "model"
+      azure_endpoint:
+        type: text-input
+        zh_label: "API 域名"
+        en_label: "Service Endpoint"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.openai_api_base"
+      openai_api_key:
+        type: secret-input
+        zh_label: "API Key"
+        en_label: "API Key"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.openai_api_key"
+      openai_api_version:
+        type: text-input
+        zh_label: "API 版本"
+        en_label: "API Version"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.openai_api_version"
+      model:
+        type: select
+        options:
+          - text-embedding-ada-002
+          - text-embedding-3-small
+          - text-embedding-3-large
+        zh_label: "基础模型"
+        en_label: "Base Model"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.base_model_name"
+
+  - name: 自定义服务
+    llm_class: EKCLLM
+    embedding_class: LocalOpenAIEmbeddings
+    provider: openai_api_compatible
+    provider_type: customizable-model
+    llm_register_params:
+      openai_api_base:
+        type: text-input
+        zh_label: "API endpoint URL"
+        en_label: "API endpoint URL"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.endpoint_url"
+      openai_api_key:
+        type: secret-input
+        zh_label: "API Key"
+        en_label: "API Key"
+        required: false
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.api_key"
+      service_name:
+        type: text-input
+        zh_label: "服务名称"
+        en_label: "Service Name"
+        required: true
+        is_public: true
+        default: ""
+      model_name:
+        type: text-input
+        zh_label: "模型名称"
+        en_label: "Model Name"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "model"
+      max_tokens:
+        type: number-input
+        zh_label: "模型上下文长度"
+        en_label: "Context Length"
+        required: true
+        is_public: true
+        default: ""
+        dify_mapping_param: "credentials.context_size"
+      output_token_limit:
+        type: number-input
+        zh_label: "模型输出长度的上限"
+        en_label: "Max Output tokens Length"
+        required: true
+        is_public: true
+        default: ""
+        dify_mapping_param: "credentials.max_tokens_to_sample"
+    embedding_register_params:
+      service_name:
+        type: text-input
+        zh_label: "服务名称"
+        en_label: "Service Name"
+        required: true
+        is_public: true
+        default: ""
+      max_tokens:
+        type: number-input
+        zh_label: "模型上下文长度"
+        en_label: "Max Token Length"
+        required: true
+        is_public: true
+        default: ""
+        dify_mapping_param: "credentials.max_token"
+      dimension:
+        type: text-input
+        zh_label: "生成向量的维度"
+        en_label: "Vector Dimension"
+        required: true
+        is_public: true
+        default: ""
+      model_name:
+        type: text-input
+        zh_label: "模型名称"
+        en_label: "Model Name"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.base_model_name"
+      openai_api_base:
+        type: text-input
+        zh_label: "API endpoint URL"
+        en_label: "API endpoint URL"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.endpoint_url"
+      openai_api_key:
+        type: secret-input
+        zh_label: "API Key"
+        en_label: "API Key"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.api_key"
+
+  - name: OpenAI
+    llm_class: ChatOpenAI
+    embedding_class: OpenAIEmbeddings
+    provider: openai
+    provider_type: predefined-model
+    llm_register_params:
+      openai_api_key:
+        type: secret-input
+        zh_label: "API Key"
+        en_label: "API Key"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.openai_api_key"
+      openai_api_base:
+        type: text-input
+        zh_label: "API Base"
+        en_label: "API Base"
+        required: false
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.openai_api_base"
+      openai_organization:
+        type: text-input
+        zh_label: "组织 ID"
+        en_label: "organization"
+        required: false
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.openai_organization"
+    embedding_register_params:
+      dimension:
+        type: text-input
+        zh_label: "生成向量的维度"
+        en_label: "Vector Dimension"
+        required: true
+        is_public: true
+        default: ""
+      openai_api_key:
+        type: secret-input
+        zh_label: "API Key"
+        en_label: "API Key"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.openai_api_key"
+      openai_api_base:
+        type: text-input
+        zh_label: "API Base"
+        en_label: "API Base"
+        required: false
+        is_public: false
+        default: ""
+        dify_mapping_param: ""
+      openai_organization:
+        type: text-input
+        zh_label: "组织ID"
+        en_label: "Organization ID"
+        required: false
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.openai_organization"
+
+  - name: 百川AI
+    llm_class: ChatBaichuan
+    embedding_class: BaichuanTextEmbeddings
+    provider: baichuan
+    provider_type: predefined-model
+    llm_register_params:
+      baichuan_api_key:
+        type: secret-input
+        zh_label: "API Key"
+        en_label: "API Key"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.api_key"
+    embedding_register_params:
+      baichuan_api_key:
+        type: secret-input
+        zh_label: "API Key"
+        en_label: "API Key"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.api_key"
+
+  - name: 百度·千帆
+    llm_class: QianfanChatEndpoint
+    embedding_class:
+    provider: wenxin
+    provider_type: predefined-model
+    llm_register_params:
+     
+      qianfan_ak:
+        type: secret-input
+        zh_label: "API Key"
+        en_label: "API Key"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.api_key"
+      qianfan_sk:
+        type: secret-input
+        zh_label: "Secret Key"
+        en_label: "Secret Key"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.secret_key"
+      
+    llm_mapping:
+      精准: 
+        type: kwargs
+        temperature:
+          type: float
+          value: 0.01
+
+  - name: 腾讯·混元
+    llm_class: ChatHunyuan
+    embedding_class:
+    provider: hunyuan
+    provider_type: predefined-model
+    llm_register_params:
+      hunyuan_secret_ID:
+        type: secret-input
+        zh_label: "Secret ID"
+        en_label: "Secret ID"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.secret_ID"
+      hunyuan_secret_key:
+        type: secret-input
+        zh_label: "Secret Key"
+        en_label: "Secret Key"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.secret_key"
+
+  - name: 智谱AI
+    llm_class: ChatZhipuAI
+    embedding_class:
+    provider: zhipuai
+    provider_type: predefined-model
+    llm_register_params:
+      zhipuai_api_key:
+        type: secret-input
+        zh_label: "APIKey"
+        en_label: "APIKey"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.api_key"
+
+  - name: 讯飞·星火
+    llm_class: ChatSparkLLM
+    embedding_class:
+    provider: spark
+    provider_type: predefined-model
+    llm_register_params:
+      spark_app_ID:
+        type: text-input
+        zh_label: "APP ID"
+        en_label: "APP ID"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.app_id"
+      spark_api_key:
+        type: secret-input
+        zh_label: "API Key"
+        en_label: "API Key"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.api_key"
+      spark_api_secret:
+        type: secret-input
+        zh_label: "API Secret"
+        en_label: "API Secret"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.api_secret"
+  - name: xinference
+    llm_class: Xinference
+    embedding_class: Xinference
+    provider: xinference
+    provider_type: customizable-model
+    llm_register_params:
+      service_name:
+        type: text-input
+        zh_label: "服务名称"
+        en_label: "Service Name"
+        required: true
+        is_public: true
+        default: ""
+      model_name:
+        type: text-input
+        zh_label: "模型名称"
+        en_label: "model name"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "model"
+      xinference_host:
+        type: secret-input
+        zh_label: "服务器URL"
+        en_label: "service URL"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.server_url"
+      model_uid:
+        type: secret-input
+        zh_label: "model uid"
+        en_label: "model uid"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.model_uid"
+      max_tokens:
+        type: number-input
+        zh_label: "模型上下文长度"
+        en_label: "Context Length"
+        required: true
+        is_public: true
+        default: ""
+    embedding_register_params:
+      service_name:
+        type: text-input
+        zh_label: "服务名称"
+        en_label: "Service Name"
+        required: true
+        is_public: true
+        default: ""
+      model_name:
+        type: text-input
+        zh_label: "模型名称"
+        en_label: "model name"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "model"
+      xinference_host:
+        type: secret-input
+        zh_label: "服务器URL"
+        en_label: "service URL"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.server_url"
+      model_uid:
+        type: secret-input
+        zh_label: "model uid"
+        en_label: "model uid"
+        required: true
+        is_public: false
+        default: ""
+        dify_mapping_param: "credentials.model_uid"
+      max_tokens:
+        type: number-input
+        zh_label: "模型上下文长度"
+        en_label: "Context Length"
+        required: true
+        is_public: true
+        default: ""
+      dimension:
+        type: text-input
+        zh_label: "生成向量的维度"
+        en_label: "Vector Dimension"
+        required: true
+        is_public: true
+        default: ""

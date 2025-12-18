@@ -1,0 +1,210 @@
+name: retrievers
+type: configurable_config
+parameters:
+  - name: variables
+    value: 
+      - name: filter 
+        class: answer_priority
+        type: configurable
+        kwargs: {}        
+  - name: configurables
+    value:
+      - name: 回答策略
+        id: answer_priority
+        description: 回答时优先使用的数据来源
+        type: single-option
+        default: auto_filter
+        cast_fn: str
+        options:
+          auto_filter: &auto_filter 自动
+          doc_filter: &doc_filter 文档优先
+          qa_filter: &qa_filter 问答优先
+          data_filter: &data_filter 数据源优先
+          graph_filter: &graph_filter 知识图谱优先
+          qa_metric_filter: &qa_metric_filter 指标和问答优先
+      - name: 知识库切片召回个数
+        id: retrieve_top_k
+        description: 知识应用切片召回个数
+        type: value
+        default: 5
+        cast_fn: int
+      - name: 知识应用切片召回阈值
+        id: retrieve_threshold
+        description: 知识应用切片召回阈值
+        type: value
+        default: 0.03
+        cast_fn: float
+      - name: 知识库切片召回参数
+        id: retriever_settings
+        description: 知识库切片召回参数
+        type: value
+        default: "{}"
+        cast_fn: str
+      - name: 知识库切片召回模式
+        id: retrieve_mode
+        description: 召回知识库切片模式
+        type: value
+        default: 0
+        cast_fn: int
+      - name: 网页爬虫
+        id: crawler_name
+        description: 网页爬虫
+        type: single-option 
+        default: AsyncChromiumLoader
+        cast_fn: str
+        options:
+          AsyncChromiumLoader: &AsyncChromiumLoader 异步浏览器爬虫
+          AsyncHtmlLoader: &AsyncHtmlLoader 异步网页爬虫
+      - name: 多源知识库切片召回个数
+        id: multi_src_retrieve_top_k
+        description: 多源知识库切片召回个数
+        type: value
+        default: 5
+        cast_fn: int
+  - name: mappings
+    value: 
+      exclude:
+        type: list
+        # 配置 ['QA'] 在召回时候过滤掉 QA 类型
+        value: []
+      text:
+        type: str
+        value: &text text 
+      QA: 
+        type: str
+        value: &QA QA 
+      Q: 
+        type: str
+        value: &Q Q 
+      Q_E: 
+        type: str
+        value: &Q_E Q-extension 
+      Q_API: 
+        type: str
+        value: &Q_API Q-API 
+      api: 
+        type: str
+        value: *Q_API
+      tool:
+        type: str
+        value: &tool tool
+      Q_DB: 
+        type: str
+        value: &Q_DB Q-DB
+      G_DB:
+        type: str
+        value: &G_DB G-DB
+      metric:
+        type: str
+        value: &METRIC metric
+      data_src: 
+        type: str
+        value: &DB data_src
+      DOC: 
+        type: str
+        value: &DOC doc-chunk 
+      WEBSITE: 
+        type: str
+        value: &WEBSITE website
+      WEB_SEARCH: 
+        type: str
+        value: &WEB_SEARCH web_search
+      MULTISRC:
+        type: str
+        value: &GRAPH multi_src
+      external_src:
+        type: str
+        value: &EXTERNAL_SRC external_src
+      
+      *auto_filter:
+        type: class
+        class: Filter
+        kwargs: {}
+      *doc_filter:
+        type: class
+        class: Filter
+        kwargs:
+          must: 
+            type: identity
+            value:
+              - key: metadata.data_type
+                match:
+                  any:
+                    - *DOC
+                    - *WEBSITE
+      *qa_filter:
+        type: class
+        class: Filter
+        kwargs:
+          must: 
+            type: identity
+            value:
+              - key: metadata.data_type
+                match:
+                  any:
+                    - *QA
+                    - *Q
+                    - *Q_E
+                    - *Q_API
+                    - *Q_DB
+      *qa_metric_filter:
+        type: class
+        class: Filter
+        kwargs:
+          must: 
+            type: identity
+            value:
+              - key: metadata.data_type
+                match:
+                  any:
+                    - *QA
+                    - *Q
+                    - *Q_E
+                    - *Q_API
+                    - *Q_DB
+                    - *METRIC
+      *data_filter:
+        type: class
+        class: Filter
+        kwargs:
+          must: 
+            type: identity
+            value:
+              - key: metadata.data_type
+                match:
+                  any:
+                    - *Q_DB
+      *graph_filter :
+        type: class
+        class: Filter
+        kwargs:
+          must:
+            type: identity
+            value:
+              - key: metadata.data_type
+                match:
+                  any:
+                    - *G_DB
+      retriever:
+        type: kwargs
+        search_type: ekc_search
+        search_kwargs:
+          score_threshold: 0.5
+          k: 15
+        post_process_kwargs:
+          max_score_cut_off: 0.8
+      reranker:
+        type: kwargs
+        reranker_sigmoid_threshold: 0.03
+        top_k: 5
+      # image:
+      #   threshold: 0.3
+      metric_base:
+        top_k: 35
+        threshold: 0
+      tool_retriever:
+        top_k: 5
+        threshold: 0.5
+      web_search:
+        top_k: 10
+        threshold: 0.5

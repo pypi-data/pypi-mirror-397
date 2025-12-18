@@ -1,0 +1,86 @@
+name: thoughts
+type: configurable_config
+parameters:
+  - name: max_time
+    value: 360
+  - name: wait_time
+    value: 0.5
+  # chain type
+  - name: chain
+    value:
+      - multi_src_chain
+      - text2metric_chain
+      - text2kb_chain
+      - metric_template_analysis_chain
+  # thought by chain
+  - name: text2kb_chain
+    value: 
+      - retrievals
+  - name: multi_src_chain
+    value: 
+      - sql_thought
+  - name: text2metric_chain
+    value: 
+      - metric_thought
+      - metric_analysis_thought
+      - metric_query_thought
+  - name: metric_template_analysis_chain
+    value:
+      - metric_template_thought
+  # detail thoughts
+  - name: retrievals
+    value:
+      - name: web_search_results
+  - name: sql_thought
+    value:
+      - name: table_select
+      - name: sql
+      - name: sql-description-thought
+        stream: yes
+      - name: sql_query_result
+  - name: metric_thought
+    value: 
+      - name: insight
+        stream: yes
+      - name: intent
+      - name: sql_*
+      - name: metric_report_*
+      - name: metric_scroll_description
+        stream: yes
+      - name: clarify
+      - name: metric_queries
+      - name: metric_scroll_description
+        stream: yes
+      - name: invalid_dimensions_*
+  - name: metric_analysis_thought
+    value:
+      - name: dimension_*
+      - name: dimension-description_*
+        stream: yes
+      - name: dimension-drill-down
+      - name: metric-link-analysis_*
+      - name: metric-link-analysis-description_*
+        stream: yes
+      - name: lineage-analysis_*
+      - name: lineage-analysis-description_*
+        stream: yes
+      - name: multiple-sources-analysis-description_*
+        stream: yes
+  - name: metric_query_thought
+    value:
+      - name: metric_query_result
+      - name: metric_query_description_*
+        stream: yes
+      - name: metric_query_chart_*
+      - name: metric_data_*
+  - name: metric_template_thought
+    value:
+      - name: metric_template_text_*
+        stream: yes
+      - name: metric_template_metric_*
+      - name: metric_template_template
+      - name: metric_template_insight
+        stream: yes
+      - name: metric_template_summary
+        stream: yes
+      - name: metric_queries

@@ -1,0 +1,54 @@
+{
+    "type": "object",
+    "properties": {
+      "time_expression": {
+        "type": "array",
+        "description":"请从用户的问题中提取出时间表达式。",
+        "$ref": "#/definitions/timeItem"
+      },
+      "time_comparisons":{
+        "type":"array",
+        "description":"请从用户的问题中提取出需要对比的时间点。",
+        "items":{
+          "type":"object",
+          "properties":{
+            "date1":{
+              "type":"string"
+            },
+            "date2":{
+              "type":"string"
+            }
+          }
+        }
+      }
+    },
+    "definitions": {
+      "timeItem": {
+        "type": "object",
+        "oneOf": [
+          {
+            "type": "object",
+            "description": "表示一个连续的时间段",
+            "properties": {
+              "from": {
+                "type": "string"
+              },
+              "to": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "description": "表示一个离散的时间点",
+            "properties": {
+              "time_value": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+  

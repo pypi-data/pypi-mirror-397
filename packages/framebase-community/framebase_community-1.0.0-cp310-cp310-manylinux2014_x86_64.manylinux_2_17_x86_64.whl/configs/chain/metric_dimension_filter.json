@@ -1,0 +1,45 @@
+{
+    "type": "object",
+    "properties": {
+        "known_dimensions": {
+            "type": "array",
+            "description": "用户问题中提到的已知信息中给出的维度信息。注意请不要把时间当作维度。如果用户的问题中没有提到任何维度或维度值。此时不要给出known_dimensions。此时将knwon_dimensions设置为空list。",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "维度名称"
+                    },
+                    "values": {
+                        "type": "array",
+                        "description": "维度值.如果有多个维度值与用户的问题相关。请全部列出来。如果用户的问题里提到了维度名称，但是没有提到维度值,那么请将values设置为*。",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "unknown_dimensions": {
+            "type": "array",
+            "description": "用户在问题中提到的，但不在已知信息中的维度信息。注意请不要把时间当作unknown_dimensions, 也不要将指标值作为unknown_dimensions。unknown_dimensions可以为空。",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "description": "请从用户的问题推断可能的维度名称。不要把时间当作unknown_dimensions."
+                    },
+                    "values": {
+                        "type": "array",
+                        "description": "请从用户的问题推断可能的维度值，可以为空。",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

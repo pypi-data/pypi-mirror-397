@@ -1,0 +1,190 @@
+{
+  "type": "object",
+  "properties": {
+    "aggregation": {
+      "type": "string",
+      "title": "聚合方式",
+      "description": "请选择合适的时间聚合方式。NONE表示不对数据做聚合。对于对比类的意图，aggregation设置为NONE。",
+      "enum": [
+        "SUM",
+        "NONE",
+        "AVG",
+        "MAX",
+        "MIN"
+      ]
+    },
+    "date_pre_thinking":{"type":"string","description":"请简要分析:当前时间是什么,用户希望查询什么日期. 你的分析要参考以下要求: 即使用户问题中提到了同比或环比，在startDate和endDate字段中也不需要考虑用户问题中的同比或环比，按照用户提到的时间给出日期即可（例如用户查询2025年5月的同比,startDate和endDate应该是2025年的5月,而不是2024年5月）。startDate和endDate的格式需要符合下面规则: windowDate为Day时，日期格式为'yyyy-MM-DD'；windowDate为MONTH和QUARTER时，日期格式为'yyyy-MM'，windowDate为QUARTER时，请给出季度的起始月份；windowDate为YEAR时，日期格式是'yyyy'。如果用户的问题里给出了两个日期，那么startDate应该是其中较小的日期。"},
+    "startDate": {
+      "type": "string",
+      "description": "请根据date_pre_thinking, 给出startDate.",
+      "title": "开始时间"
+    },
+    "endDate": {
+      "type": "string",
+      "description": "请根据date_pre_thinking,给出endDate.",
+      "title": "结束时间"
+    },
+    "dimensionHolds": {
+      "type": "array",
+      "title": "保留维度",
+      "description": "表示生成sql查询时哪些维度需要保留。请从associated_dimension中选择维度名称，dimensionHolds中的维度会作为查询结果中的下钻维度，将维度明细展示给用户。对于其他不需要保留的维度，将被自动聚合。对于用户的问题中提到的维度，如果没有明确提出需要做维度聚合，那么就把该维度作为保留维度。 请确保dimensionHolds的格式是array。如果用户问题中提到了各维度A下的xx指标,那么将维度A添加到dimensionHolds中.",
+      "items": {
+        "type": "string"
+      }
+    },
+    "dimensionFilters": {
+      "type": "object",
+      "title": "维度过滤条件",
+      "description": "请根据用户的问题，以及指标中的associated_dimension的维度名称和对应的维度值，生成过滤条件。请先从用户问题中找出associated_dimension中的维度值，如果维度值是*，那么请忽略该维度信息；注意，只有当用户问题中明确出现**维度的具体的值**时才需要生成过滤条件。用户仅提到维度名称而没有提到维度值时，不要生成过滤条件。请不要从语义的角度给出过滤条件，仅按照字符串相似度，找到用户所提到的维度值，生成过滤条件。\n仅需要对用户直接提到的维度值做过滤，用户没有直接提到的维度值，不需要生成过滤条件。当有多个维度过滤条件时，请检查这些条件的关系，如果同一个维度下，有多个值的过滤，这些条件请用should连接；如果不同维度的多个过滤条件之间没有明确的关系，那么通常使用must连接这些条件；如果明确的指出某些维度过滤条件之间是或的关系，那么可以使用shuold连接这些条件。",
+      "properties": {
+        "should": {
+          "type": "array",
+          "description": "Optional，也可以为空，表示逻辑或。注意，汉语中“A和B”，“A或B”通常表示的都是should的关系。对于比较类问题，如果问题是比较相同维度，不同维度值下的指标数据，请使用dimensionFilters下的should。",
+          "items": {
+            "$ref": "#/definitions/dimensionConditions"
+          }
+        },
+        "must": {
+          "type": "array",
+          "description": "Optional，也可以为空，表示逻辑与。汉语中一般用“且”表示must的关系。",
+          "items": {
+            "$ref": "#/definitions/dimensionConditions"
+          }
+        },
+        "must_not": {
+          "type": "array",
+          "description": "Optional，也可以为空，表示非。",
+          "items": {
+            "$ref": "#/definitions/dimensionConditions"
+          }
+        }
+      }
+    },
+    "metricValueFilters": {
+      "type": "object",
+      "title": "指标过滤条件",
+      "description": "请根据用户的问题，对指标的值，生成合适的过滤条件。可以为空。metricValueFilters只能对指标值生效，对其他的维度不会生效。通常，用户明确的给出指标值的取值范围时，才需要生成metricValueFilters。",
+      "properties": {
+        "should": {
+          "type": "array",
+          "description": "Optional，也可以为空，表示或",
+          "items": {
+            "$ref": "#/definitions/metricValueConditions"
+          }
+        },
+        "must": {
+          "type": "array",
+          "description": "Optional，也可以为空，表示与",
+          "items": {
+            "$ref": "#/definitions/metricValueConditions"
+          }
+        },
+        "must_not": {
+          "type": "array",
+          "description": "Optional，也可以为空，表示非",
+          "items": {
+            "$ref": "#/definitions/metricValueConditions"
+          }
+        }
+      }
+    },
+    "sorting": {
+      "type": "array",
+      "description": "对指标查询的结果做排序。",
+      "items": {
+        "type": "object",
+        "properties": {
+          "columnType": {
+            "type": "string",
+            "description": "要排序的列的类型。指标查询后会返回三种类型的列，分别是指标值，时间，和维度。当维度列里是数字时,才可以对维度列排序.维度列为空或者字符串时,不要对维度列排序.",
+            "enum": [
+              "METRIC_VALUE",
+              "TIME",
+              "DIM"
+            ]
+          },
+          "dimension": {
+            "type": "string",
+            "description": "维度列的名称。只有columnType是DIM时才需要指定dimension。"
+          },
+          "order": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ]
+          }
+        }
+      }
+    },
+    "limit": {
+      "type": "integer",
+      "description": "限制指标查询返回的最大行数。",
+      "default": 100000
+    },
+    "offset": {
+      "type": "integer",
+      "description": "指标查询返回结果的offset。",
+      "default": 0
+    }
+  },
+  "definitions": {
+    "dimensionConditions": {
+      "type": "object",
+      "description": "Optional。对指标的维度进行过滤。每个指标可能有多个维度列。请根据用户的需求，对指标维度选择合适的过滤条件。",
+      "properties": {
+        "dimensionName": {
+          "type": "string",
+          "title": "维度名称"
+        },
+        "operator": {
+          "type": "string",
+          "title": "比较符",
+          "description": "不要在operator中使用in和not in！ operator不支持in 和 not in！",
+          "enum": [
+            "=",
+            "!=",
+            ">",
+            ">=",
+            "<",
+            "<=",
+            "is null"
+          ]
+        },
+        "dimensionValue": {
+          "type": "string",
+          "description": "Optional。维度的值。字符串类型。当operator是is null时，可以不生成dimensionValue。"
+        },
+        "nestedFilters": {
+          "$ref": "#/properties/dimensionFilters"
+        }
+      }
+    },
+    "metricValueConditions": {
+      "type": "object",
+      "description": "Optional。对指标的值进行过滤。每个指标有且仅有一列指标值。请根据用户的需求，对指标值选择合适的过滤条件。",
+      "properties": {
+        "operator": {
+          "type": "string",
+          "description": "比较符",
+          "enum": [
+            "=",
+            "!=",
+            ">",
+            ">=",
+            "<",
+            "<="
+          ]
+        },
+        "value": {
+          "type": "number",
+          "title": "指标的值",
+          "description": "指标的值，用来生成where条件。对于百分比类型，直接输出数字即可，不需要带上百分号；以大于号为例，比较的方向是[指标的值] > value"
+        },
+        "nestedFilters": {
+          "$ref": "#/properties/metricValueFilters"
+        }
+      }
+    }
+  }
+}
