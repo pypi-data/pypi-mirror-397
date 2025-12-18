@@ -1,0 +1,39 @@
+<!-- markdownlint-disable MD024 -->
+
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+## 0.3.0 - 2025-12-16
+
+### <!-- 0 -->🚀 Features
+
+* **ci**: Publish on pypi after release
+
+## 0.2.0 - 2025-12-15
+
+### <!-- 0 -->🚀 Features
+
+* **docs**: Add a quick start
+* **servicehooks**: New client to interact with hook subscriptions
+  * Add support for creating subscriptions.
+  * Add support for listing subscriptions.
+  * Add support for deleting subscriptions.
+
+## 0.1.1 - 2025-12-11
+
+### <!-- 1 -->🐛 Bug Fixes
+
+* **python**: Accept python versions >=3.12
+
+## 0.1.0 - 2025-12-11
+
+### <!-- 0 -->🚀 Features
+
+* **ci**: Add CI/CD workflows
+* **release**: First public release
+* **tests**: Begin of unit tests
+
+### <!-- 1 -->🐛 Bug Fixes
+
+* **core**: Do not use tenacity (user choice)
