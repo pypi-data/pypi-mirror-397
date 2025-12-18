@@ -1,0 +1,70 @@
+[build-system]
+requires = ["setuptools>=46.4", "numpy"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+# consider_namespace_packages = true  # for pytest>=8.1
+addopts = "--import-mode=importlib" # for all pytest versions, pytest-cov needs `pip install -e .`
+
+[project]
+name = "darfix_batch"
+version = "0.1.2"
+authors = [{name = "ESRF", email = "dau-pydev@esrf.fr"}]
+description = "Darfix GUI for batch processing"
+readme = {file = "README.md", content-type = "text/markdown"}
+license = {file = "LICENSE"}
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "darfix[full]",
+    "ewoksjob",
+    "qtawesome"
+
+]
+
+[project.optional-dependencies]
+test = ["pytest >=7", "pytest-qt"]
+doc = [
+    "ewokssphinx >=1.0.0",
+    "sphinx >=4.5",
+    "sphinx-autodoc-typehints >=1.16",
+    "pydata_sphinx_theme",
+    "sphinxcontrib-autoprogram",
+    "sphinx-argparse",
+    "sphinx-copybutton",
+]
+
+[project.urls]
+Homepage = "https://gitlab.esrf.fr/XRD/darfix_batch"
+Documentation = "https://darfix_batch.readthedocs.io/"
+Repository = "https://gitlab.esrf.fr/XRD/darfix_batch"
+Issues = "https://gitlab.esrf.fr/XRD/darfix_batch/issues/"
+Changelog = "https://gitlab.esrf.fr/XRD/darfix_batch/-/blob/main/CHANGELOG.md"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*"= ["*.ows", "*.png", "*.svg", "*.edf", "*.hdf5", "*.h5"]
+
+[tool.coverage.run]
+omit = ["*/tests/*"]
+
+[tool.isort]
+profile = "black"
+force_single_line = "True"
+
+[tool.bandit.assert_used]
+skips = ["*/test_*.py"]
+
+[project.scripts]
+darfix_batch = "darfix_batch.main:main"
+
+
