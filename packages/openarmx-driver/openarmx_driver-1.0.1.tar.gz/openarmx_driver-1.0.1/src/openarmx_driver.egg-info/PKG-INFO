@@ -1,0 +1,140 @@
+Metadata-Version: 2.4
+Name: openarmx-driver
+Version: 1.0.1
+Summary: Python SDK for OpenArmX robotic arm control via CAN bus
+Author-email: Wei Lindong <weilindong02@gmail.com>
+License: OpenArmX Research and Education License
+        Version 1.0
+        
+        Copyright (c) 2025 Wei Lindong
+        
+        Permission is hereby granted, free of charge, to any individual person or
+        non-profit academic or research institution, to use, copy, modify, and
+        distribute this software and its associated documentation (the "Software"),
+        solely for non-commercial research, academic, and educational purposes.
+        
+        Commercial use of the Software is strictly prohibited without prior written
+        permission from the copyright holder. Commercial use includes, but is not
+        limited to:
+          - Use in commercial products or services;
+          - Use within for-profit organizations or institutions;
+          - Use for internal business operations, manufacturing, or production;
+          - Use in research or development activities intended for commercial gain;
+          - Redistribution of the Software as part of a paid product or service.
+        
+        Any individual or organization wishing to use the Software for commercial
+        purposes must obtain a separate commercial license from the copyright holder.
+        
+        Redistributions of the Software for permitted non-commercial purposes must
+        retain this license text and the above copyright notice.
+        
+        If the Software is used in academic publications, presentations, theses, or
+        other publicly available research outputs, appropriate citation of the
+        Software and its author is requested.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL
+        THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+        THE SOFTWARE.
+        
+Project-URL: Homepage, https://www.openarmx.com
+Project-URL: Documentation, https://docs.openarmx.com
+Project-URL: Repository, https://www.openarmx.com
+Project-URL: Issues, https://www.openarmx.com
+Keywords: robotics,can-bus,motor-control,robstride,openarm
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: Other/Proprietary License
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: python-can>=4.0.0
+Requires-Dist: PyYAML>=5.4.0
+Dynamic: license-file
+
+# OpenArmX Driver
+
+Python SDK for OpenArmX robotic arm control via CAN bus.
+
+## 安装
+
+```bash
+pip install openarmx-driver
+```
+
+## 快速开始
+
+### 单臂控制
+
+```python
+from openarmx_driver import Arm
+
+# 创建右臂实例
+arm = Arm('can0', side='right')
+
+# 使能电机
+arm.enable_all()
+
+# 设置为 MIT 模式
+arm.set_mode('mit')
+
+# 移动关节
+arm.move_joint_mit(motor_id=1, position=0.5, kp=10.0, kd=1.0)
+
+# 查看状态
+arm.show_motor_status()
+
+# 停止
+arm.disable_all()
+```
+
+### 双臂控制
+
+```python
+from openarmx_driver import Robot
+
+# 创建双臂机器人
+robot = Robot(left_canid='can0', right_canid='can1')
+
+# 使能所有电机
+robot.enable_all()
+
+# 设置模式
+robot.set_mode_all('mit')
+
+# 左右臂对称运动
+robot.move_joints_mit(
+    left_positions=[0.1, 0.2, 0.3, 0, 0, 0, 0],
+    right_positions=[0.1, 0.2, 0.3, 0, 0, 0, 0],
+    kp=10.0, kd=1.0
+)
+
+# 查看状态
+robot.show_all_status()
+
+# 停止
+robot.disable_all()
+```
+
+## 支持的控制模式
+
+- **MIT 模式**: 位置/速度/扭矩混合控制（带 PD 增益）
+
+
+## License
+
+This project is licensed under the OpenArmX Research and Education License.
+Commercial use requires a separate license.
