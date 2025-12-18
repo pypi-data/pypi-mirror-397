@@ -1,0 +1,78 @@
+Metadata-Version: 2.3
+Name: cif2ice
+Version: 0.4.0
+Summary: Prepare ice modules for GenIce from CIF file
+License: MIT
+Keywords: cif2ice
+Author: Masakazu Matsumoto
+Author-email: vitroid@gmail.com
+Requires-Python: >=3.11,<4.0
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.5
+Requires-Dist: jinja2 (>=3.1.6,<4.0.0)
+Requires-Dist: numpy
+Requires-Dist: pycifrw
+Requires-Dist: requests
+Requires-Dist: toml (>=0.10.2,<0.11.0)
+Requires-Dist: validators
+Project-URL: Homepage, https://github.com/vitroid/cif2ice/
+Project-URL: Repository, https://github.com/vitroid/cif2ice/
+Description-Content-Type: text/markdown
+
+# cif2ice
+
+Version 0.4.0
+
+A small utility to prepare a new ice structure for [GenIce](https://github.com/vitroid/GenIce) from a CIF file.
+
+The source can be
+
+1. A `.cif` file.
+2. An URL to a `.cif` file.
+3. The three-letter code of Zeolites.
+
+## Installation
+
+    pip install cif2ice
+
+## Usage
+
+    usage: cif2ice.x [-h] [--rep REP REP REP] [--debug] [--quiet] [--force] name
+    
+    positional arguments:
+      name                  CIF file, Zeolite 3-letter code, or URL
+    
+    options:
+      -h, --help            show this help message and exit
+      --rep, -r REP REP REP
+                            Repeat the unit cell in x,y, and z directions. [1,1,1]
+      --debug, -D           Output debugging info.
+      --quiet, -q           Do not output progress messages.
+      --force, -f           Force overwrite.
+
+
+## Example
+
+1.  To obtain a Zeolite RHO structure from the Zeolite DB
+
+        cif2ice MTN
+
+2.  To generate a python module from the `foo.cif` file:
+
+        cif2ice ./MTN.cif
+
+3.  To make the python module from a remote `.cif` file:
+
+        cif2ice http://somewhere/MTN.cif
+
+To use the module with GenIce, make a folder named `lattices/` in the current working directory and put `MTN.py` there.
+
+    genice MTN > MTN.gro
+
