@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hv_bie"
+version = "0.3.7"
+description = "HV Battle Intelligence Extractor: parse HentaiVerse battle HTML into structured Python dataclasses"
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.9"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [{ name = "Kuan-Lun Wang", email = "polyphonicared@gmail.com" }]
+dependencies = ["beautifulsoup4>=4.14.2,<5.0.0"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.9",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/Kuan-Lun/hv-bie"
+Source = "https://github.com/Kuan-Lun/hv-bie"
+Tracker = "https://github.com/Kuan-Lun/hv-bie/issues"
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.14.3,<1.0.0",
+    "mypy>=1.18.2,<2.0.0",
+    "pytest>=8.4.2,<9.0.0",
+    "black>=23.9.1",
+]
+
+[tool.setuptools]
+# Use automatic package discovery (PEP 621 recommended approach)
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["hv_bie*"]
+exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+# Publish PEP 561 typing marker
+"hv_bie" = ["py.typed"]
+"hv_bie.types" = ["py.typed"]
+"hv_bie.parsers" = ["py.typed"]
+
+[tool.black]
+line-length = 88
+
+[tool.ruff]
+src = ["hv_bie"]
+line-length = 88
+
+[tool.ruff.lint]
+extend-select = ["I"]
+extend-ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["hv_bie"]
