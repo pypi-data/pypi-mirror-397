@@ -1,0 +1,584 @@
+#!/usr/bin/python3
+"""
+PlanetFilter - filter for blog aggregators.
+
+PlanetFilter uses a user-provided filter to prune blog aggregatori
+feeds. It allows anyone to subscribe to popular blog aggregators
+without being overwhelmed by the noise.
+
+Copyright (C) 2010, 2015-2021, 2025  Francois Marier <francois@fmarier.org>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+"""
+
+import argparse
+import codecs
+import configparser as cp
+import gzip
+import html
+import http.client
+import io
+import os
+import os.path
+import re
+import sys
+import urllib.error
+import xml.parsers.expat
+from urllib.parse import quote, urlsplit, urlunsplit
+from urllib.request import Request, urlopen
+from xml.dom.minidom import Node
+
+from defusedxml import minidom
+
+RDFNS = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+UNICODE_REPLACEMENT_CHARACTER = '\ufffd'
+
+VERSION = '0.12.0'
+
+
+def delete_node(node):
+    parent = node.parentNode
+    parent.removeChild(node)
+
+
+def delete_rss1_item(item):
+    # Delete reference to the item
+    rdfabout = item.getAttributeNS(RDFNS, 'about')
+    rdfnode = item.parentNode
+    channel = rdfnode.getElementsByTagName('channel').item(0)
+    rdfseq = channel.getElementsByTagNameNS(RDFNS, 'Seq').item(0)
+    rdflist = rdfseq.getElementsByTagNameNS(RDFNS, 'li')
+    # pylint: disable=invalid-name
+    for li in rdflist:
+        if li.getAttributeNS(RDFNS, 'resource') == rdfabout:
+            delete_node(li)
+
+    # Delete the item
+    delete_node(item)
+
+
+def is_rss2(xmldocument):
+    rsslist = xmldocument.getElementsByTagName('rss')
+    if rsslist.length != 1:
+        return False
+
+    # Check the version
+    rss = rsslist.item(0)
+    return rss.getAttribute('version') == '2.0'
+
+
+def is_rss1(xmldocument):
+    rdflist = xmldocument.getElementsByTagNameNS(RDFNS, 'RDF')
+    if rdflist.length != 1:
+        return False
+
+    # Check the namespace/version
+    rdf = rdflist.item(0)
+    return rdf.getAttribute('xmlns').find('purl.org/rss/1.0') > -1
+
+
+def is_atom(xmldocument):
+    feedlist = xmldocument.getElementsByTagName('feed')
+    if feedlist.length != 1:
+        return False
+
+    # Check the namespace/version
+    feed = feedlist.item(0)
+    return feed.getAttribute('xmlns').find('w3.org/2005/Atom') > -1
+
+
+def filter_rss2(xmldocument, filters):
+    # pylint: disable=too-many-branches,too-many-locals,too-many-nested-blocks
+    rss = xmldocument.getElementsByTagName('rss').item(0)
+    channel = rss.getElementsByTagName('channel').item(0)
+    items = channel.getElementsByTagName('item')
+    for item in items:
+        deleted = False
+        titles = item.getElementsByTagName('title')
+        authors = item.getElementsByTagName('author')
+        if filters['authors']:
+            for author in authors:
+                textnode = author.firstChild
+                if not textnode:
+                    continue  # skip empty titles
+                if textnode.nodeType in (Node.TEXT_NODE,
+                                         Node.CDATA_SECTION_NODE):
+                    authorstring = textnode.nodeValue.strip()
+                    for bauthor in filters['authors']:
+                        if 0 == authorstring.find(bauthor):
+                            delete_node(item)
+                            deleted = True
+                            break
+                if deleted:
+                    break
+
+        if not deleted and (filters['authors'] or filters['titles']):
+            for title in titles:
+                textnode = title.firstChild
+                if not textnode:
+                    continue  # skip empty titles
+                if textnode.nodeType in (Node.TEXT_NODE,
+                                         Node.CDATA_SECTION_NODE):
+                    titlestring = textnode.nodeValue.strip()
+                    if filters['authors']:
+                        for bauthor in filters['authors']:
+                            if 0 == titlestring.find(bauthor):
+                                delete_node(item)
+                                deleted = True
+                                break
+                    if not deleted and filters['titles']:
+                        for btitle in filters['titles']:
+                            if titlestring.find(btitle) > -1:
+                                delete_node(item)
+                                deleted = True
+                                break
+                if deleted:
+                    break
+
+        if not deleted and filters['urls']:
+            links = item.getElementsByTagName('link')
+            for link in links:
+                textnode = link.firstChild
+                if textnode and textnode.nodeType in (Node.TEXT_NODE,
+                                                      Node.CDATA_SECTION_NODE):
+                    linkstring = textnode.nodeValue.strip()
+                    for url in filters['urls']:
+                        if 0 == linkstring.find(url):
+                            delete_node(item)
+                            deleted = True
+                            break
+                if deleted:
+                    break
+
+    return True
+
+
+def filter_atom(xmldocument, filters):
+    # pylint: disable=too-many-branches,too-many-locals,too-many-nested-blocks
+    feed = xmldocument.getElementsByTagName('feed').item(0)
+    entries = feed.getElementsByTagName('entry')
+    for entry in entries:
+        deleted = False
+        if filters['authors']:
+            authors = entry.getElementsByTagName('author')
+            for author in authors:
+                name = author.getElementsByTagName('name').item(0)
+                textnode = name.firstChild
+                if textnode and textnode.nodeType in (Node.TEXT_NODE,
+                                                      Node.CDATA_SECTION_NODE):
+                    authorstring = textnode.nodeValue.strip()
+                    for bauthor in filters['authors']:
+                        if 0 == authorstring.find(bauthor):
+                            delete_node(entry)
+                            deleted = True
+                            break
+                if deleted:
+                    break
+
+        if not deleted and filters['titles']:
+            titles = entry.getElementsByTagName('title')
+            for title in titles:
+                textnode = title.firstChild
+                if not textnode:
+                    continue  # Skip empty titles.
+                if textnode.nodeType in (Node.TEXT_NODE,
+                                         Node.CDATA_SECTION_NODE):
+                    titlestring = textnode.nodeValue.strip()
+                    for btitle in filters['titles']:
+                        if titlestring.find(btitle) > -1:
+                            delete_node(entry)
+                            deleted = True
+                            break
+                if deleted:
+                    break
+
+        if not deleted and filters['urls']:
+            links = entry.getElementsByTagName('link')
+            for link in links:
+                if link.getAttribute('rel') != 'alternate':
+                    continue
+                linkstring = link.getAttribute('href')
+                for url in filters['urls']:
+                    if 0 == linkstring.find(url):
+                        delete_node(entry)
+                        deleted = True
+                        break
+                if deleted:
+                    break
+
+    return True
+
+
+def filter_rss1(xmldocument, filters):
+    # pylint: disable=too-many-branches,too-many-nested-blocks,too-many-locals
+    rdf = xmldocument.getElementsByTagNameNS(RDFNS, 'RDF').item(0)
+    items = rdf.getElementsByTagName('item')
+    for item in items:
+        deleted = False
+        titles = item.getElementsByTagName('title')
+        if filters['authors'] or filters['titles']:
+            for title in titles:
+                textnode = title.firstChild
+                if not textnode:
+                    continue  # Skip empty titles.
+                if textnode.nodeType in (Node.TEXT_NODE,
+                                         Node.CDATA_SECTION_NODE):
+                    titlestring = textnode.nodeValue.strip()
+                    if filters['authors']:
+                        for author in filters['authors']:
+                            if 0 == titlestring.find(author):
+                                delete_rss1_item(item)
+                                deleted = True
+                                break
+                    if not deleted and filters['titles']:
+                        for btitle in filters['titles']:
+                            if titlestring.find(btitle) > -1:
+                                delete_rss1_item(item)
+                                deleted = True
+                                break
+                if deleted:
+                    break
+
+        if not deleted and filters['urls']:
+            links = item.getElementsByTagName('link')
+            for link in links:
+                textnode = link.firstChild
+                if textnode and textnode.nodeType in (Node.TEXT_NODE,
+                                                      Node.CDATA_SECTION_NODE):
+                    linkstring = textnode.nodeValue.strip()
+                    for url in filters['urls']:
+                        if 0 == linkstring.find(url):
+                            delete_rss1_item(item)
+                            deleted = True
+                            break
+                if deleted:
+                    break
+
+    return True
+
+
+def filter_feed(xmldocument, filters):
+    if is_rss2(xmldocument):
+        return filter_rss2(xmldocument, filters)
+    if is_rss1(xmldocument):
+        return filter_rss1(xmldocument, filters)
+    if is_atom(xmldocument):
+        return filter_atom(xmldocument, filters)
+
+    print('Unsupported feed type', file=sys.stderr)
+    return False
+
+
+def read_config_url(config, configfile):
+    try:
+        url = config.get('feed', 'url')
+    except cp.NoSectionError:
+        print(f"Error: '{configfile}' doesn't contain a [feed] section",
+              file=sys.stderr)
+        return None
+    except cp.NoOptionError:
+        print(f"Error: '{configfile}' doesn't contain a feed URL",
+              file=sys.stderr)
+        return None
+    if not url:
+        print(f"Error: '{configfile}' doesn't contain a feed URL",
+              file=sys.stderr)
+        return None
+
+    enabled = True
+    try:
+        enabled = config.getboolean('feed', 'enabled')
+    except cp.NoOptionError:
+        pass  # Default is enabled.
+
+    # URL-escape the path (bug 1485854).
+    parts = urlsplit(url)
+    parts = parts._replace(path=quote(parts.path))
+    url = urlunsplit(parts)
+
+    return (url, enabled)
+
+
+def read_config_filter(config, configfile):
+    filters = {'authors': [], 'titles': [], 'urls': []}
+
+    section = 'filter'
+    if not config.has_section(section):
+        section = 'blacklist'
+
+    try:
+        filters['authors'] = config.get(section, 'authors').splitlines()
+    except cp.NoSectionError:
+        print(f"Warning: '{configfile}' doesn't contain a [filter] section",
+              file=sys.stderr)
+    except cp.NoOptionError:
+        pass  # Let's not warn about missing authors filter.
+
+    try:
+        filters['titles'] = config.get(section, 'titles').splitlines()
+    except cp.NoSectionError:
+        pass  # We already warned about that.
+    except cp.NoOptionError:
+        pass  # Let's not warn about missing titles filter.
+
+    try:
+        filters['urls'] = config.get(section, 'urls').splitlines()
+    except cp.NoSectionError:
+        pass  # We already warned about that.
+    except cp.NoOptionError:
+        pass  # Let's not warn about missing urls filter.
+
+    # Remove empty elements from the filters.
+    for field in ['authors', 'titles', 'urls']:
+        if filters[field]:
+            for i in reversed(range(len(filters[field]))):
+                if not filters[field][i]:
+                    del filters[field][i]
+    return filters
+
+
+def download_feed(url):
+    # pylint: disable=too-many-return-statements
+    request = Request(url, headers={
+        'Accept-encoding': 'gzip', 'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) '
+        'Gecko/20100101 Firefox/133.0'
+    })
+    try:
+        response = urlopen(request)  # pylint: disable=consider-using-with
+    except urllib.error.HTTPError as err:
+        print(f"Error: '{url}' cannot be fetched (HTTPError): {err}",
+              file=sys.stderr)
+        return None
+    except urllib.error.URLError as err:
+        print(f"Error: '{url}' cannot be fetched (URLError): {err}",
+              file=sys.stderr)
+        return None
+    except TimeoutError as err:
+        print(f"Error: '{url}' cannot be fetched (TimeoutError): {err}",
+              file=sys.stderr)
+        return None
+    except ConnectionResetError as err:
+        print(f"Error: '{url}' cannot be fetched (ConnectionResetError): "
+              f"{err}", file=sys.stderr)
+        return None
+    except http.client.BadStatusLine as err:
+        print(f"Error: '{url}' cannot be fetched (BadStatusLine): {err}",
+              file=sys.stderr)
+        return None
+    except OSError as err:
+        print(f"Error: '{url}' cannot be fetched (OSError): {err}",
+              file=sys.stderr)
+        return None
+
+    if response.info().get('Content-Encoding') == 'gzip':
+        # print(f"Note: compressed response for '{url}'", file=sys.stderr)
+        try:
+            buf = io.BytesIO(response.read())
+        except http.client.IncompleteRead:
+            print("Error: can't decompress response (IncompleteRead)",
+                  file=sys.stderr)
+            return None
+        except ConnectionResetError as err:
+            print(f"Error: can't decompress response (ConnectionResetError): "
+                  f"{err}", file=sys.stderr)
+            return None
+        response = gzip.GzipFile(fileobj=buf)
+
+    contents = None
+    try:
+        contents = response.read()
+    except http.client.IncompleteRead as err:
+        print(f"Warning: '{url}' cannot be fully read: {err}",
+              file=sys.stderr)
+    if not contents:
+        print(f"Error: '{url}' could not be downloaded", file=sys.stderr)
+        return None
+
+    return contents.strip()
+
+
+def remove_problematic_codepoints(text):
+    """Remove problematic code points per RFC 9839 Section 2.2."""
+    # Basic Multilingual Plane problematic code points:
+    # - C0 controls (U+0000-U+001F) except useful controls (tab, LF, CR)
+    # - DEL (U+007F) - sits between C0 and C1, not part of either
+    # - C1 controls (U+0080-U+009F)
+    # - Surrogates (U+D800-U+DFFF)
+    # - Noncharacters U+FDD0-U+FDEF and U+FFFE-U+FFFF
+    bmp_pattern = re.compile(
+        r'[\x00-\x08\x0b\x0c\x0e-\x1f'  # C0 controls except \t \n \r
+        r'\x7f'                          # DEL
+        r'\x80-\x9f'                     # C1 controls
+        r'\ud800-\udfff'                 # Surrogates
+        r'\ufdd0-\ufdef'                 # Noncharacters
+        r'\ufffe\uffff]'                 # Plane 0 final noncharacters
+    )
+
+    # Supplementary planes: last two code points of each plane (1-16)
+    smp_pattern = re.compile(
+        r'[\U0001FFFE\U0001FFFF'         # Plane 1
+        r'\U0002FFFE\U0002FFFF'          # Plane 2
+        r'\U0003FFFE\U0003FFFF'          # Plane 3
+        r'\U0004FFFE\U0004FFFF'          # Plane 4
+        r'\U0005FFFE\U0005FFFF'          # Plane 5
+        r'\U0006FFFE\U0006FFFF'          # Plane 6
+        r'\U0007FFFE\U0007FFFF'          # Plane 7
+        r'\U0008FFFE\U0008FFFF'          # Plane 8
+        r'\U0009FFFE\U0009FFFF'          # Plane 9
+        r'\U000AFFFE\U000AFFFF'          # Plane 10
+        r'\U000BFFFE\U000BFFFF'          # Plane 11
+        r'\U000CFFFE\U000CFFFF'          # Plane 12
+        r'\U000DFFFE\U000DFFFF'          # Plane 13
+        r'\U000EFFFE\U000EFFFF'          # Plane 14
+        r'\U000FFFFE\U000FFFFF'          # Plane 15
+        r'\U0010FFFE\U0010FFFF]'         # Plane 16
+    )
+
+    text = bmp_pattern.sub(UNICODE_REPLACEMENT_CHARACTER, text)
+    text = smp_pattern.sub(UNICODE_REPLACEMENT_CHARACTER, text)
+    return text
+
+
+def remove_html_entities(contents):
+    try:
+        ret = contents.decode('utf-8')
+
+        ret = remove_problematic_codepoints(ret)
+    except UnicodeDecodeError as err:
+        print(f"Warning: not a valid UTF-8 document ({err}), "
+              f"trying ISO-8859-1", file=sys.stderr)
+        ret = contents.decode('iso-8859-1')
+
+    # Prevent some entities from being replaced.
+    ret = ret.replace('&amp;', 'MAGICTOKEN-AMPERSAND-MAGICTOKEN')
+    ret = ret.replace('&lt;', 'MAGICTOKEN-LESSTHAN-MAGICTOKEN')
+    ret = ret.replace('&gt;', 'MAGICTOKEN-GREATERTHAN-MAGICTOKEN')
+
+    ret = html.unescape(ret)
+
+    # Look for any unescaped ampersands.
+    ret = ret.replace('&', '&amp;')
+
+    # Restore the required entities.
+    ret = ret.replace('MAGICTOKEN-AMPERSAND-MAGICTOKEN', '&amp;')
+    ret = ret.replace('MAGICTOKEN-LESSTHAN-MAGICTOKEN', '&lt;')
+    ret = ret.replace('MAGICTOKEN-GREATERTHAN-MAGICTOKEN', '&gt;')
+
+    return ret
+
+
+def parse_feed(contents, url):
+    document = None
+
+    try:
+        document = minidom.parseString(contents)
+    except xml.parsers.expat.ExpatError as err:
+        print(f"Warning: '{url}' is not a valid feed ({err})",
+              file=sys.stderr)
+        document = None
+
+    if document:
+        return document  # Exit early for valid feeds.
+
+    # Try fixing HTML entities.
+    noentities = remove_html_entities(contents)
+
+    try:
+        document = minidom.parseString(noentities)
+    except xml.parsers.expat.ExpatError as err:
+        print(f"Error: '{url}' is not a valid feed, even with HTML entities "
+              f"removed ({err})", file=sys.stderr)
+        document = None
+
+    return document
+
+
+def process_config(configfile, outfile, overwrite):
+    """Read a config file, fetch its feed and filter it."""
+    # pylint: disable=too-many-return-statements
+    if outfile and os.path.isfile(outfile) and not overwrite:
+        print(f"Error: '{outfile}' already exists, use --force to overwrite",
+              file=sys.stderr)
+        return False
+
+    config = cp.ConfigParser()
+    with codecs.open(configfile, 'r', 'utf-8') as configfh:
+        config.read_file(configfh)
+
+    (url, enabled) = read_config_url(config, configfile)
+    if not enabled:
+        print(f"Skipping '{configfile}' since it is disabled.")
+        return True
+    if not url:
+        return False  # fatal error
+    filters = read_config_filter(config, configfile)
+
+    contents = download_feed(url)
+    if not contents:
+        if outfile and os.path.isfile(outfile):
+            # Leave the previously filtered feed in place.
+            pass
+        return True  # non-fatal error
+
+    document = parse_feed(contents, url)
+    if not document:
+        if outfile and os.path.isfile(outfile):
+            try:
+                with codecs.open(outfile, 'w', 'utf-8') as outfh:
+                    outfh.write('')  # Clear any previous feed.
+            except PermissionError:
+                print(f"Error: not enough permissions to write to '{outfile}'",
+                      file=sys.stderr)
+        return False
+
+    filter_feed(document, filters)
+
+    if outfile:
+        try:
+            with codecs.open(outfile, 'w', 'utf-8') as outfh:
+                outfh.write(document.toxml())
+        except PermissionError:
+            print(f"Error: not enough permissions to write to '{outfile}'",
+                  file=sys.stderr)
+            return False
+    else:
+        print(document.toxml())
+    return True
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='filter for blog aggregators.')
+    parser.add_argument('configfile', type=str,
+                        help='the config file to parse')
+    parser.add_argument('-o', '--output', metavar='file',
+                        required=False, type=str,
+                        help='the output filename (default: <STDOUT>)')
+    parser.add_argument('-f', '--force', dest='force', action='store_true',
+                        help='overwrite the destination file')
+    parser.add_argument('-V', '--version', action='version',
+                        version=f'planetfilter {VERSION}')
+    args = parser.parse_args()
+
+    if not os.path.isfile(args.configfile):
+        print(f"Error: '{args.configfile}' not found", file=sys.stderr)
+        return False
+    return process_config(args.configfile, args.output, args.force)
+
+
+if main():
+    sys.exit(0)
+else:
+    sys.exit(1)
