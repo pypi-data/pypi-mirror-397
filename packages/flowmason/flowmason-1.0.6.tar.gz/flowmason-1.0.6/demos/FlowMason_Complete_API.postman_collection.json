@@ -1,0 +1,5361 @@
+{
+  "info": {
+    "_postman_id": "flowmason-complete-api",
+    "name": "FlowMason Complete API Collection",
+    "description": "Complete FlowMason API collection with all 55 pipelines. Generated 2025-12-11T22:35:36.874115",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8999",
+      "type": "string"
+    },
+    {
+      "key": "api_version",
+      "value": "v1",
+      "type": "string"
+    },
+    {
+      "key": "run_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Registry",
+      "description": "Component registry endpoints",
+      "item": [
+        {
+          "name": "List Components",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/registry/components",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "{{api_version}}",
+                "registry",
+                "components"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Generator Schema",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/registry/components/generator/schema",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "{{api_version}}",
+                "registry",
+                "components",
+                "generator",
+                "schema"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Critic Schema",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/registry/components/critic/schema",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "{{api_version}}",
+                "registry",
+                "components",
+                "critic",
+                "schema"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Refresh Registry",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/registry/refresh",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "{{api_version}}",
+                "registry",
+                "refresh"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Pipeline Management",
+      "description": "Pipeline CRUD operations",
+      "item": [
+        {
+          "name": "List All Pipelines",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/pipelines?limit=100",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "{{api_version}}",
+                "pipelines"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Demo Pipelines",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/pipelines?category=demo",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "{{api_version}}",
+                "pipelines"
+              ],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "demo"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Benchmark Pipelines",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/pipelines?category=benchmark",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "{{api_version}}",
+                "pipelines"
+              ],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "benchmark"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Real-AI Pipelines",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/pipelines?category=real-ai",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "{{api_version}}",
+                "pipelines"
+              ],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "real-ai"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Validate Pipeline",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Pipeline\",\n  \"stages\": [\n    {\n      \"id\": \"gen\",\n      \"component_type\": \"generator\",\n      \"name\": \"Generator\",\n      \"config\": {},\n      \"input_mapping\": {\n        \"prompt\": \"Hello\"\n      },\n      \"depends_on\": [],\n      \"position\": {\n        \"x\": 0,\n        \"y\": 0\n      }\n    }\n  ],\n  \"output_stage_id\": \"gen\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/pipelines/validate",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "{{api_version}}",
+                "pipelines",
+                "validate"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Provider",
+      "description": "LLM provider endpoints",
+      "item": [
+        {
+          "name": "Get Current Provider",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/provider",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "{{api_version}}",
+                "provider"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Set Provider (Anthropic)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": \"anthropic\",\n  \"model\": \"claude-3-5-sonnet-20241022\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/provider",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "{{api_version}}",
+                "provider"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Set Provider (OpenAI)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"provider\": \"openai\",\n  \"model\": \"gpt-4o\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/provider",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "{{api_version}}",
+                "provider"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Test Provider Connection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/provider/test",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "{{api_version}}",
+                "provider",
+                "test"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Execution Status",
+      "description": "Pipeline execution monitoring - use run_id from pipeline run responses",
+      "item": [
+        {
+          "name": "List All Runs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/runs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "{{api_version}}",
+                "runs"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Run Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "description": "Get full run details including output. Replace {{run_id}} with actual run ID.",
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "{{api_version}}",
+                "runs",
+                "{{run_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Demo Pipelines",
+      "description": "16 demo pipelines. Run a pipeline, then use \"Get Run Details\" in folder 4 with the returned run_id to check results.",
+      "item": [
+        {
+          "name": "Filter and Transform Demo",
+          "description": "ID: pipe_eaa80058adaf | Stages: 4",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_eaa80058adaf",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_eaa80058adaf"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Sample input text for demo pipeline\",\n    \"topic\": \"technology\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_eaa80058adaf/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_eaa80058adaf",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Data Validation Demo",
+          "description": "ID: pipe_580694e322ee | Stages: 3",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_580694e322ee",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_580694e322ee"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Sample input text for demo pipeline\",\n    \"topic\": \"technology\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_580694e322ee/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_580694e322ee",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mixed Workload Demo",
+          "description": "ID: pipe_c80eb379b7eb | Stages: 29",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_c80eb379b7eb",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_c80eb379b7eb"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Sample input text for demo pipeline\",\n    \"topic\": \"technology\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_c80eb379b7eb/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_c80eb379b7eb",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mixed Workload Demo",
+          "description": "ID: pipe_87ca0f4ae1fd | Stages: 14",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_87ca0f4ae1fd",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_87ca0f4ae1fd"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Sample input text for demo pipeline\",\n    \"topic\": \"technology\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_87ca0f4ae1fd/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_87ca0f4ae1fd",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ForEach Collection Demo",
+          "description": "ID: pipe_2403d6fc109f | Stages: 2",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_2403d6fc109f",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_2403d6fc109f"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Sample input text for demo pipeline\",\n    \"topic\": \"technology\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_2403d6fc109f/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_2403d6fc109f",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ForEach Collection Demo",
+          "description": "ID: pipe_42c2fb175908 | Stages: 2",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_42c2fb175908",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_42c2fb175908"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Sample input text for demo pipeline\",\n    \"topic\": \"technology\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_42c2fb175908/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_42c2fb175908",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "ForEach Collection Demo",
+          "description": "ID: pipe_034e05c0c2a9 | Stages: 2",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_034e05c0c2a9",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_034e05c0c2a9"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Sample input text for demo pipeline\",\n    \"topic\": \"technology\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_034e05c0c2a9/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_034e05c0c2a9",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nested Conditionals Demo",
+          "description": "ID: pipe_2074157650ac | Stages: 11",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_2074157650ac",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_2074157650ac"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Sample input text for demo pipeline\",\n    \"topic\": \"technology\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_2074157650ac/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_2074157650ac",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Nested Conditionals Demo",
+          "description": "ID: pipe_40cf7642e512 | Stages: 6",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_40cf7642e512",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_40cf7642e512"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Sample input text for demo pipeline\",\n    \"topic\": \"technology\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_40cf7642e512/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_40cf7642e512",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Conditional Branching Demo",
+          "description": "ID: pipe_8af6bbde78b5 | Stages: 5",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_8af6bbde78b5",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_8af6bbde78b5"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Sample input text for demo pipeline\",\n    \"topic\": \"technology\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_8af6bbde78b5/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_8af6bbde78b5",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Data Processing Chain",
+          "description": "ID: pipe_763bd9735535 | Stages: 26",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_763bd9735535",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_763bd9735535"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Sample input text for demo pipeline\",\n    \"topic\": \"technology\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_763bd9735535/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_763bd9735535",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Data Processing Chain",
+          "description": "ID: pipe_86b2a9c41e8e | Stages: 11",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_86b2a9c41e8e",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_86b2a9c41e8e"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Sample input text for demo pipeline\",\n    \"topic\": \"technology\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_86b2a9c41e8e/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_86b2a9c41e8e",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Data Processing Chain",
+          "description": "ID: pipe_b20622ebbf27 | Stages: 6",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_b20622ebbf27",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_b20622ebbf27"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Sample input text for demo pipeline\",\n    \"topic\": \"technology\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_b20622ebbf27/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_b20622ebbf27",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Parallel Processing Demo",
+          "description": "ID: pipe_f9ed269dd280 | Stages: 27",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_f9ed269dd280",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_f9ed269dd280"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Sample input text for demo pipeline\",\n    \"topic\": \"technology\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_f9ed269dd280/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_f9ed269dd280",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Parallel Processing Demo",
+          "description": "ID: pipe_6f27fdedf014 | Stages: 12",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_6f27fdedf014",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_6f27fdedf014"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Sample input text for demo pipeline\",\n    \"topic\": \"technology\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_6f27fdedf014/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_6f27fdedf014",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Parallel Processing Demo",
+          "description": "ID: pipe_7bf9a5ce0c65 | Stages: 7",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_7bf9a5ce0c65",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_7bf9a5ce0c65"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Sample input text for demo pipeline\",\n    \"topic\": \"technology\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_7bf9a5ce0c65/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_7bf9a5ce0c65",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Benchmark Pipelines",
+      "description": "34 benchmark pipelines. Run a pipeline, then use \"Get Run Details\" in folder 4 with the returned run_id to check results.",
+      "item": [
+        {
+          "name": "Benchmark: Transform Chain 200",
+          "description": "ID: pipe_410f90e96008 | Stages: 201",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_410f90e96008",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_410f90e96008"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_410f90e96008/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_410f90e96008",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Transform Chain 100",
+          "description": "ID: pipe_78109c44d961 | Stages: 101",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_78109c44d961",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_78109c44d961"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_78109c44d961/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_78109c44d961",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Transform Chain 50",
+          "description": "ID: pipe_9b82dc715a9b | Stages: 51",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_9b82dc715a9b",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_9b82dc715a9b"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_9b82dc715a9b/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_9b82dc715a9b",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Transform Chain 25",
+          "description": "ID: pipe_d0ce7e4ac67c | Stages: 26",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_d0ce7e4ac67c",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_d0ce7e4ac67c"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_d0ce7e4ac67c/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_d0ce7e4ac67c",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Transform Chain 10",
+          "description": "ID: pipe_822df26c7f7b | Stages: 11",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_822df26c7f7b",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_822df26c7f7b"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_822df26c7f7b/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_822df26c7f7b",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Mixed Workload 100",
+          "description": "ID: pipe_7774f51a2a35 | Stages: 104",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_7774f51a2a35",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_7774f51a2a35"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_7774f51a2a35/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_7774f51a2a35",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Mixed Workload 50",
+          "description": "ID: pipe_cdcec2c00f05 | Stages: 54",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_cdcec2c00f05",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_cdcec2c00f05"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_cdcec2c00f05/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_cdcec2c00f05",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Mixed Workload 25",
+          "description": "ID: pipe_71910e119d39 | Stages: 29",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_71910e119d39",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_71910e119d39"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_71910e119d39/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_71910e119d39",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Mixed Workload 10",
+          "description": "ID: pipe_3f47d968000a | Stages: 14",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_3f47d968000a",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_3f47d968000a"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_3f47d968000a/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_3f47d968000a",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Wide Conditionals 200",
+          "description": "ID: pipe_da5d94d2d0ce | Stages: 201",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_da5d94d2d0ce",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_da5d94d2d0ce"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_da5d94d2d0ce/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_da5d94d2d0ce",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Wide Conditionals 100",
+          "description": "ID: pipe_51ba3b195fa2 | Stages: 101",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_51ba3b195fa2",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_51ba3b195fa2"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_51ba3b195fa2/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_51ba3b195fa2",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Wide Conditionals 50",
+          "description": "ID: pipe_1ef793c46072 | Stages: 51",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_1ef793c46072",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_1ef793c46072"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_1ef793c46072/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_1ef793c46072",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Wide Conditionals 25",
+          "description": "ID: pipe_47c49ca0df3e | Stages: 26",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_47c49ca0df3e",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_47c49ca0df3e"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_47c49ca0df3e/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_47c49ca0df3e",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Wide Conditionals 10",
+          "description": "ID: pipe_afc05b15d311 | Stages: 11",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_afc05b15d311",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_afc05b15d311"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_afc05b15d311/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_afc05b15d311",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: ForEach 500",
+          "description": "ID: pipe_e599e66bcd99 | Stages: 2",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_e599e66bcd99",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_e599e66bcd99"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_e599e66bcd99/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_e599e66bcd99",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: ForEach 250",
+          "description": "ID: pipe_5ee499ba6e45 | Stages: 2",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_5ee499ba6e45",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_5ee499ba6e45"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_5ee499ba6e45/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_5ee499ba6e45",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: ForEach 100",
+          "description": "ID: pipe_8466c915ca70 | Stages: 2",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_8466c915ca70",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_8466c915ca70"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_8466c915ca70/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_8466c915ca70",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: ForEach 50",
+          "description": "ID: pipe_af49aa0ea739 | Stages: 2",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_af49aa0ea739",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_af49aa0ea739"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_af49aa0ea739/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_af49aa0ea739",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: ForEach 10",
+          "description": "ID: pipe_da5a2d9d1ce2 | Stages: 2",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_da5a2d9d1ce2",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_da5a2d9d1ce2"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_da5a2d9d1ce2/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_da5a2d9d1ce2",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Nested Conditionals 50",
+          "description": "ID: pipe_3f36524ff1e0 | Stages: 51",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_3f36524ff1e0",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_3f36524ff1e0"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_3f36524ff1e0/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_3f36524ff1e0",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Nested Conditionals 30",
+          "description": "ID: pipe_874ff7778657 | Stages: 31",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_874ff7778657",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_874ff7778657"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_874ff7778657/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_874ff7778657",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Nested Conditionals 20",
+          "description": "ID: pipe_ce3cc0aaf353 | Stages: 21",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_ce3cc0aaf353",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_ce3cc0aaf353"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_ce3cc0aaf353/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_ce3cc0aaf353",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Nested Conditionals 10",
+          "description": "ID: pipe_2af4fd4de93f | Stages: 11",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_2af4fd4de93f",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_2af4fd4de93f"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_2af4fd4de93f/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_2af4fd4de93f",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Nested Conditionals 5",
+          "description": "ID: pipe_374c7529b142 | Stages: 6",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_374c7529b142",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_374c7529b142"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_374c7529b142/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_374c7529b142",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Sequential 200",
+          "description": "ID: pipe_1e4cedd4d997 | Stages: 200",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_1e4cedd4d997",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_1e4cedd4d997"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_1e4cedd4d997/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_1e4cedd4d997",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Sequential 100",
+          "description": "ID: pipe_c48e42e55f1f | Stages: 100",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_c48e42e55f1f",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_c48e42e55f1f"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_c48e42e55f1f/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_c48e42e55f1f",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Sequential 50",
+          "description": "ID: pipe_207aa0e4ef80 | Stages: 50",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_207aa0e4ef80",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_207aa0e4ef80"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_207aa0e4ef80/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_207aa0e4ef80",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Sequential 25",
+          "description": "ID: pipe_8b9179f66975 | Stages: 25",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_8b9179f66975",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_8b9179f66975"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_8b9179f66975/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_8b9179f66975",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Sequential 10",
+          "description": "ID: pipe_7f6609a1268a | Stages: 10",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_7f6609a1268a",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_7f6609a1268a"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_7f6609a1268a/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_7f6609a1268a",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Parallel 100",
+          "description": "ID: pipe_d9a7dc8ab78c | Stages: 102",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_d9a7dc8ab78c",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_d9a7dc8ab78c"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_d9a7dc8ab78c/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_d9a7dc8ab78c",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Parallel 50",
+          "description": "ID: pipe_e5520dca4d9f | Stages: 52",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_e5520dca4d9f",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_e5520dca4d9f"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_e5520dca4d9f/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_e5520dca4d9f",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Parallel 25",
+          "description": "ID: pipe_6cad7db355ea | Stages: 27",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_6cad7db355ea",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_6cad7db355ea"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_6cad7db355ea/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_6cad7db355ea",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Parallel 10",
+          "description": "ID: pipe_c0cd3bc3658f | Stages: 12",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_c0cd3bc3658f",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_c0cd3bc3658f"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_c0cd3bc3658f/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_c0cd3bc3658f",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Benchmark: Parallel 5",
+          "description": "ID: pipe_00ea49a4ff45 | Stages: 7",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_00ea49a4ff45",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_00ea49a4ff45"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"text\": \"Benchmark test input for performance testing\",\n    \"value\": 100\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_00ea49a4ff45/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_00ea49a4ff45",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7. Real-AI Pipelines",
+      "description": "5 real-ai pipelines. Run a pipeline, then use \"Get Run Details\" in folder 4 with the returned run_id to check results.",
+      "item": [
+        {
+          "name": "Document Processing Pipeline",
+          "description": "ID: pipe_106f6fdd2678 | Stages: 14",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_106f6fdd2678",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_106f6fdd2678"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"document_text\": \"CONFIDENTIAL AGREEMENT\\n\\nThis Service Level Agreement (\\\"Agreement\\\") is entered into as of January 15, 2025 between \\nAcme Corporation (\\\"Provider\\\") and Beta Industries (\\\"Client\\\").\\n\\n1. SERVICE DESCRIPTION\\nProvider agrees to deliver cloud hosting services with 99.9% uptime guarantee.\\n\\n2. PAYMENT TERMS  \\nClient shall pay $15,000 monthly, due within 30 days of invoice.\\n\\n3. TERM\\nThis agreement is effective for 24 months from the execution date.\\n\\n4. CONFIDENTIALITY\\nBoth parties agree to maintain confidentiality of all proprietary information.\\n\\nSigned: John Smith, CEO Acme Corporation\\nDate: January 15, 2025\",\n    \"document_type\": \"legal_contract\",\n    \"extract_fields\": [\n      \"parties\",\n      \"key_terms\",\n      \"dates\",\n      \"financial_terms\",\n      \"obligations\"\n    ]\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_106f6fdd2678/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_106f6fdd2678",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sales Automation Pipeline",
+          "description": "ID: pipe_31b2f7bce83e | Stages: 15",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_31b2f7bce83e",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_31b2f7bce83e"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"lead_data\": {\n      \"company\": \"TechStart Inc.\",\n      \"contact_name\": \"Sarah Chen\",\n      \"email\": \"sarah.chen@techstart.io\",\n      \"title\": \"VP of Engineering\",\n      \"company_size\": \"50-200 employees\",\n      \"industry\": \"SaaS\",\n      \"source\": \"webinar attendee\",\n      \"engagement_score\": 85\n    },\n    \"product_interest\": \"Enterprise API Platform\",\n    \"budget_range\": \"$50k-100k annually\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_31b2f7bce83e/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_31b2f7bce83e",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Market Research & Analysis Pipeline",
+          "description": "ID: pipe_f2774ddf362d | Stages: 14",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_f2774ddf362d",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_f2774ddf362d"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"query\": \"Analyze the current state of the electric vehicle market in North America, including major players, market share, growth trends, and consumer sentiment\",\n    \"industry\": \"automotive/EV\",\n    \"region\": \"North America\",\n    \"time_period\": \"Q4 2024 - Q1 2025\",\n    \"focus_areas\": [\n      \"market share\",\n      \"pricing trends\",\n      \"consumer preferences\",\n      \"competitive landscape\"\n    ]\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_f2774ddf362d/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_f2774ddf362d",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Customer Support Intelligence Pipeline",
+          "description": "ID: pipe_cf1fa884017b | Stages: 16",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_cf1fa884017b",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_cf1fa884017b"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"customer_query\": \"I have been trying to reset my password for the past hour but the reset email never arrives. This is extremely frustrating as I need to access my account urgently for a business deadline. Your support chat was also unhelpful.\",\n    \"customer_id\": \"CUST-2024-78432\",\n    \"customer_tier\": \"premium\",\n    \"account_type\": \"business\",\n    \"previous_tickets\": 2\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_cf1fa884017b/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_cf1fa884017b",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Content Creation & Review Pipeline",
+          "description": "ID: pipe_106e576216bc | Stages: 16",
+          "item": [
+            {
+              "name": "Get Pipeline Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_106e576216bc",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_106e576216bc"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Run Pipeline",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "description": "Returns 202 Accepted with run_id. Copy the \"id\" from response and use in \"Get Run Details\" to check results.",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"inputs\": {\n    \"topic\": \"The future of renewable energy and sustainable technology\",\n    \"title\": \"Green Tech Revolution 2025\",\n    \"style\": \"informative blog post\",\n    \"tone\": \"professional yet engaging\",\n    \"target_audience\": \"tech-savvy professionals interested in sustainability\"\n  }\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/pipelines/pipe_106e576216bc/run",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "pipelines",
+                    "pipe_106e576216bc",
+                    "run"
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "var jsonData = pm.response.json();",
+                      "if (jsonData.id) {",
+                      "    pm.collectionVariables.set(\"run_id\", jsonData.id);",
+                      "    console.log(\"Saved run_id: \" + jsonData.id);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Check Run Result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "description": "Uses the run_id saved from the previous Run Pipeline request. Poll this until status is \"completed\" or \"failed\".",
+                "url": {
+                  "raw": "{{base_url}}/api/{{api_version}}/runs/{{run_id}}",
+                  "host": [
+                    "{{base_url}}"
+                  ],
+                  "path": [
+                    "api",
+                    "{{api_version}}",
+                    "runs",
+                    "{{run_id}}"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

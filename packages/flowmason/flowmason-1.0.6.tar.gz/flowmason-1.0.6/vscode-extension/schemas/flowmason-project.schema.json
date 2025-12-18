@@ -1,0 +1,167 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://flowmason.io/schemas/flowmason-project.schema.json",
+  "title": "FlowMason Project",
+  "description": "Schema for FlowMason project manifest (flowmason.json)",
+  "type": "object",
+  "required": ["name", "version"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Project name",
+      "minLength": 1
+    },
+    "version": {
+      "type": "string",
+      "description": "Project version (semver)",
+      "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9]+)?$"
+    },
+    "description": {
+      "type": "string",
+      "description": "Project description"
+    },
+    "main": {
+      "type": "string",
+      "description": "Main pipeline file path",
+      "default": "pipelines/main.pipeline.json"
+    },
+    "author": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string",
+              "format": "email"
+            }
+          }
+        }
+      ],
+      "description": "Project author"
+    },
+    "license": {
+      "type": "string",
+      "description": "License identifier"
+    },
+    "components": {
+      "type": "object",
+      "description": "Component discovery configuration",
+      "properties": {
+        "include": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Glob patterns for component files",
+          "default": ["components/**/*.py"]
+        },
+        "exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Glob patterns to exclude"
+        }
+      }
+    },
+    "pipelines": {
+      "type": "object",
+      "description": "Pipeline discovery configuration",
+      "properties": {
+        "include": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Glob patterns for pipeline files",
+          "default": ["pipelines/**/*.pipeline.json"]
+        }
+      }
+    },
+    "providers": {
+      "type": "object",
+      "description": "LLM provider configuration",
+      "properties": {
+        "default": {
+          "type": "string",
+          "description": "Default provider name",
+          "enum": ["anthropic", "openai", "google", "groq"]
+        },
+        "anthropic": {
+          "$ref": "#/definitions/providerConfig"
+        },
+        "openai": {
+          "$ref": "#/definitions/providerConfig"
+        },
+        "google": {
+          "$ref": "#/definitions/providerConfig"
+        },
+        "groq": {
+          "$ref": "#/definitions/providerConfig"
+        }
+      }
+    },
+    "testing": {
+      "type": "object",
+      "description": "Testing configuration",
+      "properties": {
+        "timeout": {
+          "type": "integer",
+          "description": "Default test timeout in milliseconds",
+          "default": 30000
+        },
+        "retries": {
+          "type": "integer",
+          "description": "Number of test retries on failure",
+          "default": 0
+        },
+        "testMatch": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Glob patterns for test files"
+        }
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "description": "Package dependencies",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "scripts": {
+      "type": "object",
+      "description": "Custom scripts",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "definitions": {
+    "providerConfig": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "type": "string",
+          "description": "Default model for this provider"
+        },
+        "apiKey": {
+          "type": "string",
+          "description": "API key (prefer environment variables)"
+        },
+        "baseUrl": {
+          "type": "string",
+          "description": "Custom API base URL"
+        }
+      }
+    }
+  }
+}

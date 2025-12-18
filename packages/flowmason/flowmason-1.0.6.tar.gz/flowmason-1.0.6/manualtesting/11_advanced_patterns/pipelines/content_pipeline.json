@@ -1,0 +1,51 @@
+{
+  "name": "content_pipeline",
+  "description": "Multi-stage content generation with critique and improvement",
+  "version": "1.0.0",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "topic": {"type": "string"},
+      "style": {"type": "string", "default": "professional"}
+    },
+    "required": ["topic"]
+  },
+  "stages": {
+    "generate": {
+      "component": "generator",
+      "config": {
+        "system_prompt": "You are a content writer. Write in {{input.style}} style.",
+        "user_prompt": "Write a short article (2-3 paragraphs) about: {{input.topic}}",
+        "max_tokens": 300
+      }
+    },
+    "critique": {
+      "component": "critic",
+      "depends_on": ["generate"],
+      "config": {
+        "system_prompt": "You are a content editor. Provide constructive feedback.",
+        "user_prompt": "Review this content and list 2-3 specific improvements:\n\n{{stages.generate.content}}",
+        "max_tokens": 200
+      }
+    },
+    "improve": {
+      "component": "improver",
+      "depends_on": ["generate", "critique"],
+      "config": {
+        "system_prompt": "You are a content improver.",
+        "user_prompt": "Improve this content based on the feedback:\n\nOriginal:\n{{stages.generate.content}}\n\nFeedback:\n{{stages.critique.content}}",
+        "max_tokens": 400
+      }
+    },
+    "validate": {
+      "component": "generator",
+      "depends_on": ["improve"],
+      "config": {
+        "system_prompt": "You are a quality checker. Respond with only 'PASS' or 'NEEDS_WORK: [reason]'",
+        "user_prompt": "Check if this content is publication-ready:\n\n{{stages.improve.content}}",
+        "max_tokens": 50
+      }
+    }
+  },
+  "output_stage": "validate"
+}

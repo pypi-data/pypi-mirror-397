@@ -1,0 +1,39 @@
+{
+  "name": "batch_100",
+  "description": "Process 100 items to test batch handling",
+  "version": "1.0.0",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "items": {
+        "type": "array",
+        "items": {"type": "string"}
+      },
+      "parallel": {"type": "boolean", "default": false}
+    },
+    "required": ["items"]
+  },
+  "stages": {
+    "process_batch": {
+      "component": "foreach",
+      "config": {
+        "items": "{{input.items}}",
+        "item_variable": "item",
+        "execution_mode": "{{#if input.parallel}}parallel{{else}}sequential{{/if}}",
+        "max_parallel": 10,
+        "collect_results": true
+      },
+      "loop_stages": {
+        "process_item": {
+          "component": "variable_set",
+          "config": {
+            "variables": {
+              "processed": "Processed: {{item}}"
+            }
+          }
+        }
+      }
+    }
+  },
+  "output_stage": "process_batch"
+}

@@ -1,0 +1,157 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FlowMason Test File",
+  "description": "Schema for FlowMason .test.json test files",
+  "type": "object",
+  "required": ["name", "tests"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Name of the test suite"
+    },
+    "description": {
+      "type": "string",
+      "description": "Description of the test suite"
+    },
+    "pipeline": {
+      "type": "string",
+      "description": "Path to the pipeline file (relative to test file)"
+    },
+    "component": {
+      "type": "string",
+      "description": "Path to the component file (for unit tests)"
+    },
+    "componentType": {
+      "type": "string",
+      "description": "Component type name (for unit tests)"
+    },
+    "timeout": {
+      "type": "number",
+      "description": "Default timeout for all tests in milliseconds",
+      "default": 30000
+    },
+    "setup": {
+      "type": "object",
+      "description": "Setup configuration",
+      "properties": {
+        "env": {
+          "type": "object",
+          "description": "Environment variables",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "mocks": {
+          "type": "object",
+          "description": "Mock data for tests",
+          "additionalProperties": true
+        }
+      }
+    },
+    "tests": {
+      "type": "array",
+      "description": "Array of test cases",
+      "items": {
+        "type": "object",
+        "required": ["name", "input"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Test case name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Test case description"
+          },
+          "input": {
+            "type": "object",
+            "description": "Input data for the test",
+            "additionalProperties": true
+          },
+          "assertions": {
+            "type": "array",
+            "description": "Assertions to validate output",
+            "items": {
+              "type": "object",
+              "required": ["path"],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "description": "JSONPath to the value to check"
+                },
+                "type": {
+                  "type": "string",
+                  "description": "Type of assertion",
+                  "enum": [
+                    "equals",
+                    "notEquals",
+                    "contains",
+                    "notContains",
+                    "matches",
+                    "type",
+                    "exists",
+                    "notExists",
+                    "lessThan",
+                    "greaterThan",
+                    "lengthEquals",
+                    "lengthLessThan",
+                    "lengthGreaterThan"
+                  ],
+                  "default": "exists"
+                },
+                "value": {
+                  "description": "Expected value (for equals, contains, matches)"
+                },
+                "expectedType": {
+                  "type": "string",
+                  "description": "Expected type (for type assertion)",
+                  "enum": ["string", "number", "boolean", "object", "array", "null"]
+                },
+                "lessThan": {
+                  "type": "number",
+                  "description": "Value must be less than this"
+                },
+                "greaterThan": {
+                  "type": "number",
+                  "description": "Value must be greater than this"
+                },
+                "message": {
+                  "type": "string",
+                  "description": "Custom failure message"
+                }
+              }
+            }
+          },
+          "expectError": {
+            "oneOf": [
+              { "type": "boolean" },
+              { "type": "string" }
+            ],
+            "description": "Expected error (true for any error, or error message pattern)"
+          },
+          "timeout": {
+            "type": "number",
+            "description": "Timeout for this test in milliseconds"
+          },
+          "tags": {
+            "type": "array",
+            "description": "Tags for filtering tests",
+            "items": {
+              "type": "string"
+            }
+          },
+          "skip": {
+            "type": "boolean",
+            "description": "Skip this test",
+            "default": false
+          },
+          "only": {
+            "type": "boolean",
+            "description": "Only run this test",
+            "default": false
+          }
+        }
+      }
+    }
+  }
+}

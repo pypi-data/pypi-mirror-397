@@ -1,0 +1,60 @@
+{
+  "name": "provider_comparison",
+  "description": "Compare all 4 providers with same prompt",
+  "version": "1.0.0",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "prompt": {"type": "string"}
+    },
+    "required": ["prompt"]
+  },
+  "stages": {
+    "anthropic_response": {
+      "component": "generator",
+      "config": {
+        "provider": "anthropic",
+        "model": "claude-3-5-sonnet-20241022",
+        "user_prompt": "{{input.prompt}}",
+        "max_tokens": 100
+      }
+    },
+    "openai_response": {
+      "component": "generator",
+      "config": {
+        "provider": "openai",
+        "model": "gpt-4o",
+        "user_prompt": "{{input.prompt}}",
+        "max_tokens": 100
+      }
+    },
+    "google_response": {
+      "component": "generator",
+      "config": {
+        "provider": "google",
+        "model": "gemini-1.5-flash",
+        "user_prompt": "{{input.prompt}}",
+        "max_tokens": 100
+      }
+    },
+    "groq_response": {
+      "component": "generator",
+      "config": {
+        "provider": "groq",
+        "model": "llama-3.1-8b-instant",
+        "user_prompt": "{{input.prompt}}",
+        "max_tokens": 100
+      }
+    },
+    "summarize_comparison": {
+      "component": "synthesizer",
+      "depends_on": ["anthropic_response", "openai_response", "google_response", "groq_response"],
+      "config": {
+        "system_prompt": "Compare the 4 responses and note similarities/differences.",
+        "user_prompt": "Anthropic: {{stages.anthropic_response.content}}\n\nOpenAI: {{stages.openai_response.content}}\n\nGoogle: {{stages.google_response.content}}\n\nGroq: {{stages.groq_response.content}}",
+        "max_tokens": 200
+      }
+    }
+  },
+  "output_stage": "summarize_comparison"
+}
