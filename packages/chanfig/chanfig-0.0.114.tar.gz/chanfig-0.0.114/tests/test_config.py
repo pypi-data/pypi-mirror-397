@@ -1,0 +1,254 @@
+# CHANfiG
+# Copyright (C) 2022-Present, DanLing Team
+
+# This file is part of CHANfiG.
+
+# CHANfiG is free software: you can redistribute it and/or modify
+# it under the terms of the following licenses:
+# - The Unlicense
+# - GNU Affero General Public License v3.0 or later
+# - GNU General Public License v2.0 or later
+# - BSD 4-Clause "Original" or "Old" License
+# - MIT License
+# - Apache License 2.0
+
+# CHANfiG is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the LICENSE file for more details.
+
+from __future__ import annotations
+
+from copy import copy, deepcopy
+from functools import partial
+from io import StringIO
+
+from pytest import raises
+
+from chanfig import Config, Variable
+
+
+class DataConfig(Config):
+    __test__ = False
+    name: str
+    max_length: int = 1024
+
+    def post(self):
+        self.name = self.name.lower()
+
+
+class TestConfig(Config):
+    __test__ = False
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        num_classes = Variable(10)
+        self.name = "CHANfiG"
+        self.seed = Variable(1016, help="random seed")
+        data_factory = partial(DataConfig, name="CIFAR10")
+        self.datasets = Config(default_factory=data_factory)
+        self.datas = Config(default_factory=data_factory)
+        self.datasets.a.num_classes = num_classes
+        self.datasets.b.num_classes = num_classes
+        self.network.name = "ResNet18"
+        self.network.num_classes = num_classes
+        self.checkpoint = None
+
+    def post(self):
+        self.name = self.name.lower()
+        self.id = f"{self.name}_{self.seed}"
+
+    @property
+    def data(self):
+        return next(iter(self.datas.values())) if self.datas else self.datas["default"]
+
+
+def test_value():
+    config = TestConfig()
+    assert config.name == "CHANfiG"
+
+
+def test_post():
+    config = TestConfig()
+    config.boot()
+    assert config.name == "chanfig"
+    assert config.id == "chanfig_1016"
+    assert config.datasets.a.name == "cifar10"
+
+
+def test_parse():
+    config = TestConfig()
+    config.parse(
+        [
+            "--name",
+            "Test",
+            "--seed",
+            "1014",
+            "--datas.a.root",
+            "dataset/a",
+            "--datas.a.feature_cols",
+            "a",
+            "b",
+            "c",
+            "--datas.b.root",
+            "dataset/b",
+            "--datas.b.label_cols",
+            "d",
+            "e",
+            "f",
+            "--checkpoint",
+            "path/to/checkpoint.pth",
+        ]
+    )
+    assert config.name == "test"
+    assert config.id == "test_1014"
+    assert config.checkpoint == "path/to/checkpoint.pth"
+    assert config.data.name == "cifar10"
+    assert config.datas.a.feature_cols == ["a", "b", "c"]
+    assert config.datas.b.label_cols == ["d", "e", "f"]
+    assert config.data.max_length == 1024
+
+
+def test_nested():
+    config = TestConfig()
+    assert config.network.name == "ResNet18"
+    config.network.nested.value = 1
+
+
+def test_convert_mapping_default():
+    config = Config()
+    config["a"] = {"b": 1}
+    assert isinstance(config.a, Config)
+    assert config.a.b == 1
+
+
+def test_convert_mapping_false():
+    config = Config(convert_mapping=False)
+    config["a"] = {"b": 1}
+    assert isinstance(config.a, dict)
+    with raises(AttributeError):
+        _ = config.a.b
+
+
+def test_convert_mapping_sequences():
+    config = Config()
+    config["seq"] = [{"x": 1}, {"y": 2}]
+    assert all(isinstance(item, Config) for item in config.seq)
+    assert config.seq[0].x == 1 and config.seq[1].y == 2
+
+    config["tuple_seq"] = ({"a": 3}, {"b": 4})
+    assert isinstance(config.tuple_seq, tuple)
+    assert all(isinstance(item, Config) for item in config.tuple_seq)
+    assert config.tuple_seq[0].a == 3 and config.tuple_seq[1].b == 4
+
+
+def test_parse_boot_flag():
+    class BootConfig(Config):
+        def __init__(self):
+            super().__init__()
+            self.boot_called = 0
+
+        def boot(self):
+            self.boot_called += 1
+            return super().boot()
+
+    cfg = BootConfig()
+    cfg.parse(["--a", "1"], boot=False)
+    assert cfg.boot_called == 0
+    cfg.parse(["--a", "2"])
+    assert cfg.boot_called == 1
+
+
+def test_locked_unlocked_restore_state():
+    cfg = Config()
+    with cfg.locked(), raises(ValueError):
+        cfg["x"] = 1
+    assert cfg.getattr("frozen") is False
+
+    cfg.freeze()
+    with cfg.unlocked():
+        cfg["x"] = 1
+        assert cfg.x == 1
+    assert cfg.getattr("frozen") is True
+
+
+def test_get_fallback_and_default_on_frozen():
+    cfg = Config({"b": 0.5})
+    cfg.freeze()
+    assert cfg.get("missing.b", fallback=True) == 0.5
+    assert cfg.get("missing", default=42) == 42
+
+
+def test_contains():
+    config = TestConfig()
+    assert "name" in config
+    assert "seed" in config
+    assert "a.b.c" not in config
+    assert "a.b" not in config
+
+
+def test_variable():
+    config = TestConfig()
+    assert config.network.num_classes == 10
+    config.network.num_classes += 1
+    assert config.datasets.a.num_classes == 11
+
+
+def test_fstring():
+    config = TestConfig()
+    assert f"seed{config.seed}" == "seed1016"
+
+
+def test_load():
+    config = TestConfig()
+    config.name = "Test"
+    config.datasets.a.num_classes = 12
+    buffer = StringIO()
+    config.dump(buffer, method="json")
+    assert config == Config.load(buffer, method="json")
+    assert config.name == "Test"
+    assert config.network.name == "ResNet18"
+    assert config.network.num_classes == 12
+    assert config.datasets.a.num_classes == 12
+
+
+def test_copy():
+    config = TestConfig()
+    assert config.copy() == copy(config)
+    assert config.deepcopy() == deepcopy(config)
+
+
+def test_class_attribute():
+    config = TestConfig()
+    config.datas.a.name = "CIFAR100"
+    config.datas.b.name = "MNIST"
+    assert config.datas.a.max_length == config.datas.b.max_length == 1024
+    with raises(AttributeError):
+        config.datas.a.getattr("max_length")
+
+
+class Ancestor(Config):
+    ancestor = 1
+
+
+class Parent(Ancestor):
+    parent = 2
+
+
+class ConfigDict(Parent):
+    child = 3
+
+    def __init__(self):
+        super().__init__()
+        self.a = Config()
+        self.b = Config({"a": self.a})
+        self.c = Variable(Config({"a": self.a}))
+        self.d = Config(a=self.a)
+
+
+# Variable moved from TestConfigDict class to module level
+config_dict = ConfigDict()
+
+
+def test_affinty():
+    assert id(config_dict.a) == id(config_dict.b.a) == id(config_dict.c.a) == id(config_dict.d.a)
