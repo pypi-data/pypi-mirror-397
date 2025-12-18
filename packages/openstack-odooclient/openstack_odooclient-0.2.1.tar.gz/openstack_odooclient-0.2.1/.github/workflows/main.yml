@@ -1,0 +1,38 @@
+---
+
+name: main
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish-github-pages:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Clone full tree, and checkout branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Configure git user
+        run: |
+          git config --global user.name "${GITHUB_ACTOR}"
+          git config --global user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+          cache: "pip"
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "0.9.17"
+      - name: Create virtual environment
+        run: uv sync --only-dev
+      - name: Publish the docs to GitHub Pages
+        run: uv run mike deploy --push develop
+      - name: List available docs versions
+        run: uv run mike list
