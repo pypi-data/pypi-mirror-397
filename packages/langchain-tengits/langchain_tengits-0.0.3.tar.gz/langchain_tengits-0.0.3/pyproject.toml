@@ -1,0 +1,78 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "langchain-tengits"
+dynamic = ["version"]
+description = ''
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+keywords = []
+authors = [
+  { username="softkernel",name = "Muted Code", email = "chenshiwu@tengits.com" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = []
+
+[project.urls]
+Documentation = "https://github.com/U.N. Owen/langchain-tengits#readme"
+Issues = "https://github.com/U.N. Owen/langchain-tengits/issues"
+Source = "https://github.com/U.N. Owen/langchain-tengits"
+
+[tool.hatch.version]
+path = "src/langchain_tengits/__about__.py"
+
+[tool.hatch.envs.default]
+dependencies = [
+  "langchain-openai",
+    "langchain-core",
+    "langchain-community",
+    "pydantic",
+    "numpy",
+    "openai",
+    "loguru"
+]
+
+[tool.hatch.envs.types]
+extra-dependencies = [
+  "mypy>=1.0.0",
+]
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive {args:src/langchain_tengits tests}"
+
+[tool.coverage.run]
+source_pkgs = ["langchain_tengits", "tests"]
+branch = true
+parallel = true
+omit = [
+  "src/langchain_tengits/__about__.py",
+]
+
+[tool.coverage.paths]
+langchain_tengits = ["src/langchain_tengits", "*/langchain-tengits/src/langchain_tengits"]
+tests = ["tests", "*/langchain-tengits/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
+#
+[publish.index.repos.main]
+url = "https://upload.pypi.org/legacy/"
+
+[publish.index.repos.test]
+url = "https://test.pypi.org/legacy/"

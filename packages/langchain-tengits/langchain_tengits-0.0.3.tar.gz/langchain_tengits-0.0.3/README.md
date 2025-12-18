@@ -1,0 +1,222 @@
+# langchain-tengits
+
+[![PyPI - Version](https://img.shields.io/pypi/v/langchain-tengits.svg)](https://pypi.org/project/langchain-tengits)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/langchain-tengits.svg)](https://pypi.org/project/langchain-tengits)
+
+`langchain-tengits` 是一个用于集成多种大语言模型和嵌入模型的 LangChain 社区包，支持多种模型服务商，提供统一的 API 接口。
+
+## 功能特性
+
+- 🤖 **多模型支持**: 支持多种大语言模型和嵌入模型
+- 🌐 **多服务商集成**: 支持 OpenAI、阿里百炼、DeepSeek、SiliconFlow、百度千帆、Moonshot、智谱、Ollama、火山引擎等
+- 🔄 **同步/异步调用**: 支持同步和异步调用方式
+- 📡 **流式输出**: 支持流式响应输出
+- ⚙️ **灵活配置**: 支持自定义模型配置和参数
+- 🔧 **LangChain 集成**: 完全兼容 LangChain 生态系统
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [API Reference](#api-reference)
+  - [聊天模型 (TengitsChatClient)](#聊天模型-tengitschatclient)
+  - [嵌入模型 (TengitsEmbeddingClient)](#嵌入模型-tengitsembeddingclient)
+- [Supported Providers](#supported-providers)
+- [Configuration](#configuration)
+- [发布流程](#发布流程)
+- [License](#license)
+
+## Installation
+
+```console
+pip install langchain-tengits
+```
+
+## Quick Start
+
+### 聊天模型使用示例
+
+```python
+import asyncio
+from langchain_tengits.chat_tengits import TengitsChatClient
+
+# 创建聊天客户端
+model = TengitsChatClient(
+    server_name='ali_bailian',  # 服务商名称
+    model_name='qwen-plus',     # 模型名称
+    base_url="http://localhost:8000",  # 后端服务地址
+    config={
+        "extra_body": {"enable_thinking": True}  # 额外配置
+    },
+    client_timeout=30.0  # 请求超时时间
+)
+
+# 同步调用
+def test_sync():
+    response = model.invoke([
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "你好，请介绍一下自己"}
+    ])
+    print("同步响应:", response.content)
+
+# 流式输出
+def test_stream():
+    print("流式输出:")
+    for chunk in model.stream([
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "请用3句话介绍人工智能"}
+    ]):
+        print(chunk.content, end="", flush=True)
+    print()
+
+# 异步流式输出
+async def test_async():
+    print("异步流式输出:")
+    async for chunk in model.astream([
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "请解释什么是机器学习"}
+    ]):
+        print(chunk.content, end="", flush=True)
+    print()
+
+# 执行测试
+test_sync()
+test_stream()
+asyncio.run(test_async())
+```
+
+### 嵌入模型使用示例
+
+```python
+from langchain_tengits.embedding_tengits import TengitsEmbeddingClient
+
+# 创建嵌入客户端
+embedding_model = TengitsEmbeddingClient(
+    model_name='BAAI/bge-m3',     # 模型名称
+    server_name='siliconflow',    # 服务商名称
+    base_url="http://localhost:8000",  # 后端服务地址
+    client_timout=30.0  # 请求超时时间
+)
+
+# 单文本嵌入
+def test_single_embedding():
+    text = "这是一个测试文本"
+    embedding = embedding_model.embed_query(text)
+    print(f"文本: {text}")
+    print(f"嵌入向量维度: {len(embedding)}")
+    print(f"嵌入向量前5个值: {embedding[:5]}")
+
+# 批量文本嵌入
+def test_batch_embedding():
+    texts = [
+        "人工智能是未来的发展方向",
+        "机器学习是人工智能的子领域",
+        "深度学习推动了AI的快速发展"
+    ]
+    embeddings = embedding_model.embed_documents(texts)
+    print(f"批量处理 {len(texts)} 个文本")
+    for i, embedding in enumerate(embeddings):
+        print(f"文本 {i+1} 向量维度: {len(embedding)}")
+
+# 执行测试
+test_single_embedding()
+test_batch_embedding()
+```
+
+## API Reference
+
+### 聊天模型 (TengitsChatClient)
+
+#### 参数说明
+
+- `base_url` (str, 必需): 后端服务地址
+- `server_name` (str, 必需): 模型服务商名称
+- `model_name` (str, 必需): 模型名称
+- `model_id` (int, 可选): 模型ID，如果不提供会自动获取
+- `config` (dict, 可选): 模型配置参数
+- `client_timeout` (float, 可选): 请求超时时间（秒）
+
+#### 主要方法
+
+- `invoke(messages)`: 同步调用，返回完整响应
+- `stream(messages)`: 同步流式调用，返回生成器
+- `astream(messages)`: 异步流式调用，返回异步生成器
+
+### 嵌入模型 (TengitsEmbeddingClient)
+
+#### 参数说明
+
+- `base_url` (str, 必需): 后端服务地址
+- `server_name` (str, 必需): 模型服务商名称
+- `model_name` (str, 必需): 模型名称
+- `client_timout` (float, 可选): 请求超时时间（秒），默认30秒
+
+#### 主要方法
+
+- `embed_query(text)`: 获取单个文本的嵌入向量
+- `embed_documents(texts)`: 批量获取多个文本的嵌入向量
+
+## Supported Providers
+
+目前支持的模型服务商包括：
+
+- `openai`: OpenAI 官方API
+- `ali_bailian`: 阿里云百炼
+- `deepseek`: DeepSeek
+- `siliconflow`: SiliconFlow
+- `baidu_qianfan`: 百度千帆
+- `moonshot`: Moonshot AI
+- `zhipu`: 智谱AI
+- `ollama`: Ollama
+- `volcengine`: 火山引擎
+
+## Configuration
+
+### 聊天模型配置示例
+
+```python
+config = {
+    "stream": True,  # 启用流式输出
+    "temperature": 0.7,  # 温度参数，控制随机性
+    "max_tokens": 1000,  # 最大输出token数
+    "extra_body": {  # 额外请求体参数
+        "enable_thinking": True,  # 启用思考模式
+        # 其他自定义参数...
+    },
+    "extra_headers": {  # 额外HTTP头
+        "X-Custom-Header": "value"
+    }
+}
+```
+
+### 错误处理
+
+```python
+try:
+    response = model.invoke(messages)
+    print(response.content)
+except Exception as e:
+    print(f"调用失败: {e}")
+```
+
+## 发布流程
+
+1. 构建包：
+   ```bash
+   hatch build
+   ```
+
+2. 发布到测试PyPI：
+   ```bash
+   hatch publish -r test -u __token__
+   ```
+   然后输入 TestPyPI 的账号 token
+
+3. 从测试PyPI安装：
+   ```bash
+   pip install -i https://test.pypi.org/simple/ langchain-tengits
+   ```
+
+## License
+
+`langchain-tengits` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.
