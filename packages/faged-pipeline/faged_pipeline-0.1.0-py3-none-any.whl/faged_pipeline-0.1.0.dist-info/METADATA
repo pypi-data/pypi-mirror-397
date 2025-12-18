@@ -1,0 +1,70 @@
+Metadata-Version: 2.4
+Name: faged-pipeline
+Version: 0.1.0
+Summary: FaGED pipeline: construct graph representation for open-space public buildings, extract prototypes, and compute (n)GED/FaGED for layout-behavior retrieval.
+Author: Song Guo
+License: MIT
+Keywords: graph-edit-distance,infomap,networkx,architecture,layout
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: License :: OSI Approved :: MIT License
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: numpy>=1.24
+Requires-Dist: pandas>=2.0
+Requires-Dist: networkx>=3.2
+Requires-Dist: tqdm>=4.66
+Requires-Dist: matplotlib>=3.8
+Requires-Dist: scipy>=1.10
+Requires-Dist: opencv-python>=4.8
+Requires-Dist: shapely<2.1,>=1.8
+Requires-Dist: infomap>=2.7
+Provides-Extra: dev
+Requires-Dist: pytest>=8; extra == "dev"
+Requires-Dist: ruff>=0.6; extra == "dev"
+Requires-Dist: build>=1.2; extra == "dev"
+Requires-Dist: twine>=5.0; extra == "dev"
+
+# faged_pipeline
+
+A modular Python pipeline for architectural and urban spatial analysis, supporting
+annotation inspection, base graph construction, connectivity-aware transformation,
+layout prototype extraction, and FaGED-based graph comparison.
+
+Each step can be executed **independently** or **combined arbitrarily**, making the
+pipeline suitable for both exploratory research and reproducible experiments.
+
+---
+
+## Features
+
+- LabelMe annotation quality checks (visual & structural)
+- Area-aware Base Graph (BG) construction
+- Connectivity-aware Graph (CaG) transformation
+- Automatic selection of optimal graph variant
+- Layout prototype extraction via Infomap
+- GED / nGED / FaGED (optimal edit paths)
+- Batch processing with multiple Markov times
+- Research-oriented, transparent, and extensible design
+
+---
+
+## Project Structure
+
+faged_pipeline/
+├─ pyproject.toml
+├─ README.md
+├─ src/
+│ └─ faged_pipeline/
+│ ├─ init.py
+│ ├─ pipeline.py
+│ ├─ step0_checks.py
+│ ├─ step1_behavior.py
+│ ├─ step2_basegraph.py
+│ ├─ step3_transform.py
+│ ├─ step4_prototype.py
+│ └─ step5_faged.py
+└─ notebooks/
+└─ example_pipeline.ipynb
