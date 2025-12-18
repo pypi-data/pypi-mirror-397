@@ -1,0 +1,36 @@
+
+[project]
+name = "chq-pybos"
+version = "0.1.0"
+description = "A Python client library for the BOS API with improved developer ergonomics and type safety"
+authors = [
+    {name = "Jared Brown", email = "jbrown@chq.org"},
+    {name = "Randy Butts", email = "rbutts@chq.org"},
+    {name = "Ian Drake", email = "idrake@chq.org"}
+]
+dependencies = [
+    "suds>=1.0.0",
+    "requests>=2.25.0",
+    "xmltodict>=0.12.0",
+    "pytest>=8.4.2",
+]
+requires-python = ">=3.12"
+readme = "README.md"
+license = {text = "MIT"}
+
+[project.optional-dependencies]
+dev = [
+    "black>=25.1.0",
+    "pytest>=8.4.2",
+]
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.repositories.gitlab]
+url = "https://gitlab.it.chq.org/api/v4/projects/65/packages/pypi/"
+
+[[tool.pdm.source]]
+name = "pbos-registry"
+url = "https://gitlab.it.chq.org/api/v4/projects/65/packages/pypi/simple/"
+verify_ssl = true
