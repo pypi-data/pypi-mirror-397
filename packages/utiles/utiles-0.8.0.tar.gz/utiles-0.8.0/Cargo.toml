@@ -1,0 +1,154 @@
+[workspace]
+resolver = "2"
+members = ["utiles-pyo3"]
+
+[workspace.package]
+version = "0.8.0"
+authors = [
+    "Jesse Rubin <jessekrubin@gmail.com>",
+    "Dan Costello <dan.costello2@gmail.com>",
+]
+documentation = "https://github.com/jessekrubin/utiles"
+edition = "2024"
+homepage = "https://github.com/jessekrubin/utiles"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/jessekrubin/utiles"
+
+[workspace.dependencies]
+ahash = "0.8.12"
+anyhow = "1.0.98"
+# TODO: remove git dependency when async-sqlite is published on crates.io
+# async-sqlite = { git = "https://github.com/ryanfowler/async-sqlite.git" }
+async-sqlite = { version = "0.5.3", features = ["bundled", "functions", "trace"] }
+async-trait = "0.1.88"
+axum = { version = "0.8.7", features = ["tokio", "json", "macros"] }
+axum-extra = "0.12.2"
+base64 = "0.22.1"
+clap = { version = "4.5", features = ["derive", "color", "wrap_help"] }
+criterion = "0.8.1"
+crossbeam = { version = "0.8.4", features = ["crossbeam-channel"] }
+fast_hilbert = "2.0.2"
+fnv = "1.0.7"
+futures = "0.3.31"
+futures-util = "0.3.31"
+geo-types = "0.7.17"
+geojson = "0.24.2"
+globset = "0.4.18"
+hex = "0.4.3"
+image = "0.25.9"
+imagesize = "0.14.0"
+indicatif = "0.18.3"
+indoc = "2.0.7"
+jiff = "0.2.16"
+json-patch = "4.0.0"
+md-5 = "0.10.6"
+noncrypto-digests = "0.3.7"
+num_cpus = "1.17.0"
+owo-colors = { version = "4.2.3", features = ["supports-color"] }
+oxipng = { version = "10.0.0", features = [] }
+pmtiles = { version = "0.18.2", features = ["iter-async", "mmap-async-tokio", "tilejson", "write"], default-features = false}
+pyo3 = "0.27"
+pyo3-build-config = "0.27"
+rusqlite = { version = "0.37.0", features = ["bundled", "vtab", "blob"] }
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+size = { version = "0.5.0", features = ["default"] }
+sqlite-hashes = { version = "0.10.8", default-features = false, features = ["hex", "md5", "fnv", "xxhash"] }
+strum = { version = "0.27.2", features = ["derive"] }
+strum_macros = "0.27.2"
+thiserror = "2.0.17"
+tilejson = "0.4.3"
+tokio = { version = "1.48", features = ["full"] }
+tokio-stream = "0.1.17"
+tower = { version = "0.5.2", features = ["timeout"] }
+tower-http = { version = "0.6.8", features = ["trace", "timeout", "add-extension", "util", "request-id", "compression-gzip", "compression-zstd", "async-compression", "cors"] }
+tracing = "0.1.43"
+tracing-subscriber = { version = "0.3.20", features = ["serde", "serde_json", "env-filter"] }
+walkdir = "2.5.0"
+xxhash-rust = { version = "0.8.15", features = ["xxh32", "xxh64", "xxh3", "const_xxh32", "const_xxh64", "const_xxh3"] }
+
+# Config for 'cargo dist'
+[workspace.metadata.dist]
+# The preferred cargo-dist version to use in CI (Cargo.toml SemVer syntax)
+cargo-dist-version = "0.19.1"
+# CI backends to support
+ci = "github"
+# The installers to generate for each app
+installers = []
+# Target platforms to build apps for (Rust target-triple syntax)
+targets = ["aarch64-apple-darwin", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-pc-windows-msvc"]
+# Publish jobs to run in CI
+pr-run-mode = "plan"
+
+[profile.dev]
+opt-level = 0
+debug = 0
+
+[profile.dev.package]
+image.opt-level = 3
+quote.opt-level = 3
+serde_derive.opt-level = 3
+syn.opt-level = 3
+proc-macro2.opt-level = 3
+
+[profile.release]
+opt-level = 3
+strip = true
+lto = "thin"
+# lto = "fat"
+
+# The profile that 'cargo dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
+
+[workspace.lints.rust]
+unsafe_code = "warn"
+unreachable_pub = "warn"
+
+[workspace.lints.clippy]
+# groups
+cargo = { level = "warn", priority = -2 }
+all = { level = "warn", priority = -2 }
+# periodically check nursery lints
+# nursery = { level = "warn", priority = -2 }
+pedantic = { level = "warn", priority = -2 }
+correctness = { level = "warn", priority = 2 }
+panic = { level = "warn", priority = -1 }
+style = { level = "warn", priority = 1 }
+perf = { level = "warn", priority = 3 }
+# deny lints
+unwrap_used = "deny"
+# warn
+# arithmetic_side_effects = "warn"
+# allow pedantic
+missing_errors_doc = "allow"
+module_name_repetitions = "allow"
+# cargo allowed
+multiple_crate_versions = "allow"
+
+# nursery always on
+use_self = "warn"
+
+# =======
+# nursery
+# =======
+# __turn_these_on_occasionally__
+# equatable_if_let = "warn"
+# literal_string_with_formatting_args = "warn"
+# significant_drop_in_scrutinee = "warn"
+# __TBD__
+# as_ptr_cast_mut = 'warn'
+# derive_partial_eq_without_eq = "allow"
+# missing_const_for_fn = "allow"
+# option_if_let_else = "warn"
+# or_fun_call = "warn"
+# redundant_pub_crate = "allow"
+# significant_drop_tightening = "allow"
+# needless_pass_by_ref_mut = "allow"
+# cognitive_complexity = "allow"
+
+
+
+[workspace.metadata.release]
+tag-name = "v{{version}}"

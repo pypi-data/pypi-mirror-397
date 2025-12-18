@@ -1,0 +1,37 @@
+[package]
+name = "utiles-pyo3"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+include = ["src/**/*", "Cargo.toml", "LICENSE", "README.md"]
+license.workspace = true
+publish = false
+readme = "README.md"
+description = "utiles python bindings"
+homepage = "https://github.com/jessekrubin/utiles"
+repository = "https://github.com/jessekrubin/utiles"
+
+[lib]
+name = "_utiles"
+crate-type = ["cdylib"]
+
+[dependencies]
+geojson.workspace = true
+pyo3 = { workspace = true, features = ["experimental-async"] }
+serde.workspace = true
+serde_json.workspace = true
+size.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+utiles = { path = "../crates/utiles", features = ["python"] }
+
+[dev-dependencies]
+pyo3 = { workspace = true, features = ["auto-initialize"] }
+
+[build-dependencies]
+pyo3-build-config.workspace = true
+jiff.workspace = true
+
+[lints]
+workspace = true
+
