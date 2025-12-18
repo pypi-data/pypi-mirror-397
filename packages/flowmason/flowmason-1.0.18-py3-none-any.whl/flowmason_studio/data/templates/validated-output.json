@@ -1,0 +1,131 @@
+{
+  "id": "validated-output",
+  "name": "Validated Output Generator",
+  "description": "Generate content with built-in validation and quality assurance. Ensures output meets specified criteria before delivery.",
+  "category": "quality",
+  "tags": [
+    "quality",
+    "validation",
+    "qa",
+    "compliance"
+  ],
+  "difficulty": "advanced",
+  "use_cases": [
+    "Generate compliant content",
+    "Ensure output quality standards",
+    "Automated quality assurance",
+    "Content that must meet specific criteria"
+  ],
+  "stages": [
+    {
+      "id": "generate",
+      "component_type": "generator",
+      "name": "Generate Content",
+      "config": {
+        "prompt": "{{input.prompt}}",
+        "system_prompt": "{{input.system_prompt}}"
+      },
+      "depends_on": [],
+      "position": {
+        "x": 100,
+        "y": 150
+      }
+    },
+    {
+      "id": "validate",
+      "component_type": "critic",
+      "name": "Validate Output",
+      "config": {
+        "content": "{{upstream.generate.content}}",
+        "criteria": "Validate the generated content against these criteria:\n\n{{input.validation_criteria}}\n\nFor each criterion, indicate:\n- PASS or FAIL\n- Specific issues found (if any)\n- Suggested fixes"
+      },
+      "depends_on": [
+        "generate"
+      ],
+      "position": {
+        "x": 350,
+        "y": 150
+      }
+    },
+    {
+      "id": "improve",
+      "component_type": "improver",
+      "name": "Fix Issues",
+      "config": {
+        "content": "{{upstream.generate.content}}",
+        "feedback": "{{upstream.validate.feedback}}",
+        "instructions": "Address all validation failures. Ensure the output passes all criteria while maintaining the original intent and quality."
+      },
+      "depends_on": [
+        "validate"
+      ],
+      "position": {
+        "x": 600,
+        "y": 150
+      }
+    },
+    {
+      "id": "final-check",
+      "component_type": "critic",
+      "name": "Final Validation",
+      "config": {
+        "content": "{{upstream.improve.content}}",
+        "criteria": "Final validation check:\n{{input.validation_criteria}}\n\nConfirm all criteria now pass. Output a summary:\n- Overall Status: PASS/FAIL\n- Criteria Met: X/Y\n- Any remaining concerns"
+      },
+      "depends_on": [
+        "improve"
+      ],
+      "position": {
+        "x": 850,
+        "y": 150
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "prompt": {
+        "type": "string",
+        "description": "The content generation prompt"
+      },
+      "system_prompt": {
+        "type": "string",
+        "description": "System prompt for the generator"
+      },
+      "validation_criteria": {
+        "type": "string",
+        "description": "Criteria the output must meet (e.g., 'Must be under 500 words, must not contain competitor names')"
+      }
+    },
+    "required": [
+      "prompt",
+      "validation_criteria"
+    ]
+  },
+  "output_stage_id": "improve",
+  "example_input": {
+    "prompt": "Generate a product listing for a wireless bluetooth headphone",
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "price": {
+          "type": "number"
+        },
+        "features": {
+          "type": "array"
+        },
+        "in_stock": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "price",
+        "features"
+      ]
+    }
+  }
+}

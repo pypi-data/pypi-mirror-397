@@ -1,0 +1,58 @@
+{
+  "id": "hello-world",
+  "name": "Hello World",
+  "description": "A simple single-stage pipeline demonstrating basic text generation. Perfect for getting started with FlowMason.",
+  "category": "getting-started",
+  "tags": [
+    "beginner",
+    "simple",
+    "text-generation"
+  ],
+  "difficulty": "beginner",
+  "use_cases": [
+    "Learn the basics of FlowMason",
+    "Test your API key configuration",
+    "Quick text generation tasks"
+  ],
+  "stages": [
+    {
+      "id": "generate",
+      "component_type": "generator",
+      "name": "Generate Response",
+      "config": {
+        "prompt": "{{input.prompt}}",
+        "system_prompt": "You are a helpful assistant. Respond concisely and clearly."
+      },
+      "depends_on": [],
+      "position": {
+        "x": 250,
+        "y": 150
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "prompt": {
+        "type": "string",
+        "description": "The prompt to send to the AI"
+      }
+    },
+    "required": [
+      "prompt"
+    ]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "content": {
+        "type": "string",
+        "description": "The generated response"
+      }
+    }
+  },
+  "output_stage_id": "generate",
+  "example_input": {
+    "prompt": "What are three interesting facts about the planet Mars?"
+  }
+}
