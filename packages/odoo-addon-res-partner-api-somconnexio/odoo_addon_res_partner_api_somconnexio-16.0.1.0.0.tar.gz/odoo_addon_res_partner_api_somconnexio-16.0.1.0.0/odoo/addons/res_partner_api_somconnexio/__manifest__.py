@@ -1,0 +1,15 @@
+{
+    "name": "Odoo Som Connexió customizations for res.partner API",
+    "version": "16.0.1.0.0",
+    "summary": "Customizations for res.partner API in Som Connexió.",
+    "author": "Coopdevs Treball SCCL, Som Connexió SCCL",
+    "website": "https://coopdevs.org",
+    "license": "AGPL-3",
+    "category": "Cooperative management",
+    "depends": ["base_rest_somconnexio", "somconnexio"],
+    "data": [],
+    "demo": [],
+    "external_dependencies": {},
+    "application": False,
+    "installable": True,
+}
