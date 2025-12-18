@@ -1,0 +1,26 @@
+{{- if .Values.prometheusRule.enabled }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "emqx-client-monitor.fullname" . }}
+  namespace: {{ default .Release.Namespace .Values.prometheusRule.namespace }}
+  labels:
+    {{- include "emqx-client-monitor.labels" . | nindent 4 }}
+    {{- with .Values.prometheusRule.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  groups:
+    - name: emqx-client-monitor.rules
+      rules:
+        - alert: EmqxClientDisconnectedTooLong
+          expr: |
+            max(emqx_client_monitor_connected) by (alias, client_id, broker) == 0
+          for: {{ .Values.prometheusRule.offlineWindow }}
+          labels:
+            severity: {{ .Values.prometheusRule.severity | quote }}
+          annotations:
+            summary: "EMQX client {{`{{`}} $labels.alias {{`}}`}} is disconnected"
+            description: "Client {{`{{`}} $labels.alias {{`}}`}} on broker {{`{{`}} $labels.broker {{`}}`}} has been offline for at least {{ .Values.prometheusRule.offlineWindow }}."
+{{- end }}

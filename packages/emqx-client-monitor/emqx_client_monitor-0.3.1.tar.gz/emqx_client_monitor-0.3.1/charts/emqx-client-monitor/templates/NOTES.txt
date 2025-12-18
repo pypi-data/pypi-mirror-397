@@ -1,0 +1,6 @@
+Thank you for installing {{ include "emqx-client-monitor.fullname" . }}.
+
+1. Exporter Service: {{ include "emqx-client-monitor.fullname" . }} on port {{ .Values.service.port }}.
+2. Prometheus scraping is {{ ternary "enabled" "disabled" .Values.serviceMonitor.enabled }} via ServiceMonitor resources.
+3. Configuration secret: {{ include "emqx-client-monitor.configSecretName" . }} (mounted at {{ .Values.config.path }}).
+4. Use `kubectl get pods -l {{- include "emqx-client-monitor.selectorLabels" . | replace "\n" ","  | replace ": " "=" }}` to inspect status.
