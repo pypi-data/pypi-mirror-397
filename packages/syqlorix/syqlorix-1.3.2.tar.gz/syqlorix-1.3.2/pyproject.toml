@@ -1,0 +1,71 @@
+# pyproject.toml
+# about this package
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "syqlorix"
+version = "1.3.2"
+description = "A hyper-minimalist Python framework for building component-based web UIs and static sites with a pure Python DSL."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT License" }
+keywords = ["html", "css", "javascript", "dsl", "web", "components", "state-management", "static-site-generator", "ui", "live-reload", "routing", "static-server"]
+authors = [
+  { name = "Karl Benjamin R. Bughaw", email = "benjo@pro.space" }
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Markup :: HTML"
+]
+
+dependencies = [
+    "click>=8.0",
+    "watchdog>=2.0",
+    "websockets>=12.0",
+    "jsmin>=3.0",
+    "cssmin>=0.2",
+    "requests>=2.25.0"
+]
+
+[project.optional-dependencies]
+tailwind = [
+  "tailwind-processor"
+]
+full = [
+  "syqlorix",
+  "syqlorix[tailwind]"
+]
+
+[project.urls]
+Homepage = "https://github.com/Syqlorix/Syqlorix"
+"Bug Tracker" = "https://github.com/Syqlorix/Syqlorix/issues"
+
+[project.scripts]
+syqlorix = "syqlorix.cli:main"
+
+[tool.setuptools]
+packages = ["syqlorix"]
+package-data = {"syqlorix" = ["py.typed", "core.pyi"]}
+
+[tool.flake8]
+exclude = [
+    "venv",
+    "__pycache__",
+    ".pytest_cache",
+    "dist",
+    "build",
+    "syqlorix.egg-info",
+]
