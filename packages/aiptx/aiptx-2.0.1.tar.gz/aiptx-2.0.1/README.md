@@ -1,0 +1,303 @@
+# AIPTX - AI-Powered Penetration Testing Framework
+
+[![PyPI version](https://badge.fury.io/py/aiptx.svg)](https://badge.fury.io/py/aiptx)
+[![Downloads](https://static.pepy.tech/badge/aiptx)](https://pepy.tech/project/aiptx)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
+
+> **The Ultimate AI-Powered Penetration Testing & Vulnerability Assessment Tool**
+
+**AIPTX** is a comprehensive **penetration testing framework** that combines **36+ security tools** with **AI/LLM intelligence** for automated vulnerability discovery. Perfect for **security researchers**, **bug bounty hunters**, **penetration testers**, and **red team** professionals.
+
+## Why AIPTX?
+
+| Feature | AIPTX | Traditional Tools |
+|---------|-------|-------------------|
+| AI-Guided Scanning | ✅ LLM decides next steps | ❌ Manual decisions |
+| Tool Integration | ✅ 36+ tools unified | ❌ Run separately |
+| Enterprise Scanners | ✅ Acunetix, Burp, Nessus, ZAP | ❌ Separate licenses |
+| Auto Exploitation | ✅ SQLMap, Hydra, XSStrike | ❌ Manual chaining |
+| Professional Reports | ✅ HTML, JSON, Executive | ❌ Copy-paste results |
+| One Command | ✅ `aiptx scan target.com` | ❌ Multiple scripts |
+
+## Key Features
+
+### AI-Powered Intelligence
+- **LLM-Guided Scanning** - Claude, GPT-4, or 100+ models via LiteLLM decide which tools to run based on findings
+- **Smart Triage** - AI prioritizes vulnerabilities by real-world exploitability, not just CVSS
+- **Attack Chain Detection** - Identifies how medium findings combine into critical risks
+- **RAG-Based Tool Selection** - Semantic search matches objectives to optimal tools
+
+### Comprehensive Tool Coverage
+- **36+ Security Tools** - Unified interface for reconnaissance, scanning, exploitation, and post-exploitation
+- **Enterprise Scanner Integration** - Native API support for Acunetix, Burp Suite Professional, Nessus, and OWASP ZAP
+- **Automated Reconnaissance** - Subdomain enumeration, port scanning, technology fingerprinting
+- **Active Exploitation** - SQL injection, XSS, command injection testing (opt-in)
+- **Post-Exploitation** - Privilege escalation detection with LinPEAS/WinPEAS
+
+### Professional Output
+- **HTML Reports** - Executive-ready vulnerability reports
+- **JSON Export** - CI/CD integration and programmatic access
+- **REST API** - Integrate AIPTX into your security pipeline
+- **Rich TUI** - Beautiful terminal interface with real-time progress
+
+## Installation
+
+```bash
+# Recommended: Zero-click install with pipx
+pipx install aiptx
+
+# Or with pip
+pip install aiptx
+
+# Full installation (ML, browser automation, proxy)
+pip install aiptx[full]
+```
+
+**Requirements:** Python 3.10+ | External tools auto-detected (nmap, nuclei, etc.)
+
+## Quick Start
+
+```bash
+# Basic vulnerability scan
+aiptx scan example.com
+
+# AI-guided intelligent scanning (requires API key)
+aiptx scan example.com --ai
+
+# Full comprehensive scan (all tools + exploitation)
+aiptx scan example.com --full
+
+# Container security scanning
+aiptx scan example.com --container
+
+# Secret/credential detection
+aiptx scan example.com --secrets
+
+# With enterprise scanners
+aiptx scan example.com --acunetix --burp --nessus --zap
+
+# Check configuration and installed tools
+aiptx status
+
+# Start REST API server
+aiptx api
+```
+
+## Tool Coverage
+
+### Phase 1: Reconnaissance (10 Tools)
+
+| Tool | Purpose | Category |
+|------|---------|----------|
+| **subfinder** | Fast passive subdomain enumeration | Subdomain Discovery |
+| **assetfinder** | Find related domains and assets | Subdomain Discovery |
+| **amass** | In-depth DNS enumeration | Subdomain Discovery |
+| **httpx** | HTTP probing and fingerprinting | HTTP Analysis |
+| **nmap** | Port scanning and service detection | Network Scanning |
+| **waybackurls** | Historical URL discovery via Wayback Machine | OSINT |
+| **theHarvester** | Email and subdomain OSINT gathering | OSINT |
+| **dnsrecon** | DNS enumeration and zone transfers | DNS Analysis |
+| **wafw00f** | Web Application Firewall detection | WAF Detection |
+| **whatweb** | Technology stack fingerprinting | Tech Detection |
+
+### Phase 2: Vulnerability Scanning (15+ Tools)
+
+| Tool | Purpose | Category |
+|------|---------|----------|
+| **nuclei** | Template-based vulnerability scanning | Vuln Scanner |
+| **nikto** | Web server vulnerability scanner | Web Scanner |
+| **wpscan** | WordPress security scanner | CMS Scanner |
+| **ffuf** | Fast web fuzzer for directories/files | Fuzzing |
+| **gobuster** | Directory and vhost brute-forcing | Fuzzing |
+| **dirsearch** | Web path discovery | Fuzzing |
+| **sslscan** | SSL/TLS configuration analysis | SSL Testing |
+| **testssl** | Comprehensive TLS/SSL testing | SSL Testing |
+| **gitleaks** | Secret detection in git repositories | Secret Scanning |
+| **trufflehog** | Deep credential scanning | Secret Scanning |
+| **trivy** | Container vulnerability scanning | Container Security |
+| **Acunetix** | Enterprise DAST scanner | Enterprise |
+| **Burp Suite** | Professional web security scanner | Enterprise |
+| **Nessus** | Network vulnerability assessment | Enterprise |
+| **OWASP ZAP** | Open-source DAST | Enterprise |
+
+### Phase 3: Exploitation (5 Tools - Opt-in Full Mode)
+
+| Tool | Purpose | Attack Type |
+|------|---------|-------------|
+| **sqlmap** | Automated SQL injection exploitation | SQLi |
+| **commix** | Command injection testing | Command Injection |
+| **xsstrike** | Advanced XSS detection and exploitation | XSS |
+| **hydra** | Network login brute-forcing | Credential Attack |
+| **searchsploit** | Exploit database search | Exploit Research |
+
+### Phase 4: Post-Exploitation (4 Tools)
+
+| Tool | Purpose | Platform |
+|------|---------|----------|
+| **linpeas** | Linux privilege escalation enumeration | Linux |
+| **winpeas** | Windows privilege escalation enumeration | Windows |
+| **pspy** | Process monitoring without root | Linux |
+| **lazagne** | Credential extraction from memory | Cross-platform |
+
+## Enterprise Scanner Integration
+
+AIPTX provides **native API integration** with enterprise security scanners:
+
+```bash
+# Configure enterprise scanners
+export ACUNETIX_URL="https://your-acunetix:3443"
+export ACUNETIX_API_KEY="your-api-key"
+
+export BURP_URL="http://your-burp:1337"
+export BURP_API_KEY="your-api-key"
+
+export NESSUS_URL="https://your-nessus:8834"
+export NESSUS_ACCESS_KEY="your-access-key"
+export NESSUS_SECRET_KEY="your-secret-key"
+
+export ZAP_URL="http://localhost:8080"
+export ZAP_API_KEY="your-api-key"
+```
+
+## AI/LLM Configuration
+
+AIPTX supports **100+ LLM providers** via LiteLLM:
+
+```bash
+# Anthropic Claude (recommended)
+export ANTHROPIC_API_KEY="your-key"
+
+# OpenAI GPT-4
+export OPENAI_API_KEY="your-key"
+
+# Azure OpenAI
+export AZURE_API_KEY="your-key"
+export AZURE_API_BASE="your-endpoint"
+
+# Local models (Ollama, LM Studio)
+export OLLAMA_API_BASE="http://localhost:11434"
+```
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         AIPTX v2.0                              │
+├─────────────────────────────────────────────────────────────────┤
+│                     AI INTELLIGENCE LAYER                       │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │
+│  │ LLM Engine  │  │ CVE Scoring │  │Attack Chain │            │
+│  │ (LiteLLM)   │  │   Engine    │  │  Detection  │            │
+│  └─────────────┘  └─────────────┘  └─────────────┘            │
+├─────────────────────────────────────────────────────────────────┤
+│                      SCANNING PIPELINE                          │
+│  RECON ──────► SCAN ──────► EXPLOIT ──────► POST-EXPLOIT       │
+│  10 tools      15 tools     5 tools         4 tools            │
+├─────────────────────────────────────────────────────────────────┤
+│                    ENTERPRISE INTEGRATIONS                      │
+│  Acunetix  │  Burp Suite  │  Nessus  │  OWASP ZAP             │
+├─────────────────────────────────────────────────────────────────┤
+│                         OUTPUT                                  │
+│  HTML Reports  │  JSON Export  │  REST API  │  TUI             │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## Command Reference
+
+| Command | Description |
+|---------|-------------|
+| `aiptx scan <target>` | Run security scan against target |
+| `aiptx scan <target> --ai` | Enable AI-guided intelligent scanning |
+| `aiptx scan <target> --full` | Comprehensive scan with all tools |
+| `aiptx scan <target> --quick` | Fast scan with essential tools only |
+| `aiptx scan <target> --exploit` | Enable exploitation tools |
+| `aiptx scan <target> --container` | Enable container/Docker scanning |
+| `aiptx scan <target> --secrets` | Enable secret/credential detection |
+| `aiptx scan <target> --acunetix` | Include Acunetix enterprise scan |
+| `aiptx scan <target> --burp` | Include Burp Suite scan |
+| `aiptx scan <target> --nessus` | Include Nessus vulnerability scan |
+| `aiptx scan <target> --zap` | Include OWASP ZAP scan |
+| `aiptx status` | Check configuration and tool availability |
+| `aiptx version` | Show version information |
+| `aiptx api` | Start REST API server |
+
+## Use Cases
+
+### Bug Bounty Hunting
+```bash
+# Comprehensive recon + scanning for bug bounty
+aiptx scan target.com --ai --full
+```
+
+### Penetration Testing
+```bash
+# Professional pentest with enterprise tools
+aiptx scan client-app.com --acunetix --nessus --full
+```
+
+### DevSecOps Pipeline
+```bash
+# Automated security scanning in CI/CD
+aiptx scan staging.app.com --container --secrets --json > results.json
+```
+
+### Red Team Operations
+```bash
+# Full attack chain with exploitation
+aiptx scan target.corp --ai --exploit --full
+```
+
+## Comparison with Alternatives
+
+| Feature | AIPTX | Nuclei | Nmap | Manual Testing |
+|---------|-------|--------|------|----------------|
+| AI Intelligence | ✅ | ❌ | ❌ | ❌ |
+| Unified Interface | ✅ | ❌ | ❌ | ❌ |
+| 36+ Tools | ✅ | ❌ | ❌ | ✅ (manual) |
+| Enterprise Scanners | ✅ | ❌ | ❌ | ✅ (separate) |
+| Auto Reports | ✅ | ✅ | ❌ | ❌ |
+| Attack Chaining | ✅ | ❌ | ❌ | ✅ (manual) |
+| REST API | ✅ | ❌ | ❌ | ❌ |
+| Zero Config | ✅ | ✅ | ✅ | ❌ |
+
+## Requirements
+
+- **Python**: 3.10 or higher
+- **OS**: Linux, macOS, Windows (WSL recommended)
+- **Optional**: Docker, SSH access for remote execution
+- **External Tools**: Auto-detected (nmap, nuclei, sqlmap, etc.)
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## Author
+
+**Satyam Rastogi** - Security Researcher & Developer
+
+- GitHub: [@satyamrastogi](https://github.com/satyamrastogi)
+- Website: [aiptx.io](https://aiptx.io)
+
+## Links
+
+- [Documentation](https://aiptx.io/docs)
+- [PyPI Package](https://pypi.org/project/aiptx/)
+- [GitHub Repository](https://github.com/satyamrastogi/aiptx)
+- [Issue Tracker](https://github.com/satyamrastogi/aiptx/issues)
+- [Changelog](https://github.com/satyamrastogi/aiptx/blob/main/CHANGELOG.md)
+
+## Keywords
+
+`penetration-testing` `pentest` `vulnerability-scanner` `security-tools` `bug-bounty` `ethical-hacking` `red-team` `offensive-security` `web-security` `OWASP` `CVE` `exploit` `reconnaissance` `nmap` `nuclei` `sqlmap` `burp-suite` `acunetix` `nessus` `zap` `AI` `LLM` `automation` `VAPT` `DAST` `appsec` `infosec` `cybersecurity`
+
+---
+
+<p align="center">
+  <b>Star this repo if AIPTX helps your security testing!</b><br>
+  <a href="https://github.com/satyamrastogi/aiptx">⭐ GitHub</a> •
+  <a href="https://pypi.org/project/aiptx/">📦 PyPI</a> •
+  <a href="https://aiptx.io/docs">📚 Docs</a>
+</p>
