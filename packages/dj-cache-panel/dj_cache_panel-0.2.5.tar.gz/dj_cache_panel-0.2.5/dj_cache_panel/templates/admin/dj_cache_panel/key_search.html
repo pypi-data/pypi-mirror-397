@@ -1,0 +1,240 @@
+{% extends "admin/dj_cache_panel/base.html" %}
+{% load i18n admin_urls static %}
+
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'dj_cache_panel:index' %}">{% trans 'Cache Instances' %}</a>
+    &rsaquo; {{ cache_name }} {% trans 'Key Search' %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module key-search">
+    <!-- Messages -->
+    {% if messages %}
+    <div class="messagelist">
+        {% for message in messages %}
+        <div class="{% if message.tags == 'error' %}error{% else %}success{% endif %}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="messagelist">
+        <div class="error">
+            <strong>Error:</strong><br>
+            <pre style="white-space: pre-wrap; font-family: monospace; font-size: 11px;">{{ error }}</pre>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Page Header with Title and Flush Button -->
+    <div class="key-search-page-header">
+        <h1>{{ cache_name }} - {% trans 'Key Search' %}</h1>
+        {% if flush_supported %}
+        <form method="post" class="key-search-flush-form" onsubmit="return confirm('{% trans 'Are you sure you want to delete all entries in this cache? This action cannot be undone.' %}');">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="flush">
+            <input type="submit" value="{% trans 'Flush Cache' %}" class="flush-button">
+        </form>
+        {% else %}
+        <input type="button" value="{% trans 'Flush Cache' %}" class="flush-button" disabled>
+        {% endif %}
+    </div>
+
+    <div class="module">
+        <h2>{% trans 'Cache Information' %}</h2>
+        <br>
+        <div class="form-row">
+            <div class="field-box">
+                <label><strong>Name:</strong></label>
+                <div class="readonly">
+                    <code>{{ cache_name }}</code>
+                </div>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="field-box">
+                <label><strong>Backend:</strong></label>
+                <div class="readonly">
+                    <code>{{ cache_config.BACKEND }}</code>
+                </div>
+            </div>
+        </div>
+        {% if abilities.edit_key %}
+        <div class="form-row">
+            <div class="field-box">
+                <a href="{% url 'dj_cache_panel:key_add' cache_name %}" class="button">{% trans 'Add New Key' %}</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    
+    {% if error_message %}
+    <div class="messagelist">
+        <div class="error">{{ error_message }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Query/Get Key Not Supported Messages -->
+    {% if not query_supported or not get_key_supported %}
+    <div class="module">
+        <div class="messagelist">
+            <div class="warning" style="background: #ffc; padding: 10px; border-left: 4px solid #fc0;">
+                {% if not query_supported and not get_key_supported %}
+                <strong>{% trans 'Key Operations Not Available' %}</strong>
+                <ul>
+                    <li style="margin: 5px 0 0 0;">
+                        {% trans 'This cache backend does not support listing keys or performing exact key lookups.' %}
+                    </li>
+                    <li style="margin: 5px 0 0 0;">
+                        {% trans 'No search functionality is available for this cache backend.' %}
+                    </li>
+                </ul>
+                {% elif not query_supported %}
+                <strong>{% trans 'Key Listing Not Available' %}</strong>
+                <ul>
+                    <li style="margin: 5px 0 0 0;">
+                        {% trans 'This cache backend does not support listing all keys. You can still perform exact key lookups using the search box below.' %}
+                    </li>
+                </ul>
+                {% elif not get_key_supported %}
+                <strong>{% trans 'Key Lookup Not Available' %}</strong>
+                <ul>
+                    <li style="margin: 5px 0 0 0;">
+                        {% trans 'This cache backend does not support getting key values. You can still list keys using wildcard patterns.' %}
+                    </li>
+                </ul>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Search Form -->
+    {% if query_supported or get_key_supported %}
+    <div class="module">
+        <h2>{% trans 'Search Keys' %}</h2>
+        <br>
+        <form method="get" class="search-form">
+            <div class="form-row search-form-row">
+                <div class="search-form-fields" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                    <div class="search-field-group">
+                        <label for="q">{% trans 'Key:' %}</label>
+                        <input type="text" id="q" name="q" value="{{ search_query }}" 
+                               placeholder="{% if query_supported %}*{% elif get_key_supported %}{% trans 'Enter exact key name' %}{% endif %}" 
+                               class="vTextField" style="width: 300px;">
+                    </div>
+                    {% if query_supported %}
+                    <div class="search-field-group">
+                        <label for="per_page">{% trans 'Per page:' %}</label>
+                        <select id="per_page" name="per_page" class="vTextField">
+                            <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+                            <option value="25" {% if per_page == 25 %}selected{% endif %}>25</option>
+                            <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+                            <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+                        </select>
+                    </div>
+                    {% endif %}
+                    <div class="search-field-group">
+                        <label>&nbsp;</label>
+                        <input type="submit" value="{% trans 'Search' %}" class="default">
+                    </div>
+                </div>
+                <div class="search-help" style="margin-top: 10px;">
+                    {% if query_supported %}
+                    <div class="help">{% trans 'Use * for wildcards, e.g., user:* or *:cache. Leave empty or use * to list all keys.' %}</div>
+                    {% elif get_key_supported %}
+                    <div class="help">{% trans 'Enter the exact key name to look up its value.' %}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+
+
+    <!-- Results -->
+    {% if keys_data %}
+    <div class="module">
+        <h2>{% trans 'Results' %}</h2>
+        <br>
+        {% if exact_match %}
+        <p class="help">{% trans 'Exact key match found.' %}</p>
+        {% elif total_keys %}
+        <p class="help">
+            {% blocktrans with total=total_keys start=start_index end=end_index %}Found {{ total }} keys, showing {{ start }} to {{ end }}{% endblocktrans %}
+        </p>
+        {% endif %}
+    </div>
+
+    <div class="results">
+        <table id="result_list">
+            <thead>
+                <tr>
+                    <th scope="col">{% trans 'Key' %}</th>
+                    {% if keys_data.0.redis_key %}
+                    <th scope="col">{% trans 'Redis Key' %}</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for key_info in keys_data %}
+                <tr class="{% cycle 'row1' 'row2' %}">
+                    <td>
+                        <a href="{% url 'dj_cache_panel:key_detail' cache_name key_info.key|urlencode %}">
+                            <strong>{{ key_info.key }}</strong>
+                        </a>
+                    </td>
+                    {% if key_info.redis_key %}
+                    <td>
+                        <code class="redis-key-name">{{ key_info.redis_key }}</code>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+        <p class="paginator" align="right">
+            {% if has_previous %}
+                <a href="?{% if search_query %}q={{ search_query|urlencode }}&{% endif %}per_page={{ per_page }}&page={{ previous_page }}" class="prev">{% trans 'previous' %}</a>
+            {% endif %}
+            
+            {% for num in page_range %}
+                {% if num == "..." %}
+                    …
+                {% elif num == current_page %}
+                    <span class="this-page">{{ num }}</span>
+                {% else %}
+                    <a href="?{% if search_query %}q={{ search_query|urlencode }}&{% endif %}per_page={{ per_page }}&page={{ num }}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if has_next %}
+                <a href="?{% if search_query %}q={{ search_query|urlencode }}&{% endif %}per_page={{ per_page }}&page={{ next_page }}" class="next">{% trans 'next' %}</a>
+            {% endif %}
+            {{ total_keys }} {% blocktrans count counter=total_keys %}key{% plural %}keys{% endblocktrans %}
+        </p>
+        {% endif %}
+    </div>
+    {% elif search_query and not error_message %}
+    <div class="module">
+        <p class="help">{% trans 'No keys found matching your search.' %}</p>
+    </div>
+    {% elif query_supported and not search_query %}
+    <div class="module">
+        <p class="help">{% trans 'Enter a search pattern or click Search to list all keys.' %}</p>
+    </div>
+    {% elif not query_supported and not get_key_supported %}
+    <div class="module">
+        <p class="help">{% trans 'This cache backend does not support any key search or lookup operations.' %}</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
