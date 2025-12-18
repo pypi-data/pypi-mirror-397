@@ -1,0 +1,85 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "rasterop"
+version = "0.9.0"
+
+requires-python = ">= 3.12"
+
+
+description = "System to manage deforestation alert system"
+readme = "README.md"
+license = {text = "MIT License"}
+license-files = ["LICEN[CS]E*"]
+
+keywords = ["Monitoring", "Remote sensing"]
+
+classifiers = [
+  # How mature is this project? Common values are
+  #   3 - Alpha
+  #   4 - Beta
+  #   5 - Production/Stable
+  "Development Status :: 4 - Beta",
+
+  # Indicate who your project is intended for
+  "Intended Audience :: Developers",
+  "Intended Audience :: Education",
+  "Intended Audience :: End Users/Desktop",
+  "Topic :: Software Development :: Build Tools",
+
+  # Specify the Python versions you support here.
+  "Programming Language :: Python :: 3.12",
+]
+
+
+authors = [
+  {name = "Thibaud Vantalon", email = "t.vantalon@cgiar.org"},
+  {name = "Louis Reymondin", email = "l.reymondin@cgiar.org"},]
+
+maintainers = [
+  {name = "Thibaud Vantalon", email = "t.vantalon@cgiar.org"},
+  {name = "Louis Reymondin", email = "l.reymondin@cgiar.org"},]
+
+
+
+dependencies = [
+  "numpy",
+  "scipy",
+  "tqdm",
+  "pyproj",
+  "shapely",
+
+]
+#claud say that the __pycache__, and other compiled files are already excluded
+[tool.hatch.build.targets.sdist]
+include = [
+  "/rasterop",
+  "/test",
+  "/README.md",
+  "/LICENSE.txt",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["rasterop"]
+include = [
+  "/resources",
+  "/LICENSE.txt",
+]
+
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = "-q"
+testpaths = ["tests"]
+pythonpath = ["rasterop"]
+
+[project.urls]
+Homepage = "https://ciatgit.ciat.cgiar.org/Data_driven_sustainability_public/terra-i/rasterop#"
+Issues = "https://ciatgit.ciat.cgiar.org/Data_driven_sustainability_public/terra-i/rasterop/-/issues"
+
+[tool.hatch.metadata]
+# Optional: Configure dynamic metadata if needed, e.g., for versioning
+# dynamic = ["version"]
+allow-direct-references = true
