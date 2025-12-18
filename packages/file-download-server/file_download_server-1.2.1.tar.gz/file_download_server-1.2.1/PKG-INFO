@@ -1,0 +1,53 @@
+Metadata-Version: 2.4
+Name: file_download_server
+Version: 1.2.1
+Summary: A simple file server
+Home-page: https://github.com/GeekRicardo/file-download-server
+Author: Ricardo
+Author-email: GeekRicardozzZ@gmail.com
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi
+Requires-Dist: python-multipart
+Requires-Dist: uvicorn~=0.17.0
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# Simple file server
+
+## Usage
+
+1. Install 
+
+`pip install file_download_server`
+
+2. create server
+
+```python -m file_server --static_path {path} --port {port} --prefix {url_prefix}```
+
+**required**: `--static_path/-d`
+
+**note**:
+    you can get file md5 in path `/{prefix}/md5/{file_name}`
+
+## 为什么要写这个脚本
+为什么不直接`python -m http.server`,很简单，
+1. http.server 只能单线程下载，有人在下别人就下不了;而且速度不知道为啥慢的不行
+2. http.server 不支持url二级路径, 当我用nginx反向代理时就用不了了
