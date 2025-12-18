@@ -1,0 +1,26 @@
+[tools]
+rust = "stable"
+python = "3.12"
+
+[env]
+VIRTUAL_ENV = "{{env.PWD}}/.venv"
+PATH = "{{env.VIRTUAL_ENV}}/bin:{{env.PATH}}"
+
+[tasks.setup]
+run = """
+python -m venv .venv
+.venv/bin/pip install -U pip maturin pre-commit pytest
+pre-commit install
+"""
+
+[tasks.dev]
+run = "maturin develop"
+
+[tasks.build]
+run = "maturin build --release"
+
+[tasks.test]
+run = "pytest tests/ -v"
+
+[tasks.publish]
+run = "maturin publish"

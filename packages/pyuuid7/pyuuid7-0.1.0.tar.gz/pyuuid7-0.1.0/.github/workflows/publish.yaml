@@ -1,0 +1,146 @@
+name: Build and Publish to PyPI
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish to PyPI'
+        required: true
+        default: false
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  # =======================================================
+  # JOB 1 — Build Wheels (Linux)
+  # =======================================================
+  build-linux:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          path: .
+
+      - name: Build wheels with manylinux
+        run: |
+          echo "🏗️ Building Linux wheels..."
+
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            --volumes-from "$(hostname)" \
+            -w "${{ github.workspace }}" \
+            ghcr.io/pyo3/maturin:latest \
+            build --release --out dist \
+              --interpreter python3.9 python3.10 python3.11 python3.12
+
+          echo "📦 Built wheels:"
+          ls -la dist/
+
+          echo "✅ Linux wheels build complete"
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-linux
+          path: dist/*.whl
+
+  # =======================================================
+  # JOB 2 — Build Source Distribution
+  # =======================================================
+  build-sdist:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          path: .
+
+      - name: Build sdist
+        run: |
+          echo "📦 Building source distribution..."
+
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            --volumes-from "$(hostname)" \
+            -w "${{ github.workspace }}" \
+            ghcr.io/pyo3/maturin:latest \
+            sdist --out dist
+
+          echo "📦 Built sdist:"
+          ls -la dist/
+
+          echo "✅ Source distribution build complete"
+
+      - name: Upload sdist
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+
+  # =======================================================
+  # JOB 3 — Publish to PyPI
+  # =======================================================
+  publish:
+    needs: [build-linux, build-sdist]
+    if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.publish == 'true'
+    runs-on: self-hosted
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Show artifacts
+        run: |
+          echo "📦 Artifacts to publish:"
+          ls -la dist/
+
+      - name: Publish to PyPI
+        run: |
+          echo "🚀 Publishing to PyPI..."
+
+          docker run --rm \
+            --user "$(id -u):$(id -g)" \
+            --volumes-from "$(hostname)" \
+            -w "${{ github.workspace }}" \
+            -e MATURIN_PYPI_TOKEN="${{ secrets.PYPI_API_TOKEN }}" \
+            ghcr.io/pyo3/maturin:latest \
+            upload --skip-existing dist/*
+
+          echo "✅ Published to PyPI"
+
+  # =======================================================
+  # JOB 4 — Summary
+  # =======================================================
+  summary:
+    needs: [build-linux, build-sdist, publish]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Workflow Summary
+        run: |
+          echo "📋 Workflow Summary"
+          echo "=================="
+          echo "Build Linux: ${{ needs.build-linux.result }}"
+          echo "Build Sdist: ${{ needs.build-sdist.result }}"
+          echo "Publish: ${{ needs.publish.result || 'skipped' }}"
+          echo ""
+
+          if [ "${{ needs.publish.result }}" = "success" ]; then
+            echo "✅ Package published to PyPI successfully"
+          elif [ "${{ needs.publish.result }}" = "skipped" ]; then
+            echo "⏭️ Publish was skipped (not a tag push)"
+          else
+            echo "❌ Workflow failed"
+          fi
