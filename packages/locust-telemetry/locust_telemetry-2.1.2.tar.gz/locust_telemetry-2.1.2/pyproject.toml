@@ -1,0 +1,108 @@
+[build-system]
+requires = [
+    "setuptools>=80.9.0",
+    "wheel",
+    "setuptools_scm>=9.2.2"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "locust-telemetry"
+dynamic = ["version"]
+description = "A Locust plugin for emitting structured telemetry and metrics to JSON or OpenTelemetry backends."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [
+    {name = "Swaroop Shubhakrishna Bhat", email = "swaroopbhatk@gmail.com"}
+]
+keywords = [
+    "locust",
+    "plugin",
+    "telemetry",
+    "observability",
+    "metrics",
+    "opentelemetry",
+    "otel",
+    "load testing",
+    "performance testing",
+    "dashboard",
+    "prometheus",
+    "grafana",
+    "loki"
+]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Testing",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent"
+]
+dependencies = [
+    "locust>=2.37.0",
+    "python-json-logger>=3.3.0",
+    "opentelemetry-api>=1.37.0",
+    "opentelemetry-sdk>=1.37.0",
+    "opentelemetry-exporter-otlp>=1.37.0"
+]
+
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.4.0",
+    "pytest-cov>=6.3.0",
+    "freezegun>=1.5.5"
+]
+
+[project.urls]
+Homepage = "https://locust-telemetry.readthedocs.io/en/stable/index.html"
+Documentation = "https://locust-telemetry.readthedocs.io/en/latest/index.html"
+Bug-Tracker = "https://github.com/platform-crew/locust-observability/issues"
+
+[project.entry-points."locust_plugins"]
+telemetry_locust = "locust_telemetry.entrypoint"
+
+[tool.setuptools_scm]
+version_scheme = "release-branch-semver"
+local_scheme = "no-local-version"
+
+# --------------------------
+# Code formatting tools
+# --------------------------
+[tool.black]
+line-length = 88
+target-version = ["py38", "py39", "py310", "py311"]
+skip-string-normalization = false
+
+[tool.isort]
+profile = "black"
+line_length = 88
+known_first_party = ["locust_telemetry"]
+combine_as_imports = true
+include_trailing_comma = true
+multi_line_output = 3
+force_grid_wrap = 0
+use_parentheses = true
+
+# --------------------------
+# Packages to include
+# --------------------------
+[tool.setuptools.packages]
+find = { include = ["locust_telemetry*"] }
+
+# --------------------------
+# Coverage report
+# --------------------------
+
+[tool.coverage.run]
+source = ["locust_telemetry"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
