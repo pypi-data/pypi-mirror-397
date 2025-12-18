@@ -1,0 +1,64 @@
+Metadata-Version: 2.4
+Name: tsktimer
+Version: 0.0.5
+Summary: Simple way to understand the speed of your tasks
+Author-email: 1032249184 <1032249184@pfur.ru>, 1132243816 <1132243816@pfur.ru>, 1132246169 <1132246169@pfur.ru>
+Maintainer-email: 1132243816 <1132243816@pfur.ru>, 1132246169 <1132246169@pfur.ru>
+License: Copyright 2025 HeloHi
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+        
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Provides-Extra: test
+Requires-Dist: pytest; extra == "test"
+Dynamic: license-file
+
+# TskTimer
+
+Simple way to measure the speed of you function/task/app/project.
+Allows you to analyze every function or even code blocks on how efficient they are.
+
+## Installation
+
+pip install -U tsktimer
+
+## Quick Start
+
+```python
+from tsktimer import timeit
+import time
+
+@timeit(name="heavy_task")
+def heavy_task():
+    time.sleep(2)
+
+heavy_task()
+```
+
+```bash
+Time: 2.000088691711426s
+```
+
+## Architecture
+
+- IN CORE:
+  - TskTimer: the main class that actually measures time
+  - Context: Using ContextTskTimer you can measure time of the code block by just wrapping it using
+    `with ContextTskTimer()`
+  - Decorator: helps to measure time for functions:
+    - timeit - measures the function once and prints result
+    - ntimesit - helps to measure time by running function multiple times
+- IN METRICS:
+  - History: allows you to record all measured time all over the program.
+  - Export: you can export all your records into csv and json
+  - Stats: shows stats for one single timer
+- IN UTILS:
+  - Formatting: using TskTimerFormat you can set output to be in seconds or milliseconds
