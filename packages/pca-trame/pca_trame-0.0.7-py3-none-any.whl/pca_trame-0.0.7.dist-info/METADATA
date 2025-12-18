@@ -1,0 +1,103 @@
+Metadata-Version: 2.4
+Name: pca-trame
+Version: 0.0.7
+Author: Etienne Madinier
+Maintainer: Etienne Madinier
+Description-Content-Type: text/markdown
+License-File: LICENCE
+Requires-Dist: pydantic==2.12.5
+Requires-Dist: markdown==3.10
+Requires-Dist: bs4==0.0.2
+Requires-Dist: strictyaml==1.7.3
+Provides-Extra: dev
+Requires-Dist: build==1.3.0; extra == "dev"
+Requires-Dist: djlint==1.36.4; extra == "dev"
+Requires-Dist: black==24.4.2; extra == "dev"
+Requires-Dist: ruff==0.11.2; extra == "dev"
+Requires-Dist: jinja2==3.1.6; extra == "dev"
+Requires-Dist: twine==6.2.0; extra == "dev"
+Dynamic: license-file
+
+# Trame
+
+## Concepts
+
+- A **Trame** is a list of **Pieces**, which are themselves made of **Actors**
+- The goal is to display information, *Piece by Piece*
+
+
+
+
+## Dev / Install
+
+
+### Install locally with dev dependencies
+
+```bash
+pip3 install -e ".[dev]"
+```
+
+**If you don't need dev dependencies, you can install locally without the `.[dev]` suffix :**
+
+```bash
+pip3 install -e .
+```
+
+
+### Install
+
+```bash
+pip install pca-trame
+```
+
+```bash
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ "pca-trame[dev]==0.0.2"
+```
+
+
+### Try it out !
+
+```bash
+python -m trame_tests.sandbox README.md
+python -m trame_tests.sandbox README.md --style src/trame_tests/data/obvious-style.css
+```
+
+### Install locally
+
+```bash
+pip install -e .
+```
+
+### Run unit tests
+
+```bash
+python -m trame_tests
+```
+
+### Sandbox
+
+```bash
+python -m trame_tests.sandbox /path/to/markdown.md
+python -m trame_tests.sandbox /path/to/markdown.md --port=8000 --style=/path/to/style.css
+```
+
+
+```bash
+python -m trame_tests.sandbox src/trame_tests/data/dummy.md
+python -m trame_tests.sandbox src/trame_tests/data/rgpd_maths.pm.md --port=8000 --style=/path/to/style.css
+```
+
+### Release
+
+```bash
+python -m trame_tests
+python -m build
+python -m twine upload dist/* --verbose
+```
+
+### Play with test trame
+
+```python
+from kame_tests.get_trame import get_trame_from_test
+trame = get_trame_from_test("get_trame_from_test")
+```
