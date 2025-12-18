@@ -1,0 +1,107 @@
+# Training Configuration for AI Trainer Bot
+# This file contains all settings for training a machine learning model
+
+# Model Configuration
+model:
+  name: "cnn"  # Options: cnn, transformer, rnn
+  architecture:
+    # CNN specific settings
+    num_classes: 10
+    input_channels: 3
+    hidden_dims: [64, 128, 256]
+    kernel_size: 3
+    dropout: 0.5
+
+    # Transformer specific settings (if using transformer model)
+    # d_model: 512
+    # nhead: 8
+    # num_encoder_layers: 6
+    # dim_feedforward: 2048
+
+    # RNN specific settings (if using rnn model)
+    # input_size: 784
+    # hidden_size: 128
+    # num_layers: 2
+    # bidirectional: false
+
+# Training Configuration
+training:
+  epochs: 100
+  batch_size: 32
+  learning_rate: 0.001
+  weight_decay: 1e-4
+  resume_from: null  # Path to checkpoint to resume from
+
+  # Optimizer settings
+  optimizer:
+    type: "adam"  # Options: adam, sgd, adamw
+    # Additional optimizer params can be added here
+
+  # Scheduler settings
+  scheduler:
+    type: "step"  # Options: step, cosine, exponential, plateau
+    step_size: 30
+    gamma: 0.1
+
+  # Loss function
+  loss:
+    type: "cross_entropy"  # Options: cross_entropy, mse, bce
+
+# Data Configuration
+data:
+  dataset: "cifar10"  # Options: cifar10, mnist, custom
+  train_split: 0.8
+  val_split: 0.2
+  test_split: 0.0
+
+  # Data augmentation
+  augmentation:
+    random_crop: true
+    random_flip: true
+    normalize: true
+    mean: [0.485, 0.456, 0.406]
+    std: [0.229, 0.224, 0.225]
+
+# Metrics Configuration
+metrics:
+  - "accuracy"
+  - "precision"
+  - "recall"
+  - "f1"
+
+# Callbacks Configuration
+callbacks:
+  early_stopping:
+    patience: 10
+    monitor: "val_loss"
+    mode: "min"
+
+  model_checkpoint:
+    save_best_only: true
+    monitor: "val_accuracy"
+    mode: "max"
+    filepath: "checkpoints/best_model.pth"
+
+  learning_rate_monitor:
+    enabled: true
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  log_dir: "logs"
+  tensorboard: true
+  wandb:
+    enabled: false
+    project: "ai-trainer-bot"
+    entity: "your-entity"
+
+# Device Configuration
+device: "auto"  # Options: auto, cpu, cuda, cuda:0
+
+# Random Seed
+seed: 42
+
+# Experiment Tracking
+experiment:
+  name: null  # Auto-generated if null
+  tags: ["cnn", "classification"]
