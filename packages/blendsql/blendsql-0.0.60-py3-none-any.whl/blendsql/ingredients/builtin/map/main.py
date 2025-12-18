@@ -1,0 +1,713 @@
+import ast
+import logging
+import os
+from typing import Callable
+from pathlib import Path
+import json
+import polars as pl
+import pandas as pd
+from attr import attrs, attrib
+import copy
+from itertools import islice
+from tqdm.auto import tqdm
+
+from blendsql.configure import add_to_global_history
+from blendsql.common.logger import logger, Color
+from blendsql.common.constants import DEFAULT_ANS_SEP, INDENT, DEFAULT_CONTEXT_FORMATTER
+from blendsql.models import Model, ConstrainedModel
+from blendsql.models.utils import user
+from blendsql.models.constrained.utils import LMString, maybe_load_lm
+from blendsql.ingredients.ingredient import MapIngredient
+from blendsql.common.exceptions import IngredientException
+from blendsql.common.typing import DataType, QuantifierType
+from blendsql.ingredients.utils import (
+    initialize_retriever,
+    partialclass,
+    gen_list,
+    _wrap_with_quotes,
+)
+from blendsql.configure import (
+    MAX_OPTIONS_IN_PROMPT_KEY,
+    DEFAULT_MAX_OPTIONS_IN_PROMPT,
+    MAX_TOKENS_KEY,
+    DEFAULT_MAX_TOKENS,
+)
+from blendsql.types import prepare_datatype, apply_type_conversion
+from .examples import (
+    MapExample,
+    AnnotatedMapExample,
+    ConstrainedMapExample,
+    ConstrainedAnnotatedMapExample,
+    UnconstrainedMapExample,
+    UnconstrainedAnnotatedMapExample,
+    FeatureType,
+)
+from blendsql.search.searcher import Searcher
+
+DEFAULT_MAP_FEW_SHOT: list[AnnotatedMapExample] = [
+    AnnotatedMapExample(**d)
+    for d in json.loads(
+        open(Path(__file__).resolve().parent / "./default_examples.json", "r").read()
+    )
+]
+CONSTRAINED_MAIN_INSTRUCTION = "Complete the docstring for the provided Python function. The output should correctly answer the question provided for each input value. "
+CONSTRAINED_MAIN_INSTRUCTION = (
+    CONSTRAINED_MAIN_INSTRUCTION
+    + "On each newline, you will follow the format of f({value}) == {answer}.\n"
+)
+DEFAULT_CONSTRAINED_MAP_BATCH_SIZE = 1
+
+UNCONSTRAINED_MAIN_INSTRUCTION = (
+    "Given a set of values from a database, answer the question for each value. "
+)
+UNCONSTRAINED_MAIN_INSTRUCTION = (
+    UNCONSTRAINED_MAIN_INSTRUCTION
+    + f" Your output should be separated by '{DEFAULT_ANS_SEP}', answering for each of the values left-to-right.\n"
+)
+DEFAULT_UNCONSTRAINED_MAP_BATCH_SIZE = 5
+
+
+@attrs
+class LLMMap(MapIngredient):
+    DESCRIPTION = """
+    If question-relevant column(s) contents are not suitable for SQL comparisons or calculations, map it to a new column using the scalar function:
+        `{{LLMMap('question', 'table::column')}}`
+    """
+    model: Model = attrib(default=None)
+    few_shot_retriever: Callable[[str], list[AnnotatedMapExample]] = attrib(
+        default=None
+    )
+    list_options_in_prompt: bool = attrib(default=True)
+    few_shot_retriever: Callable[[str], list[AnnotatedMapExample]] = attrib(
+        default=None
+    )
+    context_formatter: Callable[[pl.DataFrame], str] = attrib(
+        default=DEFAULT_CONTEXT_FORMATTER,
+    )
+    batch_size: int = attrib(default=None)
+
+    @classmethod
+    def from_args(
+        cls,
+        model: Model | None = None,
+        few_shot_examples: list[dict] | list[AnnotatedMapExample] | None = None,
+        list_options_in_prompt: bool = True,
+        options_searcher: Searcher | None = None,
+        batch_size: int | None = None,
+        num_few_shot_examples: int | None = None,
+        context_searcher: Searcher | None = None,
+        enable_constrained_decoding: bool = True,
+    ):
+        """Creates a partial class with predefined arguments.
+
+        Args:
+            model: The model to be used. Defaults to None.
+            few_shot_examples: A list of dictionary MapExample few-shot examples.
+               If not specified, will use [default_examples.json](https://github.com/parkervg/blendsql/blob/main/blendsql/ingredients/builtin/map/default_examples.json) as default.
+            list_options_in_prompt: Whether to list options in the prompt. Defaults to True.
+            options_searcher: A callable that takes in a list of options, and returns a `Searcher` object.
+                For example, ```
+                options_searcher=lambda d: HybridSearch(
+                    documents=d,
+                    model_name_or_path="intfloat/e5-base-v2",
+                    k=10,
+                )
+                ```
+            batch_size: The batch size for processing. Defaults to 1.
+            num_few_shot_examples: Determines number of few-shot examples to use for each ingredient call.
+               Default is None, which will use all few-shot examples on all calls.
+               If specified, will initialize a haystack-based embedding retriever to filter examples.
+
+        Returns:
+            Type[MapIngredient]: A partial class of MapIngredient with predefined arguments.
+
+        Examples:
+            ```python
+            from blendsql import BlendSQL
+            from blendsql.ingredients.builtin import LLMQA, DEFAULT_QA_FEW_SHOT
+
+            ingredients = {
+                LLMQA.from_args(
+                    few_shot_examples=[
+                        *DEFAULT_QA_FEW_SHOT,
+                        {
+                            "question": "Which weighs the most?",
+                            "context": {
+                                {
+                                    "Animal": ["Dog", "Gorilla", "Hamster"],
+                                    "Weight": ["20 pounds", "350 lbs", "100 grams"]
+                                }
+                            },
+                            "answer": "Gorilla",
+                            # Below are optional
+                            "options": ["Dog", "Gorilla", "Hamster"]
+                        }
+                    ],
+                    num_few_shot_examples=2,
+                    # Lambda to turn the pd.DataFrame to a serialized string
+                    context_formatter=lambda df: df.to_markdown(
+                        index=False
+                    )
+                )
+            }
+
+            bsql = BlendSQL(db, ingredients=ingredients)
+            ```
+        """
+        if few_shot_examples is None:
+            few_shot_examples = DEFAULT_MAP_FEW_SHOT
+        few_shot_retriever = initialize_retriever(
+            examples=few_shot_examples, num_few_shot_examples=num_few_shot_examples
+        )
+        return cls._maybe_set_name_to_var_name(
+            partialclass(
+                cls,
+                model=model,
+                few_shot_retriever=few_shot_retriever,
+                list_options_in_prompt=list_options_in_prompt,
+                options_searcher=options_searcher,
+                batch_size=batch_size,
+                context_searcher=context_searcher,
+                enable_constrained_decoding=enable_constrained_decoding,
+            )
+        )
+
+    def run(
+        self,
+        model: Model,
+        question: str,
+        values: list[str],
+        list_options_in_prompt: bool,
+        context_formatter: Callable[[pl.DataFrame], str],
+        context: pl.DataFrame | None = None,
+        context_searcher: Searcher | None = None,
+        unpacked_questions: list[str] = None,
+        options: list[str] | None = None,
+        options_searcher: Searcher | None = None,
+        few_shot_retriever: Callable[
+            [str], list[ConstrainedAnnotatedMapExample]
+        ] = None,
+        value_limit: int | None = None,
+        example_outputs: str | None = None,
+        quantifier: QuantifierType = None,
+        return_type: DataType | str | None = None,
+        regex: str | None = None,
+        batch_size: int = None,
+        exit_condition: Callable = None,
+        **kwargs,
+    ) -> list[float | int | str | bool]:
+        """For each value in a given column, calls a Model and retrieves the output.
+
+        Args:
+            question: The question(s) to map onto the values. Will also be the new column name
+            model: The Model (blender) we will make calls to.
+            values: The list of values to apply question to.
+            value_limit: Optional limit on the number of values to pass to the Model
+            example_outputs: This gives the Model an example of the output we expect.
+            return_type: In the absence of example_outputs, give the Model some signal as to what we expect as output.
+            regex: Optional regex to constrain answer generation.
+
+        Returns:
+            Iterable[Any] containing the output of the Model for each value.
+        """
+        if model is None:
+            raise IngredientException(
+                "LLMMap requires a `Model` object, but nothing was passed!\nMost likely you forgot to set the `default_model` argument in `blend()`"
+            )
+        if few_shot_retriever is None:
+            few_shot_retriever = lambda *_: DEFAULT_MAP_FEW_SHOT
+
+        # Resolve context argument
+        # If we explicitly passed `context`, this should take precedence over the vector store.
+        context_in_use: list[str | None] = [None] * len(values)
+        context_in_use_type: FeatureType = None
+        # If we explicitly passed `context`, this should take precedence over the vector store.
+        if context_searcher is not None and context is None:
+            if (
+                unpacked_questions is not None
+            ):  # Implies we have different context for each value
+                context_in_use = context_searcher(unpacked_questions)
+                context_in_use_type = FeatureType.LOCAL
+            else:
+                context_in_use = " | ".join(context_searcher(question)[0])
+                context_in_use_type = FeatureType.GLOBAL
+        elif context is not None:  # If we've passed a table context
+            if all([len(c) == 1 for c in context]):
+                context_in_use = " | ".join([context_formatter(c) for c in context])
+                context_in_use_type = FeatureType.GLOBAL
+            else:
+                assert all(
+                    len(x) == len(values) for x in context
+                ), "Length of scalars passed in LLMMap `context` doesn't match number of values!"
+                context_in_use = [
+                    list(row) for row in pl.concat(context, how="horizontal").rows()
+                ]
+                context_in_use_type = FeatureType.LOCAL
+        # Log what we found
+        if context_in_use_type == FeatureType.GLOBAL:
+            logger.debug(
+                Color.quiet_update(
+                    f"Retrieved global context '{context_in_use[:50]}...'"
+                )
+            )
+        elif context_in_use_type == FeatureType.LOCAL:
+            logger.debug(
+                Color.quiet_update(
+                    f"Retrieved local contexts '{[str(d[:2]) + '...' for d in context_in_use[:3]]}...'"
+                )
+            )
+        elif context_in_use_type is not None:
+            raise ValueError(
+                f"Invalid `context_in_use_type`: {type(context_in_use_type)}"
+            )
+
+        # Unpack default kwargs
+        table_name, column_name = self.unpack_default_kwargs(**kwargs)
+        if value_limit is not None:
+            values = values[:value_limit]
+        values = [str(value) if not pd.isna(value) else "-" for value in values]
+        resolved_return_type: DataType = prepare_datatype(
+            return_type=return_type, options=options, quantifier=quantifier
+        )
+
+        # Prep options, if passed
+        if self.options_searcher is None:
+            options_in_use_type = FeatureType.GLOBAL
+            if options is not None and list_options_in_prompt:
+                max_options_in_prompt = int(
+                    os.getenv(MAX_OPTIONS_IN_PROMPT_KEY, DEFAULT_MAX_OPTIONS_IN_PROMPT)
+                )
+                if len(options) > max_options_in_prompt:
+                    logger.debug(
+                        Color.warning(
+                            f"Number of options ({len(options):,}) is greater than the configured MAX_OPTIONS_IN_PROMPT={max_options_in_prompt:,}.\nWill run inference without explicitly listing these options in the prompt text."
+                        )
+                    )
+                    list_options_in_prompt = False
+        else:
+            if not isinstance(model, ConstrainedModel):
+                raise NotImplementedError(
+                    "`options_searcher` logic not yet implemented for `UnconstrainedModel` classes.\nUse a `ConstrainedModel` class for now (`LlamaCpp` or `TransformersLLM`)."
+                )
+            logger.debug(
+                Color.warning(
+                    f"Calling provided `options_searcher` to retrieve {self.options_searcher.k} options for each of the {len(values)} unique values, out of {len(self.options_searcher.documents):,} total options..."
+                )
+            )
+            options_in_use_type = FeatureType.LOCAL
+
+        filtered_options: list[str | None] = [None] * len(values)
+        if self.options_searcher is not None:
+            if context_in_use_type is not None:
+                documents = [f"{v} | {c}" for c, v in zip(values, context_in_use)]
+            else:
+                documents = values
+            filtered_options = self.options_searcher(documents)
+
+        current_example = MapExample(
+            question=question,
+            column_name=column_name,
+            table_name=table_name,
+            return_type=resolved_return_type,
+            example_outputs=example_outputs,
+            options_type=options_in_use_type,
+            options=options,
+            context_type=context_in_use_type,
+            context=context_in_use,
+        )
+
+        if isinstance(model, ConstrainedModel):
+            batch_size = batch_size or DEFAULT_CONSTRAINED_MAP_BATCH_SIZE
+            current_example = ConstrainedMapExample(**current_example.__dict__)
+            few_shot_examples: list[ConstrainedAnnotatedMapExample] = [
+                ConstrainedAnnotatedMapExample(**example.__dict__)
+                if not isinstance(example, dict)
+                else ConstrainedAnnotatedMapExample(**example)
+                for example in few_shot_retriever(current_example.to_string())
+            ]
+        else:
+            batch_size = batch_size or DEFAULT_UNCONSTRAINED_MAP_BATCH_SIZE
+            current_example = UnconstrainedMapExample(**current_example.__dict__)
+            few_shot_examples: list[UnconstrainedAnnotatedMapExample] = [
+                UnconstrainedAnnotatedMapExample(**example.__dict__)
+                if not isinstance(example, dict)
+                else UnconstrainedMapExample(**example)
+                for example in few_shot_retriever(
+                    current_example.to_string(values=values)
+                )
+            ]
+
+        is_list_output = resolved_return_type.quantifier is not None
+        regex = regex or resolved_return_type.regex
+        quantifier = resolved_return_type.quantifier
+
+        if isinstance(model, ConstrainedModel):
+            import guidance
+
+            if all(x is not None for x in [options, regex]):
+                raise IngredientException(
+                    "MapIngredient exception!\nCan't have both `options` and `regex` argument passed."
+                )
+
+            if self.options_searcher:
+                # Need to create separate gen_f for each set of filtered_options
+                gen_f = [
+                    lambda _, o=o: _wrap_with_quotes(
+                        guidance.select(options=o),
+                        has_options_or_regex=bool(o or regex),
+                        force_quotes=resolved_return_type.requires_quotes,
+                    )
+                    for o in filtered_options
+                ]
+            lm = LMString()  # type: ignore
+            # Create base gen_f function
+            gen_f = lambda _: _wrap_with_quotes(
+                guidance.gen(
+                    max_tokens=kwargs.get(
+                        "max_tokens",
+                        int(os.getenv(MAX_TOKENS_KEY, DEFAULT_MAX_TOKENS)),
+                    ),
+                    # guidance=0.2.1 doesn't allow both `stop` and `regex` to be passed
+                    stop=None
+                    if regex is not None
+                    else [")", f"\n{INDENT()}"]
+                    + (['"'] if resolved_return_type.requires_quotes else []),
+                    regex=regex if self.enable_constrained_decoding else None,
+                ),
+                has_options_or_regex=bool(options or regex),
+                force_quotes=resolved_return_type.requires_quotes,
+            )
+            if self.enable_constrained_decoding:
+                if is_list_output:
+                    if self.options_searcher is not None:
+                        # Need to create separate gen_f for each set of filtered_options
+                        gen_f = [
+                            lambda _, o=o: gen_list(
+                                force_quotes=resolved_return_type.requires_quotes,
+                                quantifier=quantifier,
+                                options=o,
+                                regex=regex,
+                            )
+                            for o in filtered_options
+                        ]
+                    else:
+                        gen_f = lambda _: gen_list(
+                            force_quotes=resolved_return_type.requires_quotes,
+                            quantifier=quantifier,
+                            options=options,
+                            regex=regex,
+                        )
+                else:
+                    if self.options_searcher is not None:
+                        # Need to create separate gen_f for each set of filtered_options
+                        gen_f = [
+                            lambda _, o=o: _wrap_with_quotes(
+                                guidance.select(options=o),
+                                has_options_or_regex=bool(o or regex),
+                                force_quotes=resolved_return_type.requires_quotes,
+                            )
+                            for o in filtered_options
+                        ]
+                    elif options is not None:
+                        gen_f = lambda _: _wrap_with_quotes(
+                            guidance.select(options=options),
+                            has_options_or_regex=bool(options or regex),
+                            force_quotes=resolved_return_type.requires_quotes,
+                        )
+                    elif resolved_return_type.name == "substring":
+                        # Special case for substring datatypes
+                        gen_f = lambda s: _wrap_with_quotes(
+                            guidance.substring(target_string=s),
+                            has_options_or_regex=bool(options or regex),
+                            force_quotes=resolved_return_type.requires_quotes,
+                        )
+            else:
+                logger.debug(
+                    Color.warning(
+                        "Not applying constraints, since `enable_constrained_decoding==False`"
+                    )
+                )
+
+            def make_prediction(
+                value: str,
+                context: str | list[str] | None,
+                local_options: list[str] | None,
+                gen_f: Callable,
+            ) -> str:
+                """If `context` is a string, it is a serialized table subset.
+                Else, it's a list of documents.
+                """
+
+                def get_quote(s: str):
+                    return '"""' if any(c in s for c in ["\n", '"']) else '"'
+
+                value_quote = get_quote(value)
+                if isinstance(
+                    context, list
+                ):  # If it's a string, it's already been added in docstring as global context
+                    gen_str = f"""{INDENT(2)}f(\n{INDENT(3)}{value_quote}{value}{value_quote}"""
+                    json_str = json.dumps(context, ensure_ascii=False, indent=16)[:-1]
+                    gen_str += (
+                        f", \n{INDENT(3)}" + json_str + f"{INDENT(3)}]\n{INDENT(2)}"
+                    )
+                else:
+                    indented_value = value.replace("\n", f"\n{INDENT(2)}")
+                    gen_str = (
+                        f"""{INDENT(2)}f({value_quote}{indented_value}{value_quote}"""
+                    )
+                if local_options is not None:
+                    gen_str += f",\n{INDENT(2)}{local_options}"
+                gen_str += f""") == {guidance.capture(gen_f(value), name=f"{value}_{context}" if context is not None else value)}"""
+                return gen_str
+
+            example_str = ""
+            if len(few_shot_examples) > 0:
+                for example in few_shot_examples:
+                    example_str += example.to_string()
+
+            lm_mapping = {}  # Where we store the final type-cast results
+            loaded_lm = False
+            batch_inference_strings = []
+            batch_inference_identifiers = []
+            all_identifiers = []
+            identifier_to_cache_key = {}
+            for idx, (c, v, o) in enumerate(
+                zip(context_in_use, values, filtered_options)
+            ):
+                curr_identifier = v
+                if c is not None:
+                    curr_identifier += f"_{c}"
+                all_identifiers.append(curr_identifier)
+
+                if context_in_use_type == FeatureType.LOCAL:
+                    current_example.context = c
+
+                current_example_str = current_example.to_string(
+                    list_options=list_options_in_prompt,
+                    add_leading_newlines=True,
+                )
+
+                # First check - do we need to load the model?
+                in_cache = False
+                if model.caching:
+                    cached_response, cache_key = model.check_cache(
+                        CONSTRAINED_MAIN_INSTRUCTION,
+                        example_str,
+                        current_example_str,
+                        question,
+                        regex,
+                        options,
+                        quantifier,
+                        kwargs.get(
+                            "max_tokens",
+                            int(os.getenv(MAX_TOKENS_KEY, DEFAULT_MAX_TOKENS)),
+                        ),
+                        c,
+                        v,
+                        o,
+                        funcs=[
+                            make_prediction,
+                            gen_f[idx]
+                            if self.options_searcher is not None
+                            and self.enable_constrained_decoding
+                            else gen_f,
+                        ],
+                    )
+                    if cached_response is not None:
+                        lm_mapping[curr_identifier] = cached_response
+                        in_cache = True
+                    else:
+                        identifier_to_cache_key[curr_identifier] = cache_key
+
+                if not in_cache and not loaded_lm:
+                    lm: guidance.models.Model = maybe_load_lm(model, lm)
+                    loaded_lm = True
+                    with guidance.user():
+                        lm += CONSTRAINED_MAIN_INSTRUCTION
+                        if example_str != "":
+                            lm += example_str
+                            lm += "\n\nNow, complete the docstring for the following example:"
+                        lm += current_example_str
+
+                model.prompt_tokens += len(model.tokenizer.encode(current_example_str))
+
+                if not in_cache:
+                    batch_inference_strings.append(
+                        make_prediction(
+                            value=v,
+                            context=c,
+                            local_options=o,
+                            gen_f=gen_f[idx]
+                            if self.options_searcher is not None
+                            and self.enable_constrained_decoding
+                            else gen_f,
+                        )
+                    )
+                    batch_inference_identifiers.append(curr_identifier)
+
+            with guidance.assistant():
+                iter = range(0, len(batch_inference_strings), batch_size)
+                total_batches = len(batch_inference_strings) // batch_size
+                if logger.level <= logging.DEBUG:
+                    # Wrap with tqdm if `verbose=True`
+                    iter = tqdm(
+                        iter,
+                        total=total_batches,
+                        desc=f"LLMMap with batch_size={batch_size}",
+                    )
+                for i in iter:
+                    model.num_generation_calls += 1
+                    batch_lm = lm + "\n".join(
+                        batch_inference_strings[i : i + batch_size]
+                    )
+                    self.num_values_passed += len(
+                        batch_inference_strings[i : i + batch_size]
+                    )
+                    model.completion_tokens += sum(
+                        [
+                            len(model.tokenizer_encode(result_payload["value"]))
+                            for result_payload in batch_lm._interpreter.state.captures.values()
+                        ]
+                    )
+                    batch_lm_mapping = {
+                        value: apply_type_conversion(
+                            result_payload["value"],
+                            return_type=resolved_return_type,
+                            db=self.db,
+                        )
+                        for value, result_payload in batch_lm._interpreter.state.captures.items()
+                    }
+                    lm_mapping.update(batch_lm_mapping)
+                    add_to_global_history(str(batch_lm))
+                    if model.caching:
+                        for identifier in batch_inference_identifiers[
+                            i : i + batch_size
+                        ]:
+                            cache_key = identifier_to_cache_key[identifier]
+                            model.cache[cache_key] = lm_mapping[identifier]
+
+                    # Check and see if early exit condition applies
+                    if exit_condition is not None and exit_condition(lm_mapping):
+                        logger.debug(
+                            Color.update(
+                                f"Exit condition satisfied. \n Since you used a `LIMIT` clause, we can exit on batch {i} out of {total_batches}."
+                            )
+                        )
+                        break
+
+                model.prompt_tokens += lm._get_usage().input_tokens
+                lm._reset_usage()
+
+            mapped_values = [
+                lm_mapping.get(identifier, None) for identifier in all_identifiers
+            ]
+            logger.debug(
+                lambda: Color.warning(
+                    f"Finished LLMMap with values:\n{json.dumps({str(k)[:100]: str(v)[:100] for k, v in islice(lm_mapping.items(), 10)}, indent=4)}"
+                )
+            )
+            return mapped_values
+        else:
+            sorted_indices = sorted(range(len(values)), key=lambda i: values[i])
+            sorted_indices_to_original = {
+                k: idx for idx, k in enumerate(sorted_indices)
+            }
+            sorted_values = [values[i] for i in sorted_indices]
+            if context_in_use_type is not None:
+                context_in_use = [context_in_use[i] for i in sorted_indices]
+
+            messages_list: list[list[dict]] = []
+            batch_sizes: list[int] = []
+            if current_example.context_type == FeatureType.LOCAL:
+                if batch_size != 1:
+                    logger.debug(
+                        Color.warning(
+                            f"Overriding batch_size={batch_size} to 1, since UnconstrainedModels with LLMMap don't support local context for now"
+                        )
+                    )
+                batch_size = 1
+                current_example.context_type = FeatureType.GLOBAL
+                current_example.context = None
+            for i in range(0, len(sorted_values), batch_size):
+                curr_batch_values = sorted_values[i : i + batch_size]
+                curr_batch_contexts = context_in_use[i : i + batch_size]
+                self.num_values_passed += len(curr_batch_values)
+                batch_sizes.append(len(curr_batch_values))
+                current_batch_example = copy.deepcopy(current_example)
+                user_msg_str = ""
+                user_msg_str += UNCONSTRAINED_MAIN_INSTRUCTION
+                # Add few-shot examples
+                for example in few_shot_examples:
+                    user_msg_str += example.to_string()
+                # Add the current question + context for inference
+                if current_batch_example.context_type == FeatureType.GLOBAL:
+                    str_context = "\n".join(curr_batch_contexts[0])
+                    current_batch_example.context = str_context
+                user_msg_str += current_batch_example.to_string(
+                    values=curr_batch_values,
+                    list_options=list_options_in_prompt,
+                )
+                messages_list.append([user(user_msg_str)])
+            add_to_global_history(messages_list)
+            responses: list[str] = model.generate(
+                messages_list=messages_list,
+                max_tokens=kwargs.get(
+                    "max_tokens", int(os.getenv(MAX_TOKENS_KEY, DEFAULT_MAX_TOKENS))
+                ),
+            )
+            model.num_generation_calls += len(messages_list)
+
+            # Post-process language model response
+            mapped_values = []
+            total_missing_values = 0
+            for idx, r in enumerate(responses):
+                expected_len = batch_sizes[idx]
+                predictions: list[t.Union[str, None]] = r.split(DEFAULT_ANS_SEP)  # type: ignore
+                # Add null values, if we under-predicted
+                while len(predictions) < expected_len:
+                    total_missing_values += 1
+                    predictions.append(None)
+                # Cutoff, if we over-predicted
+                predictions = predictions[:expected_len]
+                if is_list_output:
+                    curr_converted_preds = []
+                    for pred in predictions:
+                        try:
+                            list_converted = ast.literal_eval(pred)
+                        except (ValueError, SyntaxError):
+                            logger.debug(
+                                Color.error(
+                                    f"Error casting prediction '{pred}' to a list"
+                                )
+                            )
+                            curr_converted_preds.append([])
+                            continue
+                        for item in list_converted:
+                            curr_converted_preds.append(
+                                current_example.return_type.coerce_fn(item, self.db)
+                            )
+                    mapped_values.append(curr_converted_preds)
+                else:
+                    mapped_values.extend(
+                        [
+                            current_example.return_type.coerce_fn(s, self.db)
+                            for s in predictions
+                        ]
+                    )
+            mapped_values = [
+                mapped_values[sorted_indices_to_original[i]]
+                for i in range(len(mapped_values))
+            ]
+
+            if total_missing_values > 0:
+                logger.debug(
+                    Color.error(
+                        f"LLMMap with {type(model).__name__}({model.model_name_or_path}) only returned {len(mapped_values) - total_missing_values} out of {len(mapped_values)} values"
+                    )
+                )
+            logger.debug(
+                Color.warning(
+                    f"Finished LLMMap with values:\n{json.dumps(dict(islice(dict(zip(values, mapped_values)).items(), 10)), indent=4)}"
+                )
+            )
+            return mapped_values
