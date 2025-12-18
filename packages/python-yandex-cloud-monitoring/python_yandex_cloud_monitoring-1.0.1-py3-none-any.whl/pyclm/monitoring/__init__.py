@@ -1,0 +1,191 @@
+import os
+import time
+from datetime import datetime, timezone
+import weakref
+from multiprocessing import Process, Queue
+import logging
+
+import jwt
+import requests
+
+
+API_IAM = "https://iam.api.cloud.yandex.net/iam/v1/tokens"
+API_MONITORING = "https://monitoring.api.cloud.yandex.net/monitoring/v2/data/write"
+CONNECTION_TIMEOUT = 3
+READ_TIMEOUT = 5
+
+IAM_EXP = 3 * 60 * 60
+AUTH_TYPE = "Bearer"
+
+
+class Monitoring:
+    def __init__(
+        self, credentials: dict = None, group_id: str = "default", resource_type: str = None, resource_id: str = None,
+            elements: int = 100, period: int = 10, workers: int = 0,
+            timeout=(CONNECTION_TIMEOUT, READ_TIMEOUT), log=None
+    ):
+        args = [
+            credentials, group_id, resource_type or str(os.uname()[1]), resource_id or str(os.getpid()),
+            elements if 0 < elements <= 100 else 100, period, timeout
+        ]
+        if log is not None:
+            self.log = log
+        else:
+            self.log = logging.getLogger("YandexMonitoring")
+            if not self.log.handlers:
+                h = logging.StreamHandler()
+                h.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] [%(name)s] %(message)s"))
+                self.log.addHandler(h)
+                self.log.setLevel(logging.WARNING)
+                self.log.propagate = False
+        self._send = PM(*args, workers=workers, log=self.log) if workers > 0 else Ingestion(*args)
+
+    def _metric(
+        self, name: str, value, t: str = "DGAUGE", ts: datetime = None,
+        labels: dict = None, timeseries: list = None
+    ):
+        result = {
+            "name": name,
+            "value": value,
+            "type": t,
+            "ts": ts.isoformat() if ts is not None else datetime.now(timezone.utc).isoformat()
+        }
+        if labels is not None:
+            result["labels"] = labels
+        if timeseries is not None and len(timeseries) > 1:
+            result["timeseries"] = timeseries
+        self._send(result)
+
+    #  Numeric value (decimal). It shows the metric value at a certain point in time.
+    #  For example, the amount of used RAM
+    def dgauge(self, name: str, value: float, ts: datetime = None, labels: dict = None, timeseries: list = None):
+        self._metric(name, value, "DGAUGE", ts, labels, timeseries)
+
+    #  Numeric value (integer). It shows the metric value at a certain point in time.
+    def igauge(self, name: str, value: int, ts: datetime = None, labels: dict = None, timeseries: list = None):
+        self._metric(name, value, "IGAUGE", ts, labels, timeseries)
+
+    #  Tag. It shows the metric value that increases over time.
+    #  For example, the number of days of service continuous running.
+    def counter(self, name: str, value: float, ts: datetime = None, labels: dict = None, timeseries: list = None):
+        self._metric(name, value, "COUNTER", ts, labels, timeseries)
+
+    #  Derivative value. It shows the change in the metric value over time.
+    #  For example, the number of requests per second.
+    def rate(self, name: str, value: float, ts: datetime = None, labels: dict = None, timeseries: list = None):
+        self._metric(name, value, "RATE", ts, labels, timeseries)
+
+
+class PM:
+    def __init__(self, *args, workers: int = 1, log=None):
+        self.log = log
+        self.workers = []
+        self.queue = Queue()
+        for _ in range(workers):
+            proc = Process(target=self.process, args=args, kwargs={"queue": self.queue})
+            self.workers.append(proc)
+            proc.start()
+        self._finalizer = weakref.finalize(self, self.finalize, 0)
+
+    def finalize(self, c: int = 0):
+        for _ in self.workers:
+            self.queue.put(c)
+        for proc in self.workers:
+            proc.join()
+
+    def __call__(self, value: dict):
+        self.queue.put(value)
+
+    @staticmethod
+    def process(*args, queue: Queue = None):
+        sender = Ingestion(*args)
+        while True:
+            value = queue.get()
+            if isinstance(value, dict):
+                sender(value)
+            else:
+                break
+
+
+class Ingestion:
+    def __init__(self, credentials, group_id, resource_type, resource_id, elements, period, timeout=None):
+        self.credentials = credentials
+        self._exp = 0
+        self._token = None
+        self._required = "?cloudId={cloudId}&folderId={folderId}&service=custom".format(**credentials)
+        self.elements = elements
+        self.metrics = []
+        self.period = period
+        self.labels = {
+            "group_id": str(group_id),
+            "resource_type": str(resource_type),
+            "resource_id": str(resource_id)
+        }
+        self.timer = time.time() + self.period
+        self._timeout = timeout
+        self._finalizer = weakref.finalize(self, self.finalize, 0)
+
+    def finalize(self, c: int = 0):
+        if len(self.metrics) > c:
+            self._write()
+
+    @property
+    def _payload(self):
+        result = {
+            "labels": self.labels,
+            "metrics": self.metrics
+        }
+        return result
+
+    def _write(self):
+        try:
+            response = requests.post(
+                url=API_MONITORING + self._required,
+                json=self._payload,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": " ".join([AUTH_TYPE, self.iam_token])
+                },
+                timeout=self._timeout
+            )
+        except Exception:
+            pass
+        else:
+            if response.status_code == 200 and response.json()["writtenMetricsCount"] == len(self.metrics):
+                self.metrics = []
+                self.timer = time.time() + self.period
+
+    def __call__(self, value: dict):
+        self.metrics.append(value)
+        if len(self.metrics) >= self.elements or self.timer < time.time():
+            self._write()
+
+    @property
+    def iam_token(self):
+        if self._exp < time.time():
+            response = requests.post(
+                url=API_IAM,
+                json={"jwt": self.jwt},
+                headers={"Content-Type": "application/json"},
+                timeout=self._timeout
+            )
+            if response.status_code == 200:
+                self._token = response.json().get("iamToken")
+                self._exp = time.time() + IAM_EXP
+        return self._token
+
+    @property
+    def jwt(self):
+        now = int(time.time())
+        key = self.credentials["service_account_key"]
+        return jwt.encode(
+            {
+                "aud": API_IAM,
+                "iss": key["service_account_id"],
+                "iat": now,
+                "exp": now + 360
+            },
+            key["private_key"],
+            algorithm="PS256",
+            headers={"kid": key["id"]}
+        )
