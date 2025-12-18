@@ -1,0 +1,93 @@
+Metadata-Version: 2.4
+Name: chq-pybos
+Version: 0.1.0
+Summary: A Python client library for the BOS API with improved developer ergonomics and type safety
+Home-page: https://gitlab.it.chq.org/IT/pybos
+Author: Jared Brown
+Author-email: Jared Brown <jbrown@chq.org>, Randy Butts <rbutts@chq.org>, Ian Drake <idrake@chq.org>
+License: MIT
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: suds>=1.0.0
+Requires-Dist: requests>=2.25.0
+Requires-Dist: xmltodict>=0.12.0
+Requires-Dist: pytest>=8.4.2
+Provides-Extra: dev
+Requires-Dist: black>=25.1.0; extra == "dev"
+Requires-Dist: pytest>=8.4.2; extra == "dev"
+Dynamic: author
+Dynamic: home-page
+
+# Python BOS
+
+A Python client library for the BOS API with improved developer ergonomics and type safety.
+
+## Important Note
+
+The BOS API is covered under an NDA signed by a Chautauqua Officer. The NDA may, by extension, cover this library. Its use should be limited to those covered under the NDA, namely CHQ employees.
+
+## Recent Improvements
+
+### Enhanced Developer Experience
+
+The library has been significantly improved with structured data types that replace tuple-based parameters, providing:
+
+- **Type Safety**: Compile-time error detection and IDE validation
+- **Self-Documenting API**: Clear field names and structured parameters
+- **IDE Support**: Autocomplete, type hints, and go-to-definition
+
+### Example: Account Service Improvements
+
+**Old Approach (deprecated):**
+```python
+# Unclear tuple structure - what do these numbers mean?
+filter_list = [(1, "john@example.com", 1)]
+result = service.search_account(filter_list=filter_list)
+```
+
+**New Approach (recommended):**
+```python
+from pybos.types import AccountFilter, SearchType
+
+# Clear, type-safe structure
+filter_obj = AccountFilter(
+    object_type=1,
+    value="john@example.com", 
+    search_type=SearchType.EQUAL
+)
+result = service.search_account(filters=[filter_obj], active_only=True)
+```
+
+**Complex Operations (using request objects):**
+```python
+from pybos.types import SearchAccountRequest, AccountFilter, SearchType
+
+# For complex operations, create request objects directly
+search_request = SearchAccountRequest(
+    filters=[
+        AccountFilter(1, "john@example.com", SearchType.EQUAL),
+        AccountFilter(2, "Smith", SearchType.LIKE)
+    ],
+    active_only=True,
+    dmg_category_list=["cat1", "cat2"]
+)
+
+result = service.search_account(**search_request.__dict__)
+```
+
+## Installing
+
+The Python BOS library can be installed through pip or pipenv using the git repository as a source. A read-only access token has been created to facilitate http access to the repository. This token and link should not be shared publicly.
+
+### Main Branch (Major Releases):
+
+```
+pipenv install git+https://oauth2:glpat-bHSfMffW14FbYDWFuyzs@gitlab.it.chq.org/IT/pybos.git@main#egg=pybos
+```
+
+Version specific tagging (corresponding to BOS versions) to be implemented at a later date.
+
+
+## BOS API Details
+
+The BOS API is a SOAP API that provides WSDL information in XML file that denotes the structure of the requests and responses it expects as well as what operations are available. 
