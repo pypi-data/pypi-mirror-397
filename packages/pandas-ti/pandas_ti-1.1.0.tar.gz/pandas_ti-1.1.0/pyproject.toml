@@ -1,0 +1,37 @@
+[project]
+name = "pandas_ti"
+version = "1.1.0"
+description = "A lightweight technical indicators library for pandas DataFrames and Series"
+authors = [
+    { name = "Javier Calzada Espuny" }
+]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.12"
+keywords = ["pandas", "technical-indicators", "trading", "finance"]
+
+dependencies = [
+    "rich>=14.2.0",
+    "pandas>=2.3.3",
+    "numpy>=2.3.3",
+    "scipy>=1.16.2",
+    "statsmodels>=0.14.5",
+]
+
+[project.optional-dependencies]
+dev = [
+    "yfinance>=0.2.66",
+    "matplotlib>=3.10.7",
+    "mplfinance>=0.12.10b0",
+    "jupyterlab>=4.4.9",
+    "ipykernel>=7.0.1",
+    "notebook>=7.4.7",
+    "ipython>=9.6.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pandas_ti"]
