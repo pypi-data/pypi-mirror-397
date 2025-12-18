@@ -1,0 +1,139 @@
+Metadata-Version: 2.4
+Name: certbot_deployer_ssh
+Version: 0.2.0
+Summary: Certbot Deployer plugin for deploying certificate bundles over SSH
+Home-page: https://github.com/theias/certbot_deployer_ssh
+Author: IAS
+Author-email: network@ias.edu
+Project-URL: Documentation, https://theias.github.io/certbot_deployer_ssh/
+Project-URL: Bug Tracker, https://github.com/theias/certbot_deployer_ssh/issues
+Project-URL: Source, https://github.com/theias/certbot_deployer_ssh
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: certbot_deployer<3.0.0,>=2.0.3
+Requires-Dist: cryptography<45.0.0,>=44.0.1
+Requires-Dist: fabric<4.0.0,>=3.2.2
+Dynamic: license-file
+
+certbot_deployer_ssh
+===========
+
+[Certbot Deployer] plugin for deploying certificate bundles over SSH via [Certbot] "deploy hook."
+
+# Requires
+
+* Python 3.9+
+
+# Installation
+
+You can install with [pip]:
+
+```sh
+python3 -m pip install certbot_deployer_ssh
+```
+
+Or install from source:
+
+```sh
+git clone <url>
+pip install certbot_deployer_ssh
+```
+
+# Usage
+
+This tool expects to run as a Certbot deploy hook, and for the environment variable `RENEWED_LINEAGE` to point to the live certificate directory just updated/created by Certbot.
+
+Any existing certificate bundle under the same Common Name on the remote will be overwritten.
+
+## Examples
+
+```
+## Deposit the certificate bundle directory into a remote path on a host
+
+certbot-deployer ssh --host host.domain.tld --destination-path=/path/to/wherever
+
+## Upload the certificate bundle directory
+    and run arbitrary commands before and after
+
+certbot-deployer ssh --pre-cmd "touch /some/file" --host host.domain.tld \
+    --post-cmd "chown user:grp /path/to/file"
+
+```
+
+## Config
+
+Arguments can be passed directly when calling this tool or configured in the Certbot Deployer configuration file (`/etc/certbot_deployer/certbot_deployer.conf`)
+
+## Reference
+
+```
+usage: certbot-deployer ssh [-h] [--host HOST] [--remote-dir REMOTE_DIR]
+                            [--pre-cmd PRE_CMD] [--post-cmd POST_CMD]
+                            [--mode MODE]
+
+BIG-IP subcommand
+        Certbot Deployer plugin for deploying certificate bundles over SSH
+        
+
+options:
+  -h, --help            show this help message and exit
+  --host, -H HOST       SSH host to target
+  --remote-dir, -d REMOTE_DIR
+                        Remote destination path in which to drop the
+                        certificate bundle directory. This tool will not
+                        attempt to create the path if it does not exist. If
+                        not provided, it will be up to the server - that
+                        usually ends up being the user's home directory.
+  --pre-cmd PRE_CMD     A command to run before uploading the certificate
+                        bundle. Can be passed multiple times.
+  --post-cmd POST_CMD   A command to run after uploading the certificate
+                        bundle. Can be passed multiple times.
+  --mode, -m MODE       Mode to apply to the remote certificate bundle
+                        directory on upload. Defaults to `0700`.
+
+This tool expects to run as a Certbot deploy hook, and for the
+environment variable `RENEWED_LINEAGE` to point to the live
+certificate directory just updated/created by Certbot.
+
+Any existing certificate bundle under the same Common Name on the
+remote will be overwritten.
+
+# Credentials
+
+SSH credentials should be determined by the user's SSH config, e.g.:
+
+    # /home/user/.ssh/config
+    Host host.domain.tld
+        user deploy_user
+        IdentityFile /path/to/key
+
+See the Fabric library's documentation on SSH configuration for more:
+
+    https://docs.fabfile.org/en/latest/concepts/configuration.html
+```
+
+# Contributing
+
+Merge requests are welcome. You should probably open an issue first to discuss what you would like to change.
+
+To run the test suite:
+
+```bash
+# Dependent targets create venv and install dependencies
+make
+```
+
+Please make sure to add/update tests along with any changes.
+
+# License
+
+License :: OSI Approved :: MIT License
+
+
+[Certbot Deployer]: https://github.com/theias/certbot_deployer
+[Certbot]: https://certbot.eff.org/
+[pip]: https://pip.pypa.io/en/stable/
