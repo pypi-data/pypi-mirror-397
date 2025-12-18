@@ -1,0 +1,34 @@
+[build-system]
+requires = ["scikit-build-core", "cython"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "vpdq"
+authors = [{name = "Meta", email = "threatexchange@meta.com"}]
+description = "Python bindings for Facebook VPDQ hash"
+requires-python = ">= 3.8"
+readme = {file = "python/README.md", content-type = "text/markdown"}
+license = {file = "LICENSE.txt"}
+dynamic = ["version"]
+
+[tool.scikit-build.metadata.version]
+provider = "scikit_build_core.metadata.regex"
+input = "version.txt"
+
+# Regex explanation:
+# ^ matches the start of the line.
+# ?P<value> is the named capture group with the name value. scikit is expecting this.
+# \S+ matches any non-whitespace characters, assuming the version is a single token.
+# $ ensures the match ends at the end of the line.
+regex = "^(?P<value>\\S+)$" 
+
+[tool.scikit-build]
+minimum-version = "0.10"
+cmake.build-type = "RelWithDebInfo"
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "black",
+  "clang-format~=14.0", # Github Actions CI uses version 14
+]
