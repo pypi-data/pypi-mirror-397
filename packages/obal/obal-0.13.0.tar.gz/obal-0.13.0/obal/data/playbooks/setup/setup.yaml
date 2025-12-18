@@ -1,0 +1,30 @@
+---
+- name: Setup system for use of obal
+  hosts:
+    - localhost
+  connection: local
+  tasks:
+    - name: Install required packages
+      become: true
+      package:
+        state: present
+        name:
+          - rpm-build
+          - koji
+          - "{{ 'git-annex' if ansible_distribution_major_version == '7' else 'git-annex-standalone' }}"
+          - tito
+          - scl-utils
+          - scl-utils-build
+          - rpmlint
+          - yum-utils
+          - which
+          - dnf
+          - dnf-plugins-core
+
+    - name: Install required Fedora packages
+      when: ansible_os_family == 'Fedora'
+      become: true
+      package:
+        state: present
+        name:
+          - quvi

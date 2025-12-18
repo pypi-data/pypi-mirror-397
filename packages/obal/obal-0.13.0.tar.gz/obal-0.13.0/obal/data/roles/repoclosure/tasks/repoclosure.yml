@@ -1,0 +1,39 @@
+- block:
+    - name: Set config filename for repoclosure
+      set_fact:
+        config_filename: "{{ repoclosure_config | basename }}"
+
+    - name: Create temp directory
+      tempfile:
+        state: directory
+        suffix: repoclosure
+      register: temp_directory
+
+    - name: Copy repoclosure config to temp directory
+      copy:
+        src: "{{ inventory_dir }}/{{ repoclosure_config }}"
+        dest: "{{ temp_directory.path }}/{{ config_filename }}"
+        remote_src: true
+        mode: '0640'
+
+    - name: Replace installroot with temp directory
+      replace:
+        path: "{{ temp_directory.path }}/{{ config_filename }}"
+        regexp: "^installroot.*"
+        replace: "installroot={{ temp_directory.path }}/root"
+
+    - name: 'Run repoclosure'
+      repoclosure:
+        config: "{{ temp_directory.path }}/{{ config_filename }}"
+        check: "{{ check_repos | default([]) }}"
+        additional_repos: "{{ additional_repos | default([]) }}"
+        lookaside: "{{ lookaside_repos | default([]) }}"
+      register: output
+
+    - debug:
+        msg: "{{ output.output }}"
+  always:
+    - name: Clean up temporary directory
+      file:
+        state: absent
+        path: "{{ temp_directory.path }}"

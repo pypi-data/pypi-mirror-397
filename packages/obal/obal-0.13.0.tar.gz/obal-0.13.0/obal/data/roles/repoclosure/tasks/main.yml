@@ -1,0 +1,33 @@
+---
+- name: Run repoclosure for all dists
+  include_tasks: downloaded_rpms_repoclosure.yml
+  when:
+    - repoclosure_target_dist is not defined
+    - repoclosure_check_repos is not truthy
+
+- name: Run repoclosure for main repo
+  include_tasks: repoclosure.yml
+  loop:
+    - "{{ repoclosure_target_dist }}"
+  loop_control:
+    loop_var: dist
+  vars:
+    check_repos: "{{ repoclosure_target_repos[dist] }}"
+    lookaside_repos: "{{ repoclosure_lookaside_repos[dist] }}"
+    additional_repos: []
+  when:
+    - repoclosure_target_dist is defined
+    - repoclosure_check_repos is not truthy
+
+- name: Run repoclosure for a target repo
+  include_tasks: repoclosure.yml
+  loop: "{{ repoclosure_check_repos }}"
+  loop_control:
+    loop_var: repo_url
+    index_var: index
+  vars:
+    check_repos: "{{ ['repo' + index|string] + repoclosure_target_repos[repoclosure_target_dist]|default([]) }}"
+    lookaside_repos: "{{ repoclosure_lookaside_repos[repoclosure_target_dist] }}"
+    additional_repos: "{{ [{'name': 'repo' + index|string, 'url': repo_url}] }}"
+  when:
+    - repoclosure_check_repos is truthy

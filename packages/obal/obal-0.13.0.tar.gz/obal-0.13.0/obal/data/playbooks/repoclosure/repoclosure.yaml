@@ -1,0 +1,9 @@
+- name: Run reposclosure for packages
+  hosts:
+    - repoclosures
+    - packages
+  gather_facts: false
+  roles:
+    - repoclosure
+  # Repoclosure can't run in parallel because it reuses caches
+  serial: 1
