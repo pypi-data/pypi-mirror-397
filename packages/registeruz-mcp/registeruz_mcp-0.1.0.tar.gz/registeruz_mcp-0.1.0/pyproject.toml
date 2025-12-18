@@ -1,0 +1,33 @@
+[project]
+name = "registeruz-mcp"
+version = "0.1.0"
+description = "MCP server for Slovak Registry of Financial Statements (Register účtovných závierok)"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastmcp>=2.14.0",
+    "httpx>=0.28.0",
+]
+
+[project.scripts]
+registeruz-mcp = "registeruz_mcp:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "vcrpy>=6.0.0",
+    "pytest-recording>=0.13.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["registeruz_mcp*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
