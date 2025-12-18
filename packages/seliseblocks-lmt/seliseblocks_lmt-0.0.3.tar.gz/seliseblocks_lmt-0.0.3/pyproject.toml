@@ -1,0 +1,31 @@
+[project]
+name = "seliseblocks-lmt"
+version = "0.0.3"
+readme = "README.md"
+description = "Logging, Monitoring, and Tracing library for Selise Blocks applications using Azure Service Bus."
+authors = [{name="Selise Blocks", email="mostafizur.rahman@selisegroup.com"}]
+keywords = ["Selise", "Selise Blocks", "LMT", "Logging", "Monitoring", "Tracing", "Azure Service Bus", "OpenTelemetry"]
+dependencies = [
+    "azure-servicebus>=7.14.2",
+    "opentelemetry-api>=1.33.1",
+    "opentelemetry-sdk>=1.33.1",
+    "opentelemetry-instrumentation-fastapi>=0.54b1",
+]
+
+requires-python = ">=3.9"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["blocks_lmt"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/SELISEdigitalplatforms/l0-py-blocks-genesis"
+Repository = "https://github.com/SELISEdigitalplatforms/l0-py-blocks-genesis"
