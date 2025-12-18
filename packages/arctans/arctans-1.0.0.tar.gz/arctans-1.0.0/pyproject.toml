@@ -1,0 +1,36 @@
+[project]
+name = "arctans"
+version = "1.0.0"
+description = "a library for reducing arctans"
+readme = "README.md"
+requires-python = ">=3.10.0"
+license = "MIT"
+authors = [
+    { name = "Matthew Scroggs", email = "arctans@mscroggs.co.uk" }
+]
+dependencies = ["typing_extensions; python_version < '3.11'"]
+
+[project.urls]
+homepage = "https://github.com/mscroggs/arctans"
+repository = "https://github.com/mscroggs/arctans"
+
+[project.optional-dependencies]
+style = ["ruff", "mypy"]
+docs = ["sphinx", "sphinx-autoapi"]
+test = ["pytest"]
+
+[tool.setuptools]
+packages = ["arctans"]
+
+[tool.ruff]
+line-length = 100
+indent-width = 4
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.mypy]
+ignore_missing_imports = true
