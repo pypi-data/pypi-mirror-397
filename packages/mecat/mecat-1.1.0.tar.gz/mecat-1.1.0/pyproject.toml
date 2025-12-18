@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mecat"
+version = "1.1.0"
+description = "Multi-Expert Chain for Audio Tasks (MECAT)"
+
+dependencies = [
+  "loguru",
+  "numpy",
+  "tabulate",
+  "datasets",
+  "torch>=2.2.1",
+  "pandas",
+  "transformers>=4.52.4",
+  "tqdm",
+  "sentence_transformers>=4.1",
+  "requests",
+  "psutil",
+]
+
+authors = [
+  {name = "Yadong Niu",  email = "niuyadong@xiaomi.com"},
+  {name = "Tianzi Wang", email = "twang@se.cuhk.edu.hk"},
+  {name = "Heinrich Dinkel", email = "dinkelheinrich@xiaomi.com"},
+  {name = "Xingwei Sun", email = "sunxingwei@xiaomi.com"},
+  {name = "Jiahao Zhou", email = "zhoukz@bupt.edu.cn"},
+  {name = "Gang Li",     email = "ligang5@xiaomi.com"},
+  {name = "Jizhong Liu", email = "liujizhong1@xiaomi.com"},
+  {name = "Junbo Zhang", email = "zhangjunbo1@xiaomi.com"},
+  {name = "Jian Luan",   email = "luanjian@xiaomi.com"},
+]
+
+readme = "README.md"
+requires-python = ">=3.10"
+license-files = ["LICENSE"]
+
+[project.scripts]
+mecat-evaluate = "mecat.evaluate:main"
+
+[project.urls]
+Repository = "https://git.n.xiaomi.com/niuyadong/mecat_public.git"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+mecat = [
+  "reference/caption/test/*jsonl.gz",
+  "reference/qa/test/*jsonl.gz",
+]
+
