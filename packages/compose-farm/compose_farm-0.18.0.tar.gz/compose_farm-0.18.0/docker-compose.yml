@@ -1,0 +1,11 @@
+services:
+  cf:
+    image: ghcr.io/basnijholt/compose-farm:latest
+    volumes:
+      - ${SSH_AUTH_SOCK}:/ssh-agent:ro
+      # Compose directory (contains compose files AND compose-farm.yaml config)
+      - ${CF_COMPOSE_DIR:-/opt/compose}:${CF_COMPOSE_DIR:-/opt/compose}
+    environment:
+      - SSH_AUTH_SOCK=/ssh-agent
+      # Config file path (state stored alongside it)
+      - CF_CONFIG=${CF_COMPOSE_DIR:-/opt/compose}/compose-farm.yaml
