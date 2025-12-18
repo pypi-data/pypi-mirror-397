@@ -1,0 +1,42 @@
+{
+  "name": "foreach_parallel",
+  "description": "Test parallel forEach with concurrency limit",
+  "version": "1.0.0",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": ["items"]
+  },
+  "stages": {
+    "process_parallel": {
+      "component": "foreach",
+      "config": {
+        "items": "{{input.items}}",
+        "item_variable": "item",
+        "index_variable": "idx",
+        "execution_mode": "parallel",
+        "max_parallel": 3,
+        "collect_results": true,
+        "break_on_error": false
+      },
+      "loop_stages": {
+        "process_item": {
+          "component": "generator",
+          "config": {
+            "system_prompt": "Process and respond briefly.",
+            "user_prompt": "Process item: {{item}}",
+            "max_tokens": 50
+          }
+        }
+      }
+    }
+  },
+  "output_stage": "process_parallel"
+}

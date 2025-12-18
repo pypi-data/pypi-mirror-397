@@ -1,0 +1,41 @@
+{
+  "name": "foreach_sequential",
+  "description": "Test sequential forEach loop processing",
+  "version": "1.0.0",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "required": ["items"]
+  },
+  "stages": {
+    "process_items": {
+      "component": "foreach",
+      "config": {
+        "items": "{{input.items}}",
+        "item_variable": "current_item",
+        "index_variable": "current_index",
+        "execution_mode": "sequential",
+        "collect_results": true,
+        "break_on_error": true
+      },
+      "loop_stages": {
+        "summarize_item": {
+          "component": "generator",
+          "config": {
+            "system_prompt": "Summarize in one sentence.",
+            "user_prompt": "Item {{current_index + 1}} of {{loop_total}}: {{current_item}}",
+            "max_tokens": 50
+          }
+        }
+      }
+    }
+  },
+  "output_stage": "process_items"
+}

@@ -1,0 +1,36 @@
+{
+  "name": "child_pipeline",
+  "description": "Child pipeline called by subpipeline_basic",
+  "version": "1.0.0",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {"type": "string"}
+      }
+    },
+    "required": ["data"]
+  },
+  "stages": {
+    "count_items": {
+      "component": "variable_set",
+      "config": {
+        "variables": {
+          "item_count": "{{input.data | length}}",
+          "processed": true
+        }
+      }
+    },
+    "generate_report": {
+      "component": "generator",
+      "depends_on": ["count_items"],
+      "config": {
+        "system_prompt": "Generate a brief processing report.",
+        "user_prompt": "Processed {{stages.count_items.item_count}} items: {{input.data | join(', ')}}",
+        "max_tokens": 100
+      }
+    }
+  },
+  "output_stage": "generate_report"
+}

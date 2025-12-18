@@ -1,0 +1,60 @@
+{
+  "name": "router_basic",
+  "description": "Test basic router with 3 branches",
+  "version": "1.0.0",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "language": {
+        "type": "string",
+        "enum": ["english", "spanish", "french"]
+      },
+      "text": {
+        "type": "string"
+      }
+    },
+    "required": ["language", "text"]
+  },
+  "stages": {
+    "route_language": {
+      "component": "router",
+      "config": {
+        "routing_value": "{{input.language}}",
+        "branches": {
+          "english": ["respond_english"],
+          "spanish": ["respond_spanish"],
+          "french": ["respond_french"]
+        },
+        "default_branch": ["respond_english"]
+      }
+    },
+    "respond_english": {
+      "component": "generator",
+      "depends_on": ["route_language"],
+      "config": {
+        "system_prompt": "Respond only in English.",
+        "user_prompt": "{{input.text}}",
+        "max_tokens": 100
+      }
+    },
+    "respond_spanish": {
+      "component": "generator",
+      "depends_on": ["route_language"],
+      "config": {
+        "system_prompt": "Respond only in Spanish.",
+        "user_prompt": "{{input.text}}",
+        "max_tokens": 100
+      }
+    },
+    "respond_french": {
+      "component": "generator",
+      "depends_on": ["route_language"],
+      "config": {
+        "system_prompt": "Respond only in French.",
+        "user_prompt": "{{input.text}}",
+        "max_tokens": 100
+      }
+    }
+  },
+  "output_stage": "route_language"
+}
