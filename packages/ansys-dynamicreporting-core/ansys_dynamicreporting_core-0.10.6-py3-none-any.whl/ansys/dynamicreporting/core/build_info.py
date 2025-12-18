@@ -1,0 +1,5 @@
+# Build information
+BUILD_DATE = "2025-12-16T19:41:16.943821"
+BUILD_HASH = ""
+BUILD_BRANCH = ""
+BUILD_DESCRIPTION = "unknown"
