@@ -1,0 +1,178 @@
+# Nellie Python SDK
+
+The official Python client for the [Nellie AI Book Generation API](https://nelliewriter.com).
+
+> **SDK Version:** 0.1.0  
+> **API Version:** v1
+
+## Installation
+
+```bash
+pip install nellie-api
+```
+
+## Usage
+
+### Basic Book Generation
+
+```python
+from nellie_api import Nellie
+
+client = Nellie(api_key="nel_...")
+
+# Start a book generation job
+book = client.books.create(
+    prompt="A sci-fi mystery about a lost colony on Mars",
+    style="sci_fi",
+    type="novel"
+)
+
+print(f"Book started! ID: {book.request_id}")
+
+# Check status
+status = client.books.retrieve(book.request_id)
+print(f"Status: {status.status} ({status.progress}%)")
+
+if status.status == "completed":
+    print(f"Download URL: {status.result_url}")
+```
+
+### Waiting for Completion
+
+Use the built-in polling helper to wait for a job to finish:
+
+```python
+from nellie_api import Nellie
+
+client = Nellie(api_key="nel_...")
+
+book = client.books.create(prompt="A fantasy adventure")
+
+# Block until complete (with progress callback)
+result = client.books.wait_for_completion(
+    book.request_id,
+    poll_interval=120,  # Check every 2 minutes (minimum: 60s)
+    timeout=7200,       # Max wait time: 2 hours
+    on_progress=lambda s: print(f"Progress: {s.progress}%")
+)
+
+if result.is_successful():
+    print(f"Done! Download: {result.result_url}")
+else:
+    print(f"Failed: {result.error}")
+```
+
+### Getting Configuration Options
+
+Fetch available styles, types, and output formats:
+
+```python
+config = client.get_configuration()
+print(f"Available styles: {config.styles}")
+print(f"Available types: {config.types}")
+print(f"Available formats: {config.formats}")
+```
+
+### Getting Available Models
+
+Retrieve available generation models and their costs:
+
+```python
+models = client.get_models()
+for model in models:
+    print(f"{model.name}: {model.cost_per_book} credits")
+```
+
+### Checking Usage Statistics
+
+Get your credit consumption and request history:
+
+```python
+usage = client.get_usage()
+print(f"Total requests: {usage.total_requests}")
+print(f"Total credits used: {usage.total_credits_used}")
+
+for req in usage.recent_requests:
+    print(f"  {req.request_id}: {req.status} ({req.credits_used} credits)")
+```
+
+### Type Hints
+
+The SDK exports type literals for better IDE support:
+
+```python
+from nellie_api import BookStyle, BookType, ModelVersion, OutputFormat
+
+style: BookStyle = "sci_fi"
+type: BookType = "novel"
+```
+
+### Configuration
+
+You can configure the client using environment variables or constructor arguments.
+
+**Environment Variables:**
+- `NELLIE_API_KEY`: Your API key.
+- `NELLIE_API_BASE_URL`: (Optional) Override the API base URL.
+
+**Constructor:**
+```python
+client = Nellie(
+    api_key="nel_...", 
+    base_url="https://api.nelliewriter.com",  # SDK automatically uses /v1 paths
+    max_retries=3,  # Configures automatic retries for rate limits
+    timeout=30      # Request timeout in seconds (default: 30)
+)
+```
+
+### Webhooks
+
+Verify incoming webhooks securely using the built-in utility:
+
+```python
+from nellie_api import Webhook, WebhookSignatureError
+import os
+
+# Your webhook secret from the dashboard
+webhook_secret = os.environ.get("NELLIE_WEBHOOK_SECRET")
+
+# In your Flask/Django/FastAPI route:
+def webhook_handler(request):
+    payload = request.data
+    sig_header = request.headers.get("X-Nellie-Signature")
+
+    try:
+        event = Webhook.construct_event(
+            payload, sig_header, webhook_secret
+        )
+    except WebhookSignatureError as e:
+        return "Invalid signature", 400
+
+    # Handle the event
+    if event.status == "completed":
+        print(f"Book ready: {event.result_url}")
+    
+    return "Success", 200
+```
+
+### Error Handling
+
+The SDK raises exceptions for various error conditions:
+
+- `AuthenticationError`: Invalid API key (HTTP 401).
+- `RateLimitError`: Too many requests (HTTP 429).
+- `APIError`: General API errors (e.g. invalid parameters, server errors).
+- `NellieError`: Base class for all SDK errors.
+
+```python
+from nellie_api import Nellie, APIError, AuthenticationError, RateLimitError
+
+try:
+    client.books.create(...)
+except AuthenticationError:
+    print("Check your API key")
+except RateLimitError:
+    print("Rate limit exceeded - wait before retrying")
+except APIError as e:
+    print(f"API Error: {e}")
+```
