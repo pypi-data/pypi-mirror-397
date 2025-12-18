@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["make87*"]
+
+[project]
+name = "make87"
+version = "0.2.2"
+license = "Apache-2.0"
+authors = [
+    { name = "Nisse Knudsen", email = "nisse@make87.com" },
+    { name = "Phillip Thomas", email = "phillip@make87.com" }
+]
+dependencies = [
+    "setuptools>=80.7.1",
+    "wheel>=0.45.1",
+    "pydantic>=2.11.9,<3.0.0",
+]
+readme = "README.md"
+requires-python = ">=3.9,<3.13"
+description = "Deprecated: Legacy make87 SDK for Python (unmaintained)"
+classifiers = [
+    "Development Status :: 7 - Inactive",
+]
+
+[project.urls]
+Homepage = "https://www.make87.com"
+Source = "https://github.com/make87/make87-python"
+
+[project.optional-dependencies]
+zenoh = [
+    "eclipse-zenoh>=1.5.1",
+]
+protobuf = [
+    "protobuf>=4.22,<7.0",
+    "packaging>=25.0,<26.0",
+]
+yaml = [
+    "PyYAML>=6.0,<7.0",
+]
+storage = [
+    "s3path>=0.6.4",
+]
+rerun = [
+    "rerun-sdk>=0.25.1",
+]
+dev = [
+    "pre-commit>=4.3.0",
+    "pytest>=8.4.2",
+    "pytest-mock>=3.15.1",
+    "ruff>=0.13.1",
+    "make87_messages",
+    "datamodel-code-generator==0.33.0",
+    "black>=25.9.0",
+    "boto3-stubs>=1.40.35",
+]
