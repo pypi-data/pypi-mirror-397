@@ -1,0 +1,182 @@
+# ristikko
+
+A library for tight-binding simulations, with a particular focus on realistic
+systems, disorder and impurities.
+
+Some examples are found in the `examples/` directory.
+
+For quantum transport, consider using [kwant](https://kwant-project.org/) or [pyqula](https://github.com/joselado/pyqula).
+
+# Features
+
+- Single-particle Hamiltonians, 0d, 1d, 2d (3d possible but not yet implemented).
+- Spinless/spinful/multiorbital basis
+- Arbitrarily complicated superlattice/sublattice structure
+- Arbitrarily distant hoppings
+- Arbitrary number of impurities
+- Disorder, can be applied to onsite potentials or hoppings
+- Superconductivity, magnetism, spin-orbit coupling
+- Electronic structure
+- Local density of states, resolved over the full basis
+- Chern numbers, winding numbers, Z2 invariants
+- Build from DFT models
+
+# Brief examples
+
+## Create a square lattice and plot
+
+```
+params = Params(dict(
+    N1 = 16,
+    N2 = 16,
+    mu = 0,
+    t = 1,
+    pbc = False,
+))
+
+lattice = models.Square()
+sys = System(Space.RealSpace, lattice, params)
+sys.plot()
+```
+
+### Calculate the local density of states
+
+```
+omega = np.linspace(-1, 1, 1001)
+ldos = sys.calc_ldos(omega)
+```
+
+### Calculate the spectra
+
+```
+points = np.array([
+    [0, 0],
+    [0.5, 0],
+    [0.5, 0.5],
+    [0, 0.5],
+    [0, 0]
+]) * 2 * np.pi
+Ks = np.array(k_path(101, points))
+
+sys = System(Space.KSpace, lattice, params)
+Ek = sys.diagonalise(k=Ks)
+```
+
+### Phase diagram for a toy model for a topological superconductor
+
+```
+@vectorize_parallel
+def calc(mu, J):
+    params = dict(
+            t = 1,
+            mu = mu.tolist(),
+            Jz = J.tolist(),
+            alpha = 0.5,
+            Delta = 1,
+            direction = "a2",
+    )
+    params = Params(params)
+
+    lattice = models.Square()
+    sys = System(Space.KSpace, lattice, params)
+    M = sys.calc_majorana()
+    return M
+
+Mus = np.linspace(-4, 4, 301)
+Js = np.linspace(-4, 4, 303)
+
+M = calc(Mus[None, :], Js[:, None], mem=mem, progress=True)
+
+fig, axis = plt.subplots(figsize=(4, 4))
+cmap = colours.BlackWhite()
+im = axis.pcolormesh(Mus, Js, M, cmap=cmap)
+add_colourbar(fig, axis, im)
+```
+
+### Shiba chain on a substrate
+
+```
+params = dict(
+    N1 = 11,
+    N2 = 6,
+    t = 1,
+    mu = -2,
+    alpha = 0.5,
+    Delta = 1,
+    impurities = dict(
+        t = 1,
+        mu = 0.5,
+        J = 2.5,
+    ),
+    pbc = False,
+)
+params = Params(params)
+
+t = Symbol("impurities.t")
+mu = Symbol("impurities.mu")
+J = Symbol("impurities.J")
+lattice = models.Square()
+realspace = System(Space.RealSpace, lattice, params)
+idxs = np.arange(params.N1*params.N2).reshape(params.N1, params.N2)
+y = 3
+for x in range(params.N1-1):
+    idx = realspace.add_impurity(coord=(x+0.5, y-0.5))
+    imp = realspace.impurities[idx]
+    idxs[x, y] = idx
+
+    imp.add_hopping(imp, 0, 0, mu + J)
+    imp.add_hopping(imp, 1, 1, mu + (-1 * J))
+
+    for i in range(2):
+        if x > 0:
+            imp1 = realspace.impurities[idxs[x-1, y]]
+            imp.add_hopping(imp1, i, i, t)
+
+        imp.add_hopping(Site(x, y, 0, 0), i, i, t)
+
+        imp.add_hopping(Site((x+1)%params.N1, y, 0, 0), i, i, t)
+        imp.add_hopping(Site(x, y-1, 0, 0), i, i, t)
+
+        imp.add_hopping(Site((x+1)%params.N1, (y-1)%params.N1, 0, 0), i, i, t)
+
+realspace.plot(aspect=6/11, axis_scale=5)
+```
+
+### Disordered lattice
+
+
+```
+params = Params(dict(
+    N1 = 16,
+    N2 = 16,
+    mu = 0,
+    t = 1,
+    pbc = False,
+    seed = 0,
+    scale = 1,
+))
+
+lattice = models.Square()
+sys = System(Space.RealSpace, lattice, params)
+
+def potential_disorder(params, ts, ij):
+    rng = numpy.random.default_rng(params.seed)
+    mu = rng.normal(size=(params.N1, params.N2), scale=params.scale)
+    for n in range(ts.size):
+        x0, y0, x1, y1, i, j = ij[n]
+        if i == j and x0 == x1 and y0 == y0:
+            ts[n] = mu[x0, y0]
+    return ts, ij
+
+
+H = sys.hamiltonian(postprocess_hoppings=potential_disorder)
+```
+
+
+# Homepage
+
+<https://git.sr.ht/~dcrawford/ristikko>
+
+# Licence
+
+GPLv3+
