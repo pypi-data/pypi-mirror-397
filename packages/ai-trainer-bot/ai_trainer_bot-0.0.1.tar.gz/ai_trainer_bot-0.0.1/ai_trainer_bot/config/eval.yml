@@ -1,0 +1,65 @@
+# Evaluation Configuration for AI Trainer Bot
+# This file contains all settings for evaluating a trained machine learning model
+
+# Model Configuration
+model:
+  name: "cnn"  # Must match the trained model type
+  checkpoint_path: "checkpoints/best_model.pth"  # Path to trained model checkpoint
+  architecture:
+    # Same architecture settings as used during training
+    num_classes: 10
+    input_channels: 3
+    hidden_dims: [64, 128, 256]
+    kernel_size: 3
+    dropout: 0.5
+
+# Evaluation Configuration
+evaluation:
+  batch_size: 32
+  num_workers: 4
+
+# Data Configuration
+data:
+  dataset: "cifar10"  # Must match training dataset
+  split: "test"  # Options: test, val, train
+
+  # Data preprocessing (should match training)
+  augmentation:
+    normalize: true
+    mean: [0.485, 0.456, 0.406]
+    std: [0.229, 0.224, 0.225]
+
+# Metrics Configuration
+metrics:
+  - "accuracy"
+  - "precision"
+  - "recall"
+  - "f1"
+  - "confusion_matrix"
+  - "classification_report"
+
+# Output Configuration
+output:
+  save_predictions: true
+  predictions_file: "evaluation/predictions.npy"
+  save_metrics: true
+  metrics_file: "evaluation/metrics.json"
+
+# Visualization Configuration
+visualization:
+  enabled: true
+  confusion_matrix: true
+  roc_curve: false  # Only for binary classification
+  precision_recall_curve: false  # Only for binary classification
+  output_dir: "evaluation/plots"
+
+# Device Configuration
+device: "auto"  # Options: auto, cpu, cuda, cuda:0
+
+# Random Seed
+seed: 42
+
+# Experiment Tracking
+experiment:
+  name: null  # Auto-generated if null
+  tags: ["evaluation", "cnn"]
