@@ -1,0 +1,321 @@
+from django import forms
+from netbox.forms import NetBoxModelFilterSetForm
+from utilities.forms.fields import DynamicModelChoiceField, DynamicModelMultipleChoiceField, CommentField, DynamicChoiceField
+from netbox.api.fields import ChoiceField
+from utilities.forms.rendering import FieldSet
+from utilities.forms.widgets import DatePicker
+from dcim.models import Manufacturer, Device, DeviceType
+from virtualization.models import VirtualMachine, Cluster
+from netbox_license.models.license import License
+from netbox_license.models.licenseassignment import LicenseAssignment
+from netbox_license.models.licensetype import LicenseType
+from netbox_license.filtersets import licenseassignments, licensetypes
+from netbox_license.filtersets.licenses import LicenseFilterSet
+from ..choices import (
+    VolumeTypeChoices,
+    PurchaseModelChoices,
+    LicenseModelChoices,
+    VolumeRelationChoices,
+    LicenseStatusChoices,
+    LicenseSupportStatusChoices,
+    AssignmentKindChoices,
+    LicenseAssignmentChoices,
+)
+
+# ---------- LicenseType ----------
+
+class LicenseTypeFilterForm(NetBoxModelFilterSetForm):
+    model = LicenseType
+    filterset_class = licensetypes.LicenseTypeFilterSet
+
+    fieldsets = (
+        FieldSet('q', name='Search'),
+        FieldSet(
+            'manufacturer_id',
+            'volume_type',
+            'license_model',
+            'purchase_model',
+            'base_license',
+            'product_code',
+            'ean_code',
+            name='Details'
+        ),
+    )
+
+    manufacturer_id = DynamicModelMultipleChoiceField(
+        queryset=Manufacturer.objects.all(),
+        required=False,
+        label="Manufacturer"
+    )
+
+    volume_type = forms.MultipleChoiceField(
+        choices=VolumeTypeChoices,
+        required=False,
+        label="Volume Type",
+        widget=forms.SelectMultiple()
+    )
+
+    license_model = forms.MultipleChoiceField(
+        choices=LicenseModelChoices,
+        required=False,
+        label="License Model",
+        widget=forms.SelectMultiple()
+    )
+
+    purchase_model = forms.MultipleChoiceField(
+        choices=PurchaseModelChoices,
+        required=False,
+        label="Purchase Model",
+        widget=forms.SelectMultiple()
+    )
+
+    base_license = DynamicModelMultipleChoiceField(
+        queryset=LicenseType.objects.filter(license_model="BASE"),
+        required=False,
+        label="Base License"
+    )
+
+    product_code = forms.CharField(required=False, label="Product Code")
+    ean_code = forms.CharField(required=False, label="EAN Code")
+    q = forms.CharField(required=False, label='Search')
+
+
+
+# ---------- License ----------
+
+class LicenseFilterForm(NetBoxModelFilterSetForm):
+    model = License
+    filterset_class = LicenseFilterSet
+
+    selector_fields = (
+        'license_type__manufacturer_id',
+        'volume_type',
+        'license_model',
+        'license_type_id',
+    )
+    fieldsets = (
+        FieldSet('q', name='Search'),
+        FieldSet('license_type__manufacturer_id', 'license_key', 'serial_number', 'name', 'status', 'support_status', name='License Info'),
+        FieldSet('license_model', 'volume_type', 'license_type_id', name='License Type Info'),
+        FieldSet('is_parent_license', 'is_child_license', 'parent_license', 'child_license', 'parent_license_type', name='License Relationship'),
+        FieldSet('assignments__device_id', 'assignments__virtual_machine_id', 'assignments__virtual_machine__cluster_id', 'is_assigned', name='Assignment Info'),
+        FieldSet('purchase_date__lte', 'purchase_date__gte', 'expiry_date__lte', 'expiry_date__gte',  name='Dates'),
+    )
+
+    q = forms.CharField(required=False, label='Search')
+
+    license_type__manufacturer_id = DynamicModelMultipleChoiceField(
+        queryset=Manufacturer.objects.all(),
+        required=False,
+        label="License Manufacturer",
+    )
+
+    license_key = forms.CharField(required=False, label="License Key")
+    serial_number = forms.CharField(required=False, label="Serial Number")
+    name = forms.CharField(required=False, label="Name")
+    status = forms.ChoiceField(
+        required=False,
+        label="Status",
+        choices=[('', '---------')] + list(LicenseStatusChoices)
+    )
+    support_status = forms.MultipleChoiceField(
+        required=False,
+        label="Support Status",
+        choices=[('', '---------')] + list(LicenseSupportStatusChoices)
+    )
+
+    license_model = forms.MultipleChoiceField(
+        required=False,
+        label="License Model",
+        choices=LicenseModelChoices,
+        widget=forms.SelectMultiple()
+    )
+
+    volume_type = forms.MultipleChoiceField(
+        required=False,
+        label="Volume Type",
+        choices=VolumeTypeChoices,
+        widget=forms.SelectMultiple()
+    )
+
+    license_type_id = DynamicModelMultipleChoiceField(
+        queryset=LicenseType.objects.all(),
+        required=False,
+        label="License Type",
+        query_params={'manufacturer_id': '$manufacturer_id'}
+    )
+
+    parent_license = DynamicModelMultipleChoiceField(
+        queryset=License.objects.filter(parent_license__isnull=True),
+        required=False,
+        label="Parent License"
+    )
+
+    child_license = DynamicModelMultipleChoiceField(
+        queryset=License.objects.exclude(parent_license__isnull=True),
+        required=False,
+        label="Child Licenses"
+    )
+
+    parent_license_type = DynamicModelMultipleChoiceField(
+        queryset=LicenseType.objects.all(),
+        required=False,
+        label="Parent License Type"
+    )
+
+    is_parent_license = forms.NullBooleanField(
+        required=False,
+        label="Is Parent License",
+        widget=forms.Select(choices=[('', '---------'), (True, 'Yes'), (False, 'No')])
+    )
+
+    is_child_license = forms.NullBooleanField(
+        required=False,
+        label="Is Child License",
+        widget=forms.Select(choices=[('', '---------'), (True, 'Yes'), (False, 'No')])
+    )
+
+    is_assigned = forms.MultipleChoiceField(
+        required=False,
+        label="Is Assigned",
+        choices=LicenseAssignmentChoices,
+        widget=forms.SelectMultiple()
+    )
+
+    assignments__device_id = DynamicModelMultipleChoiceField(
+        queryset=Device.objects.all(),
+        required=False,
+        label="Assigned to Device"
+    )
+
+    assignments__virtual_machine_id = DynamicModelMultipleChoiceField(
+        queryset=VirtualMachine.objects.all(),
+        required=False,
+        label="Assigned to Virtual Machine"
+    )
+
+    assignments__virtual_machine__cluster_id = DynamicModelMultipleChoiceField(
+        queryset=Cluster.objects.all(),
+        required=False,
+        label="Assigned to Cluster"
+    )
+
+    purchase_date__gte = forms.DateField(
+        required=False,
+        label="Purchase Date (After)",
+        widget=DatePicker()
+    )
+
+    purchase_date__lte = forms.DateField(
+        required=False,
+        label="Purchase Date (Before)",
+        widget=DatePicker()
+    )
+
+    expiry_date__gte = forms.DateField(
+        required=False,
+        label="Expiry Date (After)",
+        widget=DatePicker()
+    )
+
+    expiry_date__lte = forms.DateField(
+        required=False,
+        label="Expiry Date (Before)",
+        widget=DatePicker()
+    )
+
+    base_license_type_id = forms.IntegerField(
+        required=False,
+        widget=forms.HiddenInput()
+    )
+
+
+# ---------- Assignments ----------
+
+class LicenseAssignmentFilterForm(NetBoxModelFilterSetForm):
+    model = LicenseAssignment
+    filterset_class = licenseassignments.LicenseAssignmentFilterSet
+
+    fieldsets = (
+        FieldSet('q', name='Search'),
+        FieldSet('manufacturer_id', 'license', 'license__license_type_id', name='License Info'),
+        FieldSet('kind','device_manufacturer_id', 'device_id', 'device_type_id', 'virtual_machine_id', 'virtual_machine__cluster_id', name='Assignment Target'),
+        FieldSet('assigned_on__gte', 'assigned_on__lte', 'volume', name='Assignment Details'),
+        FieldSet('comments', name='Metadata'),
+    )
+
+    q = forms.CharField(required=False, label='Search')
+
+    manufacturer_id = DynamicModelMultipleChoiceField(
+    queryset=Manufacturer.objects.all(),
+    required=False,
+    label="License Manufacturer"
+)
+
+    license = DynamicModelMultipleChoiceField(
+        queryset=License.objects.all(),
+        required=False,
+        label="License",
+    )
+
+    license__license_type_id = DynamicModelMultipleChoiceField(
+        queryset=LicenseType.objects.all(),
+        required=False,
+        label="License Type"
+    )
+
+    kind = forms.MultipleChoiceField(
+        choices=AssignmentKindChoices,
+        required=False,
+        label="Kind",
+        widget=forms.SelectMultiple()
+    )
+
+    device_manufacturer_id = DynamicModelMultipleChoiceField(
+        queryset=Manufacturer.objects.all(),
+        required=False,
+        label="Device Manufacturer"
+    )
+
+    device_id = DynamicModelMultipleChoiceField(
+        queryset=Device.objects.all(),
+        required=False,
+        label="Device"
+    )
+
+    device_type_id = DynamicModelMultipleChoiceField(
+        queryset=DeviceType.objects.all(),
+        required=False,
+        label="Device Type"
+    )
+
+    virtual_machine_id = DynamicModelMultipleChoiceField(
+        queryset=VirtualMachine.objects.all(),
+        required=False,
+        label="Virtual Machine"
+    )
+
+    virtual_machine__cluster_id = DynamicModelMultipleChoiceField(
+        queryset=Cluster.objects.all(),
+        required=False,
+        label="Cluster"
+    )
+
+    assigned_on__gte = forms.DateField(
+        required=False,
+        label="Assigned Date (After)",
+        widget=DatePicker()
+    )
+
+    assigned_on__lte = forms.DateField(
+        required=False,
+        label="Assigned Date (Before)",
+        widget=DatePicker()
+    )
+
+    volume = forms.IntegerField(
+        required=False,
+        label="Volume"
+    )
+
+    comments = CommentField()
