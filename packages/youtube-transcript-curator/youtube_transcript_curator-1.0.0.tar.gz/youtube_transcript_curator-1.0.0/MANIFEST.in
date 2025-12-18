@@ -1,0 +1,26 @@
+# Include documentation
+include README.md
+include CHANGELOG.md
+include LICENSE
+
+# Include usage documentation
+recursive-include docs *.md
+
+# Include configuration files
+recursive-include config *.yaml
+
+# Include user-facing scripts (setup, completion)
+# Note: scripts/deploy/ contains developer-only tools and is excluded
+include scripts/setup.sh
+include scripts/setup-completion.sh
+include scripts/youtube-transcriber.py
+
+# Exclude development and temporary files
+recursive-exclude scripts/deploy *
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+recursive-exclude * .DS_Store
+recursive-exclude development *
+recursive-exclude sandbox *
+recursive-exclude .vscode *
+recursive-exclude .git *
