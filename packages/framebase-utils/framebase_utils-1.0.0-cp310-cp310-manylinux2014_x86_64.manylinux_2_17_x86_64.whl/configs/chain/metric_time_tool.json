@@ -1,0 +1,42 @@
+{
+  "type": "object",
+  "properties": {
+    "pre_thinking":{"type":"string","description":"请用“现在的时间是xxx，用户希望查询xxx，我要从给出的time_records中找到用户描述的时间，所以”开头，之后再根据用户的问题，回答用户描述的时间是时间区间，还是多个或单个离散的时间点。用户问月末、年末时，返回各月末、各年末的离散的时间点。如果time_records中没有用户描述的时间，请给出空list。{metric_requirement}"},
+    "time_expression": {
+      "type": "array",
+      "description":"如果用户问题中描述了时间区间，请使用from和to；如果用户问题中描述了单个或多个离散的时间点（如每天、每月末、每年末等），请使用time_value。",
+      "$ref": "#/definitions/timeItem"
+    }
+  },
+  "definitions": {
+    "timeItem": {
+      "type": "object",
+      "oneOf": [
+        {
+          "type": "object",
+          "description": "表示一个连续的时间段",
+          "properties": {
+            "from": {
+              "type": "string",
+	            "description":"请从给定的time_records中选择值"
+            },
+            "to": {
+              "type": "string",
+	            "description":"请从给定的time_records中选择值"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "description": "表示一个离散的时间点",
+          "properties": {
+            "time_value": {
+              "type": "string",
+	            "description":"请从给定的time_records中选择值"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

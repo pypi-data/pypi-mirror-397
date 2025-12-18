@@ -1,0 +1,4923 @@
+name: prompts
+type: configurable_config
+parameters:
+  - name: variables
+    value: 
+      - name: Chinese_answer_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value: 
+              - question
+              - context
+              - current_time_info
+          - key: template
+            type: configurable
+            value: answer_prompt_template
+      - name: Chinese_answer_template_check_top
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value: 
+              - question
+              - all_metrics
+          - key: template
+            type: configurable
+            value: answer_prompt_template_check_top
+      - name: Chinese_chart_summary
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value: 
+              - llm_result
+          - key: template
+            type: configurable
+            value: answer_prompt_chart_summary
+      - name: Chinese_metric_recommend_question
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value: 
+              - question
+              - sampleQuestions
+              - last_summary
+              - reconmmend_question_num
+          - key: template
+            type: configurable
+            value: recommend_question_template_tcl
+      - name: time_drift_words_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value: 
+              - time_words
+          - key: template
+            type: configurable
+            value: time_drift_words_template
+      - name: metric_intent_user_prompt
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value: []
+          - key: template
+            type: configurable
+            value: metric_intent_user_prompt
+      - name: metric_output_user_prompt
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value: []
+          - key: template
+            type: configurable
+            value: metric_output_user_prompt
+      - name: attachment_compare_prompt
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - attachment_summary
+              - question
+          - key: template
+            type: configurable
+            value: attachment_compare_template
+      - name: attachment_translate_prompt
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - text
+              - question
+          - key: template
+            type: configurable
+            value: attachment_translate_template
+      - name: attachment_continue_rewrite_prompt
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - text
+              - question
+          - key: template
+            type: configurable
+            value: attachment_continue_rewrite_template
+      - name: attachment_rewrite_prompt
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - text
+              - question
+          - key: template
+            type: configurable
+            value: attachment_rewrite_template
+      - name: attachment_generate_prompt
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - text
+              - question
+          - key: template
+            type: configurable
+            value: attachment_generate_template
+      - name: knowledge_base_system_prompt
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value: []
+          - key: template
+            type: configurable
+            value: knowledge_base_system_template
+      - name: summary_prompt
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value: 
+              - text
+              - question
+          - key: template
+            type: configurable
+            value: summary_template
+      - name: knowledge_base_prompt
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:
+            - type: mapping
+              value: knowledge_base_user_msg
+            - type: mapping
+              value: knowledge_base_system_msg
+      - name: llm_confirm_intent_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value: ()
+          - key: template
+            type: configurable
+            value: llm_confirm_intent_template
+      - name: free_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value: 
+              - question
+              - history_context
+          - key: template
+            type: configurable
+            value: free_generation_prompt_template
+      - name: free_prompt
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:
+            - type: mapping
+              value: knowledge_base_user_msg
+            - type: mapping
+              value: free_system_msg
+      - name: chat_assistant_compare_prompt
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:
+            - type: mapping
+              value: compare_prompt_human_msg
+      - name: chat_assistant_translate_prompt
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:
+            - type: mapping
+              value: knowledge_base_user_msg
+            - type: mapping
+              value: translate_prompt_human_msg
+      - name: chat_assistant_generate_prompt
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:
+            - type: mapping
+              value: knowledge_base_user_msg
+            - type: mapping
+              value: generate_prompt_human_msg
+      - name: chat_assistant_rewrite_prompt
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:
+            - type: mapping
+              value: knowledge_base_user_msg
+            - type: mapping
+              value: rewrite_prompt_human_msg
+      - name: metric_query_rewrite_for_intent_generation_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value: 
+              - api_schema
+          - key: template
+            type: configurable
+            value: metric_query_rewrite_for_intent_generation_template
+      - name: metric_query_rewrite_for_intent_generation_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:
+            - type: mapping
+              value: metric_intent_user_msg
+            - type: mapping
+              value: metric_query_rewrite_for_intent_generation_system_msg
+      - name: metric_query_rewrite_for_time_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value: 
+              - api_schema
+          - key: template
+            type: configurable
+            value: metric_query_rewrite_for_time_template
+      - name: metric_query_rewrite_for_time_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:
+            - type: mapping
+              value: metric_intent_user_msg
+            - type: mapping
+              value: metric_query_rewrite_for_time_system_msg
+      - name: metric_tree_pick_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - tree
+              - question
+          - key: template
+            type: configurable
+            value: metric_tree_pick_template
+      - name: metric_tree_pick_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:
+            - type: mapping
+              value: metric_intent_user_msg
+            - type: mapping
+              value: metric_tree_pick_system_msg
+      - name: chat_assistant_image_prompt
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - image_url
+              - question
+          - key: template
+            type: configurable
+            value: chat_assistant_image_template
+
+      - name: chat_assistant_audio_prompt
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - input_audio
+              - question
+          - key: template
+            type: configurable
+            value: chat_assistant_audio_template
+
+      - name: chat_assistant_continue_rewrite_prompt
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:
+            - type: mapping
+              value: knowledge_base_user_msg
+            - type: mapping
+              value: continue_rewrite_prompt_human_msg
+      - name: chat_assistant_summary_prompt
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value: 
+            - type: mapping
+              value: knowledge_base_user_msg 
+            - type: mapping
+              value: summary_prompt_human_msg
+      - name: chat_assistant_attachment_chat_prompt
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:  
+            - type: mapping
+              value: knowledge_base_system_msg 
+            - type: mapping
+              value: knowledge_base_user_msg   
+      - name: chat_assistant_attachment_generic_chat_prompt
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:  
+            - type: mapping
+              value: knowledge_base_user_msg    
+      - name: api_analysis_step1_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value: 
+              - api_schema
+          - key: template
+            type: configurable
+            value: api_analysis_step1_template
+      - name: api_analysis_step2_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:  
+              - api_schema
+          - key: template
+            type: configurable
+            value: api_analysis_step2_template
+      - name: generate_text_answer_by_api_response_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value: 
+              - api_schema
+          - key: template
+            type: configurable
+            value: generate_text_answer_by_api_response_template
+      - name: refine_query_with_history_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - api_schema
+          - key: template
+            type: configurable
+            value: refine_query_with_history_template
+      - name: clarify_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - question
+          - key: template
+            type: configurable
+            value: clarify_template
+      - name: clarify_recommend_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - question
+          - key: template
+            type: configurable
+            value: clarify_recommend_template
+      - name: retriever_parameters_extractor_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - question
+              - chat_history
+              - app_doc_kvs_str
+              - current_time_info
+          - key: template
+            type: configurable
+            value: retriever_parameters_extractor_template
+      - name: document_summary_prompt
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - content
+          - key: template
+            type: configurable
+            value: document_summary_prompt
+      - name: document_more_summary_prompt
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - new_summary
+              - content
+          - key: template
+            type: configurable
+            value: document_more_summary_prompt
+      - name: json_repair_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - json_str
+          - key: template
+            type: configurable
+            value: json_repair_template
+      - name: api_clarify_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - api_schema
+              - current_time_info
+          - key: template
+            type: configurable
+            value: api_clarify_template
+      - name: api_clarify_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:  
+            - type: mapping
+              value: knowledge_base_user_msg   
+            - type: mapping
+              value: api_clarify_system_msg
+      - name: generate_api_call_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - api_schema
+          - key: template
+            type: configurable
+            value: generate_api_call_template
+      - name: generate_api_call_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:  
+            - type: mapping
+              value: knowledge_base_user_msg   
+            - type: mapping
+              value: generate_api_call_system_msg
+      - name: sql_generate_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - data_src_type
+              - table_info
+              - current_time_info
+              - input
+          - key: template
+            type: configurable
+            value: sql_generate_template
+      - name: antibody_sql_generate_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - data_src_type
+              - table_info
+              - input
+          - key: template
+            type: configurable
+            value: antibody_sql_generate_template
+      - name: antibody_answer_prompt_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value: 
+              - question
+              - context
+          - key: template
+            type: configurable
+            value: antibody_answer_prompt_template
+      - name: sql_generate_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:  
+            - type: mapping
+              value: knowledge_base_user_msg   
+            - type: mapping
+              value: sql_generate_system_msg
+      - name: multi_src_output_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value: []
+          - key: template
+            type: configurable
+            value: multi_src_output_template
+      - name: multi_src_output_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:  
+            - type: mapping
+              value: multi_src_output_system_msg
+            - type: mapping
+              value: knowledge_base_user_msg  
+      - name: metric_query_intent_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - metric_info
+              - current_time_info
+              - input
+          - key: template
+            type: configurable
+            value: metric_query_intent_template
+      - name: metric_query_intent_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:    
+            - type: mapping
+              value: metric_query_intent_system_msg
+            - type: mapping
+              value: metric_intent_user_msg 
+      - name: metric_windowDate_intent_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - metric_info
+              - current_time_info
+              - input
+          - key: template
+            type: configurable
+            value: metric_windowDate_intent_template
+      - name: metric_windowDate_intent_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:    
+            - type: mapping
+              value: metric_intent_user_msg 
+            - type: mapping
+              value: metric_windowDate_intent_system_msg
+      - name: metric_warning_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - metric_info
+              - current_time_info
+              - input
+          - key: template
+            type: configurable
+            value: metric_warning_template
+      - name: metric_warning_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:    
+            - type: mapping
+              value: metric_intent_user_msg 
+            - type: mapping
+              value: metric_warning_system_msg
+      - name: metric_comparison_check_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - metric_info
+              - current_time_info
+              - input
+          - key: template
+            type: configurable
+            value: metric_comparison_check_template
+      - name: metric_comparison_check_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:    
+            - type: mapping
+              value: metric_intent_user_msg
+            - type: mapping
+              value: metric_comparison_check_system_msg
+      - name: invalid_dimension_describe_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - metric_info
+              - current_time_info
+              - input
+          - key: template
+            type: configurable
+            value: invalid_dimension_describe_template
+      - name: metric_analysis_intent_system_prompt
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - metric_info
+              - current_time_info
+              - input
+          - key: template
+            type: configurable
+            value: metric_analysis_intent_template
+      - name: metric_analysis_intent_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:  
+            - type: mapping
+              value: metric_analysis_intent_system_msg
+            - type: mapping
+              value: metric_intent_user_msg   
+      - name: metric_pick_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - metric_info
+              - current_time_info
+              - input
+          - key: template
+            type: configurable
+            value: metric_pick_template
+      - name: metric_pick_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:  
+            - type: mapping
+              value: knowledge_base_user_msg   
+            - type: mapping
+              value: metric_pick_system_msg
+      - name: metric_router_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - metric_info
+              - current_time_info
+              - input
+          - key: template
+            type: configurable
+            value: metric_router_template
+      - name: metric_router_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:  
+            - type: mapping
+              value: knowledge_base_user_msg   
+            - type: mapping
+              value: metric_router_system_msg
+      - name: metric_router_template_tcl
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:  
+            - type: mapping
+              value: knowledge_ckeck_top_msg 
+      - name: chart_summary_tcl
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:  
+            - type: mapping
+              value: chart_summary_msg 
+      - name: metric_recommend_question
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:  
+            - type: mapping
+              value: metric_recommend_question_msg 
+      - name: analytic_time_recognizer_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - question
+          - key: template
+            type: configurable
+            value: analytic_time_recognizer_template
+      - name: analytic_time_recognizer_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:  
+            - type: mapping
+              value: metric_intent_user_msg   
+            - type: mapping
+              value: analytic_time_recognizer_system_msg
+      - name: analytic_dimension_recognizer_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string 
+          - key: input_variables
+            type: tuple
+            value:
+              - question
+          - key: template
+            type: configurable
+            value: analytic_dimension_recognizer_template
+      - name: analytic_dimension_recognizer_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:  
+            - type: mapping
+              value: metric_intent_user_msg   
+            - type: mapping
+              value: analytic_dimension_recognizer_system_msg
+      
+      - name: metric_dimension_intent_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string 
+          - key: input_variables
+            type: tuple
+            value:
+              - question
+          - key: template
+            type: configurable
+            value: metric_dimension_intent_template
+      - name: metric_dimension_intent_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:  
+            - type: mapping
+              value: metric_intent_user_msg   
+            - type: mapping
+              value: metric_dimension_intent_system_msg
+      - name: metric_additional_intent_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - question
+          - key: template
+            type: configurable
+            value: metric_additional_intent_template
+      - name: metric_additional_intent_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:  
+            - type: mapping
+              value: metric_intent_user_msg   
+            - type: mapping
+              value: metric_additional_intent_system_msg
+      - name: metric_subrequest_question_refine_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - question
+              - modified_values
+          - key: template
+            type: configurable
+            value: metric_subrequest_question_refine_template
+      - name: metric_dimension_filter_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - dimension_retrivals
+              - question
+          - key: template
+            type: configurable
+            value: metric_dimension_filter_template
+      - name: metric_dimension_filter_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:    
+            - type: mapping
+              value: metric_intent_user_msg 
+            - type: mapping
+              value: metric_dimension_filter_system_msg
+      - name: table_select_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - tables_info
+              - question
+          - key: template
+            type: configurable
+            value: table_select_template
+      - name: metric_query_answer_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - question
+              - metric_result
+          - key: template
+            type: configurable
+            value: metric_query_answer_template
+      - name: metric_query_answer_refine_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - query_result
+              - question
+              - chartprompt
+          - key: template
+            type: configurable
+            value: metric_query_answer_refine_template_tcl      
+      - name: metric_query_answer_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:    
+            - type: mapping
+              value: metric_query_answer_system_msg
+            - type: mapping
+              value: metric_output_user_msg 
+      - name: metric_query_answer_template_refine
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:    
+            - type: mapping
+              value: metric_intent_user_msg
+            - type: mapping
+              value: metric_query_answer_refine_msg
+      - name: metric_query_reject_answer_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value: []
+          - key: template
+            type: configurable
+            value: metric_query_reject_answer_template
+      - name: metric_query_reject_answer_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:    
+            - type: mapping
+              value: metric_query_reject_answer_system_msg
+            - type: mapping
+              value: metric_output_user_msg 
+      - name: db_data_answer_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - table_info
+              - question
+              - sql
+              - sql_data_md
+          - key: template
+            type: configurable
+            value: db_data_answer_template
+      - name: db_data_answer_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:  
+            - type: mapping
+              value: knowledge_base_user_msg   
+            - type: mapping
+              value: db_data_answer_system_msg
+      - name: db_data_answer_without_data_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - question
+          - key: template
+            type: configurable
+            value: db_data_answer_without_data_template
+      - name: related_questions_no_recall_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - chat_history
+          - key: template
+            type: configurable
+            value: related_questions_no_recall_template
+      - name: related_questions_with_recall_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - context
+              - chat_history
+          - key: template
+            type: configurable
+            value: related_questions_with_recall_template
+      - name: metric_related_questions_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - metric_info
+          - key: template
+            type: configurable
+            value: metric_related_questions_template
+      - name: unknown_prompt
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - requirement
+          - key: template
+            type: configurable
+            value: unknown_template
+      - name: table_to_chart_task_definition_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value: 
+              - chart_schema
+              - dataset
+              - dataset_description
+          - key: template
+            type: configurable
+            value: table_to_chart_task_definition_template
+      - name: table_to_chart_task_definition_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:    
+            - type: mapping
+              value: knowledge_base_user_msg 
+            - type: mapping
+              value: table_to_chart_task_definition_system_msg
+      - name: attachment_intent_prompt
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - current_time_info
+              - chat_history
+          - key: template
+            type: configurable
+            value: attachment_intent_template
+      - name: question_classification_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - schema
+              - entities_list
+              - question
+          - key: template
+            type: configurable
+            value: question_classification_template
+      - name: cot_cypher_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - schema
+              - entities_list
+              - question
+          - key: template
+            type: configurable
+            value: cot_cypher_template
+      - name: cypher_refine_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - query
+          - key: template
+            type: configurable
+            value: cypher_refine_template
+      - name: cypher_refine_error_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - schema
+              - question
+              - query
+              - error_info
+          - key: template
+            type: configurable
+            value: cypher_refine_error_template
+      - name: g_answer_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - context
+              - question
+              - query
+          - key: template
+            type: configurable
+            value: g_answer_template
+      - name: metric_scroll_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value: []
+          - key: template
+            type: configurable
+            value: metric_scroll_template
+      - name: metric_scroll_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:     
+            - type: mapping
+              value: metric_output_user_msg
+            - type: mapping
+              value: metric_scroll_system_msg
+      - name: metric_definition_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - input
+              - definitions
+          - key: template
+            type: configurable
+            value: metric_definition_template 
+      - name: metric_query_select_time_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - time_records
+          - key: template
+            type: configurable
+            value: metric_query_select_time_template  
+      - name: metric_query_select_time_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:     
+            - type: mapping
+              value: metric_intent_user_msg
+            - type: mapping
+              value: metric_query_select_time_msg 
+      - name: metric_base_definition_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - input
+              - definitions
+          - key: template
+            type: configurable
+            value: metric_base_definition_system_template
+      - name: metric_definition_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:  
+            - type: mapping
+              value: knowledge_base_user_msg   
+            - type: mapping
+              value: metric_definition_msg
+            - type: mapping
+              value: metric_base_definition_system_msg
+      - name: cypher_refine_error_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+          - key: messages
+            type: list
+            value:
+              - type: mapping
+                value: knowledge_base_user_msg
+              - type: mapping
+                value: cypher_refine_error_system_msg
+      - name: cypher_refine_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+          - key: messages
+            type: list
+            value:
+              - type: mapping
+                value: knowledge_base_user_msg
+              - type: mapping
+                value: cypher_refine_system_msg
+      - name: cot_cypher_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+          - key: messages
+            type: list
+            value:
+              - type: mapping
+                value: knowledge_base_user_msg
+              - type: mapping
+                value: cot_cypher_system_msg
+      - name: question_classification_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+          - key: messages
+            type: list
+            value:
+              - type: mapping
+                value: knowledge_base_user_msg
+              - type: mapping
+                value: question_classification_system_msg
+      - name: metric_link_describe_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - metric_analysis_info
+              - question
+              - metric_name
+              - metric_relation
+          - key: template
+            type: configurable
+            value: metric_link_describe_template    
+      - name: metric_link_describe_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+          - key: messages
+            type: list
+            value:
+              - type: mapping
+                value: metric_output_user_msg
+              - type: mapping
+                value: metric_link_describe_system_msg  
+      - name: metric_lineage_describe_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - metric_analysis_info
+              - question
+              - metric_name
+              - source_date
+              - target_date
+          - key: template
+            type: configurable
+            value: metric_lineage_describe_template 
+      - name: metric_link_describe_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+          - key: messages
+            type: list
+            value:
+              - type: mapping
+                value: metric_output_user_msg
+              - type: mapping
+                value: metric_link_describe_system_msg  
+      - name: metric_multi_source_describe_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - metric_analysis_info
+              - question
+              - metric_name
+              - source_date
+              - target_date
+          - key: template
+            type: configurable
+            value: metric_multi_source_describe_template 
+      - name: metric_multi_source_describe_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:
+            - type: mapping
+              value: metric_output_user_msg
+            - type: mapping
+              value: metric_multi_source_describe_system_msg
+      - name: metric_dimension_describe_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - metric_analysis_info
+              - question
+              - metric_name
+              - source_date
+              - target_date
+          - key: template
+            type: configurable
+            value: metric_dimension_describe_template 
+      - name: metric_dimension_describe_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:
+            - type: mapping
+              value: metric_output_user_msg
+            - type: mapping
+              value: metric_dimension_describe_system_msg
+      - name: template_writer_question_refine_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - context
+              - question
+              - style
+          - key: template
+            type: configurable
+            value: template_writer_question_refine_template
+      - name: template_generator_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - question
+          - key: template
+            type: configurable
+            value: template_generator_template
+      - name: template_writer_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - context
+              - question
+              - style
+              - writing_hint
+          - key: template
+            type: configurable
+            value: template_writer_template
+      - name: direct_writer_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - context
+              - question
+              - style
+              - writing_hint
+          - key: template
+            type: configurable
+            value: direct_writer_template
+      - name: template_semantic_segmentation_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - question
+              - max_segments
+              - context
+              - style
+              - writing_hint
+          - key: template
+            type: configurable
+            value: template_semantic_segmentation_template
+      - name: template_segment_fill_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - segment_text
+              - placeholders
+              - previous_fills
+              - style
+              - writing_hint
+              - context
+          - key: template
+            type: configurable
+            value: template_segment_fill_template
+      - name: template_creative_slot_fill_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - slot
+              - segment_text
+              - context
+              - style
+              - writing_hint
+          - key: template
+            type: configurable
+            value: template_creative_slot_fill_template
+      - name: outline_writer_outline_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - title
+              - outline
+              - context
+              - question
+              - articleType
+          - key: template
+            type: configurable
+            value: outline_writer_outline_template
+      - name: refine_writer_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - requirements
+              - question
+          - key: template
+            type: configurable
+            value: refine_writer_template
+      - name: title_summary_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - article
+          - key: template
+            type: configurable
+            value: title_summary_template
+      - name: segmentation_web_search_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - question
+          - key: template
+            type: configurable
+            value: segmentation_web_search_template
+      - name: outline_writer_article_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - title
+              - context
+              - question
+              - type
+          - key: template
+            type: configurable
+            value: outline_writer_article_template
+      - name: outline_writer_segment_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - current_segment
+              - context
+              - style
+              - question
+              - segment_index
+              - total_segments
+              - title_hint
+          - key: template
+            type: configurable
+            value: outline_writer_segment_template
+      - name: free_writing_elements_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - question
+          - key: template
+            type: configurable
+            value: free_writing_elements_template
+      - name: free_writing_planner_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - user_request
+          - key: template
+            type: configurable
+            value: free_writing_planner_template
+      - name: free_section_writing_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - topic
+              - genre
+              - section_title
+              - chunk_words
+              - audience
+              - tone
+              - constraints_inline
+              - prev_chunk_summary_or_none
+              - tail_hint_or_empty
+              - section_target_words
+              - previous_sections_summary
+              - section_summary
+              - last_chunk_tail
+          - key: template
+            type: configurable
+            value: free_section_writing_template
+      - name: outline_planer_write_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - question
+              - outline
+          - key: template
+            type: configurable
+            value: outline_planer_write
+      - name: outline_section_writing_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - topic
+              - genre
+              - section_title
+              - chunk_words
+              - audience
+              - tone
+              - constraints_inline
+              - prev_chunk_summary_or_none
+              - tail_hint_or_empty
+              - section_target_words
+              - style
+              - context
+              - previous_sections_summary
+              - chunk_first_sentences
+          - key: template
+            type: configurable
+            value: outline_section_writing_template
+      - name: chunk_summary_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - section_title
+              - generated_content
+          - key: template
+            type: configurable
+            value: chunk_summary_template
+      - name: metric_candiates_system_template
+        class: PromptTemplate
+        type: class
+        kwargs:
+          - key: template_format
+            type: str
+            value: f-string
+          - key: input_variables
+            type: tuple
+            value:
+              - metric_candiates
+          - key: template
+            type: configurable
+            value: metric_candiates_template
+      - name: metric_candiates_template
+        class: ChatPromptTemplate
+        type: class
+        kwargs:
+         - key: messages
+           type: list
+           value:  
+            - type: mapping
+              value: metric_output_user_msg
+            - type: mapping
+              value: metric_candiates_system_msg
+  - name: configurables
+    value:
+      - name: 大模型提示词（Prompt）  
+        id: free_generation_prompt_template  
+        type: value
+        default: |-
+          {current_time_info}
+          {question}
+        cast_fn: str
+      - name: 大模型提示词（Prompt）  
+        id: answer_prompt_template  
+        type: value
+        default: |-
+          你是一个智能问答助手，请按照要求回答用户问题。 已知信息(文档片段和参考QA)如下：
+          {context}
+          
+          要求1：所有的回答都要严格按照已知信息作答。不允许在答案中添加编造成分。简洁和专业的来回答用户的问题。 答案请使用中文，并且适当使用换行符使回答的格式规整。
+          要求2：如果无法从上述已知信息得到准确回答，但能够从中得到与用户问题相关联的信息，请按照类似如下的话术回答：”亲，您可能想问xxx，为您提供如下相关信息：
+          当xxx，xxxx
+          若xxx，xxxx“
+          要求3：如果无法从上述已知信息得到任何的相关答案，请回答 “根据已知信息无法回答，请补充更加详细的信息，重新提问”。
+          要求4：当前的时间是{current_time_info}
+          
+          用户问题是：{question}
+          用户问题的回答是：
+        cast_fn: str
+      - name: 大模型提示词（查找最相关）  
+        id: answer_prompt_template_check_top  
+        type: value
+        default: |-
+            你是一个用于匹配指标相关性的工具，请按照要求完成任务。
+            已知信息如下：
+            用户的问题<question>{question}<question>
+            与之相关的模板内容<all_metrics>{all_metrics}<all_metrics>
+            请仔细分析用户问题<question>的核心含义、涉及的关键领域和指标类型。然后从<all_metrics>中筛选出与该问题在语义关联、应用场景、指标指向等方面匹配度最高的模板。不必输出筛选的依据，只需要给出最终的一个结果就好。
+            结果输出格式<json_schema>{json_schema}<json_schema>.
+            你的回答是：
+        cast_fn: str
+      - name: 大模型提示词（图表总结）  
+        id: answer_prompt_chart_summary 
+        type: value
+        default: |-
+            你将收到以下三部分内容：
+            1. 多个图表的数据分析总结；
+            2. 用户提出的原始问题；
+            3. 用户提供的补充说明或背景信息（可能零散，仅作参考）。
+
+            请基于这些内容生成一份结构清晰、重点突出的分析报告，**使用 Markdown 格式输出**。
+
+            ---
+
+            #### 一、各图表的分析总结如下：
+            <llm_result>
+            {llm_result}
+            <llm_result>
+            ---
+
+            #### 二、用户提出的问题：
+            <question>
+            {question}
+            <question>
+            ---
+
+            #### 三、用户补充说明（仅供参考）：
+            <SummaryPrompt>
+            {SummaryPrompt}
+            <SummaryPrompt>
+            ---
+
+            请严格按照以下规则执行任务：
+
+            ### 第一步：理解分析类型（自动判断）
+            根据用户问题和数据特征，自动判断最匹配的分析类型：
+            > 🔹 **类型1：差距识别**  
+            >   - 触发关键词：“top差距”、“表现最差”、“最大偏差”、“各XX的差距”
+            >   - 输出：按固定维度（客户、销售组织、事业部、产品、区域）列出Top5差距
+            >
+            > 🔹 **类型2：根因排序**  
+            >   - 触发关键词：“原因”、“根因”、“为什么”、“不达原因”
+            >   - 输出：按损失金额排序的主因+构成项分层报告
+            >
+            > 🔹 **类型3：多类对比分析**  
+            >   - 触发关键词：“对比”、“KA vs 战略”、“结构”、“趋势”
+            >   - 输出：多分类（如客户大类）的并列对比表 + 结构性问题总结
+            >
+            > 🔹 **类型4：单体下钻分析**  
+            >   - 触发关键词：“下钻”、“xx下的产品”、“xx的构成”
+            >   - 输出：单一主体（如某事业部）在多个子维度上的差距识别
+            >
+            > 🔹 **类型5：单指标现状分析**  
+            >   - 触发关键词：“xx的营收如何？”、“xx的表现？”
+            >   - 输出：该主体的预实达成情况、同环比趋势描述
+            >
+            > 🔹 **类型6：多维混合分析**  
+            >   - 触发关键词：“ASP分析”、“健康度”、“结构问题”
+            >   - 输出：结合价格、销量、客户/区域结构的综合分析
+            >
+            > 🔹 **其他类型**：若无法匹配，则进入通用模式。
+
+            ### 第二步：提取并组织关键数据
+            - 从各图表的分析总结中提取所有与“差距”、“影响”、“达成率”相关的数值；
+            - 自动识别两类数据：
+              > 🔹 **一级项目**：如“销售端因客户订单造成的营收损失”、“因交付造成的营收损失”；
+              > 🔹 **二级构成**：如某项目下的“客户A”、“华东工厂”等子项及其支撑指标（如ASP、交付达成率、正片比例）；
+            - 按“主因 → 子项”的层次结构组织数据；
+            - 仅保留负值项（即实际造成损失的部分）；
+
+            ### 第三步：生成结构化分析报告
+            - 输出标题：`## 问题总结`
+            - 内容要求（根据类型选择）：
+
+            #### 模式A：差距识别（类型1）
+            - 先用一句话概括公司整体表现；
+            - 生成标准差距表：
+              | 维度 | 差距top1 | ... | 问题结论 |
+              |------|----------|-----|----------|
+              | 客户 | ... | ... | ... |
+              | 销售组织 | ... | ... | ... |
+              | 事业部 | ... | ... | ... |
+              | 产品 | ... | ... | ... |
+              | 区域 | ... | ... | ... |
+
+            #### 模式B：根因排序（类型2）
+            - 按损失金额从大到小列出前3个最主要的一级根因；
+            - 对每个一级根因，展示其最主要的1-3个构成项，并附上关键支撑指标：
+              ### 【一级根因名称】
+              - 总损失金额：具体金额
+              - 主要构成项：
+                - [构成项1]：贡献金额 [~XX%]，[支撑指标1]: 值, [支撑指标2]: 值
+
+            #### 模式C：多类对比分析（类型3）
+            - 按营收差距值从大到小排序，生成对比表；
+            - 在表格上方添加一句话总结，指出表现较差和较好的类别；
+            - 若有趋势数据，简要描述近六个月趋势。
+
+            #### 模式D：单体下钻分析（类型4）
+            - 针对指定主体（如某事业部），生成其在产品、客户、区域三个维度的Top差距表：
+              | 维度 | top1差距 | ... | top5差距 |
+              |------|----------|-----|----------|
+              | 产品 | ... | ... | ... |
+              | 客户 | ... | ... | ... |
+              | 区域 | ... | ... | ... |
+
+            #### 模式E：单指标现状分析（类型5）
+            - 用1-2句话描述该指标的整体表现（预实差距、同环比）；
+            - 包含关键数值（实际值、目标值、差距值）；
+            - 不做原因分析，不提建议。
+
+            #### 模式F：多维混合分析（类型6）
+            - 结合价格、销量、交付等多个维度进行综合描述；
+            - 重点分析结构性问题（如高价产品销量是否偏低）；
+            - 可生成小型辅助表格支持结论。
+
+            ### 特殊场景自动处理
+            > 🔹 **若涉及“产品结构”**：在主表前插入“不同产品大类产品结构预实情况”表，并添加结论句：“应卖多的产品类别卖少了，应卖少的卖多了。”
+            >
+            > 🔹 **若涉及“客诉”**：替换主表为专用格式：
+            >   | |客户对营收的损失|客诉条数|客诉类别|客诉索赔金额|
+            >   |---|---|---|---|---|
+            >
+            > 🔹 **若涉及“健康度”**：优先展示战略客户、KA客户的贡献占比和趋势，给出“健康”或“需关注”的定性判断。
+            >
+            > 🔹 **若涉及“ASP”**：关注价格变化趋势，并关联高价值客户的价格和销量变动。
+
+            ### 第四步：输出格式要求
+            1. `## 问题总结`
+            2. 对应类型的分析内容（表格或文字）
+            3. （可选）在最后添加一句综合性描述，如“其中，【销售端因客户订单】和【因交付】是最大的两个损失来源。”
+
+            请开始输出最终结果。
+        cast_fn: str
+      - name: 大模型提示词（推荐后续可能问题）  
+        id: recommend_question_template_tcl  
+        type: value
+        default: |-
+            你作为一款专注于推荐后续提问内容的工具，需严格按照以下要求执行任务：
+            你将获取三类关键信息，作为推荐后续提问的核心依据：
+            1、用户的原始问题<question>{question}<question>
+            2、参考样本问题库：<sampleQuestions>{sampleQuestions}<sampleQuestions>
+            3、上一轮总结结果：<last_summary>{last_summary}<last_summary>
+
+            先拆解<question>的核心含义，明确用户当前关注的焦点，并预判其后续可能延伸的疑问方向。
+            基于上述分析，结合<sampleQuestions>{sampleQuestions}<sampleQuestions>的问题类型与 <last_summary>{last_summary}<last_summary> 的历史结论，生成用户 “大概率会接下来询问” 的问题，最多不超过<reconmmend_question_num>{reconmmend_question_num}<reconmmend_question_num>个。
+            针对每一个推荐的问题，从<sampleQuestions>{sampleQuestions}<sampleQuestions>中找到其所属的 AnalysisTemplateId，确保匹配的准确性。
+
+            结果输出格式<json_schema>{json_schema}<json_schema>。
+            你的回答是：
+        cast_fn: str
+      - name: 指标意图ekc模板
+        id: metric_intent_user_prompt
+        type: value
+        default: ""
+        cast_fn: str
+      - name: 指标润色ekc模板
+        id: metric_output_user_prompt
+        type: value
+        default: ""
+        cast_fn: str
+      - name: 允许大模型自由生成
+        description: 当知识库中没有可以用来回答的知识时，是否允许大模型自由生成答案。
+        id: free_mode
+        type: single-option
+        default: "off"
+        cast_fn: str
+        options:
+          "on": &on 是
+          "off": &off 否
+      - name: Summary Template
+        id: summary_template
+        type: value
+        default: |-
+            你需要根据要求，对以下内容做总结。
+            <text>
+            {text}
+            </text>
+            要求：
+            <requirement>
+            如果以上内容中没有对应的文档，总结时请跳过不存在的文档。
+            如果<text>标签间的内容为空，则说明文档内容为空，输出文档内容为空即可。
+            使用markdown格式，但不要以代码块开始回答。
+            </requirement>
+            用户问题是: {question}
+            你给出的回答是：
+        cast_fn: str
+      - name: Metric Base Definition System Template
+        id: metric_base_definition_system_template
+        type: value
+        default: |-
+            除了用户的要求之外，你的答案需要满足以下要求：
+            1.如果用户为你提供了已知信息(chunk)，你在回答时凡是引用的信息都必须用角标标注，角标的格式为<sup>chunk_id</sup>，其中chunk_id是一个完整的数字，表示该chunk的id，如<sup>1</sup>。
+            2.禁止规则：你的答案中不要直接使用 <chunk id>。如果需要指代已知信息中的 chunk，请使用角标。
+        cast_fn: str
+      - name: Knowledge Base System Template
+        id: knowledge_base_system_template
+        type: value
+        default: |-
+            除了用户的要求之外，你的答案需要满足以下要求：
+            1.用户提供的信息中可能包含<图片>图片内容</图片>，这些图片会以其他形式提供给用户，供用户参考。如果图片内容与用户的问题有关，那么图片可以作为用户问题的答案之一，此时，请在答案中告诉用户，"找到了相关的图片，请查看答案中的图片内容"。
+            2.如果用户为你提供了已知信息(chunk)，你在回答时凡是引用的信息都必须用角标标注，角标的格式为<sup>chunk_id</sup>，其中chunk_id是一个完整的数字，表示该chunk的id，如<sup>1</sup>。
+            3.在推理模型的思考过程中，必须使用\"片段+数字\"的格式来指代 chunk。例如，\"chunk1\" 应该被写作 \"片段1\"，\"chunk2\" 应该被写作 \"片段2\"，以此类推。
+            4.禁止规则：你的答案中不要直接使用 <chunk id>。如果需要指代已知信息中的 chunk，请使用角标。
+            5.严格遵守上述规则，确保在推理模型的思考过程部分使用 \"片段X\"，而在正式回答部分使用 <sup>X</sup>。
+            用户的问题是 {question}
+        cast_fn: str
+      - name: Knowledge Base System Template
+        id: knowledge_base_system_template
+        type: value
+        default: |-
+            除了用户的要求之外，你的答案需要满足以下要求：
+            1.用户提供的信息中可能包含![image](图片链接)<图片内容描述>，这些图片会以其他形式提供给用户，供用户参考。如果图片内容与用户的问题有关，那么图片可以作为用户问题的答案之一，此时，要完整的保持这种markdown格式的图片形式:![image](图片链接)  注意这里不需要包括<图片内容描述>， <图片内容描述>仅作为提供给你的参考，而不要放在回答里。
+            2.如果用户提供的信息中不包含任何![image](图片链接)<图片内容描述>这样的图片信息，就不要返回任何图片。并且不要在回答里加入任何与之相关的言论，不要出现关于未发现，未找到图片的解释。不要解释为什么回答中不会涉及图片相关内容。
+            3.如果用户为你提供了已知信息(chunk)，你在回答时凡是引用的信息都必须用角标标注，角标的格式为<sup>chunk_id</sup>，其中chunk_id是一个完整的数字，表示该chunk的id，如<sup>1</sup>。
+            4.在推理模型的思考过程中，必须使用\"片段+数字\"的格式来指代 chunk。例如，\"chunk1\" 应该被写作 \"片段1\"，\"chunk2\" 应该被写作 \"片段2\"，以此类推。
+            5.禁止规则：你的答案中不要直接使用 <chunk id>。如果需要指代已知信息中的 chunk，请使用角标。
+            6.严格遵守上述规则，确保在推理模型的思考过程部分使用 \"片段X\"，而在正式回答部分使用 <sup>X</sup>。
+            7. 如果回答中包含图片，请把图片放在合适的地方穿插在文本中。
+        cast_fn: str
+      
+      - name: Chat Assistant Image Template
+        id: chat_assistant_image_template
+        type: value
+        default: |-
+          你的任务是分析图片并回答用户的问题。
+          
+          <image>
+          {image_url}
+          </image>
+          
+          用户的问题是：{question}
+          
+          请根据图片内容回答问题：
+        cast_fn: str
+      
+      - name: Chat Assistant Audio Template
+        id: chat_assistant_audio_template
+        type: value
+        default: |-
+          你的任务是听取音频并回答用户的问题。
+          
+          <audio>
+          {input_audio}
+          </audio>
+          
+          用户的问题是：{question}
+          
+          请根据音频内容详细作答：
+        cast_fn: str
+
+
+      - name: LLM Confirm Intent Template
+        id: llm_confirm_intent_template
+        type: value
+        default: |-
+            在一个问答场景下，用户提问了一个问题：{question}，请问用户问题与下面哪个意图有关系：
+            {context}
+    
+            要求：给出与用户问题有关的意图序号，并按照类似如下json格式给出：{{"match_indexes":["0"]}}，若上面所给的意图都完全与用户问题无关且无任何语义上的联系，则返回空如：{{"match_indexes":[]}}
+            json格式回答：
+        cast_fn: str
+      - name: API Analysis Step 1 Template
+        id: api_analysis_step1_template
+        type: value
+        default: |-
+          你是一个精通API schema的软件开发者，下面是一个API的schema：
+          {api_schema}
+            
+          请分析上面给出的api schema，按照类似如下的json格式给出结果，如果API没有相关信息则不要给出。注意: json每行'#'之后的内容是注释，在你给出的json结果中一定【不要】包含'#'之后的注释。
+          {{
+              "show_type": "table/text",  #当API的summary里表示表示是展示报表或表格的API时为"table"，否则是"text"
+              "page_param": {{     #分页展示数据时的参数--页数，若API没有相关信息则为空{{}}
+                  "name": "p",       #代表"页数"的参数名
+                  "loc": "body/path/query"     #"页数"参数在请求中所处的位置
+              }},
+              "page_size_param": {{   #分页展示数据时的参数--每页数据量，若API没有相关信息则为空{{}}
+                  "name": "s",      #代表"每页数据量"的参数名
+                  "loc": "body/path/query"     #"每页数据量"参数在请求中所处的位置
+              }}
+          }}
+            
+          给出json分析结果：
+        cast_fn: str
+      - name: API Analysis Step 2 Template
+        id: api_analysis_step2_template
+        type: value
+        default: |-
+          你是一个精通API schema的软件开发者，下面是一个获取某些表格数据的API的schema，该API能够以【分页】或【全量】的方式获取结果数据：
+          {api_schema}
+          
+          分析上面给出的api schema，按照类似如下的json格式给出结果，尤其要注意获取全量数据时的请求信息。注意: json每行'#'之后的内容是注释，在你给出的json结果中一定【不要】包含'#'之后的注释。
+          {{
+              "full_data_request_data": {{   #获取表格的全量数据时的请求详情,可以根据该请求详情直接调用API得到全量数据，而不是分页数据
+                  "request_url": "",    #获取全量数据时的请求URL
+                  "request_method": "POST/GET",
+                  "request_headers": {{}},
+                  "request_body": {{}},
+                  "request_query":{{}},
+                  "request_path_params":{{}}
+              }},
+              "response_table_data": ""   #调用API所得到的表格数据的参数名，用jsonpath表示，比如像：$.data.list
+          }}
+          
+          给出json分析结果：
+        cast_fn: str
+      - name: Generate Text Answer by API Response Template
+        id: generate_text_answer_by_api_response_template
+        type: value
+        default: |-
+          你是一个知识问答助手，当用户提问："{question}", 你选择了调用了API得到的调用结果如下：
+          
+          {api_call_response}
+          
+          请根据上面API调用的结果回答用户问题，回复是：
+        cast_fn: str
+      - name: Time Drift Words Template
+        id: time_drift_words_template
+        type: value
+        default: |-
+          你是一个AI助手，请你从这些词中找出需要时间回溯，或者时间偏移的词。例如"近三年"、"近三个月"等。
+          这些词是：{time_words}
+          如果有需要时间回溯，或者时间偏移的词，请你按照以下json_schema的格式输出json：
+          <json_schema>{json_schema}</json_schema>
+          如果没有需要时间回溯，或者时间偏移的词，请输出空json：
+          {{}}
+          请不要给出任何解释和说明，直接给出你的答案：
+        cast_fn: str
+      - name: Metric Query Rewrite for Intent Generation Template
+        id: metric_query_rewrite_for_intent_generation_template
+        type: value
+        default: |-
+          你是一个问题改写助手，请你根据任务要求重写问题(question)。
+          任务要求：
+          1. 去除问题中的“高还是低“、“大还是小“、“多还是少“等描述。
+          2. 如果问题希望查询指标的排名，请将查询第N个的问题重写成查询前N个数据的问题。
+          3. 如果用户问指标当前的情况相较之前是否变化, 请把问题改写成查询过去一年的数据. 例如"xx指标最近是否增长","xx指标较之前是否有提升/下降",请把问题改写成“查询xx指标的环比数据”。
+          4. 将"哪个维度最多/最少"等描述改写成"指标值最多/最少的前十个维度".
+          5. 以下名称是指标名称，供参考，{metric_names}。
+          6. <LATEST>是一个特殊标记，表示数据库里的最新的一个日期。
+          7. 请区分同期和同比这两个词，不要对这两个词做改写.
+          8. 对于其他内容，不要做改写。不要改写问题中的时间.不要遗漏用户问题中的任何信息。不要改变问题的语义。
+          9. 请直接给出重写后的问题，不要给出任何解释和说明。
+           
+          用户输入的问题是：{question}
+          请你按照以下json_schema的格式输出：
+          <json_schema>{json_schema}</json_schema>
+          你的回答是：
+        cast_fn: str
+      - name: Metric Query Rewrite for Time Template
+        id: metric_query_rewrite_for_time_template
+        type: value
+        default: |-
+          你是一个问题改写助手，请你遵守下面的任务要求，将用户的问题中的时间替换为具体的日期。
+          任务要求：          
+          1. 如果用户要查询同期数据，请将同期替换为上一个年度的相同日期。替换同期时不要单独替换，要结合<LATEST>或者其他日期一起替换。请区分同比和同期，这是两个不同的概念。同比是和上一年度的同期做对比,如果用户的问题中有同比或环比,在重写的问题中请请保留同比/环比这个词。
+          2. 如果用户问:查询某年某月过去一年的数据,请改写成查询某年某月到某年某月的所有数据. 如果用户问:截止(截至)xx月,请将时间改写完整,写成从1到xx月.
+          3. 请把用户的问题中的"每个月","每年"等时间指代词替换成具体的时间段.
+          4. 问题中所有的时间点都应该是相同的时间粒度,即如果有一个时间点是某年某月,那么其他所有的时间点都应该是精确到月.
+          5. 上半年和下半年请改写成6月和12月.不要把季度改写成月份.
+          6. 不要丢掉用户问题中的其他信息,仅对时间做改写.改写后的内容应该和改写前的内容完全等价.
+          7. {accumulative_requirement}
+          8. {time_drift_words}
+          9. <LATEST>表示{latest}，数据库中数据的日期范围是{oldest}到{latest}。
+          10. 今天的时间是{current_time_info}。
+          11. 这些是指标名称:[{metric_name}],请不要对指标名称里的时间做替换.
+          12. 其他要求：{other_requirements}
+          13. 请不要给出任何解释和说明。
+          
+          请你按照以下json_schema的格式，将结果输出成json：
+          <json_schema>{json_schema}</json_schema>
+          用户输入的问题是：<question>{question}</question>
+          你的回答是：
+          
+        cast_fn: str
+      - name: Refine Query with History Template
+        id: refine_query_with_history_template
+        type: value
+        default: |-
+          下面是一个AI助手和用户的对话记录，请结合所给的对话历史记录对用户最新输入的问题进行重写，重写的要求如下：
+          要求1：当用户最新输入问题中包含指代词，或省略了问题中的一部分内容时，需要结合历史对话记录将其重写为一个完全独立的可理解的问题，不要遗漏相关信息（尤其是时间、地点、实体信息），也不要编造任何额外的信息。
+          要求2：当不确定用户最新问题的查询意图或用户最新问题是一个宽泛的问题时，则重写后的用户问题与原始的用户最新输入问题相同。
+          要求3：当用户最新输入问题已经是一个语义完整的问题时，则重写后的用户问题与原始的用户最新输入问题相同。
+          要求4：不要回答用户最新输入的问题。
+          要求5: 不要改写时间名词.不要把时间名词替换成具体的时间.
+          要求6：不要给出任何解释、说明。
+          要求7：如果对话记录中用户上传了文档，那么用户缺省问的就是最后一次上传的文档。
+
+          <examples> 
+          示例1：
+          对话历史记录：
+          用户：这个月的iphone多少钱？
+          助手：6999元
+          用户最新问题: Macbook呢？
+          重写后的用户问题：这个月的Macbook多少钱？
+          
+          示例2：
+          对话历史记录：
+          用户：北京今天最高气温是多少？
+          助手：今天北京最高气温30度
+          用户最新问题: 那今天车辆限号是几？
+          重写后的用户问题：那北京今天车辆限号是几？
+          
+          示例3：
+          对话历史记录：
+          用户：iphone多少钱？
+          助手：6999元
+          用户最新问题: 今天天气怎么样
+          重写后的用户问题：今天天气怎么样
+          
+          示例4：
+          对话历史记录：
+          用户：iphone多少钱？
+          助手：6999元
+          用户最新问题: 我问你的上一个问题是什么
+          重写后的用户问题：我问你的上一个问题是什么
+          
+          示例5：
+          对话历史记录：
+          用户：请假流程
+          助手：请在员工系统中点击"请假申请"提交请假申请
+          用户最新问题: 请假
+          重写后的用户问题：请假
+          
+          示例6：
+          对话历史记录：
+          用户上传文件：《化工品生产标准手册》
+          用户最新问题: 这个文件讲了什么？
+          重写后的用户问题：《化工品生产标准手册》讲了什么？
+
+          示例7：
+          对话历史记录：
+          用户上传文件：《BOM_v1.30.pdf》
+          用户最新问题: 请帮我提取单价和数量
+          重写后的用户问题：请从《BOM_v1.30.pdf》中提取单价和数量。
+
+          示例8：
+          对话历史记录：
+          用户：镇江支行今年2月末的各项贷款余额
+          用户最新问题: 此机构今年的数据
+          重写后的用户问题：镇江支行今年的各项贷款余额
+
+          示例9：
+          对话历史记录：
+          用户：我上传了一个文件《a.pdf》
+          助手：好的
+          用户：我上传了一个文件《b.pdf》
+          助手：好的
+          用户最新问题: 总结文档
+          重写后的用户问题：总结文档《a.pdf》和《b.pdf》
+
+          示例10：
+          对话历史记录：
+          用户问题1：古里中心支行的2025年存款余额变化趋势是什么
+          用户最新问题: 对比下招商中心支行
+          重写后的用户问题：古里中心支行、招商中心支行的2025年存款余额变化趋势是什么？
+
+          示例11：
+          对话历史记录：
+          用户问题1：苏州分行2月末存款余额是多少
+          用户最新问题: 对比下无锡分行
+          重写后的用户问题：苏州分行、无锡分行2月末存款余额是多少
+
+          示例12：
+          对话历史记录：
+          用户问题1： 2024年的营业收入是多少？
+          用户最新问题: 那今年呢
+          重写后的用户问题：今年的营业收入是多少？
+          </examples>
+          
+          请结合上述要求和示例重写用户输入，直接给出答案，不要做任何解释说明：
+          对话历史记录：<history>
+          {chat_history}
+          </history>
+          用户最新问题为: {question}
+          重写后的用户问题为：
+        cast_fn: str
+      - name: Retriever Parameters Extractor Template
+        id: retriever_parameters_extractor_template
+        type: value
+        default: |-
+          你是智能问答助手，请从以下对话历史记录和当前用户输入中提取出相应参数字段的信息。如果没有相应字段的信息，则为该字段输出空字符串值。
+          输出格式为如下的JSON格式:
+          {app_doc_kvs_str}
+
+          当前时间为：{current_time_info}
+          对话历史记录为：<history>{chat_history}</history>
+
+          样例1:
+          用户: 公司2024年上半年经营业绩
+          回答: {{"文档日期": "2024/"}}
+          样例2:
+          用户: 在中化信息2024年工作会议上的报告中提到的2023年工作回顾的内容有哪些？
+          回答: {{"文档日期": "2024/"}}
+
+          当前用户输入为: {question}
+
+          基于对话历史记录和当前用户输入，你提取出的参数信息为(请以指定的JSON格式输出):
+        cast_fn: str
+      - name: Document Summary Prompt
+        id: document_summary_prompt
+        type: value
+        default: |-
+          你是中化集团中化信息公司的知识助手，请根据要求，对以下公司的文档内容提取其内容要点。
+          文档内容具有清晰的层次，通过编号来体现，层次编号格式(从高到低)为“第一章”, “第一条”, "一、", “（一）”, “1.”, “（1）”。有些层次编号可能没有。
+          <content>
+          {content}
+          </content>
+          
+          要求：
+          <requirement>
+          1. 输出必须使用文档原有的层次编号及其标题，请尽量不要创建新的层次编号。
+          2. 输出的字数应该少于2500字。
+          </requirement>
+          根据要求，你输出的内容要点为（不要输出其他信息和内容）：
+        cast_fn: str
+      - name: Document More Summary Prompt
+        id: document_more_summary_prompt
+        type: value
+        default: |-
+          你是中化集团中化信息公司的知识助手，请根据要求，对以下位于<context>标签之间公司的文档部分内容提取其内容要点。
+          位于<presummary>标签之间的内容是待提取内容的前面一部分文档内容的总结，供参考使用。
+          文档内容具有清晰的层次，通过编号来体现，层次编号格式(从高到低)为: “第一章”, “第一条”, “一、“, “（一）”, “1.”, “（1）”。文档内容可能没有某些层次编号。
+          <presummary>
+          {new_summary}
+          </presummary>
+
+          <content>
+          {content}
+          </content>
+          
+          要求：
+          <requirement>
+          1. 输出必须保留文档原有的层次编号及其标题。
+          2. 输出的字数应该少于2500字。
+          3. 只提取<content>标签之间的内容要点，提取时可以参考<presummary>标签之间的内容。
+          </requirement>
+          根据要求，你输出的内容要点为（不要输出其他信息和内容）：
+        cast_fn: str
+      - name: API Clarify Template
+        id: api_clarify_template
+        type: value
+        default: |-
+          You are an AI assistant that helps people find information.
+          已知一个API的schema如下：
+          {api_schema}
+          
+          请根据上面的api schema文档，按照如下要求生成一个完整的API调用信息，以用于回答用户问题。
+          
+          要求1: json每行'#'之后的内容是注释，在你给出的json结果中一定【不要】包含注释。
+          要求2: 不要对API的输入参数的值做假设，如果用户问题不够明确、或者用户没有为API的执行提供必要的参数，请针对用户问题提出反问澄清消息，给出clarify_message。
+          要求3: 若用户提供了明确的、足够调用API的参数信息，则不需要澄清反问，令clarify_message等于""。
+          要求4: 现在的时间是:{current_time_info}。
+          要求5: 如果api schema文档中需要agent id和client id，请参考：agent_id是{agent_id}, client_id是{client_id}
+          
+          用户问题：{question}
+          根据上述要求，对用户问题给出如下json格式的回答。
+          {{
+          "api_call":  #API调用信息
+            {{"api_url":"",   #不包括request_query中的内容
+              "request_body":{{}}, 
+              "request_query":{{}}, 
+              "request_path_params":{{}}
+            }},
+          "clarify_message":""  #反问澄清消息
+          }}
+        cast_fn: str
+      - name: Generate API Call Template
+        id: generate_api_call_template
+        type: value
+        default: |-
+          已知一个API的schema如下：
+          {api_schema}
+          
+          请根据上面的api schema文档，生成一个完整的API调用信息，以用于回答用户问题。
+          
+          用户问题：{question}
+          
+          要求1: json每行'#'之后的内容是注释，在你给出的json结果中一定【不要】包含注释。
+          要求2: 如果api schema文档中需要agent id和client id，请参考：agent_id是{agent_id}, client_id是{client_id}
+          要求3: 现在的时间是:{current_time_info}。
+          根据上面的要求，给出如下json格式的API调用信息。
+          {{
+          "api_call":  #API调用信息
+            {{"api_url":"",  #完整的api路径
+              "request_body":{{}}, 
+              "request_query":{{}}, 
+              "request_path_params":{{}}
+            }}
+          }}
+        cast_fn: str
+      - name: SQL Generate Template
+        id: sql_generate_template
+        type: value
+        default: |-
+          你是一个优秀的SQL语句专家，请写出正确的{data_src_type}型SQL语句以满足用户问题：
+          1. 如果用户问题与数据表无关请拒绝回答；
+          2. 仅输出SQL语句，不要在SQL语句中输出注释；
+          3. 生成的sql，表名和schema分别加上正确的引号``，如`data59`.`养老中心组件库-new`
+          4. 现在的时间是:{current_time_info}
+          <<<
+          已知数据表信息如下：
+          {table_info}
+          >>>
+          <<<
+          用户问题: {input}
+          >>>
+          满足用户问题的SQL是：
+        cast_fn: str
+      - name: Antibody Answer Prompt Template
+        id: antibody_answer_prompt_template
+        type: value
+        default: |-
+          你是化学、医学方面的科学家，帮助用户回答问题。已知：
+          字段中文含义说明：
+          - germline: 种系
+          - name: 名称/抗体/分子名称
+          - mw: 分子量
+          - pi: 等电点
+          - ec: 消光系数
+          - sol: 溶解度
+          - MHCIIpan: 免疫原性
+          - species: 物种
+          - E_value: E值
+          
+          相关数据如下:
+          {context}
+
+          要求1: 所有的回答都要严格按照已知信息作答。不允许在答案中添加编造成分。简洁和专业的来回答用户的问题。 答案请使用中文，并且适当使用换行符使回答的格式规整。
+          要求2: 如果无法从上述已知信息得到准确回答，但能够从中得到与用户问题相关联的信息，请按照类似如下的话术回答:"我只能提供有关抗体库的信息解答"
+          要求3: 如果用户的问题涉及到了“突变点位”，可以额外提示用户，可以参考给出的突变点位图。
+          要求4: 回答时如果有用到数据为英文，请使用数据原始文本，不要进行翻译、润色和优化。也不要丢失其中的特殊符号，比如星号(*)等。
+
+          用户问题是：{question}
+
+          用户问题的回答是：
+        cast_fn: str
+      - name: Antibody SQL Generate Template
+        id: antibody_sql_generate_template
+        type: value
+        default: |-
+          你是一个专业的抗体数据库 SQL 专家，请根据以下要求生成正确的 {data_src_type} SQL：
+
+          字段中文含义说明：
+          - germline: 种系
+          - name: 名称/抗体/分子名称
+          - mw: 分子量
+          - pi: 等电点
+          - ec: 消光系数
+          - sol: 溶解度
+          - MHCIIpan: 免疫原性
+          - species: 物种
+          - E_value: E值
+
+          查询规则：
+          1. 当用户有明确提及需要什么数据时，则按照用户的需求返回数据和name列。
+
+          2. 当用户只给出抗体名称时，没有给出具体想要的字段时，默认返回该抗体的以下属性值/参数值：name, mw, pi, ec, sol, MHCIIpan, species, germline, E_value
+
+          3. 当用户笼统询问抗体的参数或者抗体的属性时，默认返回该抗体的以下属性值/参数值：name, mw, pi, ec, sol, MHCIIpan, species, germline, E_value
+
+          4. 不管什么情况，只要问到"突变点位"时，必须返回抗体的以下属性值：
+             - name
+             - heavy_chain_subtype
+             - light_chain_subtype
+             - heavy_chain_mutants
+             - light_chain_mutants
+             - heavy_chain_sequence
+             - light_chain_sequence
+             - heavy_chain_compareSequence
+             - light_chain_compareSequence
+             - heavy_chain_matchSocre_identity
+             - heavy_chain_matchSocre_positives
+             - heavy_chain_matchSocre_gaps
+             - light_chain_matchSocre_identity
+             - light_chain_matchSocre_positives
+             - light_chain_matchSocre_gaps
+             - heavy_chain_startPosition
+             - heavy_chain_endPosition
+             - heavy_chain_compareStartPosition
+             - heavy_chain_compareEndPosition
+             - light_chain_startPosition
+             - light_chain_endPosition
+             - light_chain_compareStartPosition
+             - light_chain_compareEndPosition
+
+          5. 仅输出SQL语句，不要在SQL语句中输出注释
+          6. 如果用户问题与抗体数据表无关请拒绝回答
+
+          已知数据表信息如下：
+          {table_info}
+
+          用户问题: {input}
+
+          满足用户问题的SQL是：
+        cast_fn: str
+      - name: Metric Query Intent Template
+        id: metric_query_intent_template
+        type: value
+        default: |-
+          你是一个指标查询阶段的指标意图识别助手，帮助用户将输入内容转换成有效的指标。请根据用户的输入内容，任务要求，以及指标的描述，按照json_schema的格式输出json：
+          请你参考以下任务要求：
+          <requirements>
+          1. 如果指标属性中，is_accumulative为true，则此指标为累加指标。
+          2. associated_dimension表示该指标关联的维度，如果为[]或None，表示该指标没有关联任何维度。请根据用户的问题，选择合适的维度。
+          3. 时间比较时，如“查询某年月的收入大于另一时间点的的部门”时，不要对时间生成metricValueFilters。
+          4. 无法通过用户问题判断比较大于，小于等符号时，不需要生成符号，如“同时显示出***和***各部门收入对比”。
+          5. 今天的时间是：{current_time_info}。
+          6. 即使用户希望了解多个指标的信息，你也只能使用metric_info中的指标给出你的答案。
+
+          输出格式要求：请你用且仅用一个json object作为输出。
+          <json_schema>
+          {json_schema}
+          </json_schema>     
+
+          指标信息为：
+          <metric_info>
+          {metric_info}
+          </metric_info>
+
+          </requirements>
+
+          用户输入的内容：
+          <question>{question}</question>
+          根据用户的输入信息所生成的json是(不要给出任何解释)：
+        cast_fn: str
+      - name: Metric Analysis Intent Template
+        id: metric_analysis_intent_template
+        type: value
+        default: |-
+          你是一个指标分析阶段的指标意图识别助手，请你分析用户的输入内容(question)，根据指标的信息(metric_info)，按照json_schema的格式提取参数，输出成json。
+
+          请你参考以下任务要求：
+          <requirements>
+          1. 对于时间名词的解释：“年初”指的是1月份。
+          2. 今天的时间是：{current_time_info}。
+          </requirements>
+
+          json schema为：
+          <json_schema>
+          {json_schema}
+          </json_schema>     
+
+          指标信息为：
+          <metric_info>
+          {metric_info}
+          </metric_info>
+
+          用户输入的内容：
+          <question>{question}</question>
+          根据用户的输入信息所生成的json是：
+        cast_fn: str
+      - name: Metric Subrequest Question Refine Template
+        id: metric_subrequest_question_refine_template
+        type: value
+        default: |-
+          你是一个问题改写的助手，请你参考示例，根据任务要求，将问题改写。注意处理问题中的时间和任务要求的时间的关系。
+          要求：
+          1. 如果问题中提到了离散的时间点，请根据任务要求，过滤出符合任务要求的时间点，用符合要求的时间点改写问题。
+          2. 对dimensionFilters，需要区分must(且), should(或), must_not(非)。
+
+          示例1:
+          问题：2024年10月24日，2024年11月24日和2024年12月24日的对公存款余额和对私存款余额
+          任务要求：startDate变为2024-11-02, endDate变为2024-12-24, dimensionFilters变成{{'must': []}},dimensionHolds变为["币种"]
+          改写后的问题：查询2024年11月24日和2024年12月24日的各币种的对公存款余额和对私存款余额
+
+          示例2:
+          问题：查询2024年8月的营业收入
+          任务要求：startDate变为2024-01, endDate变为2024-08, dimensionHolds变为['产品名称']
+          改写后的问题：查询2024年1到8月的各个产品名称的营业收入
+
+          示例3:
+          问题：查询2024年8月的营业收入
+          任务要求：startDate变为2024-08, endDate变为2024-08, dimensionFilters变成{{'must': [{{'dimensionName':'部门','operator':'=','dimensionValue':'部门A'}}]}},dimensionHolds变为['部门']
+          改写后的问题：查询2024年8月部门是部门A的营业收入
+
+          请模仿上面的示例
+          问题：{question}
+          任务要求：{modified_values}
+          改写后的问题：
+        cast_fn: str
+      - name: Metric Router Template
+        id: metric_router_template
+        type: value
+        default: |-
+          你是一个用户问题分类助手，识别用户的问题的类型，帮助用户问题中的信息。用户输入了一个问题，请按照任务要求和输出要求提取信息。请按照json_schema中的格式输出json：
+          <question>{question}</question>
+          
+          <json_schema>
+          {json_schema}
+          </json_schema>
+          
+          任务要求：
+          输出成json格式，并且不要给出任何解释、说明。
+          你的答案是：
+        cast_fn: str
+      - name: Metric Pick Template
+        id: metric_pick_template
+        type: value
+        default: |-
+          你是一个指标过滤助手，帮助用户提取有效的信息。用户输入了一个问题，请结合metric中的信息，按照任务要求和输出要求提取信息。请按照json_schema中的格式输出json：
+          <question>{question}</question>
+          <metric>
+          {metric_info}
+          </metric>
+          <json_schema>
+          {json_schema}
+          </json_schema>
+          任务要求：
+          1. 指标维度要求：指标中，汇总指标指的是对数据做所有维度的聚合；多维指标指的是未聚合的指标。如果用户的问题与特定的维度关联，那么请选择多维指标。如果用户希望查找汇总的结果，那么请选择汇总指标。如果用户的问题比较泛化，没有相关联的维度，那么无需区分汇总指标和多维指标之间的区别。如果用户的问题中明确提到了某些维度的具体信息，那么请优先考虑含有这些维度的指标。
+          2. 指标范围要求：请根据指标名字，对指标分组，将相似的指标划分为同一组。同一组内可以区分子指标和父指标。父指标的范围比较大，子指标一般是基于某些维度或细分领域。如果用户没有明确提出需要查询子指标，那么请优先在答案中回复对应的父指标。
+          3. 用户特定要求：如果用户明确提出了查询某些指标，请优先返回用户问题中提到的指标。
+          请你根据上面的维度要求、范围要求和特定要求，分析这些指标和用户的问题。你的答案是：
+        cast_fn: str
+      - name: Metric Comparison Check Template
+        id: metric_comparison_check_template
+        type: value
+        default: |-
+          你是一个指标意图识别助手，请你根据用户的问题和指标库中指标的时间，给出一个指标对比的json。
+          你要仔细判断用户问题中是否需要生成指标对比的内容。如果用户问题中没有明确提出需要生成指标对比的内容，请返回空json对象。
+          时间对比需要有两个时间点，你需要判断对比的时间点是哪些。如果用户没有明确指出对比的时间，那么默认是与当前时间做对比。
+          你可以在timeComparisons中使用avaliable_time_records或current_date。
+          <json_schema>
+          {json_schema}
+          </json_schema>
+          你可以参考这些分析：{time_insight}
+          当前的指标在指标库中查询到以下可用的时间：
+          <avaliable_time_records>
+          {time_records}
+          </avaliable_time_records>
+          {dynamic_requirements}
+          用户的问题是：<question>{question}</question>
+          当前的时间是：<current_date>{current_date}</current_date>
+          请根据以上信息，以json_schema定义的格式给出你的答案。注意不要给出任何解释和说明，直接给出答案：
+        cast_fn: str
+      - name: Metric WindowDate Template
+        id: metric_windowDate_intent_template
+        type: value
+        default: |-
+          你是一个指标时间窗口识别助手，请你根据要求，给出正确的json。
+          
+          <json_schema>
+          {json_schema}
+          </json_schema>
+          请根据以上信息，以json_schema定义的格式给出你的答案。注意不要给出任何解释和说明，直接给出答案：
+        cast_fn: str
+      - name: Table Select Template
+        id: table_select_template
+        type: value
+        default: |-
+          你是一个问题分类小助手，请判断用户问题与哪一个数据表相关。
+          <<< 已知的数据表有：{tables_info} >>>
+          <<< 要求：
+          1. 给出的数据表名必须在已知数据表中；
+          2. 如果用户问题是SQL语句，直接返回空结果，例如：""；
+          3. 不要解释，直接给出数据表名，例如：db_name.table_name >>>
+          用户问题是：{question}
+          相关的数据表是：
+        cast_fn: str
+      - name: Analytic Time Recognizer Template
+        id: analytic_time_recognizer_template
+        type: value
+        default: |-
+          你是一个时间识别助手，请你根据用户的问题，给出时间相关的信息。
+          请你按照json_schema中的格式和要求输出json，json中无需空格和换行符，要注意json格式的正确性：
+          <json_schema>
+          {json_schema}
+          </json_schema>
+          在json中请使用这些特殊变量来表示当前的时间：
+          - current_year: 当前年份
+          - current_month: 当前月份
+          - current_day: 当前日期
+          - current_quarter: 当前季度
+          - last_day_of_month: 某个月份的最后一天
+          用户的问题是：{question}
+          请给出你的回答：
+        cast_fn: str
+      - name: metric_candiates_template
+        id: metric_candiates_template
+        type: value
+        default: |-
+          你是一个问题推荐助手，请你将用户问题中的指标替换为metric_candiates中的指标，给出问题推荐。
+          要求：
+          每个推荐问题中只能包含一个指标，不能包含多个指标。
+          除了指标名称之外，可以适当重写问题，使得问题更好理解。
+          {metric_candiates_max_number}
+          用户的问题是：{question}
+          候选的指标是：<metric_candiates>{metric_candiates}</metric_candiates>
+          请用json格式给出你的答案，不要任何解释和说明：
+          {{"type":"object","properties":{{"new_questions":{{"type":"array","items":{{"type":"string"}}}}}}}}
+        cast_fn: str
+      - name: invalid_dimension_describe_template
+        id: invalid_dimension_describe_template
+        type: value
+        default: |-
+          你是一个AI助手，下面给出一组confusing_dimensions，一个用户的问题，以及一个指标名称。
+          confusing_dimensions是另一个AI助手从用户问题中抽取出来的，这些信息与指标名称的关联度较低，可能存在错误识别或不必要的识别。
+          请你判断confusing_dimensions中的维度对于用户的问题和指标来说是否合理。
+
+          判断规则（仅内部使用，不输出给用户）：
+          1. 若用户**明确点名**了该维度（出现“按××/以××维度”等字样），合理。
+          2. 若维度值不属于维度名称对应的概念，不合理。
+          3. 用户的问题中没有提到维度信息，不合理
+          4. 维度值不是名词，不合理
+
+          对于合理的confusing_dimension，请用一句话简单总结（[指标名称]中没有[维度或维度值]）。不合理的confusing_dimension无需总结。
+
+          <confusing_dimensions>{confusing_dimensions}</confusing_dimensions>
+          <question>{question}</question>
+          <metric_name>{metric_name}</metric_name>
+          <json_schema>
+          {{"type":"object","properties":{{"summary":{{"type":"string","description":"请用一句话简单总结（[指标名称]中没有[维度或维度值]）"}}}}}}
+          </json_schema>
+          请根据以上信息，按照json_schema中的格式给出你的答案。注意不要给出任何解释和说明，直接给出答案：
+        cast_fn: str
+     
+      - name: Analytic Dimension Recognizer Template
+        id: analytic_dimension_recognizer_template
+        type: value
+        default: |-
+          你是一个维度识别助手，请你根据用户的问题，抽取出维度相关的信息。但是请注意，不需要从用户问题中抽取时间维度相关的信息，不要从用户问题中抽取指标信息，仅需要抽取非时间或指标名称的维度信息。
+          请你按照json_schema中的格式输出json，json中无需空格和换行符，要注意json格式的正确性：
+          <json_schema>
+          {json_schema}
+          </json_schema>
+          {exclude}
+          请问用户的问题中有哪些可能的维度信息：<question>{question}</question>
+          请给出你的回答：
+        cast_fn: str
+      - name: Metric Definition Template
+        id: metric_definition_template
+        type: value
+        default: |-
+          你是一个指标定义问答助手，帮助用户检索指标的定义，比较指标的区别。用户会向你提出一些问题。请你按照要求根据以下指标的定义回答用户的问题。
+          指标定义：
+          <definitions>
+          {definitions}
+          </definitions>
+          要求1:所有的回答都要严格按照已知信息作答。不允许在答案中添加编造成分。答案请使用中文，并使用换行符使回答的格式规整。
+          要求2:尽量完整的将指标中的所有信息回答给用户。
+          要求3:问指标定义时计算逻辑按照提供数据直接给出。
+          要求4:如果给出的指标中没有用户想问的指标定义，请说“没有检索到相关的指标，请换一个问法重新提问”。
+          要求5:如果后续的对话中要求你对引用的信息生成角标，仅把角标加在段落最后即可。
+          指标定义回答示例：
+          不良贷款余额的定义是：统计全行总不良贷款余额，包含信贷、信用卡(不含贴现)。这一指标归属机构划分至核算机构，且不涉及外币计算。技术上，它指的是按照五级分类被标记为'可疑','损失','次级'的不良贷款。
+          不良贷款余额包含的维度有：业务品种，二级区域，五级分类，产品名称_常熟，利率区间，区域，客户类别，归属一级机构，担保方式，机构，涉政标识，统计维度，表内标识，贷款类型，逾期天数，金额区间。
+          计算逻辑上，不良贷款余额直接统计上述分类下的贷款余额，无需进一步计算比率或进行其他数学处理。
+          ...
+          指标对比回答示例：
+          1. **业务释义**：
+          - **贷款余额**：指的是机构对借款人融出货币资金形成的资产，包括贷款、贸易融资、票据融资、融资租赁、从非金融机构买入返售资产、透支、各项垫款等，且包含贴现。
+          - **不良贷款余额**：统计全行总不良贷款余额，包含信贷、信用卡（不含贴现），且按照五级分类为'可疑','损失','次级'的贷款被视为不良贷款。
+          2. **外币计算方式**：
+          - **贷款余额**：外币折人民币是按每日的结算价折算。
+          - **不良贷款余额**：没有提及外币计算方式，可以理解为不涉及外币折算或采用与贷款余额相同的方式但未明确说明。
+          ...
+          用户的问题：
+          {question}
+          请给出你的回答：
+        cast_fn: str
+      - name: Metric Scroll Template
+        id: metric_scroll_template
+        type: value
+        default: |-
+          你是一个指标问答助手，用户提出了一个问题，请你根据指标库中的信息回答用户的问题。
+          指标库中有以下指标目录，每个目录下可能有一些相关的指标：
+          <metric_in_directory>{metric_in_directory}</metric_in_directory>
+          此外，在指标库中找到了这些指标：<metric_infos>{metric_infos}</metric_infos>
+          用户的问题是：{question}
+          如果metric_in_directory不为空，请你在回答中按照目录结构回答。如果metric_in_directory为空，请忽略metric_in_directory。
+          如果metric_infos不为空，也请你在回答中介绍相关的指标。
+          请根据以上信息，直接给出你的回答。
+        cast_fn: str     
+      - name: Metric Link Describe Template
+        id: metric_link_describe_template
+        type: value
+        default: |-
+          这是指标【{metric_name}】的指标链路归因分析结果。
+          字段的含义：
+          "指标值"（metricValue）：这个属性用来存储指标的具体值。
+          "对比指标值"（compareMetricValue）：这个属性用来存储与指标值进行比较的另一个指标的值。
+          请根据下面数据，结合用户的问题，对数据进行分析，着重体现贡献度的变化对指标值的影响。
+          请你根据用户的提问，有针对性的给出分析结果。
+          如果用户问题没有特别的要求，请你highlight其中重要的数据（比如异常值，缺失值，最大值，最小值，变化率等），描述数据的变化（增长放缓，势头强劲，涨势喜人）。
+          请你简要回答，注意不要把数据直接告诉用户。
+          你只需要分析数据中提供到的指标，对于不在数据中的指标，请不要做任何分析和说明。
+          请你忽略未提供的数据，不要做任何说明。
+          数据：
+          {invalid_dimension_info}
+          {metric_analysis_info}
+          {metric_relation}
+          你的回答是：
+        cast_fn: str
+      - name: Metric Additional Intent Template
+        id: metric_additional_intent_template
+        type: value
+        default: |-
+          你是一个指标意图识别助手，请你根据用户的问题，给出指标意图的json。
+          <json_schema>
+          {json_schema}
+          </json_schema>
+          用户的问题是：{question}
+          涉及的指标是：【{metric_name}】
+          指标的单位是：{metric_unit}
+          请根据以上信息，以json_schema定义的格式给出你的答案。
+          注意和指标名称区分，不要把指标名称中的信息当成用户的要求。
+          你仅仅需要给出json_schema中定义的属性，不要给出其他属性。不需要给出空字段。
+          注意不要给出任何解释和说明，直接给出答案。
+          请给出你的回答：
+        cast_fn: str
+      - name: Metric Dimension Intent Template
+        id: metric_dimension_intent_template
+        type: value
+        default: |-
+          你是一个指标维度识别助手，请你根据用户的问题，给出指标维度相关的json。仅根据用户的意图进行判断，不要自行添加用户未要求的维度过滤值。
+          请按照以下json_schema的格式给出你的答案。
+          <json_schema>
+          {json_schema}
+          </json_schema>
+          指标的名字是：{metric_name}。
+          指标的维度信息是：
+          <dimension_info>
+          {relevant_dimension}
+          </dimension_info>
+          请问在这个问题中<question>{question}</question>，用户是否要求了维度信息？
+          如果用户的问题和dimension_info中的维度值拼写不一样，以dimension_info中的值为准。
+          请注意，不要把指标名字识别为维度信息。
+          请根据以上信息，从指标的维度信息中抽取出相关维度信息，以json_schema定义的格式给出你的答案。不需要给出空字段。注意不要给出任何解释和说明，直接给出答案：
+          请给出你的回答：
+        cast_fn: str
+      - name: Metric Dimension Describe Template
+        id: metric_dimension_describe_template
+        type: value
+        default: |-
+          用户查询了指标【{metric_name}】在【{source_date}】和【{target_date}】的维度分析结果。
+          {invalid_dimension_info}
+          【{target_date}】的指标是{target_value}，【{source_date}】时指标是{source_value}。
+          请问指标发生了什么变化，有哪些影响因素需要关注？
+          请你根据用户的提问，有针对性的给出分析结果。
+          如果用户问题没有特别的要求，请你highlight其中重要的数据（比如异常值，缺失值，最大值，最小值，变化率等），描述数据的变化（增长放缓，势头强劲，涨势喜人）。
+          请你简要回答，注意不要把数据直接告诉用户。
+          你只需要分析数据中提供到的指标，对于不在数据中的指标，请不要做任何分析和说明。
+          请你忽略未提供的数据，不要做任何说明。
+
+          用户的问题：{question}
+          数据：
+          {metric_analysis_info}
+          请简要回答：
+        cast_fn: str
+      - name: Metric Multi Source Describe Template
+        id: metric_multi_source_describe_template
+        type: value
+        default: |-
+          用户查询了指标【{metric_name}】在【{source_date}】和【{target_date}】的维度分析结果。
+          【{target_date}】的值是{target_value}，【{source_date}】时值是{source_value}。
+          请你根据以下参考信息，对指标结果进行分析。
+          <information>
+          {multi_source_knowledge}
+          </information>
+          请简要回答：
+        cast_fn: str
+      - name: Metric Lineage Describe Template
+        id: metric_lineage_describe_template
+        type: value
+        default: |-
+          用户查询了指标【{metric_name}】在【{source_date}】和【{target_date}】的结果。
+          {invalid_dimension_info}
+          和【{target_date}】相比，在【{source_date}】，【{metric_name}】新增的数据为：
+          {new_data}
+          减少的数据是：
+          {lack_data}
+          发生了变化的数据是：
+          {diff_data}
+          
+          请你简要总结以上信息：
+        cast_fn: str
+      - name: metric_tree_pick_template
+        id: metric_tree_pick_template
+        type: value
+        default: |-
+          你是一个指标目录筛选助手。用户提出了一个问题，希望查询指标库中的指标。指标库按照树状目录结构组成，请你判断用户是否提到了特定的目录。
+          指标库中的目录结构为：
+          <tree>
+          {tree}
+          </tree>
+          用户的问题是：{question}
+          按照以下json_schema中的格式输出json：
+          <json_schema>
+          {json_schema}
+          </json_schema>
+          请直接给出你的答案：
+        cast_fn: str
+      - name: Metric Query Select Time Template
+        id: metric_query_select_time_template
+        type: value
+        default: |-
+          你是一个指标时间抽取助手，用户提出了一个问题，这个问题关联的指标有多个时间属性（time_records）。
+          你需要判断用户问题中的时间属性，按照json_schema中的格式输出json：
+          <time_records>
+          {time_records}
+          </time_records>
+          <json_schema>
+          {json_schema}
+          </json_schema>
+          注意，当前的时间是：【{current_time_info}】，请参考当前的时间判断用户的问题。
+          请问用户的问题<question>{question}</question>中，提到了哪些time_records？
+          请根据以上信息，以json格式给出你的答案。注意不要给出任何解释和说明，直接给出答案：
+        cast_fn: str
+      - name: Metric Warning Template
+        id: metric_warning_template
+        type: value
+        default: |-
+          你是一个指标问答的总结助手，用户提出了一个问题（question），通过请求查询指标库（metric_query）。
+          请你确认metric_query是否满足用户的问题。如果不能满足请说明metric_query中欠缺什么条件。
+          用户的问题是：{question}
+          指标查询是：
+          <metric_query>
+          {metric_query}
+          </metric_query>
+          在查询过程中检测到以下warnging信息，这些warning信息不需要直接提供给用户，请你参考：
+          <warnings>
+          {warnings}
+          </warnings>
+          请你仿照以下回答示例，给出你的回答，不需要给出解释和说明：
+          回答示例：指标查询缺少xxx条件。指标库中缺少xxx时间，已经替换为xxx时间。
+          
+        cast_fn: str
+      - name: Metric Query Reject Answer Template
+        id: metric_query_reject_answer_template
+        type: value
+        default: |-
+          请你根据数据的条数，回复不同的内容：
+          如果数据条数大于0:
+          请你复述：您好，为您查询到了{data_number}条数据，请您确认。
+          如果数据条数等于0:
+          请你复述：{null_message}
+
+          请问数据条数是{data_number}时的回复是什么，请直接给出回复，不要做额外解释。
+        cast_fn: str
+
+      - name: Metric Dimension Filter Template
+        id: metric_dimension_filter_template
+        type: value
+        default: |-
+          你是一个指标意图识别助手，用户提出了一个问题，请你根据任务要求，从已知的维度信息中找出和用户的问题相关的维度信息。
+          <任务要求>
+          1. 如果已知的维度信息中，某个维度名称或者维度值是符号或者数字，你无法判断其含义时，请在答案中保留该信息。
+          2. 请判断用户问题中是否提到了任何维度信息，注意区分指标名字和维度名字。如果用户的问题包含了某个维度名称,没有明确提到维度值,但是用户想要查询该该维度下的所有值，那么请在答案中将该维度的值设置为["*"]。如果用户没有在问题中明确提到维度名称,那么不要将该维度设置为["*"].
+          3. 如果某个维度和用户的问题没有关系，在答案中将该维度的值设置为空列表。
+          4. 用户的输入信息可能不准确，所以你不能直接使用用户的问题中的维度信息，而是要从给出的已知的维度信息中作答。
+          5. 如果用户没有明确提到任何维度名称，但是希望查询排名的，请把所有维度都设置为*。
+          6. 你的回答中的所有信息都必须来源于已知的维度信息，不要编造和假设。
+          </任务要求>
+          用户的问题是：{question}
+          指标名称是：{metric_name}
+          该指标中有以下已知的维度信息：
+          {dimension_retrivals}
+          请你依次判断用户提到了上述维度信息中哪些维度值，请按照以下json schema的要求，给出json格式的答案：
+          <json_schema>
+          {json_schema}
+          </json_schema>
+          请直接给出你的答案，不要做任何解释。
+        cast_fn: str
+      - name: Metric Query Answer Template
+        id: metric_query_answer_template
+        type: value
+        default: |-
+          你是一个指标结果总结助手，用户查询了指标，请你给出指标查询结果的分析。
+          如果任务要求中明确说明了指标的主体，请你以指标主体为主语给出你的分析。
+          请你highlight其中重要的数据（比如异常值，缺失值，最大值，最小值，变化率等），描述数据的变化（增长放缓，势头强劲，涨势喜人）。
+          请你简要回答，注意不要把数据直接告诉用户。
+          
+          **核心要求：只分析表格中实际存在的维度值，不得使用表格中未出现的任何实体名称。**
+          
+          用户的问题是【{question}】。
+          以下是指标的维度信息，注意不要把维度信息和指标的主体混淆：
+          {dimension_info}
+          在指标库中查询后，查找到了相关的结果如下：
+          {metric_result}
+
+          你只需要分析表格中提供到的指标，对于不在表格中的指标，请不要做任何分析和说明。
+          请你忽略未提供的数据，不要做任何说明。
+          请你忽略掉浮点数导致的计算误差，回答时按照有效数字给出结果。对于“个”，“张”等数量单位，不要给出小数点后为零的部分。
+          请你忽略用户问题中的关于图表方面的要求（不要画折线图、也不要生成图表）。
+          请你仔细确认指标的名称，根据上面的要求，分析指标结果。
+        cast_fn: str
+      - name: Metric Query Answer Refine Template
+        id: metric_query_answer_refine_template_tcl
+        type: value
+        default: |-
+          你将处理以下数据信息：
+          <query_result>
+          {query_result}
+          <query_result>
+          用户的问题是：
+          <question>
+          {question}
+          <question>
+          当前的时间是：
+          <current_time>
+          {current_time}
+          <current_time>
+          上述数据的字段说明如下：
+          <metrics_def>
+          {metrics_def}
+          <metrics_def>
+          请根据以上内容完成以下任务：
+          1. 将数据整理为一个结构清晰、对齐良好的Markdown表格；
+          2. 表格列名应基于字段定义合理设置，确保语义准确、排版整洁；
+          3. 排除维度为空的数据；
+          4. 并基于<chart_prompt>{chart_prompt}<chart_prompt>中【表格名称】对表格进行命名，应用【数据结合和评价规则】对每一行数据进行评价；
+          5. 表格下方提供一段简要总结（字数严格控制在100-150字），概括数据的主要特征、趋势或关键发现；
+          语言风格应正式、简洁、逻辑清晰，避免主观推测，仅基于数据事实进行描述。
+          请开始输出最终结果。
+        cast_fn: str
+      - name: DB Data Answer Without Data Template
+        id: db_data_answer_without_data_template
+        type: value
+        default: |-
+          你是一个知识问答助手，用户提出了一个问题，但是在数据库中未能查到相关信息，请委婉的回复用户“未查到相关信息，请补充更加详细的信息，重新提问”。
+
+          请根据以上信息，生成回复：
+          用户问题：{question}
+          回复：
+        cast_fn: str
+      - name: Clarify recommend Template
+        id: clarify_recommend_template
+        type: value
+        default: |-
+          你是一个AI助手，用户查询了一个不明确的问题之后，系统对问题做了澄清，并且推荐了一组新的问题作为候选。
+          然而用户对推荐的问题仍然不满意，请你根据用户的历史对话记录，以及系统检索到的信息，给出新的候选问题。
+          候选问题数量不超过5个，候选问题要具体。
+          用户的历史对话记录是：
+          <history>
+          {chat_history}
+          </history>
+          用户不满意的候选问题：
+          <candidates>
+          {candidates}
+          </candidates>
+          当前检索到的信息是：
+          <information>
+          {information}
+          </information>
+          请按照以下json schema的格式要求给出答案：
+          {{
+            "type": "object",
+            "properties": {{
+              "clarify_choices": {{
+                "type": "array",
+                "description":"候选问题",
+                "items": {{
+                  "type": "string"
+                }}
+              }}
+            }}
+          }}
+          请直接给出你的json结构的答案，不要做任何解释或说明。
+        cast_fn: str
+      - name: Clarify Template
+        id: clarify_template
+        type: value
+        default: |-
+          你是一个AI助手，用户查询了一个问题，但是在数据库中没有找到和这个问题直接相关的内容。
+          请你基于当前查询到信息，向用户描述现状，并且推荐一组新的候选问题（clarify_choices）。
+          候选问题数量不超过5个，并且需要结合已经检索到的信息和用户的问题给出，候选问题要具体。。
+          用户的问题是：
+          <question>
+          {question}
+          </question>
+          当前检索到的信息是：
+          <information>
+          {information}
+          </information>
+          请按照以下json schema的格式要求给出答案：
+          {{
+            "type": "object",
+            "properties": {{
+                "message":{{
+                  "type":"string",
+                  "description":"描述现状"
+                }},
+                "clarify_choices": {{
+                "type": "array",
+                "description":"候选问题",
+                "items": {{
+                  "type": "string"
+                }}
+              }}
+            }}
+          }}
+          请直接给出你的json结构的答案，不要做任何解释或说明。
+        cast_fn: str    
+      - name: Multi Source Output Template
+        id: multi_src_output_template
+        type: value
+        default: |-
+            你是一个AI助手，帮助用户回答问题。
+            用户已经和你进行了一些问答，以下是问答历史记录：
+            <history_prompt>
+            {history_prompt}
+            </history_prompt>
+            请你参考这些历史记录。
+        cast_fn: str
+      - name: DB Data Answer Template
+        id: db_data_answer_template
+        type: value
+        default: |-
+          你是一个数据库查询结果总结助手。你的任务是根据问题和对应的markdown格式数据给出回答。
+          注意:当SQL查询结果为空时，回答“暂未查到相关信息，请补充更加详细的信息，重新提问”。
+          <<<示例：
+          用户问题：我的班次是什么？
+          markdown表格数据：
+          | 工号 | 班次 |
+          | :--: | :--: |
+          | 001 | 晚班 |
+          文本描述的回答：经过查询得知，您的工号为001，班次是晚班。
+          >>>
+          请仿照上面示例给出下面数据的文本描述，要求是仅给出下面数据的文本描述，不要加其他内容。
+
+          用户问题：{question}
+          markdown表格数据：
+          {sql_data_md}
+          文本描述的回答：
+        cast_fn: str
+      - name: Json Repair Template
+        id: json_repair_template
+        type: value
+        default: |-
+          你是一个json修复助手，用户提出一个问题，请基于这个问题和错误信息、json schema信息，修复下面json字符串中的错误。
+          用户的问题是：{question}
+          {json_str}
+          请直接给出修复后的json字符串，不要做任何解释。
+        cast_fn: str
+      - name: Related Questions No Recall Template
+        id: related_questions_no_recall_template
+        type: value
+        default: |-
+          你是知识问答助手，下面是你和用户的对话记录，请基于所给的对话记录推测用户会问的下一个问题。
+          输出的问题不能与对话记录中的任何一个用户问题类似。
+          输出格式为：输出3行，每行是一个不超过40字的问题。
+          <<<对话记录：
+          {chat_history}
+          >>>
+          用户可能会继续问的3个问题为：
+        cast_fn: str
+      - name: Related Questions With Recall Template
+        id: related_questions_with_recall_template
+        type: value
+        default: |-
+          你是知识问答助手，下面是已知问答对(格式为问-->答)和文本片段，请根据已知问答对和文本片段的内容来输出3个用户可能会问的问题。
+          输出的问题尽量从已知问答对中的问题部分中选择，而且该问题必须能被已知问答对或文本片段的内容直接回答。
+          输出格式为：输出3个问题， 每行是一个不超过40字的问题。仅仅输出问题即可，不需要输出编号或其他内容。
+          <<<已知问答对和文本片段：
+          {context}
+          >>>
+
+          注意：请尽量输出3个问题。
+          用户会问的3个问题依次为：
+        cast_fn: str
+      - name: Metric Related Questions Template
+        id: metric_related_questions_template
+        type: value
+        default: |-
+          你是数据处理的AI助手，下面是一些指标，请基于对话记录向用户推荐下一个指标相关的问题。你可以参考示例，向用户推荐指标定义问答、指标查询、指标分析的问题。
+          输出格式为：输出3行，每行是一个不超过40字的问题。
+          <<<对话记录：
+          {chat_history}
+          >>>
+          <<<指标：
+          {metric_info}
+          >>>
+          <<<示例：
+          针对 2023-04到2023-09 各项存款余额 变化趋势，分析哪个机构影响因素最大
+          我想了解2023-08的某某机构不良贷款有多少
+          指标xxx的计算规则是什么
+          >>>
+          用户可能会继续问的3个问题为：
+        cast_fn: str
+      - name: Unknown Template
+        id: unknown_template
+        type: value
+        default: |-
+          以下是一段知识助手的任务要求，请根据该要求中的描述，回答问题。
+
+          <任务要求>：
+          {requirement}
+          </任务要求>
+
+          请问，根据上面的任务要求，无法回答问题时，应该回复什么？如果任务要求中没有相关描述，请你直接回答根据已知信息无法回答。
+          直接给出你的答案，不要做解释。
+        cast_fn: str
+      - name: Table to Chart Task Definition Template
+        id: table_to_chart_task_definition_template
+        type: value
+        default: |-
+          你是一个图表生成助手，你的任务是根据用户的问题和数据库查询答案，生成图表(chart)的配置项。图表的配置必须遵循以下json schema： 
+          <chart_schema>{chart_schema}</chart_schema>
+          用户提出了以下问题：
+          <question>{question}</question>
+          从数据库中检索到以下答案：
+          <answer>{dataset}</answer>
+          在生成图表配置项时，你需要判断以下字段中，哪些作为y轴字段，哪些作为x轴字段，哪些作为过滤项。当答案仅有一个时间点时x轴字段可以优先选择维度字段。
+          字段：{dataset_description}
+          请你根据chart_schema的格式，从答案中选择合适的字段，生成一份能展示答案的json配置。
+          不要给出解释，直接生成json data。注意，生成json时必须用```json和```包围json data。
+          请使用中文回答问题：
+        cast_fn: str
+      - name: Attachment Intent Template
+        id: attachment_intent_template
+        type: value
+        default: |-
+          你的任务是根据用户最新输入问题以及对话历史记录和附件列表，判断用户的意图列表及每种意图对应的一个或多个文件。
+          <chat_history>
+          {chat_history}
+          </chat_history>
+          用户最新输入问题为：{question}
+
+          在此次对话中，有以下附件。请你根据用户最新输入问题和对话历史记录，从附件中找出相关联的文件，并且输出到最后结果中的attachments中：
+          <attachments>
+          {attachments}
+          </attachments>
+
+          请问，当前用户的意图有哪些？根据以下示例，选择正确的一项或多项：
+          <i1>summary：总结附件中的内容。示例：1.这个文件讲了什么？ 2.这个文件里有哪些内容？3.专利导读 4.文献导读 5.文献总结</i1>
+          <i2>compare：比较多个附件之间整体内容（而不是具体内容）的差异。示例：1.这两个文件有什么区别？</i2>
+          <i3>retrieve：检索附件中的特定信息，根据信息回答具体的问题。示例：1.这个文件中某个缩写是什么意思？ 2.为什么作者认为某个观点？ 3.使用模拟获得的空间分辨率和测量分辨率，哪一个更高？</i3>
+          <i4>translate：对文档做逐字逐句的翻译。示例：1.这个文件翻译成英文 2. 翻译这个文件的内容 </i4>
+          <i5>generate：基于文档生成新的内容。示例：1.扩写这个文件的内容 2.基于这个文件写一个新闻稿 3.基于这个文件写一个会议纪要</i5>
+          <i6>rewrite：对文档做逐字句的改写。示例：1.仿照这个文件，以其他主题，写一个类似的文件 2.根据已知信息xxx，填写这个模板文件 </i6>
+
+          要求：用户问题可能会有1个或多个意图，输出每种意图及其对应的文件的列表。
+          
+          你的回答应该使用以下json格式：
+          <output_format>
+          [{{"intent":Literal["retrieve","summary","compare","translate","generate","rewrite"], "attachments":["attachments"列表]}}]
+          </output_format>
+          请直接给出json格式的答案，不要给出解释和注释：
+        cast_fn: str
+      - name: Attachment Compare Template
+        id: attachment_compare_template
+        type: value
+        default: |-
+          你的任务是比较以下两个文件的主要内容，比较其中的差异。使用markdown格式，但不要以代码块开始回答。
+          文件摘要：
+          {attachment_summary}
+          
+          用户的问题是：
+          {question}
+          
+          请给出比较结果：
+        cast_fn: str
+      - name: Attachment Translate Template
+        id: attachment_translate_template
+        type: value
+        default: |-
+          该文档的内容在如下<text>标签之间。
+          <text>
+          {text}
+          </text>
+            
+          当前用户的输入是: {question}
+        cast_fn: str
+      - name: Attachment Generate Template
+        id: attachment_generate_template
+        type: value
+        default: |-
+          你的任务是根据text和用户输入的要求，生成新的内容，生成时需要遵守这些要求：
+          <requirement>
+          使用markdown格式，但不要以代码块(```)开始回答。
+          你不要给出任何解释、注释、提醒、总结或说明。
+          </requirement>
+          <text>
+          {text}
+          </text>
+          
+          当前用户的输入是: {question}
+          不需要任何提示和说明，请直接生成：
+        cast_fn: str
+      - name: Attachment Rewrite Template
+        id: attachment_rewrite_template
+        type: value
+        default: |-
+          你的任务是仿照text，根据用户输入的要求，改写成新的内容，生成时需要遵守这些要求：
+          <requirement>
+          请仿写text的格式和内容。
+          逐句生成，使用markdown格式，但不要以代码块(```)开始回答。
+          你不要给出任何解释、注释、提醒、总结或说明。
+          text的内容可能不完整，请不要续写text的结尾，按照text中已有的内容改写即可。
+          </requirement>
+          <text>
+          {text}
+          </text>
+          
+          当前用户的输入是: {question}
+          不需要任何提示和说明，请直接生成：
+        cast_fn: str
+      - name: Attachment Continue Rewrite Template
+        id: attachment_continue_rewrite_template
+        type: value
+        default: |-
+          你的任务是仿照text，续写content，续写时需要遵守这些要求：
+          <requirement>
+          逐句生成，使用markdown格式，但不要以代码块(```)开始回答。
+          你不要给出任何解释、注释、提醒、总结或说明。
+          text的内容可能不完整，请不要续写text的结尾，按照text中已有的内容续写content即可。
+          所有的续写都基于text中的已有内容以及用户的输入信息。  
+          如果content无需续写，你可以不回答任何内容。
+          </requirement>
+          <text>
+          {text}
+          </text>
+          
+          请对以下content续写：
+          {previous_output}
+        cast_fn: str
+      - name: G Question Classification Template
+        id: question_classification_template
+        type: value
+        default: |-
+          你是一个点边实体抽取助手, 请你遵循以下规则
+          给定图模式{schema}和问题中出现的实体关系{entities_list}，对问题进行分类。
+          已知问题类型有如下几种：
+
+          1. 实体属性查询：输入实体属性值，查询该实体的其他属性值
+          2. 实体一度关系查询：输入实体属性值，查询该实体的邻居属性
+          3. 实体多值属性查询：输入实体属性值，查询该实体的多个其他属性
+          4. 无实体多值属性查询：不限定实体，查询某个属性值有哪些，多少个
+          5. 实体的递归查询：输入实体属性值，查询该实体的多度邻居属性
+          6. 多实体路径查询：输入多个实体属性值且实体间有关联，返回邻居属性
+
+          要求：
+          1.严格使用上述问题类型作答，不允许在答案中出现其他问题类型。
+          2.不要给出任何解释，直接给出答案。用简洁的话语给出答案。
+
+          现在请帮我分类以下问题, 输出问题类型：
+          {question}
+        cast_fn: str
+      - name: G COT Cypher Template
+        id: cot_cypher_template
+        type: value
+        default: |-
+          你是一个Cypher语句生成助手, 请你遵循以下规则
+          Based on the graph schema below, write a Cypher query that would answer the user's question:
+          {schema}
+          Entities in the question map to the following database values:
+          {entities_list}
+          Question: {question}
+          schema结构说明:
+          1. 结构为"Node properties: 实体label 实体属性名:属性类型\n...Relationship properties:\n关系label 关系属性名:属性类型\n...The relationships:\n(:实体label)-[:关系label]->(:实体label)\n"
+          2. 实体label和关系label为schema中定义的label, 实体属性名和关系属性名为schema中定义的属性名。
+          3. The relationships里面包含实体之间的关系, ->表示关系方向。
+          
+          Demand:
+          1.Add `LIMIT` when there is `superlative degree` word in Question.
+          2.When comparing with oneself, exclude oneself.
+          3.Let's first understand the question and devise a plan to solve the problem. Each step of plan is a interaction with Graph.
+          4.以schema中实体关系为主,不要使用schema外的实体关系。
+          5.注意schema中关系方向,注意区分双向、正向、方向关系。
+          6.注意识别并分区schema中实体和关系的label和type, 不要。
+          7.严格区分实体关系和其属性值,不要将属性作为label或type。
+          8.只允许用schema中存在的label和属性, 不存在label可以不填。
+          9.不要使用缩写简称，保留完整的字段和属性值名称。
+          10.直接输出cypher，不要给出任何解释
+          11.对于类似、包含、像等描述，使用contains语法。
+          12.关系标签使用labels函数替代type函数
+          13.不支持keys函数
+          14.不要使用 size(path)函数
+          15.查询内容/东西的描述，都是查询节点，不要查询属性
+          16.查询语句对于return 点边或者路径的都要加上limit 1，其他的语句加上limit 30 
+          17.不要使用捏造的属性
+          Cypher query:
+        cast_fn: str
+      - name: G Cypher Refine Template
+        id: cypher_refine_template
+        type: value
+        default: |-
+          你是一个Cypher语句优化助手, 请你遵循以下规则
+          Please Optimize the  cypher statement {query} according to the following rules:
+          1. Remove non-statement explanations.
+          2. Do not change the semantics.
+          3. Begin your Cypher statement with property filters, if necessary.
+          4. Do not use keywords as object names: count
+          5. Use WHERE rather than HAVING.
+          6. Place WHERE conditions before the RETURN statement.
+          7. Use duration.indays function to calculate the time difference in days, for example, duration.indays(s2.surgery_time, s1.surgery_time) < 30
+          8. Use datetime function to convert a string into a timestamp, for example, datetime(s1.surgery_time)
+          9. Use only standard Cypher syntax and avoid any APOC plugin functions or procedures (e.g., `apoc.create.relationship`, `apoc.periodic.iterate`, etc.).  
+          10. If complex logic is required (e.g., batch operations, data transformation), implement it using standard Cypher syntax instead of relying on APOC.  
+          11. If the task cannot be achieved with standard Cypher, please explain the limitation instead of using APOC syntax.  
+          12. 不要叠加使用聚合函数，聚合函数外不可套任何函数，比如round(count(*))
+          13. 不要使用APOC语法，不要使用CREATE、SET、MERGE、DELETE、REMOVE、CALL、OVER语法
+          14. 不要使用窗口函数, 如sum() OVER ()
+          15. 不要使用group by，语句中必须含有return，且return的结果必须用AS取个中文别名
+          16. 所有数字计算必须加上对应的类型转换，仅支持tofloat和tointeger函数，比如tofloat(surgeryCount) * 100.0
+          17. 不支持WHERE p:CT检查单 
+          18. 优先以属性为分组条件，而不是点边
+          19. 单点不要使用path
+          20. 必须确保查询的属性在其对应的点边里存在
+          Note: only output optimized query, without any explain.
+          直接输出cypher，不要给出任何解释
+          Optimized Cypher query:
+        cast_fn: str
+      - name: G Cypher Refine Error Template
+        id: cypher_refine_error_template
+        type: value
+        default: |-
+          你是一个Cypher错误信息优化助手, 请你遵循以下规则
+          Based on the info below, rewrite a Cypher query that would answer the user's question:
+          {schema}
+          Entities in the question map to the following database values:
+          {entities}
+          Question: {question}
+          Current Cypher statement: {query}
+          Error info: {error_info}
+          Rewrite query:
+        cast_fn: str
+      - name: G Answer Template
+        id: g_answer_template
+        type: value
+        default: |-
+          根据上下文回答问题:
+          查询语句{query}及查询结果{context}
+          问题: {question}
+          回答:
+        cast_fn: str
+      - name: Writer Qustion Refine Template
+        id: template_writer_question_refine_template
+        type: value
+        default: |-
+          你是一个信息优化助手，用户会在问题中提供一些对文章写作的相关要求。
+          你需要对用户输入的问题进行优化重写，要求如下：
+          1. 重写后的问题需要可以用来更方便地在互联网上搜索到想要的文章或是答案。
+          2. 重写后的问题需要能够更方便地从向量数据库中搜索到相关的资料。
+          3. 不要回答用户的问题，而是对问题进行优化。
+          4. 不要给出任何解释。
+
+          用户提供的问题是: {question}
+          你重写后的问题是:
+        cast_fn: str
+      - name: Template Generator Template
+        id: template_generator_template
+        type: value
+        default: |-
+          你是一个精通应用文写作的写手,请按照下面的参考和需求完成一篇文章模板的撰写,用户希望在你提供的模板里进行必要信息的填空,就可以完成一篇功能文章.
+
+          详细的需求:
+          {question}
+
+          重要说明：
+          - 你只需要生成一个简洁的文章模板框架，不是完整的最终文档
+          - 模板应该包含文章的基本结构和必要的占位符，供后续填充使用
+          - 如果需求中提到字数要求（如"3万字"、"不少于XX页"等），请忽略这些字数要求，因为它们是针对最终文档的，而不是模板的
+          - 模板本身应该保持简洁明了，通常几百字即可
+
+          确保内容：
+          1. 提供的详细需求应该被最优先考虑，但忽略其中的字数/页数要求。
+          2. 模板中需要需要因情况改动,需要用户填空的地方使用"中括号和内容描述"标记,比如一篇书信模板可以有这样的标记:
+              亲爱的[收信人姓名]：
+              [问候语和开场白]
+              [正文内容]
+              此致
+              敬礼
+              [发信人姓名]
+              [日期]
+          3. 确保模板条理清晰、逻辑严谨，结构完整但内容简洁。
+          4. 生成的模板应该是一个可填充的框架，而不是详细的完整文章。
+          
+          请开始撰写模板：
+        cast_fn: str
+      - name: Template Writer Template
+        id: template_writer_template
+        type: value
+        default: |-
+          你是一个精通应用文写作的写手, 请按照下面的参考,需求和提供的模板完成一篇文章的撰写。
+
+          参考的文档:
+          {context}
+
+          参考的文风:
+          {style}
+
+          写作提示(若非空请严格遵守，不要在答案中显式重复这些提示):
+          {writing_hint}
+
+          写作的模板和需求如下:
+          {question}
+
+          确保内容：
+          1. 提供的详细需求应该被最优先考虑。
+          2. 充分根据参考文档(如有)的信息来构建文章，做到细节准确。
+          3. 文风符合参考文风(如有)的要求，可以适当调整语气、用词和句式结构，使其与所提供的风格一致。
+          4. 确保文章条理清晰、逻辑严谨，内容流畅易懂。
+          5. 模板中会提供一些需要填空的内容,它们被用"中括号和内容描述"标记,比如一篇书信模板可能是这样子:
+              亲爱的[收信人姓名]：
+              xxxxxx
+              此致
+              敬礼
+              [发信人姓名]
+          6. 你只可以在第5条提到的中括号([])中填写内容,其他内容都不能更改。
+          请开始撰写：
+        cast_fn: str
+      - name: Direct Writer Template
+        id: direct_writer_template
+        type: value
+        default: |-
+          你是一个专业的写作助手，请根据用户的要求直接进行创作写作。
+
+          参考的文档:
+          {context}
+
+          参考的文风:
+          {style}
+
+          写作要求:
+          {question}
+
+          请按照以下要求进行创作：
+          1. 严格按照用户的写作要求进行创作，确保内容符合要求。
+          2. 充分参考提供的文档信息(如有)，做到内容准确、详实。
+          3. 文风要符合参考文风(如有)的要求，保持一致的语气和风格。
+          4. 确保文章结构清晰、逻辑严谨、内容流畅易懂。
+          5. 直接输出完整的文章内容，无需分段处理。
+          6. 如果用户要求特定的字数、格式或结构，请严格遵守。
+
+          请开始创作：
+        cast_fn: str
+      - name: Template Semantic Segmentation Template
+        id: template_semantic_segmentation_template
+        type: value
+        default: |-
+          你是一个段落分析助手，请对输入文本进行“语义分段”，用于后续逐段生成。
+
+          任务要求：
+          1. 输入文本在question中，可能包含Markdown标题、编号、以及若干占位符（形如：[占位名]）。
+          2. 请依据语义结构切分为不超过{max_segments}个段，优先按标题/编号/自然段落边界切分；若文本较短，可只保留1段。
+          3. 保持每段内原始文本顺序与占位符不变，不要增删或改写任何非占位内容。
+          4. 仅输出JSON数组（list of string），数组每个元素是一个段落的原文字符串。
+          5. 禁止输出除JSON以外的任何内容（不要解释、不要额外文本、不要代码块围栏）。
+
+          参考上下文（可为空）：
+          {context}
+          写作风格参考（可为空）：
+          {style}
+          写作提示（可为空）：
+          {writing_hint}
+
+          输入文本：{question}
+
+          仅输出JSON数组：
+        cast_fn: str
+      - name: Template Segment Fill Template
+        id: template_segment_fill_template
+        type: value
+        default: |-
+          你是一名“模板写作”助手。给定不可改写的模板文本 segment_text 与占位符列表 placeholders（形如：[占位名]），请为每个占位输出合适的内容：有的占位需要“简要填充”（如姓名/日期/数量等），有的占位需要“创作描写”（如背景/原因/优势/评价/细节等）。
+
+          核心目标：
+          - 在不改变模板正文（非占位符部分）的前提下，为每个占位输出贴合上下文与写作意图的内容。
+          - 当上下文需要“创作描写”时，允许多句、细节充分的自然段；当仅需“简要填充”时，保持简洁。
+
+          决策与写作规则：
+          1) 不可更改 segment_text 中的任何非占位内容（包括标点、空格、行序）。
+          2) 为每个 placeholders 中的占位都输出一项（不可遗漏）。输出为 JSON 数组，元素为对象：{{"slot":"[占位名]","fill":"内容"}}。
+          3) 选择“简要填充”的典型占位名（示例，不限于）：姓名/用户昵称/机构名/产品名/日期/时间/编号/数量/等级/联系方式/URL/代码/短标签 等 → 建议输出简短、准确、可读。
+          4) 选择“创作描写”的典型占位名（示例，不限于）：背景/原因/影响/优势/评价/案例/细节/特性/要点/注意事项/常见问题/使用场景/改写段落 等 → 可写成1-3个句子，必要时更长，但务必贴合参考上下文与写作提示。
+          5) “创作指令类占位”强制创作：当占位文本包含“撰写/总结/说明/扩写/描写/生成/写一段/写一篇/综述/不少于/至少/≥/字/篇/段/全面概括”等词，必须按要求产出内容，禁止返回“未知”。
+          6) 历史填充值 仅作参考：当你无法确定当前段的合适内容时，可复用同名 slot 的历史值；若当前段上下文与历史值不一致，以当前上下文为准，必要时覆盖历史值。
+          7) 风格一致性：参考文风，在“创作描写”时保持语气、用词、句式一致；避免与模板无关的跑题内容。
+          8) 内容边界：
+             - 不捏造与参考上下文明显冲突的事实；
+             - 允许合理想象补足细节，但不得与写作提示冲突；
+             - 避免空泛套话，优先具体、可读、可执行。
+          9) 若在综合 参考上下文、写作提示 与 历史填充值 后仍无法确定，且该占位不属于“创作指令类占位”，方可填入 "未知"。
+
+          你只能输出 JSON 数组本体，不要输出任何解释或代码块围栏。
+
+          参考上下文：
+          {context}
+          写作风格参考：
+          {style}
+          写作提示：
+          {writing_hint}
+          历史填充值（JSON数组或对象列表）：
+          {previous_fills}
+
+          模板原文：
+          {segment_text}
+          占位符列表：
+          {placeholders}
+
+          仅输出JSON数组：
+        cast_fn: str
+      - name: Template Creative Slot Fill Template
+        id: template_creative_slot_fill_template
+        type: value
+        default: |-
+          你是一名“模板写作”助手。请根据占位符的指令与当前段落上下文，为该占位生成合适的创作内容。
+
+          必须遵守：
+          1) 仅输出创作内容本身，不要包含任何解释、JSON、提示词或代码块围栏。
+          2) 内容需贴合参考上下文与写作提示，并与文风一致；若占位包含长度要求（如“不少于1000字/至少500字/写一段/写一篇”），尽量满足或接近要求，可用多段落组织。
+          3) 内容应具体、连贯、可读，避免空泛套话；不得与参考上下文明显冲突。
+
+          占位符：{slot}
+          当前段落原文：
+          {segment_text}
+
+          参考上下文：
+          {context}
+          文风参考：
+          {style}
+          写作提示：
+          {writing_hint}
+
+          请直接输出创作内容：
+        cast_fn: str
+      - name: Outline Writer Outline Template
+        id: outline_writer_outline_template
+        type: value
+        default: |-
+          你是一个精通应用文写作的写手，现在需要你根据以下信息为用户提供一个写作用的大纲：
+          大纲标题：
+          {title}
+
+          大纲层级：
+          {outline}
+
+          文章类型：
+          {articleType}
+
+          参考资料：
+          {context}
+
+          详细需求:
+          {question}
+
+          确保内容：
+          1. 只是一个写作大纲，不需要提供具体的文章内容。
+          2. 大纲的内容要符合用户提供的文章类型。
+          3. 大纲的内容要符合用户提供的参考资料(如有)的信息。
+          4. 大纲的内容要符合用户提供的文章标题。
+          5. 大纲的范围和规格要严格符合用户提供的大纲层级。
+            举例:
+            1) 提供的大纲为【一级大纲】则生成的大纲可以如下:
+            ## 一: xxxx
+            ## 二: xxxx
+            ## 三: xxxx
+            2) 提供的大纲为【二级大纲】则生成的大纲可以如下:
+            ## 一: xxxx
+              1:xxxx
+              2:xxxx
+            ## 二: xxxx
+              1:xxxx
+              2:xxxx
+            ## 三: xxxx
+              1:xxxx
+              2:xxxx
+            2) 提供的大纲为【三级大纲】则生成的大纲可以如下:
+            ## 一: xxxx
+              ### 1:xxxx
+                a:xxxx
+                b:xxxx
+              ### 2:xxxx
+                a:xxxx
+                b:xxxx
+            ## 二: xxxx
+              ### 1:xxxx
+                a:xxxx
+                b:xxxx
+              ### 2:xxxx
+                a:xxxx
+                b:xxxx
+            ## 三: xxxx
+              ### 1:xxxx
+                a:xxxx
+                b:xxxx
+              ### 2:xxxx
+                a:xxxx
+                b:xxxx
+          6. 请从提供的参考来源中获取信息，如果其中信息和用户提供的文章类型、标题和大纲层级不一致，请不要强行提供内容，而是给出提示，并表示无法完成任务。
+          7. 直接输出用户要的大纲，不要在前后增加任何解释和产出过程。
+          8. 严格使用 markdown 语法。
+
+          请开始撰写：
+        cast_fn: str
+      - name: Refine Write Template
+        id: refine_writer_template
+        type: value
+        default: |-
+          你是一位擅长语言表达与文本润色的写作助手。
+
+          下面是用户提供的文章片段，其中 **仅包含一处** 用 `<rewrite>...</rewrite>` 标签包裹的内容。
+
+          请根据用户的改写要求，对这部分内容进行改写，并 **仅输出改写后的文本本身，不包含原始标签或其他内容**。
+
+          【改写要求】：
+          {requirements}
+
+          【文章片段】：
+          {question}
+
+          请确保保留原文的语气与风格，严格遵循要求，只返回那一段被标记内容的改写结果。
+          请开始改写:
+        cast_fn: str
+      - name: Title Summary Template
+        id: title_summary_template
+        type: value
+        default: |-
+          你是一位专业的文章标题总结助手。
+
+          请仔细阅读以下文章内容，然后为这篇文章生成一个简洁、准确、吸引人的标题。
+
+          【文章内容】：
+          {question}
+
+          【要求】：
+          1. 标题应该准确概括文章的核心内容和主题
+          2. 标题要简洁明了，长度控制在20字以内
+          3. 标题要具有吸引力和可读性
+          4. 直接输出标题，不需要其他解释或说明
+
+          请开始生成标题：
+        cast_fn: str
+      - name: Segmentation Web Search Template
+        id: segmentation_web_search_template
+        type: value
+        default: |-
+          你是一个优秀的问题分析助手，专门用于帮助信息检索系统优化搜索效果。
+          现在用户会输入一个自然语言问题，请你判断是否需要将该问题进行合理的子问题拆分。请遵守以下严格规则：
+
+          如果用户的问题本身已经非常简洁、明确、不可再拆，请直接返回 ["原文"]。
+
+          如果用户的问题包含多个子问题、复合结构或可以进一步细化，请尝试最多拆分为 5 个子问题，返回一个 Python list 格式的字符串，如 ["问题1", "问题2", "问题3"]。
+
+          每个拆分后的问题必须具备原子性：即一个问题只表达一个明确的含义，不再继续分割。
+
+          每个拆分后的问题必须保留原始问题的语义上下文，避免拆出模糊或无意义的词语（如“跑道”、“小米”等孤立词汇）。
+
+          请勿在答案中添加任何解释、说明、引号或格式说明，只返回一个 Python list 格式的字符串作为输出结果。
+
+          用户问题："{question}"
+
+          请返回拆分结果：
+        cast_fn: str
+      - name: Outline Writer Aricle Template 
+        id: outline_writer_article_template
+        type: value
+        default: |-
+          你是一个精通应用文写作的写手，现在需要你根据提供的一些大纲信息来完成一篇文章的撰写。
+                    
+          文章大纲:
+          {outline}
+
+          参考资料:
+          {context}
+
+          文风参考:
+          {style}
+
+          详细需求:
+          {question}
+
+          确保内容:
+          1. 请完全按照提供的大纲来完成写作，不许更改结构，即提供的大纲里的排序，序号，标题，副标题都要一样出现，不要做任何更改。
+          2. 充分根据参考资料(如有)的信息来构建文章，做到细节准确。
+          3. 所有的内容必须来源于参考资料，如果用户需求和参考资料出现矛盾或毫不相关的情况，请不要强行提供内容，而是给出提示，并表示无法完成任务。
+          4. 文风符合参考文风(如有)的要求，可以适当调整语气、用词和句式结构，使其与所提供的风格一致。仅仅参考写作风格，不要使用文风参考中的详细内容。
+          5. 确保文章条理清晰、逻辑严谨，内容流畅易懂。
+          6. 直接输出用户要的文章，不要在前后增加任何解释和产出过程。
+          请开始撰写:
+        cast_fn: str
+      - name: Outline Writer Segment Template
+        id: outline_writer_segment_template
+        type: value
+        default: |-
+          你是一个精通应用文写作的写手，现在需要你根据提供的段落大纲来完成这一段落的文章撰写。这是分段写作的第{segment_index}段（总共{total_segments}段）。
+
+          当前段落大纲:
+          {current_segment}
+
+          参考资料:
+          {context}
+
+          文风参考:
+          {style}
+
+          详细需求:
+          {question}
+
+          写作要求:
+          1. 如果这是第1段，请在开头加上合适的文章标题，可以参考标题提示：{title_hint}，标题应该与内容主题相符，格式为：# 标题名称
+          2. 请严格按照当前段落大纲的内容和结构进行写作，完整展开每个子项目的内容。
+          3. 关于字数控制：如果详细需求中提到了整体文章的字数要求（如"3万字"、"不少于5000字"等），请将该字数合理分配到总共{total_segments}个段落中，当前是第{segment_index}段。如果没有明确的字数要求，请写得详实充分。重要提醒：请务必在你的输出能力范围内完成写作，如果感觉接近输出长度限制，可以适当精简，但要确保内容完整性和逻辑性，绝不要写一半就停止。
+          4. 充分根据参考资料(如有)的信息来构建文章内容，如果参考资料不足，可以基于常识和专业知识进行合理扩展。
+          5. 文风符合参考文风(如有)的要求，可以适当调整语气、用词和句式结构，使其与所提供的风格一致。
+          6. 确保这一段落的内容条理清晰、逻辑严谨，与整体文章保持一致性。
+          7. 每个分段都应该有具体的实例、详细的分析和充分的论述，避免空洞的表述。
+          8. 直接输出这一段落的内容，不要在前后增加任何解释和产出过程。
+          9. 如果这是最后一段，请适当增加总结性内容和建议。
+          10. 写作策略：优先保证内容的完整性和连贯性，其次考虑字数。如果在写作过程中发现内容已经很充实，可以自然结束，不必强求达到特定字数。
+
+        cast_fn: str
+      - name: Free Writing Elements Template
+        id: free_writing_elements_template
+        type: value
+        default: |-
+          你是一名专业的中文写作助手。请根据用户的写作要求，生成文章的基本要素信息。
+
+          【任务】
+          根据用户的写作要求，生成以下要素：
+          1. title: 文章标题（简洁明了，体现核心主题）
+          2. articleType: 文章类型（如：学术论文、技术文档、商业计划书、产品介绍、新闻稿、博客文章、教程、评论、总结、概述、分析、指南、说明、介绍等）
+
+          【输入】
+          用户写作要求：{question}
+
+          【输出要求】
+          请以JSON格式输出，格式如下：
+          {{
+            "title": "文章标题",
+            "articleType": "文章类型"
+          }}
+
+          【注意事项】
+          1. 标题应该简洁明了，准确反映文章的核心主题
+          2. 文章类型应该根据用户要求的内容和用途来确定
+          3. 只输出JSON格式，不要包含其他文字
+          4. 确保JSON格式正确，可以被解析
+
+        cast_fn: str
+      - name: Writing Planner Template
+        id: free_writing_planner_template
+        type: value
+        default: |-
+          你是一名专业中文写作规划师和结构设计师。请按“分页协议”输出**严格 JSON**，以便我循环续写到完整结果。
+          **不要使用代码块围栏**（不要 ```json ），只输出 JSON 字符串本身。
+
+          【背景】
+          - 目标：一次聚合“写作简报 brief”与“章节大纲 outline”
+          - 因模型输出上限，需分页返回：第一页给出 brief 与部分大纲；后续页仅补充大纲
+          - 每一页都必须是**语法合法且自洽**的 JSON（不可截断）
+
+          【输入】
+          - 用户写作要求（原文）：{question}
+          - 上次进度：
+            - next_cursor: {next_cursor}        
+            - page_number: {page_number}        
+            - brief_summary: {brief_summary}
+
+          【生成规则】
+          1) 分页策略（自适应）：
+            - 不传 page_size，由你自主决定本页返回多少条 items，但**必须确保本页输出不会过长**（建议总体不超过 600–900 tokens）
+            - 若预估还未覆盖全部大纲，设置 has_more=true，并给出 next_cursor（下一页起始章节ID，如 "S 下一个编号"）
+            - 若本页已是最后一页，设置 has_more=false，next_cursor=null
+          2) 首页（next_cursor 为 null）：
+            - 产出 "brief"：
+              - topic, genre, audience, tone, constraints[]（数组）
+              - target_words：用户可能明确/侧面给出（如"约30页"）；请根据写作要求的内容复杂度、体裁特点、受众需求等合理推断字数；完全没有明确要求则为 null
+              - suggested_words：[min,max]（当 target_words 为 null 时给出），单位：字，需根据写作要求推断合理范围
+            - 产出 "outline_items"：从 "S1" 开始的若干章节
+          3) 续页（next_cursor 不为 null）：
+            - **不要**再输出 "brief"
+            - 仅输出从 next_cursor 起的 "outline_items" 若干，避免与 brief_summary 已存在的 id 重复
+          4) 章节规范：
+            - ID **连续编号**："S1","S2","S3",...
+            - 每条：
+              "id":"S1", "title":"...", "bullets":["...","...","..."]
+            - bullets：每节根据章节的重要性和权重生成合适的数量的条目（通常2-3条，引言和结尾适当减少），**每条不超过 24 个中文字符**，避免冗长
+            - 标题不得为空，避免与既有 ID 重复
+          5) 语言与风格：
+            - 输出为**中文**
+            - 大纲粒度以满足 {question} 的体裁与目标字数为准（你可据此自行决定总章节数）
+          6) 字数推断原则：
+            - 当用户明确给出字数要求时，target_words 设为具体数值
+            - 当用户未明确字数要求时，target_words 设为 null，suggested_words 根据以下因素推断：
+              * 体裁特点：短文(500-1500字)、中篇(1500-5000字)、长文(5000-15000字)、专著(15000字以上)
+              * 内容复杂度：简单介绍(较少字数)、深度分析(较多字数)、全面论述(大量字数)
+              * 受众需求：科普类(适中字数)、专业类(较多字数)、摘要类(较少字数)
+              * 使用场景：社交媒体(较少字数)、学术论文(较多字数)、商业报告(适中字数)
+
+          【只输出严格 JSON，不要多余文字】：
+          {{
+            "page": {page_number},
+            "has_more": true,
+            "next_cursor": "S 下一页起始编号 或 null",
+            "brief": {{
+              "topic": "...",
+              "genre": "...",
+              "audience": "...",
+              "tone": "...",
+              "constraints": ["...","..."],
+              "target_words": null,
+              "suggested_words": [根据写作要求推断的合理字数范围]
+            }},
+            "outline_items": [
+              {{"id":"S1","title":"引言","bullets":["...","...","..."]}},
+              {{"id":"S2","title":"...","bullets":["...","...","..."]}}
+              // 注意：续页**不包含** brief 字段；且本数组条数由你自适应决定；不要写注释
+            ]
+          }}
+
+          【校验钩子】
+          - 若预估本页内容可能超长：**减少本页 items 数量**，而不是截断
+          - 若是续页：省略 "brief" 字段；如误写也视为错误
+        cast_fn: str
+      - name: Section Writing Template
+        id: free_section_writing_template
+        type: value
+        default: |-
+          你是一名资深中文写作者。我们正在撰写章节《{section_title}》。
+
+          【关键要求：严格字数控制】
+          请生成**严格控制在 {chunk_words} 字的正文内容**，允许误差范围为±10%（即 {chunk_words}×0.9 到 {chunk_words}×1.1 字之间）。
+          
+          **重要提醒：**
+          - 目标字数：{chunk_words} 字
+          - 最少字数：不少于 {chunk_words}×0.9 字
+          - 最多字数：不超过 {chunk_words}×1.1 字
+          - 请在写作过程中时刻注意字数控制，避免超出范围
+
+          【写作简报（精炼）】
+          - 主题：{topic}
+          - 体裁：{genre}；受众：{audience}；语气：{tone}
+          - 约束：{constraints_inline}
+
+          【承接材料与严格避重】
+          - 上一块摘要（若本块为第一块则为"无"）：{prev_chunk_summary_or_none}
+          - 已生成内容（严禁重复以下任何句子、表述或观点）：{tail_hint_or_empty}
+          - **重要避重要求**：绝对不能重复上述已生成内容中的任何句子开头、核心表述、具体数据或论述逻辑
+          - **内容连续性要求**：必须在已有内容基础上继续深入展开，提供新的角度、细节或论证
+
+          【章节内容总结（智能避重指导）】
+          - 当前章节已生成内容总结：{section_summary}
+          - **避重指导**：基于上述总结，请确保本次写作不重复已讨论的角度、观点和具体内容
+          - **内容创新要求**：必须从新的角度、使用不同的论述方式，提供全新的见解或补充信息
+
+          【最后chunk末尾内容（衔接参考）】
+          - 上一个chunk的最后100字：{last_chunk_tail}
+          - **衔接要求**：请确保内容与上述末尾内容自然衔接，保持逻辑连贯性
+
+          【章节差异化要求】
+          - 已生成章节摘要（严禁重复这些内容的核心观点和具体表述）：{previous_sections_summary}
+          - 本章节独特角度：请确保本章节的写作角度、具体论述点、举例说明与前面章节有明显区别
+          - 内容避重原则：绝对不能重复前面章节已经详细阐述的具体操作步骤、注意事项或解决方案
+
+          【章节目标与进度】
+          - 本章节目标字数：约 {section_target_words} 字
+
+          【输出要求】
+          - 不要标题/列表/小结
+          - **第一句强制创新**：绝对不能以【已使用开头句式】中任何句子的开头词汇、句式或表述方式开始
+          - **强制避重**：绝对禁止重复【已生成内容】中的任何句子开头、关键词组合或表述方式
+          - 必须提供全新的论述角度，即使讨论相同主题也要从不同侧面切入
+          - **严格避免与【已生成章节摘要】中的内容重复，必须提供全新的角度和具体内容**
+          - 在已有内容基础上继续深入，避免重新开始或重复论证
+          - 开头建议：可尝试使用"通过...分析"、"结合...数据"、"基于...发现"、"相比之下"、"值得关注的是"、"实验证实"等不同句式
+          - **严格控制字数在指定范围内，宁可内容精炼也不要超出字数上限**
+          - 如果内容接近字数上限，请及时收尾，确保不超出 {chunk_words}×1.1 字
+        cast_fn: str
+      - name: Chunk Summary Template
+        id: chunk_summary_template
+        type: value
+        default: |-
+          你是一名专业的内容总结师。请对以下已生成的章节内容进行智能总结，重点为后续写作提供避重指导。
+
+          【输入内容】
+          - 章节标题：{section_title}
+          - 已生成内容：
+          {generated_content}
+
+          【总结要求】
+          1. **已讨论内容**：明确指出已经讨论过的具体内容、角度和观点
+          2. **避重清单**：列出绝对不能重复的具体表述、数据、案例和推荐
+          3. **内容衔接**：提供与下一部分内容的自然衔接指导
+          4. **字数控制**：总结控制在150-200字之间
+
+          【输出格式】
+          请按以下结构输出总结：
+          **已讨论内容**：[已讨论的具体内容、角度和观点]
+          **避重清单**：[绝对不能重复的具体表述、数据、案例、推荐等]
+          **衔接指导**：[为下一部分内容提供的衔接建议]
+
+          【注意事项】
+          - 重点突出避重指导，确保后续内容不重复
+          - 明确指出已讨论的具体推荐、地点、数据等
+          - 总结要简洁实用，便于后续写作参考
+          - 避免重复原文的表述方式
+
+          【输出要求】
+          - 直接输出总结内容，不要添加任何前缀或后缀
+          - 严格按照上述格式输出，确保结构清晰
+          - 重点突出避重指导，确保后续写作不重复
+        cast_fn: str
+      - name: Outline Planner Write Template
+        id: outline_planer_write
+        type: value
+        default: |-
+          你是一名结构化信息抽取器与中文写作规划师。请把输入的大纲文本解析为至多三级的树状结构，
+          并从 question 中识别篇幅/字数约束。为每个节点标记它是否来自"原始大纲"（需要对用户展示的标题）。
+
+          【输入】
+          - question（可空）：{question}
+          - outline（原文，多行）：
+          {outline}
+
+          【解析与标记要求】
+          1) 字数/篇幅约束：
+             - 从 question 中抽取 target_words（支持"万字/千字/字/页"等；30页≈9000~15000字，可按每页300~500字估算）
+             - 若无法确定，target_words=null，并给出 suggested_words 区间 [min,max]（单位：字）
+
+          2) 大纲层级解析：
+             - 依据编号或缩进推断层级（1~3级），保持原始顺序
+             - 为每一行原始大纲条目创建一个对应节点，并标记：
+               origin.is_from_outline = true
+               origin.source_line = 原始行号（从1起）
+               origin.level = 1|2|3（该行在原文中的层级）
+               origin.raw_label = 原文编号（如 "一"、"2."、"(3)"），没有则 null
+               origin.raw_text  = 原文标题行的原文文本（去除编号后的标题）
+             - 允许在解析时**为组织内容而新增派生节点**（例如拆分过长主题或补充逻辑占位），但必须标记：
+               origin.is_from_outline = false
+               origin.derive_reason = "split_long_topic" | "logic_grouping" | "other"
+             - 节点 id 按出现顺序与层级生成稳定 ID：S1, S1.1, S1.2, S2, S2.1, S2.1.1, ...
+
+          3) 显示清单（非常重要）：
+             - 返回 display_heading_ids：一个数组，**仅包含所有 origin.is_from_outline=true 的节点 id**，顺序与原文出现顺序一致
+             - 后续对用户展示标题时，只展示 display_heading_ids 中的标题
+
+          【只输出严格 JSON（不要代码块围栏、不要注释）】举例：
+          {{
+            "brief": {{
+              "topic": null,
+              "genre": null,
+              "audience": null,
+              "tone": null,
+              "constraints": [],
+              "target_words": 30000,
+              "suggested_words": [10000,15000]
+            }},
+            "nodes": [
+              {{
+                "id": "S1",
+                "title": "春季北京旅游最佳时间与气候特点",
+                "children": [],
+                "origin": {{
+                  "is_from_outline": true,
+                  "source_line": 1,
+                  "level": 1,
+                  "raw_label": "一",
+                  "raw_text": "春季北京旅游最佳时间与气候特点"
+                }}
+              }},
+              {{
+                "id": "S2",
+                "title": "北京春游必去景点推荐",
+                "children": [
+                  {{
+                    "id": "S2.1",
+                    "title": "（派生示例）城市地标组",
+                    "children": [],
+                    "origin": {{
+                      "is_from_outline": false,
+                      "derive_reason": "logic_grouping"
+                    }}
+                  }}
+                ],
+                "origin": {{
+                  "is_from_outline": true,
+                  "source_line": 2,
+                  "level": 1,
+                  "raw_label": "二",
+                  "raw_text": "北京春游必去景点推荐"
+                }}
+              }},
+              {{
+                "id": "S3",
+                "title": "春游交通出行指南",
+                "children": [],
+                "origin": {{
+                  "is_from_outline": true,
+                  "source_line": 3,
+                  "level": 1,
+                  "raw_label": "三",
+                  "raw_text": "春游交通出行指南"
+                }}
+              }}
+            ],
+            "display_heading_ids": ["S1","S2","S3"]
+          }}
+        cast_fn: str
+      - name: Outline Section Writing Template
+        id: outline_section_writing_template
+        type: value
+        default: |-
+          你是一名资深中文写作者。我们正在撰写章节《{section_title}》。
+
+          【关键要求：严格字数控制】
+          请生成**严格控制在 {chunk_words} 字的正文内容**，允许误差范围为±10%（即 {chunk_words}×0.9 到 {chunk_words}×1.1 字之间）。
+          
+          **重要提醒：**
+          - 目标字数：{chunk_words} 字
+          - 最少字数：不少于 {chunk_words}×0.9 字
+          - 最多字数：不超过 {chunk_words}×1.1 字
+          - 请在写作过程中时刻注意字数控制，避免超出范围
+
+          【写作简报（精炼）】
+          - 主题：{topic}
+          - 体裁：{genre}；受众：{audience}；语气：{tone}
+          - 约束：{constraints_inline}
+
+          【参考材料】
+          - 参考文献（请在写作中适当引用和参考，但不要直接复制）：{context}
+          - 文风参考（请参考以下文风特点，保持风格一致性）：{style}
+
+          【承接材料与严格避重】
+          - 上一块摘要（若本块为第一块则为"无"）：{prev_chunk_summary_or_none}
+          - 已生成内容（严禁重复以下任何句子、表述或观点）：{tail_hint_or_empty}
+          - **重要避重要求**：绝对不能重复上述已生成内容中的任何句子开头、核心表述、具体数据或论述逻辑
+          - **内容连续性要求**：必须在已有内容基础上继续深入展开，提供新的角度、细节或论证
+
+          【已使用开头句式（严禁重复）】
+          - 以下是所有已生成chunk的第一句，绝对不能使用相同或相似的开头：
+          {chunk_first_sentences}
+          - **开头避重要求**：本次生成的第一句必须与上述所有句子在开头词汇、句式结构、表述方式上完全不同
+          - **创新开头要求**：必须使用全新的开头方式，可以从不同角度（如原因分析、结果展示、过程描述、对比论述等）切入
+
+          【章节差异化要求】
+          - 已生成章节摘要（严禁重复这些内容的核心观点和具体表述）：{previous_sections_summary}
+          - 本章节独特角度：请确保本章节的写作角度、具体论述点、举例说明与前面章节有明显区别
+          - 内容避重原则：绝对不能重复前面章节已经详细阐述的具体操作步骤、注意事项或解决方案
+
+          【章节目标与进度】
+          - 本章节目标字数：约 {section_target_words} 字
+
+          【输出要求】
+          - 不要标题/列表/小结
+          - **第一句强制创新**：绝对不能以【已使用开头句式】中任何句子的开头词汇、句式或表述方式开始
+          - **强制避重**：绝对禁止重复【已生成内容】中的任何句子开头、关键词组合或表述方式
+          - 必须提供全新的论述角度，即使讨论相同主题也要从不同侧面切入
+          - **严格避免与【已生成章节摘要】中的内容重复，必须提供全新的角度和具体内容**
+          - 在已有内容基础上继续深入，避免重新开始或重复论证
+          - 开头建议：可尝试使用"通过...分析"、"结合...数据"、"基于...发现"、"相比之下"、"值得关注的是"、"实验证实"等不同句式
+          - **严格控制字数在指定范围内，宁可内容精炼也不要超出字数上限**
+          - 如果内容接近字数上限，请及时收尾，确保不超出 {chunk_words}×1.1 字
+          - 同时确保字数不低于字数要求的 {chunk_words}*0.9字
+          - 注意不要输出任何与文章无关的其他内容比如 (共XX字体)
+        cast_fn: str
+  - name: mappings
+    value:
+      table_to_chart_task_definition_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: table_to_chart_task_definition_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      translate_prompt_human_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: attachment_translate_prompt
+          _msg_class:
+            type: str
+            value: HumanMessage
+      continue_rewrite_prompt_human_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: attachment_continue_rewrite_prompt
+          _msg_class:
+            type: str
+            value: HumanMessage
+      generate_prompt_human_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: attachment_generate_prompt
+          _msg_class:
+            type: str
+            value: HumanMessage
+      rewrite_prompt_human_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: attachment_rewrite_prompt
+          _msg_class:
+            type: str
+            value: HumanMessage
+      compare_prompt_human_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: attachment_compare_prompt
+          _msg_class:
+            type: str
+            value: HumanMessage
+      summary_prompt_human_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: summary_prompt
+          _msg_class:
+            type: str
+            value: HumanMessage
+      knowledge_base_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: knowledge_base_system_prompt
+          _msg_class:
+            type: str
+            value: HumanMessage
+      knowledge_base_user_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: Chinese_answer_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      knowledge_ckeck_top_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: Chinese_answer_template_check_top
+          _msg_class:
+            type: str
+            value: HumanMessage    
+      chart_summary_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: Chinese_chart_summary
+          _msg_class:
+            type: str
+            value: HumanMessage    
+      metric_recommend_question_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: Chinese_metric_recommend_question
+          _msg_class:
+            type: str
+            value: HumanMessage  
+      metric_intent_user_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_intent_user_prompt
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_output_user_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_output_user_prompt
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_warning_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_warning_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_query_reject_answer_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_query_reject_answer_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_query_rewrite_for_intent_generation_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_query_rewrite_for_intent_generation_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_query_rewrite_for_time_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_query_rewrite_for_time_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_tree_pick_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_tree_pick_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_dimension_describe_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_dimension_describe_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_multi_source_describe_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_multi_source_describe_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_link_describe_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_link_describe_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_lineage_describe_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_lineage_describe_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+          
+      metric_router_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_router_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_pick_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_pick_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_base_definition_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_base_definition_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_definition_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_definition_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_dimension_filter_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_dimension_filter_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_query_select_time_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_query_select_time_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      api_clarify_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: api_clarify_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      free_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: free_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      generate_api_call_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: generate_api_call_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_windowDate_intent_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_windowDate_intent_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      analytic_time_recognizer_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: analytic_time_recognizer_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      analytic_dimension_recognizer_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: analytic_dimension_recognizer_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_dimension_intent_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_dimension_intent_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_additional_intent_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_additional_intent_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_scroll_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_scroll_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_comparison_check_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_comparison_check_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_query_intent_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_query_intent_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_analysis_intent_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_analysis_intent_system_prompt
+          _msg_class:
+            type: str
+            value: HumanMessage
+      multi_src_output_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: multi_src_output_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_query_answer_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_query_answer_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_query_answer_refine_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_query_answer_refine_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      db_data_answer_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: db_data_answer_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      sql_generate_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: sql_generate_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      cypher_refine_error_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: cypher_refine_error_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      cypher_refine_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: cypher_refine_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      cot_cypher_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: cot_cypher_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      question_classification_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: question_classification_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      metric_candiates_system_msg:
+        class: promptMessage
+        type: class
+        kwargs:
+          prompt:
+            type: variable
+            value: metric_candiates_system_template
+          _msg_class:
+            type: str
+            value: HumanMessage
+      *off: 
+        type: int
+        value: 0
+      *on: 
+        type: int
+        value: 1

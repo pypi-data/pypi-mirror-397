@@ -1,0 +1,27 @@
+name: embeddings
+type: configurable_config
+parameters:
+  - name: LocalOpenAIEmbeddings
+    value:
+      - model_name: bge-large-zh
+        openai_api_base: http://101.126.69.171:8030/v1
+        openai_api_key: password
+        length: 1024
+        normalized: true
+      - model_name: m3e-base
+        openai_api_base: http://101.126.69.171:8030/v1
+        openai_api_key: password
+        length: 768
+        normalized: true
+  - name: reranker
+    value:
+      - type: LocalRerankEmbeddings
+        model_name: bge-reranker-large
+        openai_api_base: http://101.126.69.171:8030/v1
+        openai_api_key: password
+        rerank_input_point_num: 20
+      #- type: XinferenceReranker
+      #  model_name: bge-reranker-large
+      #  rerank_input_point_num: 20
+      #  xinference_api_base: http://182.44.3.149:8069/v1
+      #  xinference_api_key: password

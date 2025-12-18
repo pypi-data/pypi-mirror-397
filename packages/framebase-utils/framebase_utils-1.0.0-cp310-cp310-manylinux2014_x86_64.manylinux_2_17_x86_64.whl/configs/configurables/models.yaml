@@ -1,0 +1,345 @@
+name: models
+type: configurable_config
+parameters:
+  - name: variables
+    value:
+      - name: output_llm
+        class: output_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: 1000
+            type: int
+          - key: temperature
+            value: random_degree
+            type: mapping
+      - name: chat_assistant_llm
+        class: chat_assistant_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: 1000
+            type: int
+          - key: temperature
+            value: random_degree
+            type: mapping
+      - name: confirm_intent_llm
+        class: sql_or_api_analysis_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: 1000
+            type: int
+          - key: temperature
+            value: random_degree
+            type: mapping
+      - name: related_question_llm
+        class: related_question_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: 1000
+            type: int
+          - key: temperature
+            value: random_degree
+            type: mapping
+      - name: doc_summary_llm
+        class: doc_summary_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: 4096
+            type: int
+          - key: temperature
+            value: 0.01
+            type: float
+          - key: streaming
+            value: true
+            type: bool
+      - name: sql_generation_llm
+        class: sql_or_api_analysis_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: 1000
+            type: int
+          - key: temperature
+            value: random_degree
+            type: mapping
+      - name: sql_to_text_llm
+        class: sql_or_api_output_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: 1000
+            type: int
+          - key: temperature
+            value: random_degree
+            type: mapping
+      - name: api_analysis_llm
+        class: sql_or_api_analysis_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: 2000
+            type: int
+          - key: temperature
+            value: random_degree
+            type: mapping
+      - name: text2api_llm
+        class: sql_or_api_analysis_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: 1000
+            type: int
+          - key: temperature
+            value: random_degree
+            type: mapping
+      - name: api_to_text_llm
+        class: sql_or_api_output_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: 1000
+            type: int
+          - key: temperature
+            value: random_degree
+            type: mapping
+      - name: table_to_chart_llm
+        class: sql_or_api_analysis_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: 1000
+            type: int
+          - key: temperature
+            value: random_degree
+            type: mapping
+      - name: attachment_intent_llm
+        class: sql_or_api_analysis_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: 1000
+            type: int
+          - key: temperature
+            value: random_degree
+            type: mapping
+      - name: text2cypher_llm
+        class: sql_or_api_analysis_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: 4096
+            type: int
+          - key: temperature
+            value: random_degree
+            type: mapping
+      - name: knowledge_operation_llm
+        class: knowledge_operation_llm
+        type: configurable
+        kwargs:
+          - key: max_tokens
+            value: 1000
+            type: int
+          - key: temperature
+            value: random_degree
+            type: mapping
+  - name: configurables
+    value:
+      - name: 选择大模型
+        id: chat_assistant_llm
+        description: 选择用于支撑当前聊天助手的后台大模型
+        type: single-option
+        default: Qwen2-72B-FabartaOptimized
+        cast_fn: str
+        options:
+          Baichuan2-13B-FabartaOptimized: Baichuan2-13B-FabartaOptimized
+          Qwen1.5-72B-Int4-FabartaOptimized: Qwen1.5-72B-Int4-FabartaOptimized
+          GPT-35-turbo: gpt-35-turbo
+          gpt4-o: gpt4-o
+          Qwen2-7B-FabartaOptimized: Qwen2-7B-FabartaOptimized
+          Qwen2-72B-FabartaOptimized: Qwen2-72B-FabartaOptimized
+      - name: 用于知识库润色的大模型
+        id: output_llm
+        description: 基于用户问题对知识库内文档、问答对中的文本进行分析，并将最终结果进行润色、评估的大模型。如有敏感数据建议使用私有化大模型。
+        type: single-option
+        default: Qwen1.5-72B-Int4-FabartaOptimized
+        cast_fn: str
+        options:
+          Baichuan2-13B-FabartaOptimized: Baichuan2-13B-FabartaOptimized
+          Qwen1.5-72B-Int4-FabartaOptimized: Qwen1.5-72B-Int4-FabartaOptimized
+          GPT-35-turbo: gpt-35-turbo
+          gpt4-o: gpt4-o
+          Qwen2-7B-FabartaOptimized: Qwen2-7B-FabartaOptimized
+          Qwen2-72B-FabartaOptimized: Qwen2-72B-FabartaOptimized
+      - name: 选择用于生成SQL与API调用命令的大模型
+        id: sql_or_api_analysis_llm
+        description: |
+          基于用户问题将相关的数据源元数据、API Schema信息发送给大模型，以生成SQL语句、API调用命令。
+          建议使用更大参数量的模型以保障SQL生成的准确性，该大模型不会接收到具体SQL与API的返回，但您仍需要注意此操作的数据安全策略是否合规。
+        type: single-option
+        default: Qwen1.5-72B-Int4-FabartaOptimized
+        cast_fn: str
+        options:
+          Baichuan2-13B-FabartaOptimized: Baichuan2-13B-FabartaOptimized
+          Qwen1.5-72B-Int4-FabartaOptimized: Qwen1.5-72B-Int4-FabartaOptimized
+          GPT-35-turbo: gpt-35-turbo
+          gpt4-o: gpt4-o
+          Qwen2-7B-FabartaOptimized: Qwen2-7B-FabartaOptimized
+          Qwen2-72B-FabartaOptimized: Qwen2-72B-FabartaOptimized
+      - name: 用于SQL与API调用结果润色的大模型
+        id: sql_or_api_output_llm
+        description: |
+          基于用户问题对知识库内文档、问答对中的文本进行分析，并将最终结果进行润色、评估的大模型。如有敏感数据建议使用私有化大模型。
+        type: single-option
+        default: Baichuan2-13B-FabartaOptimized
+        cast_fn: str
+        options:
+          Baichuan2-13B-FabartaOptimized: Baichuan2-13B-FabartaOptimized
+          Qwen1.5-72B-Int4-FabartaOptimized: Qwen1.5-72B-Int4-FabartaOptimized
+          GPT-35-turbo: gpt-35-turbo
+          gpt4-o: gpt4-o
+          Qwen2-7B-FabartaOptimized: Qwen2-7B-FabartaOptimized
+          Qwen2-72B-FabartaOptimized: Qwen2-72B-FabartaOptimized
+      - name: 用于生成关联问的大模型
+        id: related_question_llm
+        description: |
+          用于结合问答上下文、问答集，生成关联问的大模型。如有上下文中包含敏感数据建议使用私有化大模型。
+        type: single-option
+        default: Baichuan2-13B-FabartaOptimized
+        cast_fn: str
+        options:
+          Baichuan2-13B-FabartaOptimized: Baichuan2-13B-FabartaOptimized
+          Qwen1.5-72B-Int4-FabartaOptimized: Qwen1.5-72B-Int4-FabartaOptimized
+          GPT-35-turbo: gpt-35-turbo
+          gpt4-o: gpt4-o
+      - name: 用于长文本处理的大模型
+        id: doc_summary_llm
+        description: |
+          用于做长文本总结或回答的大模型。
+        type: single-option
+        default: gpt4-o
+        cast_fn: str
+        options:
+          gpt4-o: gpt4-o
+      - name: 选择用于知识运营分析的大模型
+        id: knowledge_operation_llm
+        description: |
+          用于知识运营分析的大模型
+        type: single-option
+        default: Qwen1.5-72B-Int4-FabartaOptimized
+        cast_fn: str
+        options:
+          Qwen1.5-72B-Int4-FabartaOptimized: Qwen1.5-72B-Int4-FabartaOptimized
+          GPT-35-turbo: gpt-35-turbo
+          gpt4-o: gpt4-o
+          Qwen2-7B-FabartaOptimized: Qwen2-7B-FabartaOptimized
+          Qwen2-72B-FabartaOptimized: Qwen2-72B-FabartaOptimized
+
+
+  - name: mappings
+    value:
+      Baichuan2-13B-FabartaOptimized:
+        type: class
+        class: EKCLLM
+        kwargs:
+          openai_api_base:
+            type: str
+            value: http://host.docker.internal:8009/v1
+          openai_api_key:
+            type: str
+            value: 1
+          model_name:
+            type: str
+            value: &baichuan2_13B_model_name /data1/llm/Baichuan2-13B-Chat
+      Qwen1.5-72B-Int4-FabartaOptimized:
+        type: class
+        class: EKCLLM
+        kwargs:
+          openai_api_base:
+            type: str
+            value: http://host.docker.internal:8007/v1
+          openai_api_key:
+            type: str
+            value: 1
+          model_name:
+            type: str
+            value: &qwen1_5_72B_Int4_model_name /data1/llm/Qwen1.5-72B-Chat-GPTQ-Int4/
+      Qwen2-7B-FabartaOptimized:
+        type: class
+        class: EKCLLM
+        kwargs:
+          openai_api_base:
+            type: str
+            value: http://qwen2-7b:8009/v1
+          openai_api_key:
+            type: str
+            value: 1
+          model_name:
+            type: str
+            value: &qwen2_7B_model_name /data1/llm/Qwen2-7B-Instruct
+      Qwen2-72B-FabartaOptimized:
+        type: class
+        class: ChatOpenAI
+        kwargs:
+          openai_api_base:
+            type: str
+            value: http://host.docker.internal:8014/v1
+          openai_api_key:
+            type: str
+            value: 1
+          model_name:
+            type: str
+            value: &qwen2_72B_model_name Qwen2-72B-Instruct-GPTQ-Int4
+      gpt-35-turbo:
+        type: class
+        class: AzureChatOpenAI
+        kwargs:
+          azure_endpoint:
+            type: str
+            value: https://fabarta-gpt4turbo1.openai.azure.com/
+          openai_api_key:
+            type: str
+            value: cd86c75d79534e89a1897e905c7a8242
+          openai_api_version:
+            type: str
+            value: 2024-02-15-preview
+          deployment_name:
+            type: str
+            value: &gpt_35_turbo_model_name GPT-35-turbo
+      glm-3-turbo:
+        type: class
+        class: ChatZhipuAI
+        kwargs:
+          zhipuai_api_key:
+            type: str
+            value: zhipuai_api_key
+          model_name:
+            type: str
+            value: glm-3-turbo
+      gpt4-o:
+        type: class
+        class: AzureChatOpenAI
+        kwargs:
+          azure_endpoint:
+            type: str
+            value: https://fabarta-gpt4-turbo.openai.azure.com/
+          openai_api_key:
+            type: str
+            value: 7e2a30a4b809409a9cbae59a4384b367
+          openai_api_version:
+            type: str
+            value: 2024-02-15-preview
+          deployment_name:
+            type: str
+            value: &gpt_4_o_model_name gpt-4o
+      capability:
+        type: kwargs
+        *baichuan2_13B_model_name: 4096
+        *gpt_35_turbo_model_name: 16384
+        *qwen1_5_72B_Int4_model_name: 8196
+        *gpt_4_o_model_name: 32768
+        *qwen2_7B_model_name: 8196
+        *qwen2_72B_model_name: 8196

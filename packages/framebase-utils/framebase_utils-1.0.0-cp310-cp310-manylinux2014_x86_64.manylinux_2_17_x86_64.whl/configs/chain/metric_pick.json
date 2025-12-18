@@ -1,0 +1,32 @@
+{
+  "type": "object",
+  "properties": {
+    "insight": {
+      "type": "string",
+      "description": "对用户问题的分析。在insight中，请先分析用户的问题，找出用户问题中直接提到的指标，之后给出其余最相关的指标名字，最后分析还有哪些指标和用户的问题相关，以及为什么相关。insight需要简洁明了。用户的问题中如果提到了某些维度的具体的值，那么请优先找出含有这些维度值的指标。如果有指标名字或者别名与用户问题中的指标完全一致，那么不需要返回其他指标。在insight中禁止使用指标的序号，请用指标名称指代指标，不要在insight中出现任何形式的指标序号。也不要在insight中给出指标编码的信息。"
+    },
+    "mentioned_metric": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "description": "用户在问题中提到的指标的序号。如果用户的问题中提到了某些维度的具体的值，那么优先选择带有这些维度的指标。如果有指标名字或者别名与用户问题中的描述的指标完全一致，那么仅选择此指标，不要返回其他指标。如果用户提到的指标不存在，mentioned_metric设置为空数组。注意，所有序号都必须真实有效，不要给出不存在的序号。"
+    },
+    "related_metric": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "description": "除去mentioned_metric的指标，其余相关指标的序号。按照insight中的相关度排序，最相关的排在最前面，给出相关指标的序号。注意，所有序号都必须真实有效，不要给出不存在的序号。"
+    },
+    "clarify_choices": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "如果mentioned_metric和related_metric中指标的总数大于1，请根据用户的问题和选出来的指标,生成一组（不超过5个）候选问题，用来向用户确认想要查询的是什么指标. 每个候选问题都只能包含一个指标。否则请不要生成clarify_choices字段。相关指标为空时也不要生成clarify_choices字段。"
+    }
+  }
+}

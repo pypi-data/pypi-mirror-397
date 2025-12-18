@@ -1,0 +1,76 @@
+{
+  "type": "object",
+  "properties": {
+    "metricName": {
+      "type": "string",
+      "title": "指标名称"
+    },
+    "startDate": {
+      "type": "string",
+      "title": "开始时间"
+    },
+    "endDate": {
+      "type": "string",
+      "title": "结束时间"
+    },
+    "aggregation": {
+      "type": "string",
+      "title": "聚合方式",
+      "enum": [
+        "SUM",
+        "NONE",
+        "AVG",
+        "MAX",
+        "MIN"
+      ],
+      "enumNames": [
+        "求和",
+        "平铺",
+        "平均",
+        "最大",
+        "最小"
+      ]
+    },
+    "windowDate": {
+      "type": "string",
+      "title": "日期维度",
+      "ui:readonly": true
+    },
+    "dimensionHolds": {
+      "type": "array",
+      "title": "保留维度",
+      "items": {
+        "type": "string",
+        "enum": []
+      }
+    },
+    "dimensionFilters": {
+      "type": "object",
+      "ui:hidden": true,
+      "title": "维度过滤条件",
+      "properties": {
+        "should": {
+          "title":"should",
+          "type": "array",
+          "items": {
+            "type":"object"
+          }
+        },
+        "must": {
+          "title":"must",
+          "type": "array",
+          "items": {
+            "type":"object"
+          }
+        },
+        "must_not": {
+          "title":"must_not",
+          "type": "array",
+          "items": {
+            "type":"object"
+          }
+        }
+      }
+    }
+  }
+}

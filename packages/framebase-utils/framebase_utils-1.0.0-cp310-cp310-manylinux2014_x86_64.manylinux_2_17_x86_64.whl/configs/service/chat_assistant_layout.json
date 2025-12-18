@@ -1,0 +1,42 @@
+{
+    "type": "object",
+    "properties": {
+      "strategy_configurable": {
+        "$ref": "#/definitions/strategy_configurable"
+      }
+    },
+    "definitions": {
+      "strategy_configurable": {
+          "title": "策略配置",
+          "type": "object",
+          "description":"系统的回答策略，用于提高系统回答的准确性。",
+          "definitions": {},
+          "properties": {
+              "free_generation_prompt_template": {
+                  "$ref": "#/definitions/langchain_configurables/definitions/Configurable/properties/free_generation_prompt_template",
+                  "ui:options": {
+                    "type": "textarea",
+                    "autosize": {
+                        "minRows": 6,
+                        "maxRows": 15
+                    }
+                },
+                "ui:widget": "TextAreaWidget"
+              },
+              "chat_assistant_llm": {
+                  "$ref": "#/definitions/langchain_configurables/definitions/Configurable/properties/chat_assistant_llm"
+              },
+              "multi_round_num": {
+                  "$ref": "#/definitions/langchain_configurables/definitions/Configurable/properties/multi_round_num",
+                  "pattern": "^([0-9]|10)$",
+                  "err:pattern": "请输入0～10之间的数字。"
+              }
+        }
+      },
+      "langchain_configurables": {}
+    },
+    "ui:order": [
+      "strategy_configurable",
+      "llm_configurable"
+    ]
+  }

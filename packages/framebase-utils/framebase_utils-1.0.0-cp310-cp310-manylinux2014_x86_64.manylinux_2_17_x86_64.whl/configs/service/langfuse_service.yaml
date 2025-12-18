@@ -1,0 +1,27 @@
+name: langfuse_service
+type: service_config
+parameters:
+  - name: benchmark_llm
+    value: Qwen2.5-72B-Instruct-GPTQ-Int4
+  - name: unknown_words
+    value: 根据已知信息无法回答
+  - name: generation_evaluators
+    value:
+      rag:
+        - correctness
+        - image_similarity
+      agent_rag:
+        - correctness
+      metric:
+        - json_similarity
+      analysis_metric:
+        - json_similarity 
+  - name: retrival_evaluations
+    value:
+      rag:
+        - recall
+      agent_rag:
+        - recall
+      metric: []
+      analysis_metric: []
+        

@@ -1,0 +1,88 @@
+{
+    "type": "object",
+    "properties": {
+      "related_dimension_values": {
+        "type": "array",
+        "description": "请问【{dimension_info}】中哪些维度值和用户的意图可能相关。如果有多个维度值可能相关，请全部列出。仅根据用户的意图进行判断，不要自行添加用户未要求的维度过滤值、也不要根据常识推理用户未提到的维度值。用户仅提到维度名称而没有提到维度值时，不要生成过滤条件。",
+        "items": {
+          "type": "string"
+        }
+      },
+      "dimensionFilters": {
+        "type": "object",
+        "title": "维度过滤条件",
+        "description": "维度过滤条件。将related_dimension_values写成维度过滤条件。如果用户的问题中出现“按…”、“各…”、“分别”、“所有” 等分组字样，那么请把该维度的值设置为*，表示所有维度值都与用户的问题相关，该维度不再需要枚举值。如果同一个维度下有多个维度值相关，请生成多个维度过滤条件。当有多个维度过滤条件时，请检查这些条件的关系，如果同一个维度下，有多个值的过滤，这些条件请用should连接；如果不同维度的多个过滤条件之间没有明确的关系，那么通常使用must连接这些条件；如果明确的指出某些维度过滤条件之间是或的关系，那么可以使用shuold连接这些条件。",
+        "properties": {
+          "should": {
+            "type": "array",
+            "description": "Optional，也可以为空，表示逻辑或。注意，汉语中“A和B”，“A或B”通常表示的都是should的关系。对于比较类问题，如果问题是比较相同维度，不同维度值下的指标数据，请使用dimensionFilters下的should。",
+            "items": {
+              "$ref": "#/definitions/dimensionConditions"
+            }
+          },
+          "must": {
+            "type": "array",
+            "description": "Optional，也可以为空，表示逻辑与。汉语中一般用“且”表示must的关系。",
+            "items": {
+              "$ref": "#/definitions/dimensionConditions"
+            }
+          },
+          "must_not": {
+            "type": "array",
+            "description": "Optional，也可以为空，表示非。",
+            "items": {
+              "$ref": "#/definitions/dimensionConditions"
+            }
+          }
+        }
+      },
+      "pre_thinking":{
+        "type": "string",
+        "description": "请依次回答: 1.分析用户的问题中提到了哪些维度或维度别名。2.判断哪些维度需要保留(groupby)，哪些需要被聚合(aggregate)。判断规则【a.显式点名原则:如果句子中出现“按…”、“各…”、“分别”、“所有” 等分组字样，该维度必须保留（group by）；b.显式汇总原则:句子中出现“总和、总计、合计、平均、整体、同比、环比、占比、多少（无分组字样）”，该维度必须被聚合（sum/avg …）。c.固定值比较原则:如果用户问题中包含对指标值的固定值比较，且问问题中提到了维度（包括但不限于：大于、小于、等于、高于、低于、超过、不超过、不高于、不低于、不及、少于、不足、多于、不少于等比较表达），那么该维度必须保留（group by），因为用户想要知道满足条件的维度明细。一句话总结为:分组就留，汇总就聚，比较留维度，归因分析（根因分析）无显式要求不留维度。"
+      },
+      "dimensionHolds": {
+        "type": "array",
+        "title": "查询结果中保留的维度",
+        "description": "请根据pre_thinking的结果，列出需要保留的维度。",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "definitions": {
+      "dimensionConditions": {
+        "type": "object",
+        "description": "Optional。对指标的维度进行过滤。每个指标可能有多个维度列。请根据用户的需求，对指标维度选择合适的过滤条件。",
+        "properties": {
+          "dimensionName": {
+            "type": "string",
+            "title": "维度名称"
+          },
+          "operator": {
+            "type": "string",
+            "title": "比较符",
+            "description": "不要在operator中使用in和not in！ operator不支持in 和 not in！",
+            "enum": [
+              "=",
+              "!=",
+              ">",
+              ">=",
+              "<",
+              "<=",
+              "is null",
+              "is not null"
+            ]
+          },
+          "dimensionValue": {
+            "type": "string",
+            "description": "Optional。维度的值。必须从给定的dimension_info中选择，不要自行添加维度的值，如果用户的问题中维度值和dimension_info中的值拼写不一样，以dimension_info中的值为准。当operator是is null时，可以不生成dimensionValue。如果所有的维度值都和用户的问题相关，那么请将dimensionValue设置为*。"
+          },
+          "nestedFilters": {
+            "$ref": "#/properties/dimensionFilters"
+          }
+        },
+        "required": ["operator"]
+      }
+    }
+  }
+  

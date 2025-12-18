@@ -1,0 +1,56 @@
+{
+  "type": "object",
+  "properties": {
+    "dimensionComparisons": {
+      "type": "array",
+      "title": "维度对比",
+      "description": "如果用户的问题中提到了多个维度值，并且这些维度值需要对比，请把需要对比的维度值写在dimensionComparisons中。",
+      "items": {
+        "type": "string"
+      }
+    },
+    "timeComparisons_pre_thinking": {
+      "type": "string",
+      "description": "请依次回答下面的问题：1.【question】中对比的是两个不同的时间，还是两个不同的维度值？2.时间对比需要有多个时间点，请指出对比的时间点分别是哪些。如果用户没有明确指出对比的时间，那么默认是与当前时间做对比。请判断是否和当前时间做对比？{fixedDate_thinking}"
+    },
+    "timeComparisons": {
+      "type": "array",
+      "title": "时间对比",
+      "description": "计算指标多个日期之间的差值。支持两个固定的日期对比，或者基于一个固定日期的周期对比。如果dimensionComparisons不为空，请判断用户问题中的比较是维度的比较还是时间的比较，如果用户的问题中没有时间的对比要求，请不要生成timeComparisons。",
+      "items": {
+        "oneOf": [
+          {
+            "properties": {
+              "t1": {
+                "type": "string",
+                "description": "日期1。对比词左边的时间。t1和t2不能是同一个日期，t1可以大于t2。"
+              },
+              "t2": {
+                "type": "string",
+                "description": "日期2。对比词右边的时间。t1和t2不能是同一个日期，t2可以小于t1。"
+              }
+            }
+          },
+          {
+            "description": "仅适用于同比、环比。同比指的是和t的去年同期的对比，环比指的是和t的上个月的对比。",
+            "properties": {
+              "t": {
+                "type": "string",
+                "description": "同比/环比的基准日期。从基准日期回溯同比/环比。"
+              },
+              "periodUnit": {
+                "type": "string",
+                "description": "时间单位。环比的周期单位是月，同比的周期单位是年。",
+                "enum": ["YEAR", "MONTH", "DAY"]
+              },
+              "periodQuantity": {
+                "type": "number",
+                "description": "周期的时间数量。环比和同比的周期时间数量是1。"
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
