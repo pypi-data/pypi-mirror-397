@@ -1,0 +1,205 @@
+#:schema https://json.schemastore.org/pyproject.json
+
+[tool.poetry]
+name = "beets-filetote"
+version = "1.1.1"
+description = "A beets plugin to copy/moves non-music extra files, attachments, and artifacts during the import process."
+authors = ["Gavin Tronset <gtronset@gmail.com>"]
+keywords = ["beets", "files", "artifacts", "extra"]
+license = "MIT"
+readme = "README.md"
+packages = [{ include = "beetsplug" }]
+repository = "https://github.com/gtronset/beets-filetote"
+documentation = "https://github.com/gtronset/beets-filetote"
+classifiers = [
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Multimedia :: Sound/Audio :: Players :: MP3",
+    "Environment :: Console",
+    "Environment :: Web Environment",
+]
+
+[tool.poetry.urls]
+"Release notes" = "https://github.com/gtronset/beets-filetote/releases"
+"Source" = "https://github.com/gtronset/beets-filetote"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+beets = ">=2.3.0,<2.6.0"
+mediafile = ">=0.12.0"
+typing_extensions = { version = "*", python = "<=3.10" }
+
+[tool.poetry.group.dev.dependencies]
+toml = ">=0.10.2"
+
+[tool.poetry.group.lint.dependencies]
+mypy = [{ version = "^1.19.0", python = ">=3.9" }]
+ruff = "^0.14.9"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.0.0"
+typeguard = "^4.4.0"
+
+[build-system]
+requires = ["poetry-core<2.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.mypy]
+mypy_path = ["./typehints"]
+modules = ["beetsplug", "tests.helper", "tests._common"]
+explicit_package_bases = true
+strict = true
+pretty = true
+
+[[tool.mypy.overrides]]
+module = "beets.test._common"
+follow_imports = "skip"
+
+[tool.pre-commit-update]
+dry_run = false
+all_versions = false
+verbose = true
+warnings = true
+preview = false
+jobs = 10
+keep = ["poetry"]
+
+[tool.pre-commit-update.yaml]
+mapping = 2
+sequence = 6
+offset = 4
+
+[tool.pytest.ini_options]
+testpaths = ["./tests"]
+filterwarnings = ["ignore::DeprecationWarning:.*confuse"]
+
+[tool.ruff]
+line-length = 88
+# namespace-packages = ["beetsplug"]
+preview = true
+src = ["beetsplug", "tests", "typehints"]
+target-version = "py39"
+
+[tool.ruff.lint]
+ignore = ["D205", "PLR6301"]
+extend-select = [
+    "A",    # flake8-builtins
+    "ARG",  # flake8-unused-arguments
+    "C4",   # flake8-comprehensions
+    "D",    # pydocstyle
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "FA",   # flake8-future-annotations
+    "B",    # flake8-bugbear
+    "I",    # isort
+    "N",    # pep8-naming
+    "PERF", # perflint
+    "PL",   # pylint
+    "PT",   # flake8-pytest-style
+    "PYI",  # flake8-pyi
+    "RUF",  # ruff
+    "SIM",  # flake8-simplify
+    "SLF",  # flake8-self
+    "TD",   # flake8-todos
+    "TC",   # flake8-type-checking
+    "UP",   # pyupgrade
+    "W",    # pycodestyle
+    # "PTH", # flake8-use-pathlib
+]
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.flake8-pytest-style]
+fixture-parentheses = false
+mark-parentheses = false
+parametrize-names-type = "csv"
+
+[tool.ruff.lint.flake8-unused-arguments]
+ignore-variadic-names = true
+
+[tool.ruff.lint.isort]
+lines-between-types = 1
+known-local-folder = ["tests"]
+
+[tool.ruff.lint.pep8-naming]
+extend-ignore-names = ["assert*", "getLogger"]
+
+[tool.ruff.lint.per-file-ignores]
+"beetsplug/**" = ["PT"]
+"tests/**" = ["PLR0917"]
+
+[tool.ruff.lint.pycodestyle]
+max-line-length = 88
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.pyupgrade]
+# Preserve types, even if a file imports `from __future__ import annotations`.
+keep-runtime-typing = true
+
+[tool.tox]
+requires = ["tox>=4.22"]
+min_version = "4.22"
+env_list = [
+    "3.9",
+    "3.10",
+    "3.11",
+    "3.12",
+    "3.13",
+    "beets-2.3",
+    "beets-2.4",
+    "beets-master",
+]
+
+[tool.tox.env_run_base]
+description = "Run test under {base_python}"
+allowlist_externals = ["poetry", "pytest"]
+commands_pre = [["poetry", "install", "--no-root", "--sync"]]
+commands = [
+    [
+        "poetry",
+        "run",
+        "pytest",
+        "tests",
+        "--typeguard-packages=beetsplug",
+    ],
+]
+
+[tool.tox.env.beets-2.3]
+description = "Test with beets==2.3.1"
+commands_pre = []
+deps = ["beets==2.3.1", "pytest", "typeguard"]
+commands = [["pytest", "tests", "--typeguard-packages=beetsplug"]]
+
+[tool.tox.env.beets-2.4]
+description = "Test with beets==2.4.0"
+commands_pre = []
+deps = ["beets==2.4.0", "pytest", "typeguard"]
+commands = [["pytest", "tests", "--typeguard-packages=beetsplug"]]
+
+[tool.tox.env.beets-master]
+description = "Test with beets from master branch"
+commands_pre = []
+deps = [
+    "beets @ git+https://github.com/beetbox/beets.git@master",
+    "pytest",
+    "typeguard",
+]
+commands = [["pytest", "tests", "--typeguard-packages=beetsplug"]]
+
+[tool.tox.env.lint]
+description = "Lint source code"
+commands = [["poetry", "run", "ruff", "check"]]
+
+[tool.tox.env.lint-fix]
+description = "Fixes and lint issues in source code"
+commands = [["poetry", "run", "ruff", "check", "--fix"]]
+
+
+[tool.tox.env.format]
+description = "Formats source code"
+commands = [["poetry", "run", "ruff", "format"]]
+
+[tool.tox.env.mypy]
+description = "Checks types in source code"
+commands = [["poetry", "run", "mypy"]]
