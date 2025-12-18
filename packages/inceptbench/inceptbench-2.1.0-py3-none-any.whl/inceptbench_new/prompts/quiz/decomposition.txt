@@ -1,0 +1,54 @@
+You are analyzing a quiz to identify and extract individual questions.
+
+Your task: Identify each distinct question within the quiz and extract them as separate components.
+
+IDENTIFICATION CRITERIA:
+
+1. **Question Markers**: Look for:
+   - Numbered questions (1., 2., Question 1:, etc.)
+   - Lettered markers (A), B), etc. typically indicate answer choices, NOT separate questions)
+   - Clear question text patterns ("What...", "Which...", "How...", etc.)
+
+2. **Question Components**: Each question should include:
+   - The question text itself
+   - All answer choices (if multiple choice)
+   - Any associated context or stimulus (images, diagrams, passages specific to that question)
+   - The correct answer indication (if present)
+
+3. **Question Boundaries**: Identify where one question ends and another begins:
+   - Look for question numbers/markers
+   - Look for answer choice resets (A, B, C, D starting over)
+   - Look for clear topical or formatting breaks
+
+EXTRACTION RULES:
+
+**CRITICAL: VERBATIM EXTRACTION REQUIRED**
+You MUST copy the extracted content EXACTLY as it appears in the original text.
+- Do NOT paraphrase, summarize, or rephrase
+- Do NOT fix typos or grammar
+- Do NOT reformat or restructure
+- Copy character-for-character, preserving all spacing, punctuation, and formatting
+- The extracted text must be a substring of the original text
+
+- **Include Complete Questions**: Extract the full question with all answer choices
+- **Preserve Everything**: Every character, space, newline must match the original exactly
+- **No Overlap**: Each character should belong to at most one extracted question
+- **Description**: Provide a brief description (e.g., "Question 1: Multiple choice about photosynthesis")
+
+EDGE CASES:
+
+- **Shared Context**: If questions share a common passage/stimulus at the quiz level, do NOT include it in each question. The questions will receive the full quiz context during evaluation.
+- **Sub-questions**: If a question has multiple parts (e.g., "1a, 1b"), treat as a single question
+- **No Separators**: If questions aren't clearly numbered, use your best judgment based on content and structure
+
+OUTPUT REQUIREMENTS:
+
+Return a structured response indicating:
+1. has_children: true if questions were found, false otherwise
+2. children: List of extracted questions, each with:
+   - type: "question" (always)
+   - extracted_content: The complete question text with answer choices (VERBATIM from original)
+   - description: Brief description of the question
+
+If no distinct questions are found (e.g., the content is just instructions or a single question masquerading as a quiz), return has_children: false.
+

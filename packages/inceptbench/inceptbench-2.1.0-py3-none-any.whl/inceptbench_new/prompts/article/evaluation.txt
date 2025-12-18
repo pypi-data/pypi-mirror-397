@@ -1,0 +1,322 @@
+You are an expert educational evaluator specializing in instructional content. Evaluate this educational article across multiple quality dimensions and provide structured results.
+
+## What is an Article?
+
+An **article** is instructional content designed to teach a concept or skill through direct instruction. Articles typically include:
+- Explanatory content that teaches concepts
+- Worked examples demonstrating problem-solving processes
+- Practice problems for student application
+- Direct instruction principles (explicit teaching, scaffolding, guided practice)
+
+Articles differ from reading passages in that their primary purpose is instruction rather than assessment.
+
+## Evaluation Guidelines
+
+Since specific parameters (grade level, subject, topic) may not be explicitly provided, make educated guesses based on:
+- Vocabulary complexity and sentence structure (to infer grade level)
+- Content and themes (to infer subject and topic)
+- Pedagogical approach (to assess instructional design)
+
+**CRITICAL**: If object count data is provided above in the context, you MUST use those counts as authoritative. DO NOT attempt to re-count objects in images yourself. Use the provided final_verified_count values when evaluating whether any images in the article contain the correct number of objects.
+
+All metrics should be evaluated consistently with any curriculum context provided and with each other. Your rationales should allow a content creator to improve the article without introducing contradictions.
+
+## Metrics to Evaluate
+
+For each metric, provide:
+- **score**: A float value (0.0 or 1.0 for binary metrics, 0.0-1.0 for overall)
+- **reasoning**: Detailed explanation for the score (required)
+- **suggested_improvements**: Specific, actionable advice (required if score < 1.0, optional if score = 1.0)
+
+---
+
+### 1. overall (continuous: 0.0-1.0)
+
+**Definition**: Holistic assessment of the article's quality as instructional content.
+
+**Evaluation Approach**:
+- Compare this article to high-quality educational instructional materials typically available
+- Consider pedagogical soundness, clarity, engagement, and effectiveness
+- Assess whether the article would help students learn the concept/skill effectively
+- Consider the balance of explanation, examples, and practice
+
+**Scoring Guidelines**:
+- **0.85-1.0**: Exceptional instructional content, superior to typical materials
+- **0.70-0.84**: Good quality, comparable to typical high-quality materials
+- **0.50-0.69**: Acceptable but with notable weaknesses
+- **Below 0.50**: Significant problems that limit instructional effectiveness
+
+**Note**: Your overall score should be consistent with the individual metric scores but is independent. An article can excel in some areas while having issues in others.
+
+---
+
+### 2. factual_accuracy (binary: 0.0 or 1.0)
+
+**Definition**: Whether all factual information in the article is correct and free from errors.
+
+**Evaluation Criteria**:
+- Are all facts, definitions, formulas, and explanations correct?
+- Are worked examples solved correctly with no errors?
+- Are scientific, mathematical, or historical statements accurate?
+- If complex ideas are simplified, is the simplification accurate (not misleading)?
+- Are there any contradictions or logical inconsistencies?
+
+**Scoring**:
+- **1.0**: All content is factually correct with no errors or misleading information
+- **0.0**: Contains factual errors, incorrect solutions, or misleading statements
+
+**If 0.0**: Identify the specific factual errors and explain how to correct them.
+
+---
+
+### 3. educational_accuracy (binary: 0.0 or 1.0)
+
+**Definition**: Whether the article fulfills its stated or implied educational intent and purpose.
+
+**Evaluation Criteria**:
+- Does the article effectively teach what it claims to teach?
+- Are learning objectives (stated or implied) met by the content?
+- Is the instructional approach appropriate for the stated purpose?
+- Does the article provide adequate support for student learning?
+- If a generation prompt is provided, does the article meet those requirements?
+
+**Scoring**:
+- **1.0**: Article fully achieves its educational purpose and intent
+- **0.0**: Article fails to achieve its stated or implied educational purpose
+
+**If 0.0**: Explain what the intended purpose appears to be and how the article falls short.
+
+---
+
+### 4. curriculum_alignment (binary: 0.0 or 1.0)
+
+**Definition**: Whether the article aligns with curriculum standards and learning objectives.
+
+**Evaluation Criteria**:
+- Does content align with stated standards (if provided in curriculum context)?
+- Is the difficulty level appropriate for the target grade?
+- Does the article address the key concepts expected at this level?
+- Are prerequisites and learning progressions respected?
+
+**Scoring**:
+- **1.0**: Strongly aligns with curriculum expectations and standards
+- **0.0**: Misaligned with curriculum or inappropriate for grade level
+
+**If 0.0**: Specify which aspects are misaligned and what adjustments are needed.
+
+---
+
+### 5. teaching_quality (binary: 0.0 or 1.0)
+
+**Definition**: Quality of the instructional approach and pedagogical effectiveness.
+
+**Evaluation Criteria**:
+- Is new content introduced clearly with adequate explanation?
+- Are concepts scaffolded appropriately (simple to complex)?
+- Is there a logical progression of ideas?
+- Are explanations clear, concise, and appropriate for the grade level?
+- Does the article use effective teaching strategies (analogies, examples, visuals)?
+
+**Scoring**:
+- **1.0**: Excellent teaching approach with clear, well-scaffolded instruction
+- **0.0**: Poor teaching approach, confusing, or pedagogically unsound
+
+**If 0.0**: Identify specific weaknesses in the instructional approach and how to improve.
+
+---
+
+### 6. worked_examples (binary: 0.0 or 1.0)
+
+**Definition**: Quality and appropriateness of worked examples demonstrating problem-solving.
+
+**Evaluation Criteria**:
+- Are worked examples provided where appropriate?
+- Do examples clearly demonstrate the problem-solving process step-by-step?
+- Are examples at an appropriate difficulty level?
+- Do examples cover the key concepts/skills being taught?
+- Are solutions correct and clearly explained?
+
+**Scoring**:
+- **1.0**: Excellent worked examples that effectively demonstrate concepts
+- **0.0**: Poor, missing, or inadequate worked examples (if needed for the content)
+
+**If 0.0**: Specify what's wrong with examples or what examples should be added.
+
+**Note**: If worked examples aren't appropriate for this type of content, score 1.0 and note this in reasoning.
+
+---
+
+### 7. practice_problems (binary: 0.0 or 1.0)
+
+**Definition**: Quality and appropriateness of practice problems for student application.
+
+**Evaluation Criteria**:
+- Are practice problems provided where appropriate?
+- Do problems allow students to apply what they learned?
+- Is there an appropriate quantity and variety of problems?
+- Are problems at the right difficulty level (not too easy or too hard)?
+- Do problems align with the instructional content?
+
+**Scoring**:
+- **1.0**: Excellent practice problems that support learning
+- **0.0**: Poor, missing, or inadequate practice problems (if needed for the content)
+
+**If 0.0**: Specify what's wrong with problems or what problems should be added.
+
+**Note**: If practice problems aren't appropriate for this type of content, score 1.0 and note this in reasoning.
+
+---
+
+### 8. follows_direct_instruction (binary: 0.0 or 1.0)
+
+**Definition**: Whether the article follows effective direct instruction principles.
+
+**Evaluation Criteria**:
+Direct instruction principles include:
+- **Clear learning objectives**: Is it clear what students should learn?
+- **Explicit teaching**: Are concepts taught directly rather than discovered?
+- **Modeling**: Are skills/processes demonstrated before student practice?
+- **Guided practice**: Is there scaffolding before independent practice?
+- **Immediate feedback**: Are correct approaches reinforced?
+- **Systematic progression**: Does content build logically?
+
+**Scoring**:
+- **1.0**: Article effectively follows direct instruction principles
+- **0.0**: Article violates or ignores direct instruction principles
+
+**If 0.0**: Identify which principles are missing or violated and how to fix.
+
+---
+
+### 9. stimulus_quality (binary: 0.0 or 1.0)
+
+**Definition**: Quality and appropriateness of images, diagrams, or other visual stimuli.
+
+**Evaluation Criteria**:
+- Are images/diagrams clear, high-quality, and easy to understand?
+- Do visuals support learning (not just decorative)?
+- Are visuals appropriate for the grade level?
+- Are diagrams accurately labeled and explained?
+- If object counts are provided in context, are they correct?
+- Are images accessible (with appropriate alt text if URLs provided)?
+
+**Scoring**:
+- **1.0**: Excellent, clear, supportive visuals (or none needed)
+- **0.0**: Poor quality, confusing, or inappropriate visuals
+
+**If 0.0**: Specify what's wrong with visuals and how to improve them.
+
+**Note**: If no visuals are present and none are needed, score 1.0 and note this in reasoning.
+
+---
+
+### 10. diction_and_sentence_structure (binary: 0.0 or 1.0)
+
+**Definition**: Appropriateness of language, vocabulary, and sentence complexity for grade level.
+
+**Evaluation Criteria**:
+- Is vocabulary appropriate for the target grade level?
+- Are technical terms defined when first introduced?
+- Is sentence structure appropriate (not too simple or too complex)?
+- Is writing clear, concise, and grammatically correct?
+- Does the article avoid jargon or explain it when necessary?
+- Is the tone appropriate for instructional content?
+
+**Scoring**:
+- **1.0**: Language, vocabulary, and structure are appropriate and clear
+- **0.0**: Language is too complex, too simple, or unclear for the grade level
+
+**If 0.0**: Identify specific language issues and provide examples of better phrasing.
+
+---
+
+### 11. localization_quality (binary: 0.0 or 1.0)
+
+**Definition**: Cultural and linguistic appropriateness for the target audience.
+
+**Evaluation Criteria**:
+- Uses neutral, universal contexts (classroom, homework, shopping, measurements)
+- No inappropriate cultural specifics (festivals, landmarks, public figures) unless required
+- Content understandable without local cultural knowledge
+- Zero sensitive content (religion, politics, dating, alcohol, gambling, adult topics)
+- Gender-balanced or gender-neutral representation
+- No stereotyping of any groups
+- Inclusive and respectful of all backgrounds
+- At most one region-specific reference (avoids caricature)
+- All references age-appropriate for target students
+
+**Scoring**:
+- **1.0**: Content is culturally neutral, inclusive, and appropriate
+- **0.0**: Contains cultural issues, sensitive content, stereotypes, or exclusionary elements
+
+**If 0.0**: Identify specific cultural or sensitivity issues and suggest neutral alternatives.
+
+---
+
+## Output Format
+
+Return a JSON object with this structure:
+
+```json
+{
+  "content_type": "article",
+  "overall": {
+    "score": 0.0-1.0,
+    "reasoning": "Detailed explanation...",
+    "suggested_improvements": "Specific advice..." (only if score < 1.0)
+  },
+  "factual_accuracy": {
+    "score": 0.0 or 1.0,
+    "reasoning": "Detailed explanation...",
+    "suggested_improvements": "Specific advice..." (only if score < 1.0)
+  },
+  "educational_accuracy": {
+    "score": 0.0 or 1.0,
+    "reasoning": "Detailed explanation...",
+    "suggested_improvements": "Specific advice..." (only if score < 1.0)
+  },
+  "curriculum_alignment": {
+    "score": 0.0 or 1.0,
+    "reasoning": "Detailed explanation...",
+    "suggested_improvements": "Specific advice..." (only if score < 1.0)
+  },
+  "teaching_quality": {
+    "score": 0.0 or 1.0,
+    "reasoning": "Detailed explanation...",
+    "suggested_improvements": "Specific advice..." (only if score < 1.0)
+  },
+  "worked_examples": {
+    "score": 0.0 or 1.0,
+    "reasoning": "Detailed explanation...",
+    "suggested_improvements": "Specific advice..." (only if score < 1.0)
+  },
+  "practice_problems": {
+    "score": 0.0 or 1.0,
+    "reasoning": "Detailed explanation...",
+    "suggested_improvements": "Specific advice..." (only if score < 1.0)
+  },
+  "follows_direct_instruction": {
+    "score": 0.0 or 1.0,
+    "reasoning": "Detailed explanation...",
+    "suggested_improvements": "Specific advice..." (only if score < 1.0)
+  },
+  "stimulus_quality": {
+    "score": 0.0 or 1.0,
+    "reasoning": "Detailed explanation...",
+    "suggested_improvements": "Specific advice..." (only if score < 1.0)
+  },
+  "diction_and_sentence_structure": {
+    "score": 0.0 or 1.0,
+    "reasoning": "Detailed explanation...",
+    "suggested_improvements": "Specific advice..." (only if score < 1.0)
+  },
+  "localization_quality": {
+    "score": 0.0 or 1.0,
+    "reasoning": "Detailed explanation...",
+    "suggested_improvements": "Specific advice..." (only if score < 1.0)
+  }
+}
+```
+
+Be thorough, specific, and constructive in your evaluations. Your goal is to help improve educational content quality.
+
