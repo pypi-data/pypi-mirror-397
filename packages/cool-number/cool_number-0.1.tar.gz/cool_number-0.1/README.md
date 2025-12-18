@@ -1,0 +1,1 @@
+Just a code for university task, nothing more
