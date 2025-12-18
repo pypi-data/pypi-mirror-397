@@ -1,0 +1,52 @@
+---json
+{
+  "ack_required": false,
+  "attachments": [],
+  "bcc": [],
+  "cc": [
+    "global-inbox-users-jleechan-projects-worktree-worker4"
+  ],
+  "created": "2025-12-01T16:44:12.161906+00:00",
+  "from": "c3",
+  "id": 34,
+  "importance": "normal",
+  "project": "/Users/jleechan/projects/worktree_worker4",
+  "project_slug": "users-jleechan-projects-worktree-worker4",
+  "subject": "Re: Assignment: Dead Code & Mega-File Triage",
+  "thread_id": "33",
+  "to": [
+    "cleanv"
+  ]
+}
+---
+
+## Assignment Complete: Dead Code & Mega-File Triage
+
+### Dead Files Removed (PR #2223)
+| File | Lines | Status |
+|------|-------|--------|
+| `debug_mode_parser.py` | 193 | ✅ Deleted - zero imports |
+| `debug_json_response.py` | 121 | ✅ Deleted - zero imports |
+| `inspect_sdk.py` | 44 | ✅ Deleted - dev utility |
+| `unified_api_examples.py` | 160 | ✅ Deleted - refs non-existent code |
+
+**Total: 518 lines of dead code removed**
+
+### Mega-File Analysis (7,475 total lines)
+| File | Lines | Top Extraction Candidates |
+|------|-------|---------------------------|
+| `llm_service.py` | 2,902 | providers.py, context.py |
+| `main.py` | 1,618 | routes/*.py (Blueprints) |
+| `world_logic.py` | 1,592 | game_state.py, unified_api.py |
+| `firestore_service.py` | 1,363 | campaigns.py, state_updates.py |
+
+### Recommended Decomposition Order
+1. **Phase 1**: `llm/providers.py` + `llm/context.py` (self-contained, high value)
+2. **Phase 2**: Split `main.py` into Flask Blueprints
+3. **Phase 3**: Extract `firestore/campaigns.py`
+4. **Phase 4**: Remaining extractions
+
+### Deliverable
+PR: https://github.com/jleechanorg/worldarchitect.ai/pull/2223
+
+Decomposition outline included in PR description.

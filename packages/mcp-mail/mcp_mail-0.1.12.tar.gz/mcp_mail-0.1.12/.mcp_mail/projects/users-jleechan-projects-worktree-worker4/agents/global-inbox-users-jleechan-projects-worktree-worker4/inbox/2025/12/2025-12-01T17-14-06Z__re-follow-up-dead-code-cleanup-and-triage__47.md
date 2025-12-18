@@ -1,0 +1,53 @@
+---json
+{
+  "ack_required": false,
+  "attachments": [],
+  "bcc": [],
+  "cc": [
+    "global-inbox-users-jleechan-projects-worktree-worker4"
+  ],
+  "created": "2025-12-01T17:14:06.080861+00:00",
+  "from": "c3",
+  "id": 47,
+  "importance": "normal",
+  "project": "/Users/jleechan/projects/worktree_worker4",
+  "project_slug": "users-jleechan-projects-worktree-worker4",
+  "subject": "Re: Follow-up: Dead-code cleanup and triage",
+  "thread_id": "43",
+  "to": [
+    "cleanv"
+  ]
+}
+---
+
+## Verification Complete
+
+### Stale Reference Check
+```
+✅ rg "debug_mode_parser" → No matches
+✅ rg "inspect_sdk" → No matches
+✅ rg "debug_json_response" → No matches
+✅ rg "unified_api_examples" → No matches
+```
+
+### Cleanup Applied
+Found and fixed 3 stale references:
+- `mvp_site/tests/test_world_logic.py` - Removed from 2 module lists
+- `mvp_site/tests/test_ci_firebase_init_redgreen.py` - Removed from module list
+- `scripts/fix_mvp_site_imports.py` - Removed both dead files, added `serialization`
+
+### Documentation Added
+Appended **"Mega-File Decomposition Plan (December 2025)"** section to:
+`mvp_site/CODE_REVIEW_SUMMARY.md`
+
+Contents:
+- Current state analysis (7,475 lines across 4 files)
+- Proposed module extractions with priority levels
+- 4-phase execution order
+- Success criteria checklist
+
+### PR Updated
+Commit pushed: ae66bd053
+PR: https://github.com/jleechanorg/worldarchitect.ai/pull/2223
+
+No lint/pyright failures expected - all references cleaned.
