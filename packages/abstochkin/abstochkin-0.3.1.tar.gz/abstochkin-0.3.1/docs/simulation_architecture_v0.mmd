@@ -1,0 +1,35 @@
+graph TD
+    subgraph Simulation Setup
+        A[Simulation Class] -- Initializes --> B(Processes);
+        A -- Initializes --> C(Initial Populations);
+        A -- Initializes --> D(Simulation Parameters);
+    end
+
+    subgraph Core Simulation Loop
+        B -- Defines --> E{Algorithm Sequence};
+        E -- Iterates over --> F(Time Steps);
+        F -- For each step --> G(Process Functions);
+    end
+
+    subgraph Process Execution
+        G -- Updates --> H(Agent-State Vectors);
+        H -- Managed by --> I[AgentStateData Class];
+        I -- Provides state for --> G;
+    end
+
+    subgraph ODE & Heterogeneity
+        J[DEcalcs Class] -- Solves --> K(ODEs for Deterministic Model);
+        K -- Guides --> A;
+        L[het_calcs Module] -- Calculates --> M(Heterogeneity Metrics);
+        M -- Used by --> G;
+    end
+
+    subgraph Results
+        H -- Aggregates into --> N(Simulation Results);
+        N -- Visualized by --> O[Graph Class];
+    end
+
+    A --> J;
+    A --> L;
+    A --> E;
+    A --> N;
