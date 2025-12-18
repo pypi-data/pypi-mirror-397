@@ -1,0 +1,322 @@
+Metadata-Version: 2.4
+Name: fr_config
+Version: 0.2.0
+Summary: Floating Rock cascading configuration resolver
+Author-email: "alex.telford" <alex.telford@floating-rock.com>
+License: MIT
+Project-URL: Homepage, https://github.com/Floating-Rock-Studio/fr_config
+Project-URL: Repository, https://github.com/Floating-Rock-Studio/fr_config.git
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Requires-Python: <4,>=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE
+License-File: LICENSES.txt
+Requires-Dist: jsonschema<5,>=4.21.1
+Requires-Dist: pyjson5<2,>=1.6
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: pytest-cov; extra == "dev"
+Dynamic: license-file
+
+# fr_config - Floating Rock Cascading Config Resolver
+
+fr_config is a hierarchical cascading config resolver that resolves configs based on hierarchy structure and schema.
+
+This allows for a high degree of control over how configurations are loaded based on where they are in the filesystem.
+
+Configs will load in the order of variant/default, parent.variant/parent.default until they either hit the root paths or a $parent redirect. A redirect allows for configs to jump or reference a shared directory.\
+For example a package config may have a manifests directory that can be referenced at any level of the hierarchy.
+
+A Cascade is how the configs are applied via the schema. eg: given a list value, how is that resolved across configs? Do we append? prepend? replace?\
+If that list contains objects do we replace those? just where they conflict? or perhaps recursively update.\
+This cascade allows us to use the same config layer to apply to many data types while maintaining type coherence.
+
+fr_config was designed to work with fr_env_resolver, Floating Rocks rez-based environment resolver for loading context dependent package lists.
+
+## Context Path Resolve
+
+Contexts are .frconfigs that live in any directory,
+When a path is loaded, the variables "cascade" backwards up the tree for a final resolve.
+
+This allows for per shot/asset variations.
+
+It's important to note this is not restricted to production dirs, any directory can be used to cascade.
+
+The process here is the same for Environment Contexts (packages, variables) and Tool Contexts (The subenvironment used by tools in the launcher)
+
+![Context Path Resolve](./docs/context_path_resolve.png)
+
+## Variants
+
+Inside the config resolve is something called "variants",
+By default, there is a "default" variant associated with each level in the hierarchy, but additional variants can be added to produce variations such as per department.
+
+These variations are used in anything deriving from fr_config.
+Meaning you can have a variant for a context, manifest, workflow or tool.
+
+If a variant is specified to a loader, it will attempt to load that variant any time it is available before loading the default variant.
+You cannot skip loading the default, if that is required then leave it blank and only use variants to provide details.
+
+![Context Path Resolve](./docs/config_variants.png)
+
+## Features
+
+- **Hierarchical Configuration**: Configs follow a filesystem path for resolving
+- **Schema Validation**: JSON Schema-based validation with custom type system
+- **Version Management**: Built-in versioning with tags (published, latest, deprecated, etc.)
+- **Data Merging**: Configurable cascade modes (replace, update, append, prepend)
+- **Multi-Variant Support**: Support for different configuration variants (departments, tasks, etc)
+
+## Quick Start
+
+> Important Note
+> Any code inside the _internal/ folder is not gaurenteed to persist across versions and should not be used directly outside of debugging.
+
+
+### Installation
+
+#### Local Installation
+If you have the source code locally, navigate to the project directory and install it:
+
+```bash
+cd /path/to/fr_config
+pip install .
+```
+
+or with rez:
+
+```bash
+cd /path/to/fr_config
+rez-pip install .
+```
+
+#### Remote Installation
+To install directly from this Git repository:
+
+```bash
+pip install git+https://github.com/Floating-Rock-Studio/fr_config.git
+```
+
+or with rez:
+
+```bash
+rez-pip install git+https://github.com/Floating-Rock-Studio/fr_config.git
+```
+
+### Loading Configuration
+
+```python
+from fr_config import ConfigLoader
+
+# Load config from a specific path
+config = ConfigLoader("simple", "/path/to/project")
+
+# Access configuration data
+fps = config.value("fps")
+resolution = config.value("resolution")
+tools = config.value("tools", [])  # With default value if not specified in schema
+
+# Get all configuration keys
+keys = config.keys()
+key_paths = config.key_paths()  # Returns nested paths like "/playblast_settings/overscan"
+```
+
+### Loading Specific Variants/Tags
+
+```python
+# Load development variant
+config = ConfigLoader("simple", "/path", variant="dev")
+
+# Load with specific tags, first one in list that matches is used (if no wip, then latest is used)
+config = ConfigLoader("simple", "/path", tags=["wip", "latest"])
+
+# Load multiple variants, this will load /path/prod.fr_config then /path/default.fr_config.
+config = ConfigLoader("simple", "/path", variant=["prod", "default"])
+# If a string is passed then it will automatically change to [variant, "default"]
+config = ConfigLoader("simple", "/path", variant="prod")
+```
+
+### Writing Configuration
+
+```python
+from fr_config import ConfigWriter
+
+# Create or modify a config
+writer = ConfigWriter("simple", "/path/to/project")
+writer.set_data("fps", 30.0)
+writer.set_data("resolution", [1920, 1080])
+
+writer.commit("Updated resolution and fps")  # Save changes to disk
+```
+
+### Schema Definition
+
+fr_config uses json5 files to store schema, this allows for comments to be added in complex schemas
+
+```json5
+{
+    __version__: 1,
+    fps: {type: "float", default: 24.0},
+    resolution: {
+        type: "array",
+        length: 2,
+        items: {type: "int"}
+    },
+    publish_defaults: {
+        type: "object",
+        publish_type: {type: "string", default: "Publish"},
+        handles: {
+            type: "array",
+            items: {type: "int"},
+            default: [0, 0]
+        }
+    },
+    tools: {
+        type: "array",
+        cascade: "append",
+        items: {type: "string"}
+    }
+}
+```
+
+## Data Flow
+
+fr_config follows a hierarchical resolution pattern:
+
+1. **Path Resolution**: Starting from the specified path, walks up the directory tree
+2. **Config Discovery**: Looks for `.fr_config/<name>/<variant>/` directories
+3. **Version Selection**: Chooses the appropriate version based on tags (published > latest)
+4. **Schema Loading**: Loads and validates against the schema file
+5. **Data Cascading**: Merges configurations based on cascade and schema rules
+6. **Value Resolution**: Resolves environment variables and applies type structure
+
+### Directory Structure Example
+
+```
+project/
+├── .fr_config/
+│   └── simple/
+│       └── default/
+│           ├── v1.fr_config
+│           ├── v2.fr_config
+│           ├── v3.fr_config
+│           └── .v2.published
+├── shots/
+│   └── seq001/
+│       └── shot010/
+│           └── .fr_config/
+│               └── simple/
+│                   ├── default/
+│                   │   └── v1.fr_config
+│                   └── animation/
+│                       └── v1.fr_config
+└── schema/
+    └── simple.fr_schema
+```
+
+### Data Cascade Example
+
+Given the directory structure above, loading the animation variant config from `shots/seq001/shot010` will:
+
+1. Load `shots/seq001/shot010/.fr_config/simple/variant/v1.fr_config`
+2. Load `shots/seq001/shot010/.fr_config/simple/default/v1.fr_config`
+3. Load `project/.fr_config/simple/default/v2.fr_config` (published version)
+4. Merge them according to cascade rules
+
+## Configuration File Format
+
+fr_config files use JSON5 format with special keys:
+
+```json5
+{
+    // Reference parent config for inheritance
+    "$parent": "${FR_PROJECTS_DIR}/../shared_config",
+
+    // Regular configuration data
+    fps: 30.0,
+    resolution: [1920, 1080],
+
+    // Complex cascading example
+    environment_variables: {
+        PATH: {
+            cascade: "append",
+            separator: "%pathsep%",  // Platform-specific path separator
+            value: "/additional/bin/path"
+        }
+    },
+
+    // Array with uniqueness constraints
+    packages: {
+        cascade: "append",
+        unique: true,
+        value: ["new-package-1.0+", "another-package-2.1+"]
+    }
+}
+```
+
+## Schema System
+
+### Data Types
+
+- `string`: Text values
+- `int`: Integer numbers
+- `float`: Floating-point numbers
+- `bool`: Boolean true/false
+- `array`: Lists of values
+- `object`: Nested structures
+
+### Cascade Modes
+
+- `replace`: Replace entire value (default for primitives)
+- `update`: Merge object keys (default for objects)
+- `append`: Add to end of array/string
+- `prepend`: Add to beginning of array/string
+
+### Custom Types
+
+Define reusable types in schema:
+
+```json5
+{
+    __types__: {
+        package: {
+            type: "string",
+            compare: "^([_a-zA-Z0-9]+)-.*"  // Regex for uniqueness comparison
+        },
+        environ: {
+            type: "string",
+            separator: "%pathsep%"
+        }
+    },
+
+    packages: {
+        type: "array",
+        cascade: "append",
+        unique: true,
+        items: {type: "package"}
+    },
+
+    PATH: {type: "environ"}
+}
+```
+
+## Environment Setup
+
+Set environment variables for schema and root path discovery:
+
+```bash
+# Path to schema files
+export FR_CONFIG_SCHEMA_PATH="/path/to/schemas:/another/schema/path"
+
+# Root paths that terminate config hierarchy traversal
+export FR_CONFIG_ROOT_PATHS="/projects/root:/shared/configs"
+```
