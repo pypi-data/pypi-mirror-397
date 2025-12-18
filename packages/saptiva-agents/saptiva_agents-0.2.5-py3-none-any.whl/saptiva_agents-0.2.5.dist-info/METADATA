@@ -1,0 +1,1023 @@
+Metadata-Version: 2.4
+Name: saptiva-agents
+Version: 0.2.5
+Summary: Saptiva Agents Framework based on AutoGen v0.4+
+License-Expression: MIT
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE-CODE
+License-File: LICENSE
+License-File: NOTICE.md
+Requires-Dist: autogen-agentchat>=0.4.4
+Requires-Dist: autogen-core>=0.4.4
+Requires-Dist: autogen-ext[openai]>=0.4.4
+Requires-Dist: fastapi
+Requires-Dist: uvicorn
+Requires-Dist: python-multipart
+Requires-Dist: aiohttp
+Requires-Dist: requests
+Requires-Dist: python-dotenv
+Provides-Extra: web-surfer
+Requires-Dist: autogen-ext[web-surfer]>=0.4.4; extra == "web-surfer"
+Provides-Extra: web-research
+Requires-Dist: trafilatura>=1.9.0; extra == "web-research"
+Provides-Extra: observability
+Requires-Dist: opentelemetry-api>=1.25.0; extra == "observability"
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.1.0; extra == "dev"
+Requires-Dist: pytest-mock>=3.12.0; extra == "dev"
+Requires-Dist: pytest-timeout>=2.2.0; extra == "dev"
+Requires-Dist: coverage[toml]>=7.3.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+Provides-Extra: all
+Requires-Dist: saptiva-agents[observability,web-research,web-surfer]; extra == "all"
+Dynamic: license-file
+
+# Saptiva Agents
+
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![PyPI version](https://img.shields.io/pypi/v/saptiva-agents.svg)](https://pypi.org/project/saptiva-agents/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![AutoGen](https://img.shields.io/badge/AutoGen-v0.4+-green.svg)](https://github.com/microsoft/autogen)
+
+A professional multi-agent framework built on AutoGen v0.4+, designed for building production-ready AI agent systems with native Python tools, minimal dependencies, and enterprise-grade reliability.
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Core Concepts](#core-concepts)
+- [Creating Custom Tools](#creating-custom-tools)
+- [Agent Patterns](#agent-patterns)
+- [Available Models](#available-models)
+- [API Reference](#api-reference)
+- [Best Practices](#best-practices)
+- [Migration from v0.2.3](#migration-from-v023)
+- [Contributing](#contributing)
+- [License](#license)
+- [Links](#links)
+- [Support](#support)
+
+## Overview
+
+Saptiva Agents is an enterprise-focused framework for building multi-agent AI systems. It provides:
+
+- **Native Tool System**: Pydantic-based tools with automatic schema generation (no LangChain dependency)
+- **Minimal Dependencies**: 86.7% smaller installation footprint (108 MB vs 754 MB)
+- **Production Ready**: Built on AutoGen v0.4+ with robust error handling and async support
+- **Type Safe**: Full type hints with mypy/pyright compatibility
+- **Extensible**: Easy to create custom agents, tools, and orchestration patterns
+
+## Architecture
+
+### System Architecture
+
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        User[User Application]
+        API[FastAPI REST API]
+    end
+
+    subgraph "Framework Layer"
+        Framework[SaptivaAgentsFramework]
+        Framework --> Parser[Request Parser]
+        Framework --> ModelSelector[Model Selector]
+        Framework --> AgentFactory[Agent Factory]
+    end
+
+    subgraph "Agent Layer"
+        Assistant[AssistantAgent]
+        UserProxy[UserProxyAgent]
+        Custom[Custom Agents]
+    end
+
+    subgraph "Tool Layer"
+        SaptivaTool[SaptivaTool Base]
+        NativeTools[Native Tools]
+        CustomTools[Custom Tools]
+        SaptivaTool --> NativeTools
+        SaptivaTool --> CustomTools
+    end
+
+    subgraph "Model Layer"
+        ModelClient[SaptivaAIChatCompletionClient]
+        SaptivaAPI[Saptiva API]
+        OpenAI[OpenAI Compatible APIs]
+        ModelClient --> SaptivaAPI
+        ModelClient --> OpenAI
+    end
+
+    User --> API
+    API --> Framework
+    Framework --> Assistant
+    Framework --> UserProxy
+    Framework --> Custom
+    Assistant --> NativeTools
+    Assistant --> CustomTools
+    Assistant --> ModelClient
+    UserProxy --> ModelClient
+    Custom --> ModelClient
+
+    style Framework fill:#e1f5ff
+    style ModelClient fill:#fff4e1
+    style SaptivaTool fill:#f0f0f0
+```
+
+### Key Components
+
+- `SaptivaAgentsFramework` handles request parsing, model selection, and agent creation.
+- `AssistantAgent` runs tasks and can call tools; `UserProxyAgent` enables human-in-the-loop control.
+- `SaptivaTool` is the native tool base and converts to AutoGen `FunctionTool`.
+- Teams like `RoundRobinGroupChat` and `SelectorGroupChat` coordinate multi-agent runs with termination conditions.
+
+**Execution flow (high level):** client → framework → agent(s) → tools/model → response.
+
+## Installation
+
+### Minimal Installation
+
+```bash
+pip install saptiva-agents
+```
+
+This installs the core framework with 48 packages (~108 MB).
+
+### With Optional Features
+
+```bash
+# With web browsing capabilities (Playwright)
+pip install saptiva-agents[web-surfer]
+
+# With development tools
+pip install saptiva-agents[dev]
+
+# Full installation
+pip install saptiva-agents[all]
+```
+
+### Requirements
+
+- Python 3.10 or higher
+- Async runtime support (asyncio)
+- Saptiva API key or compatible OpenAI-format API
+
+## Quick Start
+
+### 1. Basic Agent
+
+```python
+import asyncio
+from saptiva_agents import SAPTIVA_LEGACY
+from saptiva_agents.base import SaptivaAIChatCompletionClient
+from saptiva_agents.agents import AssistantAgent
+
+async def main():
+    # Initialize model client
+    model_client = SaptivaAIChatCompletionClient(
+        model=SAPTIVA_LEGACY,
+        api_key="your-api-key"
+    )
+
+    # Create agent
+    agent = AssistantAgent(
+        name="assistant",
+        model_client=model_client,
+        system_message="You are a helpful assistant."
+    )
+
+    # Run task
+    response = await agent.run(task="Explain async programming in Python")
+    print(response.messages[-1].content)
+
+    await model_client.close()
+
+asyncio.run(main())
+```
+
+### 2. Agent with Tools
+
+```python
+import asyncio
+from saptiva_agents import SAPTIVA_TURBO
+from saptiva_agents.base import SaptivaAIChatCompletionClient
+from saptiva_agents.agents import AssistantAgent
+from saptiva_agents.tools import get_weather, wikipedia_search
+
+async def main():
+    model_client = SaptivaAIChatCompletionClient(
+        model=SAPTIVA_TURBO,  # Model with tool support
+        api_key="your-api-key"
+    )
+
+    agent = AssistantAgent(
+        name="research_assistant",
+        model_client=model_client,
+        tools=[get_weather, wikipedia_search],
+        system_message="You can search Wikipedia and check weather."
+    )
+
+    response = await agent.run(
+        task="What's the weather in Tokyo and tell me about the city"
+    )
+    print(response.messages[-1].content)
+
+    await model_client.close()
+
+asyncio.run(main())
+```
+
+### 3. Multi-Agent Team
+
+```python
+import asyncio
+from saptiva_agents import SAPTIVA_OPS
+from saptiva_agents.base import SaptivaAIChatCompletionClient
+from saptiva_agents.agents import AssistantAgent, UserProxyAgent
+from saptiva_agents.teams import RoundRobinGroupChat
+from saptiva_agents.conditions import MaxMessageTermination
+
+async def main():
+    model_client = SaptivaAIChatCompletionClient(
+        model=SAPTIVA_OPS,
+        api_key="your-api-key"
+    )
+
+    # Create specialized agents
+    researcher = AssistantAgent(
+        name="researcher",
+        model_client=model_client,
+        system_message="You research topics thoroughly."
+    )
+
+    writer = AssistantAgent(
+        name="writer",
+        model_client=model_client,
+        system_message="You write clear, engaging content."
+    )
+
+    user = UserProxyAgent(name="user")
+
+    # Create team
+    team = RoundRobinGroupChat(
+        participants=[researcher, writer, user],
+        termination_condition=MaxMessageTermination(max_messages=10)
+    )
+
+    # Run team task
+    async for message in team.run_stream(
+        task="Research and write about quantum computing"
+    ):
+        print(f"{message.source}: {message.content}")
+
+    await model_client.close()
+
+asyncio.run(main())
+```
+
+## Core Concepts
+
+### Agents
+
+Agents are autonomous entities that can:
+- Execute tasks using LLMs
+- Use tools to interact with external systems
+- Collaborate with other agents
+- Maintain conversation history
+
+**Built-in Agent Types:**
+
+```python
+from saptiva_agents.agents import (
+    AssistantAgent,   # LLM-powered agent with tool support
+    UserProxyAgent,   # Human-in-the-loop proxy
+)
+```
+
+### Model Clients
+
+Model clients interface with LLM APIs:
+
+```python
+from saptiva_agents.base import SaptivaAIChatCompletionClient
+
+# Basic configuration
+client = SaptivaAIChatCompletionClient(
+    model="Saptiva Turbo",
+    api_key="your-key",
+    temperature=0.7,
+    top_p=0.9
+)
+
+# With custom base URL (OpenAI-compatible)
+client = SaptivaAIChatCompletionClient(
+    model="gpt-4",
+    api_key="your-key",
+    base_url="https://api.openai.com/v1"
+)
+```
+
+### Teams
+
+Teams orchestrate multi-agent collaboration:
+
+```python
+from saptiva_agents.teams import (
+    RoundRobinGroupChat,  # Sequential turn-taking
+    SelectorGroupChat,     # Dynamic speaker selection
+)
+
+# Round-robin coordination
+team = RoundRobinGroupChat(
+    participants=[agent1, agent2, agent3],
+    termination_condition=MaxMessageTermination(max_messages=20)
+)
+```
+
+### Termination Conditions
+
+Control when agent execution stops:
+
+```python
+from saptiva_agents.conditions import (
+    MaxMessageTermination,      # Stop after N messages
+    TextMentionTermination,     # Stop on specific text
+    TimeoutTermination,         # Stop after timeout
+)
+
+# Example: Stop when agent says "DONE"
+termination = TextMentionTermination("DONE", sources=["assistant"])
+```
+
+## Creating Custom Tools
+
+### Method 1: Simple Async Function (Recommended)
+
+```python
+async def search_database(query: str, limit: int = 10) -> dict:
+    """
+    Search the database for records matching the query.
+
+    Args:
+        query: Search query string
+        limit: Maximum number of results to return
+
+    Returns:
+        Dictionary containing search results
+    """
+    # Your implementation
+    results = await db.search(query, limit)
+    return {"results": results, "count": len(results)}
+
+# Use directly with agents
+agent = AssistantAgent(
+    name="db_assistant",
+    model_client=model_client,
+    tools=[search_database]
+)
+```
+
+### Method 2: Pydantic Tool Class (For Complex Tools)
+
+```python
+from saptiva_agents.tools import SaptivaTool
+from pydantic import BaseModel, Field
+
+class DocumentAnalysisTool(SaptivaTool[dict]):
+    """Advanced document analysis with state."""
+
+    name = "analyze_document"
+    description = "Analyzes documents and extracts key information"
+
+    def __init__(self, api_key: str):
+        self.api_key = api_key
+        self.cache = {}
+
+    async def _arun(self, document_url: str) -> dict:
+        """
+        Analyze a document from URL.
+
+        Args:
+            document_url: URL of document to analyze
+
+        Returns:
+            Analysis results including entities, summary, sentiment
+        """
+        # Check cache
+        if document_url in self.cache:
+            return self.cache[document_url]
+
+        # Perform analysis
+        result = await self._analyze(document_url)
+
+        # Cache result
+        self.cache[document_url] = result
+        return result
+
+    async def _analyze(self, url: str) -> dict:
+        # Your analysis implementation
+        return {
+            "entities": [...],
+            "summary": "...",
+            "sentiment": "positive"
+        }
+
+# Usage
+tool = DocumentAnalysisTool(api_key="your-key")
+agent = AssistantAgent(
+    name="doc_analyst",
+    model_client=model_client,
+    tools=[tool]
+)
+```
+
+### Method 3: Factory Function
+
+```python
+from saptiva_agents.tools import create_saptiva_tool
+
+async def my_existing_function(param: str) -> str:
+    return f"Processed: {param}"
+
+# Convert to tool with custom metadata
+tool = create_saptiva_tool(
+    my_existing_function,
+    name="custom_processor",
+    description="Processes strings with custom logic"
+)
+```
+
+### Tool Development Best Practices
+
+1. **Type Hints Required**: All parameters and return values must have type hints
+2. **Docstrings Required**: Describe what the tool does (used by LLM)
+3. **Async Preferred**: Use async functions for I/O operations
+4. **Error Handling**: Return descriptive error messages, don't raise exceptions
+5. **Idempotency**: Tools should be safe to call multiple times
+
+## Agent Patterns
+
+### Architecture Overview
+
+The framework supports four primary multi-agent patterns, each optimized for different use cases:
+
+1. **Research Agent with Tools** — a single agent orchestrates multiple tools for information gathering and synthesis.
+2. **Supervisor–Worker** — a supervisor delegates subtasks to specialist agents and merges results.
+3. **Sequential Pipeline** — agents transform data in order (validator → analyzer → formatter).
+4. **Consensus Building** — multiple evaluators vote and a simple aggregator produces a final decision.
+
+### Pattern 1: Research Agent with Tools
+
+```python
+from saptiva_agents.tools import wikipedia_search, get_weather
+
+async def create_research_agent(model_client):
+    """Agent that can research topics using multiple sources."""
+
+    # Define custom research tool
+    async def search_arxiv(query: str, max_results: int = 5) -> str:
+        """Search arXiv for academic papers."""
+        # Implementation
+        return "Paper results..."
+
+    agent = AssistantAgent(
+        name="researcher",
+        model_client=model_client,
+        tools=[wikipedia_search, search_arxiv, get_weather],
+        system_message="""You are a research assistant. Use your tools to:
+        1. Search Wikipedia for general information
+        2. Search arXiv for academic papers
+        3. Check weather if location-relevant
+
+        Always cite your sources."""
+    )
+
+    return agent
+```
+
+### Pattern 2: Supervisor-Worker Pattern
+
+```python
+async def create_supervisor_team(model_client):
+    """Supervisor coordinates multiple specialist workers."""
+
+    # Specialist workers
+    data_analyst = AssistantAgent(
+        name="data_analyst",
+        model_client=model_client,
+        system_message="You analyze data and provide insights."
+    )
+
+    report_writer = AssistantAgent(
+        name="writer",
+        model_client=model_client,
+        system_message="You write clear, professional reports."
+    )
+
+    # Supervisor with workers as tools
+    from saptiva_agents.tools import AgentTool
+
+    supervisor = AssistantAgent(
+        name="supervisor",
+        model_client=model_client,
+        tools=[
+            AgentTool(data_analyst, return_value_as_last_message=True),
+            AgentTool(report_writer, return_value_as_last_message=True)
+        ],
+        system_message="""You coordinate tasks between specialists:
+        - Use data_analyst for data analysis tasks
+        - Use report_writer for writing tasks
+        - Combine their outputs to complete complex requests"""
+    )
+
+    return supervisor
+```
+
+### Pattern 3: Sequential Processing Pipeline
+
+```python
+async def create_processing_pipeline(model_client):
+    """Chain of agents processing data sequentially."""
+
+    agents = [
+        AssistantAgent(
+            name="validator",
+            model_client=model_client,
+            system_message="Validate and clean input data. Output JSON."
+        ),
+        AssistantAgent(
+            name="analyzer",
+            model_client=model_client,
+            system_message="Analyze cleaned data. Output insights."
+        ),
+        AssistantAgent(
+            name="formatter",
+            model_client=model_client,
+            system_message="Format insights into final report."
+        )
+    ]
+
+    async def process(data: str) -> str:
+        result = data
+        for agent in agents:
+            response = await agent.run(task=result)
+            result = response.messages[-1].content
+        return result
+
+    return process
+```
+
+### Pattern 4: Consensus Building
+
+```python
+async def create_consensus_team(model_client, num_agents: int = 3):
+    """Multiple agents vote on decisions."""
+
+    agents = [
+        AssistantAgent(
+            name=f"evaluator_{i}",
+            model_client=model_client,
+            system_message=f"You are evaluator {i}. Analyze and vote."
+        )
+        for i in range(num_agents)
+    ]
+
+    async def get_consensus(question: str) -> dict:
+        votes = []
+        for agent in agents:
+            response = await agent.run(task=question)
+            votes.append(response.messages[-1].content)
+
+        # Aggregate votes
+        return {
+            "votes": votes,
+            "consensus": most_common(votes)
+        }
+
+    return get_consensus
+```
+
+## Available Models
+
+### Text Models (Basic)
+
+| Model | Base | Best For | Use Cases |
+|-------|------|----------|-----------|
+| **Saptiva Ops** | gpt-oss:20b | Reasoning tasks | Autonomous agents, RAG |
+| **Saptiva Guard** | llama-guard3:8b | Content moderation | Safety, compliance |
+
+### Text Models (Tool Calling)
+
+| Model | Base | Best For | Use Cases |
+|-------|------|----------|-----------|
+| **Saptiva Cortex** | qwen3-tk:30b | Complex reasoning | Advanced logic, analysis |
+| **Saptiva Turbo** | qwen3-it:30b | Tool-heavy workflows | Multi-tool agents, orchestration |
+| **Saptiva Legacy** | llama3.3:70b | Legacy compatibility | Migration, testing |
+
+### Multimodal Models
+
+| Model | Base | Best For | Use Cases |
+|-------|------|----------|-----------|
+| **Saptiva OCR** | Nanonets OCR-s | Document processing | OCR, forms, invoices |
+
+### Model Selection Guide
+
+```python
+# For simple Q&A without tools
+model = SAPTIVA_OPS
+
+# For agents using tools
+model = SAPTIVA_TURBO  # Recommended
+model = SAPTIVA_CORTEX  # For complex reasoning
+
+# For document processing
+model = SAPTIVA_OCR
+
+# For content safety
+model = SAPTIVA_GUARD
+```
+
+### Model-to-Agent Pattern Mapping
+
+The following table shows recommended model configurations for different agent patterns and use cases:
+
+| Agent Pattern | Recommended Model | Tool Support | Best For | Example Configuration |
+|--------------|-------------------|--------------|----------|----------------------|
+| **Basic Assistant** | `SAPTIVA_OPS` | ❌ No | Simple Q&A, conversation, text generation | Single agent without tools |
+| **Research Agent** | `SAPTIVA_TURBO` | ✅ Yes | Multi-tool coordination, information gathering | Agent with Wikipedia, ArXiv, Weather tools |
+| **Research Agent (Advanced)** | `SAPTIVA_CORTEX` | ✅ Yes | Complex reasoning with tools, academic research | Agent requiring deep analysis with tools |
+| **Supervisor-Worker** | `SAPTIVA_TURBO` (Supervisor)<br>`SAPTIVA_OPS` (Workers) | ✅ Supervisor<br>❌ Workers | Task delegation, hierarchical teams | Supervisor coordinates specialist agents |
+| **Sequential Pipeline** | `SAPTIVA_OPS` | ❌ No | Data transformation, ETL workflows | Chain of validator → analyzer → formatter |
+| **Sequential Pipeline (Complex)** | `SAPTIVA_CORTEX` | ✅ Yes | Complex transformations with external data | Pipeline with API calls and validation |
+| **Consensus Building** | `SAPTIVA_OPS` | ❌ No | Decision making, voting systems | Multiple evaluators voting on decisions |
+| **Document Processing** | `SAPTIVA_OCR` | ❌ No | OCR, form extraction, invoice processing | Agent processing PDFs, images |
+| **Content Moderation** | `SAPTIVA_GUARD` | ❌ No | Safety filtering, compliance checks | Agent validating user input |
+| **Multi-Agent Team (Round Robin)** | `SAPTIVA_OPS` | ❌ No | Collaborative brainstorming, discussion | Team with shared conversation context |
+| **Multi-Agent Team (Tool-Using)** | `SAPTIVA_TURBO` | ✅ Yes | Complex orchestration, external integrations | Team with shared tools and APIs |
+| **RAG Agent** | `SAPTIVA_OPS` | ✅ Yes | Retrieval-augmented generation | Agent with vector search tool |
+| **Code Generation** | `SAPTIVA_CORTEX` | ✅ Yes | Programming tasks, code analysis | Agent with code execution tools |
+| **Customer Support** | `SAPTIVA_TURBO` | ✅ Yes | Ticket handling, knowledge base queries | Agent with FAQ search and CRM tools |
+
+**Configuration Examples:**
+
+```python
+# Research Agent - Recommended: SAPTIVA_TURBO
+research_agent = AssistantAgent(
+    name="researcher",
+    model_client=SaptivaAIChatCompletionClient(model=SAPTIVA_TURBO),
+    tools=[wikipedia_search, arxiv_search, get_weather]
+)
+
+# Supervisor-Worker - Mixed models
+supervisor = AssistantAgent(
+    name="supervisor",
+    model_client=SaptivaAIChatCompletionClient(model=SAPTIVA_TURBO),  # Needs tool calling
+    tools=[AgentTool(worker1), AgentTool(worker2)]
+)
+worker = AssistantAgent(
+    name="worker",
+    model_client=SaptivaAIChatCompletionClient(model=SAPTIVA_OPS),  # Simple execution
+)
+
+# Document Processing - SAPTIVA_OCR
+ocr_agent = AssistantAgent(
+    name="ocr_processor",
+    model_client=SaptivaAIChatCompletionClient(model=SAPTIVA_OCR),
+    system_message="Extract text and structure from documents"
+)
+
+# Content Moderation - SAPTIVA_GUARD
+guard_agent = AssistantAgent(
+    name="content_guard",
+    model_client=SaptivaAIChatCompletionClient(model=SAPTIVA_GUARD),
+    system_message="Analyze content for safety violations"
+)
+```
+
+## API Reference
+
+### Core Classes
+
+#### SaptivaAIChatCompletionClient
+
+```python
+class SaptivaAIChatCompletionClient:
+    def __init__(
+        self,
+        model: str,
+        api_key: str,
+        base_url: str = "https://api.saptiva.com/v1",
+        temperature: float = 0.7,
+        top_p: float = 0.9,
+        lang: str = "es"
+    )
+```
+
+#### AssistantAgent
+
+```python
+class AssistantAgent:
+    def __init__(
+        self,
+        name: str,
+        model_client: ChatCompletionClient,
+        tools: List[Tool] = None,
+        system_message: str = "",
+        description: str = "",
+        reflect_on_tool_use: bool = False,
+        max_tool_iterations: int = 10
+    )
+
+    async def run(self, task: str) -> Response
+    async def run_stream(self, task: str) -> AsyncIterator[Message]
+```
+
+#### SaptivaTool
+
+```python
+class SaptivaTool(Generic[T]):
+    name: str
+    description: str
+
+    @abstractmethod
+    async def _arun(self, *args, **kwargs) -> T:
+        """Implement your tool logic here."""
+        pass
+
+    def to_function_tool(self) -> FunctionTool:
+        """Convert to AutoGen FunctionTool."""
+        pass
+```
+
+### Built-in Tools
+
+```python
+from saptiva_agents.tools import (
+    # Web & Research
+    wikipedia_search,        # Search Wikipedia
+    WikipediaSearchTool,     # Class-based with fallback
+
+    # Utility
+    get_weather,            # Weather information
+
+    # Saptiva Services
+    saptiva_bot_query,          # Query Saptiva bot
+    obtener_texto_en_documento, # Extract text from documents
+    consultar_curp_get,         # CURP lookup (GET)
+    consultar_curp_post,        # CURP lookup (POST)
+    consultar_cfdi,             # CFDI validation
+    get_verify_sat,             # SAT verification
+    upload_csv,                 # CSV upload and analysis
+)
+```
+
+## Best Practices
+
+### 1. Resource Management
+
+Always close clients properly:
+
+```python
+async def main():
+    client = SaptivaAIChatCompletionClient(...)
+    try:
+        agent = AssistantAgent(...)
+        result = await agent.run(task="...")
+    finally:
+        await client.close()
+```
+
+### 2. Error Handling
+
+```python
+from starlette.exceptions import HTTPException
+
+async def safe_agent_call():
+    try:
+        response = await agent.run(task="...")
+        return response
+    except HTTPException as e:
+        # Handle API errors
+        print(f"API Error: {e.detail}")
+    except Exception as e:
+        # Handle unexpected errors
+        print(f"Unexpected error: {e}")
+```
+
+### 3. Streaming Responses
+
+Use streaming for better UX:
+
+```python
+async def stream_response():
+    async for message in agent.run_stream(task="..."):
+        print(message.content, end="", flush=True)
+```
+
+### 4. Tool Design
+
+```python
+# Good: Clear, focused tool
+async def calculate_tax(amount: float, rate: float) -> float:
+    """Calculate tax on an amount."""
+    return amount * rate
+
+# Bad: Vague, multi-purpose tool
+async def do_math(operation: str, *args) -> Any:
+    """Do math."""  # Too generic
+    ...
+```
+
+### 5. System Messages
+
+Be specific about capabilities:
+
+```python
+# Good
+system_message = """You are a financial analyst. You can:
+- Analyze balance sheets
+- Calculate financial ratios
+- Provide investment recommendations
+
+Always show your calculations."""
+
+# Bad
+system_message = "You help with finance."  # Too vague
+```
+
+### 6. Token Management
+
+```python
+# Monitor token usage
+client = SaptivaAIChatCompletionClient(
+    model=SAPTIVA_TURBO,
+    api_key="your-key",
+    temperature=0.7,
+    top_p=0.9  # Control output diversity
+)
+
+# Keep prompts concise
+task = "Summarize this in 3 bullet points: [...]"
+```
+
+### 7. Production Web Research Config
+
+For VM‑hosted SearXNG (primary) and Tavily (fallback/proxy), use conservative retry and rate‑limit settings to avoid upstream throttling:
+
+```env
+# Primary: self‑hosted SearXNG
+SAPTIVA_SEARCH_PROVIDER=searxng
+SAPTIVA_SEARCH_BASE_URL=http://searxng.internal:8080
+SAPTIVA_SEARCH_MAX_RETRIES=3
+SAPTIVA_SEARCH_MIN_INTERVAL_S=0.25   # ~4 req/s per worker
+
+# Page reads (avoid bursty crawling)
+SAPTIVA_READ_MAX_RETRIES=2
+SAPTIVA_READ_MIN_INTERVAL_S=0.10     # ~10 req/s per worker
+
+# Optional fallback / proxy: Tavily
+SAPTIVA_TAVILY_API_KEY=your-tavily-key
+SAPTIVA_TAVILY_BASE_URL=https://tavily-proxy.internal/search
+```
+
+**Enterprise preset (robust, auditable):**
+
+```python
+from saptiva_agents.teams import DeepResearchTeamConfig
+
+enterprise_config = DeepResearchTeamConfig(
+    search_provider="searxng",
+    search_base_url="http://searxng.internal:8080",
+    search_max_retries=3,
+    search_min_interval_s=0.25,
+    read_extractor="trafilatura",  # pip install saptiva-agents[web-research]
+    read_max_retries=2,
+    read_min_interval_s=0.10,
+    cache_ttl_s=900,
+    min_sources=5,
+    max_turns=16,
+)
+```
+
+**Startup preset (fast iteration, lower cost):**
+
+```python
+startup_config = DeepResearchTeamConfig(
+    search_provider="tavily",
+    search_api_key=os.getenv("SAPTIVA_TAVILY_API_KEY"),
+    search_max_retries=1,
+    search_min_interval_s=0.0,
+    read_extractor="simple",
+    cache_ttl_s=300,
+    min_sources=3,
+    max_turns=10,
+)
+```
+
+### 8. FAQ: Blocked Domains / JS‑Heavy Sites
+
+Some sites (Crunchbase, Pitchbook, Cloudflare‑protected domains) return HTTP 403 to `read_page`. DeepResearch v2 will skip these sources and search alternatives. If you *must* access JS/captcha sites:
+
+- Install Playwright web browsing extra: `pip install saptiva-agents[web-surfer]`
+- Use a WebSurfer‑based agent/team for those URLs, or pre‑fetch content through your own proxy.
+- Prefer alternative sources (official docs, blogs, papers) to keep runs reliable.
+
+## Migration from v0.2.3
+
+### Breaking Changes in v0.2.4
+
+1. **LangChain Removed**
+   ```python
+   # Before (v0.2.3)
+   from saptiva_agents.tools.langchain import WikipediaSearch
+   tool = WikipediaSearch()
+
+   # After (v0.2.4)
+   from saptiva_agents.tools import WikipediaSearchTool
+   tool = WikipediaSearchTool()
+   ```
+
+2. **Dependencies Updated**
+   ```bash
+   # Before
+   pip install saptiva-agents  # 754 MB, 113 packages
+
+   # After
+   pip install saptiva-agents  # 108 MB, 48 packages
+   ```
+
+3. **Tool Validation Removed**
+   ```python
+   # Before: Manual validation required
+   from saptiva_agents._utils import validate_langchain_instance
+
+   # After: Automatic with type hints (no manual validation)
+   ```
+
+### Migration Steps
+
+1. Update installation:
+   ```bash
+   pip install --upgrade saptiva-agents
+   ```
+
+2. Replace LangChain tools:
+   ```python
+   # Replace WikipediaSearch
+   from saptiva_agents.tools import WikipediaSearchTool
+   tool = WikipediaSearchTool()
+   ```
+
+3. Remove manual tool validation (handled automatically)
+
+4. Test your agents thoroughly
+
+## Contributing
+
+Contributions are welcome! Please read our contributing guidelines before submitting PRs.
+
+### Development Setup
+
+```bash
+# Clone repository
+git clone https://github.com/saptiva-ai/saptiva-agents.git
+cd saptiva-agents
+
+# Install with dev dependencies
+pip install -e ".[dev]"
+
+# Run tests
+pytest tests/
+
+# Run linter
+ruff check .
+```
+
+## License
+
+- **Code:** MIT License. See `LICENSE-CODE`. Portions derived from Microsoft AutoGen remain under MIT.
+- **Documentation:** Creative Commons Attribution 4.0 International (CC BY 4.0). See `LICENSE` and `docs/ATTRIBUTION.md`.
+
+This project is a derivative of Microsoft AutoGen and is not affiliated with or endorsed by Microsoft. See `NOTICE.md`.
+
+## Links
+
+- [Documentation](https://saptiva.gitbook.io/saptiva-docs/)
+- [PyPI Package](https://pypi.org/project/saptiva-agents/)
+- [GitHub Repository](https://github.com/saptiva-ai/saptiva-agents)
+- [Issue Tracker](https://github.com/saptiva-ai/saptiva-agents/issues)
+
+## Support
+
+For support, please:
+1. Check the [documentation](https://saptiva.gitbook.io/saptiva-docs/)
+2. Search [existing issues](https://github.com/saptiva-ai/saptiva-agents/issues)
+3. Create a new issue with detailed information
+
+---
+
+Built with AutoGen v0.4+ | Maintained by Saptiva AI
