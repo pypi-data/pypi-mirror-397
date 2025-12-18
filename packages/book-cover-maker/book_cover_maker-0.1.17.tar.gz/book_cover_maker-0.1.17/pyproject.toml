@@ -1,0 +1,35 @@
+[project]
+name = "book-cover-maker"
+version = "0.1.17"
+description = "A tool to generate book covers with customizable text and fonts"
+dependencies = [ "pillow>=11.3.0", "typer>=0.12.0", "uv-easy>=0.2.53",]
+readme = "README.md"
+requires-python = ">= 3.9"
+[[project.authors]]
+name = "David Cho"
+email = "csi00700@gmail.com"
+
+[build-system]
+requires = [ "hatchling==1.26.3",]
+build-backend = "hatchling.build"
+
+[project.urls]
+Homepage = "https://github.com/hakunamta00700/book_cover_maker"
+Repository = "https://github.com/hakunamta00700/book_cover_maker"
+Issues = "https://github.com/hakunamta00700/book_cover_maker/issues"
+
+[project.scripts]
+book-cover-maker = "book_cover_maker.gen_cover:main"
+
+[tool.uv_easy]
+build_number = 2
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = [ "src/book_cover_maker",]
+
+[tool.hatch.build.targets.wheel.shared-data]
+"cover_background.jpg" = "cover_background.jpg"
+fonts = "fonts"
