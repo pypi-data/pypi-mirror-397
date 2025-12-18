@@ -1,0 +1,50 @@
+{
+  "name": "conditional_basic",
+  "description": "Test basic conditional branching - true/false paths",
+  "version": "1.0.0",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "is_premium": {
+        "type": "boolean",
+        "description": "Whether user is premium"
+      },
+      "message": {
+        "type": "string"
+      }
+    },
+    "required": ["is_premium", "message"]
+  },
+  "stages": {
+    "check_premium": {
+      "component": "conditional",
+      "config": {
+        "condition": "{{input.is_premium}}"
+      },
+      "inputs": {
+        "condition_value": "{{input.is_premium}}"
+      }
+    },
+    "premium_response": {
+      "component": "generator",
+      "depends_on": ["check_premium"],
+      "skip_if": "{{not stages.check_premium.branch_taken}}",
+      "config": {
+        "system_prompt": "You are a premium concierge assistant.",
+        "user_prompt": "Provide a premium, detailed response to: {{input.message}}",
+        "max_tokens": 200
+      }
+    },
+    "standard_response": {
+      "component": "generator",
+      "depends_on": ["check_premium"],
+      "skip_if": "{{stages.check_premium.branch_taken}}",
+      "config": {
+        "system_prompt": "You are a standard assistant.",
+        "user_prompt": "Provide a brief response to: {{input.message}}",
+        "max_tokens": 100
+      }
+    }
+  },
+  "output_stage": "premium_response"
+}

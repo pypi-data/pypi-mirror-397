@@ -1,0 +1,236 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "https://flowmason.dev/schemas/flowmason-package.schema.json",
+    "title": "FlowMason Package Manifest",
+    "description": "Schema for flowmason-package.json files",
+    "type": "object",
+    "required": ["name", "version", "components"],
+    "properties": {
+        "name": {
+            "type": "string",
+            "description": "Package name (kebab-case)",
+            "pattern": "^[a-z][a-z0-9-]*$",
+            "examples": ["my-package", "text-utilities"]
+        },
+        "version": {
+            "type": "string",
+            "description": "Semantic version string",
+            "pattern": "^\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9.]+)?$",
+            "examples": ["1.0.0", "2.1.0-beta.1"]
+        },
+        "description": {
+            "type": "string",
+            "description": "Short description of the package",
+            "maxLength": 500
+        },
+        "author": {
+            "type": "string",
+            "description": "Package author name or email"
+        },
+        "license": {
+            "type": "string",
+            "description": "SPDX license identifier",
+            "examples": ["MIT", "Apache-2.0", "GPL-3.0"]
+        },
+        "repository": {
+            "type": "string",
+            "description": "URL to the package repository",
+            "format": "uri"
+        },
+        "homepage": {
+            "type": "string",
+            "description": "URL to the package homepage",
+            "format": "uri"
+        },
+        "keywords": {
+            "type": "array",
+            "description": "Keywords for package discovery",
+            "items": {
+                "type": "string"
+            }
+        },
+        "components": {
+            "type": "array",
+            "description": "List of components in this package",
+            "items": {
+                "$ref": "#/definitions/component"
+            },
+            "minItems": 1
+        },
+        "dependencies": {
+            "type": "array",
+            "description": "Python package dependencies",
+            "items": {
+                "$ref": "#/definitions/dependency"
+            }
+        },
+        "flowmason": {
+            "type": "object",
+            "description": "FlowMason-specific configuration",
+            "properties": {
+                "minVersion": {
+                    "type": "string",
+                    "description": "Minimum FlowMason version required",
+                    "pattern": "^\\d+\\.\\d+\\.\\d+$"
+                },
+                "maxVersion": {
+                    "type": "string",
+                    "description": "Maximum FlowMason version supported",
+                    "pattern": "^\\d+\\.\\d+\\.\\d+$"
+                }
+            }
+        },
+        "scripts": {
+            "type": "object",
+            "description": "Custom scripts for package lifecycle",
+            "properties": {
+                "preinstall": {
+                    "type": "string",
+                    "description": "Command to run before installation"
+                },
+                "postinstall": {
+                    "type": "string",
+                    "description": "Command to run after installation"
+                },
+                "prebuild": {
+                    "type": "string",
+                    "description": "Command to run before build"
+                },
+                "postbuild": {
+                    "type": "string",
+                    "description": "Command to run after build"
+                }
+            }
+        }
+    },
+    "definitions": {
+        "component": {
+            "type": "object",
+            "required": ["type", "name", "file", "class"],
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "description": "Component type",
+                    "enum": ["node", "operator"]
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Component name (kebab-case)",
+                    "pattern": "^[a-z][a-z0-9-]*$"
+                },
+                "file": {
+                    "type": "string",
+                    "description": "Path to the Python file containing the component",
+                    "pattern": ".*\\.py$"
+                },
+                "class": {
+                    "type": "string",
+                    "description": "Name of the component class",
+                    "pattern": "^[A-Z][a-zA-Z0-9]*$"
+                },
+                "description": {
+                    "type": "string",
+                    "description": "Component description"
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Component category",
+                    "enum": ["ai", "transform", "analysis", "integration", "utility", "filter", "aggregate", "custom"]
+                },
+                "icon": {
+                    "type": "string",
+                    "description": "Lucide icon name"
+                },
+                "color": {
+                    "type": "string",
+                    "description": "Hex color code",
+                    "pattern": "^#[0-9a-fA-F]{6}$"
+                },
+                "tags": {
+                    "type": "array",
+                    "description": "Component tags for discovery",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "deprecated": {
+                    "type": "boolean",
+                    "description": "Whether this component is deprecated",
+                    "default": false
+                },
+                "deprecationMessage": {
+                    "type": "string",
+                    "description": "Message to show for deprecated components"
+                }
+            }
+        },
+        "dependency": {
+            "oneOf": [
+                {
+                    "type": "string",
+                    "description": "Simple dependency specification",
+                    "examples": ["requests>=2.28.0", "pydantic~=2.0"]
+                },
+                {
+                    "type": "object",
+                    "required": ["name"],
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Package name"
+                        },
+                        "version": {
+                            "type": "string",
+                            "description": "Version specifier"
+                        },
+                        "optional": {
+                            "type": "boolean",
+                            "description": "Whether this dependency is optional",
+                            "default": false
+                        },
+                        "extras": {
+                            "type": "array",
+                            "description": "Extra features to install",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    "examples": [
+        {
+            "name": "text-utilities",
+            "version": "1.0.0",
+            "description": "Text processing utilities for FlowMason",
+            "author": "FlowMason Team",
+            "license": "MIT",
+            "components": [
+                {
+                    "type": "node",
+                    "name": "sentiment-analyzer",
+                    "file": "sentiment.py",
+                    "class": "SentimentAnalyzerNode",
+                    "category": "analysis",
+                    "icon": "heart",
+                    "color": "#ef4444"
+                },
+                {
+                    "type": "operator",
+                    "name": "text-splitter",
+                    "file": "splitter.py",
+                    "class": "TextSplitterOperator",
+                    "category": "transform",
+                    "icon": "scissors",
+                    "color": "#10b981"
+                }
+            ],
+            "dependencies": [
+                "nltk>=3.8.0",
+                "textblob>=0.17.0"
+            ]
+        }
+    ]
+}

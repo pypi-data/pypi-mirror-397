@@ -1,0 +1,830 @@
+{
+  "name": "flowmason",
+  "displayName": "FlowMason",
+  "description": "Development tools for building FlowMason nodes and operators",
+  "version": "0.10.0",
+  "publisher": "flowmason",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Snippets",
+    "Linters",
+    "Other"
+  ],
+  "keywords": [
+    "flowmason",
+    "pipeline",
+    "ai",
+    "llm",
+    "workflow",
+    "automation"
+  ],
+  "icon": "images/icon.png",
+  "activationEvents": [
+    "workspaceContains:**/flowmason-package.json",
+    "workspaceContains:**/*.pipeline.json",
+    "workspaceContains:**/*.test.json",
+    "workspaceContains:**/flowmason.json",
+    "onLanguage:python",
+    "onLanguage:json"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "flowmason.newNode",
+        "title": "FlowMason: New Node",
+        "icon": "$(add)"
+      },
+      {
+        "command": "flowmason.newOperator",
+        "title": "FlowMason: New Operator",
+        "icon": "$(add)"
+      },
+      {
+        "command": "flowmason.buildPackage",
+        "title": "FlowMason: Build Package",
+        "icon": "$(package)"
+      },
+      {
+        "command": "flowmason.testComponent",
+        "title": "FlowMason: Test Component",
+        "icon": "$(play)"
+      },
+      {
+        "command": "flowmason.openStudio",
+        "title": "FlowMason: Open Studio",
+        "icon": "$(browser)"
+      },
+      {
+        "command": "flowmason.refreshRegistry",
+        "title": "FlowMason: Refresh Component Registry",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "flowmason.previewComponent",
+        "title": "FlowMason: Preview Component",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "flowmason.deployPackage",
+        "title": "FlowMason: Deploy Package to Local",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "flowmason.validateManifest",
+        "title": "FlowMason: Validate Package Manifest",
+        "icon": "$(check)"
+      },
+      {
+        "command": "flowmason.openDocs",
+        "title": "FlowMason: Open Documentation",
+        "icon": "$(book)"
+      },
+      {
+        "command": "flowmason.newProject",
+        "title": "FlowMason: New Project",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "flowmason.startStudio",
+        "title": "FlowMason: Start Studio",
+        "icon": "$(play)"
+      },
+      {
+        "command": "flowmason.stopStudio",
+        "title": "FlowMason: Stop Studio",
+        "icon": "$(stop)"
+      },
+      {
+        "command": "flowmason.restartStudio",
+        "title": "FlowMason: Restart Studio",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "flowmason.studioStatus",
+        "title": "FlowMason: Studio Status",
+        "icon": "$(info)"
+      },
+      {
+        "command": "flowmason.addStage",
+        "title": "FlowMason: Add Stage",
+        "icon": "$(add)"
+      },
+      {
+        "command": "flowmason.addStageAfter",
+        "title": "FlowMason: Add Stage After...",
+        "icon": "$(add)"
+      },
+      {
+        "command": "flowmason.selectStage",
+        "title": "FlowMason: Select Stage"
+      },
+      {
+        "command": "flowmason.showStageConfig",
+        "title": "FlowMason: Show Stage Config"
+      },
+      {
+        "command": "flowmason.showReactStageConfig",
+        "title": "FlowMason: Show Stage Config (React)",
+        "icon": "$(symbol-property)"
+      },
+      {
+        "command": "flowmason.openDagCanvas",
+        "title": "FlowMason: Open DAG View",
+        "icon": "$(type-hierarchy)"
+      },
+      {
+        "command": "flowmason.refreshPipelineStages",
+        "title": "FlowMason: Refresh Pipeline Stages",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "flowmason.debugPipeline",
+        "title": "FlowMason: Debug Pipeline",
+        "icon": "$(debug-alt)"
+      },
+      {
+        "command": "flowmason.runPipeline",
+        "title": "FlowMason: Run Pipeline",
+        "icon": "$(play)"
+      },
+      {
+        "command": "flowmason.debugPipelineWithInput",
+        "title": "FlowMason: Debug Pipeline with Input",
+        "icon": "$(debug-alt)"
+      },
+      {
+        "command": "flowmason.toggleBreakpoint",
+        "title": "FlowMason: Toggle Breakpoint",
+        "icon": "$(debug-breakpoint)"
+      },
+      {
+        "command": "flowmason.showPromptEditor",
+        "title": "FlowMason: Show Prompt Editor",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "flowmason.editStagePrompt",
+        "title": "FlowMason: Edit Stage Prompt",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "flowmason.rerunStage",
+        "title": "FlowMason: Re-run Current Stage",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "flowmason.runAllTests",
+        "title": "FlowMason: Run All Tests",
+        "icon": "$(testing-run-all-icon)"
+      },
+      {
+        "command": "flowmason.runTestsInFile",
+        "title": "FlowMason: Run Tests in Current File",
+        "icon": "$(testing-run-icon)"
+      },
+      {
+        "command": "flowmason.createTestFile",
+        "title": "FlowMason: Create Test File",
+        "icon": "$(add)"
+      },
+      {
+        "command": "flowmason.toggleCoverageGutters",
+        "title": "FlowMason: Toggle Coverage Gutters",
+        "icon": "$(coverage)"
+      },
+      {
+        "command": "flowmason.clearCoverage",
+        "title": "FlowMason: Clear Coverage Data",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "flowmason.startWebhookServer",
+        "title": "FlowMason: Start Webhook Server",
+        "icon": "$(radio-tower)"
+      },
+      {
+        "command": "flowmason.stopWebhookServer",
+        "title": "FlowMason: Stop Webhook Server",
+        "icon": "$(stop)"
+      },
+      {
+        "command": "flowmason.toggleWebhookServer",
+        "title": "FlowMason: Toggle Webhook Server",
+        "icon": "$(radio-tower)"
+      },
+      {
+        "command": "flowmason.copyWebhookUrl",
+        "title": "FlowMason: Copy Webhook URL",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "flowmason.importPackage",
+        "title": "FlowMason: Import Package",
+        "icon": "$(package)"
+      },
+      {
+        "command": "flowmason.mcp.createPipeline",
+        "title": "FlowMason: Create Pipeline with AI",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "flowmason.mcp.suggestPipeline",
+        "title": "FlowMason: Get Pipeline Suggestions",
+        "icon": "$(lightbulb)"
+      },
+      {
+        "command": "flowmason.mcp.generateStage",
+        "title": "FlowMason: Generate Stage with AI",
+        "icon": "$(wand)"
+      },
+      {
+        "command": "flowmason.mcp.validatePipeline",
+        "title": "FlowMason: Validate Pipeline",
+        "icon": "$(check-all)"
+      },
+      {
+        "command": "flowmason.mcp.addGeneratedStage",
+        "title": "FlowMason: Add AI-Generated Stage",
+        "icon": "$(add)"
+      },
+      {
+        "command": "flowmason.publishToRegistry",
+        "title": "FlowMason: Publish to Private Registry",
+        "icon": "$(cloud-upload)"
+      },
+      {
+        "command": "flowmason.browsePrivateRegistry",
+        "title": "FlowMason: Browse Private Registry",
+        "icon": "$(package)"
+      },
+      {
+        "command": "flowmason.downloadFromRegistry",
+        "title": "FlowMason: Download from Private Registry",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "flowmason.registryStats",
+        "title": "FlowMason: Private Registry Statistics",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "flowmason.marketplace.refresh",
+        "title": "FlowMason: Refresh Marketplace",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "flowmason.marketplace.search",
+        "title": "FlowMason: Search Marketplace",
+        "icon": "$(search)"
+      },
+      {
+        "command": "flowmason.marketplace.clearSearch",
+        "title": "FlowMason: Clear Marketplace Search",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "flowmason.marketplace.viewListing",
+        "title": "FlowMason: View Marketplace Listing",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "flowmason.marketplace.install",
+        "title": "FlowMason: Install from Marketplace",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "flowmason.marketplace.viewPublisher",
+        "title": "FlowMason: View Publisher",
+        "icon": "$(person)"
+      },
+      {
+        "command": "flowmason.marketplace.browseCategory",
+        "title": "FlowMason: Browse Marketplace by Category",
+        "icon": "$(folder)"
+      },
+      {
+        "command": "flowmason.marketplace.addFavorite",
+        "title": "FlowMason: Add to Favorites",
+        "icon": "$(star)"
+      },
+      {
+        "command": "flowmason.marketplace.removeFavorite",
+        "title": "FlowMason: Remove from Favorites",
+        "icon": "$(star-empty)"
+      },
+      {
+        "command": "flowmason.marketplace.openInBrowser",
+        "title": "FlowMason: Open Marketplace in Browser",
+        "icon": "$(browser)"
+      },
+      {
+        "command": "flowmason.timeTravel.showTimeline",
+        "title": "FlowMason: Show Time Travel Timeline",
+        "icon": "$(history)"
+      },
+      {
+        "command": "flowmason.timeTravel.stepBack",
+        "title": "FlowMason: Step Back in Time",
+        "icon": "$(debug-step-back)"
+      },
+      {
+        "command": "flowmason.timeTravel.stepForward",
+        "title": "FlowMason: Step Forward in Time",
+        "icon": "$(debug-step-over)"
+      },
+      {
+        "command": "flowmason.timeTravel.viewSnapshot",
+        "title": "FlowMason: View Snapshot",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "flowmason.timeTravel.compareDiff",
+        "title": "FlowMason: Compare Snapshots",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "flowmason.timeTravel.replay",
+        "title": "FlowMason: Replay from Snapshot",
+        "icon": "$(debug-restart)"
+      },
+      {
+        "command": "flowmason.timeTravel.whatIf",
+        "title": "FlowMason: What-If Analysis",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "flowmason.diffPipelines",
+        "title": "FlowMason: Diff Pipelines",
+        "icon": "$(diff)"
+      },
+      {
+        "command": "flowmason.diffWithHead",
+        "title": "FlowMason: Diff with Git HEAD",
+        "icon": "$(git-compare)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "flowmason",
+          "title": "FlowMason",
+          "icon": "images/flowmason-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "flowmason": [
+        {
+          "id": "flowmason.components",
+          "name": "Components",
+          "icon": "$(symbol-class)"
+        },
+        {
+          "id": "flowmason.packages",
+          "name": "Packages",
+          "icon": "$(package)"
+        },
+        {
+          "id": "flowmason.pipelines",
+          "name": "Pipelines",
+          "icon": "$(git-merge)"
+        },
+        {
+          "id": "flowmason.pipelineStages",
+          "name": "Pipeline Stages",
+          "icon": "$(list-tree)",
+          "when": "flowmason.pipelineOpen"
+        },
+        {
+          "id": "flowmason.stageConfig",
+          "name": "Stage Config",
+          "type": "webview",
+          "when": "flowmason.pipelineOpen"
+        },
+        {
+          "id": "flowmason.promptEditor",
+          "name": "Prompt Editor",
+          "type": "webview",
+          "when": "inDebugMode"
+        },
+        {
+          "id": "flowmason.marketplace",
+          "name": "Marketplace",
+          "icon": "$(remote-explorer)"
+        },
+        {
+          "id": "flowmason.timeTravel",
+          "name": "Time Travel",
+          "icon": "$(history)",
+          "when": "inDebugMode"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "flowmason.components",
+        "contents": "No FlowMason components found.\n[Create New Node](command:flowmason.newNode)\n[Create New Operator](command:flowmason.newOperator)"
+      },
+      {
+        "view": "flowmason.pipelineStages",
+        "contents": "Open a .pipeline.json file to see stages.\n[Open Pipeline](command:workbench.action.quickOpen)"
+      },
+      {
+        "view": "flowmason.promptEditor",
+        "contents": "Pause at an LLM stage during debugging to edit prompts.\n[Start Debugging](command:flowmason.debugPipeline)"
+      },
+      {
+        "view": "flowmason.marketplace",
+        "contents": "Discover and install pipeline templates from the FlowMason Marketplace.\n[Search Marketplace](command:flowmason.marketplace.search)\n[Browse Categories](command:flowmason.marketplace.browseCategory)"
+      },
+      {
+        "view": "flowmason.timeTravel",
+        "contents": "Time Travel debugging allows you to step back and forward through execution history.\n[View Timeline](command:flowmason.timeTravel.showTimeline)"
+      }
+    ],
+    "customEditors": [
+      {
+        "viewType": "flowmason.dagCanvas",
+        "displayName": "FlowMason DAG Canvas",
+        "selector": [
+          {
+            "filenamePattern": "*.pipeline.json"
+          }
+        ],
+        "priority": "default"
+      },
+      {
+        "viewType": "flowmason.jsonTreeView",
+        "displayName": "FlowMason JSON View (Read-Only)",
+        "selector": [
+          {
+            "filenamePattern": "*.pipeline.json"
+          }
+        ],
+        "priority": "option"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "flowmason.refreshRegistry",
+          "when": "view == flowmason.components",
+          "group": "navigation"
+        },
+        {
+          "command": "flowmason.newNode",
+          "when": "view == flowmason.components",
+          "group": "navigation"
+        },
+        {
+          "command": "flowmason.newOperator",
+          "when": "view == flowmason.components",
+          "group": "navigation"
+        },
+        {
+          "command": "flowmason.addStage",
+          "when": "view == flowmason.pipelineStages",
+          "group": "navigation"
+        },
+        {
+          "command": "flowmason.refreshPipelineStages",
+          "when": "view == flowmason.pipelineStages",
+          "group": "navigation"
+        },
+        {
+          "command": "flowmason.marketplace.refresh",
+          "when": "view == flowmason.marketplace",
+          "group": "navigation"
+        },
+        {
+          "command": "flowmason.marketplace.search",
+          "when": "view == flowmason.marketplace",
+          "group": "navigation"
+        },
+        {
+          "command": "flowmason.marketplace.openInBrowser",
+          "when": "view == flowmason.marketplace",
+          "group": "navigation"
+        },
+        {
+          "command": "flowmason.timeTravel.stepBack",
+          "when": "view == flowmason.timeTravel",
+          "group": "navigation"
+        },
+        {
+          "command": "flowmason.timeTravel.stepForward",
+          "when": "view == flowmason.timeTravel",
+          "group": "navigation"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "flowmason.runPipeline",
+          "when": "resourceFilename =~ /\\.pipeline\\.json$/",
+          "group": "navigation@1"
+        },
+        {
+          "command": "flowmason.debugPipeline",
+          "when": "resourceFilename =~ /\\.pipeline\\.json$/",
+          "group": "navigation@2"
+        },
+        {
+          "command": "flowmason.openDagCanvas",
+          "when": "resourceFilename =~ /\\.pipeline\\.json$/",
+          "group": "navigation@3"
+        },
+        {
+          "command": "flowmason.addStage",
+          "when": "resourceFilename =~ /\\.pipeline\\.json$/",
+          "group": "navigation@4"
+        },
+        {
+          "command": "flowmason.mcp.addGeneratedStage",
+          "when": "resourceFilename =~ /\\.pipeline\\.json$/",
+          "group": "navigation@5"
+        },
+        {
+          "command": "flowmason.mcp.validatePipeline",
+          "when": "resourceFilename =~ /\\.pipeline\\.json$/",
+          "group": "navigation@6"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "flowmason.previewComponent",
+          "when": "view == flowmason.components && viewItem == component",
+          "group": "inline"
+        },
+        {
+          "command": "flowmason.testComponent",
+          "when": "view == flowmason.components && viewItem == component",
+          "group": "inline"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "flowmason.previewComponent",
+          "when": "resourceLangId == python",
+          "group": "flowmason"
+        },
+        {
+          "command": "flowmason.testComponent",
+          "when": "resourceLangId == python",
+          "group": "flowmason"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "flowmason.buildPackage",
+          "when": "resourceFilename == flowmason-package.json",
+          "group": "flowmason"
+        },
+        {
+          "command": "flowmason.validateManifest",
+          "when": "resourceFilename == flowmason-package.json",
+          "group": "flowmason"
+        },
+        {
+          "command": "flowmason.importPackage",
+          "when": "resourceExtname == .fmpkg",
+          "group": "flowmason"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "FlowMason",
+      "properties": {
+        "flowmason.studioUrl": {
+          "type": "string",
+          "default": "http://localhost:8999",
+          "description": "URL of the FlowMason Studio API (backend)"
+        },
+        "flowmason.frontendPort": {
+          "type": "number",
+          "default": 8199,
+          "description": "Port for FlowMason Studio frontend"
+        },
+        "flowmason.packagesDirectory": {
+          "type": "string",
+          "default": "~/.flowmason/packages",
+          "description": "Directory where FlowMason packages are installed"
+        },
+        "flowmason.pythonPath": {
+          "type": "string",
+          "default": "python",
+          "description": "Path to Python executable"
+        },
+        "flowmason.autoPreview": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically preview component when editing"
+        },
+        "flowmason.showDiagnostics": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show FlowMason-specific diagnostics"
+        },
+        "flowmason.defaultProvider": {
+          "type": "string",
+          "enum": [
+            "anthropic",
+            "openai",
+            "google",
+            "groq"
+          ],
+          "default": "anthropic",
+          "description": "Default LLM provider for new nodes"
+        },
+        "flowmason.defaultModel": {
+          "type": "string",
+          "default": "claude-sonnet-4-20250514",
+          "description": "Default model for new nodes"
+        },
+        "flowmason.webhookPort": {
+          "type": "number",
+          "default": 9999,
+          "description": "Port for the development webhook server"
+        },
+        "flowmason.useReactStageEditor": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use the React-based stage configuration editor (experimental)"
+        }
+      }
+    },
+    "snippets": [
+      {
+        "language": "python",
+        "path": "./snippets/flowmason.json"
+      }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": "flowmason-package.json",
+        "url": "./schemas/flowmason-package.schema.json"
+      },
+      {
+        "fileMatch": "*.pipeline.json",
+        "url": "./schemas/pipeline.schema.json"
+      },
+      {
+        "fileMatch": "flowmason.json",
+        "url": "./schemas/flowmason-project.schema.json"
+      },
+      {
+        "fileMatch": "*.test.json",
+        "url": "./schemas/test.schema.json"
+      }
+    ],
+    "languages": [
+      {
+        "id": "flowmason-template",
+        "aliases": [
+          "FlowMason Template"
+        ],
+        "extensions": [
+          ".fmtpl"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "flowmason",
+        "label": "FlowMason Pipeline",
+        "languages": [
+          "json"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "pipeline"
+            ],
+            "properties": {
+              "pipeline": {
+                "type": "string",
+                "description": "Path to the pipeline file (.pipeline.json)",
+                "default": "${file}"
+              },
+              "input": {
+                "type": "object",
+                "description": "Input data for the pipeline (JSON object)",
+                "default": {}
+              },
+              "inputFile": {
+                "type": "string",
+                "description": "Path to a JSON file containing input data"
+              },
+              "stopOnEntry": {
+                "type": "boolean",
+                "description": "Pause execution at the first stage",
+                "default": true
+              },
+              "studioUrl": {
+                "type": "string",
+                "description": "URL of the FlowMason Studio backend",
+                "default": "http://localhost:8999"
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "flowmason",
+            "request": "launch",
+            "name": "Debug Pipeline",
+            "pipeline": "${file}",
+            "stopOnEntry": true
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "FlowMason: Debug Pipeline",
+            "description": "Debug a FlowMason pipeline",
+            "body": {
+              "type": "flowmason",
+              "request": "launch",
+              "name": "Debug ${1:Pipeline}",
+              "pipeline": "^\"${2:\\${file\\}}\"",
+              "stopOnEntry": true
+            }
+          },
+          {
+            "label": "FlowMason: Debug Pipeline with Input File",
+            "description": "Debug a FlowMason pipeline with input from a file",
+            "body": {
+              "type": "flowmason",
+              "request": "launch",
+              "name": "Debug ${1:Pipeline} with Input",
+              "pipeline": "^\"${2:\\${file\\}}\"",
+              "inputFile": "^\"${3:\\${workspaceFolder\\}/test-input.json}\"",
+              "stopOnEntry": false
+            }
+          }
+        ]
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "json"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "flowmason.debugPipeline",
+        "key": "f5",
+        "when": "resourceFilename =~ /\\.pipeline\\.json$/ && !inDebugMode"
+      },
+      {
+        "command": "flowmason.runPipeline",
+        "key": "ctrl+f5",
+        "mac": "cmd+f5",
+        "when": "resourceFilename =~ /\\.pipeline\\.json$/ && !inDebugMode"
+      },
+      {
+        "command": "flowmason.toggleBreakpoint",
+        "key": "f9",
+        "when": "resourceFilename =~ /\\.pipeline\\.json$/"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile && npm run build:webview",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "build:webview": "cd webview-ui && npm install && npm run build",
+    "watch:webview": "cd webview-ui && npm run watch",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.1.0",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@types/ws": "^8.5.10",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "@vscode/test-electron": "^2.3.8",
+    "@vscode/vsce": "^2.22.0",
+    "eslint": "^8.54.0",
+    "glob": "^10.3.10",
+    "mocha": "^10.2.0",
+    "typescript": "^5.3.2"
+  },
+  "dependencies": {
+    "@vscode/debugprotocol": "^1.68.0",
+    "axios": "^1.6.2",
+    "ws": "^8.14.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/flowmason/flowmason-vscode"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "id": "simple-pipeline",
+  "name": "simple-pipeline",
+  "version": "1.0.0",
+  "description": "A simple pipeline without inheritance",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string"
+      }
+    },
+    "required": ["text"]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "result": {
+        "type": "string"
+      }
+    }
+  },
+  "stages": [
+    {
+      "id": "process",
+      "component_type": "generator",
+      "input_mapping": {
+        "prompt": "{{input.text}}"
+      }
+    }
+  ],
+  "output_stage_id": "process"
+}
