@@ -1,0 +1,275 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: pipelines.flowmason.io
+  annotations:
+    description: "FlowMason Pipeline - Defines an AI workflow pipeline"
+spec:
+  group: flowmason.io
+  scope: Namespaced
+  names:
+    kind: Pipeline
+    listKind: PipelineList
+    plural: pipelines
+    singular: pipeline
+    shortNames:
+      - fmp
+      - pipe
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Status
+          type: string
+          jsonPath: .status.phase
+        - name: Schedule
+          type: string
+          jsonPath: .spec.schedule
+        - name: Last Run
+          type: date
+          jsonPath: .status.lastRunTime
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      schema:
+        openAPIV3Schema:
+          type: object
+          required:
+            - spec
+          properties:
+            spec:
+              type: object
+              required:
+                - stages
+              properties:
+                # Pipeline source
+                source:
+                  type: object
+                  description: "Source of pipeline configuration"
+                  properties:
+                    configMap:
+                      type: string
+                      description: "ConfigMap containing pipeline definition"
+                    secret:
+                      type: string
+                      description: "Secret containing pipeline definition"
+                    inline:
+                      type: object
+                      description: "Inline pipeline definition"
+                      x-kubernetes-preserve-unknown-fields: true
+
+                # Pipeline stages
+                stages:
+                  type: array
+                  description: "Pipeline stages"
+                  items:
+                    type: object
+                    required:
+                      - id
+                      - componentType
+                    properties:
+                      id:
+                        type: string
+                        description: "Stage identifier"
+                      name:
+                        type: string
+                        description: "Human-readable stage name"
+                      componentType:
+                        type: string
+                        description: "Component type (e.g., generator, http_request)"
+                      dependsOn:
+                        type: array
+                        description: "Stage dependencies"
+                        items:
+                          type: string
+                      config:
+                        type: object
+                        description: "Stage configuration"
+                        x-kubernetes-preserve-unknown-fields: true
+                      inputMapping:
+                        type: object
+                        description: "Input mapping from previous stages"
+                        x-kubernetes-preserve-unknown-fields: true
+
+                # Scheduling
+                schedule:
+                  type: string
+                  description: "Cron schedule (e.g., '0 * * * *' for hourly)"
+
+                # Triggers
+                triggers:
+                  type: object
+                  description: "Pipeline triggers"
+                  properties:
+                    webhook:
+                      type: object
+                      properties:
+                        enabled:
+                          type: boolean
+                        path:
+                          type: string
+                    event:
+                      type: object
+                      properties:
+                        sources:
+                          type: array
+                          items:
+                            type: string
+
+                # Resource requirements
+                resources:
+                  type: object
+                  description: "Resource requirements for execution"
+                  properties:
+                    requests:
+                      type: object
+                      properties:
+                        memory:
+                          type: string
+                        cpu:
+                          type: string
+                    limits:
+                      type: object
+                      properties:
+                        memory:
+                          type: string
+                        cpu:
+                          type: string
+
+                # Environment configuration
+                env:
+                  type: array
+                  description: "Environment variables"
+                  items:
+                    type: object
+                    required:
+                      - name
+                    properties:
+                      name:
+                        type: string
+                      value:
+                        type: string
+                      valueFrom:
+                        type: object
+                        properties:
+                          secretKeyRef:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                              key:
+                                type: string
+                          configMapKeyRef:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                              key:
+                                type: string
+
+                # Provider configuration
+                providers:
+                  type: object
+                  description: "LLM provider configuration"
+                  properties:
+                    default:
+                      type: string
+                      description: "Default provider name"
+                    anthropic:
+                      type: object
+                      properties:
+                        model:
+                          type: string
+                        secretRef:
+                          type: string
+                    openai:
+                      type: object
+                      properties:
+                        model:
+                          type: string
+                        secretRef:
+                          type: string
+
+                # Execution settings
+                timeout:
+                  type: string
+                  description: "Execution timeout (e.g., '5m', '1h')"
+
+                retries:
+                  type: integer
+                  description: "Number of retries on failure"
+                  default: 0
+                  minimum: 0
+
+                parallelism:
+                  type: boolean
+                  description: "Enable parallel stage execution"
+                  default: true
+
+                # Input/Output schemas
+                inputSchema:
+                  type: object
+                  description: "JSON Schema for pipeline inputs"
+                  x-kubernetes-preserve-unknown-fields: true
+
+                outputSchema:
+                  type: object
+                  description: "JSON Schema for pipeline outputs"
+                  x-kubernetes-preserve-unknown-fields: true
+
+                outputStageId:
+                  type: string
+                  description: "Stage to use for pipeline output"
+
+            status:
+              type: object
+              properties:
+                phase:
+                  type: string
+                  description: "Current phase"
+                  enum:
+                    - Pending
+                    - Ready
+                    - Running
+                    - Failed
+                    - Suspended
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      lastTransitionTime:
+                        type: string
+                        format: date-time
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                lastRunId:
+                  type: string
+                  description: "ID of the last run"
+                lastRunTime:
+                  type: string
+                  format: date-time
+                  description: "Time of last execution"
+                lastRunStatus:
+                  type: string
+                  description: "Status of last run"
+                  enum:
+                    - Succeeded
+                    - Failed
+                    - Running
+                nextScheduledRun:
+                  type: string
+                  format: date-time
+                  description: "Next scheduled run time"
+                observedGeneration:
+                  type: integer
+                  description: "Last observed generation"

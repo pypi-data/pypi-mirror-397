@@ -1,0 +1,204 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* shadcn/ui CSS Variables */
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 199 89% 48%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 199 89% 48%;
+  }
+}
+
+/* React Flow custom styles */
+.react-flow__node {
+  @apply rounded-lg border border-gray-200 bg-white shadow-sm;
+}
+
+.react-flow__node.selected {
+  @apply border-primary-500 ring-2 ring-primary-200;
+}
+
+.react-flow__handle {
+  @apply w-3 h-3 bg-gray-400 border-2 border-white;
+}
+
+.react-flow__handle-top {
+  @apply -top-1.5;
+}
+
+.react-flow__handle-bottom {
+  @apply -bottom-1.5;
+}
+
+/* Custom component styles */
+.node-card {
+  @apply p-3 min-w-[180px];
+}
+
+.node-card-header {
+  @apply flex items-center gap-2 mb-2;
+}
+
+.node-card-icon {
+  @apply w-8 h-8 rounded-lg flex items-center justify-center text-white;
+}
+
+.node-card-title {
+  @apply font-medium text-gray-900;
+}
+
+.node-card-type {
+  @apply text-xs text-gray-500;
+}
+
+/* Sidebar styles */
+.sidebar {
+  @apply w-64 bg-white border-r border-gray-200 flex flex-col h-full;
+}
+
+.sidebar-header {
+  @apply px-4 py-3 border-b border-gray-200;
+}
+
+.sidebar-content {
+  @apply flex-1 overflow-y-auto p-4;
+}
+
+/* Panel styles */
+.panel {
+  @apply bg-white border-l border-gray-200 w-80;
+}
+
+.panel-header {
+  @apply px-4 py-3 border-b border-gray-200 flex items-center justify-between;
+}
+
+.panel-content {
+  @apply p-4 overflow-y-auto;
+}
+
+/* Form styles */
+.form-group {
+  @apply mb-4;
+}
+
+.form-label {
+  @apply block text-sm font-medium text-gray-700 mb-1;
+}
+
+.form-input {
+  @apply w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm;
+}
+
+.form-select {
+  @apply w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm;
+}
+
+.form-textarea {
+  @apply w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm;
+}
+
+/* Button styles */
+.btn {
+  @apply inline-flex items-center justify-center px-4 py-2 border rounded-md font-medium text-sm transition-colors;
+}
+
+.btn-primary {
+  @apply bg-primary-600 text-white border-transparent hover:bg-primary-700;
+}
+
+.btn-secondary {
+  @apply bg-white text-gray-700 border-gray-300 hover:bg-gray-50;
+}
+
+.btn-danger {
+  @apply bg-red-600 text-white border-transparent hover:bg-red-700;
+}
+
+.btn-sm {
+  @apply px-3 py-1.5 text-xs;
+}
+
+/* Component palette item */
+.palette-item {
+  @apply p-3 rounded-lg border border-gray-200 bg-white cursor-grab hover:border-primary-300 hover:shadow-sm transition-all mb-2;
+}
+
+.palette-item:active {
+  @apply cursor-grabbing;
+}
+
+/* Execution trace styles */
+.trace-step {
+  @apply border-l-2 pl-4 pb-4 relative;
+}
+
+.trace-step::before {
+  @apply absolute -left-1.5 top-0 w-3 h-3 rounded-full bg-white border-2;
+  content: '';
+}
+
+.trace-step.success {
+  @apply border-green-300;
+}
+
+.trace-step.success::before {
+  @apply border-green-500;
+}
+
+.trace-step.error {
+  @apply border-red-300;
+}
+
+.trace-step.error::before {
+  @apply border-red-500;
+}
+
+.trace-step.running {
+  @apply border-blue-300;
+}
+
+.trace-step.running::before {
+  @apply border-blue-500 animate-pulse;
+}

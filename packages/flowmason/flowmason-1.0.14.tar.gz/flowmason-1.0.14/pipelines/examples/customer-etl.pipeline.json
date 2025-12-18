@@ -1,0 +1,37 @@
+{
+  "id": "customer-etl",
+  "name": "customer-etl",
+  "version": "1.0.0",
+  "description": "Customer data ETL pipeline - extends base-etl",
+  "extends": "base-etl",
+  "overrides": {
+    "transform": {
+      "component_type": "json_transform",
+      "input_mapping": {
+        "data": "{{stages.validate.output}}",
+        "mapping": {
+          "customer_id": "$.id",
+          "customer_name": "$.name"
+        }
+      }
+    }
+  },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "string",
+        "description": "Customer JSON data"
+      }
+    }
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "result": {
+        "type": "object"
+      }
+    }
+  },
+  "stages": []
+}
