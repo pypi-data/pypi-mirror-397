@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling", "hatch-requirements-txt"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+include = ["src/**"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src" = ""
+
+[tool.hatch.metadata.hooks.requirements_txt]
+files = ["requirements.txt"]
+
+[tool.pytest.ini_options]
+pythonpath = [
+  ".", "src",
+]
+
+[project]
+name = "ski-resort-lift-status"
+version = "1.0.0"
+authors = [
+  { name="NietoSkunk" },
+]
+dynamic = ["dependencies"]
+description = "Aggregated reporting of lift status at various ski resorts"
+readme = "README.md"
+requires-python = ">=3.0"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/NietoSkunk/ski-resort-lift-status"
+Issues = "https://github.com/NietoSkunk/ski-resort-lift-status/issues"
+Changelog = "https://github.com/NietoSkunk/ski-resort-lift-status/blob/main/CHANGELOG.md"
