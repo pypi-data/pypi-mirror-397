@@ -1,0 +1,42 @@
+[project]
+name = "holocron-sync"
+version = "1.1.0"
+description = "Holocron: The Ultimate Git Mirroring Tool"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "requests>=2.28.0",
+    "python-dotenv",
+]
+
+[project.scripts]
+holocron = "holocron.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/holocron"]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0.0",
+    "pytest-mock>=3.12.0",
+    "pytest-cov>=4.1.0",
+]
+
+[tool.pytest.ini_options]
+pythonpath = "src"
+norecursedirs = ["mirror-data", ".venv", ".git"]
+testpaths = ["tests"]
+
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+branches = { main = { match = "main" }, prerelease = { match = "pre-release", prerelease = true } }
+upload_to_pypi = false # We use the pypa/gh-action-pypi-publish action instead
+upload_to_release = true
+build_command = "pip install uv && uv build"
+commit_message = "chore(release): {version} [skip ci]"
+major_on_zero = true
+version_variables = ["src/holocron/config.py:__version__"]
