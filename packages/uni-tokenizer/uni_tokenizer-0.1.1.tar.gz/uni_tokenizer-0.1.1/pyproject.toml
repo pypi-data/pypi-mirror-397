@@ -1,0 +1,27 @@
+[project]
+name = "uni-tokenizer"
+version = "0.1.1"
+description = "Fast BPE tokenizer/trainer with a Rust core and Python bindings"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "numpy>=1.26",
+]
+
+[dependency-groups]
+dev = [
+  "requests>=2.32.5",
+]
+
+[tool.uv]
+cache-keys = [{file = "pyproject.toml"}, {file = "Cargo.toml"}, {file = "src/**/*.rs"}]
+
+[build-system]
+requires = ["maturin>=1.5,<2.0"]
+build-backend = "maturin"
+
+[tool.maturin]
+python-source = "python"
+module-name = "uni_tokenizer._lib"
+bindings = "pyo3"
+features = ["py"]
