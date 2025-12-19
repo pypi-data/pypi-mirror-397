@@ -1,0 +1,31 @@
+{% if scenario.tags|length > 0 -%}
+
+{% for tag in scenario.tags -%}
+{%- if tag.startswith('ID') -%}
+.. _{{ tag }}:
+
+{% endif -%}
+{%- endfor -%}
+
+
+{%- for tag in scenario.tags -%}
+{%- if tag.startswith('UN') -%}
+:ref:`@{{ tag }} <{{ tag }}>`
+{% else -%}
+@{{ tag }}
+{% endif -%}
+{%- endfor %}
+
+{% endif -%}
+
+Scenario: {{ scenario.name }}
+{{ '^' * (scenario.name|length + 11) }}
+
+.. list-table::
+    :widths: auto
+    :header-rows: 0
+{% for step in scenario.steps -%}
+{% set state.screenshots = screenshots_from_step(step) %}
+    * - {{ step.step_type }} {{ step.name }}
+      - :{{ status_to_style(step.status) }}:`{{ step.status }}`
+{%- endfor %}

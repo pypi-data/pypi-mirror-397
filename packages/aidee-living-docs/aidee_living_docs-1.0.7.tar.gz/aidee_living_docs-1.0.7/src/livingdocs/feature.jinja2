@@ -1,0 +1,35 @@
+{% set state = namespace() -%}
+.. role:: passed
+.. role:: failed
+.. role:: notrun
+.. role:: notimplemented
+.. role:: tags
+
+{{ feature.name }}
+{{ '=' * feature.name|length }}
+
+{% for line in feature.description -%}
+| {{ line }}
+{% endfor %}
+
+{%- if feature.scenarios|length != 0 %}
+Scenarios
+---------
+{% endif %}
+
+{%- for scenario in feature.scenarios %}
+{% include 'scenario.jinja2' %}
+{% endfor %}
+
+{%- for rule in feature.rules %}
+Rule: {{ rule.name }}
+{{ '-' * (rule.name|length + 6) }}
+
+{% for line in rule.description -%}
+| {{ line }}
+{% endfor %}
+
+{%- for scenario in rule.scenarios %}
+{% include 'scenario.jinja2' %}
+{% endfor %}
+{%- endfor %}
