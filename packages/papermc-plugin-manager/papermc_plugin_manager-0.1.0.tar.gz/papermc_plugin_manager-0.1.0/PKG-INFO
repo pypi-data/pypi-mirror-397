@@ -1,0 +1,84 @@
+Metadata-Version: 2.4
+Name: papermc-plugin-manager
+Version: 0.1.0
+Summary: A modern CLI tool for managing PaperMC server plugins
+Requires-Python: >=3.13
+Description-Content-Type: text/markdown
+Requires-Dist: colorama>=0.4.6
+Requires-Dist: logzero>=1.7.0
+Requires-Dist: pydantic>=2.12.5
+Requires-Dist: pyyaml>=6.0.3
+Requires-Dist: requests>=2.32.5
+Requires-Dist: rich>=14.2.0
+Requires-Dist: semantic-version>=2.10.0
+Requires-Dist: sqlalchemy>=2.0.45
+Requires-Dist: typer>=0.20.0
+
+# PaperMC Plugin Manager (ppm)
+
+A modern, user-friendly command-line tool for managing PaperMC server plugins. Built with Python and featuring intelligent caching, automatic updates, and beautiful console output powered by Rich.
+
+## Features
+
+- **Search**: Search for plugins across Modrinth with fuzzy matching
+- **Easy Installation**: Install plugins with a single command
+- **Version Management**: Upgrade, downgrade, or switch between specific versions
+- **Version Detection**: Automatically detects outdated plugins
+- **Installation Status**: See which plugins are installed at a glance
+
+## Screenshots
+
+**List installed plugins** - View all installed plugins with version information and update status:
+![ppm list](media/ppm_list.png)
+
+**Search for plugins** - Find plugins across Modrinth with fuzzy matching:
+![ppm search](media/ppm_search.png)
+
+**Show plugin details** - Display comprehensive plugin information including metadata and available versions:
+![ppm show](media/ppm_show.png)
+
+## Installation
+
+```bash
+pip install papermc-plugin-manager
+```
+
+Or using uv:
+
+```bash
+uv tool install papermc-plugin-manager
+```
+
+## Usage
+
+- List installed plugins:
+
+```bash
+ppm update
+ppm list
+```
+
+- Search for plugins:
+
+```bash
+ppm search <plugin-name>
+```
+
+- Show plugin details:
+
+```bash
+ppm show <plugin-name-or-id> [--version <version>]
+```
+
+- Install plugins:
+
+```bash
+# Latest release
+ppm install <plugin-name> [-y]
+
+# Specific version
+ppm install <plugin-name> --version <version> [-y]
+
+# Latest snapshot/beta
+ppm install <plugin-name> --snapshot [-y]
+```
