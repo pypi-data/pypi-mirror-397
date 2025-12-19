@@ -1,0 +1,1 @@
+# Obfuscator test suite
