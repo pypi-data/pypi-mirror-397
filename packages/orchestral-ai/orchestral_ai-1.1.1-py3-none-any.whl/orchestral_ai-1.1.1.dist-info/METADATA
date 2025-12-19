@@ -1,0 +1,232 @@
+Metadata-Version: 2.4
+Name: orchestral-ai
+Version: 1.1.1
+Summary: Production-ready AI framework for building LLM-powered applications with unified tool calling across multiple providers
+Author-email: Alex Roman <alex@orchestral.ai>
+License: Proprietary - All Rights Reserved
+Project-URL: Homepage, https://orchestral.ai
+Project-URL: Documentation, https://orchestral.ai/docs
+Project-URL: Issues, https://orchestral.ai/support
+Keywords: ai,llm,agent,anthropic,openai,claude,gpt,chatbot,assistant,framework,tool-calling,multi-provider
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: Other/Proprietary License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Software Development :: Libraries :: Application Frameworks
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+Requires-Dist: pydantic>=2.11.7
+Requires-Dist: anthropic>=0.64.0
+Requires-Dist: openai>=1.102.0
+Requires-Dist: google-generativeai>=0.8.3
+Requires-Dist: ollama>=0.5.1
+Requires-Dist: groq>=0.22.0
+Requires-Dist: mistralai>=1.2.0
+Requires-Dist: boto3>=1.35.0
+Requires-Dist: python-dotenv>=1.1.1
+Requires-Dist: numpy>=1.24.0
+Requires-Dist: pandas>=2.0.0
+Requires-Dist: matplotlib>=3.7.0
+Requires-Dist: scipy>=1.10.0
+Requires-Dist: requests>=2.28.0
+Requires-Dist: pillow>=10.0.0
+Requires-Dist: pexpect>=4.8.0; sys_platform != "win32"
+Requires-Dist: wexpect>=4.0.0; sys_platform == "win32"
+Requires-Dist: setuptools<81; sys_platform == "win32"
+Requires-Dist: rich>=13.0.0
+Requires-Dist: fastapi>=0.100.0
+Requires-Dist: uvicorn>=0.23.0
+Requires-Dist: websockets>=11.0.3
+Dynamic: requires-python
+
+<div align="center">
+  <img src="https://orchestral-ai.com/logo.png" alt="Orchestral AI" width="120">
+  <h1>Orchestral AI</h1>
+  <p><strong>Production-ready AI framework for building LLM-powered applications</strong></p>
+  <p>Unified tool calling across multiple providers • Web-based interface • Real-time streaming</p>
+</div>
+
+---
+
+## 🚀 Quick Start
+
+### Installation
+
+```bash
+pip install orchestral-ai
+```
+
+### Setup API Keys
+
+Create a `.env` file in your project directory:
+
+```env
+ANTHROPIC_API_KEY=sk-ant-...     # Get from https://console.anthropic.com/
+OPENAI_API_KEY=sk-proj-...       # Get from https://platform.openai.com/api-keys
+GOOGLE_API_KEY=AIza...           # Get from https://aistudio.google.com/app/apikey
+GROQ_API_KEY=gsk_...             # Get from https://console.groq.com/
+```
+
+At least one API key is required. We recommend starting with Anthropic's Claude.
+
+### Run the Web Interface
+
+```bash
+orchestral
+```
+
+The app will launch at `http://127.0.0.1:8000`
+
+⚠️ **Security Note:** By default, agents can execute code on your computer. Only use in trusted environments.
+
+---
+
+## 💡 Minimum Working Example
+
+Create powerful AI agents with just a few lines of code:
+
+```python
+import os
+from orchestral import Agent
+from orchestral.tools import (
+    RunCommandTool, RunPythonTool, WebSearchTool,
+    WriteFileTool, ReadFileTool, EditFileTool,
+    FileSearchTool, FindFilesTool, TodoWrite, TodoRead
+)
+from orchestral.tools.hooks import DangerousCommandHook, SafeguardHook
+from orchestral.llm import Claude
+from orchestral.prompts import BASIC_APP_PROMPT
+import app.server as app_server
+
+# Set up workspace
+base_directory = "workspace"
+os.makedirs(base_directory, exist_ok=True)
+
+# Configure tools
+tools = [
+    RunCommandTool(base_directory=base_directory),
+    RunPythonTool(base_directory=base_directory),
+    WriteFileTool(base_directory=base_directory),
+    ReadFileTool(base_directory=base_directory, show_line_numbers=True),
+    EditFileTool(base_directory=base_directory),
+    FindFilesTool(base_directory=base_directory),
+    FileSearchTool(base_directory=base_directory),
+    WebSearchTool(),
+    TodoRead(),
+    TodoWrite(),
+]
+
+# Add safety hooks
+hooks = [
+    SafeguardHook(),
+    DangerousCommandHook(),
+]
+
+# Create agent
+llm = Claude()
+agent = Agent(
+    llm=llm,
+    tools=tools,
+    tool_hooks=hooks,
+    system_prompt=BASIC_APP_PROMPT
+)
+
+# Launch web interface
+app_server.run_server(agent, host="127.0.0.1", port=8000, open_browser=True)
+```
+
+---
+
+## ✨ Features
+
+### Multi-Provider Support
+- **Anthropic** (Claude Sonnet, Haiku, Opus)
+- **OpenAI** (GPT-4, GPT-3.5)
+- **Google** (Gemini Pro)
+- **Groq** (Llama, Mixtral)
+- **Mistral AI**
+- **AWS Bedrock**
+- **Ollama** (local models)
+
+### Web-Based Interface
+- Beautiful, responsive chat interface
+- Real-time streaming responses
+- Conversation management (create, rename, duplicate, delete)
+- Persistent conversation history
+- Cost tracking across all providers
+- Undo/redo functionality
+- Keyboard shortcuts (Shift+Enter for new line, Esc to interrupt)
+
+### Powerful Tool System
+Built-in tools for common tasks:
+
+- **RunCommandTool** - Execute shell commands safely
+- **RunPythonTool** - Run Python code in isolated environment
+- **WriteFileTool** - Create and modify files
+- **ReadFileTool** - Read file contents with line numbers
+- **EditFileTool** - Smart file editing with find/replace
+- **FileSearchTool** - Search file contents (ripgrep)
+- **FindFilesTool** - Find files by name/pattern
+- **WebSearchTool** - Search the web for real-time information
+- **TodoWrite/TodoRead** - Task management
+- **DisplayImageTool** - Show images in the interface
+
+All file operations are scoped to a workspace directory for safety.
+
+### Safety & Security
+- **DangerousCommandHook** - Warns about potentially harmful commands
+- **SafeguardHook** - Prevents dangerous operations
+- **UserApprovalHook** - Requires confirmation for sensitive actions
+- **TruncateLinesHook** - Limits output size
+- Sandboxed file operations
+
+### Developer Experience
+- Simple, intuitive API
+- Extensible tool system - create custom tools easily
+- Hook system for pre/post-processing
+- Streaming support for real-time responses
+- Automatic cost tracking
+- Rich formatting (Markdown, LaTeX, code highlighting)
+- Context management with automatic summarization
+
+---
+
+## 📖 Documentation
+
+Visit [orchestral-ai.com/docs](https://orchestral-ai.com/docs) for comprehensive documentation, tutorials, and API reference.
+
+---
+
+## 🛠 Requirements
+
+- Python 3.12 or higher
+- At least one LLM provider API key
+
+---
+
+## 📝 License
+
+**Proprietary - All Rights Reserved**
+
+Copyright © 2024 Orchestral AI. All rights reserved.
+
+This software is proprietary and confidential. Unauthorized copying, distribution, modification, or use of this software, in whole or in part, is strictly prohibited without prior written permission from Orchestral AI.
+
+For licensing inquiries, contact: alex@orchestral.ai
+
+---
+
+## 🤝 Support
+
+- **Documentation**: [orchestral-ai.com/docs](https://orchestral-ai.com/docs)
+- **Issues**: [orchestral-ai.com/support](https://orchestral-ai.com/support)
+- **Email**: alex@orchestral.ai
+
+---
+
+<div align="center">
+  <p>Built with ❤️ by the Orchestral AI team</p>
+</div>
