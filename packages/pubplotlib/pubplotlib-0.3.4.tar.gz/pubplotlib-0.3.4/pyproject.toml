@@ -1,0 +1,55 @@
+# BUILD SYSTEM
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+# METADATA FOR THE PROJECT
+[project]
+name = "pubplotlib"
+dynamic = ["version"]
+description = "Make publication friendly plots easy!"
+authors = [
+    { name = "Pierpaolo Condò", email = "pierpaolo.condo@gmail.com" },
+    { name = "Michele Berretti", email = "michele.berretti1999@gmail.com" },
+    ]
+
+readme = "README.md"
+requires-python = ">=3.2"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+]
+license = { file = "LICENSE" }
+keywords = ["matplotlib", "publication", "plot", "figure", "science"]
+dependencies = [
+    "matplotlib>=3.4",   # for style and formatting features
+    "PyYAML>=5.3",       # for YAML file loading
+]
+
+# Optional dependencies
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "sphinx>=7.0",              # Updated for docutils 0.21.2 compatibility
+    "sphinx-rtd-theme>=1.0",
+    "myst-parser>=0.18",
+    "docutils>=0.18.1,<=0.21.2",
+]
+
+# This section links back to your GitHub repo
+[project.urls]
+Homepage = "https://github.com/pier-astro/PubPlotLib"
+Documentation = "https://pubplotlib.readthedocs.io"
+Repository = "https://github.com/pier-astro/PubPlotLib.git"
+Issues = "https://github.com/pier-astro/PubPlotLib/issues"
+Changelog = "https://github.com/pier-astro/PubPlotLib/releases"
+
+[tool.setuptools.dynamic]
+version = {attr = "pubplotlib._version.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.package-data]
+pubplotlib = ["assets/*"]
