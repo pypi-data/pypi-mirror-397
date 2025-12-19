@@ -1,0 +1,28 @@
+[build-system]
+requires = ["maturin>=1.10,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "wry_py"
+version = "0.1.1"
+description = "Python bindings for Wry/Tao"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    { name = "Jacob Walton", email = "jacob-walton@konpeki.co.uk" }
+]
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+
+[project.urls]
+Repository = "https://github.com/Jacob-Walton/wry_py"
+Issues = "https://github.com/Jacob-Walton/wry_py/issues"
+
+[tool.maturin]
+manifest-path = "rust/Cargo.toml"
+features = ["pyo3/extension-module"]
+module-name = "wry_py"
