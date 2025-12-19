@@ -1,0 +1,55 @@
+Metadata-Version: 2.4
+Name: frameclock
+Version: 1.0.0
+Summary: A lightweight Python frame counter and limiter library for small projects and simulations.
+Author-email: Your Name <youremail@example.com>
+License: MIT
+Project-URL: Source, https://github.com/NeoZett/Frames
+Project-URL: Tracker, https://github.com/NeoZett/Frames/issues
+Keywords: frame,fps,timer,game,simulation,clock
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Software Development :: Libraries
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: license-file
+
+# Frames
+
+**Frames** is a lightweight Python frame counter and limiter library.  
+It provides:
+
+- Frame rate measurement (`FrameCounter`)
+- Frame rate limiting (`FrameLimit`)
+- A convenient singleton `Clock` for small projects
+- Loop utilities with `BREAK` sentinel
+
+## Installation
+
+```bash
+pip install frameclock
+```
+
+## Usage
+
+```python
+from Frames import FrameCounter, FrameLimit, clock, BREAK
+
+# Frame counter
+counter = FrameCounter()
+print(counter.stamp())
+
+# Frame limiter
+limit = FrameLimit(60)
+limit.wait(update=True)
+
+# Clock singleton
+clock.target_fps(60)
+clock.wait(update=True)
+```
+
+## Licence
+
+MIT License
