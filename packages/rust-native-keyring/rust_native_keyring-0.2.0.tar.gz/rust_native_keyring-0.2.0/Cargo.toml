@@ -1,0 +1,36 @@
+[package]
+authors = ["Daniel Brotsky <dev@brotsky.com>"]
+description = "Sample code and CLI for the Rust Keyring"
+readme = "README.md"
+repository = "https://github.com/open-source-cooperative/keyring-rs"
+homepage = "https://github.com/open-source-cooperative/keyring-rs/wiki/Keyring"
+keywords = ["password", "credential", "keychain", "keyring", "cross-platform"]
+license = "MIT OR Apache-2.0"
+name = "keyring"
+version = "4.0.0-alpha.4"
+rust-version = "1.88.0"     # uses let chains
+edition = "2024"
+exclude = ["python"]
+
+[dependencies]
+base64 = "0.22.1"
+clap = { version = "4.5.53", features = ["derive"] }
+keyring-core = { version = "0.7", features = ["sample"] }
+rpassword = "7.4.0"
+rprompt = "2.2.0"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+apple-native-keyring-store = { version = "0.2", features = ["keychain", "protected"] }
+
+[target.'cfg(target_os = "ios")'.dependencies]
+apple-native-keyring-store = { version = "0.2", features = ["protected"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+linux-keyutils-keyring-store = { version = "0.2" }
+
+[target.'cfg(any(target_os = "linux", target_os = "freebsd"))'.dependencies]
+dbus-secret-service-keyring-store = { version = "0.3", features = ["crypto-rust", "vendored"] }
+zbus-secret-service-keyring-store = { version = "0.2", features = ["rt-async-io-crypto-rust"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-native-keyring-store = { version = "0.4" }
