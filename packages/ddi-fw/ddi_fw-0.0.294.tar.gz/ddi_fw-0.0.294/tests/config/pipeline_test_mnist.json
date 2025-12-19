@@ -1,0 +1,54 @@
+{
+    "experiments": [
+        {
+            "type": "general",
+            "library": "tensorflow",
+            "experiment_name": "Pipeline-Test-2",
+            "experiment_description": "This is a test experiment for pipeline.",
+            "default_model": {
+                "model_type": "tests.config.models.create_model",
+                "params": {
+                    "batch_size": 32,
+                    "epochs": 150
+                }
+            },
+            "tracking_config": {
+                "use_tracking": true,
+                "library": "mlflow",
+                "params": {
+                    "mlflow": {
+                        "experiment_name": "Enhancement of ddi classification",
+                        "tracking_uri": "sqlite:///tests/mlflow.db",
+                        "artifact_location": "tests/mlruns",
+                        "experiment_tags": {
+                            "project_name": "Pipeline-Test-1",
+                            "project_quarter": "Q1-2025",
+                            "mlflow.note.content": "This is a test experiment for pipeline."
+                        }
+                    }
+                }
+            },
+            "dataset": {
+                "dataset_type": "tests.config.mnist_dataset.MNISTDataset",
+                "dataset_splitter_type": "ddi_fw.datasets.dataset_splitter.DatasetSplitter",
+                "columns": [
+                    "image"
+                ],
+                "input_processing": [{"column":"image","reshape": [784, 1], "normalize": true }],
+                "additional_config": {}
+            },
+            "multi_modal": [
+                {
+                    "force_stack": false,
+                    "name": "image",
+                    "input": "image",
+                    "model_type": "tests.config.models.CNN",
+                    "params": {
+                        "batch_size": 32,
+                        "epochs": 50
+                    }
+                }
+            ]
+        }
+    ]
+}

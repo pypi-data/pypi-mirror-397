@@ -1,0 +1,75 @@
+{
+"experiments": [
+    {
+        "type": "general",
+        "library": "tensorflow",
+        "experiment_name": "OpenFDA Dataset Experiment",
+        "experiment_description": "",
+        "default_model": {
+                "model_type": "experiment_configurations.models.DNN",
+                "params": {
+                    "batch_size": 128,
+                    "epochs": 100
+                }
+        },
+        "multi_modal": [
+            {
+                "name": "together",
+                "force_stack": false,
+                "inputs": ["description_embedding","clinical_pharmacology_embedding"],
+                "model_type": "experiment_configurations.models.DNN",
+                "params": {
+                    "batch_size": 128,
+                    "epochs": 100
+                }
+            }
+        ],
+        "tracking_config": {
+            "use_tracking": "true",
+            "library": "mlflow",
+            "params": {
+                "mlflow": {
+                    "tracking_uri": "sqlite:///tests/mlflow.db",
+                    "artifact_location": "tests/mlflow",
+                    "experiment_tags": {
+                        "project_name": "OpenFDA Dataset Experiment",
+                        "project_quarter": "Q3-2025",
+                        "mlflow.note.content": ""
+                    }
+                }
+            }
+        },
+        "dataset": {
+            "dataset_type": "datasets.openfda.OpenFDADataset",
+            "dataset_splitter_type": "ddi_fw.datasets.DatasetSplitter",
+            "columns": [
+                "description", "clinical_pharmacology" 
+            ],
+            "input_processing": [
+                    {
+                        "column": "description_embedding",
+                        "flatten":true,
+                        "stack": true
+                    },
+                    {
+                        "column": "clinical_pharmacology_embedding",
+                        "flatten":true,
+                        "stack": true
+                    } 
+            ],
+            "additional_config": {
+                "min_event_category_count": 5,
+                "symmetric": true,
+                "filter_columns":[
+                  "description","clinical_pharmacology"
+                ]
+            }
+        },
+        "vector_databases": {
+            "db_type": "ddi_fw.langchain.FaissVectorStoreManager",
+            "vector_db_persist_directory": "C:/Users/admin/.cache/kagglehub/datasets/kivancbayraktar/c8c6ab09-dbbd-4a57-8241-c81209bcbfcd/versions/1/faiss/openfda-deneme-all-mpnet-base-v2/no_op",
+            "embedding_pooling_strategy": "ddi_fw.langchain.SumPoolingStrategy"
+        }
+    }
+]
+}
