@@ -1,0 +1,312 @@
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import QtQuick.Controls.Basic as Basic
+import Theme 1.0
+
+ColumnLayout {
+    id: imgBinControls
+    Layout.leftMargin: 10
+    Layout.preferredHeight: 120
+    Layout.preferredWidth: parent.width
+    Layout.alignment: Qt.AlignTop
+    spacing: 10
+    visible: imageController.display_image()
+    enabled: imageController.enable_img_controls()
+
+    property int idRole: Qt.UserRole + 1
+    property int valueRole: Qt.UserRole + 4
+    property int btnWidthSize: 100
+    property int spbWidthSize: 170
+    property int sldWidthSize: 140
+    property int lblWidthSize: 50
+
+    ButtonGroup {
+        id: btnGrpBinary
+        property bool currentCheckedButton: rdoGlobal
+        property bool clickedChange: false
+        exclusive: true
+        onCheckedButtonChanged: {
+            if (clickedChange) {
+                clickedChange = false
+                return
+            }
+
+            if (currentCheckedButton !== checkedButton) {
+                currentCheckedButton = checkedButton;
+                var val = checkedButton === rdoGlobal ? 0 : checkedButton === rdoAdaptive ? 1 : 2;
+                var index = imgBinFilterModel.index(0, 0);
+                imgBinFilterModel.setData(index, val, valueRole);
+                imageController.apply_changes("");
+            }
+        }
+        onClicked: {
+            clickedChange = true;
+            currentCheckedButton = checkedButton;
+            var val = checkedButton === rdoGlobal ? 0 : checkedButton === rdoAdaptive ? 1 : 2;
+            var index = imgBinFilterModel.index(0, 0);
+            imgBinFilterModel.setData(index, val, valueRole);
+            imageController.apply_changes("binary");
+        }
+    }
+
+
+    Text {
+        text: "Binary Filters"
+        font.pixelSize: 12
+        font.bold: true
+        color: Theme.text
+        Layout.alignment: Qt.AlignHCenter
+    }
+
+    RowLayout {
+
+        Basic.RadioButton {
+            id: rdoAdaptive
+            text: "Adaptive"
+            font.pixelSize: 11
+            //implicitHeight: itemHeight
+            Layout.preferredWidth: btnWidthSize
+            ButtonGroup.group: btnGrpBinary
+            onClicked: btnGrpBinary.checkedButton = this
+            // Smaller radio indicator
+            indicator: Rectangle {
+                width: 14
+                height: 14
+                radius: 7
+                y: (rdoAdaptive.height - height) / 2   // center vertically
+                border.color: rdoAdaptive.checked ? Theme.dodgerBlue : Theme.text
+                border.width: 2
+                color: "transparent"
+
+                Rectangle {
+                    visible: rdoAdaptive.checked
+                    width: 8
+                    height: 8
+                    radius: 4
+                    anchors.centerIn: parent
+                    color: Theme.darkGray
+                }
+            }
+            contentItem: Label {
+                text: rdoAdaptive.text
+                font: rdoAdaptive.font
+                color: Theme.text
+                verticalAlignment: Text.AlignVCenter
+                leftPadding: rdoAdaptive.indicator.width + 6
+            }
+        }
+
+        SpinBox {
+            // ONLY ODD NUMBERS
+            id: spbAdaptive
+            Layout.minimumWidth: spbWidthSize
+            //Layout.fillWidth: true
+            from: 1
+            to: 999
+            stepSize: 2
+            value: 11 // "adaptive_local_threshold_value"
+            editable: true  // Allow user input
+            enabled: rdoAdaptive.checked
+            onValueChanged: {
+                if (value % 2 === 0) {
+                    value = value - 1;  // Convert even input to the nearest odd
+                }
+
+                var index = imgBinFilterModel.index(2, 0);
+                imgBinFilterModel.setData(index, value, valueRole);
+                imageController.apply_changes("");
+            }
+            validator: IntValidator {
+                bottom: spbAdaptive.from; top: spbAdaptive.to
+            }
+        }
+    }
+
+    RowLayout {
+
+        Basic.RadioButton {
+            id: rdoGlobal
+            text: "Global"
+            font.pixelSize: 11
+            Layout.preferredWidth: btnWidthSize
+            ButtonGroup.group: btnGrpBinary
+            onClicked: btnGrpBinary.checkedButton = this
+            // Smaller radio indicator
+            indicator: Rectangle {
+                width: 14
+                height: 14
+                radius: 7
+                y: (rdoGlobal.height - height) / 2   // center vertically
+                border.color: rdoGlobal.checked ? Theme.dodgerBlue : Theme.text
+                border.width: 2
+                color: "transparent"
+
+                Rectangle {
+                    visible: rdoGlobal.checked
+                    width: 8
+                    height: 8
+                    radius: 4
+                    anchors.centerIn: parent
+                    color: Theme.darkGray
+                }
+            }
+            contentItem: Label {
+                text: rdoGlobal.text
+                font: rdoGlobal.font
+                color: Theme.text
+                verticalAlignment: Text.AlignVCenter
+                leftPadding: rdoGlobal.indicator.width + 6
+            }
+        }
+
+        Slider {
+            id: sldGlobal
+            Layout.minimumWidth: sldWidthSize
+            Layout.fillWidth: true
+            from: 1
+            to: 255
+            stepSize: 1
+            value: 127  //"global_threshold_value"
+            enabled: rdoGlobal.checked
+            onValueChanged: {
+                var index = imgBinFilterModel.index(1, 0);
+                imgBinFilterModel.setData(index, value, valueRole);
+                imageController.apply_changes("");
+            }
+        }
+
+        Label {
+            id: lblGlobal
+            font.pixelSize: 11
+            Layout.preferredWidth: lblWidthSize
+            text: Number(sldGlobal.value).toFixed(0) // Display one decimal place
+            color: Theme.text
+            enabled: rdoGlobal.checked
+        }
+
+    }
+
+    Basic.RadioButton {
+        id: rdoOtsu
+        text: "OTSU"
+        font.pixelSize: 11
+        Layout.preferredWidth: btnWidthSize
+        ButtonGroup.group: btnGrpBinary
+        onClicked: btnGrpBinary.checkedButton = this
+        // Smaller radio indicator
+        indicator: Rectangle {
+            width: 14
+            height: 14
+            radius: 7
+            y: (rdoOtsu.height - height) / 2   // center vertically
+            border.color: rdoOtsu.checked ? Theme.dodgerBlue : Theme.text
+            border.width: 2
+            color: "transparent"
+
+            Rectangle {
+                visible: rdoOtsu.checked
+                width: 8
+                height: 8
+                radius: 4
+                anchors.centerIn: parent
+                color: Theme.darkGray
+            }
+        }
+        contentItem: Label {
+            text: rdoOtsu.text
+            font: rdoOtsu.font
+            color: Theme.text
+            verticalAlignment: Text.AlignVCenter
+            leftPadding: rdoOtsu.indicator.width + 6
+        }
+    }
+
+    Basic.CheckBox {
+        id: cbxDarkFg
+        text: "Apply Dark Foreground"
+        font.pixelSize: 11
+        property bool clickedChange: false
+        property bool isChecked: false
+        checked: false
+        // Custom indicator
+        indicator: Rectangle {
+            width: 14
+            height: 14
+            radius: 3                       // slightly rounded corners
+            anchors.verticalCenter: parent.verticalCenter
+            border.color: cbxDarkFg.checked ? Theme.dodgerBlue : Theme.text
+            border.width: 2
+            color: "transparent"
+
+            // Inner "check mark"
+            Rectangle {
+                visible: cbxDarkFg.checked
+                width: 8
+                height: 8
+                radius: 1
+                anchors.centerIn: parent
+                color: Theme.darkGray
+            }
+        }
+        contentItem: Label {
+            text: cbxDarkFg.text
+            font: cbxDarkFg.font
+            color: Theme.text
+            verticalAlignment: Text.AlignVCenter
+            leftPadding: cbxDarkFg.indicator.width + 6
+        }
+        onCheckedChanged: {
+            if (clickedChange) {
+                clickedChange = false
+                return
+            }
+
+            if (isChecked !== checked) {
+                isChecked = checked;
+                var val = checked === true ? 1 : 0;
+                var index = imgBinFilterModel.index(4, 0);
+                imgBinFilterModel.setData(index, val, valueRole);
+                imageController.apply_changes("");
+            }
+        }
+        onClicked: {
+            clickedChange = true;
+            isChecked = checked;
+            var val = checked === true ? 1 : 0;
+            var index = imgBinFilterModel.index(4, 0);
+            imgBinFilterModel.setData(index, val, valueRole);
+            imageController.apply_changes("binary");
+        }
+    }
+
+    function initializeSelections() {
+        for (let row = 0; row < imgBinFilterModel.rowCount(); row++) {
+            var index = imgBinFilterModel.index(row, 0);
+            let item_id = imgBinFilterModel.data(index, idRole);  // IdRole
+            let item_val = imgBinFilterModel.data(index, valueRole); // ValueRole
+
+            if (item_id === "threshold_type") {
+                btnGrpBinary.checkedButton = item_val === 2 ? rdoOtsu : item_val === 1 ? rdoAdaptive : rdoGlobal;
+            } else if (item_id === "global_threshold_value") {
+                sldGlobal.value = item_val;
+            } else if (item_id === "adaptive_local_threshold_value") {
+                spbAdaptive.value = item_val;
+            } else if (item_id === "apply_dark_foreground") {
+                cbxDarkFg.checked = item_val === 1;
+            }
+        }
+    }
+
+    Connections {
+        target: mainController
+
+        function onImageChangedSignal() {
+            // Force refresh
+            imgBinControls.visible = imageController.display_image();
+            imgBinControls.enabled = imageController.enable_img_controls();
+            initializeSelections();
+        }
+
+    }
+}
