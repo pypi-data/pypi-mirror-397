@@ -1,0 +1,36 @@
+# SPDX-FileCopyrightText: 2023-present MTS PJSC
+# SPDX-License-Identifier: Apache-2.0
+from __future__ import annotations
+
+import json
+from typing import TYPE_CHECKING
+
+from cryptography.fernet import Fernet
+
+if TYPE_CHECKING:
+    from syncmaster.scheduler.settings import SchedulerAppSettings
+    from syncmaster.server.settings import ServerAppSettings
+    from syncmaster.worker.settings import WorkerAppSettings
+
+
+def decrypt_auth_data(
+    value: str,
+    settings: WorkerAppSettings | SchedulerAppSettings | ServerAppSettings,
+) -> dict:
+    decryptor = Fernet(settings.encryption.secret_key)
+    decrypted = decryptor.decrypt(value)
+    return json.loads(decrypted)
+
+
+def encrypt_auth_data(
+    value: dict,
+    settings: WorkerAppSettings | SchedulerAppSettings | ServerAppSettings,
+) -> str:
+    encryptor = Fernet(settings.encryption.secret_key)
+    serialized = json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+    )
+    encrypted = encryptor.encrypt(serialized.encode("utf-8"))
+    return encrypted.decode("utf-8")
