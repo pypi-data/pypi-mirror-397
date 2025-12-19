@@ -1,0 +1,71 @@
+[project]
+name = "crowdstrike-aidr-mcpscanner"
+version = "0.1.0"
+description = "A command-line tool for analyzing MCP servers."
+readme = "README.md"
+license = "MIT"
+authors = [
+    { name = "CrowdStrike", email = "support@crowdstrike.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "crowdstrike-aidr ~=0.4.0",
+    "cyclopts ~=4.3.0",
+    "fastembed ~=0.7.4",
+    "fastmcp ~=2.13.3",
+    "mcp ~=1.22.0",
+    "pydantic ~=2.12.5",
+    "pyjson5 ~=2.0.0",
+    "rich ~=14.2.0",
+    "scipy ~=1.16.3",
+]
+
+[dependency-groups]
+dev = [
+    "mypy ==1.19.0",
+    "ruff ==0.14.8",
+    "scipy-stubs ==1.16.3.3",
+]
+gpu = [
+    "fastembed-gpu ~=0.7.4",
+]
+
+[project.scripts]
+mcpscanner = "mcpscanner:app"
+
+[build-system]
+requires = ["uv_build==0.9.17"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "mcpscanner"
+
+[tool.mypy]
+plugins = ["pydantic.mypy"]
+disallow_any_generics = true
+disallow_untyped_defs = true
+follow_imports = "silent"
+no_implicit_reexport = false
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "I",   # isort
+    "PTH", # flake8-use-pathlib
+    "SIM", # flake8-simplify
+    "TC",  # flake8-type-checking
+    "UP",  # pyupgrade
+]
+flake8-type-checking.runtime-evaluated-base-classes = ["pydantic.BaseModel", "mcp.types.Tool"]
