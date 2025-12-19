@@ -1,0 +1,20 @@
+"""Constants used throughout the Coda SDK."""
+
+# Environment Variable Names
+ENV_CODA_API_GROUP_ID = "CODA_API_GROUP_ID"
+ENV_CODA_API_URL = "CODA_API_URL"
+ENV_CODA_API_TOKEN = "CODA_API_TOKEN"
+ENV_CODA_API_INSECURE_SKIP_VERIFY = "CODA_API_INSECURE_SKIP_VERIFY"
+ENV_CODA_CLI_EXE = "CODA_CLI_EXE"
+ENV_NO_CODA_EXE = "NO_CODA_EXE"
+
+# Default Values
+DEFAULT_API_URL = "https://v2.coda.sprocket.systems"
+DEFAULT_PROGRAM_ID = "program-1"
+DEFAULT_BIT_DEPTH = 24
+DEFAULT_SAMPLE_RATE = 48000
+INSECURE_SKIP_VERIFY_VALUES = ("true", "1", "yes")
+
+# URL Prefixes
+URL_PREFIX_S3 = "s3://"
+URL_PREFIX_IO = "io://"
