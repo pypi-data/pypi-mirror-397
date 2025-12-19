@@ -1,0 +1,188 @@
+# =============================================================================
+# DVT-Core MANIFEST.in - Closed Source Binary Distribution
+# =============================================================================
+# This file controls what goes into the wheel package.
+# DVT v0.52.0: Binary distribution with Cython-compiled modules.
+# =============================================================================
+
+# =============================================================================
+# INCLUDE: Compiled binary extensions
+# =============================================================================
+# These are the Cython-compiled modules (.so on Linux, .dylib on macOS)
+
+# Root dbt module compiled files
+recursive-include dbt *.so
+recursive-include dbt *.dylib
+recursive-include dbt *.pyd
+
+# =============================================================================
+# INCLUDE: Required Python files (cannot be compiled)
+# =============================================================================
+# These must remain as Python source due to:
+# - Entry points (sys.path manipulation)
+# - Click decorators (dynamic)
+# - Namespace packages (pkgutil.extend_path)
+# - Abstract base classes (polymorphism)
+# - Dynamic imports (plugin patterns)
+# - Manifest introspection (runtime reflection)
+
+# Entry point package
+include dvt_cli/__init__.py
+include dvt_cli/*.py
+
+# CLI modules (Click decorators)
+include dbt/cli/__init__.py
+include dbt/cli/*.py
+
+# Namespace package roots
+include dbt/__init__.py
+include dbt/compute/__init__.py
+include dbt/config/__init__.py
+
+# Strategy files (abstract + dynamic dispatch)
+include dbt/compute/strategies/__init__.py
+include dbt/compute/strategies/*.py
+
+# Engine files (multi-strategy dispatch)
+include dbt/compute/engines/__init__.py
+include dbt/compute/engines/*.py
+
+# Metadata module (registry, store)
+include dbt/compute/metadata/__init__.py
+include dbt/compute/metadata/*.py
+
+# Federated executor (manifest introspection)
+include dbt/compute/federated_executor.py
+
+# Task files (adapter factory, CLI)
+include dbt/task/__init__.py
+include dbt/task/*.py
+
+# =============================================================================
+# INCLUDE: dbt-core inherited files (cannot be compiled)
+# =============================================================================
+# These are part of the dbt-core base that DVT inherits
+
+recursive-include dbt/artifacts *.py
+recursive-include dbt/clients *.py
+recursive-include dbt/context *.py
+recursive-include dbt/contracts *.py
+recursive-include dbt/deps *.py
+recursive-include dbt/events *.py
+recursive-include dbt/event_time *.py
+recursive-include dbt/graph *.py
+recursive-include dbt/materializations *.py
+recursive-include dbt/parser *.py
+recursive-include dbt/plugins *.py
+recursive-include dbt/runners *.py
+recursive-include dbt/tests *.py
+recursive-include dbt/utils *.py
+recursive-include dbt/docs *.py
+
+# Top-level dbt modules
+include dbt/*.py
+
+# =============================================================================
+# INCLUDE: Static assets and templates
+# =============================================================================
+
+# Starter project templates (Jinja SQL, YAML configs)
+recursive-include dbt/include *.py *.sql *.yml *.html *.md *.csv *.duckdb .gitkeep .gitignore
+
+# Documentation server HTML
+recursive-include dbt/task/docs *.html
+
+# JSON schemas for validation
+recursive-include dbt/jsonschemas *.json
+
+# Type hints marker
+include dbt/py.typed
+
+# =============================================================================
+# INCLUDE: License and documentation
+# =============================================================================
+
+include LICENSE
+include LICENSE_DVT
+include NOTICES
+include README.md
+
+# =============================================================================
+# GLOBAL EXCLUDES
+# =============================================================================
+
+# Exclude Python cache and compiled files
+global-exclude __pycache__
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude .DS_Store
+global-exclude *.egg-info
+
+# Exclude development files
+global-exclude .git*
+global-exclude .pre-commit*
+global-exclude tox.ini
+global-exclude pytest.ini
+global-exclude .coverage
+global-exclude *.log
+
+# =============================================================================
+# EXCLUDE: DVT compiled modules (MUST be after includes to take precedence)
+# =============================================================================
+# v0.57.0: Exclude ONLY modules that are Cython-compiled
+# IMPORTANT: Package __init__.py files are NOT compiled (they need to remain
+# as .py files so Python recognizes directories as packages).
+# These excludes MUST come AFTER the includes to override them
+
+# Core Query Analysis
+exclude dbt/query_analyzer.py
+
+# Configuration
+exclude dbt/config/dvt_profile.py
+exclude dbt/config/compute.py
+
+# Task Commands (DVT-specific CLI)
+exclude dbt/task/metadata.py
+exclude dbt/task/target_sync.py
+exclude dbt/task/compute.py
+exclude dbt/task/profile.py
+exclude dbt/task/java.py
+exclude dbt/task/spark.py
+exclude dbt/task/init.py
+exclude dbt/task/docs/serve.py
+# NOTE: dbt/task/docs/api/__init__.py is NOT excluded (must remain as .py)
+exclude dbt/task/docs/api/catalog.py
+exclude dbt/task/docs/api/lineage.py
+exclude dbt/task/docs/api/profile.py
+exclude dbt/task/docs/api/spark.py
+
+# Compute Layer (Base)
+# NOTE: dbt/compute/__init__.py is NOT excluded (must remain as .py)
+exclude dbt/compute/federated_executor.py
+exclude dbt/compute/smart_selector.py
+exclude dbt/compute/filter_pushdown.py
+exclude dbt/compute/jdbc_utils.py
+exclude dbt/compute/jar_provisioning.py
+exclude dbt/compute/java_compat.py
+
+# Compute Engines
+# NOTE: dbt/compute/engines/__init__.py is NOT excluded (must remain as .py)
+exclude dbt/compute/engines/spark_engine.py
+
+# Compute Strategies
+# NOTE: dbt/compute/strategies/__init__.py is NOT excluded (must remain as .py)
+exclude dbt/compute/strategies/base.py
+exclude dbt/compute/strategies/local.py
+exclude dbt/compute/strategies/standalone.py
+exclude dbt/compute/strategies/emr.py
+exclude dbt/compute/strategies/dataproc.py
+
+# Metadata Architecture
+# NOTE: dbt/compute/metadata/__init__.py is NOT excluded (must remain as .py)
+exclude dbt/compute/metadata/adapters_registry.py
+exclude dbt/compute/metadata/registry.py
+exclude dbt/compute/metadata/store.py
+
+# Exclude Cython build artifacts (should not be in wheel)
+global-exclude *.c
+global-exclude *.h
