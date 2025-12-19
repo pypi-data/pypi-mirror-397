@@ -1,0 +1,385 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Axial Dispersion closed-closed &#8212; rtdpy 0.6.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Axial Dispersion open-open" href="AxialDispersion_oo.html" />
+    <link rel="prev" title="Plug Flow Reactor" href="Pfr.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  <div class="document">
+    
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">rtdpy</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="NCstr.html">Tanks in Series</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Pfr.html">Plug Flow Reactor</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Axial Dispersion closed-closed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AxialDispersion_oo.html">Axial Dispersion open-open</a></li>
+<li class="toctree-l1"><a class="reference internal" href="AxialDispersion_hi_peclet.html">Axial Dispersion Large Peclet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Convection.html">Convection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Zusatz.html">Zusatz</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Combinations.html">Combinations of Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Arbitrary.html">Arbitrary RTD Model</a></li>
+<li class="toctree-l1"><a class="reference internal" href="RTD.html">Base RTD class</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="Pfr.html" title="previous chapter">Plug Flow Reactor</a></li>
+      <li>Next: <a href="AxialDispersion_oo.html" title="next chapter">Axial Dispersion open-open</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-rtdpy.ad_cc">
+<span id="axial-dispersion-closed-closed"></span><h1>Axial Dispersion closed-closed<a class="headerlink" href="#module-rtdpy.ad_cc" title="Permalink to this headline">¶</a></h1>
+<p>Closed-closed axial dispersion model</p>
+<dl class="py class">
+<dt id="rtdpy.ad_cc.AD_cc">
+<em class="property">class </em><code class="sig-prename descclassname">rtdpy.ad_cc.</code><code class="sig-name descname">AD_cc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tau</span></em>, <em class="sig-param"><span class="n">peclet</span></em>, <em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="n">time_end</span></em>, <em class="sig-param"><span class="n">nx</span><span class="o">=</span><span class="default_value">200</span></em>, <em class="sig-param"><span class="n">a</span><span class="o">=</span><span class="default_value">10000</span></em>, <em class="sig-param"><span class="n">rtol</span><span class="o">=</span><span class="default_value">1e-05</span></em>, <em class="sig-param"><span class="n">atol</span><span class="o">=</span><span class="default_value">1e-10</span></em>, <em class="sig-param"><span class="n">max_step</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rtdpy/ad_cc.html#AD_cc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rtdpy.ad_cc.AD_cc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="RTD.html#rtdpy.rtd.RTD" title="rtdpy.rtd.RTD"><code class="xref py py-class docutils literal notranslate"><span class="pre">rtdpy.rtd.RTD</span></code></a></p>
+<p>Create Axial Dispersion with closed-closed boundary conditions
+Residence Time Distribution (RTD) model. <a class="reference internal" href="#ra6f86343c980-1" id="id1">[1]</a> <a class="reference internal" href="#ra6f86343c980-2" id="id2">[2]</a></p>
+<p>Solution of equation</p>
+<div class="math notranslate nohighlight">
+\[\frac{\partial C}{\partial \theta}
+= \frac{1}{Pe}\frac{\partial^2 C}{\partial z^2}
+- \frac{\partial C}{\partial z}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\theta = t/\tau\)</span> is dimensionless time,
+<span class="math notranslate nohighlight">\(z\)</span> is dimensionless length, and an impulse input at z=0
+with Danckwerts BCs</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}E(t) = C(z=1, t)\\
+C_{in} = \delta(t)\\
+C_{in} = C\rvert_{z=0}
+- \frac{1}{Pe}\frac{\partial C}{\partial z}\biggr\rvert_{z=0}\\
+\frac{\partial C}{\partial z} = 0, z=1\end{split}\]</div>
+<p>and initial conditions</p>
+<div class="math notranslate nohighlight">
+\[C=0 \text{ for } t=0\]</div>
+<p>The inpulse input is approximated by a fast exponential.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>tau</strong><span class="classifier">scalar</span></dt><dd><p>L/U or mean residence time.
+<code class="docutils literal notranslate"><span class="pre">tau&gt;0</span></code></p>
+</dd>
+<dt><strong>peclet</strong><span class="classifier">scalar</span></dt><dd><p>Reactor Peclet number (L*U/D).
+<code class="docutils literal notranslate"><span class="pre">peclet&gt;0</span></code></p>
+</dd>
+<dt><strong>dt</strong><span class="classifier">scalar</span></dt><dd><p>Time step for RTD.
+<code class="docutils literal notranslate"><span class="pre">dt&gt;0</span></code></p>
+</dd>
+<dt><strong>time_end</strong><span class="classifier">scalar</span></dt><dd><p>End time for RTD.
+<code class="docutils literal notranslate"><span class="pre">time_end&gt;0</span></code></p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Other Parameters</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>nx</strong><span class="classifier">optional</span></dt><dd><p>Number of points to discretize 1D PDE. Default is 200.</p>
+</dd>
+<dt><strong>a</strong><span class="classifier">optional</span></dt><dd><p>Rate at which to introduce material.
+The inverse of a is the approximate amount of time to resolve the
+impulse input. Default is 10000.</p>
+</dd>
+<dt><strong>rtol</strong><span class="classifier">optional</span></dt><dd><p>Relative tolerance to use in ODE solver. Default is 1e-5</p>
+</dd>
+<dt><strong>atol</strong><span class="classifier">optional</span></dt><dd><p>Absolute tolerance to use in ODE solver. Default is 1e-10.</p>
+</dd>
+<dt><strong>max_step</strong><span class="classifier">optional</span></dt><dd><p>Maximum time step size (dimensionless) to use in ODE solver.
+Default is 0.01.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="ra6f86343c980-1"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dd><p>Pearson J.R.A. (1959) A note on the “Danckwerts” boundary conditions
+for continuous flow reactors. “Chemical Engineering Science”, 6,
+281-284.</p>
+</dd>
+<dt class="label" id="ra6f86343c980-2"><span class="brackets"><a class="fn-backref" href="#id2">2</a></span></dt>
+<dd><p>Danckwerts P.V. (1953) Continuous flow systems: Distribution of
+Residence Times. “Chemical Engineering Science”, 2, 1-13.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">rtdpy</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">pe</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">100</span><span class="p">]:</span>
+<span class="gp">... </span>    <span class="n">a</span> <span class="o">=</span> <span class="n">rtdpy</span><span class="o">.</span><span class="n">AD_cc</span><span class="p">(</span><span class="n">tau</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">peclet</span><span class="o">=</span><span class="n">pe</span><span class="p">,</span> <span class="n">dt</span><span class="o">=.</span><span class="mi">01</span><span class="p">,</span> <span class="n">time_end</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">a</span><span class="o">.</span><span class="n">exitage</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">f</span><span class="s2">&quot;peclet=</span><span class="si">{pe}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;Time&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Exit Age Function&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="figure align-default">
+<img alt="_images/AxialDispersion_cc-1.png" src="_images/AxialDispersion_cc-1.png" />
+</div>
+<dl class="py method">
+<dt id="rtdpy.ad_cc.AD_cc.dt">
+<em class="property">property </em><code class="sig-name descname">dt</code><a class="headerlink" href="#rtdpy.ad_cc.AD_cc.dt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Time step for RTD</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rtdpy.ad_cc.AD_cc.exitage">
+<em class="property">property </em><code class="sig-name descname">exitage</code><a class="headerlink" href="#rtdpy.ad_cc.AD_cc.exitage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exit age distribution for RTD</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rtdpy.ad_cc.AD_cc.exitage_norm">
+<em class="property">property </em><code class="sig-name descname">exitage_norm</code><a class="headerlink" href="#rtdpy.ad_cc.AD_cc.exitage_norm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Normalized Exit Age Distribtion for RTD</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rtdpy.ad_cc.AD_cc.frequencyresponse">
+<code class="sig-name descname">frequencyresponse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">omegas</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rtdpy.ad_cc.AD_cc.frequencyresponse" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>omegas</strong><span class="classifier">ndarray</span></dt><dd><p>frequencies at which to evaluate magnitude response</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>magnitude</strong><span class="classifier">ndarray</span></dt><dd><p>frequency magnitude response at omegas</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rtdpy.ad_cc.AD_cc.funnelplot">
+<code class="sig-name descname">funnelplot</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">times</span></em>, <em class="sig-param"><span class="n">disturbances</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rtdpy.ad_cc.AD_cc.funnelplot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return maximum output signal due to square disturbances.</p>
+<p>Uses method from <a class="reference internal" href="#r3d2677e09d49-garcia" id="id5">[Garcia]</a> .
+Also returns meshgrid for times and disturbance inputs
+for ease of plotting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>times</strong><span class="classifier">array_like, size m</span></dt><dd><p>Times to determine funnelplot</p>
+</dd>
+<dt><strong>disturbances</strong><span class="classifier">array_like, size n</span></dt><dd><p>Disturbance magnitudes</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>x</strong><span class="classifier">2D meshgrid size (mxn)</span></dt><dd><p>times</p>
+</dd>
+<dt><strong>y</strong><span class="classifier">2D meshgrid size (mxn)</span></dt><dd><p>disturbances</p>
+</dd>
+<dt><strong>response</strong><span class="classifier">2D meshgrid size (mxn)</span></dt><dd><p>maximum response at (x,y)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<dl class="citation">
+<dt class="label" id="r3d2677e09d49-garcia"><span class="brackets"><a class="fn-backref" href="#id5">Garcia</a></span></dt>
+<dd><p>Garcia-Munoz S., Butterbaugh A., Leavesley I.,
+Manley L.F., Slade D., Bermingham S. (2018)
+A flowhseet model for the development of a continuous process for
+pharmaceutical tablets: An industrial perspective.
+“AIChE Journal”, 64(2), 511-525.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rtdpy.ad_cc.AD_cc.integral">
+<code class="sig-name descname">integral</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rtdpy.ad_cc.AD_cc.integral" title="Permalink to this definition">¶</a></dt>
+<dd><p>Integral of RTD.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rtdpy.ad_cc.AD_cc.mrt">
+<code class="sig-name descname">mrt</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rtdpy.ad_cc.AD_cc.mrt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mean residence time of RTD.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rtdpy.ad_cc.AD_cc.output">
+<code class="sig-name descname">output</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inputtime</span></em>, <em class="sig-param"><span class="n">inputsignal</span></em><span class="sig-paren">)</span><a class="headerlink" href="#rtdpy.ad_cc.AD_cc.output" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convolves input signal with RTD</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>inputtime</strong><span class="classifier">ndarray</span></dt><dd><p>Times of input signal, which must have same <cite>dt</cite> as RTD.  Size m</p>
+</dd>
+<dt><strong>inputsignal</strong><span class="classifier">ndarray</span></dt><dd><p>Input signal. Size n</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>outputsignal</strong><span class="classifier">ndarrary</span></dt><dd><p>Output signal at same <cite>dt</cite>.  Size m + n -1</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rtdpy.ad_cc.AD_cc.peclet">
+<em class="property">property </em><code class="sig-name descname">peclet</code><a class="headerlink" href="#rtdpy.ad_cc.AD_cc.peclet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Peclet number.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rtdpy.ad_cc.AD_cc.sigma">
+<code class="sig-name descname">sigma</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#rtdpy.ad_cc.AD_cc.sigma" title="Permalink to this definition">¶</a></dt>
+<dd><p>Variance of RTD.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rtdpy.ad_cc.AD_cc.stepresponse">
+<em class="property">property </em><code class="sig-name descname">stepresponse</code><a class="headerlink" href="#rtdpy.ad_cc.AD_cc.stepresponse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Step respose of RTD</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rtdpy.ad_cc.AD_cc.stepresponse_norm">
+<em class="property">property </em><code class="sig-name descname">stepresponse_norm</code><a class="headerlink" href="#rtdpy.ad_cc.AD_cc.stepresponse_norm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Normalized step respose of RTD</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rtdpy.ad_cc.AD_cc.tau">
+<em class="property">property </em><code class="sig-name descname">tau</code><a class="headerlink" href="#rtdpy.ad_cc.AD_cc.tau" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tau</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rtdpy.ad_cc.AD_cc.time">
+<em class="property">property </em><code class="sig-name descname">time</code><a class="headerlink" href="#rtdpy.ad_cc.AD_cc.time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Time points for exitage function.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="rtdpy.ad_cc.AD_cc.time_end">
+<em class="property">property </em><code class="sig-name descname">time_end</code><a class="headerlink" href="#rtdpy.ad_cc.AD_cc.time_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Last time point for RTD</p>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-rtdpy.ad_cc_funcs"></span><p>Define PDE for closed-closed Axial Dispersion model.</p>
+<dl class="py function">
+<dt id="rtdpy.ad_cc_funcs.diff_eq">
+<code class="sig-prename descclassname">rtdpy.ad_cc_funcs.</code><code class="sig-name descname">diff_eq</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">u</span></em>, <em class="sig-param"><span class="n">pe</span></em>, <em class="sig-param"><span class="n">h</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rtdpy/ad_cc_funcs.html#diff_eq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rtdpy.ad_cc_funcs.diff_eq" title="Permalink to this definition">¶</a></dt>
+<dd><p>Basic difference equation.</p>
+<p>1/pe d^2C/dz^2 - dC/dz</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="rtdpy.ad_cc_funcs.dudt">
+<code class="sig-prename descclassname">rtdpy.ad_cc_funcs.</code><code class="sig-name descname">dudt</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">u</span></em>, <em class="sig-param"><span class="n">pe</span></em>, <em class="sig-param"><span class="n">h</span></em>, <em class="sig-param"><span class="n">n</span></em>, <em class="sig-param"><span class="n">a</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rtdpy/ad_cc_funcs.html#dudt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rtdpy.ad_cc_funcs.dudt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Define PDE equation for AD closed-closed</p>
+<p>dC/dTheta = 1/Pe d^2C/dz^2 - dC/dz</p>
+<p>BC’s Danckwerts:</p>
+<ul class="simple">
+<li><p>Upstream BC: -Cin = 1/Pe dC/dz - C  (z=0)
+* Impulse for Cin is approximated by an exponential with parameter a&gt;&gt;1</p></li>
+<li><p>Downstream BC: dC/dz = 0 (z=1)</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt id="rtdpy.ad_cc_funcs.jac">
+<code class="sig-prename descclassname">rtdpy.ad_cc_funcs.</code><code class="sig-name descname">jac</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">t</span></em>, <em class="sig-param"><span class="n">u</span></em>, <em class="sig-param"><span class="n">pe</span></em>, <em class="sig-param"><span class="n">h</span></em>, <em class="sig-param"><span class="n">n</span></em>, <em class="sig-param"><span class="n">a</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/rtdpy/ad_cc_funcs.html#jac"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#rtdpy.ad_cc_funcs.jac" title="Permalink to this definition">¶</a></dt>
+<dd><p>Define Jacobian for AD closed-closed</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+    <div class="clearer"></div>
+  </div>
+    <div class="footer">
+      &copy;Copyright 2019-2020 Merck Sharp & Dohme Corp. a subsidiary of Merck & Co., Inc., Kenilworth, NJ, USA.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.1.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/AxialDispersion_cc.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
