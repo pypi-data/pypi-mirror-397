@@ -1,0 +1,516 @@
+Metadata-Version: 2.4
+Name: e-commerce-trust-score
+Version: 0.1.0
+Summary: A Python client library for analyzing URL trust scores using AI-powered analysis
+Author-email: Vivian Li <vivian@example.com>
+License: MIT
+Project-URL: Homepage, https://github.com/yourusername/e-commerce-trust-score
+Project-URL: Documentation, https://github.com/yourusername/e-commerce-trust-score#readme
+Project-URL: Repository, https://github.com/yourusername/e-commerce-trust-score
+Project-URL: Issues, https://github.com/yourusername/e-commerce-trust-score/issues
+Keywords: trust-score,url-analysis,security,claude,ai,mcp
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Security
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: claude-agent-sdk>=0.1.0
+Requires-Dist: anyio>=4.0.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: httpx>=0.25.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+Provides-Extra: server
+Requires-Dist: fastapi>=0.104.0; extra == "server"
+Requires-Dist: uvicorn[standard]>=0.24.0; extra == "server"
+Dynamic: license-file
+
+# E-Commerce Trust Score
+
+A Python client library for analyzing URL trust scores using AI-powered analysis.
+
+[![PyPI version](https://badge.fury.io/py/e-commerce-trust-score.svg)](https://badge.fury.io/py/e-commerce-trust-score)
+[![Python Version](https://img.shields.io/pypi/pyversions/e-commerce-trust-score.svg)](https://pypi.org/project/e-commerce-trust-score/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+## Features
+
+- 🔍 **URL Analysis**: Analyze URLs for trust and safety signals
+- 🤖 **AI-Powered**: Intelligent analysis using advanced AI models
+- 📊 **Detailed Scoring**: Comprehensive trust factors and explanations
+- 🚀 **Easy Integration**: Simple Python API
+- ⚡ **Async Support**: Built with async/await for high performance
+
+## Installation
+
+```bash
+pip install e-commerce-trust-score
+```
+
+## Quick Start
+
+```python
+import asyncio
+from commerce_trust_score import TrustScoreAPIClient
+
+async def main():
+    # Initialize the client with your API credentials
+    client = TrustScoreAPIClient(
+        api_url="https://your-trust-score-api.com",
+        api_key="your-api-key"
+    )
+    
+    # Analyze a URL
+    result = await client.analyze_url("https://example.com")
+    
+    # Check the results
+    print(f"Trust Score: {result.score}")
+    print(f"Risk Level: {result.label}")
+    print(f"\nExplanations:")
+    for explanation in result.explanations:
+        print(f"  - {explanation}")
+
+asyncio.run(main())
+```
+
+## Configuration
+
+### Getting Your API Key
+
+Contact your service provider to obtain:
+- **API URL**: The endpoint URL for the trust score service
+- **API Key**: Your authentication key
+
+### Basic Setup
+
+```python
+from commerce_trust_score import TrustScoreAPIClient
+
+client = TrustScoreAPIClient(
+    api_url="https://your-trust-score-api.com",
+    api_key="your-api-key",
+    timeout=30.0  # Optional: request timeout in seconds
+)
+```
+
+### Using Environment Variables
+
+```python
+import os
+from commerce_trust_score import TrustScoreAPIClient
+
+client = TrustScoreAPIClient(
+    api_url=os.getenv("TRUST_SCORE_API_URL"),
+    api_key=os.getenv("TRUST_SCORE_API_KEY")
+)
+```
+
+## Usage Examples
+
+### Analyze a Single URL
+
+```python
+import asyncio
+from commerce_trust_score import TrustScoreAPIClient
+
+async def analyze_url():
+    client = TrustScoreAPIClient(
+        api_url="https://your-api.com",
+        api_key="your-key"
+    )
+    
+    result = await client.analyze_url("https://suspicious-site.com")
+    
+    # Check if URL is safe
+    if result.score >= 0.8:
+        print("✅ URL appears safe")
+    elif result.score >= 0.4:
+        print("⚠️ Medium risk - proceed with caution")
+    else:
+        print("❌ High risk - not recommended")
+    
+    return result
+
+asyncio.run(analyze_url())
+```
+
+### Analyze Multiple URLs
+
+```python
+import asyncio
+from commerce_trust_score import TrustScoreAPIClient
+
+async def analyze_batch():
+    client = TrustScoreAPIClient(
+        api_url="https://your-api.com",
+        api_key="your-key"
+    )
+    
+    urls = [
+        "https://example1.com",
+        "https://example2.com",
+        "https://example3.com"
+    ]
+    
+    results = await client.analyze_urls(urls)
+    
+    for url, result in zip(urls, results):
+        print(f"{url}: {result.label} (score: {result.score:.2f})")
+
+asyncio.run(analyze_batch())
+```
+
+### Error Handling
+
+```python
+import asyncio
+from commerce_trust_score import TrustScoreAPIClient
+import httpx
+
+async def safe_analyze():
+    client = TrustScoreAPIClient(
+        api_url="https://your-api.com",
+        api_key="your-key"
+    )
+    
+    try:
+        result = await client.analyze_url("https://example.com")
+        print(f"Score: {result.score}")
+    except httpx.HTTPStatusError as e:
+        print(f"API error: {e.response.status_code}")
+    except httpx.RequestError as e:
+        print(f"Connection error: {e}")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+
+asyncio.run(safe_analyze())
+```
+
+## Trust Score Interpretation
+
+The API returns a score between 0 and 1, along with a risk label:
+
+| Label | Score Range | Recommendation |
+|-------|-------------|----------------|
+| `likely_safe` | ≥ 0.8 | URL appears trustworthy |
+| `medium_risk` | 0.4 - 0.8 | Exercise caution |
+| `high_risk` | < 0.4 | Not recommended |
+
+## Trust Factors
+
+Each analysis includes detailed factors:
+
+- **domain_age_days**: Age of the domain in days
+- **scam_reports**: Number of reported scams
+- **whois_risk**: Domain registration risk score (0-1)
+- **review_sentiment**: Review sentiment score (0-1)
+- **social_reputation**: Social media reputation (0-1)
+- **price_outlier_score**: Price anomaly detection (0-1)
+- **payment_risk**: Payment method risk (0-1)
+- **image_reuse_score**: Stolen image detection (0-1)
+- **brand_typosquatting_score**: Brand impersonation detection (0-1)
+
+## Integration Examples
+
+### Flask Application
+
+```python
+from flask import Flask, request, jsonify
+from commerce_trust_score import TrustScoreAPIClient
+import asyncio
+import os
+
+app = Flask(__name__)
+
+client = TrustScoreAPIClient(
+    api_url=os.getenv("TRUST_SCORE_API_URL"),
+    api_key=os.getenv("TRUST_SCORE_API_KEY")
+)
+
+@app.route('/check-url', methods=['POST'])
+def check_url():
+    url = request.json.get('url')
+    if not url:
+        return jsonify({'error': 'URL required'}), 400
+    
+    result = asyncio.run(client.analyze_url(url))
+    
+    return jsonify({
+        'url': url,
+        'score': result.score,
+        'label': result.label,
+        'safe': result.score >= 0.8,
+        'factors': {
+            'domain_age': result.factors.domain_age_days,
+            'scam_reports': result.factors.scam_reports,
+            'whois_risk': result.factors.whois_risk
+        }
+    })
+
+if __name__ == '__main__':
+    app.run(debug=True)
+```
+
+### Django View
+
+```python
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from commerce_trust_score import TrustScoreAPIClient
+import os
+
+client = TrustScoreAPIClient(
+    api_url=os.getenv("TRUST_SCORE_API_URL"),
+    api_key=os.getenv("TRUST_SCORE_API_KEY")
+)
+
+@require_http_methods(["POST"])
+async def analyze_url(request):
+    url = request.POST.get('url')
+    
+    if not url:
+        return JsonResponse({'error': 'URL required'}, status=400)
+    
+    result = await client.analyze_url(url)
+    
+    return JsonResponse({
+        'score': result.score,
+        'label': result.label,
+        'explanations': result.explanations
+    })
+```
+
+### FastAPI Application
+
+```python
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from commerce_trust_score import TrustScoreAPIClient
+import os
+
+app = FastAPI()
+
+client = TrustScoreAPIClient(
+    api_url=os.getenv("TRUST_SCORE_API_URL"),
+    api_key=os.getenv("TRUST_SCORE_API_KEY")
+)
+
+class URLRequest(BaseModel):
+    url: str
+
+@app.post("/analyze")
+async def analyze_url(request: URLRequest):
+    try:
+        result = await client.analyze_url(request.url)
+        return {
+            'url': request.url,
+            'score': result.score,
+            'label': result.label,
+            'factors': result.factors.dict(),
+            'explanations': result.explanations
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+```
+
+### Celery Task
+
+```python
+from celery import shared_task
+from commerce_trust_score import TrustScoreAPIClient
+import asyncio
+import os
+
+client = TrustScoreAPIClient(
+    api_url=os.getenv("TRUST_SCORE_API_URL"),
+    api_key=os.getenv("TRUST_SCORE_API_KEY")
+)
+
+@shared_task
+def analyze_url_task(url):
+    result = asyncio.run(client.analyze_url(url))
+    return {
+        'url': url,
+        'score': result.score,
+        'label': result.label,
+        'timestamp': datetime.now().isoformat()
+    }
+```
+
+## API Reference
+
+### TrustScoreAPIClient
+
+#### `__init__(api_url: str, api_key: Optional[str] = None, timeout: float = 30.0)`
+
+Initialize the client.
+
+**Parameters:**
+- `api_url` (str): Base URL of the trust score API service
+- `api_key` (str, optional): Your API authentication key
+- `timeout` (float): Request timeout in seconds (default: 30.0)
+
+#### `async analyze_url(url: str) -> TrustResponse`
+
+Analyze a single URL.
+
+**Parameters:**
+- `url` (str): The URL to analyze
+
+**Returns:**
+- `TrustResponse`: Analysis result with score, label, factors, and explanations
+
+**Raises:**
+- `httpx.HTTPError`: If the API request fails
+
+#### `async analyze_urls(urls: list[str]) -> list[TrustResponse]`
+
+Analyze multiple URLs in batch.
+
+**Parameters:**
+- `urls` (list[str]): List of URLs to analyze
+
+**Returns:**
+- `list[TrustResponse]`: List of analysis results
+
+#### `async health_check() -> dict`
+
+Check if the API service is available.
+
+**Returns:**
+- `dict`: Service health status
+
+### Response Models
+
+#### TrustResponse
+
+- `score` (float): Trust score between 0 and 1
+- `label` (str): Risk label (`likely_safe`, `medium_risk`, `high_risk`)
+- `factors` (TrustFactors): Detailed scoring factors
+- `explanations` (List[str]): Human-readable explanations
+
+#### TrustFactors
+
+- `domain_age_days` (int): Domain age in days
+- `scam_reports` (int): Number of scam reports
+- `whois_risk` (float): WHOIS risk score (0-1)
+- `review_sentiment` (float): Review sentiment (0-1)
+- `social_reputation` (float): Social reputation (0-1)
+- `price_outlier_score` (float): Price anomaly score (0-1)
+- `payment_risk` (float): Payment risk score (0-1)
+- `image_reuse_score` (float): Image theft detection (0-1)
+- `brand_typosquatting_score` (float): Brand impersonation (0-1)
+
+## Best Practices
+
+### 1. Secure API Key Storage
+
+```python
+# ✅ Good: Use environment variables
+import os
+api_key = os.getenv("TRUST_SCORE_API_KEY")
+
+# ❌ Bad: Hardcode in source
+api_key = "your-api-key-12345"  # Don't do this!
+```
+
+### 2. Implement Caching
+
+```python
+from functools import lru_cache
+import asyncio
+
+@lru_cache(maxsize=1000)
+def get_cached_score(url: str):
+    return asyncio.run(client.analyze_url(url))
+```
+
+### 3. Handle Timeouts
+
+```python
+client = TrustScoreAPIClient(
+    api_url="https://your-api.com",
+    api_key="your-key",
+    timeout=10.0  # Adjust based on your needs
+)
+```
+
+### 4. Batch Processing
+
+```python
+# Process URLs in batches for better performance
+batch_size = 10
+for i in range(0, len(urls), batch_size):
+    batch = urls[i:i + batch_size]
+    results = await client.analyze_urls(batch)
+    process_results(results)
+```
+
+## Performance Tips
+
+- **Batch Requests**: Use `analyze_urls()` for multiple URLs
+- **Async/Await**: Leverage async for better performance
+- **Caching**: Cache results for frequently checked URLs
+- **Connection Pooling**: Reuse the same client instance
+- **Timeout Management**: Set appropriate timeouts for your use case
+
+## Troubleshooting
+
+### Connection Errors
+
+```python
+# Check API connectivity
+try:
+    health = await client.health_check()
+    print(f"API Status: {health}")
+except Exception as e:
+    print(f"API unavailable: {e}")
+```
+
+### Authentication Issues
+
+- Verify your API key is correct
+- Check that the API key has not expired
+- Ensure the API URL is correct (including https://)
+
+### Timeout Issues
+
+- Increase the timeout value if analyzing complex URLs
+- Check your network connection
+- Verify the API service is responding
+
+## Requirements
+
+- Python 3.10+
+- httpx (automatically installed)
+- Valid API key from your service provider
+
+## Support
+
+For API access, billing, or technical support:
+- Contact your service provider
+- Check service status page
+- Review API documentation
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for version history.
+
