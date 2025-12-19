@@ -1,0 +1,13 @@
+# Features not currently implemented
+
+There are many features that are not currently implemented in H2Integrate that are necessary for current or future projects.
+These will become issues on the H2Integrate GitHub repo.
+We are listing them here:
+
+- splitting out HOPP into individual systems, including dispatch
+- allowing different technologies within the same plant to be at different sites
+- saving results elegantly for plant components so they do not always need to be rerun
+- detailing the required inputs and outputs for different model types (e.g. electrolyzer) so that users can more easily add their own subsystems
+- splitters and combiners for when resources are used or produced by multiple components
+- simulating different timespans than one year at hourly timesteps (8760s)
+- specifying resource locations that differ within a given plant (i.e. using one lat/lon pair for solar and another lat/lon for wind) when running a design sweep that includes latitude and longitude as design variables. Currently, sweeping locations can only be done if the location is the same for each resource model.
