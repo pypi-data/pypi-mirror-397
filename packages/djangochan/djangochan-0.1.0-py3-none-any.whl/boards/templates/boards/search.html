@@ -1,0 +1,64 @@
+{% extends 'boards/base.html' %}
+{% load cache %}
+{% load thumbnail %}
+{% load post_render %}
+{% block title %}/{{ board.ln }}/{% endblock title %}
+{% block content %}
+    <div id="board">
+        <h2 id="board-header">/{{ board.ln }}/ - {{ board.name }}</h2>
+        {% if board.description %}
+            <p id="board-description">{{ board.decription }}</p>
+        {% endif %}
+    </div>
+    [<a href="{{ board.get_absolute_url }}" hx-boost="true"
+        hx-trigger="click, keyup[altKey&&key=='r'] from:body">Return</a>]
+    <br>
+    <form id="searchform" class="info" method="get">
+        <input name="q" type="text" placeholder="Search...">
+        <input type="submit" value="Search">
+        <span id="text-submit">[<a href="#" onclick="document.querySelector('#searchform').submit(); return false;">Search</a>]</span>
+    </form>
+    {% if results %}
+        {% for post in results %}
+            <div class="row post">
+                <div class="row headline" hx-boost="true">
+                    <p><span class="author">{{ post.author }}</span>
+                        {% if post.tripcode %}<span class='tripcode'>{% if post.secure %}!{% endif %}!{{ post.tripcode }}</span>{% endif %}
+                        posted at {{ post.timestamp }}
+                        <span class="pk"><a href="{{ post.get_absolute_url }}">#{{ post.pk }}</a></span>
+                        <details><summary class="inline">[+]</summary>
+                            [<a href="{{ post.get_delete_url }}">Delete</a>]
+                            [<a href="{{ post.get_report_url }}">Report</a>]
+                        </details>
+                    </p>
+                </div>
+                {% if post.image %}
+                    <div class="row info">
+                        <span>(File)</span>
+                        <span>{{ post.image.size|filesizeformat }}</span> |
+                        <span>{{ post.image.width }}x{{ post.image.height }}</span> |
+                        <span class="ellipsis">{{ post.filename }}</span>
+                    </div>
+                {% endif %}
+                {% cache 500 post post.pk %}
+                <div class="row content">
+                    {% if post.image %}
+                        {% thumbnail post.image "x300" as im %}
+                        <div class="one-third column">
+                            <span class="image"><a href="{{ post.image.url}}"><img src="{{ im.url }}"></a></span>
+                        </div>
+                            {% endthumbnail %}
+                            <div class="two-thirds column">
+                                <span class="post-text"><p>{% post_render post %}</p></span>
+                            </div>
+                    {% else %}
+                            <span class="post-text"><p>{% post_render post %}</p></span>
+                    {% endif %}
+                </div>
+                {% endcache %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No search results.</p>
+    {% endif %}
+{% endblock content %}
