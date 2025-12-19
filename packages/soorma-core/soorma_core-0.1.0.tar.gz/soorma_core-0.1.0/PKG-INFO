@@ -1,0 +1,62 @@
+Metadata-Version: 2.4
+Name: soorma-core
+Version: 0.1.0
+Summary: The Open Source Foundation for AI Agents. Powered by the DisCo (Distributed Cognition) architecture.
+License: MIT
+License-File: LICENSE.txt
+Keywords: ai,agents,disco,distributed-systems,llm,orchestration
+Author: Soorma AI
+Author-email: founders@soorma.ai
+Requires-Python: >=3.9,<4.0
+Classifier: Development Status :: 2 - Pre-Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Classifier: Topic :: Software Development :: Libraries :: Application Frameworks
+Requires-Dist: pydantic (>=2.0.0,<3.0.0)
+Project-URL: Homepage, https://soorma.ai
+Project-URL: Repository, https://github.com/soorma-ai/soorma-core
+Description-Content-Type: text/markdown
+
+# Soorma Core
+
+**The Open Source Foundation for AI Agents.**
+
+Soorma is an agentic infrastructure platform based on the **DisCo (Distributed Cognition)** architecture. It solves the fragmentation in the AI agent ecosystem by providing a standardized **Control Plane** (Gateway, Registry, State, Pub/Sub).
+
+## 🚧 Status: Pre-Alpha (Day 0)
+
+We are currently building the core runtime. This package is a placeholder to reserve the namespace and provide early access to the API surface.
+
+**Join the waitlist:** [soorma.ai](https://soorma.ai)
+
+## The DisCo Architecture
+
+Unlike single-threaded loops (LangChain/AutoGen), Soorma enables **Autonomous Choreography**.
+
+```
+from soorma import Worker
+
+# Define a long-lived, event-driven worker
+analyst = Worker(name="MarketAnalyst", capabilities=["analyze_trends"])
+
+@analyst.on_event("research.requested")
+async def handle(event, context):
+    # React to events, don't just loop
+    history = await context.memory.retrieve(tags=["Q3"])
+    return {"analysis": "..."}
+```
+
+## Roadmap
+* [ ] **v0.1.0**: Core SDK & Local Dev Environment (`soorma dev`)
+* [ ] **v0.2.0**: Managed Cloud Deployment (`soorma deploy`)
+* [ ] **v1.0.0**: Enterprise GA
+
+## License
+MIT
