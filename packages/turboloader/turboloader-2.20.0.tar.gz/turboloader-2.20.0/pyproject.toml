@@ -1,0 +1,105 @@
+[build-system]
+requires = ["setuptools>=61", "wheel", "cmake>=3.15", "pybind11>=2.10.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "turboloader"
+version = "2.20.0"
+description = "Production-ready ML data loading library with distributed training support, SIMD-accelerated transforms, pipe operator composition, HDF5/TFRecord/Zarr support, and GPU transforms. Built with C++17 for maximum performance."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Arnav Jain", email = "arnav@example.com"}
+]
+maintainers = [
+    {name = "Arnav Jain", email = "arnav@example.com"}
+]
+keywords = [
+    "machine-learning",
+    "deep-learning",
+    "data-loading",
+    "pytorch",
+    "performance",
+    "simd",
+    "imagenet",
+    "computer-vision"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
+    "Programming Language :: C++",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+
+dependencies = [
+    "numpy>=1.19.0",
+    "torch>=1.8.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "black>=21.0",
+    "flake8>=3.9",
+    "mypy>=0.900",
+    "build>=0.7.0",
+    "twine>=3.4.0"
+]
+benchmarks = [
+    "Pillow>=8.0.0",
+    "tqdm>=4.60.0",
+    "matplotlib>=3.3.0",
+    "psutil>=5.8.0"
+]
+all = [
+    "turboloader[dev,benchmarks]"
+]
+
+[project.urls]
+Homepage = "https://github.com/ALJainProjects/TurboLoader"
+Documentation = "https://github.com/ALJainProjects/TurboLoader/blob/main/README.md"
+Repository = "https://github.com/ALJainProjects/TurboLoader"
+"Bug Tracker" = "https://github.com/ALJainProjects/TurboLoader/issues"
+Changelog = "https://github.com/ALJainProjects/TurboLoader/blob/main/CHANGELOG.md"
+Discussions = "https://github.com/ALJainProjects/TurboLoader/discussions"
+
+[tool.setuptools]
+packages = ["turboloader"]
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | build
+  | dist
+  | \.eggs
+  | \.mypy_cache
+)/
+'''
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+ignore_missing_imports = true
