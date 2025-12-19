@@ -1,0 +1,66 @@
+Metadata-Version: 2.4
+Name: rpscissors
+Version: 0.0.3
+Summary: A Rock Paper Scissors game
+Author: Iven Boxem
+Author-email: boxemivenruben@gmail.com
+License: MIT
+Keywords: rock paper scissors game
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Education
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENCE.txt
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: keywords
+Dynamic: license
+Dynamic: license-file
+Dynamic: requires-python
+Dynamic: summary
+
+# RPScissors
+
+This module makes it easy to create a Rock Paper Scissors game in Python.
+
+## Basic example
+
+```python
+import RPScissors
+
+game = RPScissors.create_default_game()
+
+user = input("Choose stone, paper or scissors: ")
+computer, result = game.play_round(user)
+
+print("Computer chose:", computer)
+print("Result:", result)
+```
+## Advanced example
+
+```python
+import RPScissors
+
+options = ["fire", "water", "plant"]
+win_rules = {
+    "fire": "plant",
+    "plant": "water",
+    "water": "fire",
+}
+
+game = RPScissors.systemRPS(options, win_rules)
+
+user = input("Choose fire, water or plant: ")
+computer, result = game.play_round(user)
+
+print("Computer chose:", computer)
+print("Result:", result)
+```
+You can now specify the names of the options yourself.
+And adjust the winning rules.
