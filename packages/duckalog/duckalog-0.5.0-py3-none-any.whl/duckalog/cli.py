@@ -1,0 +1,2002 @@
+"""Typer-based CLI for Duckalog."""
+
+from __future__ import annotations
+
+# mypy: disable-error-code=assignment
+import sys
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as pkg_version
+from pathlib import Path
+from typing import Any, Optional
+
+from loguru import logger
+
+import typer
+
+# Import fsspec at module level for easier testing
+try:
+    import fsspec
+except ImportError:
+    fsspec = None  # Will be handled in the function
+
+from .config import load_config, validate_file_accessibility, log_error, log_info
+from .config_init import create_config_template, validate_generated_config
+from .connection import CatalogConnection, connect_to_catalog
+from .engine import build_catalog
+from .errors import ConfigError, EngineError
+from .sql_generation import generate_all_views_sql
+
+app = typer.Typer(help="Duckalog CLI for building and inspecting DuckDB catalogs.")
+
+
+def _create_filesystem_from_options(
+    protocol: Optional[str] = None,
+    key: Optional[str] = None,
+    secret: Optional[str] = None,
+    token: Optional[str] = None,
+    anon: bool = False,
+    timeout: Optional[int] = 30,
+    aws_profile: Optional[str] = None,
+    gcs_credentials_file: Optional[str] = None,
+    azure_connection_string: Optional[str] = None,
+    sftp_host: Optional[str] = None,
+    sftp_port: int = 22,
+    sftp_key_file: Optional[str] = None,
+):
+    """Create a fsspec filesystem from CLI options.
+
+    Returns None if no filesystem options are provided.
+
+    Args:
+        protocol: Filesystem protocol (s3, gcs, abfs, sftp, github)
+        key: API key or access key
+        secret: Secret key or password
+        token: Authentication token
+        anon: Use anonymous access
+        timeout: Connection timeout
+        aws_profile: AWS profile name
+        gcs_credentials_file: Path to GCS credentials file
+        azure_connection_string: Azure connection string
+        sftp_host: SFTP server hostname
+        sftp_port: SFTP server port
+        sftp_key_file: Path to SFTP private key file
+
+    Returns:
+        fsspec filesystem object or None
+
+    Raises:
+        typer.Exit: If filesystem creation fails
+    """
+    # If no filesystem options provided, return None
+    if not any(
+        [
+            protocol,
+            key,
+            secret,
+            token,
+            anon,
+            aws_profile,
+            gcs_credentials_file,
+            azure_connection_string,
+            sftp_host,
+            sftp_key_file,
+        ]
+    ):
+        return None
+
+    # Check if fsspec is available
+    if fsspec is None:
+        typer.echo(
+            "fsspec is required for filesystem options. Install with: pip install duckalog[remote]",
+            err=True,
+        )
+        raise typer.Exit(4)
+
+    # Validate protocol if provided or try to infer from other options
+    if not protocol:
+        # Try to infer protocol from provided options
+        if aws_profile or (key and secret):
+            protocol = "s3"
+        elif gcs_credentials_file:
+            protocol = "gcs"
+        elif azure_connection_string or (key and secret):
+            protocol = "abfs"
+        elif sftp_host or sftp_key_file:
+            protocol = "sftp"
+        elif token:
+            protocol = "github"
+        else:
+            typer.echo(
+                "Protocol must be specified or inferable from provided options.",
+                err=True,
+            )
+            raise typer.Exit(4)
+
+    # Validate required options for specific protocols
+    if protocol in ["s3"] and not any([aws_profile, key, secret, anon]):
+        typer.echo(
+            "For S3 protocol, provide either --aws-profile, --fs-key/--fs-secret, or use --fs-anon",
+            err=True,
+        )
+        raise typer.Exit(4)
+
+    if protocol in ["abfs", "adl", "az"] and not any(
+        [azure_connection_string, key, secret]
+    ):
+        typer.echo(
+            "For Azure protocol, provide either --azure-connection-string or --fs-key/--fs-secret",
+            err=True,
+        )
+        raise typer.Exit(4)
+
+    if protocol == "sftp" and not sftp_host:
+        typer.echo(
+            "SFTP protocol requires --sftp-host to be specified",
+            err=True,
+        )
+        raise typer.Exit(4)
+
+    # Validate mutual exclusivity
+    if aws_profile and key:
+        typer.echo(
+            "Cannot specify both --aws-profile and --fs-key",
+            err=True,
+        )
+        raise typer.Exit(4)
+
+    if azure_connection_string and key:
+        typer.echo(
+            "Cannot specify both --azure-connection-string and --fs-key",
+            err=True,
+        )
+        raise typer.Exit(4)
+
+    # Validate file paths exist if provided
+    if gcs_credentials_file and not Path(gcs_credentials_file).exists():
+        typer.echo(
+            f"GCS credentials file not found: {gcs_credentials_file}",
+            err=True,
+        )
+        raise typer.Exit(4)
+
+    if sftp_key_file and not Path(sftp_key_file).exists():
+        typer.echo(
+            f"SFTP key file not found: {sftp_key_file}",
+            err=True,
+        )
+        raise typer.Exit(4)
+
+    # Determine protocol from URI or explicit parameter
+    filesystem_options = {}
+
+    # Add timeout if specified
+    if timeout:
+        filesystem_options["timeout"] = timeout
+
+    # Handle different protocols
+    if protocol == "s3" or aws_profile:
+        if aws_profile:
+            filesystem_options["profile"] = aws_profile
+        elif key and secret:
+            filesystem_options.update(
+                {
+                    "key": key,
+                    "secret": secret,
+                    "anon": anon or False,
+                }
+            )
+            # Add region if needed
+            filesystem_options["client_kwargs"] = {}
+        else:
+            # Use default AWS credential resolution
+            pass
+
+    elif protocol == "gcs":
+        if gcs_credentials_file:
+            filesystem_options["token"] = gcs_credentials_file
+        # Otherwise use default ADC
+
+    elif protocol in ["abfs", "adl", "az"]:
+        if azure_connection_string:
+            filesystem_options["connection_string"] = azure_connection_string
+        elif key and secret:
+            # Handle Azure account key auth
+            filesystem_options.update(
+                {
+                    "account_name": key,
+                    "account_key": secret,
+                }
+            )
+
+    elif protocol == "sftp":
+        filesystem_options.update(
+            {
+                "host": sftp_host,
+                "port": sftp_port,
+            }
+        )
+        if sftp_key_file:
+            filesystem_options["key_filename"] = sftp_key_file
+        elif secret:  # Use password if key file not provided
+            filesystem_options["password"] = secret
+        elif key:  # Use key as username
+            filesystem_options["username"] = key
+
+    elif protocol == "github":
+        if token:
+            filesystem_options["token"] = token
+        elif key:
+            filesystem_options["username"] = key
+            if secret:
+                filesystem_options["password"] = secret
+
+    elif protocol == "https" or protocol == "http":
+        # HTTP/HTTPS doesn't need special filesystem creation
+        # Just return None to use built-in requests
+        return None
+
+    try:
+        return fsspec.filesystem(protocol, **filesystem_options)
+    except Exception as exc:
+        typer.echo(
+            f"Failed to create filesystem for protocol '{protocol}': {exc}",
+            err=True,
+        )
+        raise typer.Exit(4)
+
+
+def _configure_logging(verbose: bool) -> None:
+    """Configure global logging settings for CLI commands.
+
+    Args:
+        verbose: When ``True``, set the log level to ``INFO``; otherwise use
+            ``WARNING``.
+    """
+    # Remove default handler to avoid duplicate output
+    logger.remove()
+
+    # Add a new handler with appropriate level and format
+    level = "INFO" if verbose else "WARNING"
+    logger.add(
+        sys.stderr,
+        level=level,
+        format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <8}</level> | {message}",
+    )
+
+
+# Shared callback for filesystem options across all commands
+@app.callback()
+def main_callback(
+    ctx: typer.Context,
+    fs_protocol: Optional[str] = typer.Option(
+        None,
+        "--fs-protocol",
+        help="Remote filesystem protocol: s3 (AWS), gcs (Google), abfs (Azure), sftp, github. Protocol can be inferred from other options.",
+    ),
+    fs_key: Optional[str] = typer.Option(
+        None,
+        "--fs-key",
+        help="API key, access key, or username for authentication (protocol-specific)",
+    ),
+    fs_secret: Optional[str] = typer.Option(
+        None,
+        "--fs-secret",
+        help="Secret key, password, or token for authentication (protocol-specific)",
+    ),
+    fs_token: Optional[str] = typer.Option(
+        None,
+        "--fs-token",
+        help="Authentication token for services like GitHub personal access tokens",
+    ),
+    fs_anon: bool = typer.Option(
+        False,
+        "--fs-anon",
+        help="Use anonymous access (no authentication required). Useful for public S3 buckets.",
+    ),
+    fs_timeout: Optional[int] = typer.Option(
+        None, "--fs-timeout", help="Connection timeout in seconds (default: 30)"
+    ),
+    aws_profile: Optional[str] = typer.Option(
+        None,
+        "--aws-profile",
+        help="AWS profile name for S3 authentication (overrides --fs-key/--fs-secret)",
+    ),
+    gcs_credentials_file: Optional[str] = typer.Option(
+        None,
+        "--gcs-credentials-file",
+        help="Path to Google Cloud service account credentials JSON file",
+    ),
+    azure_connection_string: Optional[str] = typer.Option(
+        None,
+        "--azure-connection-string",
+        help="Azure storage connection string (overrides --fs-key/--fs-secret for Azure)",
+    ),
+    sftp_host: Optional[str] = typer.Option(
+        None, "--sftp-host", help="SFTP server hostname (required for SFTP protocol)"
+    ),
+    sftp_port: int = typer.Option(
+        22, "--sftp-port", help="SFTP server port (default: 22)"
+    ),
+    sftp_key_file: Optional[str] = typer.Option(
+        None,
+        "--sftp-key-file",
+        help="Path to SSH private key file for SFTP authentication",
+    ),
+) -> None:
+    """Shared callback that creates filesystem objects from CLI options.
+
+    This callback applies to all commands and creates a filesystem object
+    from the provided options, storing it in ctx.obj["filesystem"].
+    """
+    if ctx.resilient_parsing:
+        return
+
+    # Initialize context object if needed
+    if ctx.obj is None:
+        ctx.obj = {}
+
+    # Create filesystem object using existing helper
+    filesystem = _create_filesystem_from_options(
+        protocol=fs_protocol,
+        key=fs_key,
+        secret=fs_secret,
+        token=fs_token,
+        anon=fs_anon,
+        timeout=fs_timeout,
+        aws_profile=aws_profile,
+        gcs_credentials_file=gcs_credentials_file,
+        azure_connection_string=azure_connection_string,
+        sftp_host=sftp_host,
+        sftp_port=sftp_port,
+        sftp_key_file=sftp_key_file,
+    )
+
+    # Store filesystem in context for command access
+    ctx.obj["filesystem"] = filesystem
+
+
+@app.command(name="version", help="Show duckalog version.")
+def version_command() -> None:
+    """Show the installed duckalog package version."""
+
+    try:
+        current_version = pkg_version("duckalog")
+    except PackageNotFoundError:
+        current_version = "unknown"
+    typer.echo(f"duckalog {current_version}")
+
+
+@app.command(
+    help="Build (or fully rebuild) a DuckDB catalog from a config file or remote URI."
+)
+def build(
+    ctx: typer.Context,
+    config_path: str = typer.Argument(
+        ...,
+        help="Path to configuration file or remote URI (e.g., s3://bucket/config.yaml)",
+    ),
+    db_path: Optional[str] = typer.Option(
+        None,
+        "--db-path",
+        help="Override DuckDB database path. Supports local paths and remote URIs (s3://, gs://, gcs://, abfs://, adl://, sftp://).",
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Generate SQL without executing against DuckDB."
+    ),
+    use_connection: bool = typer.Option(
+        False,
+        "--use-connection",
+        help="Use the new connection-based workflow (recommended).",
+    ),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Enable verbose logging output."
+    ),
+    load_dotenv: bool = typer.Option(
+        True,
+        "--load-dotenv/--no-load-dotenv",
+        help="Enable/disable automatic .env file loading.",
+    ),
+) -> None:
+    """CLI entry point for the ``build`` command.
+
+    This command loads a configuration file and applies it to a DuckDB
+    catalog, or prints the generated SQL when ``--dry-run`` is used.
+
+    Note: This command is being deprecated in favor of 'run'.
+
+    Examples:
+        # Local configuration file
+        duckalog build config.yaml
+
+        # Use new connection-based workflow
+        duckalog build config.yaml --use-connection
+
+    Args:
+        config_path: Path to configuration file or remote URI (e.g., s3://bucket/config.yaml).
+        db_path: Optional override for the DuckDB database file path.
+        dry_run: If ``True``, print SQL instead of modifying the database.
+        use_connection: If ``True``, use the new connection-based workflow.
+        verbose: If ``True``, enable more verbose logging.
+        load_dotenv: If ``True``, automatically load and process .env files.
+    """
+    _configure_logging(verbose)
+
+    # Get filesystem from context (created by shared callback)
+    filesystem = ctx.obj.get("filesystem")
+
+    # Validate that local files exist, but allow remote URIs
+    try:
+        from .remote_config import is_remote_uri
+
+        if not is_remote_uri(config_path):
+            # This is a local path, check if it exists
+            local_path = Path(config_path)
+            if not local_path.exists():
+                _fail(f"Config file not found: {config_path}", 2)
+    except ImportError:
+        # Remote functionality not available, treat as local path
+        local_path = Path(config_path)
+        if not local_path.exists():
+            _fail(f"Config file not found: {config_path}", 2)
+
+    log_info(
+        "CLI build invoked",
+        config_path=config_path,
+        db_path=db_path,
+        dry_run=dry_run,
+        use_connection=use_connection,
+        filesystem=filesystem is not None,
+    )
+
+    # Add deprecation warning for build command
+    typer.echo(
+        "Deprecation Warning: 'build' is being deprecated in favor of 'run'.\n"
+        "Use 'duckalog run' for incremental updates and better connection management.",
+        err=True,
+    )
+
+    if use_connection and not dry_run:
+        try:
+            with connect_to_catalog(
+                str(config_path),
+                database_path=db_path,
+                force_rebuild=True,  # build always rebuilds
+                filesystem=filesystem,
+                load_dotenv=load_dotenv,
+            ) as catalog:
+                catalog.get_connection()
+                typer.echo("Catalog build completed.")
+                return
+        except Exception as exc:
+            log_error("Build via connection failed", error=str(exc))
+            _fail(f"Error: {exc}", 1)
+
+    try:
+        sql = build_catalog(
+            str(config_path),
+            db_path=db_path,
+            dry_run=dry_run,
+            verbose=verbose,
+            filesystem=filesystem,
+            load_dotenv=load_dotenv,
+        )
+    except ConfigError as exc:
+        log_error("Build failed due to config error", error=str(exc))
+        _fail(f"Config error: {exc}", 2)
+    except EngineError as exc:
+        log_error("Build failed due to engine error", error=str(exc))
+        _fail(f"Engine error: {exc}", 3)
+    except Exception as exc:  # pragma: no cover
+        if verbose:
+            raise
+        log_error("Build failed unexpectedly", error=str(exc))
+        _fail(f"Unexpected error: {exc}", 1)
+
+    if dry_run and sql:
+        typer.echo(sql)
+    elif not dry_run:
+        typer.echo("Catalog build completed.")
+
+
+def _interactive_loop(conn: Any) -> None:
+    """Run an interactive SQL shell for the catalog."""
+    import duckdb
+
+    typer.echo("Duckalog Interactive SQL Shell")
+    typer.echo("Type '.help' for help, '.quit' to exit.")
+
+    while True:
+        try:
+            sql = typer.prompt("duckalog> ", prompt_suffix="").strip()
+            if not sql:
+                continue
+
+            if sql.lower() in (".quit", ".exit", "exit", "quit"):
+                break
+
+            if sql.lower() == ".help":
+                typer.echo("\nCommands:")
+                typer.echo("  .quit, .exit  - Exit the shell")
+                typer.echo("  .tables       - List all tables")
+                typer.echo("  .views        - List all views")
+                typer.echo("  .help         - Show this help")
+                typer.echo("  <SQL>         - Execute SQL query\n")
+                continue
+
+            if sql.lower() == ".tables":
+                res = conn.execute(
+                    "SELECT table_name, table_schema FROM duckdb_tables()"
+                ).fetchall()
+                _display_table(["table_name", "table_schema"], res)
+                continue
+
+            if sql.lower() == ".views":
+                res = conn.execute(
+                    "SELECT view_name, schema_name FROM duckdb_views()"
+                ).fetchall()
+                _display_table(["view_name", "schema_name"], res)
+                continue
+
+            # Execute SQL
+            res = conn.execute(sql)
+            if res.description:
+                columns = [desc[0] for desc in res.description]
+                rows = res.fetchall()
+                if rows:
+                    _display_table(columns, rows)
+                else:
+                    typer.echo("Query executed successfully. No rows returned.")
+            else:
+                typer.echo("Query executed successfully.")
+
+        except EOFError:
+            break
+        except duckdb.Error as e:
+            typer.echo(f"SQL Error: {e}", err=True)
+        except Exception as e:
+            typer.echo(f"Error: {e}", err=True)
+
+
+@app.command(help="Run a catalog with smart connection management.")
+def run(
+    ctx: typer.Context,
+    config_path: str = typer.Argument(
+        ...,
+        help="Path to configuration file or remote URI (e.g., s3://bucket/config.yaml)",
+    ),
+    db_path: Optional[str] = typer.Option(
+        None,
+        "--db-path",
+        help="Override DuckDB database path. Supports local paths and remote URIs (s3://, gs://, gcs://, abfs://, adl://, sftp://).",
+    ),
+    dry_run: bool = typer.Option(
+        False, "--dry-run", help="Generate SQL without executing against DuckDB."
+    ),
+    force_rebuild: bool = typer.Option(
+        False,
+        "--force-rebuild",
+        help="Force full catalog rebuild instead of incremental updates.",
+    ),
+    interactive: bool = typer.Option(
+        False,
+        "--interactive",
+        "-i",
+        help="Keep connection alive and enter interactive SQL prompt.",
+    ),
+    query_sql: Optional[str] = typer.Option(
+        None,
+        "--query",
+        "-q",
+        help="Execute a specific SQL query and exit.",
+    ),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Enable verbose logging output."
+    ),
+    load_dotenv: bool = typer.Option(
+        True,
+        "--load-dotenv/--no-load-dotenv",
+        help="Enable/disable automatic .env file loading.",
+    ),
+) -> None:
+    """CLI entry point for ``run`` command.
+
+    This command provides smart catalog management with connection state restoration
+    and incremental updates. For most use cases, prefer ``run`` over ``build``.
+
+    Examples:
+        # Run with smart connection management
+        duckalog run config.yaml
+
+        # Force full rebuild
+        duckalog run config.yaml --force-rebuild
+
+        # Interactive mode for multiple queries
+        duckalog run config.yaml --interactive
+
+        # Single query execution
+        duckalog run config.yaml --query "SELECT * FROM my_view"
+
+        # S3 with access key and secret
+        duckalog run s3://my-bucket/config.yaml --fs-key AKIA... --fs-secret wJalr...
+
+    Args:
+        config_path: Path to configuration file or remote URI (e.g., s3://bucket/config.yaml).
+        db_path: Optional override for DuckDB database file path.
+        dry_run: If ``True``, print SQL instead of modifying database.
+        force_rebuild: If ``True``, force full catalog rebuild instead of incremental updates.
+        interactive: If ``True``, start interactive SQL shell.
+        query_sql: Optional SQL query to execute and exit.
+        verbose: If ``True``, enable more verbose logging.
+        load_dotenv: If ``True``, automatically load and process .env files.
+    """
+    _configure_logging(verbose)
+
+    # Get filesystem from context (created by shared callback)
+    filesystem = ctx.obj.get("filesystem")
+
+    # Validate that local files exist, but allow remote URIs
+    try:
+        from .remote_config import is_remote_uri
+
+        if not is_remote_uri(config_path):
+            # This is a local path, check if it exists
+            local_path = Path(config_path)
+            if not local_path.exists():
+                _fail(f"Config file not found: {config_path}", 2)
+    except ImportError:
+        # Remote functionality not available, treat as local path
+        local_path = Path(config_path)
+        if not local_path.exists():
+            _fail(f"Config file not found: {config_path}", 2)
+
+    log_info(
+        "CLI run invoked",
+        config_path=config_path,
+        db_path=db_path,
+        dry_run=dry_run,
+        force_rebuild=force_rebuild,
+        interactive=interactive,
+        query=query_sql,
+        filesystem=filesystem is not None,
+    )
+
+    if dry_run:
+        try:
+            sql = build_catalog(
+                str(config_path),
+                db_path=db_path,
+                dry_run=True,
+                verbose=verbose,
+                filesystem=filesystem,
+                load_dotenv=load_dotenv,
+            )
+            if sql:
+                typer.echo(sql)
+            return
+        except Exception as exc:
+            log_error("Dry run failed", error=str(exc))
+            _fail(f"Error: {exc}", 1)
+
+    try:
+        with connect_to_catalog(
+            str(config_path),
+            database_path=db_path,
+            force_rebuild=force_rebuild,
+            filesystem=filesystem,
+            load_dotenv=load_dotenv,
+        ) as catalog:
+            conn = catalog.get_connection()
+
+            if query_sql:
+                res = conn.execute(query_sql)
+                if res.description:
+                    columns = [desc[0] for desc in res.description]
+                    rows = res.fetchall()
+                    if rows:
+                        _display_table(columns, rows)
+                    else:
+                        typer.echo("Query executed successfully. No rows returned.")
+                else:
+                    typer.echo("Query executed successfully.")
+            elif interactive:
+                _interactive_loop(conn)
+            else:
+                action = "rebuilt" if force_rebuild else "updated"
+                typer.echo(f"Catalog {action} successfully.")
+
+    except ConfigError as exc:
+        log_error("Run failed due to config error", error=str(exc))
+        _fail(f"Config error: {exc}", 2)
+    except EngineError as exc:
+        log_error("Run failed due to engine error", error=str(exc))
+        _fail(f"Engine error: {exc}", 3)
+    except Exception as exc:  # pragma: no cover
+        if verbose:
+            raise
+        log_error("Run failed unexpectedly", error=str(exc))
+        _fail(f"Unexpected error: {exc}", 1)
+
+
+@app.command(name="generate-sql", help="Validate config and emit CREATE VIEW SQL only.")
+def generate_sql(
+    ctx: typer.Context,
+    config_path: str = typer.Argument(
+        ..., help="Path to configuration file or remote URI"
+    ),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o", help="Write SQL output to file instead of stdout."
+    ),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Enable verbose logging output."
+    ),
+) -> None:
+    """CLI entry point for ``generate-sql`` command.
+
+    Args:
+        config_path: Path to configuration file or remote URI.
+        output: Optional output file path. If omitted, SQL is printed to
+            standard output.
+        verbose: If ``True``, enable more verbose logging.
+    """
+    _configure_logging(verbose)
+
+    # Get filesystem from context (created by shared callback)
+    filesystem = ctx.obj.get("filesystem")
+
+    # Validate that local files exist, but allow remote URIs
+    try:
+        from .remote_config import is_remote_uri
+
+        if not is_remote_uri(config_path):
+            # This is a local path, check if it exists
+            local_path = Path(config_path)
+            if not local_path.exists():
+                _fail(f"Config file not found: {config_path}", 2)
+    except ImportError:
+        # Remote functionality not available, treat as local path
+        local_path = Path(config_path)
+        if not local_path.exists():
+            _fail(f"Config file not found: {config_path}", 2)
+
+    log_info(
+        "CLI generate-sql invoked",
+        config_path=config_path,
+        output=str(output) if output else "stdout",
+        filesystem=filesystem is not None,
+    )
+    try:
+        config = load_config(config_path, filesystem=filesystem)
+        sql = generate_all_views_sql(config)
+    except ConfigError as exc:
+        log_error("Generate-sql failed due to config error", error=str(exc))
+        _fail(f"Config error: {exc}", 2)
+
+    if output:
+        out_path = Path(output)
+        out_path.write_text(sql)
+        if verbose:
+            typer.echo(f"Wrote SQL to {out_path}")
+    else:
+        typer.echo(sql)
+
+
+@app.command(help="Validate a config file and report success or failure.")
+def validate(
+    ctx: typer.Context,
+    config_path: str = typer.Argument(
+        ..., help="Path to configuration file or remote URI"
+    ),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Enable verbose logging output."
+    ),
+) -> None:
+    """CLI entry point for ``validate`` command.
+
+    Args:
+        config_path: Path to configuration file or remote URI.
+        verbose: If ``True``, enable more verbose logging.
+    """
+    _configure_logging(verbose)
+
+    # Get filesystem from context (created by shared callback)
+    filesystem = ctx.obj.get("filesystem")
+
+    # Validate that local files exist, but allow remote URIs
+    try:
+        from .remote_config import is_remote_uri
+
+        if not is_remote_uri(config_path):
+            # This is a local path, check if it exists
+            local_path = Path(config_path)
+            if not local_path.exists():
+                _fail(f"Config file not found: {config_path}", 2)
+    except ImportError:
+        # Remote functionality not available, treat as local path
+        local_path = Path(config_path)
+        if not local_path.exists():
+            _fail(f"Config file not found: {config_path}", 2)
+
+    log_info(
+        "CLI validate invoked",
+        config_path=config_path,
+        filesystem=filesystem is not None,
+    )
+    try:
+        load_config(config_path, filesystem=filesystem)
+    except ConfigError as exc:
+        log_error("Validate failed due to config error", error=str(exc))
+        _fail(f"Config error: {exc}", 2)
+
+    typer.echo("Config is valid.")
+
+
+@app.command(help="Show resolved paths for a configuration file.")
+def show_paths(
+    config_path: Path = typer.Argument(
+        ..., exists=True, file_okay=True, dir_okay=False
+    ),
+    check_accessibility: bool = typer.Option(
+        False, "--check", "-c", help="Check if files are accessible."
+    ),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Enable verbose logging output."
+    ),
+) -> None:
+    """Show how paths in a configuration are resolved.
+
+    This command displays the original paths from the configuration file
+    and their resolved absolute paths.
+
+    Args:
+        config_path: Path to the configuration file.
+        check_accessibility: If True, check if resolved file paths are accessible.
+        verbose: If True, enable more verbose logging.
+    """
+    _configure_logging(verbose)
+    log_info("CLI show-paths invoked", config_path=str(config_path))
+
+    try:
+        config = load_config(str(config_path))
+    except ConfigError as exc:
+        log_error("Show-paths failed due to config error", error=str(exc))
+        _fail(f"Config error: {exc}", 2)
+
+    config_dir = config_path.resolve().parent
+    typer.echo(f"Configuration: {config_path}")
+    typer.echo(f"Config directory: {config_dir}")
+    typer.echo("")
+
+    # Show view paths
+    typer.echo("View Paths:")
+    typer.echo("-" * 80)
+    if config.views:
+        for view in config.views:
+            if view.uri:
+                typer.echo(f"{view.name}:")
+                typer.echo(f"  Original: {view.uri}")
+                # For file-based views, show what would be resolved
+                if view.source in ("parquet", "delta"):
+                    from .config import is_relative_path, resolve_relative_path
+
+                    if is_relative_path(view.uri):
+                        resolved = resolve_relative_path(view.uri, config_dir)
+                        typer.echo(f"  Resolved: {resolved}")
+                    else:
+                        typer.echo(f"  Resolved: {view.uri} (absolute path)")
+
+                    if check_accessibility:
+                        is_accessible, error_msg = validate_file_accessibility(resolved)
+                        if is_accessible:
+                            typer.echo("  Status: ✅ Accessible")
+                        else:
+                            typer.echo(f"  Status: ❌ {error_msg}")
+                typer.echo("")
+    else:
+        typer.echo("No views with file paths found.")
+
+
+@app.command(help="Validate config and check path accessibility.")
+def validate_paths(
+    config_path: Path = typer.Argument(
+        ..., exists=True, file_okay=True, dir_okay=False
+    ),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Enable verbose logging output."
+    ),
+) -> None:
+    """Validate configuration and check path accessibility.
+
+    This command validates the configuration file and checks if all file
+    paths are accessible.
+
+    Args:
+        config_path: Path to the configuration file.
+        verbose: If True, enable more verbose logging.
+    """
+    _configure_logging(verbose)
+    log_info("CLI validate-paths invoked", config_path=str(config_path))
+
+    try:
+        config = load_config(str(config_path))
+        typer.echo("✅ Configuration is valid.")
+    except ConfigError as exc:
+        log_error("Validate-paths failed due to config error", error=str(exc))
+        _fail(f"Config error: {exc}", 2)
+
+    config_dir = config_path.resolve().parent
+    inaccessible_files = []
+
+    # Check accessibility of view files
+    typer.echo("")
+    typer.echo("Checking file accessibility...")
+    typer.echo("-" * 50)
+
+    if config.views:
+        for view in config.views:
+            if view.uri and view.source in ("parquet", "delta"):
+                from .config import is_relative_path, resolve_relative_path
+
+                path_to_check = view.uri
+                if is_relative_path(view.uri):
+                    path_to_check = resolve_relative_path(view.uri, config_dir)
+
+                is_accessible, error_msg = validate_file_accessibility(path_to_check)
+                if is_accessible:
+                    typer.echo(f"✅ {view.name}: {path_to_check}")
+                else:
+                    typer.echo(f"❌ {view.name}: {error_msg}")
+                    inaccessible_files.append((view.name, path_to_check, error_msg))
+
+    # Summary
+    typer.echo("")
+    if inaccessible_files:
+        typer.echo(f"❌ Found {len(inaccessible_files)} inaccessible files:")
+        for name, path, error in inaccessible_files:
+            typer.echo(f"  - {name}: {error}")
+        _fail("Some files are not accessible.", 3)
+    else:
+        typer.echo("✅ All files are accessible.")
+
+
+def _collect_import_graph(
+    config_path: str,
+    filesystem: Optional[Any] = None,
+) -> tuple[list[str], dict[str, list[str]], set[str]]:
+    """Collect import graph information from a config file.
+
+    Args:
+        config_path: Path to the configuration file.
+        filesystem: Optional filesystem object for remote file access.
+
+    Returns:
+        A tuple of (import_chain, import_graph, visited) where:
+        - import_chain: The chain of files from root to current
+        - import_graph: Dict mapping file paths to their imported files
+        - visited: Set of visited file paths (normalized)
+    """
+    from .config.loader import (
+        _is_remote_uri,
+        _normalize_uri,
+        _resolve_import_path,
+    )
+
+    import_chain = []
+    import_graph: dict[str, list[str]] = {}
+    visited = set()
+
+    def _traverse_imports(current_path: str, base_path: str) -> None:
+        """Recursively traverse import graph."""
+        # Normalize and resolve the current path
+        if _is_remote_uri(current_path):
+            normalized_current = _normalize_uri(current_path)
+        else:
+            normalized_current = _normalize_uri(str(Path(current_path).resolve()))
+
+        # Avoid infinite loops and duplicate processing
+        if normalized_current in visited:
+            return
+        visited.add(normalized_current)
+
+        # Use normalized path for the chain to ensure consistency
+        import_chain.append(normalized_current)
+
+        # Load the config to get its imports
+        try:
+            if _is_remote_uri(current_path):
+                config = load_config(
+                    current_path, filesystem=filesystem, load_sql_files=False
+                )
+            else:
+                config = load_config(
+                    current_path, filesystem=filesystem, load_sql_files=False
+                )
+        except Exception:
+            # If we can't load the config, skip it
+            import_graph[normalized_current] = []
+            return
+
+        # Get imports and resolve them to normalized paths
+        imports = config.imports if config.imports else []
+        resolved_imports = []
+
+        # Recursively process each import
+        for import_path in imports:
+            try:
+                resolved_import = _resolve_import_path(import_path, current_path)
+
+                # Normalize the resolved import for consistency
+                if _is_remote_uri(resolved_import):
+                    normalized_import = _normalize_uri(resolved_import)
+                else:
+                    normalized_import = _normalize_uri(
+                        str(Path(resolved_import).resolve())
+                    )
+
+                resolved_imports.append(resolved_import)
+
+                _traverse_imports(resolved_import, current_path)
+            except Exception:
+                # If we can't resolve an import, skip it
+                continue
+
+        import_graph[normalized_current] = resolved_imports
+
+    # Start traversal from the root config
+    if _is_remote_uri(config_path):
+        _traverse_imports(config_path, config_path)
+    else:
+        # Resolve to absolute path for proper relative path resolution
+        abs_config_path = str(Path(config_path).resolve())
+        _traverse_imports(abs_config_path, abs_config_path)
+
+    return import_chain, import_graph, visited
+
+
+def _compute_import_diagnostics(import_graph: dict[str, list[str]]) -> dict[str, Any]:
+    """Compute diagnostics for the import graph.
+
+    Args:
+        import_graph: Dict mapping file paths to their imported files.
+
+    Returns:
+        Dictionary containing diagnostic information:
+        - max_depth: Maximum import depth
+        - total_files: Total number of files in the graph
+        - files_with_imports: Count of files that have imports
+        - remote_imports: Count of remote URI imports
+        - local_imports: Count of local file imports
+        - duplicate_imports: List of files imported multiple times
+    """
+    if not import_graph:
+        return {
+            "max_depth": 0,
+            "total_files": 0,
+            "files_with_imports": 0,
+            "remote_imports": 0,
+            "local_imports": 0,
+            "duplicate_imports": [],
+        }
+
+    # Build parent-child relationships
+    children_map = {parent: children for parent, children in import_graph.items()}
+
+    # Find the root (file that is not imported by any other file)
+    all_imported = set()
+    for children in import_graph.values():
+        all_imported.update(children)
+
+    roots = [f for f in import_graph.keys() if f not in all_imported]
+
+    # Compute maximum depth
+    max_depth = 0
+    for root in roots:
+        depths = {}
+
+        def compute_depth(node: str, depth: int = 0) -> None:
+            """Recursively compute depth."""
+            if node in depths and depths[node] <= depth:
+                return
+            depths[node] = depth
+
+            children = children_map.get(node, [])
+            for child in children:
+                compute_depth(child, depth + 1)
+
+        compute_depth(root)
+        max_depth = max(max_depth, max(depths.values()) if depths else 0)
+
+    # Count file types
+    remote_imports = sum(
+        1 for children in import_graph.values() for child in children if "://" in child
+    )
+
+    local_imports = sum(
+        1
+        for children in import_graph.values()
+        for child in children
+        if "://" not in child
+    )
+
+    # Find duplicate imports
+    all_imports = []
+    for children in import_graph.values():
+        all_imports.extend(children)
+
+    import_counts = {}
+    for imp in all_imports:
+        import_counts[imp] = import_counts.get(imp, 0) + 1
+
+    duplicate_imports = [imp for imp, count in import_counts.items() if count > 1]
+
+    return {
+        "max_depth": max_depth,
+        "total_files": len(import_graph),
+        "files_with_imports": sum(1 for children in import_graph.values() if children),
+        "remote_imports": remote_imports,
+        "local_imports": local_imports,
+        "duplicate_imports": duplicate_imports,
+    }
+
+
+def _print_import_tree(
+    import_chain: list[str],
+    import_graph: dict[str, list[str]],
+    visited: set[str],
+    show_diagnostics: bool = False,
+    original_root_path: Optional[str] = None,
+) -> None:
+    """Print the import graph as a tree structure.
+
+    Args:
+        import_chain: The chain of files from root to current.
+        import_graph: Dict mapping file paths to their imported files.
+        visited: Set of visited file paths.
+        show_diagnostics: If True, also print diagnostic information.
+        original_root_path: The original root path (for display purposes).
+    """
+    if not import_chain:
+        typer.echo("No imports found.")
+        return
+
+    # Track which files have been printed
+    printed = set()
+
+    # Create a path display helper that shows relative paths when possible
+    def _get_display_path(path: str) -> str:
+        """Get a user-friendly display path."""
+        # For remote URIs, show as-is
+        if "://" in path:
+            return path
+
+        # For local files, try to show relative to current directory
+        try:
+            p = Path(path).resolve()
+
+            # Try to make it relative to current directory
+            try:
+                relative = p.relative_to(Path.cwd())
+                return str(relative)
+            except ValueError:
+                # Not under current dir, show as absolute
+                return str(p)
+        except Exception:
+            # If anything fails, just return the path
+            return path
+
+    def _print_node(path: str, prefix: str = "", is_last: bool = True) -> None:
+        """Print a node in the tree."""
+        display_path = _get_display_path(path)
+
+        # Determine if this is a remote URI
+        is_remote = "://" in str(display_path)
+        path_type = " [REMOTE]" if is_remote else ""
+
+        if is_last:
+            typer.echo(f"{prefix}└── {display_path}{path_type}")
+            new_prefix = prefix + "    "
+        else:
+            typer.echo(f"{prefix}├── {display_path}{path_type}")
+            new_prefix = prefix + "│   "
+
+        printed.add(path)
+
+        # Get and sort children
+        children = sorted(import_graph.get(path, []))
+
+        # Print children
+        for i, child in enumerate(children):
+            is_child_last = i == len(children) - 1
+            if child not in printed:
+                _print_node(child, new_prefix, is_child_last)
+
+    # Start printing from the root
+    root = import_chain[0]
+    root_display = _get_display_path(root)
+    typer.echo(f"{root_display}")
+    children = sorted(import_graph.get(root, []))
+
+    for i, child in enumerate(children):
+        is_last = i == len(children) - 1
+        _print_node(child, "", is_last)
+
+    # Print diagnostics
+    if show_diagnostics:
+        diagnostics = _compute_import_diagnostics(import_graph)
+        typer.echo("")
+        typer.echo("Import Diagnostics:")
+        typer.echo("-" * 80)
+        typer.echo(f"  Total files: {diagnostics['total_files']}")
+        typer.echo(f"  Maximum import depth: {diagnostics['max_depth']}")
+        typer.echo(f"  Files with imports: {diagnostics['files_with_imports']}")
+        typer.echo(f"  Remote imports: {diagnostics['remote_imports']}")
+        typer.echo(f"  Local imports: {diagnostics['local_imports']}")
+        if diagnostics["duplicate_imports"]:
+            typer.echo(
+                f"  Duplicate imports: {', '.join(diagnostics['duplicate_imports'])}"
+            )
+    else:
+        total_files = len(visited) if visited else len(import_chain)
+        typer.echo("")
+        typer.echo(f"Total files in import graph: {total_files}")
+
+
+@app.command(help="Show the import graph for a configuration file.")
+def show_imports(
+    ctx: typer.Context,
+    config_path: str = typer.Argument(
+        ..., help="Path to configuration file or remote URI"
+    ),
+    show_merged: bool = typer.Option(
+        False,
+        "--show-merged",
+        help="Also display the fully merged configuration after imports are resolved.",
+    ),
+    output_format: str = typer.Option(
+        "tree",
+        "--format",
+        "-f",
+        help="Output format: tree or json (default: tree)",
+    ),
+    diagnostics: bool = typer.Option(
+        False,
+        "--diagnostics",
+        help="Show import diagnostics (depth, duplicates, performance metrics).",
+    ),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Enable verbose logging output."
+    ),
+) -> None:
+    """Display the import graph for a configuration file.
+
+    This command shows which configuration files are imported and how they
+    are connected, helping you understand the structure of your configuration.
+
+    Examples:
+        # Show the import tree
+        duckalog show-imports config.yaml
+
+        # Show import tree with diagnostics
+        duckalog show-imports config.yaml --diagnostics
+
+        # Show import tree with merged config
+        duckalog show-imports config.yaml --show-merged
+
+        # Export import graph as JSON
+        duckalog show-imports config.yaml --format json
+
+    Args:
+        config_path: Path to configuration file or remote URI.
+        show_merged: If True, also display the fully merged configuration.
+        output_format: Output format (tree or json).
+        diagnostics: If True, show import diagnostics (depth, duplicates, etc.).
+        verbose: If True, enable more verbose logging.
+    """
+    from .config.loader import _is_remote_uri
+    import json
+
+    _configure_logging(verbose)
+
+    # Get filesystem from context
+    filesystem = ctx.obj.get("filesystem")
+
+    # Validate that local files exist, but allow remote URIs
+    if not _is_remote_uri(config_path):
+        local_path = Path(config_path)
+        if not local_path.exists():
+            _fail(f"Config file not found: {config_path}", 2)
+
+    log_info("CLI show-imports invoked", config_path=config_path)
+
+    try:
+        # Collect import graph information
+        import_chain, import_graph, visited = _collect_import_graph(
+            config_path, filesystem
+        )
+
+        # Output based on format
+        if output_format == "json":
+            output = {
+                "import_chain": import_chain,
+                "import_graph": import_graph,
+                "total_files": len(visited),
+            }
+            typer.echo(json.dumps(output, indent=2))
+        else:
+            # Default tree format
+            typer.echo("")
+            typer.echo("Import Graph:")
+            typer.echo("=" * 80)
+            _print_import_tree(
+                import_chain, import_graph, visited, show_diagnostics=diagnostics
+            )
+
+            # Optionally show merged config
+            if show_merged:
+                typer.echo("")
+                typer.echo("Merged Configuration:")
+                typer.echo("=" * 80)
+                try:
+                    merged_config = load_config(config_path, filesystem=filesystem)
+                    # Use model_dump_json for clean JSON output
+                    merged_json = merged_config.model_dump_json(indent=2)
+                    typer.echo(merged_json)
+                except ConfigError as exc:
+                    typer.echo(f"Error loading merged config: {exc}", err=True)
+
+    except ConfigError as exc:
+        log_error("Show-imports failed due to config error", error=str(exc))
+        _fail(f"Config error: {exc}", 2)
+    except Exception as exc:
+        if verbose:
+            raise
+        log_error("Show-imports failed unexpectedly", error=str(exc))
+        _fail(f"Unexpected error: {exc}", 1)
+
+
+def _fail(message: str, code: int) -> None:
+    """Print an error message and exit with the given code.
+
+    Args:
+        message: Message to write to stderr.
+        code: Process exit code.
+    """
+
+    typer.echo(message, err=True)
+    raise typer.Exit(code)
+
+
+@app.command(name="ui", help="Launch the local dashboard for a catalog.")
+def ui(
+    config_path: str = typer.Argument(
+        ..., help="Path to configuration file (local or remote)."
+    ),
+    host: str = typer.Option(
+        "127.0.0.1", "--host", help="Host to bind (default: loopback)."
+    ),
+    port: int = typer.Option(8787, "--port", help="Port to bind (default: 8787)."),
+    row_limit: int = typer.Option(
+        500, "--row-limit", help="Max rows to show in query results."
+    ),
+    db_path: Optional[str] = typer.Option(
+        None, "--db", help="Path to DuckDB database file (optional)."
+    ),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Enable verbose logging output."
+    ),
+) -> None:
+    """Start a local dashboard to inspect and query a Duckalog catalog.
+
+    This command launches a web-based dashboard that allows you to:
+    - Browse views defined in the catalog configuration
+    - Execute SQL queries against the DuckDB database
+    - View query results in real-time with streaming
+
+    Examples:
+        # Basic usage with config file
+        duckalog ui config.yaml
+
+        # Specify a custom host and port
+        duckalog ui config.yaml --host 0.0.0.0 --port 8080
+
+        # Use with an existing database file
+        duckalog ui config.yaml --db catalog.duckdb
+    """
+    _configure_logging(verbose)
+
+    # Check for UI dependencies
+    try:
+        from .dashboard import create_app
+    except ImportError:
+        _fail(
+            "Dashboard dependencies not installed. Install with: pip install duckalog[ui]",
+            2,
+        )
+
+    try:
+        import uvicorn
+    except ImportError:
+        _fail("uvicorn is required. Install with: pip install duckalog[ui]", 2)
+
+    # Load configuration
+    try:
+        config = load_config(config_path)
+    except ConfigError as exc:
+        _fail(f"Config error: {exc}", 2)
+
+    # Create the dashboard app
+    dashboard_app = create_app(
+        config,
+        config_path=config_path,
+        db_path=db_path,
+        row_limit=row_limit,
+    )
+
+    typer.echo(f"Starting dashboard at http://{host}:{port}")
+    if host not in ("127.0.0.1", "localhost", "::1"):
+        typer.echo(
+            "Warning: binding to a non-loopback host may expose the dashboard to others on your network.",
+            err=True,
+        )
+    uvicorn.run(dashboard_app, host=host, port=port, log_level="info")
+
+
+@app.command(help="Execute SQL queries against a DuckDB catalog.")
+def query(
+    sql: str = typer.Argument(
+        ...,
+        help="SQL query to execute against the catalog.",
+    ),
+    catalog: Optional[str] = typer.Option(
+        None,
+        "--catalog",
+        "-c",
+        help="Path to DuckDB catalog file (optional, defaults to catalog.duckdb in current directory).",
+    ),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Enable verbose logging output."
+    ),
+) -> None:
+    """Execute SQL queries against a DuckDB catalog.
+
+    This command allows you to run ad-hoc SQL queries against an existing
+    DuckDB catalog file and display results in a tabular format.
+
+    Examples:
+        # Query with implicit catalog discovery (catalog.duckdb in current directory)
+        duckalog query "SELECT COUNT(*) FROM users"
+
+        # Query with explicit catalog path
+        duckalog query "SELECT * FROM users" --catalog catalog.duckdb
+        duckalog query "SELECT * FROM users" -c analytics.duckdb
+
+        # Query a remote catalog (if filesystem options are configured)
+        duckalog query "SELECT name, email FROM users WHERE active = true" --catalog s3://my-bucket/catalog.duckdb
+
+    Args:
+        sql: SQL query string to execute.
+        catalog: Optional path to DuckDB catalog file. If omitted, looks for
+            'catalog.duckdb' in the current directory.
+        verbose: If True, enable verbose logging.
+    """
+    import duckdb
+
+    _configure_logging(verbose)
+
+    # Determine catalog path
+    if not catalog:
+        # Try to find a default catalog in the current directory
+        default_path = Path("catalog.duckdb")
+        if default_path.exists():
+            catalog = str(default_path)
+        else:
+            _fail(
+                "No catalog file specified and catalog.duckdb not found in current directory. "
+                "Either provide a catalog path or ensure catalog.duckdb exists.",
+                2,
+            )
+    else:
+        # Validate that the provided catalog path exists
+        catalog_file = Path(catalog)
+        if not catalog_file.exists():
+            _fail(f"Catalog file not found: {catalog}", 2)
+
+    log_info(
+        "CLI query invoked",
+        catalog_path=catalog,
+        sql=sql[:100] + "..." if len(sql) > 100 else sql,
+    )
+
+    try:
+        # Connect to the DuckDB catalog
+        conn = duckdb.connect(str(catalog), read_only=True)
+
+        try:
+            # Execute the query
+            result = conn.execute(sql)
+
+            # Fetch results
+            rows = result.fetchall()
+
+            # Get column information
+            columns = [desc[0] for desc in result.description]
+
+            # Display results in tabular format
+            if rows:
+                _display_table(columns, rows)
+            else:
+                if columns:
+                    typer.echo("Query executed successfully. No rows returned.")
+                    # Show column headers for context
+                    typer.echo(f"Columns: {', '.join(columns)}")
+                else:
+                    typer.echo("Query executed successfully. No results returned.")
+
+        except duckdb.Error as exc:
+            log_error("Query execution failed", error=str(exc))
+            _fail(f"SQL error: {exc}", 3)
+        finally:
+            conn.close()
+
+    except duckdb.Error as exc:
+        log_error("Failed to connect to catalog", error=str(exc))
+        _fail(f"Database error: {exc}", 3)
+    except typer.Exit:
+        # Re-raise Exit exceptions (from _fail) without modification
+        raise
+    except Exception as exc:
+        if verbose:
+            raise
+        log_error("Query failed unexpectedly", error=str(exc))
+        _fail(f"Unexpected error: {exc}", 1)
+
+
+def _display_table(columns: list[str], rows: list[tuple]) -> None:
+    """Display query results in a simple tabular format.
+
+    Args:
+        columns: List of column names.
+        rows: List of rows, where each row is a tuple of values.
+    """
+    if not columns or not rows:
+        return
+
+    # Convert all values to strings for consistent display
+    str_columns = [str(col) for col in columns]
+    str_rows = [[str(cell) for cell in row] for row in rows]
+
+    # Calculate column widths
+    col_widths = []
+    for i, col in enumerate(str_columns):
+        # Start with column header width
+        max_width = len(col)
+        # Check all rows in this column
+        for row in str_rows:
+            if i < len(row):
+                max_width = max(max_width, len(str(row[i])))
+        col_widths.append(max_width)
+
+    # Create horizontal separator line
+    separator = "+" + "+".join("-" * (width + 2) for width in col_widths) + "+"
+
+    # Print header
+    typer.echo(separator)
+    header_row = (
+        "|"
+        + "|".join(f" {col:<{col_widths[i]}} " for i, col in enumerate(str_columns))
+        + "|"
+    )
+    typer.echo(header_row)
+    typer.echo(separator)
+
+    # Print data rows
+    for row in str_rows:
+        # Pad row with empty strings if it has fewer columns than headers
+        padded_row = row + [""] * (len(str_columns) - len(row))
+        data_row = (
+            "|"
+            + "|".join(
+                f" {padded_row[i]:<{col_widths[i]}} " for i in range(len(str_columns))
+            )
+            + "|"
+        )
+        typer.echo(data_row)
+
+    typer.echo(separator)
+
+
+@app.command(help="Initialize a new Duckalog configuration file.")
+def init(
+    output: Optional[str] = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Output file path for the configuration. Defaults to catalog.yaml or catalog.json based on format.",
+    ),
+    format: str = typer.Option(
+        "yaml",
+        "--format",
+        "-f",
+        help="Output format: yaml or json (default: yaml)",
+    ),
+    database_name: str = typer.Option(
+        "analytics_catalog.duckdb",
+        "--database",
+        "-d",
+        help="DuckDB database filename (default: analytics_catalog.duckdb)",
+    ),
+    project_name: str = typer.Option(
+        "my_analytics_project",
+        "--project",
+        "-p",
+        help="Project name used in comments (default: my_analytics_project)",
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        help="Overwrite existing file without prompting",
+    ),
+    skip_existing: bool = typer.Option(
+        False,
+        "--skip-existing",
+        help="Skip file creation if it already exists",
+    ),
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Enable verbose logging output."
+    ),
+) -> None:
+    """Create a new Duckalog configuration file.
+
+    This command generates a basic, valid configuration template with
+    sensible defaults and educational example content.
+
+    Examples:
+        # Create a basic YAML config
+        duckalog init
+
+        # Create a JSON config with custom filename
+        duckalog init --format json --output my_config.json
+
+        # Create with custom database and project names
+        duckalog init --database sales.db --project sales_analytics
+
+        # Force overwrite existing file
+        duckalog init --force
+    """
+    _configure_logging(verbose)
+
+    # Validate format
+    if format not in ("yaml", "json"):
+        typer.echo(f"Error: Format must be 'yaml' or 'json', got '{format}'", err=True)
+        raise typer.Exit(1)
+
+    # Determine default output path
+    if not output:
+        output = f"catalog.{format}"
+
+    output_path = Path(output)
+
+    # Check if file already exists
+    if output_path.exists():
+        if skip_existing:
+            typer.echo(f"File {output_path} already exists, skipping.")
+            return
+        elif not force:
+            # Prompt for confirmation
+            if not typer.confirm(f"File {output_path} already exists. Overwrite?"):
+                typer.echo("Operation cancelled.")
+                return
+
+    try:
+        # Generate the configuration template
+        content = create_config_template(
+            format=format,
+            output_path=str(output_path),
+            database_name=database_name,
+            project_name=project_name,
+        )
+
+        # Validate the generated content
+        validate_generated_config(content, format=format)
+
+        # Determine default filename for messaging
+        if output == f"catalog.{format}":
+            filename_msg = f"catalog.{format} (default filename)"
+        else:
+            filename_msg = str(output_path)
+
+        typer.echo(f"✅ Created Duckalog configuration: {filename_msg}")
+        typer.echo(f"📁 Path: {output_path.resolve()}")
+        typer.echo(f"📄 Format: {format.upper()}")
+        typer.echo(f"💾 Database: {database_name}")
+
+        if verbose:
+            typer.echo("\n🔧 Next steps:")
+            typer.echo(f"   1. Edit {output_path} to customize views and data sources")
+            typer.echo(
+                f"   2. Run 'duckalog validate {output_path}' to check your configuration"
+            )
+            typer.echo(
+                f"   3. Run 'duckalog build {output_path}' to create your catalog"
+            )
+
+    except Exception as exc:
+        if verbose:
+            raise
+        typer.echo(f"Error creating configuration: {exc}", err=True)
+        raise typer.Exit(1)
+
+
+@app.command(help="Generate .env file templates for common use cases.")
+def init_env(
+    template: str = typer.Option(
+        "basic",
+        "--template",
+        "-t",
+        help="Template to use: basic, development, production, cloud, or custom",
+    ),
+    output: Optional[str] = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Output file path. Defaults to .env for basic template, or template-specific name for others.",
+    ),
+    force: bool = typer.Option(
+        False,
+        "--force",
+        "-f",
+        help="Overwrite existing files without prompting",
+    ),
+    verbose: bool = typer.Option(
+        False,
+        "--verbose",
+        "-v",
+        help="Enable verbose output",
+    ),
+) -> None:
+    """Generate .env file templates to help you get started with environment variables.
+
+    This command creates .env file templates with commonly used environment variables
+    for different use cases like development, production, and cloud deployments.
+
+    Templates:
+        basic       - Basic .env file with common variables (default)
+        development - Development environment variables
+        production  - Production environment variables
+        cloud       - Cloud service configuration variables
+
+    Examples:
+        # Generate basic .env template
+        duckalog init-env
+
+        # Generate development template
+        duckalog init-env --template development
+
+        # Generate production template with custom output
+        duckalog init-env --template production --output .env.production
+
+        # Force overwrite existing file
+        duckalog init-env --force
+    """
+    _configure_logging(verbose)
+
+    # Define templates
+    templates = {
+        "basic": {
+            "filename": ".env",
+            "content": """# Basic Duckalog Environment Configuration
+# Copy this file to .env and fill in your actual values
+
+# DuckDB Database Configuration
+DATABASE_URL=sqlite:///my_database.db
+# DATABASE_URL=postgres://username:password@localhost:5432/database_name
+# DATABASE_URL=mysql://username:password@localhost:3306/database_name
+
+# API Configuration
+API_KEY=your_api_key_here
+API_SECRET=your_api_secret_here
+API_BASE_URL=https://api.example.com
+
+# Application Settings
+ENVIRONMENT=development
+DEBUG=true
+LOG_LEVEL=info
+
+# File Paths (optional)
+DATA_PATH=./data
+OUTPUT_PATH=./output
+
+# Custom Variables
+# Add your own environment variables below
+# MY_CUSTOM_VAR=my_value
+""",
+        },
+        "development": {
+            "filename": ".env.development",
+            "content": """# Development Environment Configuration
+# This file contains development-specific settings
+
+# Database Configuration
+DATABASE_URL=sqlite:///dev_database.db
+DEBUG=true
+LOG_LEVEL=debug
+
+# API Configuration
+API_KEY=dev_api_key_123
+API_BASE_URL=http://localhost:8080
+
+# Development Services
+REDIS_URL=redis://localhost:6379
+ELASTICSEARCH_URL=http://localhost:9200
+
+# Feature Flags
+ENABLE_DEBUG_TOOLS=true
+ENABLE_MOCK_DATA=true
+ENABLE_HOT_RELOAD=true
+
+# Security (Development)
+CORS_ORIGINS=http://localhost:3000,http://localhost:8080
+SECRET_KEY=dev_secret_key_change_in_production
+
+# Monitoring
+ENABLE_PROFILING=true
+ENABLE_TRACING=true
+""",
+        },
+        "production": {
+            "filename": ".env.production",
+            "content": """# Production Environment Configuration
+# ⚠️  IMPORTANT: Never commit this file to version control!
+# Ensure proper security measures are in place
+
+# Database Configuration
+DATABASE_URL=postgresql://prod_user:secure_password@prod-db.example.com:5432/prod_db
+DATABASE_POOL_SIZE=20
+DATABASE_TIMEOUT=30
+
+# API Configuration
+API_KEY=prod_api_key_secure_123
+API_SECRET=prod_api_secret_very_secure_456
+API_BASE_URL=https://api.production.com
+
+# Security
+SECRET_KEY=change_this_to_a_secure_random_key_in_production
+CORS_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+SSL_REQUIRED=true
+HSTS_ENABLED=true
+
+# Application Settings
+ENVIRONMENT=production
+DEBUG=false
+LOG_LEVEL=warning
+
+# External Services
+REDIS_URL=redis://prod-redis:6379
+S3_BUCKET=your-production-bucket
+S3_REGION=us-east-1
+
+# Monitoring
+SENTRY_DSN=https://your-sentry-dsn@sentry.io/project-id
+ENABLE_METRICS=true
+ENABLE_ALERTING=true
+
+# Performance
+MAX_WORKERS=10
+CACHE_TTL=3600
+""",
+        },
+        "cloud": {
+            "filename": ".env.cloud",
+            "content": """# Cloud Services Configuration
+# Configuration for various cloud services
+
+# AWS Configuration
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+AWS_REGION=us-east-1
+S3_BUCKET=your-s3-bucket-name
+S3_PREFIX=data/
+
+# Google Cloud Platform
+GCP_PROJECT_ID=your-gcp-project-id
+GCP_CREDENTIALS_FILE=/path/to/service-account.json
+GCS_BUCKET=your-gcs-bucket-name
+
+# Azure Configuration
+AZURE_STORAGE_ACCOUNT=your_storage_account
+AZURE_STORAGE_KEY=your_storage_key
+AZURE_CONTAINER=your_container_name
+
+# Database Cloud Services
+# PostgreSQL (AWS RDS, Google Cloud SQL, etc.)
+DATABASE_URL=postgresql://user:password@cloud-db-host:5432/database
+
+# MongoDB Atlas
+MONGODB_URL=mongodb+srv://username:password@cluster.mongodb.net/database
+
+# Redis Cloud
+REDIS_URL=redis://username:password@redis-host:6379
+
+# Message Queues
+# AWS SQS
+SQS_QUEUE_URL=https://sqs.us-east-1.amazonaws.com/account/queue-name
+
+# RabbitMQ Cloud
+RABBITMQ_URL=amqp://username:password@cloud-host:5672
+
+# Monitoring & Logging
+# DataDog
+DATADOG_API_KEY=your_datadog_api_key
+DATADOG_APP_KEY=your_datadog_app_key
+
+# CloudWatch
+CLOUDWATCH_LOG_GROUP=/your/application/logs
+CLOUDWATCH_NAMESPACE=YourApplication
+
+# Application Insights
+APPINSIGHTS_INSTRUMENTATIONKEY=your_app_insights_key
+""",
+        },
+    }
+
+    # Validate template
+    if template not in templates:
+        typer.echo(
+            f"Error: Unknown template '{template}'. Available templates:", err=True
+        )
+        for name in templates.keys():
+            typer.echo(f"  - {name}")
+        raise typer.Exit(1)
+
+    template_data = templates[template]
+
+    # Determine output path
+    if not output:
+        output = template_data["filename"]
+
+    output_path = Path(output)
+
+    # Check if file already exists
+    if output_path.exists():
+        if not force:
+            if not typer.confirm(f"File {output_path} already exists. Overwrite?"):
+                typer.echo("Operation cancelled.")
+                return
+        typer.echo(f"Overwriting existing file: {output_path}")
+
+    try:
+        # Write the template
+        output_path.write_text(template_data["content"])
+        typer.echo(f"✅ Created {template} .env template: {output_path}")
+
+        # Provide helpful guidance
+        if template == "basic":
+            typer.echo("\nNext steps:")
+            typer.echo(f"   1. Edit {output_path} and fill in your actual values")
+            typer.echo(
+                "   2. Run 'duckalog build catalog.yaml' to test your configuration"
+            )
+            typer.echo(
+                "   3. Add .env to your .gitignore file to avoid committing secrets"
+            )
+        else:
+            typer.echo(f"\nNext steps:")
+            typer.echo(f"   1. Edit {output_path} and fill in your actual values")
+            typer.echo(
+                f"   2. Use with: duckalog build catalog.yaml --env-files {output_path}"
+            )
+            typer.echo("   3. Never commit this file to version control")
+
+    except Exception as exc:
+        if verbose:
+            raise
+        typer.echo(f"Error creating .env template: {exc}", err=True)
+        raise typer.Exit(1)
+
+
+def main_entry() -> None:
+    """Invoke the Typer application as the console entry point."""
+
+    app()
+
+
+__all__ = ["app", "main_entry"]
