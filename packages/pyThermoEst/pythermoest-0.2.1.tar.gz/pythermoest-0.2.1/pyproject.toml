@@ -1,0 +1,83 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyThermoEst"
+version = "0.2.1"
+description = "A Python toolkit for estimating thermodynamic properties"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    {name = "Sina Gilassi", email = "sina.gilassi@gmail.com"}
+]
+keywords = [
+    'chemical-engineering',
+    'thermodynamics',
+    'property-estimation',
+    'joback-method',
+    'zabransky-ruzicka-method',
+    'group-contribution-methods',
+    'parameter-estimation',
+]
+classifiers = [
+    "Development Status :: 1 - Planning",
+    "Intended Audience :: Education",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: Unix",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: Microsoft :: Windows",
+]
+dependencies = [
+    "numpy>=2.3.5",
+    "scipy>=1.16.3",
+    "pandas>=2.3.3",
+    "pyyaml>=6.0.3",
+    "pydantic>=2.12.4",
+    "pydantic-settings>=2.12.0",
+    "pythermodb-settings",
+    "pycuc",
+]
+
+[project.urls]
+Homepage = "https://github.com/sinagilassi/PyThermoEst"
+Documentation = "https://pythermoest.readthedocs.io/en/latest/"
+Source = "https://github.com/sinagilassi/PyThermoEst"
+Tracker = "https://github.com/sinagilassi/PyThermoEst/issues"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+exclude = [
+    "tests",
+    "tests.*",
+    "examples",
+    "examples.*",
+    "notebooks",
+    "notebooks.*",
+    "statics",
+    "statics.*",
+    "private",
+    "private.*",
+    "app",
+    "app.*",
+    "docs",
+    "docs.*",
+    "sources",
+    "sources.*",
+]
+
+[tool.setuptools.package-data]
+pyThermoEst = [
+    'config/*.yml',
+    'config/*.csv',
+    'data/*.csv',
+    'data/*.yml',
+    'plugin/*.yml',
+    'plugin/*.csv',
+    'templates/*.html',
+    'static/*'
+]
