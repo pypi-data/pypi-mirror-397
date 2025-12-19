@@ -1,0 +1,29 @@
+.. role:: passed
+.. role:: failed
+.. role:: notrun
+.. role:: notimplemented
+
+Userneeds Trace
+===============
+
+{% for need in userneeds %}
+{{ need.id }} - {{ need.description }}
+{{ '-' * (need.id|length + need.description|length + 3) }}
+
+{% if need.scenarios|length > 0 %}
+.. list-table::
+    :widths: auto
+    :header-rows: 1
+
+    * - ID
+      - Feature - Scenario
+      - Test result
+{%- for scenario in need.scenarios %}
+    * - :ref:`{{ scenario.id}} <{{ scenario.id}}>`
+      - {{ scenario.name }}
+      - :{{ status_to_style(scenario.result) }}:`{{ scenario.result }}`
+{%- endfor %}
+{% else %}
+No matching scenarios
+{% endif %}
+{% endfor %}
