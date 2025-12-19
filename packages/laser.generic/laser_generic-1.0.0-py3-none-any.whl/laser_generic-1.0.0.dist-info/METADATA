@@ -1,0 +1,154 @@
+Metadata-Version: 2.4
+Name: laser.generic
+Version: 1.0.0
+Summary: Generic, SI/SIR/SEIR/etc., disease models implemented with the LASER toolkit.
+Home-page: https://github.com/InstituteforDiseaseModeling/laser-generic
+Author: Christopher Lorton
+Author-email: Christopher Lorton <christopher.lorton@gatesfoundation.org>, Jonathan Bloedow <jonathan.bloedow@gatesfoundation.org>, Katherine Rosenfeld <katherine.rosenfeld@gatesfoundation.org>, Kevin McCarthy <kevin.mccarthy@gatesfoundation.org>, Paul R Saxman <paul.saxman@gatesfoundation.org>
+Maintainer-email: Christopher Lorton <christopher.lorton@gatesfoundation.org>, Paul R Saxman <paul.saxman@gatesfoundation.org>
+Project-URL: Homepage, https://github.com/InstituteforDiseaseModeling/laser-generic/
+Project-URL: Documentation, https://institutefordiseasemodeling.github.io/laser-generic
+Project-URL: Repository, https://github.com/InstituteforDiseaseModeling/laser-generic.git
+Project-URL: Issues, https://github.com/InstituteforDiseaseModeling/laser-generic/issues
+Project-URL: Changelog, https://github.com/InstituteforDiseaseModeling/laser-generic/blob/master/CHANGELOG.md
+Keywords: sir,seir,spatial,modeling,laser
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: Unix
+Classifier: Operating System :: POSIX
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: MacOS
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Topic :: Utilities
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: click
+Requires-Dist: laser.core>=1.0.0
+Requires-Dist: tqdm
+Requires-Dist: geopandas
+Requires-Dist: pandas
+Requires-Dist: numpy
+Requires-Dist: scipy
+Requires-Dist: scikit-learn
+Requires-Dist: mplcursors>=0.7
+Requires-Dist: PyWavelets
+Provides-Extra: dev
+Requires-Dist: pre-commit; extra == "dev"
+Requires-Dist: pytest; extra == "dev"
+Provides-Extra: basemaps
+Requires-Dist: contextily>=1.6.2; extra == "basemaps"
+Dynamic: author
+Dynamic: home-page
+Dynamic: license-file
+
+# Overview
+
+[![Documentation Build Status](https://github.com/laser-base/laser-generic/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/laser-base/laser-generic/actions/workflows/pages/pages-build-deployment)
+[![GitHub Actions Build Status](https://github.com/laser-base/laser-generic/actions/workflows/github-actions.yml/badge.svg)](https://github.com/laser-base/laser-generic/actions)
+[![Coverage Status](https://codecov.io/gh/laser-base/laser-generic/branch/main/graphs/badge.svg?branch=main)](https://app.codecov.io/github/laser-base/laser-generic)
+[![PyPI Package latest release](https://img.shields.io/pypi/v/laser-generic.svg)](https://test.pypi.org/project/laser-generic)
+[![PyPI Wheel](https://img.shields.io/pypi/wheel/laser-generic.svg)](https://test.pypi.org/project/laser-generic)
+[![Supported versions](https://img.shields.io/pypi/pyversions/laser-generic.svg)](https://test.pypi.org/project/laser-generic)
+[![Supported implementations](https://img.shields.io/pypi/implementation/laser-generic.svg)](https://test.pypi.org/project/laser-generic)
+[![Commits since latest release](https://img.shields.io/github/commits-since/InstituteforDiseaseModeling/laser-generic/v1.0.0.svg)](https://github.com/InstituteforDiseaseModeling/laser-generic/compare/v1.0.0...main)
+
+LASER (Lightweight Agent Spatial modeling for ERadication) is a framework for building agent-based infectious disease models with an emphasis on spatial modeling and efficient computation at scale.
+
+[`laser-generic`](https://github.com/laser-base/laser-generic) builds on top of [`laser-core`](https://github.com/laser-base/laser-core), offering a set of ready-to-use, generic disease model components (e.g., SI, SIS, SIR dynamics, births, deaths, vaccination).
+
+* Free software: MIT license
+
+## Documentation
+
+https://laser-base.github.io/laser-generic/
+
+## New model components
+
+`laser-generic` adds additional modeling components to those developed for `laser-core`. They include:
+
+### Infection & transmission
+
+- ``Infection()`` / ``Infection_SIS()`` – intrahost progression for SI and SIS models.
+- ``Susceptibility()`` – manages agent susceptibility.
+- ``Exposure()`` – models exposed (latent) state with timers.
+- ``Transmission()`` / ``TransmissionSIR()`` – interhost transmission dynamics.
+- ``Infect_Agents_In_Patch()`` / ``Infect_Random_Agents()`` – stochastic infection events.
+
+### Births & demographics
+
+- ``Births()`` – demographic process, assigning DOB and node IDs.
+- ``Births_ConstantPop()`` – keeps population constant by matching births to deaths.
+- ``Births_ConstantPop_VariableBirthRate()`` – constant population but with variable crude birth rates.
+
+### Immunization
+
+- ``ImmunizationCampaign()`` – age-targeted, periodic campaigns.
+- ``RoutineImmunization()`` – ongoing routine immunization at target ages.
+- ``immunize_in_age_window()`` – helper to immunize within an age band.
+
+### Initialization & seeding
+
+- ``seed_infections_in_patch()`` / ``seed_infections_randomly()`` / ``seed_infections_randomly_SI()`` – seed infections at start.
+- ``set_initial_susceptibility_in_patch()`` / ``set_initial_susceptibility_randomly()`` – initialize susceptibility.
+
+### Utilities
+
+- ``calc_capacity()`` – computes population capacity given births and ticks.
+- ``calc_distances()`` – helper for spatial coupling via geocoordinates.
+- ``get_default_parameters()`` – returns baseline parameters.
+
+
+## Installation
+
+We recommend using [`uv`](https://github.com/astral-sh/uv) for faster, more reliable installs:
+
+```
+uv pip install laser-generic
+```
+
+Alternatively, you can use regular `pip`:
+
+```
+pip install laser-generic
+```
+
+To install the latest in-development version:
+
+```
+pip install https://github.com/InstituteforDiseaseModeling/laser-generic/archive/main.zip
+```
+
+## Development
+
+To run all the tests run:
+
+```sh
+tox
+```
+
+Note, to combine the coverage data from all the tox environments run:
+
+**Windows:**
+```sh
+set PYTEST_ADDOPTS=--cov-append
+ tox
+```
+
+**Other:**
+```sh
+PYTEST_ADDOPTS=--cov-append tox
+```
+
+-----
+
+## Disclaimer
+
+The code in this repository was developed by IDM and other collaborators to support our joint research on flexible agent-based modeling. We've made it publicly available under the MIT License to provide others with a better understanding of our research and an opportunity to build upon it for their own work. We make no representations that the code works as intended or that we will provide support, address issues that are found, or accept pull requests. You are welcome to create your own fork and modify the code to suit your own modeling needs as permitted under the MIT License.
