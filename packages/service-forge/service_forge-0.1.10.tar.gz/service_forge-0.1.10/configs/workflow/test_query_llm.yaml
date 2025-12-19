@@ -1,0 +1,15 @@
+name: test_query_llm
+nodes:
+  - name: trigger
+    type: OnceTrigger
+    args:
+    outputs:
+      trigger: query_llm|TRIGGER
+
+  - name: query_llm
+    type: QueryLLMNode
+    args:
+      prompt: prompt/test_query_llm_prompt.txt
+      system_prompt: prompt/test_query_llm_system_prompt.txt
+      temperature: 0.8
+    outputs:
