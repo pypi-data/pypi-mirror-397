@@ -1,0 +1,30 @@
+# FlowMason Studio - Development Override
+#
+# Usage:
+#   docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+#
+# This enables:
+#   - Hot reload for Python code changes
+#   - Source code mounted as volumes
+#   - Debug logging
+
+version: '3.8'
+
+services:
+  studio:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      # Mount source code for hot reload
+      - ./core:/app/core:ro
+      - ./studio:/app/studio:ro
+      - ./lab:/app/lab:ro
+      # Persist data
+      - flowmason-data:/app/data
+      # Mount pipelines (read-write for development)
+      - ${PIPELINES_DIR:-./pipelines}:/app/pipelines
+    environment:
+      - FLOWMASON_DEBUG=true
+      - FLOWMASON_LOG_LEVEL=DEBUG
+    command: ["python", "-m", "uvicorn", "flowmason_studio.api.app:app", "--host", "0.0.0.0", "--port", "8999", "--reload"]

@@ -1,0 +1,388 @@
+{
+  "id": "devops-cicd-deployment",
+  "name": "CI/CD Deployment Pipeline",
+  "description": "A comprehensive CI/CD pipeline that triggers builds, runs tests, deploys to staging, validates with smoke tests, and promotes to production. Includes rollback capability and team notifications via Slack.",
+  "category": "devops",
+  "tags": [
+    "devops",
+    "cicd",
+    "deployment",
+    "automation",
+    "github",
+    "jenkins",
+    "rollback"
+  ],
+  "difficulty": "intermediate",
+  "use_cases": [
+    "Automated deployment to staging and production",
+    "CI/CD pipeline orchestration",
+    "Blue-green or rolling deployments",
+    "Integration with GitHub Actions or Jenkins"
+  ],
+  "stages": [
+    {
+      "id": "log-start",
+      "component_type": "logger",
+      "name": "Log Deployment Start",
+      "config": {
+        "message": "Starting deployment for {{input.service_name}} version {{input.version}}",
+        "level": "info",
+        "data": {
+          "service": "{{input.service_name}}",
+          "version": "{{input.version}}",
+          "environment": "{{input.target_environment}}",
+          "triggered_by": "{{input.triggered_by}}",
+          "timestamp": "{{now()}}"
+        }
+      },
+      "depends_on": [],
+      "position": {
+        "x": 100,
+        "y": 200
+      }
+    },
+    {
+      "id": "validate-input",
+      "component_type": "schema-validate",
+      "name": "Validate Deployment Request",
+      "config": {
+        "data": "{{input}}",
+        "schema": {
+          "type": "object",
+          "required": ["service_name", "version", "artifact_url"],
+          "properties": {
+            "service_name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "version": {
+              "type": "string",
+              "pattern": "^v?[0-9]+\\.[0-9]+\\.[0-9]+.*$"
+            },
+            "artifact_url": {
+              "type": "string",
+              "format": "uri"
+            },
+            "target_environment": {
+              "type": "string",
+              "enum": ["staging", "production"]
+            }
+          }
+        }
+      },
+      "depends_on": ["log-start"],
+      "position": {
+        "x": 350,
+        "y": 200
+      }
+    },
+    {
+      "id": "trigger-build",
+      "component_type": "http-request",
+      "name": "Trigger CI Build",
+      "config": {
+        "url": "{{input.ci_api_url}}/builds",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer {{env.CI_TOKEN}}",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "repository": "{{input.repository}}",
+          "branch": "{{input.branch}}",
+          "version": "{{input.version}}",
+          "artifact_url": "{{input.artifact_url}}"
+        },
+        "timeout": 30000
+      },
+      "depends_on": ["validate-input"],
+      "position": {
+        "x": 600,
+        "y": 200
+      }
+    },
+    {
+      "id": "poll-build-status",
+      "component_type": "http-request",
+      "name": "Poll Build Status",
+      "config": {
+        "url": "{{input.ci_api_url}}/builds/{{upstream.trigger-build.body.build_id}}/status",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer {{env.CI_TOKEN}}"
+        },
+        "timeout": 10000
+      },
+      "depends_on": ["trigger-build"],
+      "error_handling": {
+        "on_error": "retry",
+        "max_retries": 30,
+        "retry_delay": 10000
+      },
+      "position": {
+        "x": 850,
+        "y": 200
+      }
+    },
+    {
+      "id": "check-build-success",
+      "component_type": "filter",
+      "name": "Verify Build Success",
+      "config": {
+        "data": "{{upstream.poll-build-status.body}}",
+        "condition": "data.get('status') == 'success' and data.get('tests_passed', False) == True"
+      },
+      "depends_on": ["poll-build-status"],
+      "position": {
+        "x": 1100,
+        "y": 200
+      }
+    },
+    {
+      "id": "deploy-staging",
+      "component_type": "http-request",
+      "name": "Deploy to Staging",
+      "config": {
+        "url": "{{env.DEPLOY_API}}/deployments",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer {{env.DEPLOY_TOKEN}}",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "service": "{{input.service_name}}",
+          "version": "{{input.version}}",
+          "artifact_url": "{{input.artifact_url}}",
+          "environment": "staging",
+          "strategy": "{{input.deploy_strategy}}"
+        },
+        "timeout": 60000
+      },
+      "depends_on": ["check-build-success"],
+      "position": {
+        "x": 1350,
+        "y": 100
+      }
+    },
+    {
+      "id": "wait-staging-healthy",
+      "component_type": "http-request",
+      "name": "Wait for Staging Health",
+      "config": {
+        "url": "{{env.STAGING_URL}}/{{input.service_name}}/health",
+        "method": "GET",
+        "timeout": 10000
+      },
+      "depends_on": ["deploy-staging"],
+      "error_handling": {
+        "on_error": "retry",
+        "max_retries": 12,
+        "retry_delay": 5000
+      },
+      "position": {
+        "x": 1600,
+        "y": 100
+      }
+    },
+    {
+      "id": "run-smoke-tests",
+      "component_type": "http-request",
+      "name": "Run Smoke Tests",
+      "config": {
+        "url": "{{input.test_api_url}}/tests/smoke",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer {{env.TEST_TOKEN}}"
+        },
+        "body": {
+          "target_url": "{{env.STAGING_URL}}/{{input.service_name}}",
+          "test_suite": "smoke",
+          "version": "{{input.version}}"
+        },
+        "timeout": 300000
+      },
+      "depends_on": ["wait-staging-healthy"],
+      "position": {
+        "x": 1850,
+        "y": 100
+      }
+    },
+    {
+      "id": "evaluate-tests",
+      "component_type": "filter",
+      "name": "Evaluate Test Results",
+      "config": {
+        "data": "{{upstream.run-smoke-tests.body}}",
+        "condition": "data.get('passed', False) == True and data.get('failures', 1) == 0"
+      },
+      "depends_on": ["run-smoke-tests"],
+      "position": {
+        "x": 2100,
+        "y": 100
+      }
+    },
+    {
+      "id": "deploy-production",
+      "component_type": "http-request",
+      "name": "Deploy to Production",
+      "config": {
+        "url": "{{env.DEPLOY_API}}/deployments",
+        "method": "POST",
+        "headers": {
+          "Authorization": "Bearer {{env.DEPLOY_TOKEN}}",
+          "Content-Type": "application/json"
+        },
+        "body": {
+          "service": "{{input.service_name}}",
+          "version": "{{input.version}}",
+          "artifact_url": "{{input.artifact_url}}",
+          "environment": "production",
+          "strategy": "{{input.deploy_strategy}}"
+        },
+        "timeout": 120000
+      },
+      "depends_on": ["evaluate-tests"],
+      "position": {
+        "x": 2350,
+        "y": 100
+      }
+    },
+    {
+      "id": "verify-production",
+      "component_type": "http-request",
+      "name": "Verify Production Health",
+      "config": {
+        "url": "{{env.PROD_URL}}/{{input.service_name}}/health",
+        "method": "GET",
+        "timeout": 10000
+      },
+      "depends_on": ["deploy-production"],
+      "error_handling": {
+        "on_error": "retry",
+        "max_retries": 10,
+        "retry_delay": 5000
+      },
+      "position": {
+        "x": 2600,
+        "y": 100
+      }
+    },
+    {
+      "id": "notify-success",
+      "component_type": "http-request",
+      "name": "Notify Success",
+      "config": {
+        "url": "{{env.SLACK_WEBHOOK}}",
+        "method": "POST",
+        "body": {
+          "blocks": [
+            {
+              "type": "header",
+              "text": {
+                "type": "plain_text",
+                "text": "Deployment Successful"
+              }
+            },
+            {
+              "type": "section",
+              "fields": [
+                {"type": "mrkdwn", "text": "*Service:*\n{{input.service_name}}"},
+                {"type": "mrkdwn", "text": "*Version:*\n{{input.version}}"},
+                {"type": "mrkdwn", "text": "*Environment:*\nProduction"},
+                {"type": "mrkdwn", "text": "*Triggered by:*\n{{input.triggered_by}}"}
+              ]
+            }
+          ]
+        }
+      },
+      "depends_on": ["verify-production"],
+      "position": {
+        "x": 2850,
+        "y": 100
+      }
+    },
+    {
+      "id": "format-output",
+      "component_type": "json-transform",
+      "name": "Format Output",
+      "config": {
+        "template": {
+          "status": "success",
+          "service": "{{input.service_name}}",
+          "version": "{{input.version}}",
+          "environments_deployed": ["staging", "production"],
+          "build_id": "{{upstream.trigger-build.body.build_id}}",
+          "test_results": {
+            "passed": "{{upstream.run-smoke-tests.body.passed}}",
+            "total_tests": "{{upstream.run-smoke-tests.body.total}}"
+          },
+          "completed_at": "{{now()}}"
+        }
+      },
+      "depends_on": ["notify-success"],
+      "position": {
+        "x": 3100,
+        "y": 100
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "service_name": {
+        "type": "string",
+        "description": "Name of the service to deploy"
+      },
+      "version": {
+        "type": "string",
+        "description": "Version tag (e.g., v1.2.3)"
+      },
+      "artifact_url": {
+        "type": "string",
+        "description": "URL to the build artifact (Docker image, package, etc.)"
+      },
+      "repository": {
+        "type": "string",
+        "description": "Source repository (e.g., owner/repo)"
+      },
+      "branch": {
+        "type": "string",
+        "description": "Git branch name"
+      },
+      "ci_api_url": {
+        "type": "string",
+        "description": "Base URL for CI system API"
+      },
+      "test_api_url": {
+        "type": "string",
+        "description": "Base URL for test runner API"
+      },
+      "target_environment": {
+        "type": "string",
+        "description": "Target environment (staging or production)"
+      },
+      "deploy_strategy": {
+        "type": "string",
+        "description": "Deployment strategy (rolling, blue-green, canary)"
+      },
+      "triggered_by": {
+        "type": "string",
+        "description": "User or system that triggered the deployment"
+      }
+    },
+    "required": ["service_name", "version", "artifact_url", "ci_api_url"]
+  },
+  "output_stage_id": "format-output",
+  "example_input": {
+    "service_name": "user-api",
+    "version": "v2.1.0",
+    "artifact_url": "ghcr.io/myorg/user-api:v2.1.0",
+    "repository": "myorg/user-api",
+    "branch": "main",
+    "ci_api_url": "https://ci.example.com/api",
+    "test_api_url": "https://tests.example.com/api",
+    "target_environment": "production",
+    "deploy_strategy": "rolling",
+    "triggered_by": "github-actions"
+  }
+}

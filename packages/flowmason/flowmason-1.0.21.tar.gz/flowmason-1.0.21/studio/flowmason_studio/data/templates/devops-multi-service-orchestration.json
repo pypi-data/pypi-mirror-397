@@ -1,0 +1,363 @@
+{
+  "id": "devops-multi-service-orchestration",
+  "name": "Multi-Service API Orchestration",
+  "description": "An API orchestration pipeline that coordinates calls across multiple services, transforms and merges responses, validates data, and enriches results with AI. Ideal for building composite APIs and data aggregation workflows.",
+  "category": "integration",
+  "tags": [
+    "integration",
+    "api",
+    "orchestration",
+    "etl",
+    "data-aggregation",
+    "microservices"
+  ],
+  "difficulty": "intermediate",
+  "use_cases": [
+    "Building composite/aggregate APIs",
+    "Data enrichment from multiple sources",
+    "Microservice orchestration",
+    "ETL and data synchronization"
+  ],
+  "stages": [
+    {
+      "id": "validate-input",
+      "component_type": "schema-validate",
+      "name": "Validate Input",
+      "config": {
+        "data": "{{input}}",
+        "schema": {
+          "type": "object",
+          "required": ["entity_id"],
+          "properties": {
+            "entity_id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Primary entity ID to fetch data for"
+            },
+            "include_enrichment": {
+              "type": "boolean",
+              "description": "Whether to include AI enrichment"
+            }
+          }
+        }
+      },
+      "depends_on": [],
+      "position": {
+        "x": 100,
+        "y": 200
+      }
+    },
+    {
+      "id": "log-start",
+      "component_type": "logger",
+      "name": "Log Orchestration Start",
+      "config": {
+        "message": "Starting multi-service orchestration for entity {{input.entity_id}}",
+        "level": "info",
+        "data": {
+          "entity_id": "{{input.entity_id}}",
+          "include_enrichment": "{{input.include_enrichment}}",
+          "timestamp": "{{now()}}"
+        }
+      },
+      "depends_on": ["validate-input"],
+      "position": {
+        "x": 350,
+        "y": 200
+      }
+    },
+    {
+      "id": "fetch-primary-data",
+      "component_type": "http-request",
+      "name": "Fetch Primary Data",
+      "config": {
+        "url": "{{env.PRIMARY_API}}/entities/{{input.entity_id}}",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer {{env.PRIMARY_API_TOKEN}}",
+          "Accept": "application/json"
+        },
+        "timeout": 30000
+      },
+      "depends_on": ["log-start"],
+      "position": {
+        "x": 600,
+        "y": 100
+      }
+    },
+    {
+      "id": "fetch-secondary-data",
+      "component_type": "http-request",
+      "name": "Fetch Secondary Data",
+      "config": {
+        "url": "{{env.SECONDARY_API}}/data",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer {{env.SECONDARY_API_TOKEN}}",
+          "Accept": "application/json"
+        },
+        "query_params": {
+          "entity_id": "{{input.entity_id}}",
+          "include_history": "true"
+        },
+        "timeout": 30000
+      },
+      "depends_on": ["log-start"],
+      "position": {
+        "x": 600,
+        "y": 250
+      }
+    },
+    {
+      "id": "fetch-tertiary-data",
+      "component_type": "http-request",
+      "name": "Fetch Tertiary Data",
+      "config": {
+        "url": "{{env.TERTIARY_API}}/metadata/{{input.entity_id}}",
+        "method": "GET",
+        "headers": {
+          "Authorization": "Bearer {{env.TERTIARY_API_TOKEN}}",
+          "Accept": "application/json"
+        },
+        "timeout": 30000
+      },
+      "depends_on": ["log-start"],
+      "position": {
+        "x": 600,
+        "y": 400
+      }
+    },
+    {
+      "id": "validate-primary",
+      "component_type": "schema-validate",
+      "name": "Validate Primary Response",
+      "config": {
+        "data": "{{upstream.fetch-primary-data.body}}",
+        "schema": {
+          "type": "object",
+          "required": ["id", "name"],
+          "properties": {
+            "id": {"type": "string"},
+            "name": {"type": "string"},
+            "status": {"type": "string"},
+            "created_at": {"type": "string"}
+          }
+        },
+        "strict": false
+      },
+      "depends_on": ["fetch-primary-data"],
+      "position": {
+        "x": 850,
+        "y": 100
+      }
+    },
+    {
+      "id": "transform-secondary",
+      "component_type": "json-transform",
+      "name": "Transform Secondary Data",
+      "config": {
+        "data": "{{upstream.fetch-secondary-data.body}}",
+        "template": {
+          "items": "{{data.items or []}}",
+          "total_count": "{{len(data.items) if data.items else 0}}",
+          "latest_item": "{{data.items[0] if data.items else None}}",
+          "has_history": "{{len(data.items or []) > 1}}"
+        }
+      },
+      "depends_on": ["fetch-secondary-data"],
+      "position": {
+        "x": 850,
+        "y": 250
+      }
+    },
+    {
+      "id": "transform-tertiary",
+      "component_type": "json-transform",
+      "name": "Transform Tertiary Data",
+      "config": {
+        "data": "{{upstream.fetch-tertiary-data.body}}",
+        "template": {
+          "metadata": "{{data.metadata or {}}}",
+          "tags": "{{data.tags or []}}",
+          "category": "{{data.category or 'uncategorized'}}",
+          "last_updated": "{{data.updated_at}}"
+        }
+      },
+      "depends_on": ["fetch-tertiary-data"],
+      "position": {
+        "x": 850,
+        "y": 400
+      }
+    },
+    {
+      "id": "merge-all-data",
+      "component_type": "json-transform",
+      "name": "Merge All Data Sources",
+      "config": {
+        "template": {
+          "entity": {
+            "id": "{{upstream.validate-primary.data.id}}",
+            "name": "{{upstream.validate-primary.data.name}}",
+            "status": "{{upstream.validate-primary.data.status}}",
+            "created_at": "{{upstream.validate-primary.data.created_at}}"
+          },
+          "history": {
+            "items": "{{upstream.transform-secondary.items}}",
+            "total_count": "{{upstream.transform-secondary.total_count}}",
+            "has_history": "{{upstream.transform-secondary.has_history}}"
+          },
+          "metadata": {
+            "category": "{{upstream.transform-tertiary.category}}",
+            "tags": "{{upstream.transform-tertiary.tags}}",
+            "additional": "{{upstream.transform-tertiary.metadata}}",
+            "last_updated": "{{upstream.transform-tertiary.last_updated}}"
+          },
+          "merged_at": "{{now()}}",
+          "sources": ["primary", "secondary", "tertiary"]
+        }
+      },
+      "depends_on": ["validate-primary", "transform-secondary", "transform-tertiary"],
+      "position": {
+        "x": 1100,
+        "y": 250
+      }
+    },
+    {
+      "id": "check-enrichment-needed",
+      "component_type": "filter",
+      "name": "Check if Enrichment Needed",
+      "config": {
+        "data": "{{input}}",
+        "condition": "data.get('include_enrichment', False) == True"
+      },
+      "depends_on": ["merge-all-data"],
+      "position": {
+        "x": 1350,
+        "y": 150
+      }
+    },
+    {
+      "id": "enrich-with-ai",
+      "component_type": "generator",
+      "name": "AI Data Enrichment",
+      "config": {
+        "prompt": "Analyze this entity data and provide enrichment:\n\n{{upstream.merge-all-data}}\n\nProvide:\n1. A brief summary of this entity (2-3 sentences)\n2. Key insights from the historical data\n3. Suggested tags or categories based on the data\n4. Any anomalies or notable patterns\n5. Recommended next actions",
+        "system_prompt": "You are a data analyst enriching entity records. Provide concise, actionable insights. Focus on patterns and recommendations."
+      },
+      "depends_on": ["check-enrichment-needed"],
+      "position": {
+        "x": 1600,
+        "y": 150
+      }
+    },
+    {
+      "id": "skip-enrichment",
+      "component_type": "json-transform",
+      "name": "Skip Enrichment",
+      "config": {
+        "template": {
+          "enrichment": null,
+          "enrichment_skipped": true
+        }
+      },
+      "depends_on": ["merge-all-data"],
+      "position": {
+        "x": 1350,
+        "y": 350
+      }
+    },
+    {
+      "id": "validate-output",
+      "component_type": "schema-validate",
+      "name": "Validate Final Output",
+      "config": {
+        "data": "{{upstream.merge-all-data}}",
+        "schema": {
+          "type": "object",
+          "required": ["entity", "merged_at"],
+          "properties": {
+            "entity": {
+              "type": "object",
+              "required": ["id", "name"]
+            },
+            "history": {"type": "object"},
+            "metadata": {"type": "object"},
+            "merged_at": {"type": "string"}
+          }
+        }
+      },
+      "depends_on": ["merge-all-data"],
+      "position": {
+        "x": 1350,
+        "y": 500
+      }
+    },
+    {
+      "id": "log-completion",
+      "component_type": "logger",
+      "name": "Log Orchestration Complete",
+      "config": {
+        "message": "Multi-service orchestration completed for {{input.entity_id}}",
+        "level": "info",
+        "data": {
+          "entity_id": "{{input.entity_id}}",
+          "sources_fetched": 3,
+          "enrichment_included": "{{input.include_enrichment}}",
+          "timestamp": "{{now()}}"
+        }
+      },
+      "depends_on": ["validate-output"],
+      "position": {
+        "x": 1600,
+        "y": 500
+      }
+    },
+    {
+      "id": "format-output",
+      "component_type": "json-transform",
+      "name": "Format Final Output",
+      "config": {
+        "template": {
+          "success": true,
+          "data": "{{upstream.merge-all-data}}",
+          "enrichment": "{{upstream.enrich-with-ai.content if input.include_enrichment else None}}",
+          "validation": {
+            "input_valid": "{{upstream.validate-input.valid}}",
+            "output_valid": "{{upstream.validate-output.valid}}"
+          },
+          "metadata": {
+            "entity_id": "{{input.entity_id}}",
+            "sources_count": 3,
+            "enriched": "{{input.include_enrichment}}",
+            "processed_at": "{{now()}}"
+          }
+        }
+      },
+      "depends_on": ["log-completion", "enrich-with-ai", "skip-enrichment"],
+      "position": {
+        "x": 1850,
+        "y": 300
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "entity_id": {
+        "type": "string",
+        "description": "The primary entity ID to fetch and orchestrate data for"
+      },
+      "include_enrichment": {
+        "type": "boolean",
+        "description": "Whether to include AI-powered data enrichment",
+        "default": false
+      }
+    },
+    "required": ["entity_id"]
+  },
+  "output_stage_id": "format-output",
+  "example_input": {
+    "entity_id": "customer-12345",
+    "include_enrichment": true
+  }
+}

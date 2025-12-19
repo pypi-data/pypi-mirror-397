@@ -1,0 +1,318 @@
+{
+  "id": "devops-health-monitor",
+  "name": "Service Health Monitor",
+  "description": "A comprehensive health monitoring pipeline that checks multiple services in parallel, aggregates results, uses AI to analyze patterns, and sends alerts via Slack or PagerDuty when services are unhealthy.",
+  "category": "devops",
+  "tags": [
+    "devops",
+    "monitoring",
+    "health-check",
+    "alerting",
+    "observability",
+    "sre"
+  ],
+  "difficulty": "intermediate",
+  "use_cases": [
+    "Multi-service health monitoring",
+    "Automated alerting on service failures",
+    "AI-powered health pattern analysis",
+    "Scheduled health check pipelines"
+  ],
+  "stages": [
+    {
+      "id": "log-check-start",
+      "component_type": "logger",
+      "name": "Log Health Check Start",
+      "config": {
+        "message": "Starting health check for {{len(input.services)}} services",
+        "level": "info",
+        "data": {
+          "services_count": "{{len(input.services)}}",
+          "timestamp": "{{now()}}"
+        }
+      },
+      "depends_on": [],
+      "position": {
+        "x": 100,
+        "y": 200
+      }
+    },
+    {
+      "id": "check-all-services",
+      "component_type": "foreach",
+      "name": "Check All Services",
+      "config": {
+        "items": "{{input.services}}",
+        "item_variable": "service",
+        "loop_stages": ["health-check", "evaluate-health"],
+        "collect_results": true,
+        "parallel": true,
+        "max_parallel": 10
+      },
+      "depends_on": ["log-check-start"],
+      "position": {
+        "x": 350,
+        "y": 200
+      }
+    },
+    {
+      "id": "health-check",
+      "component_type": "http-request",
+      "name": "Health Check",
+      "config": {
+        "url": "{{context.service.url}}/health",
+        "method": "GET",
+        "headers": {
+          "Accept": "application/json"
+        },
+        "timeout": 10000
+      },
+      "position": {
+        "x": 350,
+        "y": 350
+      }
+    },
+    {
+      "id": "evaluate-health",
+      "component_type": "json-transform",
+      "name": "Evaluate Health Response",
+      "config": {
+        "template": {
+          "service_name": "{{context.service.name}}",
+          "service_url": "{{context.service.url}}",
+          "status_code": "{{upstream.health-check.status_code}}",
+          "response_time_ms": "{{upstream.health-check.elapsed_ms}}",
+          "healthy": "{{upstream.health-check.status_code == 200}}",
+          "details": "{{upstream.health-check.body}}",
+          "checked_at": "{{now()}}"
+        }
+      },
+      "depends_on": ["health-check"],
+      "position": {
+        "x": 350,
+        "y": 500
+      }
+    },
+    {
+      "id": "aggregate-results",
+      "component_type": "json-transform",
+      "name": "Aggregate Results",
+      "config": {
+        "data": "{{upstream.check-all-services.results}}",
+        "template": {
+          "total_services": "{{len(data)}}",
+          "healthy_count": "{{len([r for r in data if r.get('healthy', False)])}}",
+          "unhealthy_count": "{{len([r for r in data if not r.get('healthy', True)])}}",
+          "avg_response_time_ms": "{{sum([r.get('response_time_ms', 0) for r in data]) / len(data) if data else 0}}",
+          "unhealthy_services": "{{[r for r in data if not r.get('healthy', True)]}}",
+          "healthy_services": "{{[r for r in data if r.get('healthy', False)]}}",
+          "all_healthy": "{{all(r.get('healthy', False) for r in data)}}",
+          "checked_at": "{{now()}}"
+        }
+      },
+      "depends_on": ["check-all-services"],
+      "position": {
+        "x": 600,
+        "y": 200
+      }
+    },
+    {
+      "id": "analyze-health",
+      "component_type": "generator",
+      "name": "AI Health Analysis",
+      "config": {
+        "prompt": "Analyze this health check report and provide insights:\n\n## Health Check Summary\n- Total Services: {{upstream.aggregate-results.total_services}}\n- Healthy: {{upstream.aggregate-results.healthy_count}}\n- Unhealthy: {{upstream.aggregate-results.unhealthy_count}}\n- Average Response Time: {{upstream.aggregate-results.avg_response_time_ms}}ms\n\n## Unhealthy Services\n{{upstream.aggregate-results.unhealthy_services}}\n\n## Healthy Services\n{{upstream.aggregate-results.healthy_services}}\n\nProvide:\n1. Overall system health assessment\n2. Identify any patterns or concerning trends\n3. Prioritize which unhealthy services need immediate attention\n4. Recommend immediate actions if any services are down",
+        "system_prompt": "You are an SRE expert analyzing service health. Be concise and focus on actionable insights. Prioritize by business impact."
+      },
+      "depends_on": ["aggregate-results"],
+      "position": {
+        "x": 850,
+        "y": 200
+      }
+    },
+    {
+      "id": "check-alert-needed",
+      "component_type": "filter",
+      "name": "Check if Alert Needed",
+      "config": {
+        "data": "{{upstream.aggregate-results}}",
+        "condition": "data.get('unhealthy_count', 0) > 0"
+      },
+      "depends_on": ["aggregate-results"],
+      "position": {
+        "x": 850,
+        "y": 350
+      }
+    },
+    {
+      "id": "determine-severity",
+      "component_type": "json-transform",
+      "name": "Determine Alert Severity",
+      "config": {
+        "data": "{{upstream.aggregate-results}}",
+        "template": {
+          "severity": "{{ 'critical' if data.unhealthy_count >= 3 else ('high' if data.unhealthy_count >= 2 else 'medium') }}",
+          "unhealthy_count": "{{data.unhealthy_count}}",
+          "unhealthy_services": "{{data.unhealthy_services}}"
+        }
+      },
+      "depends_on": ["check-alert-needed"],
+      "position": {
+        "x": 1100,
+        "y": 350
+      }
+    },
+    {
+      "id": "send-slack-alert",
+      "component_type": "http-request",
+      "name": "Send Slack Alert",
+      "config": {
+        "url": "{{env.SLACK_WEBHOOK}}",
+        "method": "POST",
+        "body": {
+          "blocks": [
+            {
+              "type": "header",
+              "text": {
+                "type": "plain_text",
+                "text": "Health Check Alert: {{upstream.aggregate-results.unhealthy_count}} Services Unhealthy"
+              }
+            },
+            {
+              "type": "section",
+              "text": {
+                "type": "mrkdwn",
+                "text": "{{upstream.analyze-health.content}}"
+              }
+            },
+            {
+              "type": "section",
+              "fields": [
+                {"type": "mrkdwn", "text": "*Healthy:*\n{{upstream.aggregate-results.healthy_count}}"},
+                {"type": "mrkdwn", "text": "*Unhealthy:*\n{{upstream.aggregate-results.unhealthy_count}}"},
+                {"type": "mrkdwn", "text": "*Severity:*\n{{upstream.determine-severity.severity}}"},
+                {"type": "mrkdwn", "text": "*Avg Response:*\n{{upstream.aggregate-results.avg_response_time_ms}}ms"}
+              ]
+            }
+          ],
+          "attachments": [
+            {
+              "color": "{{ '#ff0000' if upstream.determine-severity.severity == 'critical' else ('#ff9900' if upstream.determine-severity.severity == 'high' else '#ffcc00') }}"
+            }
+          ]
+        }
+      },
+      "depends_on": ["determine-severity", "analyze-health"],
+      "position": {
+        "x": 1350,
+        "y": 250
+      }
+    },
+    {
+      "id": "send-pagerduty-alert",
+      "component_type": "http-request",
+      "name": "Send PagerDuty Alert",
+      "config": {
+        "url": "https://events.pagerduty.com/v2/enqueue",
+        "method": "POST",
+        "body": {
+          "routing_key": "{{env.PAGERDUTY_ROUTING_KEY}}",
+          "event_action": "trigger",
+          "dedup_key": "health-check-{{upstream.aggregate-results.checked_at}}",
+          "payload": {
+            "summary": "{{upstream.aggregate-results.unhealthy_count}} services unhealthy",
+            "severity": "{{upstream.determine-severity.severity}}",
+            "source": "flowmason-health-monitor",
+            "timestamp": "{{now()}}",
+            "custom_details": {
+              "unhealthy_services": "{{upstream.aggregate-results.unhealthy_services}}",
+              "analysis": "{{upstream.analyze-health.content}}"
+            }
+          }
+        }
+      },
+      "depends_on": ["determine-severity", "analyze-health"],
+      "position": {
+        "x": 1350,
+        "y": 450
+      }
+    },
+    {
+      "id": "log-summary",
+      "component_type": "logger",
+      "name": "Log Health Summary",
+      "config": {
+        "message": "Health check completed: {{upstream.aggregate-results.healthy_count}}/{{upstream.aggregate-results.total_services}} healthy",
+        "level": "{{ 'error' if upstream.aggregate-results.unhealthy_count > 0 else 'info' }}",
+        "data": {
+          "total": "{{upstream.aggregate-results.total_services}}",
+          "healthy": "{{upstream.aggregate-results.healthy_count}}",
+          "unhealthy": "{{upstream.aggregate-results.unhealthy_count}}",
+          "avg_response_time_ms": "{{upstream.aggregate-results.avg_response_time_ms}}"
+        }
+      },
+      "depends_on": ["aggregate-results"],
+      "position": {
+        "x": 850,
+        "y": 500
+      }
+    },
+    {
+      "id": "format-output",
+      "component_type": "json-transform",
+      "name": "Format Output",
+      "config": {
+        "template": {
+          "status": "{{ 'unhealthy' if upstream.aggregate-results.unhealthy_count > 0 else 'healthy' }}",
+          "summary": {
+            "total_services": "{{upstream.aggregate-results.total_services}}",
+            "healthy": "{{upstream.aggregate-results.healthy_count}}",
+            "unhealthy": "{{upstream.aggregate-results.unhealthy_count}}",
+            "avg_response_time_ms": "{{upstream.aggregate-results.avg_response_time_ms}}"
+          },
+          "unhealthy_services": "{{upstream.aggregate-results.unhealthy_services}}",
+          "analysis": "{{upstream.analyze-health.content}}",
+          "checked_at": "{{now()}}"
+        }
+      },
+      "depends_on": ["analyze-health", "log-summary"],
+      "position": {
+        "x": 1100,
+        "y": 500
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "services": {
+        "type": "array",
+        "description": "List of services to check",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Service name"
+            },
+            "url": {
+              "type": "string",
+              "description": "Base URL of the service"
+            }
+          },
+          "required": ["name", "url"]
+        }
+      }
+    },
+    "required": ["services"]
+  },
+  "output_stage_id": "format-output",
+  "example_input": {
+    "services": [
+      {"name": "user-api", "url": "https://api.example.com/users"},
+      {"name": "order-api", "url": "https://api.example.com/orders"},
+      {"name": "payment-api", "url": "https://api.example.com/payments"},
+      {"name": "inventory-api", "url": "https://api.example.com/inventory"}
+    ]
+  }
+}

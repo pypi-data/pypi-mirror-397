@@ -1,0 +1,48 @@
+{
+  "id": "base-etl",
+  "name": "base-etl",
+  "version": "1.0.0",
+  "description": "Base ETL pipeline - abstract, must be extended",
+  "abstract": true,
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "string",
+        "description": "Input data to process"
+      }
+    },
+    "required": ["data"]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "result": {
+        "type": "string"
+      }
+    }
+  },
+  "stages": [
+    {
+      "id": "validate",
+      "component_type": "schema_validate",
+      "input_mapping": {
+        "data": "{{input.data}}"
+      }
+    },
+    {
+      "id": "transform",
+      "component_type": "abstract",
+      "depends_on": ["validate"]
+    },
+    {
+      "id": "output",
+      "component_type": "logger",
+      "depends_on": ["transform"],
+      "input_mapping": {
+        "message": "{{stages.transform.result}}"
+      }
+    }
+  ],
+  "output_stage_id": "output"
+}

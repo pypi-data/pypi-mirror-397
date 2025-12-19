@@ -1,0 +1,43 @@
+{
+  "id": "doc-qa-enricher",
+  "name": "doc-qa-enricher",
+  "version": "1.0.0",
+  "description": "Given a question and a documentation excerpt, generate an answer strictly based on the excerpt (no hallucinations).",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "question": {
+        "type": "string",
+        "description": "User's question about FlowMason or the content of the documentation excerpt."
+      },
+      "documentation": {
+        "type": "string",
+        "description": "Documentation excerpt to answer the question from."
+      }
+    },
+    "required": ["documentation"]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "answer": {
+        "type": "string",
+        "description": "Answer to the question, using only the provided documentation excerpt."
+      }
+    }
+  },
+  "stages": [
+    {
+      "id": "answer",
+      "name": "Generate Answer From Docs",
+      "component_type": "generator",
+      "config": {
+        "prompt": "You are FlowMason's product documentation assistant.\n\nYou will be given a documentation excerpt and an optional user question.\nAnswer strictly using the information in the documentation excerpt.\nIf the excerpt does not contain enough information to answer, say \"I don't know based on this excerpt\" and do not invent features or behavior.\n\nDocumentation excerpt:\n\"\"\"\n{{input.documentation}}\n\"\"\"\n\nQuestion:\n{{input.question}}\n\nAnswer:"
+      },
+      "input_mapping": {},
+      "depends_on": []
+    }
+  ],
+  "output_stage_id": "answer"
+}
+

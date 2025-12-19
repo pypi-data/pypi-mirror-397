@@ -1,0 +1,875 @@
+{
+	"info": {
+		"_postman_id": "flowmason-api-collection",
+		"name": "FlowMason API",
+		"description": "Complete API collection for FlowMason Studio - AI Pipeline Orchestration Platform\n\nBase URL: http://127.0.0.1:8999/api/v1\n\nThis collection covers:\n- Pipelines: Create, read, update, delete, execute pipelines\n- Execution: Run pipelines and track execution status\n- Templates: Browse and instantiate pipeline templates\n- Registry: Manage components and packages\n- Providers: LLM provider configuration\n- Settings: Application settings and API keys\n- Logs: View and configure application logs",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://127.0.0.1:8999/api/v1",
+			"type": "string"
+		},
+		{
+			"key": "pipelineId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "runId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "templateId",
+			"value": "hello-world",
+			"type": "string"
+		},
+		{
+			"key": "componentType",
+			"value": "generator",
+			"type": "string"
+		},
+		{
+			"key": "providerName",
+			"value": "anthropic",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Health",
+			"item": [
+				{
+					"name": "Health Check",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/health",
+							"host": ["{{baseUrl}}"],
+							"path": ["health"]
+						},
+						"description": "Check if the API server is running and healthy."
+					}
+				}
+			]
+		},
+		{
+			"name": "Pipelines",
+			"item": [
+				{
+					"name": "List Pipelines",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/pipelines?limit=100&offset=0",
+							"host": ["{{baseUrl}}"],
+							"path": ["pipelines"],
+							"query": [
+								{
+									"key": "category",
+									"value": "custom",
+									"disabled": true
+								},
+								{
+									"key": "tags",
+									"value": "ai,automation",
+									"disabled": true
+								},
+								{
+									"key": "limit",
+									"value": "100"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						},
+						"description": "List all pipelines with optional filtering by category and tags."
+					}
+				},
+				{
+					"name": "Create Pipeline",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.id) {",
+									"    pm.collectionVariables.set(\"pipelineId\", jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"My Test Pipeline\",\n  \"description\": \"A simple test pipeline with a generator stage\",\n  \"category\": \"custom\",\n  \"tags\": [\"test\", \"demo\"],\n  \"version\": \"1.0.0\",\n  \"input_schema\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"topic\": {\n        \"type\": \"string\",\n        \"description\": \"The topic to write about\"\n      }\n    },\n    \"required\": [\"topic\"]\n  },\n  \"stages\": [\n    {\n      \"id\": \"generate-content\",\n      \"component_type\": \"generator\",\n      \"name\": \"Content Generator\",\n      \"config\": {\n        \"prompt\": \"Write a short paragraph about: {{input.topic}}\",\n        \"system_prompt\": \"You are a helpful content writer.\"\n      },\n      \"depends_on\": [],\n      \"input_mapping\": {},\n      \"position\": {\"x\": 400, \"y\": 100}\n    }\n  ],\n  \"output_stage_id\": \"generate-content\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pipelines",
+							"host": ["{{baseUrl}}"],
+							"path": ["pipelines"]
+						},
+						"description": "Create a new pipeline configuration."
+					}
+				},
+				{
+					"name": "Get Pipeline",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/pipelines/{{pipelineId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["pipelines", "{{pipelineId}}"]
+						},
+						"description": "Get detailed information about a specific pipeline."
+					}
+				},
+				{
+					"name": "Update Pipeline",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"My Updated Pipeline\",\n  \"description\": \"Updated description\",\n  \"stages\": [\n    {\n      \"id\": \"generate-content\",\n      \"component_type\": \"generator\",\n      \"name\": \"Content Generator\",\n      \"config\": {\n        \"prompt\": \"Write a detailed article about: {{input.topic}}\",\n        \"system_prompt\": \"You are an expert content writer.\"\n      },\n      \"depends_on\": [],\n      \"input_mapping\": {},\n      \"position\": {\"x\": 400, \"y\": 100}\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pipelines/{{pipelineId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["pipelines", "{{pipelineId}}"]
+						},
+						"description": "Update an existing pipeline configuration."
+					}
+				},
+				{
+					"name": "Validate Pipeline",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/pipelines/{{pipelineId}}/validate",
+							"host": ["{{baseUrl}}"],
+							"path": ["pipelines", "{{pipelineId}}", "validate"]
+						},
+						"description": "Validate pipeline configuration without executing. Returns validation errors and warnings."
+					}
+				},
+				{
+					"name": "Clone Pipeline",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/pipelines/{{pipelineId}}/clone?new_name=My Cloned Pipeline",
+							"host": ["{{baseUrl}}"],
+							"path": ["pipelines", "{{pipelineId}}", "clone"],
+							"query": [
+								{
+									"key": "new_name",
+									"value": "My Cloned Pipeline"
+								}
+							]
+						},
+						"description": "Create a copy of an existing pipeline."
+					}
+				},
+				{
+					"name": "Delete Pipeline",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/pipelines/{{pipelineId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["pipelines", "{{pipelineId}}"]
+						},
+						"description": "Delete a pipeline."
+					}
+				}
+			],
+			"description": "Endpoints for managing pipelines - create, read, update, delete, validate, and clone."
+		},
+		{
+			"name": "Execution",
+			"item": [
+				{
+					"name": "Execute Pipeline",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.id) {",
+									"    pm.collectionVariables.set(\"runId\", jsonData.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"inputs\": {\n    \"topic\": \"artificial intelligence trends in 2025\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/pipelines/{{pipelineId}}/run",
+							"host": ["{{baseUrl}}"],
+							"path": ["pipelines", "{{pipelineId}}", "run"]
+						},
+						"description": "Start execution of a pipeline with provided inputs. Returns immediately with a run ID (202 Accepted)."
+					}
+				},
+				{
+					"name": "List Runs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/runs?limit=100&offset=0",
+							"host": ["{{baseUrl}}"],
+							"path": ["runs"],
+							"query": [
+								{
+									"key": "pipeline_id",
+									"value": "{{pipelineId}}",
+									"disabled": true
+								},
+								{
+									"key": "status",
+									"value": "completed",
+									"disabled": true
+								},
+								{
+									"key": "limit",
+									"value": "100"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						},
+						"description": "List all pipeline runs with optional filtering by pipeline ID and status."
+					}
+				},
+				{
+					"name": "Get Run Status",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/runs/{{runId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["runs", "{{runId}}"]
+						},
+						"description": "Get detailed information about a specific run including status, output, and stage results."
+					}
+				},
+				{
+					"name": "Get Run Trace",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/runs/{{runId}}/trace",
+							"host": ["{{baseUrl}}"],
+							"path": ["runs", "{{runId}}", "trace"]
+						},
+						"description": "Get detailed execution trace for a run including timing information for each stage."
+					}
+				},
+				{
+					"name": "Cancel Run",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/runs/{{runId}}/cancel",
+							"host": ["{{baseUrl}}"],
+							"path": ["runs", "{{runId}}", "cancel"]
+						},
+						"description": "Attempt to cancel a running pipeline execution."
+					}
+				},
+				{
+					"name": "Delete Run",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/runs/{{runId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["runs", "{{runId}}"]
+						},
+						"description": "Delete a run record."
+					}
+				}
+			],
+			"description": "Endpoints for executing pipelines and tracking run status."
+		},
+		{
+			"name": "Templates",
+			"item": [
+				{
+					"name": "List Templates",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/templates",
+							"host": ["{{baseUrl}}"],
+							"path": ["templates"],
+							"query": [
+								{
+									"key": "category",
+									"value": "getting-started",
+									"disabled": true
+								},
+								{
+									"key": "difficulty",
+									"value": "beginner",
+									"disabled": true
+								}
+							]
+						},
+						"description": "List all available templates, both built-in and user-created. Can filter by category and difficulty."
+					}
+				},
+				{
+					"name": "Get Template",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/templates/{{templateId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["templates", "{{templateId}}"]
+						},
+						"description": "Get detailed information about a specific template including all stages and configuration."
+					}
+				},
+				{
+					"name": "Instantiate Template",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/templates/{{templateId}}/instantiate?name=My Pipeline from Template",
+							"host": ["{{baseUrl}}"],
+							"path": ["templates", "{{templateId}}", "instantiate"],
+							"query": [
+								{
+									"key": "name",
+									"value": "My Pipeline from Template"
+								}
+							]
+						},
+						"description": "Create a new pipeline based on a template. Optionally specify a custom name."
+					}
+				},
+				{
+					"name": "List Template Categories",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/templates/categories/list",
+							"host": ["{{baseUrl}}"],
+							"path": ["templates", "categories", "list"]
+						},
+						"description": "Get a list of all template categories with counts."
+					}
+				}
+			],
+			"description": "Endpoints for browsing and instantiating pipeline templates."
+		},
+		{
+			"name": "Registry",
+			"item": [
+				{
+					"name": "List Components",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/registry/components",
+							"host": ["{{baseUrl}}"],
+							"path": ["registry", "components"],
+							"query": [
+								{
+									"key": "category",
+									"value": "generators",
+									"disabled": true
+								},
+								{
+									"key": "kind",
+									"value": "node",
+									"disabled": true
+								}
+							]
+						},
+						"description": "List all available components. Can filter by category (e.g., 'generators', 'operators') and kind ('node' or 'operator')."
+					}
+				},
+				{
+					"name": "Get Component",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/registry/components/{{componentType}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["registry", "components", "{{componentType}}"]
+						},
+						"description": "Get detailed information about a specific component including input/output schemas."
+					}
+				},
+				{
+					"name": "List Packages",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/registry/packages",
+							"host": ["{{baseUrl}}"],
+							"path": ["registry", "packages"]
+						},
+						"description": "List all registered packages."
+					}
+				},
+				{
+					"name": "Deploy Package",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"description": "The .fmpkg package file",
+									"type": "file",
+									"src": ""
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/registry/deploy",
+							"host": ["{{baseUrl}}"],
+							"path": ["registry", "deploy"]
+						},
+						"description": "Upload and register a .fmpkg package file."
+					}
+				},
+				{
+					"name": "Unregister Component",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/registry/components/{{componentType}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["registry", "components", "{{componentType}}"]
+						},
+						"description": "Remove a component from the registry (by unregistering its package)."
+					}
+				},
+				{
+					"name": "Refresh Registry",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/registry/refresh",
+							"host": ["{{baseUrl}}"],
+							"path": ["registry", "refresh"]
+						},
+						"description": "Rescan the packages directory and reload all components."
+					}
+				},
+				{
+					"name": "Get Registry Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/registry/stats",
+							"host": ["{{baseUrl}}"],
+							"path": ["registry", "stats"]
+						},
+						"description": "Get statistics about the component registry."
+					}
+				}
+			],
+			"description": "Endpoints for managing the component registry and packages."
+		},
+		{
+			"name": "Providers",
+			"item": [
+				{
+					"name": "List Providers",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/providers",
+							"host": ["{{baseUrl}}"],
+							"path": ["providers"]
+						},
+						"description": "List all available LLM providers with their configuration status."
+					}
+				},
+				{
+					"name": "Get Provider Models",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/providers/{{providerName}}/models",
+							"host": ["{{baseUrl}}"],
+							"path": ["providers", "{{providerName}}", "models"]
+						},
+						"description": "Get available models for a specific provider."
+					}
+				},
+				{
+					"name": "Test Provider Connection",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"api_key\": null\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/providers/{{providerName}}/test",
+							"host": ["{{baseUrl}}"],
+							"path": ["providers", "{{providerName}}", "test"]
+						},
+						"description": "Test that a provider is properly configured and working. Optionally provide an API key override."
+					}
+				},
+				{
+					"name": "List Capabilities",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/providers/capabilities",
+							"host": ["{{baseUrl}}"],
+							"path": ["providers", "capabilities"]
+						},
+						"description": "List all possible provider capabilities (text_generation, streaming, function_calling, vision, embeddings, code_execution)."
+					}
+				}
+			],
+			"description": "Endpoints for managing LLM providers."
+		},
+		{
+			"name": "Settings",
+			"item": [
+				{
+					"name": "Get Settings",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/settings",
+							"host": ["{{baseUrl}}"],
+							"path": ["settings"]
+						},
+						"description": "Get current application settings including provider configurations (API keys are masked)."
+					}
+				},
+				{
+					"name": "Update Settings",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"default_provider\": \"anthropic\",\n  \"theme\": \"dark\",\n  \"auto_save\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/settings",
+							"host": ["{{baseUrl}}"],
+							"path": ["settings"]
+						},
+						"description": "Update application settings."
+					}
+				},
+				{
+					"name": "Get Provider Settings",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/settings/providers/{{providerName}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["settings", "providers", "{{providerName}}"]
+						},
+						"description": "Get settings for a specific provider."
+					}
+				},
+				{
+					"name": "Set Provider API Key",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"api_key\": \"your-api-key-here\",\n  \"default_model\": \"claude-sonnet-4-20250514\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/settings/providers/{{providerName}}/key",
+							"host": ["{{baseUrl}}"],
+							"path": ["settings", "providers", "{{providerName}}", "key"]
+						},
+						"description": "Set API key for a provider. This persists the key and sets it in the environment."
+					}
+				},
+				{
+					"name": "Remove Provider API Key",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/settings/providers/{{providerName}}/key",
+							"host": ["{{baseUrl}}"],
+							"path": ["settings", "providers", "{{providerName}}", "key"]
+						},
+						"description": "Remove API key for a provider."
+					}
+				},
+				{
+					"name": "Set Provider Enabled",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/settings/providers/{{providerName}}/enabled?enabled=true",
+							"host": ["{{baseUrl}}"],
+							"path": ["settings", "providers", "{{providerName}}", "enabled"],
+							"query": [
+								{
+									"key": "enabled",
+									"value": "true"
+								}
+							]
+						},
+						"description": "Enable or disable a provider."
+					}
+				},
+				{
+					"name": "Test Provider (Settings)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/settings/providers/{{providerName}}/test",
+							"host": ["{{baseUrl}}"],
+							"path": ["settings", "providers", "{{providerName}}", "test"]
+						},
+						"description": "Test a provider's connection and API key using stored settings."
+					}
+				},
+				{
+					"name": "Apply Settings to Environment",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/settings/apply-to-environment",
+							"host": ["{{baseUrl}}"],
+							"path": ["settings", "apply-to-environment"]
+						},
+						"description": "Apply saved API keys to environment variables for the current session."
+					}
+				},
+				{
+					"name": "Restart Backend",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/settings/restart",
+							"host": ["{{baseUrl}}"],
+							"path": ["settings", "restart"]
+						},
+						"description": "Restart the backend server. The server will reload all modules and configurations."
+					}
+				}
+			],
+			"description": "Endpoints for managing application settings and API keys."
+		},
+		{
+			"name": "Logs",
+			"item": [
+				{
+					"name": "Get Logs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/logs?limit=100&offset=0",
+							"host": ["{{baseUrl}}"],
+							"path": ["logs"],
+							"query": [
+								{
+									"key": "limit",
+									"value": "100"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								},
+								{
+									"key": "level",
+									"value": "ERROR",
+									"disabled": true
+								},
+								{
+									"key": "category",
+									"value": "EXECUTION",
+									"disabled": true
+								},
+								{
+									"key": "search",
+									"value": "error",
+									"disabled": true
+								},
+								{
+									"key": "since",
+									"value": "2025-01-01T00:00:00Z",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get log entries with optional filtering. Returns logs in reverse chronological order."
+					}
+				},
+				{
+					"name": "Get Log Config",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/logs/config",
+							"host": ["{{baseUrl}}"],
+							"path": ["logs", "config"]
+						},
+						"description": "Get current log configuration."
+					}
+				},
+				{
+					"name": "Update Log Config",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"global_level\": \"INFO\",\n  \"category_levels\": {\n    \"EXECUTION\": \"DEBUG\"\n  },\n  \"max_entries\": 1000,\n  \"enabled\": true\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/logs/config",
+							"host": ["{{baseUrl}}"],
+							"path": ["logs", "config"]
+						},
+						"description": "Update log configuration. Changes take effect immediately."
+					}
+				},
+				{
+					"name": "Clear Logs",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/logs",
+							"host": ["{{baseUrl}}"],
+							"path": ["logs"]
+						},
+						"description": "Clear all log entries."
+					}
+				},
+				{
+					"name": "Get Log Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/logs/stats",
+							"host": ["{{baseUrl}}"],
+							"path": ["logs", "stats"]
+						},
+						"description": "Get logging statistics including counts by level and category."
+					}
+				},
+				{
+					"name": "Get Available Levels",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/logs/levels",
+							"host": ["{{baseUrl}}"],
+							"path": ["logs", "levels"]
+						},
+						"description": "Get available log levels and categories."
+					}
+				}
+			],
+			"description": "Endpoints for viewing and configuring application logs."
+		}
+	]
+}

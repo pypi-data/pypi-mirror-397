@@ -1,0 +1,68 @@
+{
+  "id": "nl-interpreter",
+  "name": "nl-interpreter",
+  "version": "1.0.0",
+  "description": "AI pipeline design assistant: interpret a natural language pipeline description into structured context and an optional draft FlowMason pipeline.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "description": {
+        "type": "string",
+        "description": "Natural language description of the desired pipeline."
+      }
+    },
+    "required": ["description"]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "intent": { "type": "string" },
+      "actions": { "type": "array", "items": { "type": "string" } },
+      "data_sources": { "type": "array", "items": { "type": "string" } },
+      "outputs": { "type": "array", "items": { "type": "string" } },
+      "constraints": { "type": "array", "items": { "type": "string" } },
+      "ambiguities": { "type": "array", "items": { "type": "string" } },
+      "notes": { "type": "string" },
+      "raw_description": { "type": "string" },
+      "suggested_components": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Component types that would be helpful for this pipeline"
+      },
+      "suggested_patterns": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "High-level pipeline patterns (e.g. foreach, validation+transform, http_ingest+send)"
+      },
+      "proposed_pipeline": {
+        "type": "object",
+        "description": "Optional full pipeline proposal JSON matching FlowMason pipeline schema (name, description, input_schema, stages, output_stage_id, etc.)"
+      }
+    },
+    "required": ["intent"]
+  },
+  "stages": [
+    {
+      "id": "interpret",
+      "component_type": "generator",
+      "config": {
+        "prompt": "You are an expert AI pipeline architect helping users create sophisticated, production-ready FlowMason pipelines.\n\nYour job is to read a natural language description of a desired pipeline and return a single well-formed JSON object with the following top-level fields:\n- intent: string summarizing the primary goal (e.g. 'opportunity_readiness_review', 'document_enrichment')\n- actions: string[] of key actions the pipeline should perform\n- data_sources: string[] of data sources mentioned (e.g. 'salesforce', 'csv', 'database', 'external_api')\n- outputs: string[] of expected outputs (e.g. 'json', 'text_summary', 'salesforce_update')\n- constraints: string[] of important requirements (latency, quality, governance, security, etc.)\n- ambiguities: string[] describing unclear points or missing details where user clarification would help\n- notes: string with any additional design insights or trade-offs\n- raw_description: string echo of the original user description\n- suggested_components: string[] of FlowMason component types that are appropriate, chosen from: 'generator', 'critic', 'improver', 'synthesizer', 'selector', 'foreach', 'conditional', 'schema_validate', 'json_transform', 'http_request', 'logger', 'variable_set'\n- suggested_patterns: string[] of high-level patterns such as 'generate-critic-improve', 'foreach_items', 'validate_then_transform', 'http_ingest_and_send', 'routing_by_complexity'\n\nIn addition, when you have enough information, include a field proposed_pipeline containing a full FlowMason pipeline definition JSON with at least these keys:\n- name: descriptive pipeline name\n- description: what this pipeline accomplishes\n- version: string, e.g. '1.0.0'\n- input_schema: JSON Schema for the pipeline input (type: 'object', properties, required[]). Use UI-friendly hints (format, title, description) where appropriate.\n- stages: array of stages, each with: id, name, component_type (using FlowMason component types above), config (LLM prompts, HTTP details, mappings, etc.), and depends_on[]\n- output_stage_id: id of the stage whose output is the final pipeline output\n- sample_input: realistic example input object that matches input_schema\n- fields: array of output field definitions or important outputs this pipeline produces (e.g. readiness_score, recommendations, warnings)\n\nWhen designing stages, think in terms of advanced AI orchestration patterns:\n- Use generator + critic + improver loops to improve quality when appropriate\n- Use synthesizer/selector when combining multiple model outputs\n- Use foreach for lists of items\n- Use schema_validate for structural checks\n- Use http_request for integrations\n- Use conditional/router-like behaviour for branching based on content or scores\n\nImportant:\n- Always respond with a single JSON object, no markdown fences.\n- Make sure the JSON is valid and parsable.\n- Do not fabricate business logic; stay faithful to the user's description but make the structure explicit and production-ready.\n\nUser description:\n\"{{input.description}}\""
+      }
+    },
+    {
+      "id": "review",
+      "component_type": "critic",
+      "depends_on": ["interpret"],
+      "config": {
+        "content": "{{input.description}}",
+        "criteria": [
+          "Is the JSON well-structured and valid?",
+          "Does intent clearly capture the main goal?",
+          "Are actions and data_sources specific enough for pipeline design?",
+          "Are ambiguities and constraints clearly listed?"
+        ]
+      }
+    }
+  ],
+  "output_stage_id": "interpret"
+}

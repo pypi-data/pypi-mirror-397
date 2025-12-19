@@ -1,0 +1,72 @@
+{
+  "id": "console-planner",
+  "name": "console-planner",
+  "version": "1.0.0",
+  "description": "AI planner for FlowMason API Console. Reads the latest user message and session state, then proposes console actions such as DESIGN_PIPELINE, MODIFY_PIPELINE, VIEW_PIPELINE, RUN_PIPELINE, EXPLAIN_PIPELINE, DEBUG_ERROR, or HELP.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "message": {
+        "type": "string",
+        "description": "Latest user message from the console."
+      },
+      "session": {
+        "type": "object",
+        "description": "Current console session and conversation state (goal, requirements, pipeline context, history summary)."
+      }
+    },
+    "required": ["message"]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "primary_intent": {
+        "type": "string",
+        "description": "One of: DESIGN_PIPELINE, MODIFY_PIPELINE, RUN_PIPELINE, VIEW_PIPELINE, EXPLAIN_PIPELINE, DEBUG_ERROR, HELP, UNKNOWN."
+      },
+      "actions": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Ordered list of console actions to execute."
+      },
+      "goal": {
+        "type": "string",
+        "description": "Updated or inferred user goal for this conversation."
+      },
+      "requirements_update": {
+        "type": "object",
+        "description": "Structured updates to conversation requirements (e.g. data_sources, outputs, constraints)."
+      },
+      "clarifications": {
+        "type": "array",
+        "description": "Optional clarification questions the console should ask before acting.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "path": { "type": "string" },
+            "question": { "type": "string" },
+            "expected_type": { "type": "string" }
+          },
+          "required": ["id", "path", "question", "expected_type"]
+        }
+      },
+      "notes": {
+        "type": "string",
+        "description": "Optional planner notes or reasoning."
+      }
+    },
+    "required": ["primary_intent", "actions"]
+  },
+  "stages": [
+    {
+      "id": "plan",
+      "component_type": "generator",
+      "config": {
+        "prompt": "You are the FlowMason Console Planner, an expert assistant that knows about FlowMason pipelines, the Studio, and the tools available in the API Console.\\n\\nYou receive:\\n- message: the latest user message from the console\\n- session: the current console session and conversation state, including goal, requirements, pipeline_context, history_summary, and last_actions.\\n\\nYour job is to decide what the console should do next. You do NOT execute tools yourself; instead you propose a plan for the console router.\\n\\nAvailable actions (strings):\\n- DESIGN_PIPELINE: Design a new pipeline based on the user's description.\\n- MODIFY_PIPELINE: Refine or modify the current pipeline in context according to user instructions.\\n- RUN_PIPELINE: Execute the current pipeline (or a named pipeline) with appropriate inputs.\\n- VIEW_PIPELINE: Load and show the structure of a pipeline (JSON + Mermaid).\\n- EXPLAIN_PIPELINE: Explain the pipeline in natural language and show diagrams.\\n- DEBUG_ERROR: Inspect recent runs and summarize why things are failing.\\n- HELP: Provide guidance on how to use the console and pipelines.\\n- UNKNOWN: When you truly cannot determine intent.\\n\\nYou must respond with a single JSON object with the following keys:\\n- primary_intent: one of the action names above.\\n- actions: ordered list of actions (strings) the console should perform this turn. For simple cases this is just [primary_intent].\\n- goal: optional updated conversation goal (string).\\n- requirements_update: optional object with any structured requirement updates you can infer.\\n- clarifications: optional list of clarification questions. Each question is an object with keys: id, path, question, expected_type (one of string, number, boolean, object, array, json). Only include clarifications if they are truly needed before acting.\\n- notes: optional short reasoning or explanation for the plan.\\n\\nBe conservative: prefer HELP or EXPLAIN_PIPELINE when the user is asking for guidance; prefer MODIFY_PIPELINE when there is a current pipeline in context and the user says things like 'now add', 'change', 'update', or 'refine'.\\n\\nImportant:\\n- Always return valid JSON, no markdown fences.\\n- Do NOT invent tool names beyond the actions listed.\\n\\nUser message:\\n{{input.message}}\\n\\nSession state (JSON):\\n{{input.session}}"
+      }
+    }
+  ],
+  "output_stage_id": "plan"
+}
+
