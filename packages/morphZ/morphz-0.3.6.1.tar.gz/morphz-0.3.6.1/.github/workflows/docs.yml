@@ -1,0 +1,43 @@
+name: docs
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (fetch full history for SCM)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install docs dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Jupyter Book v2 uses a different configuration format (myst.yml).
+          # This repository uses the classic v0.x Jupyter Book with _config.yml/_toc.yml.
+          python -m pip install 'jupyter-book<2'
+
+      - name: Build documentation
+        run: |
+          chmod +x docs/build_docs.sh
+          PYTHON=python JUPYTER_BOOK=jupyter-book docs/build_docs.sh
+          test -f docs/_build/html/index.html
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs/_build/html
+          publish_branch: gh-pages
+          enable_jekyll: false
