@@ -1,0 +1,125 @@
+Metadata-Version: 2.4
+Name: aiguard-sdk-python
+Version: 0.1.0
+Summary: AIGuard SDK for monitoring and logging AI model invocations
+Author: AIGuard
+License: MIT
+Project-URL: Homepage, https://github.com/yourusername/aiguard
+Project-URL: Documentation, https://github.com/yourusername/aiguard#readme
+Project-URL: Repository, https://github.com/yourusername/aiguard
+Keywords: ai,monitoring,logging,openai,llm
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: requests>=2.25.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+
+# AIGuard Python SDK
+
+Python SDK for monitoring and logging AI model invocations with AIGuard.
+
+## Installation
+
+```bash
+pip install aiguard
+```
+
+Or install from source:
+
+```bash
+pip install -e /path/to/python-sdk
+```
+
+## Usage
+
+### Initialize the client
+
+```python
+from aiguard import AIGuard
+
+guard = AIGuard(api_key="your-api-key")
+```
+
+### Direct API calls
+
+```python
+# Start an invocation
+invocation = guard.start_invocation({
+    "eventId": "unique-event-123",
+    "event": "chat-completion",
+    "userId": "user-456",
+    "inputMessage": "Hello, how are you?",
+    "model": "gpt-4",
+    "convoId": "conversation-789",
+    "properties": {"temperature": 0.7}
+})
+
+# ... make your AI call ...
+
+# End the invocation
+completed = guard.end_invocation({
+    "eventId": "unique-event-123",
+    "output": "I am doing well, thank you!"
+})
+```
+
+### Manual logging
+
+```python
+guard.log({
+    "model": "gpt-4",
+    "input": [{"role": "user", "content": "Hello"}],
+    "output": "Hi there!",
+    "latency": 150,
+    "tokens": {"prompt": 10, "completion": 5, "total": 15},
+    "status": "success"
+})
+```
+
+### Wrap OpenAI client (automatic logging)
+
+```python
+from openai import OpenAI
+from aiguard import AIGuard
+
+guard = AIGuard(api_key="your-api-key")
+client = guard.wrap_openai(OpenAI())
+
+# All chat completion calls are now automatically logged
+response = client.chat.completions.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "Hello!"}]
+)
+```
+
+## API Reference
+
+### `AIGuard(api_key, base_url="http://localhost:5000/api")`
+
+Initialize the AIGuard client.
+
+### `start_invocation(data) -> dict`
+
+Start tracking an invocation. Required fields: `eventId`, `event`, `userId`.
+
+### `end_invocation(data) -> dict`
+
+End an invocation. Required field: `eventId`.
+
+### `log(data) -> None`
+
+Fire-and-forget logging of a model call.
+
+### `wrap_openai(client) -> client`
+
+Wrap an OpenAI client for automatic logging.
