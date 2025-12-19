@@ -1,0 +1,396 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+{{ block.super }}
+<link rel="stylesheet" href="{% static "admin/css/dashboard.css" %}">
+<style>
+    #ai-search-container {
+        margin-bottom: 20px;
+        padding: 15px;
+        background: var(--darkened-bg);
+        border-radius: 4px;
+    }
+    #ai-search-input {
+        width: 100%;
+        padding: 10px 15px;
+        font-size: 14px;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        background: var(--body-bg);
+        color: var(--body-fg);
+    }
+    #ai-search-input:focus {
+        outline: none;
+        border-color: var(--primary);
+    }
+    #ai-search-results {
+        margin-top: 15px;
+        display: none;
+    }
+    #ai-search-results.visible {
+        display: block;
+    }
+    .ai-result-header {
+        padding: 10px 15px;
+        background: var(--primary);
+        color: var(--header-link-color);
+        border-radius: 4px 4px 0 0;
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .ai-result-body {
+        background: var(--body-bg);
+        border: 1px solid var(--border-color);
+        border-top: none;
+        border-radius: 0 0 4px 4px;
+        max-height: 500px;
+        overflow: auto;
+    }
+    .ai-loading {
+        text-align: center;
+        padding: 20px;
+        color: var(--body-quiet-color);
+    }
+    .ai-error {
+        color: var(--error-fg);
+        padding: 15px;
+        background: #ffebee;
+        border-radius: 4px;
+        margin: 10px;
+    }
+    .ai-explanation {
+        padding: 10px 15px;
+        background: var(--darkened-bg);
+        border-bottom: 1px solid var(--border-color);
+        font-style: italic;
+        color: var(--body-quiet-color);
+    }
+    .ai-cache-indicator {
+        font-size: 11px;
+        color: var(--body-quiet-color);
+        margin-left: 10px;
+    }
+    .ai-code-toggle {
+        padding: 8px 15px;
+        background: var(--darkened-bg);
+        border-bottom: 1px solid var(--border-color);
+        cursor: pointer;
+        font-size: 12px;
+        color: var(--link-fg);
+    }
+    .ai-code-toggle:hover {
+        background: var(--selected-bg);
+    }
+    .ai-code {
+        padding: 10px 15px;
+        background: #1e1e1e;
+        color: #d4d4d4;
+        font-family: monospace;
+        font-size: 11px;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        display: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .ai-code.visible {
+        display: block;
+    }
+
+    /* Table styles */
+    .ai-results-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+    .ai-results-table th {
+        background: var(--darkened-bg);
+        padding: 10px 12px;
+        text-align: left;
+        font-weight: 600;
+        border-bottom: 2px solid var(--border-color);
+        position: sticky;
+        top: 0;
+        text-transform: uppercase;
+        font-size: 11px;
+        color: var(--body-quiet-color);
+        white-space: nowrap;
+    }
+    .ai-results-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border-color);
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .ai-results-table tr:hover {
+        background: var(--selected-bg);
+    }
+    .ai-results-table td:first-child {
+        font-weight: 500;
+    }
+    .ai-results-table a {
+        color: var(--link-fg);
+        text-decoration: none;
+        font-weight: 600;
+    }
+    .ai-results-table a:hover {
+        text-decoration: underline;
+    }
+    .ai-no-results {
+        padding: 20px;
+        text-align: center;
+        color: var(--body-quiet-color);
+    }
+</style>
+{% endblock %}
+
+{% block coltype %}colMS{% endblock %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block nav-breadcrumbs %}{% endblock %}
+
+{% block nav-sidebar %}{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <div id="ai-search-container">
+        <input type="text" id="ai-search-input" placeholder="Search with AI... (e.g., 'Find all users created today', 'Show last 10 attachments')" />
+        <div id="ai-search-results">
+            <div class="ai-result-header">
+                <span id="ai-result-title">Search Results</span>
+                <span id="ai-result-count"></span>
+            </div>
+            <div class="ai-result-body" id="ai-result-body"></div>
+        </div>
+    </div>
+    {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('ai-search-input');
+    const resultsContainer = document.getElementById('ai-search-results');
+    const resultBody = document.getElementById('ai-result-body');
+    const resultCount = document.getElementById('ai-result-count');
+
+    // Handle Enter key
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const query = searchInput.value.trim();
+            if (query) {
+                performSearch(query, true);
+            }
+        }
+    });
+
+    // Handle browser back/forward
+    window.addEventListener('popstate', function(e) {
+        if (e.state && e.state.query) {
+            searchInput.value = e.state.query;
+            performSearch(e.state.query, false);
+        } else {
+            // No state - hide results
+            resultsContainer.classList.remove('visible');
+            searchInput.value = '';
+        }
+    });
+
+    // Check URL on page load for search query
+    function checkUrlForSearch() {
+        const path = window.location.pathname;
+        const searchPrefix = '/admin/search/';
+        if (path.startsWith(searchPrefix)) {
+            const query = decodeURIComponent(path.substring(searchPrefix.length));
+            if (query) {
+                searchInput.value = query;
+                performSearch(query, false);
+            }
+        }
+    }
+
+    function performSearch(query, updateUrl) {
+        if (!query) return;
+
+        // Update URL for browser history
+        if (updateUrl) {
+            const newUrl = '/admin/search/' + encodeURIComponent(query);
+            history.pushState({ query: query }, '', newUrl);
+        }
+
+        resultsContainer.classList.add('visible');
+        resultBody.innerHTML = '<div class="ai-loading">Searching...</div>';
+        resultCount.textContent = '';
+
+        fetch('/admin/ai-search/search/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({ query: query }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderResults(data);
+            } else {
+                resultBody.innerHTML = `<div class="ai-error">Error: ${escapeHtml(data.error)}</div>`;
+                resultCount.textContent = '';
+            }
+        })
+        .catch(error => {
+            resultBody.innerHTML = `<div class="ai-error">Error: ${escapeHtml(error.message)}</div>`;
+            resultCount.textContent = '';
+        });
+    }
+
+    function renderResults(data) {
+        let html = '';
+
+        // Explanation with cache indicator
+        if (data.explanation) {
+            let cacheIndicator = data.from_cache ? '<span class="ai-cache-indicator">(cached)</span>' : '';
+            html += `<div class="ai-explanation">${escapeHtml(data.explanation)}${cacheIndicator}</div>`;
+        }
+
+        // Code toggle
+        if (data.code) {
+            html += `<div class="ai-code-toggle" onclick="toggleCode()">Show/Hide Generated Code</div>`;
+            html += `<div class="ai-code" id="ai-code-block">${escapeHtml(data.code)}</div>`;
+        }
+
+        // Results table
+        if (data.results && data.results.length > 0 && data.columns && data.columns.length > 0) {
+            resultCount.textContent = `${data.count} result(s)`;
+
+            html += '<table class="ai-results-table">';
+
+            // Header row
+            html += '<thead><tr>';
+            data.columns.forEach(col => {
+                html += `<th>${escapeHtml(formatColumnName(col))}</th>`;
+            });
+            html += '</tr></thead>';
+
+            // Data rows
+            html += '<tbody>';
+            data.results.forEach(row => {
+                html += '<tr>';
+                data.columns.forEach((col, index) => {
+                    const value = row[col];
+                    const displayValue = formatCellValue(value);
+
+                    if (col === 'id' && data.app_label && data.model_name) {
+                        // Make ID clickable - link to admin change page
+                        const adminUrl = `/admin/${data.app_label}/${data.model_name.toLowerCase()}/${value}/change/`;
+                        html += `<td><a href="${adminUrl}">${escapeHtml(displayValue)}</a></td>`;
+                    } else {
+                        html += `<td title="${escapeHtml(String(value || ''))}">${escapeHtml(displayValue)}</td>`;
+                    }
+                });
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+        } else {
+            html += '<div class="ai-no-results">No results found</div>';
+            resultCount.textContent = '0 results';
+        }
+
+        resultBody.innerHTML = html;
+    }
+
+    function formatColumnName(name) {
+        // Convert snake_case to Title Case
+        return name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    function formatCellValue(value) {
+        if (value === null || value === undefined) {
+            return '-';
+        }
+        if (typeof value === 'boolean') {
+            return value ? 'Yes' : 'No';
+        }
+        if (typeof value === 'object') {
+            return JSON.stringify(value);
+        }
+        const strValue = String(value);
+        // Truncate long values
+        if (strValue.length > 50) {
+            return strValue.substring(0, 47) + '...';
+        }
+        return strValue;
+    }
+
+    window.toggleCode = function() {
+        const codeBlock = document.getElementById('ai-code-block');
+        if (codeBlock) {
+            codeBlock.classList.toggle('visible');
+        }
+    };
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function escapeHtml(text) {
+        if (text === null || text === undefined) return '';
+        const div = document.createElement('div');
+        div.textContent = String(text);
+        return div.innerHTML;
+    }
+
+    // Check URL on page load
+    checkUrlForSearch();
+});
+</script>
+{% endblock %}
+
+{% block sidebar %}
+<div id="content-related">
+    <div class="module" id="recent-actions-module">
+        <h2>{% translate 'Recent actions' %}</h2>
+        <h3>{% translate 'My actions' %}</h3>
+            {% load log %}
+            {% get_admin_log 10 as admin_log for_user user %}
+            {% if not admin_log %}
+            <p>{% translate 'None available' %}</p>
+            {% else %}
+            <ul class="actionlist">
+            {% for entry in admin_log %}
+            <li class="{% if entry.is_addition %}addlink{% endif %}{% if entry.is_change %}changelink{% endif %}{% if entry.is_deletion %}deletelink{% endif %}">
+                {% if entry.is_deletion or not entry.get_admin_url %}
+                    {{ entry.object_repr }}
+                {% else %}
+                    <a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>
+                {% endif %}
+                <br>
+                {% if entry.content_type %}
+                    <span class="mini quiet">{% filter capfirst %}{{ entry.content_type.name }}{% endfilter %}</span>
+                {% else %}
+                    <span class="mini quiet">{% translate 'Unknown content' %}</span>
+                {% endif %}
+            </li>
+            {% endfor %}
+            </ul>
+            {% endif %}
+    </div>
+</div>
+{% endblock %}
