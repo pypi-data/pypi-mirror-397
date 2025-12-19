@@ -1,0 +1,81 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "insightsolver"
+description = "InsightSolver offers rule-based insights generation for actionable data-driven decisions."
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "Apache-2.0"}
+authors = [
+  { name = "Noé Aubin-Cadot", email = "noe.aubin-cadot@insightsolver.com" },
+]
+maintainers = [
+  { name = "InsightSolver Solutions Inc.", email = "support@insightsolver.com" },
+]
+keywords = ["data-science", "rule-mining", "machine-learning", "interpretable-ai", "decision-intelligence"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dynamic = ["version", "dependencies"]
+
+[project.urls]
+Homepage = "https://insightsolver.com"
+Repository = "https://github.com/insightsolver/insightsolver"
+Documentation = "https://insightsolver.readthedocs.io"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-mock",
+    "ruff>=0.1.0",
+    "mypy>=1.0",
+    "pandas-stubs",
+    "types-requests",
+]
+
+[tool.setuptools.dynamic]
+version = { attr = "insightsolver.version.__version__" }
+dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.package-data]
+insightsolver = [
+    "assets/__init__.py",
+    "assets/google_fonts_icons/*",
+    "assets/google_fonts_icons/png/*.png",
+]
+
+# --- Tool Configurations ---
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+ignore = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+addopts = "-ra -q"
+
+[tool.mypy]
+python_version = "3.9"
+ignore_missing_imports = true
