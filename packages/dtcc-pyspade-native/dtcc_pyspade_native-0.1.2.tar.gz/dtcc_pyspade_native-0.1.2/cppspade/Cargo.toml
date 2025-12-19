@@ -1,0 +1,22 @@
+[package]
+name = "spade-ffi"
+version = "0.1.1"
+edition = "2021"
+authors = ["DTCC Project"]
+description = "C FFI bindings for Spade triangulation library"
+
+[lib]
+name = "spade_ffi"
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+# Use Spade from GitHub - will auto-fetch during build
+# You can specify a specific version/tag/commit:
+# spade = { git = "https://github.com/Stoeoef/spade", tag = "v2.10.0" }
+# spade = { git = "https://github.com/Stoeoef/spade", rev = "abc123" }
+spade = { git = "https://github.com/Stoeoef/spade", branch = "master" }
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3
