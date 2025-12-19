@@ -1,0 +1,109 @@
+Metadata-Version: 2.4
+Name: uuid-mcp
+Version: 0.1.0
+Summary: A simple MCP server that provides a tool to generate UUIDs
+Keywords: mcp,uuid,model-context-protocol,cursor
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: mcp>=0.9.0
+
+# UUID MCP Tool
+
+A simple Model Context Protocol (MCP) server that provides a tool to generate UUIDs.
+
+## Installation
+
+### Install from PyPI (Recommended)
+
+```bash
+pip install uuid-mcp
+```
+
+### Install from source
+
+1. Clone or download this repository
+2. Install the package:
+```bash
+pip install .
+```
+
+Or install in development mode:
+```bash
+pip install -e .
+```
+
+### Install from local directory
+
+If you have the package locally:
+```bash
+pip install /path/to/uuid-mcp
+```
+
+## Usage
+
+After installation, you can run the MCP server using the `uuid-mcp` command:
+
+```bash
+uuid-mcp
+```
+
+The server will communicate via stdio and expose a `generate_uuid` tool that generates a random UUID (version 4) when called.
+
+## Tool
+
+- **generate_uuid**: Generates a random UUID (version 4). Takes no parameters and returns a UUID string.
+
+## Adding to Cursor
+
+To use this MCP tool in Cursor, add it to your Cursor MCP configuration:
+
+1. Open Cursor Settings (Cmd/Ctrl + ,)
+2. Navigate to "Features" → "Model Context Protocol" or search for "MCP"
+3. Click "Edit Config" or open the MCP configuration file (typically located at `~/.cursor/mcp.json` or in Cursor's settings)
+
+4. Add the following configuration:
+
+```json
+{
+  "mcpServers": {
+    "uuid-generator": {
+      "command": "uuid-mcp"
+    }
+  }
+}
+```
+
+If `uuid-mcp` is not in your PATH, you can use the full path to the executable. After pip installation, you can find it with:
+
+```bash
+which uuid-mcp
+```
+
+Or use Python's `-m` flag:
+
+```json
+{
+  "mcpServers": {
+    "uuid-generator": {
+      "command": "python",
+      "args": ["-m", "uuid_mcp.server"]
+    }
+  }
+}
+```
+
+5. Restart Cursor for the changes to take effect.
+
+Once configured, you can use the `generate_uuid` tool in Cursor's AI chat interface.
+
+## Publishing
+
+For package maintainers: See [PUBLISHING.md](PUBLISHING.md) for instructions on how to publish this package to PyPI.
