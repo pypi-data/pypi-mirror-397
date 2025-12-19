@@ -1,0 +1,788 @@
+"""Used for extracting components from metric definitions."""
+
+import hashlib
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from functools import lru_cache
+
+from datajunction_server.models.decompose import (
+    Aggregability,
+    AggregationRule,
+    MetricComponent,
+)
+from datajunction_server.naming import amenable_name
+from datajunction_server.sql import functions as dj_functions
+from datajunction_server.sql.parsing.backends.antlr4 import ast, parse
+
+
+# =============================================================================
+# AST Builder Helpers
+# =============================================================================
+
+
+def make_func(name: str, *args: ast.Expression | str) -> ast.Function:
+    """Build a Function AST node."""
+    return ast.Function(
+        ast.Name(name),
+        args=[ast.Column(ast.Name(a)) if isinstance(a, str) else a for a in args],
+    )
+
+
+# =============================================================================
+# Decomposition Framework
+# =============================================================================
+
+
+@dataclass
+class ComponentDef:
+    """
+    Defines one component of an aggregation decomposition.
+
+    Attributes:
+        suffix: Name suffix for the component (e.g., "_sum", "_count", "_hll")
+        accumulate: Phase 1 - how to build from raw data. Can be:
+            - Simple function name: "SUM" -> SUM(expr)
+            - Template with {}: "SUM(POWER({}, 2))" -> SUM(POWER(expr, 2))
+            - Template with {0}, {1}: "SUM({0} * {1})" for multi-arg functions
+        merge: Phase 2 function - combine pre-aggregated values (e.g., "SUM", "hll_union")
+        arg_index: Which function argument to use (default 0). Use None for multi-arg templates.
+    """
+
+    suffix: str
+    accumulate: str
+    merge: str
+    arg_index: int | None = 0  # Which arg to use, or None for multi-arg templates
+
+
+class AggDecomposition(ABC):
+    """
+    Abstract base class for aggregation decompositions.
+
+    Defines the three phases of metric decomposition:
+    1. Accumulate: How to build components from raw data (via `components`)
+    2. Merge: How to combine pre-aggregated components (via `components`)
+    3. Combiner: How to produce the final metric value from merged components
+
+    Subclasses must define `components` and implement `combine()`.
+    """
+
+    @property
+    @abstractmethod
+    def components(self) -> list[ComponentDef]:
+        """Define the components needed for this aggregation."""
+
+    @abstractmethod
+    def combine(self, components: list[MetricComponent]) -> ast.Expression:
+        """Build the combiner expression from merged metric components."""
+
+
+# =============================================================================
+# Decomposition Registry
+# =============================================================================
+
+DECOMPOSITION_REGISTRY: dict[type, type[AggDecomposition] | None] = {}
+
+
+def decomposes(func_class: type):
+    """Decorator to register a decomposition class for a function."""
+
+    def decorator(decomp_class: type[AggDecomposition]):
+        DECOMPOSITION_REGISTRY[func_class] = decomp_class
+        return decomp_class
+
+    return decorator
+
+
+def not_decomposable(func_class: type):
+    """Mark a function as not decomposable (requires full dataset)."""
+    DECOMPOSITION_REGISTRY[func_class] = None
+
+
+# =============================================================================
+# Simple Decompositions (accumulate == merge)
+# =============================================================================
+
+
+@decomposes(dj_functions.Sum)
+class SumDecomposition(AggDecomposition):
+    """SUM: simple additive aggregation."""
+
+    @property
+    def components(self) -> list[ComponentDef]:
+        return [ComponentDef("_sum", "SUM", "SUM")]
+
+    def combine(self, components: list[MetricComponent]):
+        return make_func("SUM", components[0].name)
+
+
+@decomposes(dj_functions.Max)
+class MaxDecomposition(AggDecomposition):
+    """MAX: maximum value is associative."""
+
+    @property
+    def components(self) -> list[ComponentDef]:
+        return [ComponentDef("_max", "MAX", "MAX")]
+
+    def combine(self, components: list[MetricComponent]):
+        return make_func("MAX", components[0].name)
+
+
+@decomposes(dj_functions.Min)
+class MinDecomposition(AggDecomposition):
+    """MIN: minimum value is associative."""
+
+    @property
+    def components(self) -> list[ComponentDef]:
+        return [ComponentDef("_min", "MIN", "MIN")]
+
+    def combine(self, components: list[MetricComponent]):
+        return make_func("MIN", components[0].name)
+
+
+@decomposes(dj_functions.AnyValue)
+class AnyValueDecomposition(AggDecomposition):
+    """ANY_VALUE: any value from the group."""
+
+    @property
+    def components(self) -> list[ComponentDef]:
+        return [ComponentDef("_any_value", "ANY_VALUE", "ANY_VALUE")]
+
+    def combine(self, components: list[MetricComponent]):
+        return make_func("ANY_VALUE", components[0].name)
+
+
+# =============================================================================
+# Count Decompositions (accumulate=COUNT, merge=SUM)
+# =============================================================================
+
+
+@decomposes(dj_functions.Count)
+class CountDecomposition(AggDecomposition):
+    """COUNT: count rows, merge by summing counts."""
+
+    @property
+    def components(self) -> list[ComponentDef]:
+        return [ComponentDef("_count", "COUNT", "SUM")]
+
+    def combine(self, components: list[MetricComponent]):
+        return make_func("SUM", components[0].name)
+
+
+@decomposes(dj_functions.CountIf)
+class CountIfDecomposition(AggDecomposition):
+    """COUNT_IF: conditional count, merge by summing counts."""
+
+    @property
+    def components(self) -> list[ComponentDef]:
+        return [ComponentDef("_count_if", "COUNT_IF", "SUM")]
+
+    def combine(self, components: list[MetricComponent]):
+        return make_func("SUM", components[0].name)
+
+
+# =============================================================================
+# AVG Decomposition (needs sum and count)
+# =============================================================================
+
+
+@decomposes(dj_functions.Avg)
+class AvgDecomposition(AggDecomposition):
+    """AVG = SUM / COUNT, requires two components."""
+
+    @property
+    def components(self) -> list[ComponentDef]:
+        return [
+            ComponentDef("_sum", "SUM", "SUM"),
+            ComponentDef("_count", "COUNT", "SUM"),
+        ]
+
+    def combine(self, components: list[MetricComponent]):
+        return ast.BinaryOp(
+            op=ast.BinaryOpKind.Divide,
+            left=make_func("SUM", components[0].name),
+            right=make_func("SUM", components[1].name),
+        )
+
+
+# =============================================================================
+# HLL Sketch Decomposition (approximate distinct count)
+# =============================================================================
+
+
+@decomposes(dj_functions.ApproxCountDistinct)
+class ApproxCountDistinctDecomposition(AggDecomposition):
+    """
+    APPROX_COUNT_DISTINCT using HyperLogLog sketches.
+
+    Uses Spark function names (hll_sketch_agg, hll_union, hll_sketch_estimate).
+    Translation to other dialects happens in the transpilation layer.
+    """
+
+    @property
+    def components(self) -> list[ComponentDef]:
+        return [ComponentDef("_hll", "hll_sketch_agg", "hll_union")]
+
+    def combine(self, components: list[MetricComponent]):
+        return make_func(
+            "hll_sketch_estimate",
+            make_func("hll_union", components[0].name),
+        )
+
+
+# =============================================================================
+# Variance Decompositions
+# =============================================================================
+
+
+class VarianceDecompositionBase(AggDecomposition):
+    """
+    Base class for variance decompositions.
+
+    Variance can be computed from three components:
+    - sum(x): sum of values
+    - sum(x²): sum of squared values
+    - count: number of values
+
+    VAR_POP = E[X²] - E[X]² = sum(x²)/n - (sum(x)/n)²
+    VAR_SAMP uses Bessel's correction: n/(n-1) * VAR_POP
+    """
+
+    @property
+    def components(self) -> list[ComponentDef]:
+        return [
+            ComponentDef("_sum", "SUM", "SUM"),
+            ComponentDef("_sum_sq", "SUM(POWER({}, 2))", "SUM"),  # sum of x²
+            ComponentDef("_count", "COUNT", "SUM"),
+        ]
+
+    def _make_var_pop(self, components: list[MetricComponent]) -> ast.Expression:
+        """Build VAR_POP: E[X²] - E[X]²"""
+        sum_col = components[0].name
+        sum_sq_col = components[1].name
+        count_col = components[2].name
+
+        # E[X²] = SUM(sum_sq) / SUM(count)
+        mean_of_squares = ast.BinaryOp(
+            op=ast.BinaryOpKind.Divide,
+            left=make_func("SUM", sum_sq_col),
+            right=make_func("SUM", count_col),
+        )
+
+        # E[X]² = (SUM(sum) / SUM(count))²
+        square_of_mean = make_func(
+            "POWER",
+            ast.BinaryOp(
+                op=ast.BinaryOpKind.Divide,
+                left=make_func("SUM", sum_col),
+                right=make_func("SUM", count_col),
+            ),
+            ast.Number(2),
+        )
+
+        return ast.BinaryOp(
+            op=ast.BinaryOpKind.Minus,
+            left=mean_of_squares,
+            right=square_of_mean,
+        )
+
+    def _make_var_samp(self, components: list[MetricComponent]) -> ast.Expression:
+        """
+        Build VAR_SAMP with Bessel's correction.
+
+        = (n * SUM(x²) - SUM(x)²) / (n * (n-1))
+        where n = SUM(count)
+        """
+        sum_col = components[0].name
+        sum_sq_col = components[1].name
+        count_col = components[2].name
+
+        n = make_func("SUM", count_col)
+        sum_x = make_func("SUM", sum_col)
+        sum_x_sq = make_func("SUM", sum_sq_col)
+
+        # Numerator: n * sum_x_sq - sum_x²
+        numerator = ast.BinaryOp(
+            op=ast.BinaryOpKind.Minus,
+            left=ast.BinaryOp(op=ast.BinaryOpKind.Multiply, left=n, right=sum_x_sq),
+            right=make_func("POWER", sum_x, ast.Number(2)),
+        )
+
+        # Denominator: n * (n - 1)
+        denominator = ast.BinaryOp(
+            op=ast.BinaryOpKind.Multiply,
+            left=n,
+            right=ast.BinaryOp(op=ast.BinaryOpKind.Minus, left=n, right=ast.Number(1)),
+        )
+
+        return ast.BinaryOp(
+            op=ast.BinaryOpKind.Divide,
+            left=numerator,
+            right=denominator,
+        )
+
+
+@decomposes(dj_functions.VarPop)
+class VarPopDecomposition(VarianceDecompositionBase):
+    """Population variance: E[X²] - E[X]²"""
+
+    def combine(self, components: list[MetricComponent]):
+        return self._make_var_pop(components)
+
+
+@decomposes(dj_functions.VarSamp)
+class VarSampDecomposition(VarianceDecompositionBase):
+    """Sample variance with Bessel's correction."""
+
+    def combine(self, components: list[MetricComponent]):
+        return self._make_var_samp(components)
+
+
+@decomposes(dj_functions.Variance)
+class VarianceDecomposition(VarianceDecompositionBase):
+    """VARIANCE (alias for VAR_SAMP in Spark)."""
+
+    def combine(self, components: list[MetricComponent]):
+        return self._make_var_samp(components)  # pragma: no cover
+
+
+# =============================================================================
+# Standard Deviation Decompositions (square root of variance)
+# =============================================================================
+
+
+@decomposes(dj_functions.StddevPop)
+class StddevPopDecomposition(VarianceDecompositionBase):
+    """Population standard deviation: sqrt(VAR_POP)"""
+
+    def combine(self, components: list[MetricComponent]):
+        return make_func("SQRT", self._make_var_pop(components))
+
+
+@decomposes(dj_functions.StddevSamp)
+class StddevSampDecomposition(VarianceDecompositionBase):
+    """Sample standard deviation: sqrt(VAR_SAMP)"""
+
+    def combine(self, components: list[MetricComponent]):
+        return make_func("SQRT", self._make_var_samp(components))
+
+
+@decomposes(dj_functions.Stddev)
+class StddevDecomposition(VarianceDecompositionBase):
+    """STDDEV (alias for STDDEV_SAMP in Spark)."""
+
+    def combine(self, components: list[MetricComponent]):
+        return make_func("SQRT", self._make_var_samp(components))  # pragma: no cover
+
+
+# =============================================================================
+# Covariance Decompositions (two-argument functions)
+# =============================================================================
+
+
+class CovarianceDecompositionBase(AggDecomposition):
+    """
+    Base class for covariance decompositions.
+
+    Covariance between X and Y can be computed from four components:
+    - sum(x): sum of first variable
+    - sum(y): sum of second variable
+    - sum(x*y): sum of products
+    - count: number of pairs
+
+    COVAR_POP = E[XY] - E[X]*E[Y] = sum(xy)/n - (sum(x)/n)*(sum(y)/n)
+    COVAR_SAMP uses Bessel's correction
+    """
+
+    @property
+    def components(self) -> list[ComponentDef]:
+        return [
+            ComponentDef("_sum_x", "SUM({0})", "SUM", arg_index=0),
+            ComponentDef("_sum_y", "SUM({1})", "SUM", arg_index=1),
+            ComponentDef("_sum_xy", "SUM({0} * {1})", "SUM", arg_index=None),
+            ComponentDef("_count", "COUNT({0})", "SUM", arg_index=0),
+        ]
+
+    def _make_covar_pop(self, components: list[MetricComponent]) -> ast.Expression:
+        """Build COVAR_POP: E[XY] - E[X]*E[Y]"""
+        sum_x_col = components[0].name
+        sum_y_col = components[1].name
+        sum_xy_col = components[2].name
+        count_col = components[3].name
+
+        n = make_func("SUM", count_col)
+        sum_x = make_func("SUM", sum_x_col)
+        sum_y = make_func("SUM", sum_y_col)
+        sum_xy = make_func("SUM", sum_xy_col)
+
+        # E[XY] = sum(xy) / n
+        mean_of_products = ast.BinaryOp(
+            op=ast.BinaryOpKind.Divide,
+            left=sum_xy,
+            right=n,
+        )
+
+        # E[X] * E[Y] = (sum(x)/n) * (sum(y)/n)
+        product_of_means = ast.BinaryOp(
+            op=ast.BinaryOpKind.Multiply,
+            left=ast.BinaryOp(op=ast.BinaryOpKind.Divide, left=sum_x, right=n),
+            right=ast.BinaryOp(op=ast.BinaryOpKind.Divide, left=sum_y, right=n),
+        )
+
+        return ast.BinaryOp(
+            op=ast.BinaryOpKind.Minus,
+            left=mean_of_products,
+            right=product_of_means,
+        )
+
+    def _make_covar_samp(self, components: list[MetricComponent]) -> ast.Expression:
+        """
+        Build COVAR_SAMP with Bessel's correction.
+
+        = (n * sum(xy) - sum(x) * sum(y)) / (n * (n-1))
+        """
+        sum_x_col = components[0].name
+        sum_y_col = components[1].name
+        sum_xy_col = components[2].name
+        count_col = components[3].name
+
+        n = make_func("SUM", count_col)
+        sum_x = make_func("SUM", sum_x_col)
+        sum_y = make_func("SUM", sum_y_col)
+        sum_xy = make_func("SUM", sum_xy_col)
+
+        # Numerator: n * sum(xy) - sum(x) * sum(y)
+        numerator = ast.BinaryOp(
+            op=ast.BinaryOpKind.Minus,
+            left=ast.BinaryOp(op=ast.BinaryOpKind.Multiply, left=n, right=sum_xy),
+            right=ast.BinaryOp(op=ast.BinaryOpKind.Multiply, left=sum_x, right=sum_y),
+        )
+
+        # Denominator: n * (n - 1)
+        denominator = ast.BinaryOp(
+            op=ast.BinaryOpKind.Multiply,
+            left=n,
+            right=ast.BinaryOp(op=ast.BinaryOpKind.Minus, left=n, right=ast.Number(1)),
+        )
+
+        return ast.BinaryOp(
+            op=ast.BinaryOpKind.Divide,
+            left=numerator,
+            right=denominator,
+        )
+
+
+@decomposes(dj_functions.CovarPop)
+class CovarPopDecomposition(CovarianceDecompositionBase):
+    """Population covariance: E[XY] - E[X]*E[Y]"""
+
+    def combine(self, components: list[MetricComponent]):
+        return self._make_covar_pop(components)
+
+
+@decomposes(dj_functions.CovarSamp)
+class CovarSampDecomposition(CovarianceDecompositionBase):
+    """Sample covariance with Bessel's correction."""
+
+    def combine(self, components: list[MetricComponent]):
+        return self._make_covar_samp(components)
+
+
+# =============================================================================
+# Correlation Decomposition (CORR = COVAR / (STDDEV_X * STDDEV_Y))
+# =============================================================================
+
+
+@decomposes(dj_functions.Corr)
+class CorrDecomposition(AggDecomposition):
+    """
+    Pearson correlation coefficient.
+
+    CORR(X,Y) = COVAR(X,Y) / (STDDEV(X) * STDDEV(Y))
+
+    Requires 6 components:
+    - sum(x), sum(y): for means
+    - sum(x²), sum(y²): for variances
+    - sum(xy): for covariance
+    - count: for all calculations
+    """
+
+    @property
+    def components(self) -> list[ComponentDef]:
+        return [
+            ComponentDef("_sum_x", "SUM({0})", "SUM", arg_index=0),
+            ComponentDef("_sum_y", "SUM({1})", "SUM", arg_index=1),
+            ComponentDef("_sum_x_sq", "SUM(POWER({0}, 2))", "SUM", arg_index=0),
+            ComponentDef("_sum_y_sq", "SUM(POWER({1}, 2))", "SUM", arg_index=1),
+            ComponentDef("_sum_xy", "SUM({0} * {1})", "SUM", arg_index=None),
+            ComponentDef("_count", "COUNT({0})", "SUM", arg_index=0),
+        ]
+
+    def combine(self, components: list[MetricComponent]) -> ast.Expression:
+        """
+        Build CORR: COVAR(X,Y) / (STDDEV(X) * STDDEV(Y))
+
+        Using population formulas:
+        COVAR_POP = E[XY] - E[X]*E[Y]
+        VAR_POP = E[X²] - E[X]²
+        """
+        sum_x_col = components[0].name
+        sum_y_col = components[1].name
+        sum_x_sq_col = components[2].name
+        sum_y_sq_col = components[3].name
+        sum_xy_col = components[4].name
+        count_col = components[5].name
+
+        n = make_func("SUM", count_col)
+        sum_x = make_func("SUM", sum_x_col)
+        sum_y = make_func("SUM", sum_y_col)
+        sum_x_sq = make_func("SUM", sum_x_sq_col)
+        sum_y_sq = make_func("SUM", sum_y_sq_col)
+        sum_xy = make_func("SUM", sum_xy_col)
+
+        # Covariance numerator: n * sum(xy) - sum(x) * sum(y)
+        covar_num = ast.BinaryOp(
+            op=ast.BinaryOpKind.Minus,
+            left=ast.BinaryOp(op=ast.BinaryOpKind.Multiply, left=n, right=sum_xy),
+            right=ast.BinaryOp(op=ast.BinaryOpKind.Multiply, left=sum_x, right=sum_y),
+        )
+
+        # Variance X: n * sum(x²) - sum(x)²
+        var_x = ast.BinaryOp(
+            op=ast.BinaryOpKind.Minus,
+            left=ast.BinaryOp(op=ast.BinaryOpKind.Multiply, left=n, right=sum_x_sq),
+            right=make_func("POWER", sum_x, ast.Number(2)),
+        )
+
+        # Variance Y: n * sum(y²) - sum(y)²
+        var_y = ast.BinaryOp(
+            op=ast.BinaryOpKind.Minus,
+            left=ast.BinaryOp(op=ast.BinaryOpKind.Multiply, left=n, right=sum_y_sq),
+            right=make_func("POWER", sum_y, ast.Number(2)),
+        )
+
+        # Denominator: sqrt(var_x * var_y)
+        denominator = make_func(
+            "SQRT",
+            ast.BinaryOp(op=ast.BinaryOpKind.Multiply, left=var_x, right=var_y),
+        )
+
+        return ast.BinaryOp(
+            op=ast.BinaryOpKind.Divide,
+            left=covar_num,
+            right=denominator,
+        )
+
+
+# =============================================================================
+# Non-Decomposable Aggregations
+# =============================================================================
+
+# These require access to the full dataset and cannot be pre-aggregated
+not_decomposable(dj_functions.MaxBy)
+not_decomposable(dj_functions.MinBy)
+
+
+# =============================================================================
+# Decomposition Lookup
+# =============================================================================
+
+
+def get_decomposition(func_class: type) -> AggDecomposition | None:
+    """Get decomposition instance for a function class, or None if not decomposable."""
+    decomp_class = DECOMPOSITION_REGISTRY.get(func_class)
+    if decomp_class is None:
+        return None
+    return decomp_class()
+
+
+# =============================================================================
+# Decomposition Result
+# =============================================================================
+
+
+@dataclass
+class DecompositionResult:
+    """Result of decomposing an aggregation function."""
+
+    components: list[MetricComponent]
+    combiner: ast.Node
+
+
+# =============================================================================
+# Metric Component Extractor
+# =============================================================================
+
+
+class MetricComponentExtractor:
+    """
+    Extracts metric components from a metric definition and generates SQL derived
+    from those components.
+    """
+
+    def __init__(self, query_ast: ast.Query):
+        self._components: list[MetricComponent] = []
+        self._components_tracker: set[str] = set()
+        self._query_ast = query_ast
+        self._extracted = False
+
+    @classmethod
+    @lru_cache(maxsize=128)
+    def from_query_string(cls, metric_query: str):
+        """Create metric component extractor from query string."""
+        query_ast = parse(metric_query)
+        return MetricComponentExtractor(query_ast=query_ast)
+
+    @classmethod
+    def from_query_ast(cls, query_ast: ast.Query):  # pragma: no cover
+        """Create metric component extractor from query AST."""
+        return MetricComponentExtractor(query_ast=query_ast)  # pragma: no cover
+
+    def extract(self) -> tuple[list[MetricComponent], ast.Query]:
+        """
+        Decomposes the metric query into its constituent aggregatable components
+        and constructs a SQL query derived from those components.
+        """
+        if not self._extracted and self._query_ast.select.from_:
+            self._normalize_aliases()
+
+            for func in self._query_ast.find_all(ast.Function):
+                dj_function = func.function()
+                if dj_function and dj_function.is_aggregation:
+                    result = self._decompose(func, dj_function)
+                    if result:
+                        # Apply combiner to AST
+                        func.parent.replace(from_=func, to=result.combiner)  # type: ignore
+                        # Collect unique components
+                        for comp in sorted(result.components, key=lambda m: m.name):
+                            if comp.name not in self._components_tracker:
+                                self._components_tracker.add(comp.name)
+                                self._components.append(comp)
+
+            self._extracted = True
+        return self._components, self._query_ast
+
+    def _normalize_aliases(self):
+        """Remove table aliases from the query to normalize column references."""
+        parent_node_alias = self._query_ast.select.from_.relations[  # type: ignore
+            0
+        ].primary.alias  # type: ignore
+        if parent_node_alias:
+            for col in self._query_ast.find_all(ast.Column):
+                if col.namespace and col.namespace[0].name == parent_node_alias.name:
+                    col.name = ast.Name(col.name.name)
+            self._query_ast.select.from_.relations[0].primary.set_alias(None)  # type: ignore
+
+    def _decompose(
+        self,
+        func: ast.Function,
+        dj_function: type,
+    ) -> DecompositionResult | None:
+        """Decompose an aggregation function using the registry."""
+        decomposition = get_decomposition(dj_function)
+
+        if decomposition is None:
+            # Not decomposable (e.g., MAX_BY, MIN_BY)
+            return None
+
+        # Build components from decomposition
+        components = [
+            self._make_component(func, comp_def)
+            for comp_def in decomposition.components
+        ]
+
+        # Build combiner AST
+        is_distinct = func.quantifier == ast.SetQuantifier.Distinct
+
+        if is_distinct:
+            # DISTINCT aggregations can't be pre-aggregated, so keep original function
+            # Just replace column references with component names
+            combiner_ast: ast.Expression = ast.Function(
+                func.name,
+                args=[ast.Column(ast.Name(components[0].name))],
+                quantifier=ast.SetQuantifier.Distinct,
+            )
+        else:
+            combiner_ast = decomposition.combine(components)
+
+        return DecompositionResult(components, combiner_ast)
+
+    def _make_component(
+        self,
+        func: ast.Function,
+        comp_def: ComponentDef,
+    ) -> MetricComponent:
+        """Create a MetricComponent from a function and component definition."""
+        is_distinct = func.quantifier == ast.SetQuantifier.Distinct
+
+        # Determine which args to use based on arg_index
+        if comp_def.arg_index is not None:
+            # Single-arg component
+            arg = func.args[comp_def.arg_index]
+            expression = str(arg)
+            columns = list(arg.find_all(ast.Column))
+        else:
+            # Multi-arg component (e.g., for CORR, COVAR)
+            # Expression combines all args
+            expression = " * ".join(str(a) for a in func.args)
+            columns = []
+            for a in func.args:
+                columns.extend(a.find_all(ast.Column))
+
+        # Build component name from columns in the expression
+        if is_distinct:
+            # DISTINCT uses column names + "_distinct"
+            base_name = (
+                "_".join(amenable_name(str(col)) for col in columns) + "_distinct"
+            )
+        elif columns:
+            # Normal case: column names + suffix
+            base_name = (
+                "_".join(amenable_name(str(col)) for col in columns) + comp_def.suffix
+            )
+        else:
+            # No columns (e.g., COUNT(*)) - use suffix without leading underscore
+            base_name = comp_def.suffix.lstrip("_") or "count"
+
+        short_hash = self._short_hash(expression)
+
+        # Build accumulate expression with template expansion
+        accumulate_expr = self._expand_template(comp_def.accumulate, func.args)
+
+        return MetricComponent(
+            name=f"{base_name}_{short_hash}",
+            expression=expression,
+            aggregation=None if is_distinct else accumulate_expr,
+            merge=None if is_distinct else comp_def.merge,
+            rule=AggregationRule(
+                type=Aggregability.LIMITED if is_distinct else Aggregability.FULL,
+                level=[str(a) for a in func.args] if is_distinct else None,
+            ),
+        )
+
+    def _expand_template(self, template: str, args: list) -> str:
+        """
+        Expand accumulate template with function arguments.
+
+        Supports:
+        - Simple function name: "SUM" -> "SUM"
+        - Single placeholder {}: "SUM(POWER({}, 2))" -> "SUM(POWER(x, 2))"
+        - Indexed placeholders: "SUM({0} * {1})" -> "SUM(x * y)"
+        """
+        if "{" not in template:
+            # Simple function name, no expansion needed
+            return template
+
+        # Check for indexed placeholders {0}, {1}, etc.
+        if "{0}" in template or "{1}" in template:
+            result = template
+            for i, arg in enumerate(args):
+                result = result.replace(f"{{{i}}}", str(arg))
+            return result
+
+        # Single {} placeholder - use first arg
+        return template.replace("{}", str(args[0]))
+
+    def _short_hash(self, expression: str) -> str:
+        """Generate a short hash for the given expression."""
+        signature = expression + str(self._query_ast.select.from_)
+        return hashlib.md5(signature.encode("utf-8")).hexdigest()[:8]
