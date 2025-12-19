@@ -1,0 +1,162 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chedito"
+version = "25.0.0"
+description = "A modern, feature-rich rich text editor for Django."
+readme = "README.md"
+license = "MIT"
+authors = [
+    {name = "Emmanuel Asamoah", email = "emmanuelasamoah179@gmail.com"}
+]
+maintainers = [
+    {name = "Emmanuel Asamoah", email = "emmanuelasamoah179@gmail.com"}
+]
+keywords = [
+    "django",
+    "rich-text",
+    "editor",
+    "wysiwyg",
+    "quill",
+    "ckeditor",
+    "html-editor",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Framework :: Django :: 4.0",
+    "Framework :: Django :: 4.1",
+    "Framework :: Django :: 4.2",
+    "Framework :: Django :: 5.0",
+    "Framework :: Django :: 5.1",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Text Editors :: Word Processors",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "Django>=5.0",
+]
+
+[project.optional-dependencies]
+sanitize = [
+    "nh3>=0.2.0",
+]
+bleach = [
+    "bleach>=6.0.0",
+]
+all = [
+    "nh3>=0.2.0",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-django>=4.5",
+    "pytest-cov>=4.0",
+    "black>=23.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0",
+    "django-stubs>=4.0",
+    "pre-commit>=3.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/jasonpython50/chedito"
+Documentation = "https://github.com/jasonpython50/chedito#readme"
+Repository = "https://github.com/jasonpython50/chedito"
+Changelog = "https://github.com/jasonpython50/chedito/blob/main/CHANGELOG.md"
+Issues = "https://github.com/jasonpython50/chedito/issues"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["chedito*"]
+
+[tool.setuptools.package-data]
+chedito = [
+    "static/chedito/css/*.css",
+    "static/chedito/js/*.js",
+    "static/chedito/js/modules/*.js",
+    "templates/chedito/*.html",
+    "templates/chedito/includes/*.html",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py39', 'py310', 'py311', 'py312']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+    | migrations
+)/
+'''
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501", # line too long (handled by black)
+    "B008", # do not perform function calls in argument defaults
+]
+
+[tool.ruff.isort]
+known-first-party = ["chedito"]
+known-third-party = ["django"]
+
+[tool.mypy]
+python_version = "3.9"
+plugins = ["mypy_django_plugin.main"]
+strict = false
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.django-stubs]
+django_settings_module = "tests.settings"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "tests.settings"
+python_files = ["test_*.py", "*_test.py"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["chedito"]
+omit = ["*/tests/*", "*/migrations/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]

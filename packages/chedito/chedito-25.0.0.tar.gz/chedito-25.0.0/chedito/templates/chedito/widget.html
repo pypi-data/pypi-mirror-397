@@ -1,0 +1,420 @@
+{% load static %}<div class="chedito-widget-container"
+     data-chedito-init="true"
+     data-textarea-id="{{ widget.attrs.id }}"
+     data-editor-id="{{ widget.editor_id }}"
+     data-config='{{ widget.quill_config|escapejs }}'
+     data-upload-image-url="{{ widget.upload_image_url }}"
+     data-upload-video-url="{{ widget.upload_video_url }}"
+     data-upload-file-url="{{ widget.upload_file_url }}">
+
+    {# Hidden textarea to store HTML content #}
+    <textarea name="{{ widget.name }}"
+              id="{{ widget.attrs.id }}"
+              class="chedito-textarea"
+              {% if widget.attrs.required %}required{% endif %}
+              {% if widget.attrs.disabled %}disabled{% endif %}
+              {% if widget.attrs.readonly %}readonly{% endif %}
+              style="display: none !important;">{{ widget.value|default:'' }}</textarea>
+
+    {# Quill Editor Container #}
+    <div id="{{ widget.editor_id }}"
+         class="chedito-editor ql-container"
+         style="height: {{ widget.widget_height }};
+                min-height: {{ widget.widget_min_height }};
+                {% if widget.widget_max_height %}max-height: {{ widget.widget_max_height }};{% endif %}
+                border: 1px solid #ccc;
+                background: #fff;">
+    </div>
+</div>
+
+<script>
+(function() {
+    function initEditor() {
+        var textareaId = '{{ widget.attrs.id }}';
+        var editorId = '{{ widget.editor_id }}';
+
+        // Check if Quill is available
+        if (typeof Quill === 'undefined') {
+            console.error('Chedito: Quill.js is not loaded');
+            return;
+        }
+
+        // Check if already initialized
+        if (window.CheditoEditors && window.CheditoEditors[textareaId]) {
+            return;
+        }
+
+        var config = {{ widget.quill_config|safe }};
+        var textarea = document.getElementById(textareaId);
+        var editorContainer = document.getElementById(editorId);
+
+        if (!textarea || !editorContainer) {
+            console.error('Chedito: Could not find elements', textareaId, editorId);
+            return;
+        }
+
+        // Create Quill instance
+        var quill = new Quill('#' + editorId, config);
+
+        // Set initial content from textarea
+        if (textarea.value) {
+            quill.root.innerHTML = textarea.value;
+        }
+
+        // Sync content back to textarea on change
+        quill.on('text-change', function() {
+            var html = quill.root.innerHTML;
+            // Convert empty editor to empty string
+            if (html === '<p><br></p>' || html === '<p></p>') {
+                textarea.value = '';
+            } else {
+                textarea.value = html;
+            }
+        });
+
+        // Store instance
+        window.CheditoEditors = window.CheditoEditors || {};
+        window.CheditoEditors[textareaId] = quill;
+
+        // Enhance accessibility
+        var widgetContainer = editorContainer.closest('.chedito-widget-container');
+        if (widgetContainer) {
+            enhanceAccessibility(widgetContainer);
+        }
+
+        // Handle form submission
+        var form = textarea.closest('form');
+        if (form) {
+            form.addEventListener('submit', function() {
+                textarea.value = quill.root.innerHTML;
+            });
+        }
+
+        // Setup image upload handler
+        var toolbar = quill.getModule('toolbar');
+        if (toolbar) {
+            toolbar.addHandler('image', function() {
+                var input = document.createElement('input');
+                input.setAttribute('type', 'file');
+                input.setAttribute('accept', 'image/*');
+                input.click();
+
+                input.onchange = function() {
+                    var file = input.files[0];
+                    if (file) {
+                        uploadFile(file, '{{ widget.upload_image_url }}', function(error, url) {
+                            if (error) {
+                                console.error('Image upload failed:', error);
+                                alert('Image upload failed: ' + error);
+                                return;
+                            }
+                            var range = quill.getSelection(true);
+                            quill.insertEmbed(range.index, 'image', url);
+                            quill.setSelection(range.index + 1);
+                        });
+                    }
+                };
+            });
+
+            toolbar.addHandler('video', function() {
+                var input = document.createElement('input');
+                input.setAttribute('type', 'file');
+                input.setAttribute('accept', 'video/*');
+                input.click();
+
+                input.onchange = function() {
+                    var file = input.files[0];
+                    if (file) {
+                        uploadFile(file, '{{ widget.upload_video_url }}', function(error, url) {
+                            if (error) {
+                                console.error('Video upload failed:', error);
+                                alert('Video upload failed: ' + error);
+                                return;
+                            }
+                            var range = quill.getSelection(true);
+                            quill.insertEmbed(range.index, 'video', url);
+                            quill.setSelection(range.index + 1);
+                        });
+                    }
+                };
+            });
+        }
+
+        console.log('Chedito: Editor initialized for', textareaId);
+    }
+
+    function uploadFile(file, url, callback) {
+        var formData = new FormData();
+        formData.append('file', file);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', url, true);
+
+        // Get CSRF token
+        var csrfToken = getCSRFToken();
+        if (csrfToken) {
+            xhr.setRequestHeader('X-CSRFToken', csrfToken);
+        }
+
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    if (response.success) {
+                        callback(null, response.url);
+                    } else {
+                        callback(response.error || 'Upload failed');
+                    }
+                } catch (e) {
+                    callback('Invalid server response');
+                }
+            } else {
+                try {
+                    var response = JSON.parse(xhr.responseText);
+                    callback(response.error || 'Upload failed');
+                } catch (e) {
+                    callback('Upload failed with status ' + xhr.status);
+                }
+            }
+        };
+
+        xhr.onerror = function() {
+            callback('Network error during upload');
+        };
+
+        xhr.send(formData);
+    }
+
+    function getCSRFToken() {
+        var name = 'csrftoken';
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.indexOf(name + '=') === 0) {
+                return decodeURIComponent(cookie.substring(name.length + 1));
+            }
+        }
+        // Try meta tag
+        var meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta) return meta.getAttribute('content');
+        // Try hidden input
+        var input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+        if (input) return input.value;
+        return null;
+    }
+
+    // Accessibility labels for toolbar buttons
+    var accessibilityLabels = {
+        'bold': 'Bold',
+        'italic': 'Italic',
+        'underline': 'Underline',
+        'strike': 'Strikethrough',
+        'script[value="sub"]': 'Subscript',
+        'script[value="super"]': 'Superscript',
+        'blockquote': 'Block Quote',
+        'code-block': 'Code Block',
+        'list[value="ordered"]': 'Numbered List',
+        'list[value="bullet"]': 'Bulleted List',
+        'indent[value="-1"]': 'Decrease Indent',
+        'indent[value="+1"]': 'Increase Indent',
+        'direction[value="rtl"]': 'Right to Left Text Direction',
+        'align[value=""]': 'Align Left',
+        'align[value="center"]': 'Align Center',
+        'align[value="right"]': 'Align Right',
+        'align[value="justify"]': 'Justify',
+        'link': 'Insert Link',
+        'image': 'Insert Image',
+        'video': 'Insert Video',
+        'clean': 'Remove Formatting',
+        'color': 'Text Color',
+        'background': 'Background Color',
+        'header': 'Heading Style',
+        'font': 'Font Family',
+        'size': 'Font Size'
+    };
+
+    function enhanceAccessibility(container) {
+        var toolbar = container.querySelector('.ql-toolbar');
+        if (!toolbar) return;
+
+        // Set toolbar role and label
+        toolbar.setAttribute('role', 'toolbar');
+        toolbar.setAttribute('aria-label', 'Text Formatting Toolbar');
+
+        // Label all buttons
+        var buttons = toolbar.querySelectorAll('button');
+        for (var i = 0; i < buttons.length; i++) {
+            var button = buttons[i];
+            var label = null;
+            var buttonType = null;
+
+            // Get button type from class
+            var classList = button.className.split(' ');
+            for (var j = 0; j < classList.length; j++) {
+                if (classList[j].indexOf('ql-') === 0) {
+                    buttonType = classList[j].substring(3);
+                    break;
+                }
+            }
+
+            if (buttonType) {
+                // Check for value attribute
+                var value = button.getAttribute('value');
+                if (value !== null && value !== '') {
+                    var keyWithValue = buttonType + '[value="' + value + '"]';
+                    label = accessibilityLabels[keyWithValue];
+                }
+
+                if (!label) {
+                    label = accessibilityLabels[buttonType];
+                }
+
+                if (!label) {
+                    label = buttonType.replace(/-/g, ' ').replace(/^\w/, function(c) { return c.toUpperCase(); });
+                }
+
+                button.setAttribute('aria-label', label);
+                button.setAttribute('title', label);
+
+                // Add aria-pressed for toggle buttons
+                var toggleButtons = ['bold', 'italic', 'underline', 'strike', 'blockquote', 'code-block'];
+                if (toggleButtons.indexOf(buttonType) !== -1) {
+                    var isActive = button.className.indexOf('ql-active') !== -1;
+                    button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                }
+            }
+        }
+
+        // Label picker dropdowns
+        var pickers = toolbar.querySelectorAll('.ql-picker');
+        for (var p = 0; p < pickers.length; p++) {
+            var picker = pickers[p];
+            var pickerType = null;
+            var pickerClasses = picker.className.split(' ');
+
+            for (var k = 0; k < pickerClasses.length; k++) {
+                if (pickerClasses[k].indexOf('ql-') === 0 &&
+                    pickerClasses[k] !== 'ql-picker' &&
+                    pickerClasses[k].indexOf('ql-expanded') === -1) {
+                    pickerType = pickerClasses[k].substring(3);
+                    break;
+                }
+            }
+
+            if (pickerType) {
+                var pickerLabel = accessibilityLabels[pickerType] ||
+                    pickerType.charAt(0).toUpperCase() + pickerType.slice(1);
+
+                picker.setAttribute('aria-label', pickerLabel);
+
+                var pickerLabelEl = picker.querySelector('.ql-picker-label');
+                if (pickerLabelEl) {
+                    pickerLabelEl.setAttribute('aria-label', pickerLabel + ' dropdown');
+                    pickerLabelEl.setAttribute('title', pickerLabel);
+                    pickerLabelEl.setAttribute('role', 'button');
+                    pickerLabelEl.setAttribute('aria-haspopup', 'listbox');
+                    pickerLabelEl.setAttribute('aria-expanded', 'false');
+                }
+
+                var pickerOptions = picker.querySelector('.ql-picker-options');
+                if (pickerOptions) {
+                    pickerOptions.setAttribute('role', 'listbox');
+                    pickerOptions.setAttribute('aria-label', pickerLabel + ' options');
+
+                    var options = pickerOptions.querySelectorAll('.ql-picker-item');
+                    for (var m = 0; m < options.length; m++) {
+                        var option = options[m];
+                        option.setAttribute('role', 'option');
+
+                        var dataValue = option.getAttribute('data-value');
+                        var optionLabel = '';
+
+                        if (pickerType === 'header') {
+                            if (dataValue === null || dataValue === '' || dataValue === 'false') {
+                                optionLabel = 'Normal text';
+                            } else {
+                                optionLabel = 'Heading ' + dataValue;
+                            }
+                        } else if (pickerType === 'align') {
+                            if (dataValue === null || dataValue === '' || dataValue === 'false') {
+                                optionLabel = 'Align Left';
+                            } else if (dataValue === 'center') {
+                                optionLabel = 'Align Center';
+                            } else if (dataValue === 'right') {
+                                optionLabel = 'Align Right';
+                            } else if (dataValue === 'justify') {
+                                optionLabel = 'Justify';
+                            }
+                        } else if (pickerType === 'color' || pickerType === 'background') {
+                            if (dataValue) {
+                                optionLabel = (pickerType === 'color' ? 'Text color: ' : 'Background color: ') + dataValue;
+                            } else {
+                                optionLabel = 'Default ' + (pickerType === 'color' ? 'text color' : 'background color');
+                            }
+                        } else {
+                            optionLabel = dataValue || 'Default';
+                        }
+
+                        option.setAttribute('aria-label', optionLabel);
+                        option.setAttribute('title', optionLabel);
+                    }
+                }
+            }
+        }
+
+        // Update aria states on click
+        toolbar.addEventListener('click', function(e) {
+            var btn = e.target.closest ? e.target.closest('button') : null;
+            if (!btn) {
+                var el = e.target;
+                while (el && el.tagName !== 'BUTTON') el = el.parentElement;
+                btn = el;
+            }
+            if (btn && btn.hasAttribute('aria-pressed')) {
+                setTimeout(function() {
+                    var isActive = btn.className.indexOf('ql-active') !== -1;
+                    btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                }, 10);
+            }
+
+            var pickerLbl = e.target.closest ? e.target.closest('.ql-picker-label') : null;
+            if (!pickerLbl) {
+                var el2 = e.target;
+                while (el2 && el2.className.indexOf('ql-picker-label') === -1) el2 = el2.parentElement;
+                pickerLbl = el2;
+            }
+            if (pickerLbl) {
+                var pickerEl = pickerLbl.parentElement;
+                setTimeout(function() {
+                    var isExpanded = pickerEl.className.indexOf('ql-expanded') !== -1;
+                    pickerLbl.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+                }, 10);
+            }
+        });
+
+        // Make editor content area accessible
+        var editor = container.querySelector('.ql-editor');
+        if (editor) {
+            editor.setAttribute('role', 'textbox');
+            editor.setAttribute('aria-multiline', 'true');
+            editor.setAttribute('aria-label', 'Rich text editor content');
+        }
+    }
+
+    // Wait for Quill to be loaded
+    function waitForQuill() {
+        if (typeof Quill !== 'undefined') {
+            initEditor();
+        } else {
+            setTimeout(waitForQuill, 50);
+        }
+    }
+
+    // Start initialization
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', waitForQuill);
+    } else {
+        waitForQuill();
+    }
+})();
+</script>

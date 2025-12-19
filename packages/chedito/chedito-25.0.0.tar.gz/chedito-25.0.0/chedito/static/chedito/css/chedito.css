@@ -1,0 +1,241 @@
+/**
+ * Chedito - Rich Text Editor Styles
+ */
+
+/* Widget Container */
+.chedito-widget-container {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+/* Editor Container */
+.chedito-editor {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.chedito-editor .ql-toolbar {
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    border-bottom: 1px solid #ccc;
+    background-color: #f8f9fa;
+}
+
+.chedito-editor .ql-container {
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+    font-size: 16px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.chedito-editor .ql-editor {
+    min-height: 200px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.chedito-editor .ql-editor.ql-blank::before {
+    font-style: normal;
+    color: #999;
+}
+
+/* Hide the textarea */
+.chedito-widget-container textarea.chedito-textarea {
+    display: none !important;
+}
+
+/* Drag and Drop Overlay */
+.chedito-editor.chedito-dragover {
+    outline: 2px dashed #007bff;
+    outline-offset: -2px;
+}
+
+.chedito-editor.chedito-dragover::after {
+    content: "Drop files here";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 123, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: #007bff;
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* Custom Toolbar Styles */
+.chedito-editor .ql-toolbar button:hover,
+.chedito-editor .ql-toolbar button:focus {
+    color: #007bff;
+}
+
+.chedito-editor .ql-toolbar button.ql-active {
+    color: #007bff;
+}
+
+.chedito-editor .ql-toolbar .ql-stroke {
+    stroke: #444;
+}
+
+.chedito-editor .ql-toolbar .ql-fill {
+    fill: #444;
+}
+
+.chedito-editor .ql-toolbar button:hover .ql-stroke,
+.chedito-editor .ql-toolbar button.ql-active .ql-stroke {
+    stroke: #007bff;
+}
+
+.chedito-editor .ql-toolbar button:hover .ql-fill,
+.chedito-editor .ql-toolbar button.ql-active .ql-fill {
+    fill: #007bff;
+}
+
+/* Embedded Content Styles */
+.chedito-editor .ql-editor img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+
+.chedito-editor .ql-editor video {
+    max-width: 100%;
+    border-radius: 4px;
+}
+
+.chedito-editor .ql-editor iframe {
+    max-width: 100%;
+    border-radius: 4px;
+}
+
+/* Code Block Styling */
+.chedito-editor .ql-editor pre.ql-syntax {
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    border-radius: 4px;
+    padding: 1rem;
+    overflow-x: auto;
+    font-family: "Fira Code", "Consolas", "Monaco", monospace;
+    font-size: 14px;
+}
+
+/* Blockquote Styling */
+.chedito-editor .ql-editor blockquote {
+    border-left: 4px solid #007bff;
+    padding-left: 1rem;
+    margin-left: 0;
+    color: #666;
+    font-style: italic;
+}
+
+/* Link Styling */
+.chedito-editor .ql-editor a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.chedito-editor .ql-editor a:hover {
+    text-decoration: underline;
+}
+
+/* List Styling */
+.chedito-editor .ql-editor ul,
+.chedito-editor .ql-editor ol {
+    padding-left: 1.5rem;
+}
+
+/* Table Styling (if using table module) */
+.chedito-editor .ql-editor table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+}
+
+.chedito-editor .ql-editor table td,
+.chedito-editor .ql-editor table th {
+    border: 1px solid #ddd;
+    padding: 0.5rem;
+}
+
+.chedito-editor .ql-editor table th {
+    background-color: #f8f9fa;
+    font-weight: bold;
+}
+
+/* Focus State */
+.chedito-editor .ql-container.ql-snow:focus-within {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Error State */
+.chedito-widget-container.has-error .chedito-editor {
+    border-color: #dc3545;
+}
+
+.chedito-widget-container.has-error .chedito-editor .ql-toolbar {
+    border-color: #dc3545;
+}
+
+/* Disabled State */
+.chedito-editor.disabled .ql-toolbar {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.chedito-editor.disabled .ql-editor {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+}
+
+/* Loading State */
+.chedito-editor.loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    margin: -15px 0 0 -15px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #007bff;
+    border-radius: 50%;
+    animation: chedito-spin 1s linear infinite;
+    z-index: 10;
+}
+
+@keyframes chedito-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .chedito-editor .ql-toolbar {
+        flex-wrap: wrap;
+    }
+
+    .chedito-editor .ql-editor {
+        min-height: 150px;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .chedito-editor .ql-toolbar {
+        display: none;
+    }
+
+    .chedito-editor .ql-container {
+        border: none;
+    }
+
+    .chedito-editor .ql-editor {
+        padding: 0;
+    }
+}

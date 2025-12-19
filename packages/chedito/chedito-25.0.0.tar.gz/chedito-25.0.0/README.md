@@ -1,0 +1,428 @@
+# Chedito
+
+A modern, feature-rich rich text editor for Django using [Quill.js](https://quilljs.com/).
+
+[![PyPI version](https://badge.fury.io/py/chedito.svg)](https://badge.fury.io/py/chedito)
+[![Python versions](https://img.shields.io/pypi/pyversions/chedito.svg)](https://pypi.org/project/chedito/)
+[![Django versions](https://img.shields.io/badge/django-4.0%20%7C%204.1%20%7C%204.2%20%7C%205.0%20%7C%205.1-blue)](https://pypi.org/project/chedito/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+## Features
+
+- **Modern Editor**: Built on Quill.js - a powerful, free, open-source WYSIWYG editor
+- **Full Media Support**: Upload and embed images, videos, and file attachments
+- **Drag & Drop**: Drag and drop images and files directly into the editor
+- **Paste Support**: Paste images from clipboard
+- **Django Admin Integration**: Seamless integration with Django admin
+- **Multiple Storage Backends**: Use Django's default storage or custom backends
+- **XSS Protection**: Built-in HTML sanitization
+- **Customizable**: Fully configurable toolbar and editor options
+- **Responsive**: Works great on desktop and mobile devices
+- **Accessible**: Full screen reader support with ARIA labels for all toolbar controls
+- **Offline Support**: Quill.js is bundled locally - no CDN dependency
+- **MIT Licensed**: Free for personal and commercial use
+
+## Installation
+
+```
+pip install chedito
+```
+
+For HTML sanitization (recommended):
+
+```
+pip install chedito[sanitize]  # Uses nh3 (fast, Rust-based)
+# or
+pip install chedito[bleach]    # Uses bleach
+```
+
+## Quick Start
+
+### 1. Add to INSTALLED_APPS
+
+```
+# settings.py
+INSTALLED_APPS = [
+    ...
+    'chedito',
+]
+```
+
+### 2. Include URLs
+
+```
+# urls.py
+from django.urls import path, include
+
+urlpatterns = [
+    ...
+    path('chedito/', include('chedito.urls')),
+]
+```
+
+### 3. Use in Models
+
+```
+# models.py
+from django.db import models
+from chedito.fields import RichTextField
+
+class Article(models.Model):
+    title = models.CharField(max_length=200)
+    content = RichTextField()
+```
+
+### 4. Use in Admin
+
+```
+# admin.py
+from django.contrib import admin
+from chedito.admin import RichTextAdminMixin
+from .models import Article
+
+@admin.register(Article)
+class ArticleAdmin(RichTextAdminMixin, admin.ModelAdmin):
+    list_display = ['title']
+```
+
+### 5. Display in Templates
+
+```
+{% load chedito_tags %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    {% chedito_css %}
+</head>
+<body>
+    <article>
+        {% render_rich_text article.content %}
+    </article>
+</body>
+</html>
+```
+
+## Configuration
+
+Configure Chedito in your Django settings:
+
+```
+# settings.py
+CHEDITO_CONFIG = {
+    # Upload settings
+    'upload_path': 'chedito_uploads/',
+    'storage_backend': 'chedito.storage.default.DefaultStorage',
+
+    # Size limits
+    'max_image_size': 5 * 1024 * 1024,  # 5MB
+    'max_video_size': 50 * 1024 * 1024,  # 50MB
+    'max_file_size': 10 * 1024 * 1024,  # 10MB
+
+    # Allowed file types
+    'allowed_image_types': ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+    'allowed_video_types': ['video/mp4', 'video/webm'],
+
+    # Security
+    'require_authentication': False,
+    'staff_only_uploads': False,
+    'sanitize_html': True,
+
+    # Editor settings
+    'quill_theme': 'snow',  # 'snow' or 'bubble'
+    'widget_height': '300px',
+
+    # Quill configuration
+    'quill_config': {
+        'modules': {
+            'toolbar': [
+                [{'header': [1, 2, 3, False]}],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{'color': []}, {'background': []}],
+                ['blockquote', 'code-block'],
+                [{'list': 'ordered'}, {'list': 'bullet'}],
+                ['link', 'image', 'video'],
+                ['clean'],
+            ]
+        },
+        'placeholder': 'Write something...',
+    },
+}
+```
+
+## Usage
+
+### Model Field
+
+```
+from chedito.fields import RichTextField
+
+class Article(models.Model):
+    # Basic usage
+    content = RichTextField()
+
+    # With custom configuration
+    content = RichTextField(
+        quill_config={
+            'modules': {
+                'toolbar': ['bold', 'italic', 'link']
+            }
+        }
+    )
+```
+
+### Form Widget
+
+```
+from django import forms
+from chedito.widgets import RichTextWidget
+
+class ArticleForm(forms.Form):
+    content = forms.CharField(widget=RichTextWidget())
+```
+
+### Form Field
+
+```
+from django import forms
+from chedito.forms import RichTextFormField
+
+class ArticleForm(forms.Form):
+    content = RichTextFormField()
+```
+
+### Template Tags
+
+```
+{% load chedito_tags %}
+
+<!-- Include CSS (in <head>) -->
+{% chedito_css %}
+
+<!-- Include JS (before </body>) -->
+{% chedito_js %}
+
+<!-- Render rich text content -->
+{% render_rich_text article.content %}
+
+<!-- As a filter -->
+{{ article.content|richtext }}
+
+<!-- Strip HTML tags -->
+{{ article.content|strip_tags }}
+
+<!-- Truncate with ellipsis -->
+{{ article.content|truncate_richtext:200 }}
+```
+
+### Standalone Editor
+
+```
+{% load chedito_tags %}
+
+{% chedito_editor "content" initial_value %}
+```
+
+## Storage Backends
+
+### Django Default Storage (default)
+
+Uses Django's configured default storage backend:
+
+```
+CHEDITO_CONFIG = {
+    'storage_backend': 'chedito.storage.default.DefaultStorage',
+}
+```
+
+### Local Filesystem
+
+```
+CHEDITO_CONFIG = {
+    'storage_backend': 'chedito.storage.local.LocalStorage',
+}
+```
+
+### Custom Backend
+
+Create your own storage backend:
+
+```
+from chedito.storage.base import BaseStorage
+
+class MyCustomStorage(BaseStorage):
+    def save(self, file, filename, upload_type='file'):
+        # Save file and return URL
+        pass
+
+    def delete(self, filename):
+        # Delete file
+        pass
+
+    def url(self, filename):
+        # Return file URL
+        pass
+
+    def exists(self, filename):
+        # Check if file exists
+        pass
+```
+
+## Accessibility
+
+Chedito is built with accessibility in mind and provides full screen reader support:
+
+### Screen Reader Support
+
+All toolbar controls are properly labeled for screen readers (NVDA, JAWS, VoiceOver):
+
+- **Toolbar buttons**: Each button has descriptive `aria-label` (e.g., "Bold", "Italic", "Insert Image")
+- **Toggle buttons**: Include `aria-pressed` state that updates when activated
+- **Dropdown menus**: Properly labeled with `aria-haspopup`, `aria-expanded`, and `aria-label`
+- **Dropdown options**: Each option has a descriptive label (e.g., "Heading 1", "Normal text", "Align Center")
+- **Editor content area**: Marked as `role="textbox"` with `aria-multiline="true"`
+- **Toolbar container**: Has `role="toolbar"` with descriptive label
+
+### Keyboard Navigation
+
+- Tab through toolbar controls
+- Enter/Space to activate buttons
+- Arrow or tab keys to navigate dropdown options
+
+### Labels for All Controls
+
+| Control | Label |
+|---------|-------|
+| Bold | "Bold" |
+| Italic | "Italic" |
+| Underline | "Underline" |
+| Strikethrough | "Strikethrough" |
+| Subscript | "Subscript" |
+| Superscript | "Superscript" |
+| Block Quote | "Block Quote" |
+| Code Block | "Code Block" |
+| Numbered List | "Numbered List" |
+| Bulleted List | "Bulleted List" |
+| Decrease Indent | "Decrease Indent" |
+| Increase Indent | "Increase Indent" |
+| Align buttons | "Align Left", "Align Center", "Align Right", "Justify" |
+| Link | "Insert Link" |
+| Image | "Insert Image" |
+| Video | "Insert Video" |
+| Clean | "Remove Formatting" |
+| Heading dropdown | "Heading Style dropdown" |
+| Color picker | "Text Color dropdown" |
+| Background picker | "Background Color dropdown" |
+
+## Security
+
+### HTML Sanitization
+
+Chedito sanitizes HTML content to prevent XSS attacks. Install a sanitization library:
+
+```
+pip install chedito[sanitize]  # Recommended: uses nh3
+```
+
+Configure allowed tags and attributes:
+
+```
+CHEDITO_CONFIG = {
+    'sanitize_html': True,
+    'allowed_tags': ['p', 'br', 'strong', 'em', 'a', 'img', ...],
+    'allowed_attributes': {
+        'a': ['href', 'title'],
+        'img': ['src', 'alt'],
+        ...
+    },
+}
+```
+
+### Upload Restrictions
+
+```
+CHEDITO_CONFIG = {
+    'require_authentication': True,  # Require logged-in users
+    'staff_only_uploads': True,      # Restrict to staff users
+}
+```
+
+## Admin Integration
+
+### Basic Integration
+
+```
+from chedito.admin import RichTextAdminMixin
+
+@admin.register(Article)
+class ArticleAdmin(RichTextAdminMixin, admin.ModelAdmin):
+    pass
+```
+
+### With Inlines
+
+```
+from chedito.admin import RichTextStackedInline, RichTextTabularInline
+
+class CommentInline(RichTextStackedInline):
+    model = Comment
+    extra = 1
+
+@admin.register(Article)
+class ArticleAdmin(RichTextAdminMixin, admin.ModelAdmin):
+    inlines = [CommentInline]
+```
+
+### Custom Admin Configuration
+
+```
+@admin.register(Article)
+class ArticleAdmin(RichTextAdminMixin, admin.ModelAdmin):
+    chedito_config = {
+        'modules': {
+            'toolbar': ['bold', 'italic', 'link']
+        }
+    }
+```
+
+## Requirements
+
+- Python 3.9+
+- Django 4.0+
+
+## Documentation
+
+Full documentation is available in the [docs](docs/) directory:
+
+- [Installation](docs/installation.md)
+- [Quick Start](docs/quickstart.md)
+- [Configuration](docs/configuration.md)
+- [Model Fields](docs/fields.md)
+- [Form Widgets](docs/widgets.md)
+- [Admin Integration](docs/admin.md)
+- [Template Tags](docs/templatetags.md)
+- [File Uploads](docs/uploads.md)
+- [Storage Backends](docs/storage.md)
+- [Security](docs/security.md)
+- [API Reference](docs/api.md)
+
+## Contributing
+
+Contributions are welcome! Please read our contributing guidelines before submitting a pull request.
+
+## License
+
+MIT License - Copyright (c) 2025 Emmanuel Asamoah
+
+See [LICENSE](LICENSE) for details.
+
+## Author
+
+**Emmanuel Asamoah**
+- Email: emmanuelasamoah179@gmail.com
+- GitHub: [@jasonpython50](https://github.com/jasonpython50)
+
+## Acknowledgments
+
+- [Quill.js](https://quilljs.com/) - The powerful rich text editor
+- [Django](https://www.djangoproject.com/) - The web framework for perfectionists with deadlines
