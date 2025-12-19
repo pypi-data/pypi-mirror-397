@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>21. Python model evaluator &#8212; SasView 6.1.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=f0c0c503"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="22. Identify all parameters in all models" href="list_pars.html" />
+    <link rel="prev" title="20. Ctypes model evaluator" href="kerneldll.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="list_pars.html" title="22. Identify all parameters in all models"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="kerneldll.html" title="20. Ctypes model evaluator"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">21. </span>Python model evaluator</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="python-model-evaluator">
+<h1><span class="section-number">21. </span>Python model evaluator<a class="headerlink" href="#python-model-evaluator" title="Link to this heading">¶</a></h1>
+<section id="module-sasmodels.kernelpy">
+<span id="sasmodels-kernelpy"></span><h2><a class="reference internal" href="#module-sasmodels.kernelpy" title="sasmodels.kernelpy"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.kernelpy</span></code></a><a class="headerlink" href="#module-sasmodels.kernelpy" title="Link to this heading">¶</a></h2>
+<p>Python driver for python kernels</p>
+<p>Calls the kernel with a vector of <span class="math notranslate nohighlight">\(q\)</span> values for a single parameter set.
+Polydispersity is supported by looping over different parameter sets and
+summing the results.  The interface to <a class="reference internal" href="#sasmodels.kernelpy.PyModel" title="sasmodels.kernelpy.PyModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">PyModel</span></code></a> matches those for
+<a class="reference internal" href="kernelcl.html#sasmodels.kernelcl.GpuModel" title="sasmodels.kernelcl.GpuModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">kernelcl.GpuModel</span></code></a> and <a class="reference internal" href="kerneldll.html#sasmodels.kerneldll.DllModel" title="sasmodels.kerneldll.DllModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">kerneldll.DllModel</span></code></a>.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sasmodels.kernelpy.</span></span><span class="sig-name descname"><span class="pre">PyInput</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q_vectors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Make q data available to the gpu.</p>
+<p><em>q_vectors</em> is a list of q vectors, which will be <em>[q]</em> for 1-D data,
+and <em>[qx, qy]</em> for 2-D data.  Internally, the vectors will be reallocated
+to get the best performance on OpenCL, which may involve shifting and
+stretching the array to better match the memory architecture.  Additional
+points will be evaluated with <em>q=1e-3</em>.</p>
+<p><em>dtype</em> is the data type for the q vectors. The data type should be
+set to match that of the kernel, which is an attribute of
+<a class="reference internal" href="#sasmodels.kernelpy.PyModel" title="sasmodels.kernelpy.PyModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">PyModel</span></code></a>.  Note that not all kernels support double
+precision, so even if the program was created for double precision,
+the <em>GpuProgram.dtype</em> may be single precision.</p>
+<p>Call <a class="reference internal" href="#sasmodels.kernelpy.PyInput.release" title="sasmodels.kernelpy.PyInput.release"><code class="xref py py-meth docutils literal notranslate"><span class="pre">release()</span></code></a> when complete.  Even if not called directly, the
+buffer will be released when the data object is freed.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__class__">
+<span class="sig-name descname"><span class="pre">__class__</span></span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__class__" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__delattr__">
+<span class="sig-name descname"><span class="pre">__delattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__delattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement delattr(self, name).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__dict__">
+<span class="sig-name descname"><span class="pre">__dict__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">mappingproxy({'__module__':</span> <span class="pre">'sasmodels.kernelpy',</span> <span class="pre">'__doc__':</span> <span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Make</span> <span class="pre">q</span> <span class="pre">data</span> <span class="pre">available</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">gpu.\n\n</span>&#160;&#160;&#160; <span class="pre">*q_vectors*</span> <span class="pre">is</span> <span class="pre">a</span> <span class="pre">list</span> <span class="pre">of</span> <span class="pre">q</span> <span class="pre">vectors,</span> <span class="pre">which</span> <span class="pre">will</span> <span class="pre">be</span> <span class="pre">*[q]*</span> <span class="pre">for</span> <span class="pre">1-D</span> <span class="pre">data,\n</span>&#160;&#160;&#160; <span class="pre">and</span> <span class="pre">*[qx,</span> <span class="pre">qy]*</span> <span class="pre">for</span> <span class="pre">2-D</span> <span class="pre">data.</span>&#160; <span class="pre">Internally,</span> <span class="pre">the</span> <span class="pre">vectors</span> <span class="pre">will</span> <span class="pre">be</span> <span class="pre">reallocated\n</span>&#160;&#160;&#160; <span class="pre">to</span> <span class="pre">get</span> <span class="pre">the</span> <span class="pre">best</span> <span class="pre">performance</span> <span class="pre">on</span> <span class="pre">OpenCL,</span> <span class="pre">which</span> <span class="pre">may</span> <span class="pre">involve</span> <span class="pre">shifting</span> <span class="pre">and\n</span>&#160;&#160;&#160; <span class="pre">stretching</span> <span class="pre">the</span> <span class="pre">array</span> <span class="pre">to</span> <span class="pre">better</span> <span class="pre">match</span> <span class="pre">the</span> <span class="pre">memory</span> <span class="pre">architecture.</span>&#160; <span class="pre">Additional\n</span>&#160;&#160;&#160; <span class="pre">points</span> <span class="pre">will</span> <span class="pre">be</span> <span class="pre">evaluated</span> <span class="pre">with</span> <span class="pre">*q=1e-3*.\n\n</span>&#160;&#160;&#160; <span class="pre">*dtype*</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">data</span> <span class="pre">type</span> <span class="pre">for</span> <span class="pre">the</span> <span class="pre">q</span> <span class="pre">vectors.</span> <span class="pre">The</span> <span class="pre">data</span> <span class="pre">type</span> <span class="pre">should</span> <span class="pre">be\n</span>&#160;&#160;&#160; <span class="pre">set</span> <span class="pre">to</span> <span class="pre">match</span> <span class="pre">that</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">kernel,</span> <span class="pre">which</span> <span class="pre">is</span> <span class="pre">an</span> <span class="pre">attribute</span> <span class="pre">of\n</span>&#160;&#160;&#160; <span class="pre">:class:`PyModel`.</span>&#160; <span class="pre">Note</span> <span class="pre">that</span> <span class="pre">not</span> <span class="pre">all</span> <span class="pre">kernels</span> <span class="pre">support</span> <span class="pre">double\n</span>&#160;&#160;&#160; <span class="pre">precision,</span> <span class="pre">so</span> <span class="pre">even</span> <span class="pre">if</span> <span class="pre">the</span> <span class="pre">program</span> <span class="pre">was</span> <span class="pre">created</span> <span class="pre">for</span> <span class="pre">double</span> <span class="pre">precision,\n</span>&#160;&#160;&#160; <span class="pre">the</span> <span class="pre">*GpuProgram.dtype*</span> <span class="pre">may</span> <span class="pre">be</span> <span class="pre">single</span> <span class="pre">precision.\n\n</span>&#160;&#160;&#160; <span class="pre">Call</span> <span class="pre">:meth:`release`</span> <span class="pre">when</span> <span class="pre">complete.</span>&#160; <span class="pre">Even</span> <span class="pre">if</span> <span class="pre">not</span> <span class="pre">called</span> <span class="pre">directly,</span> <span class="pre">the\n</span>&#160;&#160;&#160; <span class="pre">buffer</span> <span class="pre">will</span> <span class="pre">be</span> <span class="pre">released</span> <span class="pre">when</span> <span class="pre">the</span> <span class="pre">data</span> <span class="pre">object</span> <span class="pre">is</span> <span class="pre">freed.\n</span>&#160;&#160;&#160; <span class="pre">',</span> <span class="pre">'__init__':</span> <span class="pre">&lt;function</span> <span class="pre">PyInput.__init__&gt;,</span> <span class="pre">'release':</span> <span class="pre">&lt;function</span> <span class="pre">PyInput.release&gt;,</span> <span class="pre">'__dict__':</span> <span class="pre">&lt;attribute</span> <span class="pre">'__dict__'</span> <span class="pre">of</span> <span class="pre">'PyInput'</span> <span class="pre">objects&gt;,</span> <span class="pre">'__weakref__':</span> <span class="pre">&lt;attribute</span> <span class="pre">'__weakref__'</span> <span class="pre">of</span> <span class="pre">'PyInput'</span> <span class="pre">objects&gt;,</span> <span class="pre">'__annotations__':</span> <span class="pre">{}})</span></em><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__dict__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__dir__">
+<span class="sig-name descname"><span class="pre">__dir__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__dir__" title="Link to this definition">¶</a></dt>
+<dd><p>Default dir() implementation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__doc__">
+<span class="sig-name descname"><span class="pre">__doc__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Make</span> <span class="pre">q</span> <span class="pre">data</span> <span class="pre">available</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">gpu.\n\n</span>&#160;&#160;&#160; <span class="pre">*q_vectors*</span> <span class="pre">is</span> <span class="pre">a</span> <span class="pre">list</span> <span class="pre">of</span> <span class="pre">q</span> <span class="pre">vectors,</span> <span class="pre">which</span> <span class="pre">will</span> <span class="pre">be</span> <span class="pre">*[q]*</span> <span class="pre">for</span> <span class="pre">1-D</span> <span class="pre">data,\n</span>&#160;&#160;&#160; <span class="pre">and</span> <span class="pre">*[qx,</span> <span class="pre">qy]*</span> <span class="pre">for</span> <span class="pre">2-D</span> <span class="pre">data.</span>&#160; <span class="pre">Internally,</span> <span class="pre">the</span> <span class="pre">vectors</span> <span class="pre">will</span> <span class="pre">be</span> <span class="pre">reallocated\n</span>&#160;&#160;&#160; <span class="pre">to</span> <span class="pre">get</span> <span class="pre">the</span> <span class="pre">best</span> <span class="pre">performance</span> <span class="pre">on</span> <span class="pre">OpenCL,</span> <span class="pre">which</span> <span class="pre">may</span> <span class="pre">involve</span> <span class="pre">shifting</span> <span class="pre">and\n</span>&#160;&#160;&#160; <span class="pre">stretching</span> <span class="pre">the</span> <span class="pre">array</span> <span class="pre">to</span> <span class="pre">better</span> <span class="pre">match</span> <span class="pre">the</span> <span class="pre">memory</span> <span class="pre">architecture.</span>&#160; <span class="pre">Additional\n</span>&#160;&#160;&#160; <span class="pre">points</span> <span class="pre">will</span> <span class="pre">be</span> <span class="pre">evaluated</span> <span class="pre">with</span> <span class="pre">*q=1e-3*.\n\n</span>&#160;&#160;&#160; <span class="pre">*dtype*</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">data</span> <span class="pre">type</span> <span class="pre">for</span> <span class="pre">the</span> <span class="pre">q</span> <span class="pre">vectors.</span> <span class="pre">The</span> <span class="pre">data</span> <span class="pre">type</span> <span class="pre">should</span> <span class="pre">be\n</span>&#160;&#160;&#160; <span class="pre">set</span> <span class="pre">to</span> <span class="pre">match</span> <span class="pre">that</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">kernel,</span> <span class="pre">which</span> <span class="pre">is</span> <span class="pre">an</span> <span class="pre">attribute</span> <span class="pre">of\n</span>&#160;&#160;&#160; <span class="pre">:class:`PyModel`.</span>&#160; <span class="pre">Note</span> <span class="pre">that</span> <span class="pre">not</span> <span class="pre">all</span> <span class="pre">kernels</span> <span class="pre">support</span> <span class="pre">double\n</span>&#160;&#160;&#160; <span class="pre">precision,</span> <span class="pre">so</span> <span class="pre">even</span> <span class="pre">if</span> <span class="pre">the</span> <span class="pre">program</span> <span class="pre">was</span> <span class="pre">created</span> <span class="pre">for</span> <span class="pre">double</span> <span class="pre">precision,\n</span>&#160;&#160;&#160; <span class="pre">the</span> <span class="pre">*GpuProgram.dtype*</span> <span class="pre">may</span> <span class="pre">be</span> <span class="pre">single</span> <span class="pre">precision.\n\n</span>&#160;&#160;&#160; <span class="pre">Call</span> <span class="pre">:meth:`release`</span> <span class="pre">when</span> <span class="pre">complete.</span>&#160; <span class="pre">Even</span> <span class="pre">if</span> <span class="pre">not</span> <span class="pre">called</span> <span class="pre">directly,</span> <span class="pre">the\n</span>&#160;&#160;&#160; <span class="pre">buffer</span> <span class="pre">will</span> <span class="pre">be</span> <span class="pre">released</span> <span class="pre">when</span> <span class="pre">the</span> <span class="pre">data</span> <span class="pre">object</span> <span class="pre">is</span> <span class="pre">freed.\n</span>&#160;&#160;&#160; <span class="pre">'</span></em><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__doc__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__eq__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__format__">
+<span class="sig-name descname"><span class="pre">__format__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format_spec</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__format__" title="Link to this definition">¶</a></dt>
+<dd><p>Default object formatter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__ge__">
+<span class="sig-name descname"><span class="pre">__ge__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__ge__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__getattribute__">
+<span class="sig-name descname"><span class="pre">__getattribute__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__getattribute__" title="Link to this definition">¶</a></dt>
+<dd><p>Return getattr(self, name).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__getstate__">
+<span class="sig-name descname"><span class="pre">__getstate__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__getstate__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__gt__">
+<span class="sig-name descname"><span class="pre">__gt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__gt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__hash__" title="Link to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q_vectors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__init_subclass__" title="Link to this definition">¶</a></dt>
+<dd><p>This method is called when a class is subclassed.</p>
+<p>The default implementation does nothing. It may be
+overridden to extend subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__le__">
+<span class="sig-name descname"><span class="pre">__le__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__le__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__lt__">
+<span class="sig-name descname"><span class="pre">__lt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__lt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__module__">
+<span class="sig-name descname"><span class="pre">__module__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sasmodels.kernelpy'</span></em><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__module__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__ne__">
+<span class="sig-name descname"><span class="pre">__ne__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__ne__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self!=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__new__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__new__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__reduce__">
+<span class="sig-name descname"><span class="pre">__reduce__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__reduce__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__reduce_ex__">
+<span class="sig-name descname"><span class="pre">__reduce_ex__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protocol</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__reduce_ex__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__repr__" title="Link to this definition">¶</a></dt>
+<dd><p>Return repr(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__setattr__">
+<span class="sig-name descname"><span class="pre">__setattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__setattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement setattr(self, name, value).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__sizeof__">
+<span class="sig-name descname"><span class="pre">__sizeof__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__sizeof__" title="Link to this definition">¶</a></dt>
+<dd><p>Size of object in memory, in bytes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__str__" title="Link to this definition">¶</a></dt>
+<dd><p>Return str(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__subclasshook__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__subclasshook__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__subclasshook__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract classes can override this to customize issubclass().</p>
+<p>This is invoked early on by abc.ABCMeta.__subclasscheck__().
+It should return True, False or NotImplemented.  If it returns
+NotImplemented, the normal algorithm is used.  Otherwise, it
+overrides the normal algorithm (and the outcome is cached).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.__weakref__">
+<span class="sig-name descname"><span class="pre">__weakref__</span></span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.__weakref__" title="Link to this definition">¶</a></dt>
+<dd><p>list of weak references to the object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyInput.release">
+<span class="sig-name descname"><span class="pre">release</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyInput.release" title="Link to this definition">¶</a></dt>
+<dd><p>Free resources associated with the model inputs.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sasmodels.kernelpy.</span></span><span class="sig-name descname"><span class="pre">PyKernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="kernel.html#sasmodels.kernel.Kernel" title="sasmodels.kernel.Kernel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Kernel</span></code></a></p>
+<p>Callable SAS kernel.</p>
+<p><em>kernel</em> is the kernel object to call.</p>
+<p><em>model_info</em> is the module information</p>
+<p><em>q_input</em> is the DllInput q vectors at which the kernel should be
+evaluated.</p>
+<p>The resulting call method takes the <em>pars</em>, a list of values for
+the fixed parameters to the kernel, and <em>pd_pars</em>, a list of (value,weight)
+vectors for the polydisperse parameters.  <em>cutoff</em> determines the
+integration limits: any points with combined weight less than <em>cutoff</em>
+will not be calculated.</p>
+<p>Call <a class="reference internal" href="#sasmodels.kernelpy.PyKernel.release" title="sasmodels.kernelpy.PyKernel.release"><code class="xref py py-meth docutils literal notranslate"><span class="pre">release()</span></code></a> when done with the kernel instance.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.Fq">
+<span class="sig-name descname"><span class="pre">Fq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call_details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magnetic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius_effective_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">np.ndarray</span></span></span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.Fq" title="Link to this definition">¶</a></dt>
+<dd><p>Returns &lt;F(q)&gt;, &lt;F(q)^2&gt;, effective radius, shell volume and
+form:shell volume ratio.  The &lt;F(q)&gt; term may be None if the
+form factor does not support direct computation of <span class="math notranslate nohighlight">\(F(q)\)</span></p>
+<p><span class="math notranslate nohighlight">\(P(q) = &lt;F^2(q)&gt;/&lt;V&gt;\)</span> is used for structure factor calculations,</p>
+<div class="math notranslate nohighlight">
+\[I(q) = \text{scale} \cdot P(q) \cdot S(q) + \text{background}\]</div>
+<p>For the beta approximation, this becomes</p>
+<div class="math notranslate nohighlight">
+\[I(q) = \text{scale} P (1 + &lt;F&gt;^2/&lt;F^2&gt; (S - 1)) + \text{background}
+     = \text{scale}/&lt;V&gt; (&lt;F^2&gt; + &lt;F&gt;^2 (S - 1)) + \text{background}\]</div>
+<p><span class="math notranslate nohighlight">\(&lt;F(q)&gt;\)</span> and <span class="math notranslate nohighlight">\(&lt;F^2(q)&gt;\)</span> are averaged by polydispersity in shape
+and orientation, with each configuration <span class="math notranslate nohighlight">\(x_k\)</span> having form factor
+<span class="math notranslate nohighlight">\(F(q, x_k)\)</span>, weight <span class="math notranslate nohighlight">\(w_k\)</span> and volume <span class="math notranslate nohighlight">\(V_k\)</span>.  The result is:</p>
+<div class="math notranslate nohighlight">
+\[P(q)=\frac{\sum w_k F^2(q, x_k) / \sum w_k}{\sum w_k V_k / \sum w_k}\]</div>
+<p>The form factor itself is scaled by volume and contrast to compute the
+total scattering.  This is then squared, and the volume weighted
+F^2 is then normalized by volume F.  For a given density, the number
+of scattering centers is assumed to scale linearly with volume.  Later
+scaling the resulting <span class="math notranslate nohighlight">\(P(q)\)</span> by the volume fraction of particles
+gives the total scattering on an absolute scale. Most models
+incorporate the volume fraction into the overall scale parameter.  An
+exception is vesicle, which includes the volume fraction parameter in
+the model itself, scaling <span class="math notranslate nohighlight">\(F\)</span> by <span class="math notranslate nohighlight">\(\surd V_f\)</span> so that the math for
+the beta approximation works out.</p>
+<p>By scaling <span class="math notranslate nohighlight">\(P(q)\)</span> by total weight <span class="math notranslate nohighlight">\(\sum w_k\)</span>, there is no need to make
+sure that the polydisperisity distributions normalize to one.  In
+particular, any distibution values <span class="math notranslate nohighlight">\(x_k\)</span> outside the valid domain
+of <span class="math notranslate nohighlight">\(F\)</span> will not be included, and the distribution will be implicitly
+truncated.  This is controlled by the parameter limits defined in the
+model (which truncate the distribution before calling the kernel) as
+well as any region excluded using the <em>INVALID</em> macro defined within
+the model itself.</p>
+<p>The volume used in the polydispersity calculation is the form volume
+for solid objects or the shell volume for hollow objects.  Shell
+volume should be used within <span class="math notranslate nohighlight">\(F\)</span> so that the normalizing scale
+represents the volume fraction of the shell rather than the entire
+form.  This corresponds to the volume fraction of shell-forming
+material added to the solvent.</p>
+<p>The calculation of <span class="math notranslate nohighlight">\(S\)</span> requires the effective radius and the
+volume fraction of the particles.  The model can have several
+different ways to compute effective radius, with the
+<em>radius_effective_mode</em> parameter used to select amongst them.  The
+volume fraction of particles should be determined from the total
+volume fraction of the form, not just the shell volume fraction.
+This makes a difference for hollow shapes, which need to scale
+the volume fraction by the returned volume ratio when computing <span class="math notranslate nohighlight">\(S\)</span>.
+For solid objects, the shell volume is set to the form volume so
+this scale factor evaluates to one and so can be used for both
+hollow and solid shapes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.Iq">
+<span class="sig-name descname"><span class="pre">Iq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call_details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magnetic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">np.ndarray</span></span></span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.Iq" title="Link to this definition">¶</a></dt>
+<dd><p>Returns I(q) from the polydisperse average scattering.</p>
+<div class="math notranslate nohighlight">
+\[I(q) = \text{scale} \cdot P(q) + \text{background}\]</div>
+<p>With the correct choice of model and contrast, setting <em>scale</em> to
+the volume fraction <span class="math notranslate nohighlight">\(V_f\)</span> of particles should match the measured
+absolute scattering.  Some models (e.g., vesicle) have volume fraction
+built into the model, and do not need an additional scale.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__annotations__">
+<span class="sig-name descname"><span class="pre">__annotations__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__annotations__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call_details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magnetic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">np.ndarray</span></span></span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__call__" title="Link to this definition">¶</a></dt>
+<dd><p>Returns I(q) from the polydisperse average scattering.</p>
+<div class="math notranslate nohighlight">
+\[I(q) = \text{scale} \cdot P(q) + \text{background}\]</div>
+<p>With the correct choice of model and contrast, setting <em>scale</em> to
+the volume fraction <span class="math notranslate nohighlight">\(V_f\)</span> of particles should match the measured
+absolute scattering.  Some models (e.g., vesicle) have volume fraction
+built into the model, and do not need an additional scale.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__class__">
+<span class="sig-name descname"><span class="pre">__class__</span></span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__class__" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__delattr__">
+<span class="sig-name descname"><span class="pre">__delattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__delattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement delattr(self, name).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__dict__">
+<span class="sig-name descname"><span class="pre">__dict__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">mappingproxy({'__module__':</span> <span class="pre">'sasmodels.kernelpy',</span> <span class="pre">'__doc__':</span> <span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Callable</span> <span class="pre">SAS</span> <span class="pre">kernel.\n\n</span>&#160;&#160;&#160; <span class="pre">*kernel*</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">kernel</span> <span class="pre">object</span> <span class="pre">to</span> <span class="pre">call.\n\n</span>&#160;&#160;&#160; <span class="pre">*model_info*</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">module</span> <span class="pre">information\n\n</span>&#160;&#160;&#160; <span class="pre">*q_input*</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">DllInput</span> <span class="pre">q</span> <span class="pre">vectors</span> <span class="pre">at</span> <span class="pre">which</span> <span class="pre">the</span> <span class="pre">kernel</span> <span class="pre">should</span> <span class="pre">be\n</span>&#160;&#160;&#160; <span class="pre">evaluated.\n\n</span>&#160;&#160;&#160; <span class="pre">The</span> <span class="pre">resulting</span> <span class="pre">call</span> <span class="pre">method</span> <span class="pre">takes</span> <span class="pre">the</span> <span class="pre">*pars*,</span> <span class="pre">a</span> <span class="pre">list</span> <span class="pre">of</span> <span class="pre">values</span> <span class="pre">for\n</span>&#160;&#160;&#160; <span class="pre">the</span> <span class="pre">fixed</span> <span class="pre">parameters</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">kernel,</span> <span class="pre">and</span> <span class="pre">*pd_pars*,</span> <span class="pre">a</span> <span class="pre">list</span> <span class="pre">of</span> <span class="pre">(value,weight)\n</span>&#160;&#160;&#160; <span class="pre">vectors</span> <span class="pre">for</span> <span class="pre">the</span> <span class="pre">polydisperse</span> <span class="pre">parameters.</span>&#160; <span class="pre">*cutoff*</span> <span class="pre">determines</span> <span class="pre">the\n</span>&#160;&#160;&#160; <span class="pre">integration</span> <span class="pre">limits:</span> <span class="pre">any</span> <span class="pre">points</span> <span class="pre">with</span> <span class="pre">combined</span> <span class="pre">weight</span> <span class="pre">less</span> <span class="pre">than</span> <span class="pre">*cutoff*\n</span>&#160;&#160;&#160; <span class="pre">will</span> <span class="pre">not</span> <span class="pre">be</span> <span class="pre">calculated.\n\n</span>&#160;&#160;&#160; <span class="pre">Call</span> <span class="pre">:meth:`release`</span> <span class="pre">when</span> <span class="pre">done</span> <span class="pre">with</span> <span class="pre">the</span> <span class="pre">kernel</span> <span class="pre">instance.\n</span>&#160;&#160;&#160; <span class="pre">',</span> <span class="pre">'__init__':</span> <span class="pre">&lt;function</span> <span class="pre">PyKernel.__init__&gt;,</span> <span class="pre">'_call_kernel':</span> <span class="pre">&lt;function</span> <span class="pre">PyKernel._call_kernel&gt;,</span> <span class="pre">'release':</span> <span class="pre">&lt;function</span> <span class="pre">PyKernel.release&gt;,</span> <span class="pre">'__annotations__':</span> <span class="pre">{'dim':</span> <span class="pre">'str',</span> <span class="pre">'info':</span> <span class="pre">'ModelInfo',</span> <span class="pre">'dtype':</span> <span class="pre">'np.dtype',</span> <span class="pre">'q_input':</span> <span class="pre">'Any',</span> <span class="pre">'result':</span> <span class="pre">'np.ndarray'}})</span></em><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__dict__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__dir__">
+<span class="sig-name descname"><span class="pre">__dir__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__dir__" title="Link to this definition">¶</a></dt>
+<dd><p>Default dir() implementation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__doc__">
+<span class="sig-name descname"><span class="pre">__doc__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Callable</span> <span class="pre">SAS</span> <span class="pre">kernel.\n\n</span>&#160;&#160;&#160; <span class="pre">*kernel*</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">kernel</span> <span class="pre">object</span> <span class="pre">to</span> <span class="pre">call.\n\n</span>&#160;&#160;&#160; <span class="pre">*model_info*</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">module</span> <span class="pre">information\n\n</span>&#160;&#160;&#160; <span class="pre">*q_input*</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">DllInput</span> <span class="pre">q</span> <span class="pre">vectors</span> <span class="pre">at</span> <span class="pre">which</span> <span class="pre">the</span> <span class="pre">kernel</span> <span class="pre">should</span> <span class="pre">be\n</span>&#160;&#160;&#160; <span class="pre">evaluated.\n\n</span>&#160;&#160;&#160; <span class="pre">The</span> <span class="pre">resulting</span> <span class="pre">call</span> <span class="pre">method</span> <span class="pre">takes</span> <span class="pre">the</span> <span class="pre">*pars*,</span> <span class="pre">a</span> <span class="pre">list</span> <span class="pre">of</span> <span class="pre">values</span> <span class="pre">for\n</span>&#160;&#160;&#160; <span class="pre">the</span> <span class="pre">fixed</span> <span class="pre">parameters</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">kernel,</span> <span class="pre">and</span> <span class="pre">*pd_pars*,</span> <span class="pre">a</span> <span class="pre">list</span> <span class="pre">of</span> <span class="pre">(value,weight)\n</span>&#160;&#160;&#160; <span class="pre">vectors</span> <span class="pre">for</span> <span class="pre">the</span> <span class="pre">polydisperse</span> <span class="pre">parameters.</span>&#160; <span class="pre">*cutoff*</span> <span class="pre">determines</span> <span class="pre">the\n</span>&#160;&#160;&#160; <span class="pre">integration</span> <span class="pre">limits:</span> <span class="pre">any</span> <span class="pre">points</span> <span class="pre">with</span> <span class="pre">combined</span> <span class="pre">weight</span> <span class="pre">less</span> <span class="pre">than</span> <span class="pre">*cutoff*\n</span>&#160;&#160;&#160; <span class="pre">will</span> <span class="pre">not</span> <span class="pre">be</span> <span class="pre">calculated.\n\n</span>&#160;&#160;&#160; <span class="pre">Call</span> <span class="pre">:meth:`release`</span> <span class="pre">when</span> <span class="pre">done</span> <span class="pre">with</span> <span class="pre">the</span> <span class="pre">kernel</span> <span class="pre">instance.\n</span>&#160;&#160;&#160; <span class="pre">'</span></em><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__doc__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__eq__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__format__">
+<span class="sig-name descname"><span class="pre">__format__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format_spec</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__format__" title="Link to this definition">¶</a></dt>
+<dd><p>Default object formatter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__ge__">
+<span class="sig-name descname"><span class="pre">__ge__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__ge__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__getattribute__">
+<span class="sig-name descname"><span class="pre">__getattribute__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__getattribute__" title="Link to this definition">¶</a></dt>
+<dd><p>Return getattr(self, name).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__getstate__">
+<span class="sig-name descname"><span class="pre">__getstate__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__getstate__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__gt__">
+<span class="sig-name descname"><span class="pre">__gt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__gt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__hash__" title="Link to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__init_subclass__" title="Link to this definition">¶</a></dt>
+<dd><p>This method is called when a class is subclassed.</p>
+<p>The default implementation does nothing. It may be
+overridden to extend subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__le__">
+<span class="sig-name descname"><span class="pre">__le__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__le__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__lt__">
+<span class="sig-name descname"><span class="pre">__lt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__lt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__module__">
+<span class="sig-name descname"><span class="pre">__module__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sasmodels.kernelpy'</span></em><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__module__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__ne__">
+<span class="sig-name descname"><span class="pre">__ne__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__ne__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self!=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__new__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__new__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__reduce__">
+<span class="sig-name descname"><span class="pre">__reduce__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__reduce__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__reduce_ex__">
+<span class="sig-name descname"><span class="pre">__reduce_ex__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protocol</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__reduce_ex__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__repr__" title="Link to this definition">¶</a></dt>
+<dd><p>Return repr(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__setattr__">
+<span class="sig-name descname"><span class="pre">__setattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__setattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement setattr(self, name, value).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__sizeof__">
+<span class="sig-name descname"><span class="pre">__sizeof__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__sizeof__" title="Link to this definition">¶</a></dt>
+<dd><p>Size of object in memory, in bytes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__str__" title="Link to this definition">¶</a></dt>
+<dd><p>Return str(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__subclasshook__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__subclasshook__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__subclasshook__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract classes can override this to customize issubclass().</p>
+<p>This is invoked early on by abc.ABCMeta.__subclasscheck__().
+It should return True, False or NotImplemented.  If it returns
+NotImplemented, the normal algorithm is used.  Otherwise, it
+overrides the normal algorithm (and the outcome is cached).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.__weakref__">
+<span class="sig-name descname"><span class="pre">__weakref__</span></span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.__weakref__" title="Link to this definition">¶</a></dt>
+<dd><p>list of weak references to the object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel._call_kernel">
+<span class="sig-name descname"><span class="pre">_call_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call_details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magnetic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius_effective_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel._call_kernel" title="Link to this definition">¶</a></dt>
+<dd><p>Call the kernel.  Subclasses defining kernels for particular execution
+engines need to provide an implementation for this.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.dim" title="Link to this definition">¶</a></dt>
+<dd><p>Kernel dimension, either “1d” or “2d”.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.dtype">
+<span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">np.dtype</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.dtype" title="Link to this definition">¶</a></dt>
+<dd><p>Numerical precision for the computation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.info">
+<span class="sig-name descname"><span class="pre">info</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bumps_model.html#sasmodels.bumps_model.ModelInfo" title="sasmodels.bumps_model.ModelInfo"><span class="pre">ModelInfo</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.info" title="Link to this definition">¶</a></dt>
+<dd><p>Model info.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.q_input">
+<span class="sig-name descname"><span class="pre">q_input</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bumps_model.html#sasmodels.bumps_model.Any" title="sasmodels.bumps_model.Any"><span class="pre">Any</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.q_input" title="Link to this definition">¶</a></dt>
+<dd><p>Q values at which the kernel is to be evaluated.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.release">
+<span class="sig-name descname"><span class="pre">release</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.release" title="Link to this definition">¶</a></dt>
+<dd><p>Free resources associated with the kernel.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyKernel.result">
+<span class="sig-name descname"><span class="pre">result</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">np.ndarray</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.kernelpy.PyKernel.result" title="Link to this definition">¶</a></dt>
+<dd><p>Place to hold result of <em>_call_kernel()</em> for subclass.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sasmodels.kernelpy.</span></span><span class="sig-name descname"><span class="pre">PyModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="kernel.html#sasmodels.kernel.KernelModel" title="sasmodels.kernel.KernelModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">KernelModel</span></code></a></p>
+<p>Wrapper for pure python models.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__annotations__">
+<span class="sig-name descname"><span class="pre">__annotations__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__annotations__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__class__">
+<span class="sig-name descname"><span class="pre">__class__</span></span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__class__" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__delattr__">
+<span class="sig-name descname"><span class="pre">__delattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__delattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement delattr(self, name).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__dict__">
+<span class="sig-name descname"><span class="pre">__dict__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">mappingproxy({'__module__':</span> <span class="pre">'sasmodels.kernelpy',</span> <span class="pre">'__doc__':</span> <span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Wrapper</span> <span class="pre">for</span> <span class="pre">pure</span> <span class="pre">python</span> <span class="pre">models.\n</span>&#160;&#160;&#160; <span class="pre">',</span> <span class="pre">'__init__':</span> <span class="pre">&lt;function</span> <span class="pre">PyModel.__init__&gt;,</span> <span class="pre">'make_kernel':</span> <span class="pre">&lt;function</span> <span class="pre">PyModel.make_kernel&gt;,</span> <span class="pre">'release':</span> <span class="pre">&lt;function</span> <span class="pre">PyModel.release&gt;,</span> <span class="pre">'__annotations__':</span> <span class="pre">{'info':</span> <span class="pre">'ModelInfo',</span> <span class="pre">'dtype':</span> <span class="pre">'np.dtype'}})</span></em><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__dict__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__dir__">
+<span class="sig-name descname"><span class="pre">__dir__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__dir__" title="Link to this definition">¶</a></dt>
+<dd><p>Default dir() implementation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__doc__">
+<span class="sig-name descname"><span class="pre">__doc__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Wrapper</span> <span class="pre">for</span> <span class="pre">pure</span> <span class="pre">python</span> <span class="pre">models.\n</span>&#160;&#160;&#160; <span class="pre">'</span></em><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__doc__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__eq__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__format__">
+<span class="sig-name descname"><span class="pre">__format__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format_spec</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__format__" title="Link to this definition">¶</a></dt>
+<dd><p>Default object formatter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__ge__">
+<span class="sig-name descname"><span class="pre">__ge__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__ge__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__getattribute__">
+<span class="sig-name descname"><span class="pre">__getattribute__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__getattribute__" title="Link to this definition">¶</a></dt>
+<dd><p>Return getattr(self, name).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__getstate__">
+<span class="sig-name descname"><span class="pre">__getstate__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__getstate__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__gt__">
+<span class="sig-name descname"><span class="pre">__gt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__gt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__hash__" title="Link to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__init_subclass__" title="Link to this definition">¶</a></dt>
+<dd><p>This method is called when a class is subclassed.</p>
+<p>The default implementation does nothing. It may be
+overridden to extend subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__le__">
+<span class="sig-name descname"><span class="pre">__le__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__le__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__lt__">
+<span class="sig-name descname"><span class="pre">__lt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__lt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__module__">
+<span class="sig-name descname"><span class="pre">__module__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sasmodels.kernelpy'</span></em><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__module__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__ne__">
+<span class="sig-name descname"><span class="pre">__ne__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__ne__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self!=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__new__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__new__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__reduce__">
+<span class="sig-name descname"><span class="pre">__reduce__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__reduce__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__reduce_ex__">
+<span class="sig-name descname"><span class="pre">__reduce_ex__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protocol</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__reduce_ex__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__repr__" title="Link to this definition">¶</a></dt>
+<dd><p>Return repr(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__setattr__">
+<span class="sig-name descname"><span class="pre">__setattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__setattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement setattr(self, name, value).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__sizeof__">
+<span class="sig-name descname"><span class="pre">__sizeof__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__sizeof__" title="Link to this definition">¶</a></dt>
+<dd><p>Size of object in memory, in bytes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__str__" title="Link to this definition">¶</a></dt>
+<dd><p>Return str(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__subclasshook__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__subclasshook__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__subclasshook__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract classes can override this to customize issubclass().</p>
+<p>This is invoked early on by abc.ABCMeta.__subclasscheck__().
+It should return True, False or NotImplemented.  If it returns
+NotImplemented, the normal algorithm is used.  Otherwise, it
+overrides the normal algorithm (and the outcome is cached).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.__weakref__">
+<span class="sig-name descname"><span class="pre">__weakref__</span></span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.__weakref__" title="Link to this definition">¶</a></dt>
+<dd><p>list of weak references to the object</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.dtype">
+<span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">np.dtype</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.kernelpy.PyModel.dtype" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.info">
+<span class="sig-name descname"><span class="pre">info</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bumps_model.html#sasmodels.bumps_model.ModelInfo" title="sasmodels.bumps_model.ModelInfo"><span class="pre">ModelInfo</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.kernelpy.PyModel.info" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.make_kernel">
+<span class="sig-name descname"><span class="pre">make_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q_vectors</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.make_kernel" title="Link to this definition">¶</a></dt>
+<dd><p>Instantiate the python kernel with input <em>q_vectors</em></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kernelpy.PyModel.release">
+<span class="sig-name descname"><span class="pre">release</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy.PyModel.release" title="Link to this definition">¶</a></dt>
+<dd><p>Free resources associated with the model.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.kernelpy._create_default_functions">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.kernelpy.</span></span><span class="sig-name descname"><span class="pre">_create_default_functions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy._create_default_functions" title="Link to this definition">¶</a></dt>
+<dd><p>Autogenerate missing functions, such as Iqxy from Iq.</p>
+<p>This only works for Iqxy when Iq is written in python. <code class="xref py py-func docutils literal notranslate"><span class="pre">make_source()</span></code>
+performs a similar role for Iq written in C.  This also vectorizes
+any functions that are not already marked as vectorized.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.kernelpy._create_vector_Iq">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.kernelpy.</span></span><span class="sig-name descname"><span class="pre">_create_vector_Iq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy._create_vector_Iq" title="Link to this definition">¶</a></dt>
+<dd><p>Define Iq as a vector function if it exists.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.kernelpy._create_vector_Iqxy">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.kernelpy.</span></span><span class="sig-name descname"><span class="pre">_create_vector_Iqxy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kernelpy._create_vector_Iqxy" title="Link to this definition">¶</a></dt>
+<dd><p>Define Iqxy as a vector function if it exists, or default it from Iq().</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.kernelpy._loops">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.kernelpy.</span></span><span class="sig-name descname"><span class="pre">_loops</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">form</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">form_volume</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">form_radius</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">call_details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.kernelpy._loops" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">21. Python model evaluator</a><ul>
+<li><a class="reference internal" href="#module-sasmodels.kernelpy"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.kernelpy</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput"><code class="docutils literal notranslate"><span class="pre">PyInput</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__class__"><code class="docutils literal notranslate"><span class="pre">PyInput.__class__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__delattr__"><code class="docutils literal notranslate"><span class="pre">PyInput.__delattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__dict__"><code class="docutils literal notranslate"><span class="pre">PyInput.__dict__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__dir__"><code class="docutils literal notranslate"><span class="pre">PyInput.__dir__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__doc__"><code class="docutils literal notranslate"><span class="pre">PyInput.__doc__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__eq__"><code class="docutils literal notranslate"><span class="pre">PyInput.__eq__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__format__"><code class="docutils literal notranslate"><span class="pre">PyInput.__format__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__ge__"><code class="docutils literal notranslate"><span class="pre">PyInput.__ge__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__getattribute__"><code class="docutils literal notranslate"><span class="pre">PyInput.__getattribute__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__getstate__"><code class="docutils literal notranslate"><span class="pre">PyInput.__getstate__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__gt__"><code class="docutils literal notranslate"><span class="pre">PyInput.__gt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__hash__"><code class="docutils literal notranslate"><span class="pre">PyInput.__hash__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__init__"><code class="docutils literal notranslate"><span class="pre">PyInput.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">PyInput.__init_subclass__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__le__"><code class="docutils literal notranslate"><span class="pre">PyInput.__le__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__lt__"><code class="docutils literal notranslate"><span class="pre">PyInput.__lt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__module__"><code class="docutils literal notranslate"><span class="pre">PyInput.__module__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__ne__"><code class="docutils literal notranslate"><span class="pre">PyInput.__ne__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__new__"><code class="docutils literal notranslate"><span class="pre">PyInput.__new__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__reduce__"><code class="docutils literal notranslate"><span class="pre">PyInput.__reduce__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__reduce_ex__"><code class="docutils literal notranslate"><span class="pre">PyInput.__reduce_ex__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__repr__"><code class="docutils literal notranslate"><span class="pre">PyInput.__repr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__setattr__"><code class="docutils literal notranslate"><span class="pre">PyInput.__setattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__sizeof__"><code class="docutils literal notranslate"><span class="pre">PyInput.__sizeof__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__str__"><code class="docutils literal notranslate"><span class="pre">PyInput.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__subclasshook__"><code class="docutils literal notranslate"><span class="pre">PyInput.__subclasshook__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.__weakref__"><code class="docutils literal notranslate"><span class="pre">PyInput.__weakref__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyInput.release"><code class="docutils literal notranslate"><span class="pre">PyInput.release()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel"><code class="docutils literal notranslate"><span class="pre">PyKernel</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.Fq"><code class="docutils literal notranslate"><span class="pre">PyKernel.Fq()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.Iq"><code class="docutils literal notranslate"><span class="pre">PyKernel.Iq()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__annotations__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__annotations__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__call__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__call__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__class__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__class__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__delattr__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__delattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__dict__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__dict__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__dir__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__dir__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__doc__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__doc__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__eq__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__eq__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__format__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__format__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__ge__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__ge__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__getattribute__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__getattribute__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__getstate__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__getstate__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__gt__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__gt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__hash__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__hash__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__init__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__init_subclass__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__le__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__le__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__lt__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__lt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__module__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__module__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__ne__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__ne__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__new__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__new__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__reduce__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__reduce__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__reduce_ex__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__reduce_ex__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__repr__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__repr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__setattr__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__setattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__sizeof__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__sizeof__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__str__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__subclasshook__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__subclasshook__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.__weakref__"><code class="docutils literal notranslate"><span class="pre">PyKernel.__weakref__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel._call_kernel"><code class="docutils literal notranslate"><span class="pre">PyKernel._call_kernel()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.dim"><code class="docutils literal notranslate"><span class="pre">PyKernel.dim</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.dtype"><code class="docutils literal notranslate"><span class="pre">PyKernel.dtype</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.info"><code class="docutils literal notranslate"><span class="pre">PyKernel.info</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.q_input"><code class="docutils literal notranslate"><span class="pre">PyKernel.q_input</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.release"><code class="docutils literal notranslate"><span class="pre">PyKernel.release()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyKernel.result"><code class="docutils literal notranslate"><span class="pre">PyKernel.result</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel"><code class="docutils literal notranslate"><span class="pre">PyModel</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__annotations__"><code class="docutils literal notranslate"><span class="pre">PyModel.__annotations__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__class__"><code class="docutils literal notranslate"><span class="pre">PyModel.__class__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__delattr__"><code class="docutils literal notranslate"><span class="pre">PyModel.__delattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__dict__"><code class="docutils literal notranslate"><span class="pre">PyModel.__dict__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__dir__"><code class="docutils literal notranslate"><span class="pre">PyModel.__dir__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__doc__"><code class="docutils literal notranslate"><span class="pre">PyModel.__doc__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__eq__"><code class="docutils literal notranslate"><span class="pre">PyModel.__eq__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__format__"><code class="docutils literal notranslate"><span class="pre">PyModel.__format__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__ge__"><code class="docutils literal notranslate"><span class="pre">PyModel.__ge__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__getattribute__"><code class="docutils literal notranslate"><span class="pre">PyModel.__getattribute__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__getstate__"><code class="docutils literal notranslate"><span class="pre">PyModel.__getstate__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__gt__"><code class="docutils literal notranslate"><span class="pre">PyModel.__gt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__hash__"><code class="docutils literal notranslate"><span class="pre">PyModel.__hash__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__init__"><code class="docutils literal notranslate"><span class="pre">PyModel.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">PyModel.__init_subclass__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__le__"><code class="docutils literal notranslate"><span class="pre">PyModel.__le__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__lt__"><code class="docutils literal notranslate"><span class="pre">PyModel.__lt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__module__"><code class="docutils literal notranslate"><span class="pre">PyModel.__module__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__ne__"><code class="docutils literal notranslate"><span class="pre">PyModel.__ne__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__new__"><code class="docutils literal notranslate"><span class="pre">PyModel.__new__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__reduce__"><code class="docutils literal notranslate"><span class="pre">PyModel.__reduce__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__reduce_ex__"><code class="docutils literal notranslate"><span class="pre">PyModel.__reduce_ex__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__repr__"><code class="docutils literal notranslate"><span class="pre">PyModel.__repr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__setattr__"><code class="docutils literal notranslate"><span class="pre">PyModel.__setattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__sizeof__"><code class="docutils literal notranslate"><span class="pre">PyModel.__sizeof__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__str__"><code class="docutils literal notranslate"><span class="pre">PyModel.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__subclasshook__"><code class="docutils literal notranslate"><span class="pre">PyModel.__subclasshook__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.__weakref__"><code class="docutils literal notranslate"><span class="pre">PyModel.__weakref__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.dtype"><code class="docutils literal notranslate"><span class="pre">PyModel.dtype</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.info"><code class="docutils literal notranslate"><span class="pre">PyModel.info</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.make_kernel"><code class="docutils literal notranslate"><span class="pre">PyModel.make_kernel()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy.PyModel.release"><code class="docutils literal notranslate"><span class="pre">PyModel.release()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sasmodels.kernelpy._create_default_functions"><code class="docutils literal notranslate"><span class="pre">_create_default_functions()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy._create_vector_Iq"><code class="docutils literal notranslate"><span class="pre">_create_vector_Iq()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy._create_vector_Iqxy"><code class="docutils literal notranslate"><span class="pre">_create_vector_Iqxy()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kernelpy._loops"><code class="docutils literal notranslate"><span class="pre">_loops()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="kerneldll.html"
+                          title="previous chapter"><span class="section-number">20. </span>Ctypes model evaluator</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="list_pars.html"
+                          title="next chapter"><span class="section-number">22. </span>Identify all parameters in all models</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/dev/sasmodels-api/kernelpy.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="list_pars.html" title="22. Identify all parameters in all models"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="kerneldll.html" title="20. Ctypes model evaluator"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">21. </span>Python model evaluator</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, The SasView Project.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

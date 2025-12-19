@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>two_yukawa &#8212; SasView 6.1.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=f0c0c503"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Menu Bar" href="../menu_bar.html" />
+    <link rel="prev" title="stickyhardsphere" href="stickyhardsphere.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../menu_bar.html" title="Menu Bar"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="stickyhardsphere.html" title="stickyhardsphere"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../user.html" >SasView User Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../qtgui/Perspectives/Fitting/models/index.html" >Model Functions</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="../qtgui/Perspectives/Fitting/models/structure-factor.html" accesskey="U">Structure Factors</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">two_yukawa</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="two-yukawa">
+<span id="id1"></span><h1>two_yukawa<a class="headerlink" href="#two-yukawa" title="Link to this heading">¶</a></h1>
+<p>User model for two Yukawa structure factor (S(q))</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Parameter</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Units</p></th>
+<th class="head"><p>Default value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>radius_effective</p></td>
+<td></td>
+<td><p>Å</p></td>
+<td><p>50</p></td>
+</tr>
+<tr class="row-odd"><td><p>volfraction</p></td>
+<td></td>
+<td><p>None</p></td>
+<td><p>0.1</p></td>
+</tr>
+<tr class="row-even"><td><p>k1</p></td>
+<td></td>
+<td><p>None</p></td>
+<td><p>6</p></td>
+</tr>
+<tr class="row-odd"><td><p>k2</p></td>
+<td></td>
+<td><p>None</p></td>
+<td><p>-2</p></td>
+</tr>
+<tr class="row-even"><td><p>z1</p></td>
+<td></td>
+<td><p>None</p></td>
+<td><p>10</p></td>
+</tr>
+<tr class="row-odd"><td><p>z2</p></td>
+<td></td>
+<td><p>None</p></td>
+<td><p>2</p></td>
+</tr>
+</tbody>
+</table>
+<p>The returned value is a dimensionless structure factor, <span class="math notranslate nohighlight">\(S(q)\)</span>.</p>
+<p>This model calculates the structure factor, <span class="math notranslate nohighlight">\(S(q)\)</span>, of one-component liquid
+systems interacting with a two-term Yukawa potential with the mean spherical
+approximation (MSA) by solving the Ornstein-Zernike (OZ) equation. Both Yukawa
+terms can be used to simulate either a repulsive or an attraction potential
+feature. For example, if one Yukawa term is chosen to be an attractive potential
+and the other a repulsive potential, the two Yukawa potential can simulate a
+potential with both a short-range attraction and long-range repulsion
+(SALR).[1,2] When combined with an appropriate form factor <span class="math notranslate nohighlight">\(P(q)\)</span>, this allows
+for inclusion of the interparticle interference effects due to a relatively
+complex potential.</p>
+<p>The algorithm used in this model was originally proposed and developed by Liu et
+al. in 2005 and implemented using MatLab.[1] This algorithm used a theory
+proposed by Hoye and Blum in 1977,[4] in which the structure factor is solved by
+using Baxter’s Q-method with the MSA closure.</p>
+<p>The interaction potential <span class="math notranslate nohighlight">\(V(r)\)</span> is</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\frac{V(r)}{k_BT} = \begin{cases}
+\infty &amp; r &lt; 1 \\
+K_1 \frac{e^{-Z_1(r-1)}}{r} + K_2 \frac{e^{-Z_2(r-1)}}{r} &amp; r \geq 1
+\end{cases}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(r\)</span> is the normalized distance, <span class="math notranslate nohighlight">\(\frac{r_{cc}}{2R}\)</span>. (<span class="math notranslate nohighlight">\(R\)</span> is the effective
+radius and <span class="math notranslate nohighlight">\(r_{cc}\)</span> is the distance between the center-of-mass of particles.)
+<span class="math notranslate nohighlight">\(K_1\)</span> and <span class="math notranslate nohighlight">\(K_2\)</span> are positive for repulsion and negative for attraction.
+<span class="math notranslate nohighlight">\(Z_1\)</span> and <span class="math notranslate nohighlight">\(Z_2\)</span> are the inversely proportional to the decay rate of the
+potential. They should always be positive.</p>
+<p>To reduce numerical issues during fitting, the lower boundary of the absolute
+values for <span class="math notranslate nohighlight">\(K_1\)</span> and <span class="math notranslate nohighlight">\(K_2\)</span> are set to 0.0001. That is, when <span class="math notranslate nohighlight">\(|K| &lt; 0.0001\)</span> it is
+adjusted 0.0001 while preserving the sign. Similarly, when <span class="math notranslate nohighlight">\(Z_1\)</span> or <span class="math notranslate nohighlight">\(Z_2\)</span> are
+less than 0.01, they are adjusted to 0.01. To make the two Yukawa terms
+functionally different, <span class="math notranslate nohighlight">\(Z_1\)</span> is adjusted to <span class="math notranslate nohighlight">\(Z_2+0.01\)</span> if the difference
+between them is less than 0.01. The impact of these changes on the accuracy of
+<span class="math notranslate nohighlight">\(S(Q)\)</span> was negligible for all tested cases. The algorithm works best if
+<span class="math notranslate nohighlight">\(Z_1&gt;Z_2\)</span>, particularly for large <span class="math notranslate nohighlight">\(Z\)</span> such as <span class="math notranslate nohighlight">\(Z&gt;20\)</span>. When <span class="math notranslate nohighlight">\(Z_1\)</span> is less than
+<span class="math notranslate nohighlight">\(Z_2\)</span>, the code will automatically swap <span class="math notranslate nohighlight">\(Z_1\)</span> and <span class="math notranslate nohighlight">\(Z_2\)</span>, and <span class="math notranslate nohighlight">\(K_1\)</span> and <span class="math notranslate nohighlight">\(K_2\)</span>.
+<span class="math notranslate nohighlight">\(S(Q)\)</span> is set to 1.0 for volume fraction <span class="math notranslate nohighlight">\(\phi &lt; 10^{-10}\)</span>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The so-called <span class="math notranslate nohighlight">\(\beta(q)\)</span> (“beta”) approximation [3] can be used
+to calculate the effective structure factor for polydispersity and
+non-sphericity when a system is not too far away from the mono-disperse
+spherical systems.</p>
+</div>
+<p>In general, any closure used to solve the OZ equation is an approximation. Thus,
+the structure factor calculated using a closure is an approximation of the real
+structure factor. Its accuracy varies for different parameter ranges. One should
+not “blindly” trust the results. In addition, when using the O-Z equation to
+obtain the structure factor, it assumes that a system is in a liquid state.
+However, when the attraction potential is too strong the system may not be in a
+simple liquid state, and the OZ equation may not have a solution, or the
+solution may be unphysical.</p>
+<p>Accuracy for the MSA closure used here to solve the OZ equation for two Yukawa
+potential was evaluated by Broccio, et al.[2]  When the overall attraction is
+moderate, this algorithm produces reasonably accurate results. However, when the
+net attraction is very strong, it has been shown that the fitting algorithm
+tends to overestimate the attraction strength. Care is needed when discussing
+quantitative fitting results for those systems.</p>
+<p>When the interaction distances <span class="math notranslate nohighlight">\(Z_1\)</span> and <span class="math notranslate nohighlight">\(Z_2\)</span> are large, the method implemented
+here may be influenced by the numerical accuracy of a computer. In general, when
+<span class="math notranslate nohighlight">\(Z&lt;20\)</span>, the code should function well for most cases. When <span class="math notranslate nohighlight">\(Z&gt;25\)</span>, sometimes the
+intermediate results of this code may run into the limit of the largest number
+that a computer can handle. Therefore, results may potentially become less
+reliable. Hence, the check of <span class="math notranslate nohighlight">\(g(r)\)</span> becomes very important in those situations.
+So far, no limitation of the value of <span class="math notranslate nohighlight">\(K\)</span> has been encountered except that they
+cannot be zero.</p>
+<figure class="align-default" id="id2">
+<img alt="../../_images/two_yukawa_autogenfig.png" src="../../_images/two_yukawa_autogenfig.png" />
+<figcaption>
+<p><span class="caption-number">Fig. 133 </span><span class="caption-text">1D plot corresponding to the default parameters of the model.</span><a class="headerlink" href="#id2" title="Link to this image">¶</a></p>
+</figcaption>
+</figure>
+<p><strong>Source</strong></p>
+<p><a class="reference download internal" download="" href="../../_downloads/0dbd85ed75889e021ab7d3e8382815a3/two_yukawa.py"><code class="xref download docutils literal notranslate"><span class="pre">two_yukawa.py</span></code></a></p>
+<p><strong>References</strong></p>
+<ol class="arabic simple">
+<li><ol class="upperalpha simple" start="25">
+<li><p>Liu, W. R. Chen, S-H Chen, <em>J. Chem. Phys.</em>, 122 (2005) 044507</p></li>
+</ol>
+</li>
+<li><ol class="upperalpha simple" start="13">
+<li><p>Broccio, D. Costa, Y. Liu, S-H Chen, <em>J. Chem. Phys.</em>, 124 (2006) 084501</p></li>
+</ol>
+</li>
+<li><ol class="upperalpha simple" start="13">
+<li><p>Kotlarchyk and S-H Chen, <em>J. Chem. Phys.</em>, 79 (1983) 2461-2469</p></li>
+</ol>
+</li>
+<li><ol class="upperalpha simple" start="10">
+<li><ol class="upperalpha simple" start="19">
+<li><p>Hoye, L. Blum, J. Stat. Phys., 16(1977) 399-413</p></li>
+</ol>
+</li>
+</ol>
+</li>
+</ol>
+<p><strong>Authorship and Verification</strong></p>
+<ul class="simple">
+<li><p><strong>Author:</strong> Yun Liu <strong>Date:</strong> January 22, 2024</p></li>
+<li><p><strong>Last Modified by:</strong> Yun Liu <strong>Date:</strong> January 22, 2024</p></li>
+<li><p><strong>Last Reviewed by:</strong> Yun Liu <strong>Date:</strong> January 22, 2024</p></li>
+</ul>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="stickyhardsphere.html"
+                          title="previous chapter">stickyhardsphere</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="../menu_bar.html"
+                          title="next chapter">Menu Bar</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/user/models/two_yukawa.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../menu_bar.html" title="Menu Bar"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="stickyhardsphere.html" title="stickyhardsphere"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../user.html" >SasView User Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../qtgui/Perspectives/Fitting/models/index.html" >Model Functions</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="../qtgui/Perspectives/Fitting/models/structure-factor.html" >Structure Factors</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">two_yukawa</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, The SasView Project.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

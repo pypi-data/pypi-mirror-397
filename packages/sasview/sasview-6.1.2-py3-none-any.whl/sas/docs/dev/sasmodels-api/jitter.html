@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>16. Orientation explorer &#8212; SasView 6.1.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=f0c0c503"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="17. Evaluator type definitions" href="kernel.html" />
+    <link rel="prev" title="15. Guyou map projection" href="guyou.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="kernel.html" title="17. Evaluator type definitions"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="guyou.html" title="15. Guyou map projection"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">16. </span>Orientation explorer</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="orientation-explorer">
+<h1><span class="section-number">16. </span>Orientation explorer<a class="headerlink" href="#orientation-explorer" title="Link to this heading">¶</a></h1>
+<section id="module-sasmodels.jitter">
+<span id="sasmodels-jitter"></span><h2><a class="reference internal" href="#module-sasmodels.jitter" title="sasmodels.jitter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.jitter</span></code></a><a class="headerlink" href="#module-sasmodels.jitter" title="Link to this heading">¶</a></h2>
+<section id="jitter-explorer">
+<h3>Jitter Explorer<a class="headerlink" href="#jitter-explorer" title="Link to this heading">¶</a></h3>
+<p>Application to explore orientation angle and angular dispersity.</p>
+<p>From the command line:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Show docs</span>
+<span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">sasmodels</span><span class="o">.</span><span class="n">jitter</span> <span class="o">--</span><span class="n">help</span>
+
+<span class="c1"># Guyou projection jitter, uniform over 20 degree theta and 10 in phi</span>
+<span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">sasmodels</span><span class="o">.</span><span class="n">jitter</span> <span class="o">--</span><span class="n">projection</span><span class="o">=</span><span class="n">guyou</span> <span class="o">--</span><span class="n">dist</span><span class="o">=</span><span class="n">uniform</span> <span class="o">--</span><span class="n">jitter</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span><span class="mi">10</span><span class="p">,</span><span class="mi">0</span>
+</pre></div>
+</div>
+<p>From a jupyter cell:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">ipyvolume</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ipv</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sasmodels</span><span class="w"> </span><span class="kn">import</span> <span class="n">jitter</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span><span class="p">;</span> <span class="n">importlib</span><span class="o">.</span><span class="n">reload</span><span class="p">(</span><span class="n">jitter</span><span class="p">)</span>
+<span class="n">jitter</span><span class="o">.</span><span class="n">set_plotter</span><span class="p">(</span><span class="s2">&quot;ipv&quot;</span><span class="p">)</span>
+
+<span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">view</span> <span class="o">=</span> <span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+<span class="c1">#size = (15, 15, 100)</span>
+<span class="c1">#view = (60, 60, 0)</span>
+
+<span class="n">dview</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="c1">#dview = (5, 5, 0)</span>
+<span class="c1">#dview = (15, 180, 0)</span>
+<span class="c1">#dview = (180, 15, 0)</span>
+
+<span class="n">projection</span> <span class="o">=</span> <span class="s1">&#39;equirectangular&#39;</span>
+<span class="c1">#projection = &#39;azimuthal_equidistance&#39;</span>
+<span class="c1">#projection = &#39;guyou&#39;</span>
+<span class="c1">#projection = &#39;sinusoidal&#39;</span>
+<span class="c1">#projection = &#39;azimuthal_equal_area&#39;</span>
+
+<span class="n">dist</span> <span class="o">=</span> <span class="s1">&#39;uniform&#39;</span>
+<span class="c1">#dist = &#39;gaussian&#39;</span>
+
+<span class="n">jitter</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="n">view</span><span class="o">=</span><span class="n">view</span><span class="p">,</span> <span class="n">jitter</span><span class="o">=</span><span class="n">dview</span><span class="p">,</span> <span class="n">dist</span><span class="o">=</span><span class="n">dist</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="n">projection</span><span class="p">)</span>
+<span class="c1">#filename = projection+(&#39;_theta&#39; if dview[0] == 180 else &#39;_phi&#39; if dview[1] == 180 else &#39;&#39;)</span>
+<span class="c1">#ipv.savefig(filename+&#39;.png&#39;)</span>
+</pre></div>
+</div>
+</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.PLOT_ENGINE">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">PLOT_ENGINE</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">calculator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">draw_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projection</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.PLOT_ENGINE" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">Quaternion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Quaternion(w, r) = w + ir[0] + jr[1] + kr[2]</p>
+<p>Quaternion.from_angle_axis(theta, r) for a rotation of angle theta about
+an axis oriented toward the direction r.  This defines a unit quaternion,
+normalizing <span class="math notranslate nohighlight">\(r\)</span> to the unit vector <span class="math notranslate nohighlight">\(\hat r\)</span>, and setting quaternion
+<span class="math notranslate nohighlight">\(Q = \cos \theta + \sin \theta \hat r\)</span></p>
+<p>Quaternion objects can be multiplied, which applies a rotation about the
+given axis, allowing composition of rotations without risk of gimbal lock.
+The resulting quaternion is applied to a set of points using <em>Q.rot(v)</em>.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__class__">
+<span class="sig-name descname"><span class="pre">__class__</span></span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__class__" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__delattr__">
+<span class="sig-name descname"><span class="pre">__delattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__delattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement delattr(self, name).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__dict__">
+<span class="sig-name descname"><span class="pre">__dict__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">mappingproxy({'__module__':</span> <span class="pre">'sasmodels.jitter',</span> <span class="pre">'__doc__':</span> <span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Quaternion(w,</span> <span class="pre">r)</span> <span class="pre">=</span> <span class="pre">w</span> <span class="pre">+</span> <span class="pre">ir[0]</span> <span class="pre">+</span> <span class="pre">jr[1]</span> <span class="pre">+</span> <span class="pre">kr[2]\n\n</span>&#160;&#160;&#160; <span class="pre">Quaternion.from_angle_axis(theta,</span> <span class="pre">r)</span> <span class="pre">for</span> <span class="pre">a</span> <span class="pre">rotation</span> <span class="pre">of</span> <span class="pre">angle</span> <span class="pre">theta</span> <span class="pre">about\n</span>&#160;&#160;&#160; <span class="pre">an</span> <span class="pre">axis</span> <span class="pre">oriented</span> <span class="pre">toward</span> <span class="pre">the</span> <span class="pre">direction</span> <span class="pre">r.</span>&#160; <span class="pre">This</span> <span class="pre">defines</span> <span class="pre">a</span> <span class="pre">unit</span> <span class="pre">quaternion,\n</span>&#160;&#160;&#160; <span class="pre">normalizing</span> <span class="pre">$r$</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">unit</span> <span class="pre">vector</span> <span class="pre">$\\hat</span> <span class="pre">r$,</span> <span class="pre">and</span> <span class="pre">setting</span> <span class="pre">quaternion\n</span>&#160;&#160;&#160; <span class="pre">$Q</span> <span class="pre">=</span> <span class="pre">\\cos</span> <span class="pre">\\theta</span> <span class="pre">+</span> <span class="pre">\\sin</span> <span class="pre">\\theta</span> <span class="pre">\\hat</span> <span class="pre">r$\n\n</span>&#160;&#160;&#160; <span class="pre">Quaternion</span> <span class="pre">objects</span> <span class="pre">can</span> <span class="pre">be</span> <span class="pre">multiplied,</span> <span class="pre">which</span> <span class="pre">applies</span> <span class="pre">a</span> <span class="pre">rotation</span> <span class="pre">about</span> <span class="pre">the\n</span>&#160;&#160;&#160; <span class="pre">given</span> <span class="pre">axis,</span> <span class="pre">allowing</span> <span class="pre">composition</span> <span class="pre">of</span> <span class="pre">rotations</span> <span class="pre">without</span> <span class="pre">risk</span> <span class="pre">of</span> <span class="pre">gimbal</span> <span class="pre">lock.\n</span>&#160;&#160;&#160; <span class="pre">The</span> <span class="pre">resulting</span> <span class="pre">quaternion</span> <span class="pre">is</span> <span class="pre">applied</span> <span class="pre">to</span> <span class="pre">a</span> <span class="pre">set</span> <span class="pre">of</span> <span class="pre">points</span> <span class="pre">using</span> <span class="pre">*Q.rot(v)*.\n</span>&#160;&#160;&#160; <span class="pre">',</span> <span class="pre">'__init__':</span> <span class="pre">&lt;function</span> <span class="pre">Quaternion.__init__&gt;,</span> <span class="pre">'from_angle_axis':</span> <span class="pre">&lt;staticmethod(&lt;function</span> <span class="pre">Quaternion.from_angle_axis&gt;)&gt;,</span> <span class="pre">'__mul__':</span> <span class="pre">&lt;function</span> <span class="pre">Quaternion.__mul__&gt;,</span> <span class="pre">'rot':</span> <span class="pre">&lt;function</span> <span class="pre">Quaternion.rot&gt;,</span> <span class="pre">'conj':</span> <span class="pre">&lt;function</span> <span class="pre">Quaternion.conj&gt;,</span> <span class="pre">'inv':</span> <span class="pre">&lt;function</span> <span class="pre">Quaternion.inv&gt;,</span> <span class="pre">'norm':</span> <span class="pre">&lt;function</span> <span class="pre">Quaternion.norm&gt;,</span> <span class="pre">'__str__':</span> <span class="pre">&lt;function</span> <span class="pre">Quaternion.__str__&gt;,</span> <span class="pre">'__dict__':</span> <span class="pre">&lt;attribute</span> <span class="pre">'__dict__'</span> <span class="pre">of</span> <span class="pre">'Quaternion'</span> <span class="pre">objects&gt;,</span> <span class="pre">'__weakref__':</span> <span class="pre">&lt;attribute</span> <span class="pre">'__weakref__'</span> <span class="pre">of</span> <span class="pre">'Quaternion'</span> <span class="pre">objects&gt;,</span> <span class="pre">'__annotations__':</span> <span class="pre">{}})</span></em><a class="headerlink" href="#sasmodels.jitter.Quaternion.__dict__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__dir__">
+<span class="sig-name descname"><span class="pre">__dir__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__dir__" title="Link to this definition">¶</a></dt>
+<dd><p>Default dir() implementation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__doc__">
+<span class="sig-name descname"><span class="pre">__doc__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Quaternion(w,</span> <span class="pre">r)</span> <span class="pre">=</span> <span class="pre">w</span> <span class="pre">+</span> <span class="pre">ir[0]</span> <span class="pre">+</span> <span class="pre">jr[1]</span> <span class="pre">+</span> <span class="pre">kr[2]\n\n</span>&#160;&#160;&#160; <span class="pre">Quaternion.from_angle_axis(theta,</span> <span class="pre">r)</span> <span class="pre">for</span> <span class="pre">a</span> <span class="pre">rotation</span> <span class="pre">of</span> <span class="pre">angle</span> <span class="pre">theta</span> <span class="pre">about\n</span>&#160;&#160;&#160; <span class="pre">an</span> <span class="pre">axis</span> <span class="pre">oriented</span> <span class="pre">toward</span> <span class="pre">the</span> <span class="pre">direction</span> <span class="pre">r.</span>&#160; <span class="pre">This</span> <span class="pre">defines</span> <span class="pre">a</span> <span class="pre">unit</span> <span class="pre">quaternion,\n</span>&#160;&#160;&#160; <span class="pre">normalizing</span> <span class="pre">$r$</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">unit</span> <span class="pre">vector</span> <span class="pre">$\\hat</span> <span class="pre">r$,</span> <span class="pre">and</span> <span class="pre">setting</span> <span class="pre">quaternion\n</span>&#160;&#160;&#160; <span class="pre">$Q</span> <span class="pre">=</span> <span class="pre">\\cos</span> <span class="pre">\\theta</span> <span class="pre">+</span> <span class="pre">\\sin</span> <span class="pre">\\theta</span> <span class="pre">\\hat</span> <span class="pre">r$\n\n</span>&#160;&#160;&#160; <span class="pre">Quaternion</span> <span class="pre">objects</span> <span class="pre">can</span> <span class="pre">be</span> <span class="pre">multiplied,</span> <span class="pre">which</span> <span class="pre">applies</span> <span class="pre">a</span> <span class="pre">rotation</span> <span class="pre">about</span> <span class="pre">the\n</span>&#160;&#160;&#160; <span class="pre">given</span> <span class="pre">axis,</span> <span class="pre">allowing</span> <span class="pre">composition</span> <span class="pre">of</span> <span class="pre">rotations</span> <span class="pre">without</span> <span class="pre">risk</span> <span class="pre">of</span> <span class="pre">gimbal</span> <span class="pre">lock.\n</span>&#160;&#160;&#160; <span class="pre">The</span> <span class="pre">resulting</span> <span class="pre">quaternion</span> <span class="pre">is</span> <span class="pre">applied</span> <span class="pre">to</span> <span class="pre">a</span> <span class="pre">set</span> <span class="pre">of</span> <span class="pre">points</span> <span class="pre">using</span> <span class="pre">*Q.rot(v)*.\n</span>&#160;&#160;&#160; <span class="pre">'</span></em><a class="headerlink" href="#sasmodels.jitter.Quaternion.__doc__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__eq__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__format__">
+<span class="sig-name descname"><span class="pre">__format__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format_spec</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__format__" title="Link to this definition">¶</a></dt>
+<dd><p>Default object formatter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__ge__">
+<span class="sig-name descname"><span class="pre">__ge__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__ge__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__getattribute__">
+<span class="sig-name descname"><span class="pre">__getattribute__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__getattribute__" title="Link to this definition">¶</a></dt>
+<dd><p>Return getattr(self, name).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__getstate__">
+<span class="sig-name descname"><span class="pre">__getstate__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__getstate__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__gt__">
+<span class="sig-name descname"><span class="pre">__gt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__gt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__hash__" title="Link to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">w</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__init_subclass__" title="Link to this definition">¶</a></dt>
+<dd><p>This method is called when a class is subclassed.</p>
+<p>The default implementation does nothing. It may be
+overridden to extend subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__le__">
+<span class="sig-name descname"><span class="pre">__le__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__le__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__lt__">
+<span class="sig-name descname"><span class="pre">__lt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__lt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__module__">
+<span class="sig-name descname"><span class="pre">__module__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sasmodels.jitter'</span></em><a class="headerlink" href="#sasmodels.jitter.Quaternion.__module__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__mul__">
+<span class="sig-name descname"><span class="pre">__mul__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">other</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__mul__" title="Link to this definition">¶</a></dt>
+<dd><p>Multiply quaterions</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__ne__">
+<span class="sig-name descname"><span class="pre">__ne__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__ne__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self!=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__new__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__new__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__reduce__">
+<span class="sig-name descname"><span class="pre">__reduce__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__reduce__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__reduce_ex__">
+<span class="sig-name descname"><span class="pre">__reduce_ex__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protocol</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__reduce_ex__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__repr__" title="Link to this definition">¶</a></dt>
+<dd><p>Return repr(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__setattr__">
+<span class="sig-name descname"><span class="pre">__setattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__setattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement setattr(self, name, value).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__sizeof__">
+<span class="sig-name descname"><span class="pre">__sizeof__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__sizeof__" title="Link to this definition">¶</a></dt>
+<dd><p>Size of object in memory, in bytes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__str__" title="Link to this definition">¶</a></dt>
+<dd><p>Return str(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__subclasshook__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__subclasshook__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__subclasshook__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract classes can override this to customize issubclass().</p>
+<p>This is invoked early on by abc.ABCMeta.__subclasscheck__().
+It should return True, False or NotImplemented.  If it returns
+NotImplemented, the normal algorithm is used.  Otherwise, it
+overrides the normal algorithm (and the outcome is cached).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.__weakref__">
+<span class="sig-name descname"><span class="pre">__weakref__</span></span><a class="headerlink" href="#sasmodels.jitter.Quaternion.__weakref__" title="Link to this definition">¶</a></dt>
+<dd><p>list of weak references to the object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.conj">
+<span class="sig-name descname"><span class="pre">conj</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.conj" title="Link to this definition">¶</a></dt>
+<dd><p>Conjugate quaternion</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.from_angle_axis">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_angle_axis</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theta</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.from_angle_axis" title="Link to this definition">¶</a></dt>
+<dd><p>Build quaternion as rotation theta about axis r</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.inv">
+<span class="sig-name descname"><span class="pre">inv</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.inv" title="Link to this definition">¶</a></dt>
+<dd><p>Inverse quaternion</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.norm">
+<span class="sig-name descname"><span class="pre">norm</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.norm" title="Link to this definition">¶</a></dt>
+<dd><p>Quaternion length</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.jitter.Quaternion.rot">
+<span class="sig-name descname"><span class="pre">rot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Quaternion.rot" title="Link to this definition">¶</a></dt>
+<dd><p>Transform point <em>v</em> by quaternion</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.R_to_xyz">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">R_to_xyz</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">R</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.R_to_xyz" title="Link to this definition">¶</a></dt>
+<dd><p>Return phi, theta, psi Tait-Bryan angles corresponding to the given rotation matrix.</p>
+<p>Extracting Euler Angles from a Rotation Matrix
+Mike Day, Insomniac Games
+<a class="reference external" href="https://d3cw3dd2w32x2b.cloudfront.net/wp-content/uploads/2012/07/euler-angles1.pdf">https://d3cw3dd2w32x2b.cloudfront.net/wp-content/uploads/2012/07/euler-angles1.pdf</a>
+Based on: Shoemake’s “Euler Angle Conversion”, Graphics Gems IV, pp.  222-229</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.Rx">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">Rx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">angle</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Rx" title="Link to this definition">¶</a></dt>
+<dd><p>Construct a matrix to rotate points about <em>x</em> by <em>angle</em> degrees.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.Ry">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">Ry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">angle</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Ry" title="Link to this definition">¶</a></dt>
+<dd><p>Construct a matrix to rotate points about <em>y</em> by <em>angle</em> degrees.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.Rz">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">Rz</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">angle</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.Rz" title="Link to this definition">¶</a></dt>
+<dd><p>Construct a matrix to rotate points about <em>z</em> by <em>angle</em> degrees.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter._build_sc">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">_build_sc</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter._build_sc" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter._draw_crystal">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">_draw_crystal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atoms</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter._draw_crystal" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter._ipv_fix_color">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">_ipv_fix_color</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter._ipv_fix_color" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter._ipv_plot">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">_ipv_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">calculator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">draw_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projection</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter._ipv_plot" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter._ipv_set_transparency">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">_ipv_set_transparency</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kw</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter._ipv_set_transparency" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter._mpl_plot">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">_mpl_plot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">calculator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">draw_shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projection</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter._mpl_plot" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.apply_jitter">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">apply_jitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">jitter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">points</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.apply_jitter" title="Link to this definition">¶</a></dt>
+<dd><p>Apply the jitter transform to a set of points.</p>
+<p>Points are stored in a 3 x n numpy matrix, not a numpy array or tuple.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.build_model">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">build_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">150</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">pars</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.build_model" title="Link to this definition">¶</a></dt>
+<dd><p>Build a calculator for the given shape.</p>
+<p><em>model_name</em> is any sasmodels model.  <em>n</em> and <em>qmax</em> define an n x n mesh
+on which to evaluate the model.  The remaining parameters are stored in
+the returned calculator as <em>calculator.pars</em>.  They are used by
+<a class="reference internal" href="#sasmodels.jitter.draw_scattering" title="sasmodels.jitter.draw_scattering"><code class="xref py py-func docutils literal notranslate"><span class="pre">draw_scattering()</span></code></a> to set the non-orientation parameters in the
+calculation.</p>
+<p>Returns a <em>calculator</em> function which takes a dictionary or parameters and
+produces Iqxy.  The Iqxy value needs to be reshaped to an n x n matrix
+for plotting.  See the <a class="reference internal" href="direct_model.html#sasmodels.direct_model.DirectModel" title="sasmodels.direct_model.DirectModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">direct_model.DirectModel</span></code></a> class
+for details.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.clipped_range">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">clipped_range</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">portion</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'central'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.clipped_range" title="Link to this definition">¶</a></dt>
+<dd><p>Determine range from data.</p>
+<p>If <em>portion</em> is 1, use full range, otherwise use the center of the range
+or the top of the range, depending on whether <em>mode</em> is ‘central’ or ‘top’.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.draw_axes">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">draw_axes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">origin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(-1,</span> <span class="pre">-1,</span> <span class="pre">-1)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(2,</span> <span class="pre">2,</span> <span class="pre">2)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.draw_axes" title="Link to this definition">¶</a></dt>
+<dd><p>Draw wireframe axes lines, with given origin and length</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.draw_bcc">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">draw_bcc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.draw_bcc" title="Link to this definition">¶</a></dt>
+<dd><p>Draw points for body-centered cubic paracrystal</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.draw_beam">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">draw_beam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.draw_beam" title="Link to this definition">¶</a></dt>
+<dd><p>Draw the beam going from source at (0, 0, 1) to detector at (0, 0, -1)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.draw_box">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">draw_box</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.draw_box" title="Link to this definition">¶</a></dt>
+<dd><p>Draw a wireframe box at a particular view.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.draw_ellipsoid">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">draw_ellipsoid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.draw_ellipsoid" title="Link to this definition">¶</a></dt>
+<dd><p>Draw an ellipsoid.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.draw_fcc">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">draw_fcc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.draw_fcc" title="Link to this definition">¶</a></dt>
+<dd><p>Draw points for face-centered cubic paracrystal</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.draw_jitter">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">draw_jitter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist='gaussian'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size=(0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">0.4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">1.0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">draw_shape=&lt;function</span> <span class="pre">draw_parallelepiped&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projection='equirectangular'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha=0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">views=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.draw_jitter" title="Link to this definition">¶</a></dt>
+<dd><p>Represent jitter as a set of shapes at different orientations.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.draw_labels">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">draw_labels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.draw_labels" title="Link to this definition">¶</a></dt>
+<dd><p>Draw text at a particular location.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.draw_mesh">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">draw_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gaussian'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projection</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'equirectangular'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.draw_mesh" title="Link to this definition">¶</a></dt>
+<dd><p>Draw the dispersion mesh showing the theta-phi orientations at which
+the model will be evaluated.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.draw_parallelepiped">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">draw_parallelepiped</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0.6,</span> <span class="pre">1.0,</span> <span class="pre">0.6)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.draw_parallelepiped" title="Link to this definition">¶</a></dt>
+<dd><p>Draw a parallelepiped surface, with view and jitter.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.draw_person_on_sphere">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">draw_person_on_sphere</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.draw_person_on_sphere" title="Link to this definition">¶</a></dt>
+<dd><p>Draw a person on the surface of a sphere.</p>
+<p><em>view</em> indicates (latitude, longitude, orientation)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.draw_sc">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">draw_sc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.draw_sc" title="Link to this definition">¶</a></dt>
+<dd><p>Draw points for simple cubic paracrystal</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.draw_scattering">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">draw_scattering</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">calculator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gaussian'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.draw_scattering" title="Link to this definition">¶</a></dt>
+<dd><p>Plot the scattering for the particular view.</p>
+<p><em>calculator</em> is returned from <a class="reference internal" href="#sasmodels.jitter.build_model" title="sasmodels.jitter.build_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_model()</span></code></a>.  <em>axes</em> are the 3D axes
+on which the data will be plotted.  <em>view</em> and <em>jitter</em> are the current
+orientation and orientation dispersity.  <em>dist</em> is one of the sasmodels
+weight distributions.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.draw_sphere">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">draw_sphere</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">axes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">25</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">center</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">0,</span> <span class="pre">0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'w'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.draw_sphere" title="Link to this definition">¶</a></dt>
+<dd><p>Draw a sphere</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.get_projection">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">get_projection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">projection</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.get_projection" title="Link to this definition">¶</a></dt>
+<dd><p>jitter projections
+&lt;<a class="reference external" href="https://en.wikipedia.org/wiki/List_of_map_projections">https://en.wikipedia.org/wiki/List_of_map_projections</a>&gt;</p>
+<dl class="simple">
+<dt>equirectangular (standard latitude-longitude mesh)</dt><dd><p>&lt;<a class="reference external" href="https://en.wikipedia.org/wiki/Equirectangular_projection">https://en.wikipedia.org/wiki/Equirectangular_projection</a>&gt;
+Allows free movement in phi (around the equator), but theta is
+limited to +/- 90, and points are cos-weighted. Jitter in phi is
+uniform in weight along a line of latitude.  With small theta and
+phi ranging over +/- 180 this forms a wobbling disk.  With small
+phi and theta ranging over +/- 90 this forms a wedge like a slice
+of an orange.</p>
+</dd>
+<dt>azimuthal_equidistance (Postel)</dt><dd><p>&lt;<a class="reference external" href="https://en.wikipedia.org/wiki/Azimuthal_equidistant_projection">https://en.wikipedia.org/wiki/Azimuthal_equidistant_projection</a>&gt;
+Preserves distance from center, and so is an excellent map for
+representing a bivariate gaussian on the surface.  Theta and phi
+operate identically, cutting wegdes from the antipode of the viewing
+angle.  This unfortunately does not allow free movement in either
+theta or phi since the orthogonal wobble decreases to 0 as the body
+rotates through 180 degrees.</p>
+</dd>
+<dt>sinusoidal (Sanson-Flamsteed, Mercator equal-area)</dt><dd><p>&lt;<a class="reference external" href="https://en.wikipedia.org/wiki/Sinusoidal_projection">https://en.wikipedia.org/wiki/Sinusoidal_projection</a>&gt;
+Preserves arc length with latitude, giving bad behaviour at
+theta near +/- 90.  Theta and phi operate somewhat differently,
+so a system with a-b-c dtheta-dphi-dpsi will not give the same
+value as one with b-a-c dphi-dtheta-dpsi, as would be the case
+for azimuthal equidistance.  Free movement using theta or phi
+uniform over +/- 180 will work, but not as well as equirectangular
+phi, with theta being slightly worse.  Computationally it is much
+cheaper for wide theta-phi meshes since it excludes points which
+lie outside the sinusoid near theta +/- 90 rather than packing
+them close together as in equirectangle.  Note that the poles
+will be slightly overweighted for theta &gt; 90 with the circle
+from theta at 90+dt winding backwards around the pole, overlapping
+the circle from theta at 90-dt.</p>
+</dd>
+<dt>Guyou (hemisphere-in-a-square) <strong>not weighted</strong></dt><dd><p>&lt;<a class="reference external" href="https://en.wikipedia.org/wiki/Guyou_hemisphere-in-a-square_projection">https://en.wikipedia.org/wiki/Guyou_hemisphere-in-a-square_projection</a>&gt;
+With tiling, allows rotation in phi or theta through +/- 180, with
+uniform spacing.  Both theta and phi allow free rotation, with wobble
+in the orthogonal direction reasonably well behaved (though not as
+good as equirectangular phi). The forward/reverse transformations
+relies on elliptic integrals that are somewhat expensive, so the
+behaviour has to be very good to justify the cost and complexity.
+The weighting function for each point has not yet been computed.
+Note: run the module <em>guyou.py</em> directly and it will show the forward
+and reverse mappings.</p>
+</dd>
+<dt>azimuthal_equal_area  <strong>incomplete</strong></dt><dd><p>&lt;<a class="reference external" href="https://en.wikipedia.org/wiki/Lambert_azimuthal_equal-area_projection">https://en.wikipedia.org/wiki/Lambert_azimuthal_equal-area_projection</a>&gt;
+Preserves the relative density of the surface patches.  Not that
+useful and not completely implemented</p>
+</dd>
+<dt>Gauss-Kreuger <strong>not implemented</strong></dt><dd><p>&lt;<a class="reference external" href="https://en.wikipedia.org/wiki/Transverse_Mercator_projection#Ellipsoidal_transverse_Mercator">https://en.wikipedia.org/wiki/Transverse_Mercator_projection#Ellipsoidal_transverse_Mercator</a>&gt;
+Should allow free movement in theta, but phi is distorted.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.ipv_axes">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">ipv_axes</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.ipv_axes" title="Link to this definition">¶</a></dt>
+<dd><p>Build a matplotlib style Axes interface for ipyvolume</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.main">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.main" title="Link to this definition">¶</a></dt>
+<dd><p>Command line interface to the jitter viewer.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.make_image">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">make_image</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.make_image" title="Link to this definition">¶</a></dt>
+<dd><p>Convert numpy array <em>z</em> into a <em>PIL</em> RGB image.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.make_vec">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">make_vec</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.make_vec" title="Link to this definition">¶</a></dt>
+<dd><p>Turn all elements of <em>args</em> into numpy arrays</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.map_colors">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">map_colors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.map_colors" title="Link to this definition">¶</a></dt>
+<dd><p>Process matplotlib-style colour arguments.</p>
+<p>Pulls ‘cmap’, ‘alpha’, ‘vmin’, and ‘vmax’ from th <em>kw</em> dictionary, setting
+the <em>kw[‘color’]</em> to an RGB array.  These are ignored if ‘c’ or ‘color’ are
+set inside <em>kw</em>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.orient_relative_to_beam">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">orient_relative_to_beam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">points</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.orient_relative_to_beam" title="Link to this definition">¶</a></dt>
+<dd><p>Apply the view transform to a set of points.</p>
+<p>Points are stored in a 3 x n numpy matrix, not a numpy array or tuple.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.orient_relative_to_beam_quaternion">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">orient_relative_to_beam_quaternion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">points</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.orient_relative_to_beam_quaternion" title="Link to this definition">¶</a></dt>
+<dd><p>Apply the view transform to a set of points.</p>
+<p>Points are stored in a 3 x n numpy matrix, not a numpy array or tuple.</p>
+<p>This variant uses quaternions rather than rotation matrices for the
+computation.  It works but it is not used because it doesn’t solve
+any problems.  The challenge of mapping theta/phi/psi to SO(3) does
+not disappear by calculating the transform differently.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.run">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'parallelepiped'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">40,</span> <span class="pre">100)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">view</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">0,</span> <span class="pre">0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">0,</span> <span class="pre">0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dist</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'gaussian'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">projection</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'equirectangular'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.run" title="Link to this definition">¶</a></dt>
+<dd><p>Show an interactive orientation and jitter demo.</p>
+<p><em>model_name</em> is one of: sphere, ellipsoid, triaxial_ellipsoid,
+parallelepiped, cylinder, or sc/fcc/bcc_paracrystal</p>
+<p><em>size</em> gives the dimensions (a, b, c) of the shape.</p>
+<p><em>view</em> gives the initial view (theta, phi, psi) of the shape.</p>
+<p><em>view</em> gives the initial jitter (dtheta, dphi, dpsi) of the shape.</p>
+<p><em>dist</em> is the type of dispersition: gaussian, rectangle, or uniform.</p>
+<p><em>mesh</em> is the number of points in the dispersion mesh.</p>
+<p><em>projection</em> is the map projection to use for the mesh: equirectangular,
+sinusoidal, guyou, azimuthal_equidistance, or azimuthal_equal_area.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.select_calculator">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">select_calculator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">150</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(10,</span> <span class="pre">40,</span> <span class="pre">100)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.select_calculator" title="Link to this definition">¶</a></dt>
+<dd><p>Create a model calculator for the given shape.</p>
+<p><em>model_name</em> is one of sphere, cylinder, ellipsoid, triaxial_ellipsoid,
+parallelepiped or bcc_paracrystal. <em>n</em> is the number of points to use
+in the q range.  <em>qmax</em> is chosen based on model parameters for the
+given model to show something intersting.</p>
+<p>Returns <em>calculator</em> and tuple <em>size</em> (a,b,c) giving minor and major
+equitorial axes and polar axis respectively.  See <a class="reference internal" href="#sasmodels.jitter.build_model" title="sasmodels.jitter.build_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_model()</span></code></a>
+for details on the returned calculator.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.set_plotter">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">set_plotter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.set_plotter" title="Link to this definition">¶</a></dt>
+<dd><p>Setting the plotting engine to matplotlib/ipyvolume or equivalently mpl/ipv.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.test_qrot">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">test_qrot</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.test_qrot" title="Link to this definition">¶</a></dt>
+<dd><p>Quaternion checks</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.jitter.transform_xyz">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.jitter.</span></span><span class="sig-name descname"><span class="pre">transform_xyz</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">view</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">jitter</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.jitter.transform_xyz" title="Link to this definition">¶</a></dt>
+<dd><p>Send a set of (x,y,z) points through the jitter and view transforms.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">16. Orientation explorer</a><ul>
+<li><a class="reference internal" href="#module-sasmodels.jitter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.jitter</span></code></a><ul>
+<li><a class="reference internal" href="#jitter-explorer">Jitter Explorer</a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.PLOT_ENGINE"><code class="docutils literal notranslate"><span class="pre">PLOT_ENGINE()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion"><code class="docutils literal notranslate"><span class="pre">Quaternion</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__class__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__class__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__delattr__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__delattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__dict__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__dict__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__dir__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__dir__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__doc__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__doc__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__eq__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__eq__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__format__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__format__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__ge__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__ge__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__getattribute__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__getattribute__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__getstate__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__getstate__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__gt__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__gt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__hash__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__hash__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__init__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__init_subclass__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__le__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__le__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__lt__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__lt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__module__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__module__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__mul__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__mul__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__ne__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__ne__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__new__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__new__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__reduce__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__reduce__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__reduce_ex__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__reduce_ex__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__repr__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__repr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__setattr__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__setattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__sizeof__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__sizeof__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__str__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__subclasshook__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__subclasshook__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.__weakref__"><code class="docutils literal notranslate"><span class="pre">Quaternion.__weakref__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.conj"><code class="docutils literal notranslate"><span class="pre">Quaternion.conj()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.from_angle_axis"><code class="docutils literal notranslate"><span class="pre">Quaternion.from_angle_axis()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.inv"><code class="docutils literal notranslate"><span class="pre">Quaternion.inv()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.norm"><code class="docutils literal notranslate"><span class="pre">Quaternion.norm()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Quaternion.rot"><code class="docutils literal notranslate"><span class="pre">Quaternion.rot()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sasmodels.jitter.R_to_xyz"><code class="docutils literal notranslate"><span class="pre">R_to_xyz()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Rx"><code class="docutils literal notranslate"><span class="pre">Rx()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Ry"><code class="docutils literal notranslate"><span class="pre">Ry()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.Rz"><code class="docutils literal notranslate"><span class="pre">Rz()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter._build_sc"><code class="docutils literal notranslate"><span class="pre">_build_sc()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter._draw_crystal"><code class="docutils literal notranslate"><span class="pre">_draw_crystal()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter._ipv_fix_color"><code class="docutils literal notranslate"><span class="pre">_ipv_fix_color()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter._ipv_plot"><code class="docutils literal notranslate"><span class="pre">_ipv_plot()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter._ipv_set_transparency"><code class="docutils literal notranslate"><span class="pre">_ipv_set_transparency()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter._mpl_plot"><code class="docutils literal notranslate"><span class="pre">_mpl_plot()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.apply_jitter"><code class="docutils literal notranslate"><span class="pre">apply_jitter()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.build_model"><code class="docutils literal notranslate"><span class="pre">build_model()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.clipped_range"><code class="docutils literal notranslate"><span class="pre">clipped_range()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.draw_axes"><code class="docutils literal notranslate"><span class="pre">draw_axes()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.draw_bcc"><code class="docutils literal notranslate"><span class="pre">draw_bcc()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.draw_beam"><code class="docutils literal notranslate"><span class="pre">draw_beam()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.draw_box"><code class="docutils literal notranslate"><span class="pre">draw_box()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.draw_ellipsoid"><code class="docutils literal notranslate"><span class="pre">draw_ellipsoid()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.draw_fcc"><code class="docutils literal notranslate"><span class="pre">draw_fcc()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.draw_jitter"><code class="docutils literal notranslate"><span class="pre">draw_jitter()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.draw_labels"><code class="docutils literal notranslate"><span class="pre">draw_labels()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.draw_mesh"><code class="docutils literal notranslate"><span class="pre">draw_mesh()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.draw_parallelepiped"><code class="docutils literal notranslate"><span class="pre">draw_parallelepiped()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.draw_person_on_sphere"><code class="docutils literal notranslate"><span class="pre">draw_person_on_sphere()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.draw_sc"><code class="docutils literal notranslate"><span class="pre">draw_sc()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.draw_scattering"><code class="docutils literal notranslate"><span class="pre">draw_scattering()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.draw_sphere"><code class="docutils literal notranslate"><span class="pre">draw_sphere()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.get_projection"><code class="docutils literal notranslate"><span class="pre">get_projection()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.ipv_axes"><code class="docutils literal notranslate"><span class="pre">ipv_axes()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.make_image"><code class="docutils literal notranslate"><span class="pre">make_image()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.make_vec"><code class="docutils literal notranslate"><span class="pre">make_vec()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.map_colors"><code class="docutils literal notranslate"><span class="pre">map_colors()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.orient_relative_to_beam"><code class="docutils literal notranslate"><span class="pre">orient_relative_to_beam()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.orient_relative_to_beam_quaternion"><code class="docutils literal notranslate"><span class="pre">orient_relative_to_beam_quaternion()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.run"><code class="docutils literal notranslate"><span class="pre">run()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.select_calculator"><code class="docutils literal notranslate"><span class="pre">select_calculator()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.set_plotter"><code class="docutils literal notranslate"><span class="pre">set_plotter()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.test_qrot"><code class="docutils literal notranslate"><span class="pre">test_qrot()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.jitter.transform_xyz"><code class="docutils literal notranslate"><span class="pre">transform_xyz()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="guyou.html"
+                          title="previous chapter"><span class="section-number">15. </span>Guyou map projection</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="kernel.html"
+                          title="next chapter"><span class="section-number">17. </span>Evaluator type definitions</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/dev/sasmodels-api/jitter.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="kernel.html" title="17. Evaluator type definitions"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="guyou.html" title="15. Guyou map projection"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">16. </span>Orientation explorer</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, The SasView Project.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

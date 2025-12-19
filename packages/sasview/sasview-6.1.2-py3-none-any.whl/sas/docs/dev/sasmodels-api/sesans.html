@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>32. SESANS calculation routines &#8212; SasView 6.1.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=f0c0c503"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="33. Special functions library" href="special.html" />
+    <link rel="prev" title="31. Sasview interface" href="sasview_model.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="special.html" title="33. Special functions library"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="sasview_model.html" title="31. Sasview interface"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">32. </span>SESANS calculation routines</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="sesans-calculation-routines">
+<h1><span class="section-number">32. </span>SESANS calculation routines<a class="headerlink" href="#sesans-calculation-routines" title="Link to this heading">¶</a></h1>
+<section id="module-sasmodels.sesans">
+<span id="sasmodels-sesans"></span><h2><a class="reference internal" href="#module-sasmodels.sesans" title="sasmodels.sesans"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.sesans</span></code></a><a class="headerlink" href="#module-sasmodels.sesans" title="Link to this heading">¶</a></h2>
+<p>Conversion of scattering cross section from SANS (I(q), or rather, ds/dO) in absolute
+units (cm-1)into SESANS correlation function G using a Hankel transformation, then converting
+the SESANS correlation function into polarisation from the SESANS experiment</p>
+<p>Everything is in units of metres except specified otherwise (NOT TRUE!!!)
+Everything is in conventional units (nm for spin echo length)</p>
+<p>Wim Bouwman (<a class="reference external" href="mailto:w&#46;g&#46;bouwman&#37;&#52;&#48;tudelft&#46;nl">w<span>&#46;</span>g<span>&#46;</span>bouwman<span>&#64;</span>tudelft<span>&#46;</span>nl</a>), June 2013</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sasmodels.sesans.</span></span><span class="sig-name descname"><span class="pre">SesansTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SElength</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lam</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zaccept</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Rmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_spacing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0003</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sesans.SesansTransform" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Spin-Echo SANS transform calculator.  Similar to a resolution function,
+the SesansTransform object takes I(q) for the set of <em>q_calc</em> values and
+produces a transformed dataset</p>
+<p><em>SElength</em> (A) is the set of spin-echo lengths in the measured data.</p>
+<p><em>zaccept</em> (1/A) is the maximum acceptance of scattering vector in the spin
+echo encoding dimension (for ToF: Q of min(R) and max(lam)).</p>
+<p><em>Rmax</em> (A) is the maximum size sensitivity; larger radius requires more
+computation time.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform._H">
+<span class="sig-name descname"><span class="pre">_H</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.sesans.SesansTransform._H" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform._H0">
+<span class="sig-name descname"><span class="pre">_H0</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.sesans.SesansTransform._H0" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__class__">
+<span class="sig-name descname"><span class="pre">__class__</span></span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__class__" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__delattr__">
+<span class="sig-name descname"><span class="pre">__delattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__delattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement delattr(self, name).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__dict__">
+<span class="sig-name descname"><span class="pre">__dict__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">mappingproxy({'__module__':</span> <span class="pre">'sasmodels.sesans',</span> <span class="pre">'__doc__':</span> <span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Spin-Echo</span> <span class="pre">SANS</span> <span class="pre">transform</span> <span class="pre">calculator.</span>&#160; <span class="pre">Similar</span> <span class="pre">to</span> <span class="pre">a</span> <span class="pre">resolution</span> <span class="pre">function,\n</span>&#160;&#160;&#160; <span class="pre">the</span> <span class="pre">SesansTransform</span> <span class="pre">object</span> <span class="pre">takes</span> <span class="pre">I(q)</span> <span class="pre">for</span> <span class="pre">the</span> <span class="pre">set</span> <span class="pre">of</span> <span class="pre">*q_calc*</span> <span class="pre">values</span> <span class="pre">and\n</span>&#160;&#160;&#160; <span class="pre">produces</span> <span class="pre">a</span> <span class="pre">transformed</span> <span class="pre">dataset\n\n</span>&#160;&#160;&#160; <span class="pre">*SElength*</span> <span class="pre">(A)</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">set</span> <span class="pre">of</span> <span class="pre">spin-echo</span> <span class="pre">lengths</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">measured</span> <span class="pre">data.\n\n</span>&#160;&#160;&#160; <span class="pre">*zaccept*</span> <span class="pre">(1/A)</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">maximum</span> <span class="pre">acceptance</span> <span class="pre">of</span> <span class="pre">scattering</span> <span class="pre">vector</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">spin\n</span>&#160;&#160;&#160; <span class="pre">echo</span> <span class="pre">encoding</span> <span class="pre">dimension</span> <span class="pre">(for</span> <span class="pre">ToF:</span> <span class="pre">Q</span> <span class="pre">of</span> <span class="pre">min(R)</span> <span class="pre">and</span> <span class="pre">max(lam)).\n\n</span>&#160;&#160;&#160; <span class="pre">*Rmax*</span> <span class="pre">(A)</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">maximum</span> <span class="pre">size</span> <span class="pre">sensitivity;</span> <span class="pre">larger</span> <span class="pre">radius</span> <span class="pre">requires</span> <span class="pre">more\n</span>&#160;&#160;&#160; <span class="pre">computation</span> <span class="pre">time.\n</span>&#160;&#160;&#160; <span class="pre">',</span> <span class="pre">'q':</span> <span class="pre">None,</span> <span class="pre">'q_calc':</span> <span class="pre">None,</span> <span class="pre">'_H':</span> <span class="pre">None,</span> <span class="pre">'_H0':</span> <span class="pre">None,</span> <span class="pre">'__init__':</span> <span class="pre">&lt;function</span> <span class="pre">SesansTransform.__init__&gt;,</span> <span class="pre">'apply':</span> <span class="pre">&lt;function</span> <span class="pre">SesansTransform.apply&gt;,</span> <span class="pre">'_set_hankel':</span> <span class="pre">&lt;function</span> <span class="pre">SesansTransform._set_hankel&gt;,</span> <span class="pre">'__dict__':</span> <span class="pre">&lt;attribute</span> <span class="pre">'__dict__'</span> <span class="pre">of</span> <span class="pre">'SesansTransform'</span> <span class="pre">objects&gt;,</span> <span class="pre">'__weakref__':</span> <span class="pre">&lt;attribute</span> <span class="pre">'__weakref__'</span> <span class="pre">of</span> <span class="pre">'SesansTransform'</span> <span class="pre">objects&gt;,</span> <span class="pre">'__annotations__':</span> <span class="pre">{'q':</span> <span class="pre">'np.ndarray',</span> <span class="pre">'q_calc':</span> <span class="pre">'np.ndarray',</span> <span class="pre">'_H':</span> <span class="pre">'np.ndarray',</span> <span class="pre">'_H0':</span> <span class="pre">'np.ndarray'}})</span></em><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__dict__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__dir__">
+<span class="sig-name descname"><span class="pre">__dir__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__dir__" title="Link to this definition">¶</a></dt>
+<dd><p>Default dir() implementation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__doc__">
+<span class="sig-name descname"><span class="pre">__doc__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Spin-Echo</span> <span class="pre">SANS</span> <span class="pre">transform</span> <span class="pre">calculator.</span>&#160; <span class="pre">Similar</span> <span class="pre">to</span> <span class="pre">a</span> <span class="pre">resolution</span> <span class="pre">function,\n</span>&#160;&#160;&#160; <span class="pre">the</span> <span class="pre">SesansTransform</span> <span class="pre">object</span> <span class="pre">takes</span> <span class="pre">I(q)</span> <span class="pre">for</span> <span class="pre">the</span> <span class="pre">set</span> <span class="pre">of</span> <span class="pre">*q_calc*</span> <span class="pre">values</span> <span class="pre">and\n</span>&#160;&#160;&#160; <span class="pre">produces</span> <span class="pre">a</span> <span class="pre">transformed</span> <span class="pre">dataset\n\n</span>&#160;&#160;&#160; <span class="pre">*SElength*</span> <span class="pre">(A)</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">set</span> <span class="pre">of</span> <span class="pre">spin-echo</span> <span class="pre">lengths</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">measured</span> <span class="pre">data.\n\n</span>&#160;&#160;&#160; <span class="pre">*zaccept*</span> <span class="pre">(1/A)</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">maximum</span> <span class="pre">acceptance</span> <span class="pre">of</span> <span class="pre">scattering</span> <span class="pre">vector</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">spin\n</span>&#160;&#160;&#160; <span class="pre">echo</span> <span class="pre">encoding</span> <span class="pre">dimension</span> <span class="pre">(for</span> <span class="pre">ToF:</span> <span class="pre">Q</span> <span class="pre">of</span> <span class="pre">min(R)</span> <span class="pre">and</span> <span class="pre">max(lam)).\n\n</span>&#160;&#160;&#160; <span class="pre">*Rmax*</span> <span class="pre">(A)</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">maximum</span> <span class="pre">size</span> <span class="pre">sensitivity;</span> <span class="pre">larger</span> <span class="pre">radius</span> <span class="pre">requires</span> <span class="pre">more\n</span>&#160;&#160;&#160; <span class="pre">computation</span> <span class="pre">time.\n</span>&#160;&#160;&#160; <span class="pre">'</span></em><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__doc__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__eq__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__format__">
+<span class="sig-name descname"><span class="pre">__format__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format_spec</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__format__" title="Link to this definition">¶</a></dt>
+<dd><p>Default object formatter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__ge__">
+<span class="sig-name descname"><span class="pre">__ge__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__ge__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__getattribute__">
+<span class="sig-name descname"><span class="pre">__getattribute__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__getattribute__" title="Link to this definition">¶</a></dt>
+<dd><p>Return getattr(self, name).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__getstate__">
+<span class="sig-name descname"><span class="pre">__getstate__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__getstate__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__gt__">
+<span class="sig-name descname"><span class="pre">__gt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__gt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__hash__" title="Link to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">SElength</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lam</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zaccept</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Rmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_spacing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0003</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__init_subclass__" title="Link to this definition">¶</a></dt>
+<dd><p>This method is called when a class is subclassed.</p>
+<p>The default implementation does nothing. It may be
+overridden to extend subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__le__">
+<span class="sig-name descname"><span class="pre">__le__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__le__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__lt__">
+<span class="sig-name descname"><span class="pre">__lt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__lt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__module__">
+<span class="sig-name descname"><span class="pre">__module__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sasmodels.sesans'</span></em><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__module__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__ne__">
+<span class="sig-name descname"><span class="pre">__ne__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__ne__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self!=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__new__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__new__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__reduce__">
+<span class="sig-name descname"><span class="pre">__reduce__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__reduce__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__reduce_ex__">
+<span class="sig-name descname"><span class="pre">__reduce_ex__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protocol</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__reduce_ex__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__repr__" title="Link to this definition">¶</a></dt>
+<dd><p>Return repr(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__setattr__">
+<span class="sig-name descname"><span class="pre">__setattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__setattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement setattr(self, name, value).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__sizeof__">
+<span class="sig-name descname"><span class="pre">__sizeof__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__sizeof__" title="Link to this definition">¶</a></dt>
+<dd><p>Size of object in memory, in bytes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__str__" title="Link to this definition">¶</a></dt>
+<dd><p>Return str(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__subclasshook__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__subclasshook__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__subclasshook__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract classes can override this to customize issubclass().</p>
+<p>This is invoked early on by abc.ABCMeta.__subclasscheck__().
+It should return True, False or NotImplemented.  If it returns
+NotImplemented, the normal algorithm is used.  Otherwise, it
+overrides the normal algorithm (and the outcome is cached).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.__weakref__">
+<span class="sig-name descname"><span class="pre">__weakref__</span></span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.__weakref__" title="Link to this definition">¶</a></dt>
+<dd><p>list of weak references to the object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform._set_hankel">
+<span class="sig-name descname"><span class="pre">_set_hankel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">SElength</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lam</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zaccept</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Rmax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.sesans.SesansTransform._set_hankel" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.apply">
+<span class="sig-name descname"><span class="pre">apply</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Iq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#sasmodels.sesans.SesansTransform.apply" title="Link to this definition">¶</a></dt>
+<dd><p>Apply the SESANS transform to the computed I(q).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.q">
+<span class="sig-name descname"><span class="pre">q</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.sesans.SesansTransform.q" title="Link to this definition">¶</a></dt>
+<dd><p>SElength from the data in the original data units; not used by transform
+but the GUI uses it, so make sure that it is present.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sesans.SesansTransform.q_calc">
+<span class="sig-name descname"><span class="pre">q_calc</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.sesans.SesansTransform.q_calc" title="Link to this definition">¶</a></dt>
+<dd><p>q values to calculate when computing transform</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">32. SESANS calculation routines</a><ul>
+<li><a class="reference internal" href="#module-sasmodels.sesans"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.sesans</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform"><code class="docutils literal notranslate"><span class="pre">SesansTransform</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform._H"><code class="docutils literal notranslate"><span class="pre">SesansTransform._H</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform._H0"><code class="docutils literal notranslate"><span class="pre">SesansTransform._H0</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__class__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__class__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__delattr__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__delattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__dict__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__dict__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__dir__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__dir__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__doc__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__doc__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__eq__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__eq__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__format__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__format__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__ge__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__ge__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__getattribute__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__getattribute__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__getstate__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__getstate__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__gt__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__gt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__hash__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__hash__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__init__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__init_subclass__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__le__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__le__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__lt__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__lt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__module__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__module__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__ne__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__ne__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__new__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__new__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__reduce__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__reduce__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__reduce_ex__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__reduce_ex__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__repr__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__repr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__setattr__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__setattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__sizeof__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__sizeof__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__str__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__subclasshook__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__subclasshook__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.__weakref__"><code class="docutils literal notranslate"><span class="pre">SesansTransform.__weakref__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform._set_hankel"><code class="docutils literal notranslate"><span class="pre">SesansTransform._set_hankel()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.apply"><code class="docutils literal notranslate"><span class="pre">SesansTransform.apply()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.q"><code class="docutils literal notranslate"><span class="pre">SesansTransform.q</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sesans.SesansTransform.q_calc"><code class="docutils literal notranslate"><span class="pre">SesansTransform.q_calc</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="sasview_model.html"
+                          title="previous chapter"><span class="section-number">31. </span>Sasview interface</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="special.html"
+                          title="next chapter"><span class="section-number">33. </span>Special functions library</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/dev/sasmodels-api/sesans.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="special.html" title="33. Special functions library"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="sasview_model.html" title="31. Sasview interface"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">32. </span>SESANS calculation routines</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, The SasView Project.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

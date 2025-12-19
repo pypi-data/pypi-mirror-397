@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>26. Multiple scattering support &#8212; SasView 6.1.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=f0c0c503"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="27. Product model evaluator" href="product.html" />
+    <link rel="prev" title="25. Parameter and model definitions" href="modelinfo.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="product.html" title="27. Product model evaluator"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="modelinfo.html" title="25. Parameter and model definitions"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">26. </span>Multiple scattering support</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="multiple-scattering-support">
+<h1><span class="section-number">26. </span>Multiple scattering support<a class="headerlink" href="#multiple-scattering-support" title="Link to this heading">¶</a></h1>
+<section id="module-sasmodels.multiscat">
+<span id="sasmodels-multiscat"></span><h2><a class="reference internal" href="#module-sasmodels.multiscat" title="sasmodels.multiscat"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.multiscat</span></code></a><a class="headerlink" href="#module-sasmodels.multiscat" title="Link to this heading">¶</a></h2>
+<p>Multiple scattering calculator</p>
+<p>Calculate multiple scattering using 2D FFT convolution.</p>
+<p>Usage:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>python -m sasmodels.multiscat [options] model_name model_par=value ...
+
+Options include:
+-h, --help: show help and exit
+-n, --nq: the number of mesh points (dq = qmax*window/nq)
+-o, --outfile: save results to outfile.txt and outfile_powers.txt
+-p, --probability: the scattering probability (0.1)
+-q, --qmax: that max q that you care about (0.5)
+-r, --random: generate a random parameter set
+-s, --seed: generate a random parameter set with a given seed
+-w, --window: the extension window (q is calculated for qmax*window)
+-2, --2d: perform the calculation for an oriented pattern
+</pre></div>
+</div>
+<p>Assume the probability of scattering is <span class="math notranslate nohighlight">\(p\)</span>. After each scattering event,
+<span class="math notranslate nohighlight">\(1-p\)</span> neutrons will leave the system and go to the detector, and the remaining
+<span class="math notranslate nohighlight">\(p\)</span> will scatter again.</p>
+<p>Let the scattering probability for <span class="math notranslate nohighlight">\(n\)</span> scattering event at <span class="math notranslate nohighlight">\(q\)</span> be <span class="math notranslate nohighlight">\(f_n(q)\)</span>,
+with</p>
+<div class="math notranslate nohighlight">
+\[f_1(q) = \frac{I_1(q)}{\int I_1(q) {\rm d}q}\]</div>
+<p>for <span class="math notranslate nohighlight">\(I_1(q)\)</span>, the single scattering from the system. After two scattering
+events, the scattering probability will be the convolution of the first
+scattering and itself, or <span class="math notranslate nohighlight">\(f_2(q) = (f_1*f_1)(q)\)</span>.  After <span class="math notranslate nohighlight">\(n\)</span> events it will be
+<span class="math notranslate nohighlight">\(f_n(q) = (f_1 * \cdots * f_1)(q)\)</span>.  The total scattering is calculated
+as the weighted sum of <span class="math notranslate nohighlight">\(f_k\)</span>, with weights following the Poisson distribution</p>
+<div class="math notranslate nohighlight">
+\[P(k; \lambda) = \frac{\lambda^k e^{-\lambda}}{k!}\]</div>
+<p>for <span class="math notranslate nohighlight">\(\lambda\)</span> determined by the total thickness divided by the mean
+free path between scattering, giving</p>
+<div class="math notranslate nohighlight">
+\[I(q) = \sum_{k=0}^\infty P(k; \lambda) f_k(q)\]</div>
+<p>The <span class="math notranslate nohighlight">\(k=0\)</span> term is ignored since it involves no scattering.
+We cut the series when cumulative probability is less than cutoff <span class="math notranslate nohighlight">\(C=99\%\)</span>,
+which is <span class="math notranslate nohighlight">\(\max n\)</span> such that</p>
+<div class="math notranslate nohighlight">
+\[\sum_{k=1}^n \frac{P(k; \lambda)}{1 - P(0; \lambda)} &lt; C\]</div>
+<p>Using the convolution theorem, where <span class="math notranslate nohighlight">\(F = \mathcal{F}(f)\)</span> is the
+Fourier transform,</p>
+<div class="math notranslate nohighlight">
+\[f * g = \mathcal{F}^{-1}\{\mathcal{F}\{f\} \cdot \mathcal{F}\{g\}\}\]</div>
+<p>so</p>
+<div class="math notranslate nohighlight">
+\[f * \ldots * f = \mathcal{F}^{-1}\{ F^n \}\]</div>
+<p>Since the Fourier transform is a linear operator, we can move the polynomial
+expression for the convolution into the transform, giving</p>
+<div class="math notranslate nohighlight">
+\[I(q) = \mathcal{F}^{-1}\left\{ \sum_{k=1}^{n} P(k; \lambda) F^k \right\}\]</div>
+<p>In the dilute limit <span class="math notranslate nohighlight">\(\lambda \rightarrow 0\)</span> only the <span class="math notranslate nohighlight">\(k=1\)</span> term is active,
+and so</p>
+<div class="math notranslate nohighlight">
+\[P(1; \lambda) = \lambda e^{-\lambda} = \int I_1(q) {\rm d}q\]</div>
+<p>therefore we compute</p>
+<div class="math notranslate nohighlight">
+\[I(q) =
+\mathcal{F}^{-1}\left\{
+    \sum_{l=1}^{n} \frac{P(k; \lambda)}{P(1; \lambda))} F^k \right\}
+\, \int I_1(q) {\rm d}q
+= \mathcal{F}^{-1}\left\{
+    \sum_{l=1}^{n} \frac{\lambda^{k-1}}{k!} F^k \right\}
+\, \int I_1(q) {\rm d}q\]</div>
+<p>For speed we may use the fast fourier transform with a power of two.
+The resulting <span class="math notranslate nohighlight">\(I(q)\)</span> will be linearly spaced and likely heavily oversampled.
+The usual pinhole or slit resolution calculation can performed from these
+calculated values.</p>
+<p>By default single precision OpenCL is used for the calculation.  Set the
+environment variable <em>SAS_OPENCL=none</em> to use double precision numpy FFT
+instead.  The OpenCL versions is about 10x faster on an elderly Mac with
+Intel HD 4000 graphics.  The single precision numerical artifacts don’t
+seem to seriously impact overall accuracy, though they look pretty bad.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.Calculator">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.multiscat.</span></span><span class="sig-name descname"><span class="pre">Calculator</span></span><a class="headerlink" href="#sasmodels.multiscat.Calculator" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator" title="sasmodels.multiscat.NumpyCalculator"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumpyCalculator</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sasmodels.multiscat.</span></span><span class="sig-name descname"><span class="pre">ICalculator</span></span><a class="headerlink" href="#sasmodels.multiscat.ICalculator" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Multiple scattering calculator</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__class__">
+<span class="sig-name descname"><span class="pre">__class__</span></span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__class__" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__delattr__">
+<span class="sig-name descname"><span class="pre">__delattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__delattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement delattr(self, name).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__dict__">
+<span class="sig-name descname"><span class="pre">__dict__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">mappingproxy({'__module__':</span> <span class="pre">'sasmodels.multiscat',</span> <span class="pre">'__doc__':</span> <span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Multiple</span> <span class="pre">scattering</span> <span class="pre">calculator\n</span>&#160;&#160;&#160; <span class="pre">',</span> <span class="pre">'fft':</span> <span class="pre">&lt;function</span> <span class="pre">ICalculator.fft&gt;,</span> <span class="pre">'ifft':</span> <span class="pre">&lt;function</span> <span class="pre">ICalculator.ifft&gt;,</span> <span class="pre">'multiple_scattering':</span> <span class="pre">&lt;function</span> <span class="pre">ICalculator.multiple_scattering&gt;,</span> <span class="pre">'__dict__':</span> <span class="pre">&lt;attribute</span> <span class="pre">'__dict__'</span> <span class="pre">of</span> <span class="pre">'ICalculator'</span> <span class="pre">objects&gt;,</span> <span class="pre">'__weakref__':</span> <span class="pre">&lt;attribute</span> <span class="pre">'__weakref__'</span> <span class="pre">of</span> <span class="pre">'ICalculator'</span> <span class="pre">objects&gt;,</span> <span class="pre">'__annotations__':</span> <span class="pre">{}})</span></em><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__dict__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__dir__">
+<span class="sig-name descname"><span class="pre">__dir__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__dir__" title="Link to this definition">¶</a></dt>
+<dd><p>Default dir() implementation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__doc__">
+<span class="sig-name descname"><span class="pre">__doc__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Multiple</span> <span class="pre">scattering</span> <span class="pre">calculator\n</span>&#160;&#160;&#160; <span class="pre">'</span></em><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__doc__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__eq__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__format__">
+<span class="sig-name descname"><span class="pre">__format__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format_spec</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__format__" title="Link to this definition">¶</a></dt>
+<dd><p>Default object formatter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__ge__">
+<span class="sig-name descname"><span class="pre">__ge__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__ge__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__getattribute__">
+<span class="sig-name descname"><span class="pre">__getattribute__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__getattribute__" title="Link to this definition">¶</a></dt>
+<dd><p>Return getattr(self, name).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__getstate__">
+<span class="sig-name descname"><span class="pre">__getstate__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__getstate__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__gt__">
+<span class="sig-name descname"><span class="pre">__gt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__gt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__hash__" title="Link to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__init_subclass__" title="Link to this definition">¶</a></dt>
+<dd><p>This method is called when a class is subclassed.</p>
+<p>The default implementation does nothing. It may be
+overridden to extend subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__le__">
+<span class="sig-name descname"><span class="pre">__le__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__le__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__lt__">
+<span class="sig-name descname"><span class="pre">__lt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__lt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__module__">
+<span class="sig-name descname"><span class="pre">__module__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sasmodels.multiscat'</span></em><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__module__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__ne__">
+<span class="sig-name descname"><span class="pre">__ne__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__ne__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self!=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__new__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__new__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__reduce__">
+<span class="sig-name descname"><span class="pre">__reduce__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__reduce__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__reduce_ex__">
+<span class="sig-name descname"><span class="pre">__reduce_ex__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protocol</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__reduce_ex__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__repr__" title="Link to this definition">¶</a></dt>
+<dd><p>Return repr(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__setattr__">
+<span class="sig-name descname"><span class="pre">__setattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__setattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement setattr(self, name, value).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__sizeof__">
+<span class="sig-name descname"><span class="pre">__sizeof__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__sizeof__" title="Link to this definition">¶</a></dt>
+<dd><p>Size of object in memory, in bytes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__str__" title="Link to this definition">¶</a></dt>
+<dd><p>Return str(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__subclasshook__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__subclasshook__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__subclasshook__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract classes can override this to customize issubclass().</p>
+<p>This is invoked early on by abc.ABCMeta.__subclasscheck__().
+It should return True, False or NotImplemented.  If it returns
+NotImplemented, the normal algorithm is used.  Otherwise, it
+overrides the normal algorithm (and the outcome is cached).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.__weakref__">
+<span class="sig-name descname"><span class="pre">__weakref__</span></span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.__weakref__" title="Link to this definition">¶</a></dt>
+<dd><p>list of weak references to the object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.fft">
+<span class="sig-name descname"><span class="pre">fft</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Iq</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.fft" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the forward FFT for an image, real -&gt; complex.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.ifft">
+<span class="sig-name descname"><span class="pre">ifft</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fourier_frame</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.ifft" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the inverse FFT for an image, complex -&gt; complex.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.ICalculator.multiple_scattering">
+<span class="sig-name descname"><span class="pre">multiple_scattering</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Iq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.99</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.ICalculator.multiple_scattering" title="Link to this definition">¶</a></dt>
+<dd><p>Compute multiple scattering for I(q) given scattering probability p.</p>
+<p>Given a probability p of scattering with the thickness, the expected
+number of scattering events, <span class="math notranslate nohighlight">\(\lambda = -\log(1 - p)\)</span>, giving a
+Poisson weighted sum of single, double, triple, etc. scattering patterns.
+The number of patterns used is based on coverage (default 99%).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sasmodels.multiscat.</span></span><span class="sig-name descname"><span class="pre">MultipleScattering</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probability</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.99</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is2d</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">dtype('float64')</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="resolution.html#sasmodels.resolution.Resolution" title="sasmodels.resolution.Resolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">Resolution</span></code></a></p>
+<p>Compute multiple scattering using Fourier convolution.</p>
+<p>The fourier steps are determined by <em>qmax</em>, the maximum <span class="math notranslate nohighlight">\(q\)</span> value
+desired, <em>nq</em> the number of <span class="math notranslate nohighlight">\(q\)</span> steps and <em>window</em>, the amount
+of padding around the circular convolution.  The <span class="math notranslate nohighlight">\(q\)</span> spacing
+will be <span class="math notranslate nohighlight">\(\Delta q = 2 q_\mathrm{max} w / n_q\)</span>.  If <em>nq</em> is not
+given it will use <span class="math notranslate nohighlight">\(n_q = 2^k\)</span> such that <span class="math notranslate nohighlight">\(\Delta q &lt; q_\mathrm{min}\)</span>.</p>
+<p><em>probability</em> is related to the expected number of scattering
+events in the sample <span class="math notranslate nohighlight">\(\lambda\)</span> as <span class="math notranslate nohighlight">\(p = 1 - e^{-\lambda}\)</span>.</p>
+<p><em>coverage</em> determines how many scattering steps to consider.  The
+default is 0.99, which sets <span class="math notranslate nohighlight">\(n\)</span> such that <span class="math notranslate nohighlight">\(1 \ldots n\)</span> covers 99%
+of the Poisson probability mass function.</p>
+<p><em>is2d</em> is True then 2D scattering is used, otherwise it accepts
+and returns 1D scattering.</p>
+<p><em>resolution</em> is the resolution function to apply after multiple
+scattering.  If present, then the resolution <span class="math notranslate nohighlight">\(q\)</span> vectors will provide
+default values for <em>qmin</em>, <em>qmax</em> and <em>nq</em>.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__annotations__">
+<span class="sig-name descname"><span class="pre">__annotations__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__annotations__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__class__">
+<span class="sig-name descname"><span class="pre">__class__</span></span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__class__" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__delattr__">
+<span class="sig-name descname"><span class="pre">__delattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__delattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement delattr(self, name).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__dict__">
+<span class="sig-name descname"><span class="pre">__dict__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">mappingproxy({'__module__':</span> <span class="pre">'sasmodels.multiscat',</span> <span class="pre">'__doc__':</span> <span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Compute</span> <span class="pre">multiple</span> <span class="pre">scattering</span> <span class="pre">using</span> <span class="pre">Fourier</span> <span class="pre">convolution.\n\n</span>&#160;&#160;&#160; <span class="pre">The</span> <span class="pre">fourier</span> <span class="pre">steps</span> <span class="pre">are</span> <span class="pre">determined</span> <span class="pre">by</span> <span class="pre">*qmax*,</span> <span class="pre">the</span> <span class="pre">maximum</span> <span class="pre">$q$</span> <span class="pre">value\n</span>&#160;&#160;&#160; <span class="pre">desired,</span> <span class="pre">*nq*</span> <span class="pre">the</span> <span class="pre">number</span> <span class="pre">of</span> <span class="pre">$q$</span> <span class="pre">steps</span> <span class="pre">and</span> <span class="pre">*window*,</span> <span class="pre">the</span> <span class="pre">amount\n</span>&#160;&#160;&#160; <span class="pre">of</span> <span class="pre">padding</span> <span class="pre">around</span> <span class="pre">the</span> <span class="pre">circular</span> <span class="pre">convolution.</span>&#160; <span class="pre">The</span> <span class="pre">$q$</span> <span class="pre">spacing\n</span>&#160;&#160;&#160; <span class="pre">will</span> <span class="pre">be</span> <span class="pre">$\\Delta</span> <span class="pre">q</span> <span class="pre">=</span> <span class="pre">2</span> <span class="pre">q_\\mathrm{max}</span> <span class="pre">w</span> <span class="pre">/</span> <span class="pre">n_q$.</span>&#160; <span class="pre">If</span> <span class="pre">*nq*</span> <span class="pre">is</span> <span class="pre">not\n</span>&#160;&#160;&#160; <span class="pre">given</span> <span class="pre">it</span> <span class="pre">will</span> <span class="pre">use</span> <span class="pre">$n_q</span> <span class="pre">=</span> <span class="pre">2^k$</span> <span class="pre">such</span> <span class="pre">that</span> <span class="pre">$\\Delta</span> <span class="pre">q</span> <span class="pre">&lt;</span> <span class="pre">q_\\mathrm{min}$.\n\n</span>&#160;&#160;&#160; <span class="pre">*probability*</span> <span class="pre">is</span> <span class="pre">related</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">expected</span> <span class="pre">number</span> <span class="pre">of</span> <span class="pre">scattering\n</span>&#160;&#160;&#160; <span class="pre">events</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">sample</span> <span class="pre">$\\lambda$</span> <span class="pre">as</span> <span class="pre">$p</span> <span class="pre">=</span> <span class="pre">1</span> <span class="pre">-</span> <span class="pre">e^{-\\lambda}$.\n\n</span>&#160;&#160;&#160; <span class="pre">*coverage*</span> <span class="pre">determines</span> <span class="pre">how</span> <span class="pre">many</span> <span class="pre">scattering</span> <span class="pre">steps</span> <span class="pre">to</span> <span class="pre">consider.</span>&#160; <span class="pre">The\n</span>&#160;&#160;&#160; <span class="pre">default</span> <span class="pre">is</span> <span class="pre">0.99,</span> <span class="pre">which</span> <span class="pre">sets</span> <span class="pre">$n$</span> <span class="pre">such</span> <span class="pre">that</span> <span class="pre">$1</span> <span class="pre">\\ldots</span> <span class="pre">n$</span> <span class="pre">covers</span> <span class="pre">99%\n</span>&#160;&#160;&#160; <span class="pre">of</span> <span class="pre">the</span> <span class="pre">Poisson</span> <span class="pre">probability</span> <span class="pre">mass</span> <span class="pre">function.\n\n</span>&#160;&#160;&#160; <span class="pre">*is2d*</span> <span class="pre">is</span> <span class="pre">True</span> <span class="pre">then</span> <span class="pre">2D</span> <span class="pre">scattering</span> <span class="pre">is</span> <span class="pre">used,</span> <span class="pre">otherwise</span> <span class="pre">it</span> <span class="pre">accepts\n</span>&#160;&#160;&#160; <span class="pre">and</span> <span class="pre">returns</span> <span class="pre">1D</span> <span class="pre">scattering.\n\n</span>&#160;&#160;&#160; <span class="pre">*resolution*</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">resolution</span> <span class="pre">function</span> <span class="pre">to</span> <span class="pre">apply</span> <span class="pre">after</span> <span class="pre">multiple\n</span>&#160;&#160;&#160; <span class="pre">scattering.</span>&#160; <span class="pre">If</span> <span class="pre">present,</span> <span class="pre">then</span> <span class="pre">the</span> <span class="pre">resolution</span> <span class="pre">$q$</span> <span class="pre">vectors</span> <span class="pre">will</span> <span class="pre">provide\n</span>&#160;&#160;&#160; <span class="pre">default</span> <span class="pre">values</span> <span class="pre">for</span> <span class="pre">*qmin*,</span> <span class="pre">*qmax*</span> <span class="pre">and</span> <span class="pre">*nq*.\n</span>&#160;&#160;&#160; <span class="pre">',</span> <span class="pre">'__init__':</span> <span class="pre">&lt;function</span> <span class="pre">MultipleScattering.__init__&gt;,</span> <span class="pre">'apply':</span> <span class="pre">&lt;function</span> <span class="pre">MultipleScattering.apply&gt;,</span> <span class="pre">'radial_profile':</span> <span class="pre">&lt;function</span> <span class="pre">MultipleScattering.radial_profile&gt;,</span> <span class="pre">'plot_and_save_powers':</span> <span class="pre">&lt;function</span> <span class="pre">MultipleScattering.plot_and_save_powers&gt;,</span> <span class="pre">'__annotations__':</span> <span class="pre">{'Iq':</span> <span class="pre">'np.ndarray',</span> <span class="pre">'Iqxy':</span> <span class="pre">'np.ndarray',</span> <span class="pre">'q':</span> <span class="pre">'np.ndarray',</span> <span class="pre">'q_calc':</span> <span class="pre">'np.ndarray'}})</span></em><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__dict__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__dir__">
+<span class="sig-name descname"><span class="pre">__dir__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__dir__" title="Link to this definition">¶</a></dt>
+<dd><p>Default dir() implementation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__doc__">
+<span class="sig-name descname"><span class="pre">__doc__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Compute</span> <span class="pre">multiple</span> <span class="pre">scattering</span> <span class="pre">using</span> <span class="pre">Fourier</span> <span class="pre">convolution.\n\n</span>&#160;&#160;&#160; <span class="pre">The</span> <span class="pre">fourier</span> <span class="pre">steps</span> <span class="pre">are</span> <span class="pre">determined</span> <span class="pre">by</span> <span class="pre">*qmax*,</span> <span class="pre">the</span> <span class="pre">maximum</span> <span class="pre">$q$</span> <span class="pre">value\n</span>&#160;&#160;&#160; <span class="pre">desired,</span> <span class="pre">*nq*</span> <span class="pre">the</span> <span class="pre">number</span> <span class="pre">of</span> <span class="pre">$q$</span> <span class="pre">steps</span> <span class="pre">and</span> <span class="pre">*window*,</span> <span class="pre">the</span> <span class="pre">amount\n</span>&#160;&#160;&#160; <span class="pre">of</span> <span class="pre">padding</span> <span class="pre">around</span> <span class="pre">the</span> <span class="pre">circular</span> <span class="pre">convolution.</span>&#160; <span class="pre">The</span> <span class="pre">$q$</span> <span class="pre">spacing\n</span>&#160;&#160;&#160; <span class="pre">will</span> <span class="pre">be</span> <span class="pre">$\\Delta</span> <span class="pre">q</span> <span class="pre">=</span> <span class="pre">2</span> <span class="pre">q_\\mathrm{max}</span> <span class="pre">w</span> <span class="pre">/</span> <span class="pre">n_q$.</span>&#160; <span class="pre">If</span> <span class="pre">*nq*</span> <span class="pre">is</span> <span class="pre">not\n</span>&#160;&#160;&#160; <span class="pre">given</span> <span class="pre">it</span> <span class="pre">will</span> <span class="pre">use</span> <span class="pre">$n_q</span> <span class="pre">=</span> <span class="pre">2^k$</span> <span class="pre">such</span> <span class="pre">that</span> <span class="pre">$\\Delta</span> <span class="pre">q</span> <span class="pre">&lt;</span> <span class="pre">q_\\mathrm{min}$.\n\n</span>&#160;&#160;&#160; <span class="pre">*probability*</span> <span class="pre">is</span> <span class="pre">related</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">expected</span> <span class="pre">number</span> <span class="pre">of</span> <span class="pre">scattering\n</span>&#160;&#160;&#160; <span class="pre">events</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">sample</span> <span class="pre">$\\lambda$</span> <span class="pre">as</span> <span class="pre">$p</span> <span class="pre">=</span> <span class="pre">1</span> <span class="pre">-</span> <span class="pre">e^{-\\lambda}$.\n\n</span>&#160;&#160;&#160; <span class="pre">*coverage*</span> <span class="pre">determines</span> <span class="pre">how</span> <span class="pre">many</span> <span class="pre">scattering</span> <span class="pre">steps</span> <span class="pre">to</span> <span class="pre">consider.</span>&#160; <span class="pre">The\n</span>&#160;&#160;&#160; <span class="pre">default</span> <span class="pre">is</span> <span class="pre">0.99,</span> <span class="pre">which</span> <span class="pre">sets</span> <span class="pre">$n$</span> <span class="pre">such</span> <span class="pre">that</span> <span class="pre">$1</span> <span class="pre">\\ldots</span> <span class="pre">n$</span> <span class="pre">covers</span> <span class="pre">99%\n</span>&#160;&#160;&#160; <span class="pre">of</span> <span class="pre">the</span> <span class="pre">Poisson</span> <span class="pre">probability</span> <span class="pre">mass</span> <span class="pre">function.\n\n</span>&#160;&#160;&#160; <span class="pre">*is2d*</span> <span class="pre">is</span> <span class="pre">True</span> <span class="pre">then</span> <span class="pre">2D</span> <span class="pre">scattering</span> <span class="pre">is</span> <span class="pre">used,</span> <span class="pre">otherwise</span> <span class="pre">it</span> <span class="pre">accepts\n</span>&#160;&#160;&#160; <span class="pre">and</span> <span class="pre">returns</span> <span class="pre">1D</span> <span class="pre">scattering.\n\n</span>&#160;&#160;&#160; <span class="pre">*resolution*</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">resolution</span> <span class="pre">function</span> <span class="pre">to</span> <span class="pre">apply</span> <span class="pre">after</span> <span class="pre">multiple\n</span>&#160;&#160;&#160; <span class="pre">scattering.</span>&#160; <span class="pre">If</span> <span class="pre">present,</span> <span class="pre">then</span> <span class="pre">the</span> <span class="pre">resolution</span> <span class="pre">$q$</span> <span class="pre">vectors</span> <span class="pre">will</span> <span class="pre">provide\n</span>&#160;&#160;&#160; <span class="pre">default</span> <span class="pre">values</span> <span class="pre">for</span> <span class="pre">*qmin*,</span> <span class="pre">*qmax*</span> <span class="pre">and</span> <span class="pre">*nq*.\n</span>&#160;&#160;&#160; <span class="pre">'</span></em><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__doc__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__eq__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__format__">
+<span class="sig-name descname"><span class="pre">__format__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format_spec</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__format__" title="Link to this definition">¶</a></dt>
+<dd><p>Default object formatter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__ge__">
+<span class="sig-name descname"><span class="pre">__ge__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__ge__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__getattribute__">
+<span class="sig-name descname"><span class="pre">__getattribute__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__getattribute__" title="Link to this definition">¶</a></dt>
+<dd><p>Return getattr(self, name).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__getstate__">
+<span class="sig-name descname"><span class="pre">__getstate__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__getstate__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__gt__">
+<span class="sig-name descname"><span class="pre">__gt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__gt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__hash__" title="Link to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qmin</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nq</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">probability</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.99</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is2d</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolution</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">dtype('float64')</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__init_subclass__" title="Link to this definition">¶</a></dt>
+<dd><p>This method is called when a class is subclassed.</p>
+<p>The default implementation does nothing. It may be
+overridden to extend subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__le__">
+<span class="sig-name descname"><span class="pre">__le__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__le__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__lt__">
+<span class="sig-name descname"><span class="pre">__lt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__lt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__module__">
+<span class="sig-name descname"><span class="pre">__module__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sasmodels.multiscat'</span></em><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__module__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__ne__">
+<span class="sig-name descname"><span class="pre">__ne__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__ne__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self!=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__new__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__new__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__reduce__">
+<span class="sig-name descname"><span class="pre">__reduce__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__reduce__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__reduce_ex__">
+<span class="sig-name descname"><span class="pre">__reduce_ex__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protocol</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__reduce_ex__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__repr__" title="Link to this definition">¶</a></dt>
+<dd><p>Return repr(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__setattr__">
+<span class="sig-name descname"><span class="pre">__setattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__setattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement setattr(self, name, value).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__sizeof__">
+<span class="sig-name descname"><span class="pre">__sizeof__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__sizeof__" title="Link to this definition">¶</a></dt>
+<dd><p>Size of object in memory, in bytes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__str__" title="Link to this definition">¶</a></dt>
+<dd><p>Return str(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__subclasshook__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__subclasshook__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__subclasshook__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract classes can override this to customize issubclass().</p>
+<p>This is invoked early on by abc.ABCMeta.__subclasscheck__().
+It should return True, False or NotImplemented.  If it returns
+NotImplemented, the normal algorithm is used.  Otherwise, it
+overrides the normal algorithm (and the outcome is cached).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.__weakref__">
+<span class="sig-name descname"><span class="pre">__weakref__</span></span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.__weakref__" title="Link to this definition">¶</a></dt>
+<dd><p>list of weak references to the object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.apply">
+<span class="sig-name descname"><span class="pre">apply</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theory</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.apply" title="Link to this definition">¶</a></dt>
+<dd><p>Smear <em>theory</em> by the resolution function, returning <em>Iq</em>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.plot_and_save_powers">
+<span class="sig-name descname"><span class="pre">plot_and_save_powers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">theory</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outfile</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">background</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.plot_and_save_powers" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.q">
+<span class="sig-name descname"><span class="pre">q</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.q" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.q_calc">
+<span class="sig-name descname"><span class="pre">q_calc</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.q_calc" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.MultipleScattering.radial_profile">
+<span class="sig-name descname"><span class="pre">radial_profile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Iqxy</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.MultipleScattering.radial_profile" title="Link to this definition">¶</a></dt>
+<dd><p>Compute that radial profile for the given Iqxy grid.  The grid should
+be defined as for</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sasmodels.multiscat.</span></span><span class="sig-name descname"><span class="pre">NumpyCalculator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">dtype('float64')</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sasmodels.multiscat.ICalculator" title="sasmodels.multiscat.ICalculator"><code class="xref py py-class docutils literal notranslate"><span class="pre">ICalculator</span></code></a></p>
+<p>Multiple scattering calculator using numpy fft.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__annotations__">
+<span class="sig-name descname"><span class="pre">__annotations__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__annotations__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__class__">
+<span class="sig-name descname"><span class="pre">__class__</span></span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__class__" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__delattr__">
+<span class="sig-name descname"><span class="pre">__delattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__delattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement delattr(self, name).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__dict__">
+<span class="sig-name descname"><span class="pre">__dict__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">mappingproxy({'__module__':</span> <span class="pre">'sasmodels.multiscat',</span> <span class="pre">'__doc__':</span> <span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Multiple</span> <span class="pre">scattering</span> <span class="pre">calculator</span> <span class="pre">using</span> <span class="pre">numpy</span> <span class="pre">fft.\n</span>&#160;&#160;&#160; <span class="pre">',</span> <span class="pre">'__init__':</span> <span class="pre">&lt;function</span> <span class="pre">NumpyCalculator.__init__&gt;,</span> <span class="pre">'fft':</span> <span class="pre">&lt;function</span> <span class="pre">NumpyCalculator.fft&gt;,</span> <span class="pre">'ifft':</span> <span class="pre">&lt;function</span> <span class="pre">NumpyCalculator.ifft&gt;,</span> <span class="pre">'multiple_scattering':</span> <span class="pre">&lt;function</span> <span class="pre">NumpyCalculator.multiple_scattering&gt;,</span> <span class="pre">'__annotations__':</span> <span class="pre">{}})</span></em><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__dict__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__dir__">
+<span class="sig-name descname"><span class="pre">__dir__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__dir__" title="Link to this definition">¶</a></dt>
+<dd><p>Default dir() implementation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__doc__">
+<span class="sig-name descname"><span class="pre">__doc__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Multiple</span> <span class="pre">scattering</span> <span class="pre">calculator</span> <span class="pre">using</span> <span class="pre">numpy</span> <span class="pre">fft.\n</span>&#160;&#160;&#160; <span class="pre">'</span></em><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__doc__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__eq__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__format__">
+<span class="sig-name descname"><span class="pre">__format__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format_spec</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__format__" title="Link to this definition">¶</a></dt>
+<dd><p>Default object formatter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__ge__">
+<span class="sig-name descname"><span class="pre">__ge__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__ge__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__getattribute__">
+<span class="sig-name descname"><span class="pre">__getattribute__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__getattribute__" title="Link to this definition">¶</a></dt>
+<dd><p>Return getattr(self, name).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__getstate__">
+<span class="sig-name descname"><span class="pre">__getstate__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__getstate__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__gt__">
+<span class="sig-name descname"><span class="pre">__gt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__gt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__hash__" title="Link to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dims</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">dtype('float64')</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__init_subclass__" title="Link to this definition">¶</a></dt>
+<dd><p>This method is called when a class is subclassed.</p>
+<p>The default implementation does nothing. It may be
+overridden to extend subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__le__">
+<span class="sig-name descname"><span class="pre">__le__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__le__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__lt__">
+<span class="sig-name descname"><span class="pre">__lt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__lt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__module__">
+<span class="sig-name descname"><span class="pre">__module__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sasmodels.multiscat'</span></em><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__module__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__ne__">
+<span class="sig-name descname"><span class="pre">__ne__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__ne__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self!=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__new__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__new__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__reduce__">
+<span class="sig-name descname"><span class="pre">__reduce__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__reduce__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__reduce_ex__">
+<span class="sig-name descname"><span class="pre">__reduce_ex__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protocol</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__reduce_ex__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__repr__" title="Link to this definition">¶</a></dt>
+<dd><p>Return repr(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__setattr__">
+<span class="sig-name descname"><span class="pre">__setattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__setattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement setattr(self, name, value).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__sizeof__">
+<span class="sig-name descname"><span class="pre">__sizeof__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__sizeof__" title="Link to this definition">¶</a></dt>
+<dd><p>Size of object in memory, in bytes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__str__" title="Link to this definition">¶</a></dt>
+<dd><p>Return str(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__subclasshook__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__subclasshook__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__subclasshook__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract classes can override this to customize issubclass().</p>
+<p>This is invoked early on by abc.ABCMeta.__subclasscheck__().
+It should return True, False or NotImplemented.  If it returns
+NotImplemented, the normal algorithm is used.  Otherwise, it
+overrides the normal algorithm (and the outcome is cached).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.__weakref__">
+<span class="sig-name descname"><span class="pre">__weakref__</span></span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.__weakref__" title="Link to this definition">¶</a></dt>
+<dd><p>list of weak references to the object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.fft">
+<span class="sig-name descname"><span class="pre">fft</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Iq</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.fft" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the forward FFT for an image, real -&gt; complex.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.ifft">
+<span class="sig-name descname"><span class="pre">ifft</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fourier_frame</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.ifft" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the inverse FFT for an image, complex -&gt; complex.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.NumpyCalculator.multiple_scattering">
+<span class="sig-name descname"><span class="pre">multiple_scattering</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Iq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.99</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.NumpyCalculator.multiple_scattering" title="Link to this definition">¶</a></dt>
+<dd><p>Compute multiple scattering for I(q) given scattering probability p.</p>
+<p>Given a probability p of scattering with the thickness, the expected
+number of scattering events, <span class="math notranslate nohighlight">\(\lambda = -\log(1 - p)\)</span>, giving a
+Poisson weighted sum of single, double, triple, etc. scattering patterns.
+The number of patterns used is based on coverage (default 99%).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sasmodels.multiscat.</span></span><span class="sig-name descname"><span class="pre">OpenclCalculator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dims</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">dtype('float64')</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sasmodels.multiscat.ICalculator" title="sasmodels.multiscat.ICalculator"><code class="xref py py-class docutils literal notranslate"><span class="pre">ICalculator</span></code></a></p>
+<p>Multiple scattering calculator using OpenCL via pyfft.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__annotations__">
+<span class="sig-name descname"><span class="pre">__annotations__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__annotations__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__class__">
+<span class="sig-name descname"><span class="pre">__class__</span></span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__class__" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__delattr__">
+<span class="sig-name descname"><span class="pre">__delattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__delattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement delattr(self, name).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__dict__">
+<span class="sig-name descname"><span class="pre">__dict__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">mappingproxy({'__module__':</span> <span class="pre">'sasmodels.multiscat',</span> <span class="pre">'__doc__':</span> <span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Multiple</span> <span class="pre">scattering</span> <span class="pre">calculator</span> <span class="pre">using</span> <span class="pre">OpenCL</span> <span class="pre">via</span> <span class="pre">pyfft.\n</span>&#160;&#160;&#160; <span class="pre">',</span> <span class="pre">'polyval1f':</span> <span class="pre">None,</span> <span class="pre">'polyval1d':</span> <span class="pre">None,</span> <span class="pre">'__init__':</span> <span class="pre">&lt;function</span> <span class="pre">OpenclCalculator.__init__&gt;,</span> <span class="pre">'fft':</span> <span class="pre">&lt;function</span> <span class="pre">OpenclCalculator.fft&gt;,</span> <span class="pre">'ifft':</span> <span class="pre">&lt;function</span> <span class="pre">OpenclCalculator.ifft&gt;,</span> <span class="pre">'multiple_scattering':</span> <span class="pre">&lt;function</span> <span class="pre">OpenclCalculator.multiple_scattering&gt;,</span> <span class="pre">'__annotations__':</span> <span class="pre">{}})</span></em><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__dict__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__dir__">
+<span class="sig-name descname"><span class="pre">__dir__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__dir__" title="Link to this definition">¶</a></dt>
+<dd><p>Default dir() implementation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__doc__">
+<span class="sig-name descname"><span class="pre">__doc__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Multiple</span> <span class="pre">scattering</span> <span class="pre">calculator</span> <span class="pre">using</span> <span class="pre">OpenCL</span> <span class="pre">via</span> <span class="pre">pyfft.\n</span>&#160;&#160;&#160; <span class="pre">'</span></em><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__doc__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__eq__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__format__">
+<span class="sig-name descname"><span class="pre">__format__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format_spec</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__format__" title="Link to this definition">¶</a></dt>
+<dd><p>Default object formatter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__ge__">
+<span class="sig-name descname"><span class="pre">__ge__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__ge__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__getattribute__">
+<span class="sig-name descname"><span class="pre">__getattribute__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__getattribute__" title="Link to this definition">¶</a></dt>
+<dd><p>Return getattr(self, name).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__getstate__">
+<span class="sig-name descname"><span class="pre">__getstate__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__getstate__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__gt__">
+<span class="sig-name descname"><span class="pre">__gt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__gt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__hash__" title="Link to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dims</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">dtype('float64')</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__init_subclass__" title="Link to this definition">¶</a></dt>
+<dd><p>This method is called when a class is subclassed.</p>
+<p>The default implementation does nothing. It may be
+overridden to extend subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__le__">
+<span class="sig-name descname"><span class="pre">__le__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__le__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__lt__">
+<span class="sig-name descname"><span class="pre">__lt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__lt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__module__">
+<span class="sig-name descname"><span class="pre">__module__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sasmodels.multiscat'</span></em><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__module__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__ne__">
+<span class="sig-name descname"><span class="pre">__ne__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__ne__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self!=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__new__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__new__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__reduce__">
+<span class="sig-name descname"><span class="pre">__reduce__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__reduce__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__reduce_ex__">
+<span class="sig-name descname"><span class="pre">__reduce_ex__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protocol</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__reduce_ex__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__repr__" title="Link to this definition">¶</a></dt>
+<dd><p>Return repr(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__setattr__">
+<span class="sig-name descname"><span class="pre">__setattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__setattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement setattr(self, name, value).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__sizeof__">
+<span class="sig-name descname"><span class="pre">__sizeof__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__sizeof__" title="Link to this definition">¶</a></dt>
+<dd><p>Size of object in memory, in bytes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__str__" title="Link to this definition">¶</a></dt>
+<dd><p>Return str(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__subclasshook__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__subclasshook__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__subclasshook__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract classes can override this to customize issubclass().</p>
+<p>This is invoked early on by abc.ABCMeta.__subclasscheck__().
+It should return True, False or NotImplemented.  If it returns
+NotImplemented, the normal algorithm is used.  Otherwise, it
+overrides the normal algorithm (and the outcome is cached).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.__weakref__">
+<span class="sig-name descname"><span class="pre">__weakref__</span></span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.__weakref__" title="Link to this definition">¶</a></dt>
+<dd><p>list of weak references to the object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.fft">
+<span class="sig-name descname"><span class="pre">fft</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Iq</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.fft" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the forward FFT for an image, real -&gt; complex.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.ifft">
+<span class="sig-name descname"><span class="pre">ifft</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fourier_frame</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.ifft" title="Link to this definition">¶</a></dt>
+<dd><p>Compute the inverse FFT for an image, complex -&gt; complex.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.multiple_scattering">
+<span class="sig-name descname"><span class="pre">multiple_scattering</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Iq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.99</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.multiple_scattering" title="Link to this definition">¶</a></dt>
+<dd><p>Compute multiple scattering for I(q) given scattering probability p.</p>
+<p>Given a probability p of scattering with the thickness, the expected
+number of scattering events, <span class="math notranslate nohighlight">\(\lambda = -\log(1 - p)\)</span>, giving a
+Poisson weighted sum of single, double, triple, etc. scattering patterns.
+The number of patterns used is based on coverage (default 99%).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.polyval1d">
+<span class="sig-name descname"><span class="pre">polyval1d</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.polyval1d" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.multiscat.OpenclCalculator.polyval1f">
+<span class="sig-name descname"><span class="pre">polyval1f</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.multiscat.OpenclCalculator.polyval1f" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.multiscat._forward_shift">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.multiscat.</span></span><span class="sig-name descname"><span class="pre">_forward_shift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Iq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">dtype('float64')</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat._forward_shift" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.multiscat._inverse_shift">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.multiscat.</span></span><span class="sig-name descname"><span class="pre">_inverse_shift</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">frame</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">dtype('float64')</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat._inverse_shift" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.multiscat.annular_average">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.multiscat.</span></span><span class="sig-name descname"><span class="pre">annular_average</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qxy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Iqxy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qbins</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.annular_average" title="Link to this definition">¶</a></dt>
+<dd><p>Compute annular average of points in <em>Iqxy</em> at <em>qbins</em>.  The <span class="math notranslate nohighlight">\(q_x\)</span>, <span class="math notranslate nohighlight">\(q_y\)</span>
+coordinates for <em>Iqxy</em> are given in <em>qxy</em>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.multiscat.main">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.multiscat.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.main" title="Link to this definition">¶</a></dt>
+<dd><p>Command line interface to multiple scattering calculator.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.multiscat.parse_pars">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.multiscat.</span></span><span class="sig-name descname"><span class="pre">parse_pars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">opts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Namespace</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.multiscat.parse_pars" title="Link to this definition">¶</a></dt>
+<dd><p>Parse par=val arguments from the command line.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.multiscat.plotxy">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.multiscat.</span></span><span class="sig-name descname"><span class="pre">plotxy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Iq</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.plotxy" title="Link to this definition">¶</a></dt>
+<dd><p>Plot q, Iq or (qx, qy), Iqxy.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.multiscat.rebin">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.multiscat.</span></span><span class="sig-name descname"><span class="pre">rebin</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">I</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">xo</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.rebin" title="Link to this definition">¶</a></dt>
+<dd><p>Rebin from edges <em>x</em>, bins I into edges <em>xo</em>.</p>
+<p><em>x</em> and <em>xo</em> should be monotonically increasing.</p>
+<p>If <em>x</em> has duplicate values, then all corresponding values at I(x) will
+be effectively summed into the same bin.  If <em>xo</em> has duplicate values,
+the first bin will contain the entire contents and subsequent bins will
+contain zeros.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.multiscat.scattering_coeffs">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.multiscat.</span></span><span class="sig-name descname"><span class="pre">scattering_coeffs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coverage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.99</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.scattering_coeffs" title="Link to this definition">¶</a></dt>
+<dd><p>Return the coefficients of the scattering powers for transmission
+probability <em>p</em>.  This is just the corresponding values for the
+Poisson distribution for <span class="math notranslate nohighlight">\(\lambda = -\ln(1-p)\)</span> such that
+<span class="math notranslate nohighlight">\(\sum_{k = 0 \ldots n} P(k; \lambda)\)</span> is larger than <em>coverage</em>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.multiscat.scattering_powers">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.multiscat.</span></span><span class="sig-name descname"><span class="pre">scattering_powers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Iq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'f'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.scattering_powers" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate the scattering powers up to <em>n</em>.</p>
+<p>This includes <em>k=1</em> even though it should just be <em>Iq</em> itself</p>
+<p>The frames are unweighted; to weight scale by <span class="math notranslate nohighlight">\(\lambda^k e^{-\lambda}/k!\)</span>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.multiscat.truncated_poisson_invcdf">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.multiscat.</span></span><span class="sig-name descname"><span class="pre">truncated_poisson_invcdf</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">coverage</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">L</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.multiscat.truncated_poisson_invcdf" title="Link to this definition">¶</a></dt>
+<dd><p>Return smallest k such that cdf(k; L) &gt; coverage from the truncated Poisson
+probability excluding k=0</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">26. Multiple scattering support</a><ul>
+<li><a class="reference internal" href="#module-sasmodels.multiscat"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.multiscat</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.multiscat.Calculator"><code class="docutils literal notranslate"><span class="pre">Calculator</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator"><code class="docutils literal notranslate"><span class="pre">ICalculator</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__class__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__class__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__delattr__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__delattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__dict__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__dict__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__dir__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__dir__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__doc__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__doc__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__eq__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__eq__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__format__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__format__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__ge__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__ge__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__getattribute__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__getattribute__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__getstate__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__getstate__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__gt__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__gt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__hash__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__hash__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__init__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__init_subclass__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__le__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__le__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__lt__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__lt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__module__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__module__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__ne__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__ne__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__new__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__new__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__reduce__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__reduce__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__reduce_ex__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__reduce_ex__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__repr__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__repr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__setattr__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__setattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__sizeof__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__sizeof__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__str__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__subclasshook__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__subclasshook__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.__weakref__"><code class="docutils literal notranslate"><span class="pre">ICalculator.__weakref__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.fft"><code class="docutils literal notranslate"><span class="pre">ICalculator.fft()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.ifft"><code class="docutils literal notranslate"><span class="pre">ICalculator.ifft()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.ICalculator.multiple_scattering"><code class="docutils literal notranslate"><span class="pre">ICalculator.multiple_scattering()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering"><code class="docutils literal notranslate"><span class="pre">MultipleScattering</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__annotations__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__annotations__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__class__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__class__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__delattr__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__delattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__dict__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__dict__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__dir__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__dir__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__doc__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__doc__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__eq__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__eq__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__format__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__format__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__ge__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__ge__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__getattribute__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__getattribute__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__getstate__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__getstate__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__gt__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__gt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__hash__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__hash__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__init__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__init_subclass__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__le__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__le__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__lt__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__lt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__module__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__module__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__ne__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__ne__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__new__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__new__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__reduce__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__reduce__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__reduce_ex__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__reduce_ex__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__repr__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__repr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__setattr__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__setattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__sizeof__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__sizeof__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__str__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__subclasshook__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__subclasshook__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.__weakref__"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.__weakref__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.apply"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.apply()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.plot_and_save_powers"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.plot_and_save_powers()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.q"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.q</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.q_calc"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.q_calc</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.MultipleScattering.radial_profile"><code class="docutils literal notranslate"><span class="pre">MultipleScattering.radial_profile()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__annotations__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__annotations__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__class__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__class__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__delattr__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__delattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__dict__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__dict__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__dir__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__dir__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__doc__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__doc__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__eq__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__eq__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__format__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__format__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__ge__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__ge__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__getattribute__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__getattribute__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__getstate__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__getstate__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__gt__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__gt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__hash__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__hash__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__init__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__init_subclass__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__le__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__le__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__lt__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__lt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__module__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__module__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__ne__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__ne__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__new__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__new__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__reduce__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__reduce__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__reduce_ex__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__reduce_ex__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__repr__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__repr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__setattr__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__setattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__sizeof__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__sizeof__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__str__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__subclasshook__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__subclasshook__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.__weakref__"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.__weakref__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.fft"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.fft()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.ifft"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.ifft()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.NumpyCalculator.multiple_scattering"><code class="docutils literal notranslate"><span class="pre">NumpyCalculator.multiple_scattering()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__annotations__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__annotations__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__class__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__class__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__delattr__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__delattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__dict__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__dict__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__dir__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__dir__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__doc__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__doc__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__eq__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__eq__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__format__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__format__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__ge__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__ge__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__getattribute__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__getattribute__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__getstate__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__getstate__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__gt__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__gt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__hash__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__hash__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__init__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__init_subclass__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__le__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__le__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__lt__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__lt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__module__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__module__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__ne__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__ne__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__new__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__new__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__reduce__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__reduce__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__reduce_ex__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__reduce_ex__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__repr__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__repr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__setattr__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__setattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__sizeof__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__sizeof__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__str__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__subclasshook__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__subclasshook__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.__weakref__"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.__weakref__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.fft"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.fft()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.ifft"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.ifft()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.multiple_scattering"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.multiple_scattering()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.polyval1d"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.polyval1d</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.OpenclCalculator.polyval1f"><code class="docutils literal notranslate"><span class="pre">OpenclCalculator.polyval1f</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sasmodels.multiscat._forward_shift"><code class="docutils literal notranslate"><span class="pre">_forward_shift()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat._inverse_shift"><code class="docutils literal notranslate"><span class="pre">_inverse_shift()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.annular_average"><code class="docutils literal notranslate"><span class="pre">annular_average()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.parse_pars"><code class="docutils literal notranslate"><span class="pre">parse_pars()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.plotxy"><code class="docutils literal notranslate"><span class="pre">plotxy()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.rebin"><code class="docutils literal notranslate"><span class="pre">rebin()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.scattering_coeffs"><code class="docutils literal notranslate"><span class="pre">scattering_coeffs()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.scattering_powers"><code class="docutils literal notranslate"><span class="pre">scattering_powers()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.multiscat.truncated_poisson_invcdf"><code class="docutils literal notranslate"><span class="pre">truncated_poisson_invcdf()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="modelinfo.html"
+                          title="previous chapter"><span class="section-number">25. </span>Parameter and model definitions</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="product.html"
+                          title="next chapter"><span class="section-number">27. </span>Product model evaluator</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/dev/sasmodels-api/multiscat.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="product.html" title="27. Product model evaluator"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="modelinfo.html" title="25. Parameter and model definitions"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">26. </span>Multiple scattering support</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, The SasView Project.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

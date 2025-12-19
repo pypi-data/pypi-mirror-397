@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>20. Ctypes model evaluator &#8212; SasView 6.1.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=f0c0c503"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="21. Python model evaluator" href="kernelpy.html" />
+    <link rel="prev" title="19. CUDA model evaluator" href="kernelcuda.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="kernelpy.html" title="21. Python model evaluator"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="kernelcuda.html" title="19. CUDA model evaluator"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">20. </span>Ctypes model evaluator</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="ctypes-model-evaluator">
+<h1><span class="section-number">20. </span>Ctypes model evaluator<a class="headerlink" href="#ctypes-model-evaluator" title="Link to this heading">¶</a></h1>
+<section id="module-sasmodels.kerneldll">
+<span id="sasmodels-kerneldll"></span><h2><a class="reference internal" href="#module-sasmodels.kerneldll" title="sasmodels.kerneldll"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.kerneldll</span></code></a><a class="headerlink" href="#module-sasmodels.kerneldll" title="Link to this heading">¶</a></h2>
+<p>DLL driver for C kernels</p>
+<p>If the environment variable <em>SAS_OPENMP</em> is set, then sasmodels
+will attempt to compile with OpenMP flags so that the model can use all
+available kernels.  This may or may not be available on your compiler
+toolchain.  Depending on operating system and environment.</p>
+<p>Windows does not have provide a compiler with the operating system.
+Instead, we assume that TinyCC is installed and available.  This can
+be done with a simple pip command if it is not already available:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">tinycc</span>
+</pre></div>
+</div>
+<p>If Microsoft Visual C++ is available (because VCINSTALLDIR is
+defined in the environment), then that will be used instead.
+Microsoft Visual C++ for Python is available from Microsoft:</p>
+<blockquote>
+<div><p><a class="reference external" href="http://www.microsoft.com/en-us/download/details.aspx?id=44266">http://www.microsoft.com/en-us/download/details.aspx?id=44266</a></p>
+</div></blockquote>
+<p>If neither compiler is available, sasmodels will check for <em>MinGW</em>,
+the GNU compiler toolchain. This available in packages such as Anaconda
+and PythonXY, or available stand alone. This toolchain has had
+difficulties on some systems, and may or may not work for you.</p>
+<p>You can control which compiler to use by setting SAS_COMPILER in the
+environment:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>tinycc (Windows): use the TinyCC compiler shipped with SasView</p></li>
+<li><p>msvc (Windows): use the Microsoft Visual C++ compiler</p></li>
+<li><p>mingw (Windows): use the MinGW GNU cc compiler</p></li>
+<li><p>unix (Linux): use the system cc compiler.</p></li>
+<li><p>unix (Mac): use the clang compiler. You will need XCode installed, and
+the XCode command line tools. Mac comes with OpenCL drivers, so generally
+this will not be needed.</p></li>
+</ul>
+</div></blockquote>
+<p>Both <em>msvc</em> and <em>mingw</em> require that the compiler is available on your path.
+For <em>msvc</em>, this can done by running vcvarsall.bat in a windows terminal.
+Install locations are system dependent, such as:</p>
+<blockquote>
+<div><p>C:Program Files (x86)Common FilesMicrosoftVisual
+C++ for Python9.0vcvarsall.bat</p>
+</div></blockquote>
+<p>or maybe</p>
+<blockquote>
+<div><p>C:UsersyournameAppDataLocalProgramsCommonMicrosoftVisual
+C++ for Python9.0vcvarsall.bat</p>
+</div></blockquote>
+<p>OpenMP for <em>msvc</em> requires the Microsoft vcomp90.dll library, which doesn’t
+seem to be included with the compiler, nor does there appear to be a public
+download location.  There may be one on your machine already in a location
+such as:</p>
+<blockquote>
+<div><p>C:Windowswinsxsx86_microsoft.vc90.openmp*vcomp90.dll</p>
+</div></blockquote>
+<p>If you copy this to somewhere on your path, such as the python directory or
+the install directory for this application, then OpenMP should be supported.</p>
+<p>For full control of the compiler, define a function
+<em>compile_command(source,output)</em> which takes the name of the source file
+and the name of the output file and returns a compile command that can be
+evaluated in the shell.  For even more control, replace the entire
+<em>compile(source,output)</em> function.</p>
+<p>The global attribute <em>ALLOW_SINGLE_PRECISION_DLLS</em> should be set to <em>False</em> if
+you wish to prevent single precision floating point evaluation for the compiled
+models, otherwise set it defaults to <em>True</em>.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sasmodels.kerneldll.</span></span><span class="sig-name descname"><span class="pre">DllKernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="kernelpy.html#sasmodels.kernelpy.PyInput" title="sasmodels.kernelpy.PyInput"><span class="pre">PyInput</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="kernel.html#sasmodels.kernel.Kernel" title="sasmodels.kernel.Kernel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Kernel</span></code></a></p>
+<p>Callable SAS kernel.</p>
+<p><em>kernel</em> is the c function to call.</p>
+<p><em>model_info</em> is the module information</p>
+<p><em>q_input</em> is the DllInput q vectors at which the kernel should be
+evaluated.</p>
+<p>The resulting call method takes the <em>pars</em>, a list of values for
+the fixed parameters to the kernel, and <em>pd_pars</em>, a list of (value, weight)
+vectors for the polydisperse parameters.  <em>cutoff</em> determines the
+integration limits: any points with combined weight less than <em>cutoff</em>
+will not be calculated.</p>
+<p>Call <a class="reference internal" href="#sasmodels.kerneldll.DllKernel.release" title="sasmodels.kerneldll.DllKernel.release"><code class="xref py py-meth docutils literal notranslate"><span class="pre">release()</span></code></a> when done with the kernel instance.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.Fq">
+<span class="sig-name descname"><span class="pre">Fq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call_details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magnetic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius_effective_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">np.ndarray</span></span></span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.Fq" title="Link to this definition">¶</a></dt>
+<dd><p>Returns &lt;F(q)&gt;, &lt;F(q)^2&gt;, effective radius, shell volume and
+form:shell volume ratio.  The &lt;F(q)&gt; term may be None if the
+form factor does not support direct computation of <span class="math notranslate nohighlight">\(F(q)\)</span></p>
+<p><span class="math notranslate nohighlight">\(P(q) = &lt;F^2(q)&gt;/&lt;V&gt;\)</span> is used for structure factor calculations,</p>
+<div class="math notranslate nohighlight">
+\[I(q) = \text{scale} \cdot P(q) \cdot S(q) + \text{background}\]</div>
+<p>For the beta approximation, this becomes</p>
+<div class="math notranslate nohighlight">
+\[I(q) = \text{scale} P (1 + &lt;F&gt;^2/&lt;F^2&gt; (S - 1)) + \text{background}
+     = \text{scale}/&lt;V&gt; (&lt;F^2&gt; + &lt;F&gt;^2 (S - 1)) + \text{background}\]</div>
+<p><span class="math notranslate nohighlight">\(&lt;F(q)&gt;\)</span> and <span class="math notranslate nohighlight">\(&lt;F^2(q)&gt;\)</span> are averaged by polydispersity in shape
+and orientation, with each configuration <span class="math notranslate nohighlight">\(x_k\)</span> having form factor
+<span class="math notranslate nohighlight">\(F(q, x_k)\)</span>, weight <span class="math notranslate nohighlight">\(w_k\)</span> and volume <span class="math notranslate nohighlight">\(V_k\)</span>.  The result is:</p>
+<div class="math notranslate nohighlight">
+\[P(q)=\frac{\sum w_k F^2(q, x_k) / \sum w_k}{\sum w_k V_k / \sum w_k}\]</div>
+<p>The form factor itself is scaled by volume and contrast to compute the
+total scattering.  This is then squared, and the volume weighted
+F^2 is then normalized by volume F.  For a given density, the number
+of scattering centers is assumed to scale linearly with volume.  Later
+scaling the resulting <span class="math notranslate nohighlight">\(P(q)\)</span> by the volume fraction of particles
+gives the total scattering on an absolute scale. Most models
+incorporate the volume fraction into the overall scale parameter.  An
+exception is vesicle, which includes the volume fraction parameter in
+the model itself, scaling <span class="math notranslate nohighlight">\(F\)</span> by <span class="math notranslate nohighlight">\(\surd V_f\)</span> so that the math for
+the beta approximation works out.</p>
+<p>By scaling <span class="math notranslate nohighlight">\(P(q)\)</span> by total weight <span class="math notranslate nohighlight">\(\sum w_k\)</span>, there is no need to make
+sure that the polydisperisity distributions normalize to one.  In
+particular, any distibution values <span class="math notranslate nohighlight">\(x_k\)</span> outside the valid domain
+of <span class="math notranslate nohighlight">\(F\)</span> will not be included, and the distribution will be implicitly
+truncated.  This is controlled by the parameter limits defined in the
+model (which truncate the distribution before calling the kernel) as
+well as any region excluded using the <em>INVALID</em> macro defined within
+the model itself.</p>
+<p>The volume used in the polydispersity calculation is the form volume
+for solid objects or the shell volume for hollow objects.  Shell
+volume should be used within <span class="math notranslate nohighlight">\(F\)</span> so that the normalizing scale
+represents the volume fraction of the shell rather than the entire
+form.  This corresponds to the volume fraction of shell-forming
+material added to the solvent.</p>
+<p>The calculation of <span class="math notranslate nohighlight">\(S\)</span> requires the effective radius and the
+volume fraction of the particles.  The model can have several
+different ways to compute effective radius, with the
+<em>radius_effective_mode</em> parameter used to select amongst them.  The
+volume fraction of particles should be determined from the total
+volume fraction of the form, not just the shell volume fraction.
+This makes a difference for hollow shapes, which need to scale
+the volume fraction by the returned volume ratio when computing <span class="math notranslate nohighlight">\(S\)</span>.
+For solid objects, the shell volume is set to the form volume so
+this scale factor evaluates to one and so can be used for both
+hollow and solid shapes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.Iq">
+<span class="sig-name descname"><span class="pre">Iq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call_details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magnetic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">np.ndarray</span></span></span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.Iq" title="Link to this definition">¶</a></dt>
+<dd><p>Returns I(q) from the polydisperse average scattering.</p>
+<div class="math notranslate nohighlight">
+\[I(q) = \text{scale} \cdot P(q) + \text{background}\]</div>
+<p>With the correct choice of model and contrast, setting <em>scale</em> to
+the volume fraction <span class="math notranslate nohighlight">\(V_f\)</span> of particles should match the measured
+absolute scattering.  Some models (e.g., vesicle) have volume fraction
+built into the model, and do not need an additional scale.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__annotations__">
+<span class="sig-name descname"><span class="pre">__annotations__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__annotations__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call_details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magnetic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">np.ndarray</span></span></span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__call__" title="Link to this definition">¶</a></dt>
+<dd><p>Returns I(q) from the polydisperse average scattering.</p>
+<div class="math notranslate nohighlight">
+\[I(q) = \text{scale} \cdot P(q) + \text{background}\]</div>
+<p>With the correct choice of model and contrast, setting <em>scale</em> to
+the volume fraction <span class="math notranslate nohighlight">\(V_f\)</span> of particles should match the measured
+absolute scattering.  Some models (e.g., vesicle) have volume fraction
+built into the model, and do not need an additional scale.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__class__">
+<span class="sig-name descname"><span class="pre">__class__</span></span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__class__" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__del__">
+<span class="sig-name descname"><span class="pre">__del__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__del__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__delattr__">
+<span class="sig-name descname"><span class="pre">__delattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__delattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement delattr(self, name).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__dict__">
+<span class="sig-name descname"><span class="pre">__dict__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">mappingproxy({'__module__':</span> <span class="pre">'sasmodels.kerneldll',</span> <span class="pre">'__doc__':</span> <span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Callable</span> <span class="pre">SAS</span> <span class="pre">kernel.\n\n</span>&#160;&#160;&#160; <span class="pre">*kernel*</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">c</span> <span class="pre">function</span> <span class="pre">to</span> <span class="pre">call.\n\n</span>&#160;&#160;&#160; <span class="pre">*model_info*</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">module</span> <span class="pre">information\n\n</span>&#160;&#160;&#160; <span class="pre">*q_input*</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">DllInput</span> <span class="pre">q</span> <span class="pre">vectors</span> <span class="pre">at</span> <span class="pre">which</span> <span class="pre">the</span> <span class="pre">kernel</span> <span class="pre">should</span> <span class="pre">be\n</span>&#160;&#160;&#160; <span class="pre">evaluated.\n\n</span>&#160;&#160;&#160; <span class="pre">The</span> <span class="pre">resulting</span> <span class="pre">call</span> <span class="pre">method</span> <span class="pre">takes</span> <span class="pre">the</span> <span class="pre">*pars*,</span> <span class="pre">a</span> <span class="pre">list</span> <span class="pre">of</span> <span class="pre">values</span> <span class="pre">for\n</span>&#160;&#160;&#160; <span class="pre">the</span> <span class="pre">fixed</span> <span class="pre">parameters</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">kernel,</span> <span class="pre">and</span> <span class="pre">*pd_pars*,</span> <span class="pre">a</span> <span class="pre">list</span> <span class="pre">of</span> <span class="pre">(value,</span> <span class="pre">weight)\n</span>&#160;&#160;&#160; <span class="pre">vectors</span> <span class="pre">for</span> <span class="pre">the</span> <span class="pre">polydisperse</span> <span class="pre">parameters.</span>&#160; <span class="pre">*cutoff*</span> <span class="pre">determines</span> <span class="pre">the\n</span>&#160;&#160;&#160; <span class="pre">integration</span> <span class="pre">limits:</span> <span class="pre">any</span> <span class="pre">points</span> <span class="pre">with</span> <span class="pre">combined</span> <span class="pre">weight</span> <span class="pre">less</span> <span class="pre">than</span> <span class="pre">*cutoff*\n</span>&#160;&#160;&#160; <span class="pre">will</span> <span class="pre">not</span> <span class="pre">be</span> <span class="pre">calculated.\n\n</span>&#160;&#160;&#160; <span class="pre">Call</span> <span class="pre">:meth:`release`</span> <span class="pre">when</span> <span class="pre">done</span> <span class="pre">with</span> <span class="pre">the</span> <span class="pre">kernel</span> <span class="pre">instance.\n</span>&#160;&#160;&#160; <span class="pre">',</span> <span class="pre">'__init__':</span> <span class="pre">&lt;function</span> <span class="pre">DllKernel.__init__&gt;,</span> <span class="pre">'_call_kernel':</span> <span class="pre">&lt;function</span> <span class="pre">DllKernel._call_kernel&gt;,</span> <span class="pre">'release':</span> <span class="pre">&lt;function</span> <span class="pre">DllKernel.release&gt;,</span> <span class="pre">'__del__':</span> <span class="pre">&lt;function</span> <span class="pre">DllKernel.__del__&gt;,</span> <span class="pre">'__annotations__':</span> <span class="pre">{'dim':</span> <span class="pre">'str',</span> <span class="pre">'info':</span> <span class="pre">'ModelInfo',</span> <span class="pre">'dtype':</span> <span class="pre">'np.dtype',</span> <span class="pre">'q_input':</span> <span class="pre">'Any',</span> <span class="pre">'result':</span> <span class="pre">'np.ndarray'}})</span></em><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__dict__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__dir__">
+<span class="sig-name descname"><span class="pre">__dir__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__dir__" title="Link to this definition">¶</a></dt>
+<dd><p>Default dir() implementation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__doc__">
+<span class="sig-name descname"><span class="pre">__doc__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Callable</span> <span class="pre">SAS</span> <span class="pre">kernel.\n\n</span>&#160;&#160;&#160; <span class="pre">*kernel*</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">c</span> <span class="pre">function</span> <span class="pre">to</span> <span class="pre">call.\n\n</span>&#160;&#160;&#160; <span class="pre">*model_info*</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">module</span> <span class="pre">information\n\n</span>&#160;&#160;&#160; <span class="pre">*q_input*</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">DllInput</span> <span class="pre">q</span> <span class="pre">vectors</span> <span class="pre">at</span> <span class="pre">which</span> <span class="pre">the</span> <span class="pre">kernel</span> <span class="pre">should</span> <span class="pre">be\n</span>&#160;&#160;&#160; <span class="pre">evaluated.\n\n</span>&#160;&#160;&#160; <span class="pre">The</span> <span class="pre">resulting</span> <span class="pre">call</span> <span class="pre">method</span> <span class="pre">takes</span> <span class="pre">the</span> <span class="pre">*pars*,</span> <span class="pre">a</span> <span class="pre">list</span> <span class="pre">of</span> <span class="pre">values</span> <span class="pre">for\n</span>&#160;&#160;&#160; <span class="pre">the</span> <span class="pre">fixed</span> <span class="pre">parameters</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">kernel,</span> <span class="pre">and</span> <span class="pre">*pd_pars*,</span> <span class="pre">a</span> <span class="pre">list</span> <span class="pre">of</span> <span class="pre">(value,</span> <span class="pre">weight)\n</span>&#160;&#160;&#160; <span class="pre">vectors</span> <span class="pre">for</span> <span class="pre">the</span> <span class="pre">polydisperse</span> <span class="pre">parameters.</span>&#160; <span class="pre">*cutoff*</span> <span class="pre">determines</span> <span class="pre">the\n</span>&#160;&#160;&#160; <span class="pre">integration</span> <span class="pre">limits:</span> <span class="pre">any</span> <span class="pre">points</span> <span class="pre">with</span> <span class="pre">combined</span> <span class="pre">weight</span> <span class="pre">less</span> <span class="pre">than</span> <span class="pre">*cutoff*\n</span>&#160;&#160;&#160; <span class="pre">will</span> <span class="pre">not</span> <span class="pre">be</span> <span class="pre">calculated.\n\n</span>&#160;&#160;&#160; <span class="pre">Call</span> <span class="pre">:meth:`release`</span> <span class="pre">when</span> <span class="pre">done</span> <span class="pre">with</span> <span class="pre">the</span> <span class="pre">kernel</span> <span class="pre">instance.\n</span>&#160;&#160;&#160; <span class="pre">'</span></em><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__doc__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__eq__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__format__">
+<span class="sig-name descname"><span class="pre">__format__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format_spec</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__format__" title="Link to this definition">¶</a></dt>
+<dd><p>Default object formatter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__ge__">
+<span class="sig-name descname"><span class="pre">__ge__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__ge__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__getattribute__">
+<span class="sig-name descname"><span class="pre">__getattribute__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__getattribute__" title="Link to this definition">¶</a></dt>
+<dd><p>Return getattr(self, name).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__getstate__">
+<span class="sig-name descname"><span class="pre">__getstate__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__getstate__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__gt__">
+<span class="sig-name descname"><span class="pre">__gt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__gt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__hash__" title="Link to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">q_input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="kernelpy.html#sasmodels.kernelpy.PyInput" title="sasmodels.kernelpy.PyInput"><span class="pre">PyInput</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__init_subclass__" title="Link to this definition">¶</a></dt>
+<dd><p>This method is called when a class is subclassed.</p>
+<p>The default implementation does nothing. It may be
+overridden to extend subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__le__">
+<span class="sig-name descname"><span class="pre">__le__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__le__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__lt__">
+<span class="sig-name descname"><span class="pre">__lt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__lt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__module__">
+<span class="sig-name descname"><span class="pre">__module__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sasmodels.kerneldll'</span></em><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__module__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__ne__">
+<span class="sig-name descname"><span class="pre">__ne__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__ne__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self!=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__new__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__new__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__reduce__">
+<span class="sig-name descname"><span class="pre">__reduce__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__reduce__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__reduce_ex__">
+<span class="sig-name descname"><span class="pre">__reduce_ex__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protocol</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__reduce_ex__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__repr__" title="Link to this definition">¶</a></dt>
+<dd><p>Return repr(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__setattr__">
+<span class="sig-name descname"><span class="pre">__setattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__setattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement setattr(self, name, value).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__sizeof__">
+<span class="sig-name descname"><span class="pre">__sizeof__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__sizeof__" title="Link to this definition">¶</a></dt>
+<dd><p>Size of object in memory, in bytes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__str__" title="Link to this definition">¶</a></dt>
+<dd><p>Return str(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__subclasshook__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__subclasshook__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__subclasshook__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract classes can override this to customize issubclass().</p>
+<p>This is invoked early on by abc.ABCMeta.__subclasscheck__().
+It should return True, False or NotImplemented.  If it returns
+NotImplemented, the normal algorithm is used.  Otherwise, it
+overrides the normal algorithm (and the outcome is cached).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.__weakref__">
+<span class="sig-name descname"><span class="pre">__weakref__</span></span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.__weakref__" title="Link to this definition">¶</a></dt>
+<dd><p>list of weak references to the object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel._call_kernel">
+<span class="sig-name descname"><span class="pre">_call_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call_details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magnetic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius_effective_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel._call_kernel" title="Link to this definition">¶</a></dt>
+<dd><p>Call the kernel.  Subclasses defining kernels for particular execution
+engines need to provide an implementation for this.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.dim" title="Link to this definition">¶</a></dt>
+<dd><p>Kernel dimension, either “1d” or “2d”.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.dtype">
+<span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">np.dtype</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.dtype" title="Link to this definition">¶</a></dt>
+<dd><p>Numerical precision for the computation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.info">
+<span class="sig-name descname"><span class="pre">info</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bumps_model.html#sasmodels.bumps_model.ModelInfo" title="sasmodels.bumps_model.ModelInfo"><span class="pre">ModelInfo</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.info" title="Link to this definition">¶</a></dt>
+<dd><p>Model info.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.q_input">
+<span class="sig-name descname"><span class="pre">q_input</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bumps_model.html#sasmodels.bumps_model.Any" title="sasmodels.bumps_model.Any"><span class="pre">Any</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.q_input" title="Link to this definition">¶</a></dt>
+<dd><p>Q values at which the kernel is to be evaluated.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.release">
+<span class="sig-name descname"><span class="pre">release</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.release" title="Link to this definition">¶</a></dt>
+<dd><p>Release resources associated with the kernel.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllKernel.result">
+<span class="sig-name descname"><span class="pre">result</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">np.ndarray</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.kerneldll.DllKernel.result" title="Link to this definition">¶</a></dt>
+<dd><p>Place to hold result of <em>_call_kernel()</em> for subclass.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sasmodels.kerneldll.</span></span><span class="sig-name descname"><span class="pre">DllModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dllpath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dtype</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">dtype('float32')</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllModel" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="kernel.html#sasmodels.kernel.KernelModel" title="sasmodels.kernel.KernelModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">KernelModel</span></code></a></p>
+<p>ctypes wrapper for a single model.</p>
+<p><em>dllpath</em> is the stored path to the dll.</p>
+<p><em>model_info</em> is the model definition returned from
+<a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.make_model_info" title="sasmodels.modelinfo.make_model_info"><code class="xref py py-func docutils literal notranslate"><span class="pre">modelinfo.make_model_info()</span></code></a>.</p>
+<p><em>dtype</em> is the desired model precision.  Any numpy dtype for single
+or double precision floats will do, such as ‘f’, ‘float32’ or ‘single’
+for single and ‘d’, ‘float64’ or ‘double’ for double.  Double precision
+is an optional extension which may not be available on all devices.</p>
+<p>Call <a class="reference internal" href="#sasmodels.kerneldll.DllModel.release" title="sasmodels.kerneldll.DllModel.release"><code class="xref py py-meth docutils literal notranslate"><span class="pre">release()</span></code></a> when done with the kernel.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__annotations__">
+<span class="sig-name descname"><span class="pre">__annotations__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__annotations__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__class__">
+<span class="sig-name descname"><span class="pre">__class__</span></span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__class__" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__delattr__">
+<span class="sig-name descname"><span class="pre">__delattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__delattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement delattr(self, name).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__dict__">
+<span class="sig-name descname"><span class="pre">__dict__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">mappingproxy({'__module__':</span> <span class="pre">'sasmodels.kerneldll',</span> <span class="pre">'__doc__':</span> <span class="pre">&quot;\n</span>&#160;&#160;&#160; <span class="pre">ctypes</span> <span class="pre">wrapper</span> <span class="pre">for</span> <span class="pre">a</span> <span class="pre">single</span> <span class="pre">model.\n\n</span>&#160;&#160;&#160; <span class="pre">*dllpath*</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">stored</span> <span class="pre">path</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">dll.\n\n</span>&#160;&#160;&#160; <span class="pre">*model_info*</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">model</span> <span class="pre">definition</span> <span class="pre">returned</span> <span class="pre">from\n</span>&#160;&#160;&#160; <span class="pre">:func:`.modelinfo.make_model_info`.\n\n</span>&#160;&#160;&#160; <span class="pre">*dtype*</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">desired</span> <span class="pre">model</span> <span class="pre">precision.</span>&#160; <span class="pre">Any</span> <span class="pre">numpy</span> <span class="pre">dtype</span> <span class="pre">for</span> <span class="pre">single\n</span>&#160;&#160;&#160; <span class="pre">or</span> <span class="pre">double</span> <span class="pre">precision</span> <span class="pre">floats</span> <span class="pre">will</span> <span class="pre">do,</span> <span class="pre">such</span> <span class="pre">as</span> <span class="pre">'f',</span> <span class="pre">'float32'</span> <span class="pre">or</span> <span class="pre">'single'\n</span>&#160;&#160;&#160; <span class="pre">for</span> <span class="pre">single</span> <span class="pre">and</span> <span class="pre">'d',</span> <span class="pre">'float64'</span> <span class="pre">or</span> <span class="pre">'double'</span> <span class="pre">for</span> <span class="pre">double.</span>&#160; <span class="pre">Double</span> <span class="pre">precision\n</span>&#160;&#160;&#160; <span class="pre">is</span> <span class="pre">an</span> <span class="pre">optional</span> <span class="pre">extension</span> <span class="pre">which</span> <span class="pre">may</span> <span class="pre">not</span> <span class="pre">be</span> <span class="pre">available</span> <span class="pre">on</span> <span class="pre">all</span> <span class="pre">devices.\n\n</span>&#160;&#160;&#160; <span class="pre">Call</span> <span class="pre">:meth:`release`</span> <span class="pre">when</span> <span class="pre">done</span> <span class="pre">with</span> <span class="pre">the</span> <span class="pre">kernel.\n</span>&#160;&#160;&#160; <span class="pre">&quot;,</span> <span class="pre">'__init__':</span> <span class="pre">&lt;function</span> <span class="pre">DllModel.__init__&gt;,</span> <span class="pre">'_load_dll':</span> <span class="pre">&lt;function</span> <span class="pre">DllModel._load_dll&gt;,</span> <span class="pre">'__getstate__':</span> <span class="pre">&lt;function</span> <span class="pre">DllModel.__getstate__&gt;,</span> <span class="pre">'__setstate__':</span> <span class="pre">&lt;function</span> <span class="pre">DllModel.__setstate__&gt;,</span> <span class="pre">'make_kernel':</span> <span class="pre">&lt;function</span> <span class="pre">DllModel.make_kernel&gt;,</span> <span class="pre">'release':</span> <span class="pre">&lt;function</span> <span class="pre">DllModel.release&gt;,</span> <span class="pre">'__annotations__':</span> <span class="pre">{'_dll':</span> <span class="pre">'ct.CDLL',</span> <span class="pre">'_kernels':</span> <span class="pre">'list[Callable,</span> <span class="pre">Callable]',</span> <span class="pre">'info':</span> <span class="pre">'ModelInfo',</span> <span class="pre">'dtype':</span> <span class="pre">'np.dtype'}})</span></em><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__dict__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__dir__">
+<span class="sig-name descname"><span class="pre">__dir__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__dir__" title="Link to this definition">¶</a></dt>
+<dd><p>Default dir() implementation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__doc__">
+<span class="sig-name descname"><span class="pre">__doc__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&quot;\n</span>&#160;&#160;&#160; <span class="pre">ctypes</span> <span class="pre">wrapper</span> <span class="pre">for</span> <span class="pre">a</span> <span class="pre">single</span> <span class="pre">model.\n\n</span>&#160;&#160;&#160; <span class="pre">*dllpath*</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">stored</span> <span class="pre">path</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">dll.\n\n</span>&#160;&#160;&#160; <span class="pre">*model_info*</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">model</span> <span class="pre">definition</span> <span class="pre">returned</span> <span class="pre">from\n</span>&#160;&#160;&#160; <span class="pre">:func:`.modelinfo.make_model_info`.\n\n</span>&#160;&#160;&#160; <span class="pre">*dtype*</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">desired</span> <span class="pre">model</span> <span class="pre">precision.</span>&#160; <span class="pre">Any</span> <span class="pre">numpy</span> <span class="pre">dtype</span> <span class="pre">for</span> <span class="pre">single\n</span>&#160;&#160;&#160; <span class="pre">or</span> <span class="pre">double</span> <span class="pre">precision</span> <span class="pre">floats</span> <span class="pre">will</span> <span class="pre">do,</span> <span class="pre">such</span> <span class="pre">as</span> <span class="pre">'f',</span> <span class="pre">'float32'</span> <span class="pre">or</span> <span class="pre">'single'\n</span>&#160;&#160;&#160; <span class="pre">for</span> <span class="pre">single</span> <span class="pre">and</span> <span class="pre">'d',</span> <span class="pre">'float64'</span> <span class="pre">or</span> <span class="pre">'double'</span> <span class="pre">for</span> <span class="pre">double.</span>&#160; <span class="pre">Double</span> <span class="pre">precision\n</span>&#160;&#160;&#160; <span class="pre">is</span> <span class="pre">an</span> <span class="pre">optional</span> <span class="pre">extension</span> <span class="pre">which</span> <span class="pre">may</span> <span class="pre">not</span> <span class="pre">be</span> <span class="pre">available</span> <span class="pre">on</span> <span class="pre">all</span> <span class="pre">devices.\n\n</span>&#160;&#160;&#160; <span class="pre">Call</span> <span class="pre">:meth:`release`</span> <span class="pre">when</span> <span class="pre">done</span> <span class="pre">with</span> <span class="pre">the</span> <span class="pre">kernel.\n</span>&#160;&#160;&#160; <span class="pre">&quot;</span></em><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__doc__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__eq__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__format__">
+<span class="sig-name descname"><span class="pre">__format__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format_spec</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__format__" title="Link to this definition">¶</a></dt>
+<dd><p>Default object formatter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__ge__">
+<span class="sig-name descname"><span class="pre">__ge__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__ge__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__getattribute__">
+<span class="sig-name descname"><span class="pre">__getattribute__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__getattribute__" title="Link to this definition">¶</a></dt>
+<dd><p>Return getattr(self, name).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__getstate__">
+<span class="sig-name descname"><span class="pre">__getstate__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__getstate__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__gt__">
+<span class="sig-name descname"><span class="pre">__gt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__gt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__hash__" title="Link to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dllpath</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dtype</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">dtype('float32')</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__init_subclass__" title="Link to this definition">¶</a></dt>
+<dd><p>This method is called when a class is subclassed.</p>
+<p>The default implementation does nothing. It may be
+overridden to extend subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__le__">
+<span class="sig-name descname"><span class="pre">__le__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__le__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__lt__">
+<span class="sig-name descname"><span class="pre">__lt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__lt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__module__">
+<span class="sig-name descname"><span class="pre">__module__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sasmodels.kerneldll'</span></em><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__module__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__ne__">
+<span class="sig-name descname"><span class="pre">__ne__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__ne__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self!=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__new__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__new__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__reduce__">
+<span class="sig-name descname"><span class="pre">__reduce__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__reduce__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__reduce_ex__">
+<span class="sig-name descname"><span class="pre">__reduce_ex__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protocol</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__reduce_ex__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__repr__" title="Link to this definition">¶</a></dt>
+<dd><p>Return repr(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__setattr__">
+<span class="sig-name descname"><span class="pre">__setattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__setattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement setattr(self, name, value).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__setstate__">
+<span class="sig-name descname"><span class="pre">__setstate__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__setstate__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__sizeof__">
+<span class="sig-name descname"><span class="pre">__sizeof__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__sizeof__" title="Link to this definition">¶</a></dt>
+<dd><p>Size of object in memory, in bytes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__str__" title="Link to this definition">¶</a></dt>
+<dd><p>Return str(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__subclasshook__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__subclasshook__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__subclasshook__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract classes can override this to customize issubclass().</p>
+<p>This is invoked early on by abc.ABCMeta.__subclasscheck__().
+It should return True, False or NotImplemented.  If it returns
+NotImplemented, the normal algorithm is used.  Otherwise, it
+overrides the normal algorithm (and the outcome is cached).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.__weakref__">
+<span class="sig-name descname"><span class="pre">__weakref__</span></span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.__weakref__" title="Link to this definition">¶</a></dt>
+<dd><p>list of weak references to the object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel._load_dll">
+<span class="sig-name descname"><span class="pre">_load_dll</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.kerneldll.DllModel._load_dll" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.dtype">
+<span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">np.dtype</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.kerneldll.DllModel.dtype" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.info">
+<span class="sig-name descname"><span class="pre">info</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bumps_model.html#sasmodels.bumps_model.ModelInfo" title="sasmodels.bumps_model.ModelInfo"><span class="pre">ModelInfo</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.kerneldll.DllModel.info" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.make_kernel">
+<span class="sig-name descname"><span class="pre">make_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q_vectors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#sasmodels.kerneldll.DllKernel" title="sasmodels.kerneldll.DllKernel"><span class="pre">DllKernel</span></a></span></span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.make_kernel" title="Link to this definition">¶</a></dt>
+<dd><p>Instantiate a kernel for evaluating the model at <em>q_vectors</em>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.DllModel.release">
+<span class="sig-name descname"><span class="pre">release</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.kerneldll.DllModel.release" title="Link to this definition">¶</a></dt>
+<dd><p>Release any resources associated with the model.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.compile_command">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.kerneldll.</span></span><span class="sig-name descname"><span class="pre">compile_command</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.compile_command" title="Link to this definition">¶</a></dt>
+<dd><p>unix compiler command</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.compile_model">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.kerneldll.</span></span><span class="sig-name descname"><span class="pre">compile_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.kerneldll.compile_model" title="Link to this definition">¶</a></dt>
+<dd><p>Compile <em>source</em> producing <em>output</em>.</p>
+<p>Raises RuntimeError if the compile failed or the output wasn’t produced.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.decode">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.kerneldll.</span></span><span class="sig-name descname"><span class="pre">decode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.kerneldll.decode" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.dll_name">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.kerneldll.</span></span><span class="sig-name descname"><span class="pre">dll_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sasmodels.kerneldll.dll_name" title="Link to this definition">¶</a></dt>
+<dd><p>Name of the dll containing the model.  This is the base file name without
+any path or extension, with a form such as ‘sas_sphere32’.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.dll_path">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.kerneldll.</span></span><span class="sig-name descname"><span class="pre">dll_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sasmodels.kerneldll.dll_path" title="Link to this definition">¶</a></dt>
+<dd><p>Complete path to the dll for the model.  Note that the dll may not
+exist yet if it hasn’t been compiled.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.load_dll">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.kerneldll.</span></span><span class="sig-name descname"><span class="pre">load_dll</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dtype</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">dtype('float64')</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#sasmodels.kerneldll.DllModel" title="sasmodels.kerneldll.DllModel"><span class="pre">DllModel</span></a></span></span><a class="headerlink" href="#sasmodels.kerneldll.load_dll" title="Link to this definition">¶</a></dt>
+<dd><p>Create and load a dll corresponding to the source.</p>
+<p><em>model_info</em> is the info object returned from
+<a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.make_model_info" title="sasmodels.modelinfo.make_model_info"><code class="xref py py-func docutils literal notranslate"><span class="pre">modelinfo.make_model_info()</span></code></a>.</p>
+<p><em>source</em> is returned from <a class="reference internal" href="generate.html#sasmodels.generate.make_source" title="sasmodels.generate.make_source"><code class="xref py py-func docutils literal notranslate"><span class="pre">generate.make_source()</span></code></a>, as
+<em>make_source(model_info)[‘dll’]</em>.</p>
+<p>See <a class="reference internal" href="#sasmodels.kerneldll.make_dll" title="sasmodels.kerneldll.make_dll"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_dll()</span></code></a> for details on controlling the dll path and the
+allowed floating point precision.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.kerneldll.make_dll">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.kerneldll.</span></span><span class="sig-name descname"><span class="pre">make_dll</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dtype</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">dtype('float64')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">system</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sasmodels.kerneldll.make_dll" title="Link to this definition">¶</a></dt>
+<dd><p>Returns the path to the compiled model defined by <em>kernel_module</em>.</p>
+<p>If the model has not been compiled, or if the source file(s) are newer
+than the dll, then <em>make_dll</em> will compile the model before returning.
+This routine does not load the resulting dll.</p>
+<p><em>dtype</em> is a numpy floating point precision specifier indicating whether
+the model should be single, double or long double precision.  The default
+is double precision, <em>np.dtype(‘d’)</em>.</p>
+<p>Set <em>sasmodels.ALLOW_SINGLE_PRECISION_DLLS</em> to False if single precision
+models are not allowed as DLLs.</p>
+<p>Set <em>sasmodels.kerneldll.SAS_DLL_PATH</em> to the compiled dll output path.
+Alternatively, set the environment variable <em>SAS_DLL_PATH</em>.
+The default is in ~/.sasmodels/compiled_models.</p>
+<p><em>system</em> is a bool that controls whether these are the precompiled DLLs
+that would be shipped with a binary distribution.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">20. Ctypes model evaluator</a><ul>
+<li><a class="reference internal" href="#module-sasmodels.kerneldll"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.kerneldll</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel"><code class="docutils literal notranslate"><span class="pre">DllKernel</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.Fq"><code class="docutils literal notranslate"><span class="pre">DllKernel.Fq()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.Iq"><code class="docutils literal notranslate"><span class="pre">DllKernel.Iq()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__annotations__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__annotations__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__call__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__call__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__class__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__class__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__del__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__del__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__delattr__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__delattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__dict__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__dict__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__dir__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__dir__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__doc__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__doc__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__eq__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__eq__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__format__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__format__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__ge__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__ge__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__getattribute__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__getattribute__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__getstate__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__getstate__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__gt__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__gt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__hash__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__hash__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__init__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__init_subclass__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__le__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__le__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__lt__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__lt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__module__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__module__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__ne__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__ne__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__new__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__new__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__reduce__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__reduce__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__reduce_ex__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__reduce_ex__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__repr__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__repr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__setattr__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__setattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__sizeof__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__sizeof__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__str__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__subclasshook__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__subclasshook__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.__weakref__"><code class="docutils literal notranslate"><span class="pre">DllKernel.__weakref__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel._call_kernel"><code class="docutils literal notranslate"><span class="pre">DllKernel._call_kernel()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.dim"><code class="docutils literal notranslate"><span class="pre">DllKernel.dim</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.dtype"><code class="docutils literal notranslate"><span class="pre">DllKernel.dtype</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.info"><code class="docutils literal notranslate"><span class="pre">DllKernel.info</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.q_input"><code class="docutils literal notranslate"><span class="pre">DllKernel.q_input</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.release"><code class="docutils literal notranslate"><span class="pre">DllKernel.release()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllKernel.result"><code class="docutils literal notranslate"><span class="pre">DllKernel.result</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel"><code class="docutils literal notranslate"><span class="pre">DllModel</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__annotations__"><code class="docutils literal notranslate"><span class="pre">DllModel.__annotations__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__class__"><code class="docutils literal notranslate"><span class="pre">DllModel.__class__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__delattr__"><code class="docutils literal notranslate"><span class="pre">DllModel.__delattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__dict__"><code class="docutils literal notranslate"><span class="pre">DllModel.__dict__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__dir__"><code class="docutils literal notranslate"><span class="pre">DllModel.__dir__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__doc__"><code class="docutils literal notranslate"><span class="pre">DllModel.__doc__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__eq__"><code class="docutils literal notranslate"><span class="pre">DllModel.__eq__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__format__"><code class="docutils literal notranslate"><span class="pre">DllModel.__format__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__ge__"><code class="docutils literal notranslate"><span class="pre">DllModel.__ge__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__getattribute__"><code class="docutils literal notranslate"><span class="pre">DllModel.__getattribute__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__getstate__"><code class="docutils literal notranslate"><span class="pre">DllModel.__getstate__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__gt__"><code class="docutils literal notranslate"><span class="pre">DllModel.__gt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__hash__"><code class="docutils literal notranslate"><span class="pre">DllModel.__hash__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__init__"><code class="docutils literal notranslate"><span class="pre">DllModel.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">DllModel.__init_subclass__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__le__"><code class="docutils literal notranslate"><span class="pre">DllModel.__le__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__lt__"><code class="docutils literal notranslate"><span class="pre">DllModel.__lt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__module__"><code class="docutils literal notranslate"><span class="pre">DllModel.__module__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__ne__"><code class="docutils literal notranslate"><span class="pre">DllModel.__ne__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__new__"><code class="docutils literal notranslate"><span class="pre">DllModel.__new__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__reduce__"><code class="docutils literal notranslate"><span class="pre">DllModel.__reduce__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__reduce_ex__"><code class="docutils literal notranslate"><span class="pre">DllModel.__reduce_ex__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__repr__"><code class="docutils literal notranslate"><span class="pre">DllModel.__repr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__setattr__"><code class="docutils literal notranslate"><span class="pre">DllModel.__setattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__setstate__"><code class="docutils literal notranslate"><span class="pre">DllModel.__setstate__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__sizeof__"><code class="docutils literal notranslate"><span class="pre">DllModel.__sizeof__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__str__"><code class="docutils literal notranslate"><span class="pre">DllModel.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__subclasshook__"><code class="docutils literal notranslate"><span class="pre">DllModel.__subclasshook__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.__weakref__"><code class="docutils literal notranslate"><span class="pre">DllModel.__weakref__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel._load_dll"><code class="docutils literal notranslate"><span class="pre">DllModel._load_dll()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.dtype"><code class="docutils literal notranslate"><span class="pre">DllModel.dtype</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.info"><code class="docutils literal notranslate"><span class="pre">DllModel.info</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.make_kernel"><code class="docutils literal notranslate"><span class="pre">DllModel.make_kernel()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.DllModel.release"><code class="docutils literal notranslate"><span class="pre">DllModel.release()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.compile_command"><code class="docutils literal notranslate"><span class="pre">compile_command()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.compile_model"><code class="docutils literal notranslate"><span class="pre">compile_model()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.decode"><code class="docutils literal notranslate"><span class="pre">decode()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.dll_name"><code class="docutils literal notranslate"><span class="pre">dll_name()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.dll_path"><code class="docutils literal notranslate"><span class="pre">dll_path()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.load_dll"><code class="docutils literal notranslate"><span class="pre">load_dll()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.kerneldll.make_dll"><code class="docutils literal notranslate"><span class="pre">make_dll()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="kernelcuda.html"
+                          title="previous chapter"><span class="section-number">19. </span>CUDA model evaluator</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="kernelpy.html"
+                          title="next chapter"><span class="section-number">21. </span>Python model evaluator</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/dev/sasmodels-api/kerneldll.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="kernelpy.html" title="21. Python model evaluator"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="kernelcuda.html" title="19. CUDA model evaluator"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">20. </span>Ctypes model evaluator</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, The SasView Project.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>23. Mixture model evaluator &#8212; SasView 6.1.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=f0c0c503"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="24. Unit test support" href="model_test.html" />
+    <link rel="prev" title="22. Identify all parameters in all models" href="list_pars.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="model_test.html" title="24. Unit test support"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="list_pars.html" title="22. Identify all parameters in all models"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">23. </span>Mixture model evaluator</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="mixture-model-evaluator">
+<h1><span class="section-number">23. </span>Mixture model evaluator<a class="headerlink" href="#mixture-model-evaluator" title="Link to this heading">¶</a></h1>
+<section id="module-sasmodels.mixture">
+<span id="sasmodels-mixture"></span><h2><a class="reference internal" href="#module-sasmodels.mixture" title="sasmodels.mixture"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.mixture</span></code></a><a class="headerlink" href="#module-sasmodels.mixture" title="Link to this heading">¶</a></h2>
+<section id="mixture-model">
+<h3>Mixture model<a class="headerlink" href="#mixture-model" title="Link to this heading">¶</a></h3>
+<p>The product model multiplies the structure factor by the form factor,
+modulated by the effective radius of the form.  The resulting model
+has a attributes of both the model description (with parameters, etc.)
+and the module evaluator (with call, release, etc.).</p>
+<p>To use it, first load form factor P and structure factor S, then create
+<em>ProductModel(P, S)</em>.</p>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sasmodels.mixture.</span></span><span class="sig-name descname"><span class="pre">MixtureKernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="kernel.html#sasmodels.kernel.Kernel" title="sasmodels.kernel.Kernel"><span class="pre">Kernel</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="kernel.html#sasmodels.kernel.Kernel" title="sasmodels.kernel.Kernel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Kernel</span></code></a></p>
+<p>Instantiated kernel for mixture of models.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.Fq">
+<span class="sig-name descname"><span class="pre">Fq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call_details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magnetic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius_effective_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">np.ndarray</span></span></span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.Fq" title="Link to this definition">¶</a></dt>
+<dd><p>Returns &lt;F(q)&gt;, &lt;F(q)^2&gt;, effective radius, shell volume and
+form:shell volume ratio.  The &lt;F(q)&gt; term may be None if the
+form factor does not support direct computation of <span class="math notranslate nohighlight">\(F(q)\)</span></p>
+<p><span class="math notranslate nohighlight">\(P(q) = &lt;F^2(q)&gt;/&lt;V&gt;\)</span> is used for structure factor calculations,</p>
+<div class="math notranslate nohighlight">
+\[I(q) = \text{scale} \cdot P(q) \cdot S(q) + \text{background}\]</div>
+<p>For the beta approximation, this becomes</p>
+<div class="math notranslate nohighlight">
+\[I(q) = \text{scale} P (1 + &lt;F&gt;^2/&lt;F^2&gt; (S - 1)) + \text{background}
+     = \text{scale}/&lt;V&gt; (&lt;F^2&gt; + &lt;F&gt;^2 (S - 1)) + \text{background}\]</div>
+<p><span class="math notranslate nohighlight">\(&lt;F(q)&gt;\)</span> and <span class="math notranslate nohighlight">\(&lt;F^2(q)&gt;\)</span> are averaged by polydispersity in shape
+and orientation, with each configuration <span class="math notranslate nohighlight">\(x_k\)</span> having form factor
+<span class="math notranslate nohighlight">\(F(q, x_k)\)</span>, weight <span class="math notranslate nohighlight">\(w_k\)</span> and volume <span class="math notranslate nohighlight">\(V_k\)</span>.  The result is:</p>
+<div class="math notranslate nohighlight">
+\[P(q)=\frac{\sum w_k F^2(q, x_k) / \sum w_k}{\sum w_k V_k / \sum w_k}\]</div>
+<p>The form factor itself is scaled by volume and contrast to compute the
+total scattering.  This is then squared, and the volume weighted
+F^2 is then normalized by volume F.  For a given density, the number
+of scattering centers is assumed to scale linearly with volume.  Later
+scaling the resulting <span class="math notranslate nohighlight">\(P(q)\)</span> by the volume fraction of particles
+gives the total scattering on an absolute scale. Most models
+incorporate the volume fraction into the overall scale parameter.  An
+exception is vesicle, which includes the volume fraction parameter in
+the model itself, scaling <span class="math notranslate nohighlight">\(F\)</span> by <span class="math notranslate nohighlight">\(\surd V_f\)</span> so that the math for
+the beta approximation works out.</p>
+<p>By scaling <span class="math notranslate nohighlight">\(P(q)\)</span> by total weight <span class="math notranslate nohighlight">\(\sum w_k\)</span>, there is no need to make
+sure that the polydisperisity distributions normalize to one.  In
+particular, any distibution values <span class="math notranslate nohighlight">\(x_k\)</span> outside the valid domain
+of <span class="math notranslate nohighlight">\(F\)</span> will not be included, and the distribution will be implicitly
+truncated.  This is controlled by the parameter limits defined in the
+model (which truncate the distribution before calling the kernel) as
+well as any region excluded using the <em>INVALID</em> macro defined within
+the model itself.</p>
+<p>The volume used in the polydispersity calculation is the form volume
+for solid objects or the shell volume for hollow objects.  Shell
+volume should be used within <span class="math notranslate nohighlight">\(F\)</span> so that the normalizing scale
+represents the volume fraction of the shell rather than the entire
+form.  This corresponds to the volume fraction of shell-forming
+material added to the solvent.</p>
+<p>The calculation of <span class="math notranslate nohighlight">\(S\)</span> requires the effective radius and the
+volume fraction of the particles.  The model can have several
+different ways to compute effective radius, with the
+<em>radius_effective_mode</em> parameter used to select amongst them.  The
+volume fraction of particles should be determined from the total
+volume fraction of the form, not just the shell volume fraction.
+This makes a difference for hollow shapes, which need to scale
+the volume fraction by the returned volume ratio when computing <span class="math notranslate nohighlight">\(S\)</span>.
+For solid objects, the shell volume is set to the form volume so
+this scale factor evaluates to one and so can be used for both
+hollow and solid shapes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.Iq">
+<span class="sig-name descname"><span class="pre">Iq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call_details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magnetic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.Iq" title="Link to this definition">¶</a></dt>
+<dd><p>Returns I(q) from the polydisperse average scattering.</p>
+<div class="math notranslate nohighlight">
+\[I(q) = \text{scale} \cdot P(q) + \text{background}\]</div>
+<p>With the correct choice of model and contrast, setting <em>scale</em> to
+the volume fraction <span class="math notranslate nohighlight">\(V_f\)</span> of particles should match the measured
+absolute scattering.  Some models (e.g., vesicle) have volume fraction
+built into the model, and do not need an additional scale.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__annotations__">
+<span class="sig-name descname"><span class="pre">__annotations__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__annotations__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call_details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magnetic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__call__" title="Link to this definition">¶</a></dt>
+<dd><p>Returns I(q) from the polydisperse average scattering.</p>
+<div class="math notranslate nohighlight">
+\[I(q) = \text{scale} \cdot P(q) + \text{background}\]</div>
+<p>With the correct choice of model and contrast, setting <em>scale</em> to
+the volume fraction <span class="math notranslate nohighlight">\(V_f\)</span> of particles should match the measured
+absolute scattering.  Some models (e.g., vesicle) have volume fraction
+built into the model, and do not need an additional scale.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__class__">
+<span class="sig-name descname"><span class="pre">__class__</span></span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__class__" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__delattr__">
+<span class="sig-name descname"><span class="pre">__delattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__delattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement delattr(self, name).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__dict__">
+<span class="sig-name descname"><span class="pre">__dict__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">mappingproxy({'__module__':</span> <span class="pre">'sasmodels.mixture',</span> <span class="pre">'__doc__':</span> <span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Instantiated</span> <span class="pre">kernel</span> <span class="pre">for</span> <span class="pre">mixture</span> <span class="pre">of</span> <span class="pre">models.\n</span>&#160;&#160;&#160; <span class="pre">',</span> <span class="pre">'__init__':</span> <span class="pre">&lt;function</span> <span class="pre">MixtureKernel.__init__&gt;,</span> <span class="pre">'Iq':</span> <span class="pre">&lt;function</span> <span class="pre">MixtureKernel.Iq&gt;,</span> <span class="pre">'__call__':</span> <span class="pre">&lt;function</span> <span class="pre">MixtureKernel.Iq&gt;,</span> <span class="pre">'release':</span> <span class="pre">&lt;function</span> <span class="pre">MixtureKernel.release&gt;,</span> <span class="pre">'__annotations__':</span> <span class="pre">{'results':</span> <span class="pre">'Callable[[],</span> <span class="pre">OrderedDict]',</span> <span class="pre">'dim':</span> <span class="pre">'str',</span> <span class="pre">'info':</span> <span class="pre">'ModelInfo',</span> <span class="pre">'dtype':</span> <span class="pre">'np.dtype',</span> <span class="pre">'q_input':</span> <span class="pre">'Any',</span> <span class="pre">'result':</span> <span class="pre">'np.ndarray'}})</span></em><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__dict__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__dir__">
+<span class="sig-name descname"><span class="pre">__dir__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__dir__" title="Link to this definition">¶</a></dt>
+<dd><p>Default dir() implementation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__doc__">
+<span class="sig-name descname"><span class="pre">__doc__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Instantiated</span> <span class="pre">kernel</span> <span class="pre">for</span> <span class="pre">mixture</span> <span class="pre">of</span> <span class="pre">models.\n</span>&#160;&#160;&#160; <span class="pre">'</span></em><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__doc__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__eq__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__format__">
+<span class="sig-name descname"><span class="pre">__format__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format_spec</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__format__" title="Link to this definition">¶</a></dt>
+<dd><p>Default object formatter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__ge__">
+<span class="sig-name descname"><span class="pre">__ge__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__ge__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__getattribute__">
+<span class="sig-name descname"><span class="pre">__getattribute__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__getattribute__" title="Link to this definition">¶</a></dt>
+<dd><p>Return getattr(self, name).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__getstate__">
+<span class="sig-name descname"><span class="pre">__getstate__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__getstate__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__gt__">
+<span class="sig-name descname"><span class="pre">__gt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__gt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__hash__" title="Link to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="kernel.html#sasmodels.kernel.Kernel" title="sasmodels.kernel.Kernel"><span class="pre">Kernel</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__init_subclass__" title="Link to this definition">¶</a></dt>
+<dd><p>This method is called when a class is subclassed.</p>
+<p>The default implementation does nothing. It may be
+overridden to extend subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__le__">
+<span class="sig-name descname"><span class="pre">__le__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__le__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__lt__">
+<span class="sig-name descname"><span class="pre">__lt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__lt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__module__">
+<span class="sig-name descname"><span class="pre">__module__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sasmodels.mixture'</span></em><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__module__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__ne__">
+<span class="sig-name descname"><span class="pre">__ne__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__ne__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self!=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__new__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__new__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__reduce__">
+<span class="sig-name descname"><span class="pre">__reduce__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__reduce__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__reduce_ex__">
+<span class="sig-name descname"><span class="pre">__reduce_ex__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protocol</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__reduce_ex__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__repr__" title="Link to this definition">¶</a></dt>
+<dd><p>Return repr(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__setattr__">
+<span class="sig-name descname"><span class="pre">__setattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__setattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement setattr(self, name, value).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__sizeof__">
+<span class="sig-name descname"><span class="pre">__sizeof__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__sizeof__" title="Link to this definition">¶</a></dt>
+<dd><p>Size of object in memory, in bytes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__str__" title="Link to this definition">¶</a></dt>
+<dd><p>Return str(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__subclasshook__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__subclasshook__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__subclasshook__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract classes can override this to customize issubclass().</p>
+<p>This is invoked early on by abc.ABCMeta.__subclasscheck__().
+It should return True, False or NotImplemented.  If it returns
+NotImplemented, the normal algorithm is used.  Otherwise, it
+overrides the normal algorithm (and the outcome is cached).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.__weakref__">
+<span class="sig-name descname"><span class="pre">__weakref__</span></span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.__weakref__" title="Link to this definition">¶</a></dt>
+<dd><p>list of weak references to the object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel._call_kernel">
+<span class="sig-name descname"><span class="pre">_call_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call_details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magnetic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius_effective_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel._call_kernel" title="Link to this definition">¶</a></dt>
+<dd><p>Call the kernel.  Subclasses defining kernels for particular execution
+engines need to provide an implementation for this.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.dim" title="Link to this definition">¶</a></dt>
+<dd><p>Kernel dimension, either “1d” or “2d”.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.dtype">
+<span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">np.dtype</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.dtype" title="Link to this definition">¶</a></dt>
+<dd><p>Numerical precision for the computation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.info">
+<span class="sig-name descname"><span class="pre">info</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bumps_model.html#sasmodels.bumps_model.ModelInfo" title="sasmodels.bumps_model.ModelInfo"><span class="pre">ModelInfo</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.info" title="Link to this definition">¶</a></dt>
+<dd><p>Model info.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.q_input">
+<span class="sig-name descname"><span class="pre">q_input</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bumps_model.html#sasmodels.bumps_model.Any" title="sasmodels.bumps_model.Any"><span class="pre">Any</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.q_input" title="Link to this definition">¶</a></dt>
+<dd><p>Q values at which the kernel is to be evaluated.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.release">
+<span class="sig-name descname"><span class="pre">release</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.release" title="Link to this definition">¶</a></dt>
+<dd><p>Free resources associated with the kernel.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureKernel.result">
+<span class="sig-name descname"><span class="pre">result</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">np.ndarray</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.mixture.MixtureKernel.result" title="Link to this definition">¶</a></dt>
+<dd><p>Place to hold result of <em>_call_kernel()</em> for subclass.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sasmodels.mixture.</span></span><span class="sig-name descname"><span class="pre">MixtureModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">parts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="kernel.html#sasmodels.kernel.KernelModel" title="sasmodels.kernel.KernelModel"><span class="pre">KernelModel</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureModel" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="kernel.html#sasmodels.kernel.KernelModel" title="sasmodels.kernel.KernelModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">KernelModel</span></code></a></p>
+<p>Model definition for mixture of models.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__annotations__">
+<span class="sig-name descname"><span class="pre">__annotations__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__annotations__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__class__">
+<span class="sig-name descname"><span class="pre">__class__</span></span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__class__" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__delattr__">
+<span class="sig-name descname"><span class="pre">__delattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__delattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement delattr(self, name).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__dict__">
+<span class="sig-name descname"><span class="pre">__dict__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">mappingproxy({'__module__':</span> <span class="pre">'sasmodels.mixture',</span> <span class="pre">'__doc__':</span> <span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Model</span> <span class="pre">definition</span> <span class="pre">for</span> <span class="pre">mixture</span> <span class="pre">of</span> <span class="pre">models.\n</span>&#160;&#160;&#160; <span class="pre">',</span> <span class="pre">'__init__':</span> <span class="pre">&lt;function</span> <span class="pre">MixtureModel.__init__&gt;,</span> <span class="pre">'make_kernel':</span> <span class="pre">&lt;function</span> <span class="pre">MixtureModel.make_kernel&gt;,</span> <span class="pre">'release':</span> <span class="pre">&lt;function</span> <span class="pre">MixtureModel.release&gt;,</span> <span class="pre">'__annotations__':</span> <span class="pre">{'info':</span> <span class="pre">'ModelInfo',</span> <span class="pre">'dtype':</span> <span class="pre">'np.dtype'}})</span></em><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__dict__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__dir__">
+<span class="sig-name descname"><span class="pre">__dir__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__dir__" title="Link to this definition">¶</a></dt>
+<dd><p>Default dir() implementation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__doc__">
+<span class="sig-name descname"><span class="pre">__doc__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Model</span> <span class="pre">definition</span> <span class="pre">for</span> <span class="pre">mixture</span> <span class="pre">of</span> <span class="pre">models.\n</span>&#160;&#160;&#160; <span class="pre">'</span></em><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__doc__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__eq__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__format__">
+<span class="sig-name descname"><span class="pre">__format__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format_spec</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__format__" title="Link to this definition">¶</a></dt>
+<dd><p>Default object formatter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__ge__">
+<span class="sig-name descname"><span class="pre">__ge__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__ge__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__getattribute__">
+<span class="sig-name descname"><span class="pre">__getattribute__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__getattribute__" title="Link to this definition">¶</a></dt>
+<dd><p>Return getattr(self, name).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__getstate__">
+<span class="sig-name descname"><span class="pre">__getstate__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__getstate__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__gt__">
+<span class="sig-name descname"><span class="pre">__gt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__gt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__hash__" title="Link to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">parts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="kernel.html#sasmodels.kernel.KernelModel" title="sasmodels.kernel.KernelModel"><span class="pre">KernelModel</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__init_subclass__" title="Link to this definition">¶</a></dt>
+<dd><p>This method is called when a class is subclassed.</p>
+<p>The default implementation does nothing. It may be
+overridden to extend subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__le__">
+<span class="sig-name descname"><span class="pre">__le__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__le__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__lt__">
+<span class="sig-name descname"><span class="pre">__lt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__lt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__module__">
+<span class="sig-name descname"><span class="pre">__module__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sasmodels.mixture'</span></em><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__module__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__ne__">
+<span class="sig-name descname"><span class="pre">__ne__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__ne__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self!=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__new__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__new__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__reduce__">
+<span class="sig-name descname"><span class="pre">__reduce__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__reduce__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__reduce_ex__">
+<span class="sig-name descname"><span class="pre">__reduce_ex__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protocol</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__reduce_ex__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__repr__" title="Link to this definition">¶</a></dt>
+<dd><p>Return repr(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__setattr__">
+<span class="sig-name descname"><span class="pre">__setattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__setattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement setattr(self, name, value).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__sizeof__">
+<span class="sig-name descname"><span class="pre">__sizeof__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__sizeof__" title="Link to this definition">¶</a></dt>
+<dd><p>Size of object in memory, in bytes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__str__" title="Link to this definition">¶</a></dt>
+<dd><p>Return str(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__subclasshook__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__subclasshook__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__subclasshook__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract classes can override this to customize issubclass().</p>
+<p>This is invoked early on by abc.ABCMeta.__subclasscheck__().
+It should return True, False or NotImplemented.  If it returns
+NotImplemented, the normal algorithm is used.  Otherwise, it
+overrides the normal algorithm (and the outcome is cached).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.__weakref__">
+<span class="sig-name descname"><span class="pre">__weakref__</span></span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.__weakref__" title="Link to this definition">¶</a></dt>
+<dd><p>list of weak references to the object</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.dtype">
+<span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">np.dtype</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.mixture.MixtureModel.dtype" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.info">
+<span class="sig-name descname"><span class="pre">info</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bumps_model.html#sasmodels.bumps_model.ModelInfo" title="sasmodels.bumps_model.ModelInfo"><span class="pre">ModelInfo</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.mixture.MixtureModel.info" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.make_kernel">
+<span class="sig-name descname"><span class="pre">make_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q_vectors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#sasmodels.mixture.MixtureKernel" title="sasmodels.mixture.MixtureKernel"><span class="pre">MixtureKernel</span></a></span></span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.make_kernel" title="Link to this definition">¶</a></dt>
+<dd><p>Instantiate a kernel for evaluating the model at <em>q_vectors</em>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture.MixtureModel.release">
+<span class="sig-name descname"><span class="pre">release</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.mixture.MixtureModel.release" title="Link to this definition">¶</a></dt>
+<dd><p>Free resources associated with the kernel.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sasmodels.mixture.</span></span><span class="sig-name descname"><span class="pre">_MixtureParts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="kernel.html#sasmodels.kernel.Kernel" title="sasmodels.kernel.Kernel"><span class="pre">Kernel</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">call_details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture._MixtureParts" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Mixture component iterator.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__class__">
+<span class="sig-name descname"><span class="pre">__class__</span></span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__class__" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__delattr__">
+<span class="sig-name descname"><span class="pre">__delattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__delattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement delattr(self, name).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__dict__">
+<span class="sig-name descname"><span class="pre">__dict__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">mappingproxy({'__module__':</span> <span class="pre">'sasmodels.mixture',</span> <span class="pre">'__doc__':</span> <span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Mixture</span> <span class="pre">component</span> <span class="pre">iterator.\n</span>&#160;&#160;&#160; <span class="pre">',</span> <span class="pre">'__init__':</span> <span class="pre">&lt;function</span> <span class="pre">_MixtureParts.__init__&gt;,</span> <span class="pre">'__iter__':</span> <span class="pre">&lt;function</span> <span class="pre">_MixtureParts.__iter__&gt;,</span> <span class="pre">'__next__':</span> <span class="pre">&lt;function</span> <span class="pre">_MixtureParts.__next__&gt;,</span> <span class="pre">'next':</span> <span class="pre">&lt;function</span> <span class="pre">_MixtureParts.__next__&gt;,</span> <span class="pre">'_part_details':</span> <span class="pre">&lt;function</span> <span class="pre">_MixtureParts._part_details&gt;,</span> <span class="pre">'_part_values':</span> <span class="pre">&lt;function</span> <span class="pre">_MixtureParts._part_values&gt;,</span> <span class="pre">'__dict__':</span> <span class="pre">&lt;attribute</span> <span class="pre">'__dict__'</span> <span class="pre">of</span> <span class="pre">'_MixtureParts'</span> <span class="pre">objects&gt;,</span> <span class="pre">'__weakref__':</span> <span class="pre">&lt;attribute</span> <span class="pre">'__weakref__'</span> <span class="pre">of</span> <span class="pre">'_MixtureParts'</span> <span class="pre">objects&gt;,</span> <span class="pre">'__annotations__':</span> <span class="pre">{}})</span></em><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__dict__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__dir__">
+<span class="sig-name descname"><span class="pre">__dir__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__dir__" title="Link to this definition">¶</a></dt>
+<dd><p>Default dir() implementation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__doc__">
+<span class="sig-name descname"><span class="pre">__doc__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Mixture</span> <span class="pre">component</span> <span class="pre">iterator.\n</span>&#160;&#160;&#160; <span class="pre">'</span></em><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__doc__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__eq__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__format__">
+<span class="sig-name descname"><span class="pre">__format__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format_spec</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__format__" title="Link to this definition">¶</a></dt>
+<dd><p>Default object formatter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__ge__">
+<span class="sig-name descname"><span class="pre">__ge__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__ge__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__getattribute__">
+<span class="sig-name descname"><span class="pre">__getattribute__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__getattribute__" title="Link to this definition">¶</a></dt>
+<dd><p>Return getattr(self, name).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__getstate__">
+<span class="sig-name descname"><span class="pre">__getstate__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__getstate__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__gt__">
+<span class="sig-name descname"><span class="pre">__gt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__gt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__hash__" title="Link to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernels</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="kernel.html#sasmodels.kernel.Kernel" title="sasmodels.kernel.Kernel"><span class="pre">Kernel</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">call_details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__init_subclass__" title="Link to this definition">¶</a></dt>
+<dd><p>This method is called when a class is subclassed.</p>
+<p>The default implementation does nothing. It may be
+overridden to extend subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__iter__">
+<span class="sig-name descname"><span class="pre">__iter__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#sasmodels.mixture._MixtureParts" title="sasmodels.mixture._MixtureParts"><span class="pre">_MixtureParts</span></a></span></span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__iter__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__le__">
+<span class="sig-name descname"><span class="pre">__le__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__le__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__lt__">
+<span class="sig-name descname"><span class="pre">__lt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__lt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__module__">
+<span class="sig-name descname"><span class="pre">__module__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sasmodels.mixture'</span></em><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__module__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__ne__">
+<span class="sig-name descname"><span class="pre">__ne__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__ne__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self!=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__new__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__new__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__next__">
+<span class="sig-name descname"><span class="pre">__next__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__next__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__reduce__">
+<span class="sig-name descname"><span class="pre">__reduce__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__reduce__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__reduce_ex__">
+<span class="sig-name descname"><span class="pre">__reduce_ex__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protocol</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__reduce_ex__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__repr__" title="Link to this definition">¶</a></dt>
+<dd><p>Return repr(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__setattr__">
+<span class="sig-name descname"><span class="pre">__setattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__setattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement setattr(self, name, value).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__sizeof__">
+<span class="sig-name descname"><span class="pre">__sizeof__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__sizeof__" title="Link to this definition">¶</a></dt>
+<dd><p>Size of object in memory, in bytes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__str__" title="Link to this definition">¶</a></dt>
+<dd><p>Return str(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__subclasshook__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__subclasshook__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__subclasshook__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract classes can override this to customize issubclass().</p>
+<p>This is invoked early on by abc.ABCMeta.__subclasscheck__().
+It should return True, False or NotImplemented.  If it returns
+NotImplemented, the normal algorithm is used.  Otherwise, it
+overrides the normal algorithm (and the outcome is cached).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.__weakref__">
+<span class="sig-name descname"><span class="pre">__weakref__</span></span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.__weakref__" title="Link to this definition">¶</a></dt>
+<dd><p>list of weak references to the object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts._part_details">
+<span class="sig-name descname"><span class="pre">_part_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">par_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a></span></span><a class="headerlink" href="#sasmodels.mixture._MixtureParts._part_details" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts._part_values">
+<span class="sig-name descname"><span class="pre">_part_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">par_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mag_index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#sasmodels.mixture._MixtureParts._part_values" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.mixture._MixtureParts.next">
+<span class="sig-name descname"><span class="pre">next</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.mixture._MixtureParts.next" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.mixture._intermediates">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.mixture.</span></span><span class="sig-name descname"><span class="pre">_intermediates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">results</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="kernel.html#sasmodels.kernel.Kernel" title="sasmodels.kernel.Kernel"><span class="pre">Kernel</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">OrderedDict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bumps_model.html#sasmodels.bumps_model.Any" title="typing.Any"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.mixture._intermediates" title="Link to this definition">¶</a></dt>
+<dd><p>Returns intermediate results for mixture model.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.mixture.make_mixture_info">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.mixture.</span></span><span class="sig-name descname"><span class="pre">make_mixture_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operation</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'+'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></span><a class="headerlink" href="#sasmodels.mixture.make_mixture_info" title="Link to this definition">¶</a></dt>
+<dd><p>Create info block for mixture model.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">23. Mixture model evaluator</a><ul>
+<li><a class="reference internal" href="#module-sasmodels.mixture"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.mixture</span></code></a><ul>
+<li><a class="reference internal" href="#mixture-model">Mixture model</a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel"><code class="docutils literal notranslate"><span class="pre">MixtureKernel</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.Fq"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.Fq()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.Iq"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.Iq()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__annotations__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__annotations__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__call__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__call__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__class__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__class__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__delattr__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__delattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__dict__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__dict__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__dir__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__dir__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__doc__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__doc__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__eq__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__eq__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__format__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__format__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__ge__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__ge__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__getattribute__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__getattribute__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__getstate__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__getstate__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__gt__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__gt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__hash__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__hash__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__init__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__init_subclass__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__le__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__le__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__lt__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__lt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__module__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__module__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__ne__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__ne__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__new__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__new__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__reduce__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__reduce__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__reduce_ex__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__reduce_ex__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__repr__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__repr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__setattr__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__setattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__sizeof__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__sizeof__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__str__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__subclasshook__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__subclasshook__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.__weakref__"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.__weakref__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel._call_kernel"><code class="docutils literal notranslate"><span class="pre">MixtureKernel._call_kernel()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.dim"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.dim</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.dtype"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.dtype</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.info"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.info</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.q_input"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.q_input</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.release"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.release()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureKernel.result"><code class="docutils literal notranslate"><span class="pre">MixtureKernel.result</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel"><code class="docutils literal notranslate"><span class="pre">MixtureModel</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__annotations__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__annotations__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__class__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__class__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__delattr__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__delattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__dict__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__dict__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__dir__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__dir__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__doc__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__doc__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__eq__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__eq__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__format__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__format__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__ge__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__ge__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__getattribute__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__getattribute__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__getstate__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__getstate__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__gt__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__gt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__hash__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__hash__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__init__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__init_subclass__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__le__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__le__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__lt__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__lt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__module__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__module__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__ne__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__ne__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__new__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__new__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__reduce__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__reduce__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__reduce_ex__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__reduce_ex__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__repr__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__repr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__setattr__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__setattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__sizeof__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__sizeof__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__str__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__subclasshook__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__subclasshook__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.__weakref__"><code class="docutils literal notranslate"><span class="pre">MixtureModel.__weakref__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.dtype"><code class="docutils literal notranslate"><span class="pre">MixtureModel.dtype</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.info"><code class="docutils literal notranslate"><span class="pre">MixtureModel.info</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.make_kernel"><code class="docutils literal notranslate"><span class="pre">MixtureModel.make_kernel()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.MixtureModel.release"><code class="docutils literal notranslate"><span class="pre">MixtureModel.release()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts"><code class="docutils literal notranslate"><span class="pre">_MixtureParts</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__class__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__class__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__delattr__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__delattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__dict__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__dict__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__dir__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__dir__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__doc__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__doc__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__eq__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__eq__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__format__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__format__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__ge__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__ge__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__getattribute__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__getattribute__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__getstate__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__getstate__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__gt__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__gt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__hash__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__hash__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__init__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__init_subclass__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__iter__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__iter__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__le__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__le__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__lt__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__lt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__module__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__module__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__ne__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__ne__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__new__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__new__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__next__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__next__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__reduce__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__reduce__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__reduce_ex__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__reduce_ex__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__repr__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__repr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__setattr__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__setattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__sizeof__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__sizeof__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__str__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__subclasshook__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__subclasshook__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.__weakref__"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.__weakref__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts._part_details"><code class="docutils literal notranslate"><span class="pre">_MixtureParts._part_details()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts._part_values"><code class="docutils literal notranslate"><span class="pre">_MixtureParts._part_values()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture._MixtureParts.next"><code class="docutils literal notranslate"><span class="pre">_MixtureParts.next()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sasmodels.mixture._intermediates"><code class="docutils literal notranslate"><span class="pre">_intermediates()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.mixture.make_mixture_info"><code class="docutils literal notranslate"><span class="pre">make_mixture_info()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="list_pars.html"
+                          title="previous chapter"><span class="section-number">22. </span>Identify all parameters in all models</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="model_test.html"
+                          title="next chapter"><span class="section-number">24. </span>Unit test support</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/dev/sasmodels-api/mixture.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="model_test.html" title="24. Unit test support"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="list_pars.html" title="22. Identify all parameters in all models"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">23. </span>Mixture model evaluator</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, The SasView Project.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

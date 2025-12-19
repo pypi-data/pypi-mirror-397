@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>27. Product model evaluator &#8212; SasView 6.1.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=f0c0c503"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="28. 1-D resolution functions" href="resolution.html" />
+    <link rel="prev" title="26. Multiple scattering support" href="multiscat.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="resolution.html" title="28. 1-D resolution functions"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="multiscat.html" title="26. Multiple scattering support"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">27. </span>Product model evaluator</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="product-model-evaluator">
+<h1><span class="section-number">27. </span>Product model evaluator<a class="headerlink" href="#product-model-evaluator" title="Link to this heading">¶</a></h1>
+<section id="module-sasmodels.product">
+<span id="sasmodels-product"></span><h2><a class="reference internal" href="#module-sasmodels.product" title="sasmodels.product"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.product</span></code></a><a class="headerlink" href="#module-sasmodels.product" title="Link to this heading">¶</a></h2>
+<section id="product-model">
+<h3>Product model<a class="headerlink" href="#product-model" title="Link to this heading">¶</a></h3>
+<p>The product model multiplies the structure factor by the form factor,
+modulated by the effective radius of the form.  The resulting model
+has a attributes of both the model description (with parameters, etc.)
+and the module evaluator (with call, release, etc.).</p>
+<p>To use it, first load form factor P and structure factor S, then create
+<em>make_product_info(P, S)</em>.</p>
+<p>The P&#64;S models is somewhat complicated because there are many special
+parameters that need to be handled in particular ways.  Much of the
+code is used to figure out what special parameters we have, where to
+find them in the P&#64;S model inputs and how to distribute them to the underlying
+P and S model calculators.</p>
+<p>The parameter packet received by the P&#64;S is a <a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><code class="xref py py-class docutils literal notranslate"><span class="pre">details.CallDetails</span></code></a>
+structure along with a data vector. The CallDetails structure indicates which
+parameters are polydisperse, the length of the distribution, and where to
+find it in the data vector.  The distributions are ordered from longest to
+shortest, with length 1 distributions filling out the distribution set.  That
+way the kernel calculator doesn’t have to check if it needs another nesting
+level since it is always there.  The data vector consists of a list of target
+values for the parameters, followed by a concatenation of the distribution
+values, and then followed by a concatenation of the distribution weights.
+Given the combined details and data for P&#64;S, we must decompose them in to
+details for P and details for S separately, which unfortunately requires
+intimate knowledge of the data structures and tricky code.</p>
+<p>The special parameters are:</p>
+<ul>
+<li><dl class="simple">
+<dt><em>scale</em> and <em>background</em>:</dt><dd><p>First two parameters of the value list in each of P, S and P&#64;S.
+When decomposing P&#64;S parameters, ignore <em>scale</em> and <em>background</em>,
+instead using 1 and 0 for the first two slots of both P and S.
+After calling P and S individually, the results are combined as
+<code class="code docutils literal notranslate"><span class="pre">volfraction*scale*P*S</span> <span class="pre">+</span> <span class="pre">background</span></code>.  The <em>scale</em> and
+<em>background</em> do not show up in the polydispersity structure so
+they are easy to handle.</p>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt><em>volfraction</em>:</dt><dd><p>Always the first parameter of S, but it may also be in P. If it is in P,
+then <em>P.volfraction</em> is used in the combined P&#64;S list, and
+<em>S.volfraction</em> is elided, otherwise <em>S.volfraction</em> is used. If we
+are using <em>volfraction</em> from P we can treat it like all the other P
+parameters when calling P, but when calling S we need to insert the
+<em>P.volfraction</em> into data vector for S and assign a slot of length 1
+in the distribution. Because we are using the original layout of the
+distribution vectors from P&#64;S, but copying it into private data
+vectors for S and P, we are free to “borrow” a P slots to store the
+missing <em>S.volfraction</em> distribution.  We use the <em>P.volfraction</em>
+slot itself but any slot will work.</p>
+<p>For hollow shapes, <em>volfraction</em> represents the volume fraction of
+material but S needs the volume fraction enclosed by the shape. The
+answer is to scale the user specified volume fraction by the form:shell
+ratio computed from the average form volume and average shell volume
+returned from P. Use the original <em>volfraction</em> divided by <em>shell_volume</em>
+to compute the number density, and scale P&#64;S by that to get absolute
+scaling on the final <em>I(q)</em>. The <em>scale</em> for P&#64;S should therefore usually
+be one.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><em>radius_effective</em>:</dt><dd><p>Always the second parameter of S and always part of P&#64;S, but never in P.
+The value may be calculated using <em>P.radius_effective()</em> or it
+may be set to the <em>radius_effective</em> value in P&#64;S, depending on
+<em>radius_effective_mode</em>.  If part of S, the value may be polydisperse.
+If calculated by P, then it will be the weighted average of effective
+radii computed for the polydisperse shape parameters.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><em>structure_factor_mode</em></dt><dd><p>If P&#64;S supports beta approximation (i.e., if it has the <em>Fq</em> function that
+returns &lt;FF*&gt; and &lt;F&gt;&lt;F*&gt;), then <em>structure_factor_mode</em> will be added
+to the P&#64;S parameters right after the S parameters.  This mode may be 0
+for the monodisperse approximation or 1 for the beta approximation.  We
+will add more values here as we implemented more complicated operations,
+but for now P and S must be computed separately.  If beta, then we
+return <em>I = scale volfrac/volume ( &lt;FF&gt; + &lt;F&gt;^2 (S-1)) + background</em>.
+If not beta then return <em>I = scale/volume P S + background</em> .  In both
+cases, return the appropriate immediate values.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><em>radius_effective_mode</em></dt><dd><p>If P defines the <em>radius_effective</em> function (and therefore
+<em>P.info.radius_effective_modes</em> is a list of effective radius modes),
+then <em>radius_effective_mode</em> will be the final parameter in P&#64;S.  Mode
+will be zero if <em>radius_effective</em> is defined by the user using the S
+parameter; any other value and the <em>radius_effective</em> parameter will be
+filled in from the value computed in P.  In the latter case, the
+polydispersity information for <em>S.radius_effective</em> will need to be
+suppressed, with pd length set to 1, the first value set to the
+effective radius and the first weight set to 1.  Do this after composing
+the S data vector so the inputs are left untouched.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><em>regular parameters</em></dt><dd><p>The regular P parameters form a block of length <em>P.info.npars</em> at the
+start of the data vector (after scale and background).  These will be
+followed by <em>S.effective_radius</em>, and <em>S.volfraction</em> (if <em>P.volfraction</em>
+is absent), and then the regular S parameters.  The P and S blocks can
+be copied as a group into the respective P and S data vectors.
+We can copy the distribution value and weight vectors untouched to both
+the P and S data vectors since they are referenced by offset and length.
+We can update the radius_effective slots in the P data vector with
+<em>P.radius_effective()</em> if needed.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><em>magnetic parameters</em></dt><dd><p>For each P parameter that is an SLD there will be a set of three magnetic
+parameters tacked on to P&#64;S after the regular P and S and after the
+special <em>structure_factor_mode</em> and <em>radius_effective_mode</em>.  These
+can be copied as a group after the regular P parameters.  There won’t
+be any magnetic S parameters.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sasmodels.product.</span></span><span class="sig-name descname"><span class="pre">ProductKernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_kernel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="kernel.html#sasmodels.kernel.Kernel" title="sasmodels.kernel.Kernel"><span class="pre">Kernel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_kernel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="kernel.html#sasmodels.kernel.Kernel" title="sasmodels.kernel.Kernel"><span class="pre">Kernel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductKernel" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="kernel.html#sasmodels.kernel.Kernel" title="sasmodels.kernel.Kernel"><code class="xref py py-class docutils literal notranslate"><span class="pre">Kernel</span></code></a></p>
+<p>Instantiated kernel for product model.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.Fq">
+<span class="sig-name descname"><span class="pre">Fq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call_details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magnetic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius_effective_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">np.ndarray</span></span></span><a class="headerlink" href="#sasmodels.product.ProductKernel.Fq" title="Link to this definition">¶</a></dt>
+<dd><p>Returns &lt;F(q)&gt;, &lt;F(q)^2&gt;, effective radius, shell volume and
+form:shell volume ratio.  The &lt;F(q)&gt; term may be None if the
+form factor does not support direct computation of <span class="math notranslate nohighlight">\(F(q)\)</span></p>
+<p><span class="math notranslate nohighlight">\(P(q) = &lt;F^2(q)&gt;/&lt;V&gt;\)</span> is used for structure factor calculations,</p>
+<div class="math notranslate nohighlight">
+\[I(q) = \text{scale} \cdot P(q) \cdot S(q) + \text{background}\]</div>
+<p>For the beta approximation, this becomes</p>
+<div class="math notranslate nohighlight">
+\[I(q) = \text{scale} P (1 + &lt;F&gt;^2/&lt;F^2&gt; (S - 1)) + \text{background}
+     = \text{scale}/&lt;V&gt; (&lt;F^2&gt; + &lt;F&gt;^2 (S - 1)) + \text{background}\]</div>
+<p><span class="math notranslate nohighlight">\(&lt;F(q)&gt;\)</span> and <span class="math notranslate nohighlight">\(&lt;F^2(q)&gt;\)</span> are averaged by polydispersity in shape
+and orientation, with each configuration <span class="math notranslate nohighlight">\(x_k\)</span> having form factor
+<span class="math notranslate nohighlight">\(F(q, x_k)\)</span>, weight <span class="math notranslate nohighlight">\(w_k\)</span> and volume <span class="math notranslate nohighlight">\(V_k\)</span>.  The result is:</p>
+<div class="math notranslate nohighlight">
+\[P(q)=\frac{\sum w_k F^2(q, x_k) / \sum w_k}{\sum w_k V_k / \sum w_k}\]</div>
+<p>The form factor itself is scaled by volume and contrast to compute the
+total scattering.  This is then squared, and the volume weighted
+F^2 is then normalized by volume F.  For a given density, the number
+of scattering centers is assumed to scale linearly with volume.  Later
+scaling the resulting <span class="math notranslate nohighlight">\(P(q)\)</span> by the volume fraction of particles
+gives the total scattering on an absolute scale. Most models
+incorporate the volume fraction into the overall scale parameter.  An
+exception is vesicle, which includes the volume fraction parameter in
+the model itself, scaling <span class="math notranslate nohighlight">\(F\)</span> by <span class="math notranslate nohighlight">\(\surd V_f\)</span> so that the math for
+the beta approximation works out.</p>
+<p>By scaling <span class="math notranslate nohighlight">\(P(q)\)</span> by total weight <span class="math notranslate nohighlight">\(\sum w_k\)</span>, there is no need to make
+sure that the polydisperisity distributions normalize to one.  In
+particular, any distibution values <span class="math notranslate nohighlight">\(x_k\)</span> outside the valid domain
+of <span class="math notranslate nohighlight">\(F\)</span> will not be included, and the distribution will be implicitly
+truncated.  This is controlled by the parameter limits defined in the
+model (which truncate the distribution before calling the kernel) as
+well as any region excluded using the <em>INVALID</em> macro defined within
+the model itself.</p>
+<p>The volume used in the polydispersity calculation is the form volume
+for solid objects or the shell volume for hollow objects.  Shell
+volume should be used within <span class="math notranslate nohighlight">\(F\)</span> so that the normalizing scale
+represents the volume fraction of the shell rather than the entire
+form.  This corresponds to the volume fraction of shell-forming
+material added to the solvent.</p>
+<p>The calculation of <span class="math notranslate nohighlight">\(S\)</span> requires the effective radius and the
+volume fraction of the particles.  The model can have several
+different ways to compute effective radius, with the
+<em>radius_effective_mode</em> parameter used to select amongst them.  The
+volume fraction of particles should be determined from the total
+volume fraction of the form, not just the shell volume fraction.
+This makes a difference for hollow shapes, which need to scale
+the volume fraction by the returned volume ratio when computing <span class="math notranslate nohighlight">\(S\)</span>.
+For solid objects, the shell volume is set to the form volume so
+this scale factor evaluates to one and so can be used for both
+hollow and solid shapes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.Iq">
+<span class="sig-name descname"><span class="pre">Iq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call_details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magnetic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#sasmodels.product.ProductKernel.Iq" title="Link to this definition">¶</a></dt>
+<dd><p>Returns I(q) from the polydisperse average scattering.</p>
+<div class="math notranslate nohighlight">
+\[I(q) = \text{scale} \cdot P(q) + \text{background}\]</div>
+<p>With the correct choice of model and contrast, setting <em>scale</em> to
+the volume fraction <span class="math notranslate nohighlight">\(V_f\)</span> of particles should match the measured
+absolute scattering.  Some models (e.g., vesicle) have volume fraction
+built into the model, and do not need an additional scale.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__annotations__">
+<span class="sig-name descname"><span class="pre">__annotations__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#sasmodels.product.ProductKernel.__annotations__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call_details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magnetic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#sasmodels.product.ProductKernel.__call__" title="Link to this definition">¶</a></dt>
+<dd><p>Returns I(q) from the polydisperse average scattering.</p>
+<div class="math notranslate nohighlight">
+\[I(q) = \text{scale} \cdot P(q) + \text{background}\]</div>
+<p>With the correct choice of model and contrast, setting <em>scale</em> to
+the volume fraction <span class="math notranslate nohighlight">\(V_f\)</span> of particles should match the measured
+absolute scattering.  Some models (e.g., vesicle) have volume fraction
+built into the model, and do not need an additional scale.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__class__">
+<span class="sig-name descname"><span class="pre">__class__</span></span><a class="headerlink" href="#sasmodels.product.ProductKernel.__class__" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__delattr__">
+<span class="sig-name descname"><span class="pre">__delattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductKernel.__delattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement delattr(self, name).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__dict__">
+<span class="sig-name descname"><span class="pre">__dict__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">mappingproxy({'__module__':</span> <span class="pre">'sasmodels.product',</span> <span class="pre">'__doc__':</span> <span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Instantiated</span> <span class="pre">kernel</span> <span class="pre">for</span> <span class="pre">product</span> <span class="pre">model.\n</span>&#160;&#160;&#160; <span class="pre">',</span> <span class="pre">'__init__':</span> <span class="pre">&lt;function</span> <span class="pre">ProductKernel.__init__&gt;,</span> <span class="pre">'Iq':</span> <span class="pre">&lt;function</span> <span class="pre">ProductKernel.Iq&gt;,</span> <span class="pre">'__call__':</span> <span class="pre">&lt;function</span> <span class="pre">ProductKernel.Iq&gt;,</span> <span class="pre">'release':</span> <span class="pre">&lt;function</span> <span class="pre">ProductKernel.release&gt;,</span> <span class="pre">'__annotations__':</span> <span class="pre">{'results':</span> <span class="pre">'Callable[[],</span> <span class="pre">OrderedDict]',</span> <span class="pre">'dim':</span> <span class="pre">'str',</span> <span class="pre">'info':</span> <span class="pre">'ModelInfo',</span> <span class="pre">'dtype':</span> <span class="pre">'np.dtype',</span> <span class="pre">'q_input':</span> <span class="pre">'Any',</span> <span class="pre">'result':</span> <span class="pre">'np.ndarray'}})</span></em><a class="headerlink" href="#sasmodels.product.ProductKernel.__dict__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__dir__">
+<span class="sig-name descname"><span class="pre">__dir__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductKernel.__dir__" title="Link to this definition">¶</a></dt>
+<dd><p>Default dir() implementation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__doc__">
+<span class="sig-name descname"><span class="pre">__doc__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Instantiated</span> <span class="pre">kernel</span> <span class="pre">for</span> <span class="pre">product</span> <span class="pre">model.\n</span>&#160;&#160;&#160; <span class="pre">'</span></em><a class="headerlink" href="#sasmodels.product.ProductKernel.__doc__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductKernel.__eq__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__format__">
+<span class="sig-name descname"><span class="pre">__format__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format_spec</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductKernel.__format__" title="Link to this definition">¶</a></dt>
+<dd><p>Default object formatter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__ge__">
+<span class="sig-name descname"><span class="pre">__ge__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductKernel.__ge__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__getattribute__">
+<span class="sig-name descname"><span class="pre">__getattribute__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductKernel.__getattribute__" title="Link to this definition">¶</a></dt>
+<dd><p>Return getattr(self, name).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__getstate__">
+<span class="sig-name descname"><span class="pre">__getstate__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductKernel.__getstate__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__gt__">
+<span class="sig-name descname"><span class="pre">__gt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductKernel.__gt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductKernel.__hash__" title="Link to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">p_kernel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="kernel.html#sasmodels.kernel.Kernel" title="sasmodels.kernel.Kernel"><span class="pre">Kernel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_kernel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="kernel.html#sasmodels.kernel.Kernel" title="sasmodels.kernel.Kernel"><span class="pre">Kernel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.product.ProductKernel.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductKernel.__init_subclass__" title="Link to this definition">¶</a></dt>
+<dd><p>This method is called when a class is subclassed.</p>
+<p>The default implementation does nothing. It may be
+overridden to extend subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__le__">
+<span class="sig-name descname"><span class="pre">__le__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductKernel.__le__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__lt__">
+<span class="sig-name descname"><span class="pre">__lt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductKernel.__lt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__module__">
+<span class="sig-name descname"><span class="pre">__module__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sasmodels.product'</span></em><a class="headerlink" href="#sasmodels.product.ProductKernel.__module__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__ne__">
+<span class="sig-name descname"><span class="pre">__ne__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductKernel.__ne__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self!=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__new__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductKernel.__new__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__reduce__">
+<span class="sig-name descname"><span class="pre">__reduce__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductKernel.__reduce__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__reduce_ex__">
+<span class="sig-name descname"><span class="pre">__reduce_ex__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protocol</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductKernel.__reduce_ex__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductKernel.__repr__" title="Link to this definition">¶</a></dt>
+<dd><p>Return repr(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__setattr__">
+<span class="sig-name descname"><span class="pre">__setattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductKernel.__setattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement setattr(self, name, value).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__sizeof__">
+<span class="sig-name descname"><span class="pre">__sizeof__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductKernel.__sizeof__" title="Link to this definition">¶</a></dt>
+<dd><p>Size of object in memory, in bytes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductKernel.__str__" title="Link to this definition">¶</a></dt>
+<dd><p>Return str(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__subclasshook__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__subclasshook__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductKernel.__subclasshook__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract classes can override this to customize issubclass().</p>
+<p>This is invoked early on by abc.ABCMeta.__subclasscheck__().
+It should return True, False or NotImplemented.  If it returns
+NotImplemented, the normal algorithm is used.  Otherwise, it
+overrides the normal algorithm (and the outcome is cached).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.__weakref__">
+<span class="sig-name descname"><span class="pre">__weakref__</span></span><a class="headerlink" href="#sasmodels.product.ProductKernel.__weakref__" title="Link to this definition">¶</a></dt>
+<dd><p>list of weak references to the object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel._call_kernel">
+<span class="sig-name descname"><span class="pre">_call_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">call_details</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="details.html#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magnetic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">radius_effective_mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.product.ProductKernel._call_kernel" title="Link to this definition">¶</a></dt>
+<dd><p>Call the kernel.  Subclasses defining kernels for particular execution
+engines need to provide an implementation for this.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.dim">
+<span class="sig-name descname"><span class="pre">dim</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.product.ProductKernel.dim" title="Link to this definition">¶</a></dt>
+<dd><p>Kernel dimension, either “1d” or “2d”.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.dtype">
+<span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">np.dtype</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.product.ProductKernel.dtype" title="Link to this definition">¶</a></dt>
+<dd><p>Numerical precision for the computation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.info">
+<span class="sig-name descname"><span class="pre">info</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bumps_model.html#sasmodels.bumps_model.ModelInfo" title="sasmodels.bumps_model.ModelInfo"><span class="pre">ModelInfo</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.product.ProductKernel.info" title="Link to this definition">¶</a></dt>
+<dd><p>Model info.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.q_input">
+<span class="sig-name descname"><span class="pre">q_input</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bumps_model.html#sasmodels.bumps_model.Any" title="sasmodels.bumps_model.Any"><span class="pre">Any</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.product.ProductKernel.q_input" title="Link to this definition">¶</a></dt>
+<dd><p>Q values at which the kernel is to be evaluated.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.release">
+<span class="sig-name descname"><span class="pre">release</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.product.ProductKernel.release" title="Link to this definition">¶</a></dt>
+<dd><p>Free resources associated with the kernel.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product.ProductKernel.result">
+<span class="sig-name descname"><span class="pre">result</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">np.ndarray</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.product.ProductKernel.result" title="Link to this definition">¶</a></dt>
+<dd><p>Place to hold result of <em>_call_kernel()</em> for subclass.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sasmodels.product.</span></span><span class="sig-name descname"><span class="pre">ProductModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">P</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="kernel.html#sasmodels.kernel.KernelModel" title="sasmodels.kernel.KernelModel"><span class="pre">KernelModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">S</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="kernel.html#sasmodels.kernel.KernelModel" title="sasmodels.kernel.KernelModel"><span class="pre">KernelModel</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductModel" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="kernel.html#sasmodels.kernel.KernelModel" title="sasmodels.kernel.KernelModel"><code class="xref py py-class docutils literal notranslate"><span class="pre">KernelModel</span></code></a></p>
+<p>Model definition for product model.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.P">
+<span class="sig-name descname"><span class="pre">P</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bumps_model.html#sasmodels.bumps_model.KernelModel" title="sasmodels.bumps_model.KernelModel"><span class="pre">KernelModel</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.product.ProductModel.P" title="Link to this definition">¶</a></dt>
+<dd><p>Form factor modelling individual particles.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.S">
+<span class="sig-name descname"><span class="pre">S</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bumps_model.html#sasmodels.bumps_model.KernelModel" title="sasmodels.bumps_model.KernelModel"><span class="pre">KernelModel</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.product.ProductModel.S" title="Link to this definition">¶</a></dt>
+<dd><p>Structure factor modelling interaction between particles.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__annotations__">
+<span class="sig-name descname"><span class="pre">__annotations__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{'P':</span> <span class="pre">'KernelModel',</span> <span class="pre">'S':</span> <span class="pre">'KernelModel',</span> <span class="pre">'dtype':</span> <span class="pre">'np.dtype',</span> <span class="pre">'info':</span> <span class="pre">'ModelInfo'}</span></em><a class="headerlink" href="#sasmodels.product.ProductModel.__annotations__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__class__">
+<span class="sig-name descname"><span class="pre">__class__</span></span><a class="headerlink" href="#sasmodels.product.ProductModel.__class__" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__delattr__">
+<span class="sig-name descname"><span class="pre">__delattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductModel.__delattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement delattr(self, name).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__dict__">
+<span class="sig-name descname"><span class="pre">__dict__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">mappingproxy({'__module__':</span> <span class="pre">'sasmodels.product',</span> <span class="pre">'__doc__':</span> <span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Model</span> <span class="pre">definition</span> <span class="pre">for</span> <span class="pre">product</span> <span class="pre">model.\n</span>&#160;&#160;&#160; <span class="pre">',</span> <span class="pre">'info':</span> <span class="pre">None,</span> <span class="pre">'P':</span> <span class="pre">None,</span> <span class="pre">'S':</span> <span class="pre">None,</span> <span class="pre">'dtype':</span> <span class="pre">None,</span> <span class="pre">'__init__':</span> <span class="pre">&lt;function</span> <span class="pre">ProductModel.__init__&gt;,</span> <span class="pre">'make_kernel':</span> <span class="pre">&lt;function</span> <span class="pre">ProductModel.make_kernel&gt;,</span> <span class="pre">'release':</span> <span class="pre">&lt;function</span> <span class="pre">ProductModel.release&gt;,</span> <span class="pre">'__annotations__':</span> <span class="pre">{'info':</span> <span class="pre">'ModelInfo',</span> <span class="pre">'P':</span> <span class="pre">'KernelModel',</span> <span class="pre">'S':</span> <span class="pre">'KernelModel',</span> <span class="pre">'dtype':</span> <span class="pre">'np.dtype'}})</span></em><a class="headerlink" href="#sasmodels.product.ProductModel.__dict__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__dir__">
+<span class="sig-name descname"><span class="pre">__dir__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductModel.__dir__" title="Link to this definition">¶</a></dt>
+<dd><p>Default dir() implementation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__doc__">
+<span class="sig-name descname"><span class="pre">__doc__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Model</span> <span class="pre">definition</span> <span class="pre">for</span> <span class="pre">product</span> <span class="pre">model.\n</span>&#160;&#160;&#160; <span class="pre">'</span></em><a class="headerlink" href="#sasmodels.product.ProductModel.__doc__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductModel.__eq__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__format__">
+<span class="sig-name descname"><span class="pre">__format__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format_spec</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductModel.__format__" title="Link to this definition">¶</a></dt>
+<dd><p>Default object formatter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__ge__">
+<span class="sig-name descname"><span class="pre">__ge__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductModel.__ge__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__getattribute__">
+<span class="sig-name descname"><span class="pre">__getattribute__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductModel.__getattribute__" title="Link to this definition">¶</a></dt>
+<dd><p>Return getattr(self, name).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__getstate__">
+<span class="sig-name descname"><span class="pre">__getstate__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductModel.__getstate__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__gt__">
+<span class="sig-name descname"><span class="pre">__gt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductModel.__gt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductModel.__hash__" title="Link to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">P</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="kernel.html#sasmodels.kernel.KernelModel" title="sasmodels.kernel.KernelModel"><span class="pre">KernelModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">S</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="kernel.html#sasmodels.kernel.KernelModel" title="sasmodels.kernel.KernelModel"><span class="pre">KernelModel</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.product.ProductModel.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductModel.__init_subclass__" title="Link to this definition">¶</a></dt>
+<dd><p>This method is called when a class is subclassed.</p>
+<p>The default implementation does nothing. It may be
+overridden to extend subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__le__">
+<span class="sig-name descname"><span class="pre">__le__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductModel.__le__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__lt__">
+<span class="sig-name descname"><span class="pre">__lt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductModel.__lt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__module__">
+<span class="sig-name descname"><span class="pre">__module__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sasmodels.product'</span></em><a class="headerlink" href="#sasmodels.product.ProductModel.__module__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__ne__">
+<span class="sig-name descname"><span class="pre">__ne__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductModel.__ne__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self!=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__new__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductModel.__new__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__reduce__">
+<span class="sig-name descname"><span class="pre">__reduce__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductModel.__reduce__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__reduce_ex__">
+<span class="sig-name descname"><span class="pre">__reduce_ex__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protocol</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductModel.__reduce_ex__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductModel.__repr__" title="Link to this definition">¶</a></dt>
+<dd><p>Return repr(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__setattr__">
+<span class="sig-name descname"><span class="pre">__setattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductModel.__setattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement setattr(self, name, value).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__sizeof__">
+<span class="sig-name descname"><span class="pre">__sizeof__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductModel.__sizeof__" title="Link to this definition">¶</a></dt>
+<dd><p>Size of object in memory, in bytes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductModel.__str__" title="Link to this definition">¶</a></dt>
+<dd><p>Return str(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__subclasshook__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__subclasshook__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product.ProductModel.__subclasshook__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract classes can override this to customize issubclass().</p>
+<p>This is invoked early on by abc.ABCMeta.__subclasscheck__().
+It should return True, False or NotImplemented.  If it returns
+NotImplemented, the normal algorithm is used.  Otherwise, it
+overrides the normal algorithm (and the outcome is cached).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.__weakref__">
+<span class="sig-name descname"><span class="pre">__weakref__</span></span><a class="headerlink" href="#sasmodels.product.ProductModel.__weakref__" title="Link to this definition">¶</a></dt>
+<dd><p>list of weak references to the object</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.dtype">
+<span class="sig-name descname"><span class="pre">dtype</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">np.dtype</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.product.ProductModel.dtype" title="Link to this definition">¶</a></dt>
+<dd><p>Model precision. This is not really relevant, since it is the
+individual P and S models that control the effective dtype,
+converting the q-vectors to the correct type when the kernels
+for each are created. Ideally this should be set to the more
+precise type to avoid loss of precision, but precision in q is
+not critical (single is good enough for our purposes), so it just
+uses the precision of the form factor.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.info">
+<span class="sig-name descname"><span class="pre">info</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="bumps_model.html#sasmodels.bumps_model.ModelInfo" title="sasmodels.bumps_model.ModelInfo"><span class="pre">ModelInfo</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.product.ProductModel.info" title="Link to this definition">¶</a></dt>
+<dd><p>Combined info plock for the product model</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.make_kernel">
+<span class="sig-name descname"><span class="pre">make_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">q_vectors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="kernel.html#sasmodels.kernel.Kernel" title="sasmodels.kernel.Kernel"><span class="pre">Kernel</span></a></span></span><a class="headerlink" href="#sasmodels.product.ProductModel.make_kernel" title="Link to this definition">¶</a></dt>
+<dd><p>Instantiate a kernel for evaluating the model at <em>q_vectors</em>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product.ProductModel.release">
+<span class="sig-name descname"><span class="pre">release</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.product.ProductModel.release" title="Link to this definition">¶</a></dt>
+<dd><p>Free resources associated with the model.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sasmodels.product.</span></span><span class="sig-name descname"><span class="pre">_Intermediates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Returns intermediate results for beta approximation-enabled product.
+The result may be an array or a float.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates.__call__" title="Link to this definition">¶</a></dt>
+<dd><p>Call self as a function.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__class__">
+<span class="sig-name descname"><span class="pre">__class__</span></span><a class="headerlink" href="#sasmodels.product._Intermediates.__class__" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__delattr__">
+<span class="sig-name descname"><span class="pre">__delattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates.__delattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement delattr(self, name).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__dict__">
+<span class="sig-name descname"><span class="pre">__dict__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">mappingproxy({'__module__':</span> <span class="pre">'sasmodels.product',</span> <span class="pre">'__doc__':</span> <span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Returns</span> <span class="pre">intermediate</span> <span class="pre">results</span> <span class="pre">for</span> <span class="pre">beta</span> <span class="pre">approximation-enabled</span> <span class="pre">product.\n</span>&#160;&#160;&#160; <span class="pre">The</span> <span class="pre">result</span> <span class="pre">may</span> <span class="pre">be</span> <span class="pre">an</span> <span class="pre">array</span> <span class="pre">or</span> <span class="pre">a</span> <span class="pre">float.\n</span>&#160;&#160;&#160; <span class="pre">',</span> <span class="pre">'__init__':</span> <span class="pre">&lt;function</span> <span class="pre">_Intermediates.__init__&gt;,</span> <span class="pre">'__call__':</span> <span class="pre">&lt;function</span> <span class="pre">_Intermediates.__call__&gt;,</span> <span class="pre">'__dict__':</span> <span class="pre">&lt;attribute</span> <span class="pre">'__dict__'</span> <span class="pre">of</span> <span class="pre">'_Intermediates'</span> <span class="pre">objects&gt;,</span> <span class="pre">'__weakref__':</span> <span class="pre">&lt;attribute</span> <span class="pre">'__weakref__'</span> <span class="pre">of</span> <span class="pre">'_Intermediates'</span> <span class="pre">objects&gt;,</span> <span class="pre">'__annotations__':</span> <span class="pre">{}})</span></em><a class="headerlink" href="#sasmodels.product._Intermediates.__dict__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__dir__">
+<span class="sig-name descname"><span class="pre">__dir__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates.__dir__" title="Link to this definition">¶</a></dt>
+<dd><p>Default dir() implementation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__doc__">
+<span class="sig-name descname"><span class="pre">__doc__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Returns</span> <span class="pre">intermediate</span> <span class="pre">results</span> <span class="pre">for</span> <span class="pre">beta</span> <span class="pre">approximation-enabled</span> <span class="pre">product.\n</span>&#160;&#160;&#160; <span class="pre">The</span> <span class="pre">result</span> <span class="pre">may</span> <span class="pre">be</span> <span class="pre">an</span> <span class="pre">array</span> <span class="pre">or</span> <span class="pre">a</span> <span class="pre">float.\n</span>&#160;&#160;&#160; <span class="pre">'</span></em><a class="headerlink" href="#sasmodels.product._Intermediates.__doc__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates.__eq__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__format__">
+<span class="sig-name descname"><span class="pre">__format__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format_spec</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates.__format__" title="Link to this definition">¶</a></dt>
+<dd><p>Default object formatter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__ge__">
+<span class="sig-name descname"><span class="pre">__ge__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates.__ge__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__getattribute__">
+<span class="sig-name descname"><span class="pre">__getattribute__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates.__getattribute__" title="Link to this definition">¶</a></dt>
+<dd><p>Return getattr(self, name).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__getstate__">
+<span class="sig-name descname"><span class="pre">__getstate__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates.__getstate__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__gt__">
+<span class="sig-name descname"><span class="pre">__gt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates.__gt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates.__hash__" title="Link to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.product._Intermediates.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates.__init_subclass__" title="Link to this definition">¶</a></dt>
+<dd><p>This method is called when a class is subclassed.</p>
+<p>The default implementation does nothing. It may be
+overridden to extend subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__le__">
+<span class="sig-name descname"><span class="pre">__le__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates.__le__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__lt__">
+<span class="sig-name descname"><span class="pre">__lt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates.__lt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__module__">
+<span class="sig-name descname"><span class="pre">__module__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sasmodels.product'</span></em><a class="headerlink" href="#sasmodels.product._Intermediates.__module__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__ne__">
+<span class="sig-name descname"><span class="pre">__ne__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates.__ne__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self!=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__new__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates.__new__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__reduce__">
+<span class="sig-name descname"><span class="pre">__reduce__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates.__reduce__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__reduce_ex__">
+<span class="sig-name descname"><span class="pre">__reduce_ex__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protocol</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates.__reduce_ex__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates.__repr__" title="Link to this definition">¶</a></dt>
+<dd><p>Return repr(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__setattr__">
+<span class="sig-name descname"><span class="pre">__setattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates.__setattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement setattr(self, name, value).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__sizeof__">
+<span class="sig-name descname"><span class="pre">__sizeof__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates.__sizeof__" title="Link to this definition">¶</a></dt>
+<dd><p>Size of object in memory, in bytes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates.__str__" title="Link to this definition">¶</a></dt>
+<dd><p>Return str(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__subclasshook__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__subclasshook__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._Intermediates.__subclasshook__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract classes can override this to customize issubclass().</p>
+<p>This is invoked early on by abc.ABCMeta.__subclasscheck__().
+It should return True, False or NotImplemented.  If it returns
+NotImplemented, the normal algorithm is used.  Otherwise, it
+overrides the normal algorithm (and the outcome is cached).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product._Intermediates.__weakref__">
+<span class="sig-name descname"><span class="pre">__weakref__</span></span><a class="headerlink" href="#sasmodels.product._Intermediates.__weakref__" title="Link to this definition">¶</a></dt>
+<dd><p>list of weak references to the object</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sasmodels.product.</span></span><span class="sig-name descname"><span class="pre">_ProductRandom</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_pairs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Random set of model parameters for product model</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__call__" title="Link to this definition">¶</a></dt>
+<dd><p>Call self as a function.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__class__">
+<span class="sig-name descname"><span class="pre">__class__</span></span><a class="headerlink" href="#sasmodels.product._ProductRandom.__class__" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__delattr__">
+<span class="sig-name descname"><span class="pre">__delattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__delattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement delattr(self, name).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__dict__">
+<span class="sig-name descname"><span class="pre">__dict__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">mappingproxy({'__module__':</span> <span class="pre">'sasmodels.product',</span> <span class="pre">'__doc__':</span> <span class="pre">'Random</span> <span class="pre">set</span> <span class="pre">of</span> <span class="pre">model</span> <span class="pre">parameters</span> <span class="pre">for</span> <span class="pre">product</span> <span class="pre">model',</span> <span class="pre">'__init__':</span> <span class="pre">&lt;function</span> <span class="pre">_ProductRandom.__init__&gt;,</span> <span class="pre">'__call__':</span> <span class="pre">&lt;function</span> <span class="pre">_ProductRandom.__call__&gt;,</span> <span class="pre">'__dict__':</span> <span class="pre">&lt;attribute</span> <span class="pre">'__dict__'</span> <span class="pre">of</span> <span class="pre">'_ProductRandom'</span> <span class="pre">objects&gt;,</span> <span class="pre">'__weakref__':</span> <span class="pre">&lt;attribute</span> <span class="pre">'__weakref__'</span> <span class="pre">of</span> <span class="pre">'_ProductRandom'</span> <span class="pre">objects&gt;,</span> <span class="pre">'__annotations__':</span> <span class="pre">{}})</span></em><a class="headerlink" href="#sasmodels.product._ProductRandom.__dict__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__dir__">
+<span class="sig-name descname"><span class="pre">__dir__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__dir__" title="Link to this definition">¶</a></dt>
+<dd><p>Default dir() implementation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__doc__">
+<span class="sig-name descname"><span class="pre">__doc__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Random</span> <span class="pre">set</span> <span class="pre">of</span> <span class="pre">model</span> <span class="pre">parameters</span> <span class="pre">for</span> <span class="pre">product</span> <span class="pre">model'</span></em><a class="headerlink" href="#sasmodels.product._ProductRandom.__doc__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__eq__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__format__">
+<span class="sig-name descname"><span class="pre">__format__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format_spec</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__format__" title="Link to this definition">¶</a></dt>
+<dd><p>Default object formatter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__ge__">
+<span class="sig-name descname"><span class="pre">__ge__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__ge__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__getattribute__">
+<span class="sig-name descname"><span class="pre">__getattribute__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__getattribute__" title="Link to this definition">¶</a></dt>
+<dd><p>Return getattr(self, name).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__getstate__">
+<span class="sig-name descname"><span class="pre">__getstate__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__getstate__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__gt__">
+<span class="sig-name descname"><span class="pre">__gt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__gt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__hash__" title="Link to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_pairs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__init_subclass__" title="Link to this definition">¶</a></dt>
+<dd><p>This method is called when a class is subclassed.</p>
+<p>The default implementation does nothing. It may be
+overridden to extend subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__le__">
+<span class="sig-name descname"><span class="pre">__le__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__le__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__lt__">
+<span class="sig-name descname"><span class="pre">__lt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__lt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__module__">
+<span class="sig-name descname"><span class="pre">__module__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sasmodels.product'</span></em><a class="headerlink" href="#sasmodels.product._ProductRandom.__module__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__ne__">
+<span class="sig-name descname"><span class="pre">__ne__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__ne__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self!=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__new__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__new__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__reduce__">
+<span class="sig-name descname"><span class="pre">__reduce__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__reduce__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__reduce_ex__">
+<span class="sig-name descname"><span class="pre">__reduce_ex__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protocol</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__reduce_ex__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__repr__" title="Link to this definition">¶</a></dt>
+<dd><p>Return repr(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__setattr__">
+<span class="sig-name descname"><span class="pre">__setattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__setattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement setattr(self, name, value).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__sizeof__">
+<span class="sig-name descname"><span class="pre">__sizeof__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__sizeof__" title="Link to this definition">¶</a></dt>
+<dd><p>Size of object in memory, in bytes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__str__" title="Link to this definition">¶</a></dt>
+<dd><p>Return str(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__subclasshook__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__subclasshook__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._ProductRandom.__subclasshook__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract classes can override this to customize issubclass().</p>
+<p>This is invoked early on by abc.ABCMeta.__subclasscheck__().
+It should return True, False or NotImplemented.  If it returns
+NotImplemented, the normal algorithm is used.  Otherwise, it
+overrides the normal algorithm (and the outcome is cached).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.product._ProductRandom.__weakref__">
+<span class="sig-name descname"><span class="pre">__weakref__</span></span><a class="headerlink" href="#sasmodels.product._ProductRandom.__weakref__" title="Link to this definition">¶</a></dt>
+<dd><p>list of weak references to the object</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.product._tag_parameter">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.product.</span></span><span class="sig-name descname"><span class="pre">_tag_parameter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">par</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.product._tag_parameter" title="Link to this definition">¶</a></dt>
+<dd><p>Tag the parameter name with _S to indicate that the parameter comes from
+the structure factor parameter set.  This is only necessary if the
+form factor model includes a parameter of the same name as a parameter
+in the structure factor.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.product.make_extra_pars">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.product.</span></span><span class="sig-name descname"><span class="pre">make_extra_pars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.Parameter" title="sasmodels.modelinfo.Parameter"><span class="pre">Parameter</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.product.make_extra_pars" title="Link to this definition">¶</a></dt>
+<dd><p>Create parameters for structure factor and effective radius modes.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.product.make_product_info">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.product.</span></span><span class="sig-name descname"><span class="pre">make_product_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">p_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></span><a class="headerlink" href="#sasmodels.product.make_product_info" title="Link to this definition">¶</a></dt>
+<dd><p>Create info block for product model.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">27. Product model evaluator</a><ul>
+<li><a class="reference internal" href="#module-sasmodels.product"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.product</span></code></a><ul>
+<li><a class="reference internal" href="#product-model">Product model</a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel"><code class="docutils literal notranslate"><span class="pre">ProductKernel</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.Fq"><code class="docutils literal notranslate"><span class="pre">ProductKernel.Fq()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.Iq"><code class="docutils literal notranslate"><span class="pre">ProductKernel.Iq()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__annotations__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__annotations__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__call__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__call__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__class__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__class__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__delattr__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__delattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__dict__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__dict__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__dir__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__dir__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__doc__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__doc__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__eq__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__eq__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__format__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__format__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__ge__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__ge__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__getattribute__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__getattribute__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__getstate__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__getstate__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__gt__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__gt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__hash__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__hash__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__init__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__init_subclass__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__le__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__le__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__lt__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__lt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__module__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__module__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__ne__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__ne__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__new__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__new__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__reduce__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__reduce__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__reduce_ex__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__reduce_ex__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__repr__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__repr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__setattr__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__setattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__sizeof__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__sizeof__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__str__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__subclasshook__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__subclasshook__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.__weakref__"><code class="docutils literal notranslate"><span class="pre">ProductKernel.__weakref__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel._call_kernel"><code class="docutils literal notranslate"><span class="pre">ProductKernel._call_kernel()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.dim"><code class="docutils literal notranslate"><span class="pre">ProductKernel.dim</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.dtype"><code class="docutils literal notranslate"><span class="pre">ProductKernel.dtype</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.info"><code class="docutils literal notranslate"><span class="pre">ProductKernel.info</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.q_input"><code class="docutils literal notranslate"><span class="pre">ProductKernel.q_input</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.release"><code class="docutils literal notranslate"><span class="pre">ProductKernel.release()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductKernel.result"><code class="docutils literal notranslate"><span class="pre">ProductKernel.result</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel"><code class="docutils literal notranslate"><span class="pre">ProductModel</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.P"><code class="docutils literal notranslate"><span class="pre">ProductModel.P</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.S"><code class="docutils literal notranslate"><span class="pre">ProductModel.S</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__annotations__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__annotations__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__class__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__class__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__delattr__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__delattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__dict__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__dict__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__dir__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__dir__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__doc__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__doc__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__eq__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__eq__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__format__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__format__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__ge__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__ge__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__getattribute__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__getattribute__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__getstate__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__getstate__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__gt__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__gt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__hash__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__hash__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__init__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__init_subclass__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__le__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__le__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__lt__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__lt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__module__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__module__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__ne__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__ne__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__new__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__new__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__reduce__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__reduce__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__reduce_ex__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__reduce_ex__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__repr__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__repr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__setattr__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__setattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__sizeof__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__sizeof__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__str__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__subclasshook__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__subclasshook__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.__weakref__"><code class="docutils literal notranslate"><span class="pre">ProductModel.__weakref__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.dtype"><code class="docutils literal notranslate"><span class="pre">ProductModel.dtype</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.info"><code class="docutils literal notranslate"><span class="pre">ProductModel.info</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.make_kernel"><code class="docutils literal notranslate"><span class="pre">ProductModel.make_kernel()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.ProductModel.release"><code class="docutils literal notranslate"><span class="pre">ProductModel.release()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates"><code class="docutils literal notranslate"><span class="pre">_Intermediates</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__call__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__call__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__class__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__class__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__delattr__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__delattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__dict__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__dict__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__dir__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__dir__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__doc__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__doc__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__eq__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__eq__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__format__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__format__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__ge__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__ge__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__getattribute__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__getattribute__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__getstate__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__getstate__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__gt__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__gt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__hash__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__hash__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__init__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__init_subclass__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__le__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__le__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__lt__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__lt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__module__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__module__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__ne__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__ne__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__new__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__new__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__reduce__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__reduce__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__reduce_ex__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__reduce_ex__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__repr__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__repr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__setattr__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__setattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__sizeof__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__sizeof__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__str__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__subclasshook__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__subclasshook__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._Intermediates.__weakref__"><code class="docutils literal notranslate"><span class="pre">_Intermediates.__weakref__</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom"><code class="docutils literal notranslate"><span class="pre">_ProductRandom</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__call__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__call__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__class__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__class__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__delattr__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__delattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__dict__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__dict__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__dir__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__dir__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__doc__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__doc__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__eq__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__eq__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__format__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__format__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__ge__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__ge__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__getattribute__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__getattribute__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__getstate__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__getstate__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__gt__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__gt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__hash__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__hash__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__init__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__init_subclass__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__le__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__le__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__lt__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__lt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__module__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__module__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__ne__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__ne__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__new__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__new__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__reduce__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__reduce__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__reduce_ex__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__reduce_ex__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__repr__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__repr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__setattr__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__setattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__sizeof__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__sizeof__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__str__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__subclasshook__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__subclasshook__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product._ProductRandom.__weakref__"><code class="docutils literal notranslate"><span class="pre">_ProductRandom.__weakref__</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sasmodels.product._tag_parameter"><code class="docutils literal notranslate"><span class="pre">_tag_parameter()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.make_extra_pars"><code class="docutils literal notranslate"><span class="pre">make_extra_pars()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.product.make_product_info"><code class="docutils literal notranslate"><span class="pre">make_product_info()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="multiscat.html"
+                          title="previous chapter"><span class="section-number">26. </span>Multiple scattering support</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="resolution.html"
+                          title="next chapter"><span class="section-number">28. </span>1-D resolution functions</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/dev/sasmodels-api/product.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="resolution.html" title="28. 1-D resolution functions"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="multiscat.html" title="26. Multiple scattering support"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">27. </span>Product model evaluator</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, The SasView Project.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

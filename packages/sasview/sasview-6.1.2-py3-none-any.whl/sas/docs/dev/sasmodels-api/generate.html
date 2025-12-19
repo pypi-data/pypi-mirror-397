@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>13. Model parser &#8212; SasView 6.1.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=f0c0c503"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="14. Generate Gauss-Legendre integration points" href="gengauss.html" />
+    <link rel="prev" title="12. Annotate exceptions" href="exception.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="gengauss.html" title="14. Generate Gauss-Legendre integration points"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="exception.html" title="12. Annotate exceptions"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">13. </span>Model parser</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="model-parser">
+<h1><span class="section-number">13. </span>Model parser<a class="headerlink" href="#model-parser" title="Link to this heading">¶</a></h1>
+<section id="module-sasmodels.generate">
+<span id="sasmodels-generate"></span><h2><a class="reference internal" href="#module-sasmodels.generate" title="sasmodels.generate"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.generate</span></code></a><a class="headerlink" href="#module-sasmodels.generate" title="Link to this heading">¶</a></h2>
+<p>SAS model constructor.</p>
+<p>Small angle scattering models are defined by a set of kernel functions:</p>
+<blockquote>
+<div><p><em>Iq(q, p1, p2, …)</em> returns the scattering at q for a form with
+particular dimensions averaged over all orientations.</p>
+<p><em>Iqac(qab, qc, p1, p2, …)</em> returns the scattering at qab, qc
+for a rotationally symmetric form with particular dimensions.
+qab, qc are determined from shape orientation and scattering angles.
+This call is used if the shape has orientation parameters theta and phi.</p>
+<p><em>Iqabc(qa, qb, qc, p1, p2, …)</em> returns the scattering at qa, qb, qc
+for a form with particular dimensions.  qa, qb, qc are determined from
+shape orientation and scattering angles. This call is used if the shape
+has orientation parameters theta, phi and psi.</p>
+<p><em>Iqxy(qx, qy, p1, p2, …)</em> returns the scattering at qx, qy.  Use this
+to create an arbitrary 2D theory function, needed for q-dependent
+background functions and for models with non-uniform magnetism.</p>
+<p><em>form_volume(p1, p2, …)</em> returns the volume of the form with particular
+dimension, or 1.0 if no volume normalization is required.</p>
+<p><em>shell_volume(p1, p2, …)</em> returns the volume of the shell for forms
+which are hollow.</p>
+<p><em>radius_effective(mode, p1, p2, …)</em> returns the effective radius of
+the form with particular dimensions.  Mode determines the type of
+effective radius returned, with mode=1 for equivalent volume.</p>
+</div></blockquote>
+<p>These functions are defined in a kernel module .py script and an associated
+set of .c files.  The model constructor will use them to create models with
+polydispersity across volume and orientation parameters, and provide
+scale and background parameters for each model.</p>
+<p>C code should be stylized C-99 functions written for OpenCL. All functions
+need prototype declarations even if the are defined before they are used.
+Although OpenCL supports <em>#include</em> preprocessor directives, the list of
+includes should be given as part of the metadata in the kernel module
+definition. The included files should be listed using a path relative to the
+kernel module, or if using “lib/file.c” if it is one of the standard includes
+provided with the sasmodels source. The includes need to be listed in order
+so that functions are defined before they are used.</p>
+<p>Floating point values should be declared as <em>double</em>.  For single precision
+calculations, <em>double</em> will be replaced by <em>float</em>.  The single precision
+conversion will also tag floating point constants with “f” to make them
+single precision constants.  When using integral values in floating point
+expressions, they should be expressed as floating point values by including
+a decimal point.  This includes 0., 1. and 2.</p>
+<p>OpenCL has a <em>sincos</em> function which can improve performance when both
+the <em>sin</em> and <em>cos</em> values are needed for a particular argument.  Since
+this function does not exist in C99, all use of <em>sincos</em> should be
+replaced by the macro <em>SINCOS(value, sn, cn)</em> where <em>sn</em> and <em>cn</em> are
+previously declared <em>double</em> variables.  When compiled for systems without
+OpenCL, <em>SINCOS</em> will be replaced by <em>sin</em> and <em>cos</em> calls.   If <em>value</em> is
+an expression, it will appear twice in this case; whether or not it will be
+evaluated twice depends on the quality of the compiler.</p>
+<p>The kernel module must set variables defining the kernel meta data:</p>
+<blockquote>
+<div><p><em>id</em> is an implicit variable formed from the filename.  It will be
+a valid python identifier, and will be used as the reference into
+the html documentation, with ‘_’ replaced by ‘-‘.</p>
+<p><em>name</em> is the model name as displayed to the user.  If it is missing,
+it will be constructed from the id.</p>
+<p><em>title</em> is a short description of the model, suitable for a tool tip,
+or a one line model summary in a table of models.</p>
+<p><em>description</em> is an extended description of the model to be displayed
+while the model parameters are being edited.</p>
+<p><em>parameters</em> is the list of parameters.  Parameters in the kernel
+functions must appear in the same order as they appear in the
+parameters list.  Two additional parameters, <em>scale</em> and <em>background</em>
+are added to the beginning of the parameter list.  They will show up
+in the documentation as model parameters, but they are never sent to
+the kernel functions.  Note that <em>effect_radius</em> and <em>volfraction</em>
+must occur first in structure factor calculations.</p>
+<p><em>category</em> is the default category for the model.  The category is
+two level structure, with the form “group:section”, indicating where
+in the manual the model will be located.  Models are alphabetical
+within their section.</p>
+<p><em>source</em> is the list of C-99 source files that must be joined to
+create the OpenCL kernel functions.  The files defining the functions
+need to be listed before the files which use the functions.</p>
+<p><em>form_volume</em>, <em>Iq</em>, <em>Iqac</em>, <em>Iqabc</em> are strings containing
+the C source code for the body of the volume, Iq, and Iqac functions
+respectively.  These can also be defined in the last source file.</p>
+<p><em>Iq</em>, <em>Iqac</em>, <em>Iqabc</em> also be instead be python functions defining the
+kernel.  If they are marked as <em>Iq.vectorized = True</em> then the
+kernel is passed the entire <em>q</em> vector at once, otherwise it is
+passed values one <em>q</em> at a time.  The performance improvement of
+this step is significant.</p>
+<p><em>valid</em> expression that evaluates to True if the input parameters
+are valid (e.g., “bell_radius &gt;= radius” for the barbell or capped
+cylinder models).  The expression can call C functions, including
+those defined in your model file.</p>
+</div></blockquote>
+<p>A <a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">modelinfo.ModelInfo</span></code></a> structure is constructed from the kernel meta
+data and returned to the caller.</p>
+<p>Valid inputs should be identified by the <em>valid</em> expression.
+Particularly with polydispersity, there are some sets of shape parameters
+which lead to nonsensical forms, such as a capped cylinder where the
+cap radius is smaller than the cylinder radius.  The polydispersity
+calculation will ignore these points, effectively chopping the
+parameter weight distributions at the boundary of the infeasible region.
+The resulting scattering will be set to background, even for models with
+no polydispersity.  If the <em>valid</em> expression misses some parameter
+combinations and they reach the kernel, the kernel should probably return
+NaN rather than zero.  Even if the volume also evaluates to zero for
+these parameters, the distribution weights are still accumulated and the
+average volume calculation will be slightly off.</p>
+<p>The doc string at the start of the kernel module will be used to
+construct the model documentation web pages.  Embedded figures should
+appear in the subdirectory “img” beside the model definition, and tagged
+with the kernel module name to avoid collision with other models.  Some
+file systems are case-sensitive, so only use lower case characters for
+file names and extensions.</p>
+<p>Code follows the C99 standard with the following extensions and conditions:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">M_PI_180</span> <span class="o">=</span> <span class="n">pi</span><span class="o">/</span><span class="mi">180</span>
+<span class="n">M_4PI_3</span> <span class="o">=</span> <span class="mi">4</span><span class="n">pi</span><span class="o">/</span><span class="mi">3</span>
+<span class="n">square</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="n">x</span><span class="o">*</span><span class="n">x</span>
+<span class="n">cube</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="n">x</span><span class="o">*</span><span class="n">x</span><span class="o">*</span><span class="n">x</span>
+<span class="n">sas_sinx_x</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">=</span> <span class="n">sin</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">/</span><span class="n">x</span><span class="p">,</span> <span class="k">with</span> <span class="n">sin</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">/</span><span class="mi">0</span> <span class="o">-&gt;</span> <span class="mi">1</span>
+<span class="nb">all</span> <span class="n">double</span> <span class="n">precision</span> <span class="n">constants</span> <span class="n">must</span> <span class="n">include</span> <span class="n">the</span> <span class="n">decimal</span> <span class="n">point</span>
+<span class="nb">all</span> <span class="n">double</span> <span class="n">declarations</span> <span class="n">may</span> <span class="n">be</span> <span class="n">converted</span> <span class="n">to</span> <span class="n">half</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="ow">or</span> <span class="n">long</span> <span class="n">double</span>
+<span class="n">FLOAT_SIZE</span> <span class="ow">is</span> <span class="n">the</span> <span class="n">number</span> <span class="n">of</span> <span class="nb">bytes</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">converted</span> <span class="n">variables</span>
+</pre></div>
+</div>
+<p><a class="reference internal" href="#sasmodels.generate.load_kernel_module" title="sasmodels.generate.load_kernel_module"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_kernel_module()</span></code></a> loads the model definition file and
+<a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.make_model_info" title="sasmodels.modelinfo.make_model_info"><code class="xref py py-func docutils literal notranslate"><span class="pre">modelinfo.make_model_info()</span></code></a> parses it. <a class="reference internal" href="#sasmodels.generate.make_source" title="sasmodels.generate.make_source"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_source()</span></code></a>
+converts C-based model definitions to C source code, including the
+polydispersity integral.  <a class="reference internal" href="#sasmodels.generate.model_sources" title="sasmodels.generate.model_sources"><code class="xref py py-func docutils literal notranslate"><span class="pre">model_sources()</span></code></a> returns the list of
+source files the model depends on, and <a class="reference internal" href="#sasmodels.generate.ocl_timestamp" title="sasmodels.generate.ocl_timestamp"><code class="xref py py-func docutils literal notranslate"><span class="pre">ocl_timestamp()</span></code></a> returns
+the latest time stamp amongst the source files (so you can check if
+the model needs to be rebuilt).</p>
+<p>The function <a class="reference internal" href="#sasmodels.generate.make_doc" title="sasmodels.generate.make_doc"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_doc()</span></code></a> extracts the doc string and adds the
+parameter table to the top.  <em>make_figure</em> in <em>sasmodels/doc/genmodel</em>
+creates the default figure for the model.  [These two sets of code
+should mignrate into docs.py so docs can be updated in one place].</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate._add_source">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">_add_source</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">code</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lineno</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.generate._add_source" title="Link to this definition">¶</a></dt>
+<dd><p>Add a file to the list of source code chunks, tagged with path and line.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate._build_translation">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">_build_translation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'_v'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">var_prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'_var_'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.generate._build_translation" title="Link to this definition">¶</a></dt>
+<dd><p>Interpret parameter translation block, if any.</p>
+<p><em>model_info</em> contains the parameter table and any translation definition
+for converting between model parameters and the base calculation model.</p>
+<p><em>table_id</em> is the internal label used for the parameter call table.  It
+must be of the form “_table” matching whatever table variable name that
+appears in the macros such as CALL_VOLUME() and CALL_IQ().</p>
+<p><em>var_prefix</em> is a tag to attach to intermediate variables to avoid
+collision with variables used inside kernel_iq.</p>
+<p>Returns:</p>
+<ul class="simple">
+<li><p><em>subs</em> = {name: expr, …} parameter substitution table for calling
+into the kernel function</p></li>
+<li><p><em>translation</em> = “#define TRANSLATION_VARS(_v) _var_name = expr ….”</p></li>
+<li><p><em>validity</em> = “#define VALID(_v) …”</p></li>
+</ul>
+<p>The returned <em>subs</em> is used to generate the substitions for CALL_VOLUME
+etc., parameters, via <a class="reference internal" href="#sasmodels.generate._call_pars" title="sasmodels.generate._call_pars"><code class="xref py py-func docutils literal notranslate"><span class="pre">_call_pars()</span></code></a>.</p>
+<p>The returned <em>translation</em> and <em>validity</em> macros need to be included inside
+the generated model files.  They are the same for all variants (1D, 2D,
+magnetic) so can be defined once along side the parameter table.  Even
+though they are expanded independently in each variant.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate._build_translation_vars">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">_build_translation_vars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variables</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.generate._build_translation_vars" title="Link to this definition">¶</a></dt>
+<dd><p>Build TRANSLATION_VARS macro for C which builds intermediate values.</p>
+<ol class="upperalpha simple" start="5">
+<li><p>g.,</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#define TRANSLATION_VARS(_v) \</span>
+ <span class="n">const</span> <span class="n">double</span> <span class="n">_temporary_Re</span> <span class="o">=</span> <span class="n">cbrt</span><span class="p">(</span><span class="n">_v</span><span class="o">.</span><span class="n">volume</span><span class="o">/</span><span class="n">_v</span><span class="o">.</span><span class="n">eccentricity</span><span class="o">/</span><span class="n">M_4PI_3</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate._build_validity_check">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">_build_validity_check</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.generate._build_validity_check" title="Link to this definition">¶</a></dt>
+<dd><p>Substitute parameter expressions into validity test, returning the
+VALID(_table) macro.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate._call_pars">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">_call_pars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.Parameter" title="sasmodels.modelinfo.Parameter"><span class="pre">Parameter</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.generate._call_pars" title="Link to this definition">¶</a></dt>
+<dd><p>Return a list of <em>prefix+parameter</em> from parameter items.</p>
+<p><em>pars</em> is the list of parameters from the base model.</p>
+<p><em>subs</em> contains the translation equations with references to parameters
+from the new parameter table.  If there is no translation, then <em>subs</em>
+is just a list of references into the base table.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate._clean_source_filename">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">_clean_source_filename</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sasmodels.generate._clean_source_filename" title="Link to this definition">¶</a></dt>
+<dd><p>Make the source filename into a canonical, relative form if possible</p>
+<p>Remove the common start of the file path (if there is one), yielding
+the path relative to this file, such as:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>./kernel_iq.c</p></li>
+<li><p>./models/sphere.c</p></li>
+<li><p>./models/lib/sas_J0.c</p></li>
+</ul>
+</div></blockquote>
+<p>This is a format that the compiler/debugger understand for indicating
+included files with relative paths. Omitting the common parent to the
+paths means that the irrelevant detail of the temporary directory where
+the source was unpacked for compilation is not included in pre-compiled
+models.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate._convert_section_titles_to_boldface">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">_convert_section_titles_to_boldface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lines</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.generate._convert_section_titles_to_boldface" title="Link to this definition">¶</a></dt>
+<dd><p>Do the actual work of identifying and converting section headings.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate._convert_type">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">_convert_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constant_flag</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sasmodels.generate._convert_type" title="Link to this definition">¶</a></dt>
+<dd><p>Replace ‘double’ with <em>type_name</em> in <em>source</em>, tagging floating point
+constants with <em>constant_flag</em>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate._fix_tgmath_int">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">_fix_tgmath_int</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sasmodels.generate._fix_tgmath_int" title="Link to this definition">¶</a></dt>
+<dd><p>Replace f(integer) with f(integer.) for sin, cos, pow, etc.</p>
+<p>OS X OpenCL complains that it can’t resolve the type generic calls to
+the standard math functions when they are called with integer constants,
+but this does not happen with the Windows Intel driver for example.
+To avoid confusion on the matrix marketplace, automatically promote
+integers to floats if we recognize them in the source.</p>
+<p>The specific functions we look for are:</p>
+<blockquote>
+<div><p>trigonometric: sin, asin, sinh, asinh, etc., and atan2
+exponential:   exp, exp2, exp10, expm1, log, log2, log10, logp1
+power:         pow, pown, powr, sqrt, rsqrt, rootn
+special:       erf, erfc, tgamma
+float:         fabs, fmin, fmax</p>
+</div></blockquote>
+<p>Note that we don’t convert the second argument of dual argument
+functions: atan2, fmax, fmin, pow, powr.  This could potentially
+be a problem for pow(x, 2), but that case seems to work without change.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate._gen_fn">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">_gen_fn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.Parameter" title="sasmodels.modelinfo.Parameter"><span class="pre">Parameter</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sasmodels.generate._gen_fn" title="Link to this definition">¶</a></dt>
+<dd><p>Generate a function given pars and body.</p>
+<p>Returns the following string:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">double</span> <span class="n">fn</span><span class="p">(</span><span class="n">double</span> <span class="n">a</span><span class="p">,</span> <span class="n">double</span> <span class="n">b</span><span class="p">,</span> <span class="o">...</span><span class="p">);</span>
+<span class="n">double</span> <span class="n">fn</span><span class="p">(</span><span class="n">double</span> <span class="n">a</span><span class="p">,</span> <span class="n">double</span> <span class="n">b</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span> <span class="p">{</span>
+    <span class="o">....</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate._kernels">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">_kernels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">call_iq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clear_iq</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">call_iqxy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">clear_iqxy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.generate._kernels" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate._search">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">_search</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">search_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sasmodels.generate._search" title="Link to this definition">¶</a></dt>
+<dd><p>Find <em>filename</em> in <em>search_path</em>.</p>
+<p>Raises ValueError if file does not exist.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate._split_translation">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">_split_translation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">translation</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.generate._split_translation" title="Link to this definition">¶</a></dt>
+<dd><p>Process the <em>translation</em> string, which is a sequence of assignments.</p>
+<p>Blanks and comments (c-style and python-style) are stripped.</p>
+<p>Conditional expressions should use C syntax (! || &amp;&amp; ? :) not python.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate._tag_float">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">_tag_float</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constant_flag</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.generate._tag_float" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.contains_Fq">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">contains_Fq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#sasmodels.generate.contains_Fq" title="Link to this definition">¶</a></dt>
+<dd><p>Return True if C source defines “void Fq(“.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.contains_shell_volume">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">contains_shell_volume</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#sasmodels.generate.contains_shell_volume" title="Link to this definition">¶</a></dt>
+<dd><p>Return True if C source defines “double shell_volume(“.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.convert_section_titles_to_boldface">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">convert_section_titles_to_boldface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sasmodels.generate.convert_section_titles_to_boldface" title="Link to this definition">¶</a></dt>
+<dd><p>Use explicit bold-face rather than section headings so that the table of
+contents is not polluted with section names from the model documentation.</p>
+<p>Sections are identified as the title line followed by a line of punctuation
+at least as long as the title line.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.convert_type">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">convert_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sasmodels.generate.convert_type" title="Link to this definition">¶</a></dt>
+<dd><p>Convert code from double precision to the desired type.</p>
+<p>Floating point constants are tagged with ‘f’ for single precision or ‘L’
+for long double precision.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.demo_time">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">demo_time</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.generate.demo_time" title="Link to this definition">¶</a></dt>
+<dd><p>Show how long it takes to process a model.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.dll_timestamp">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">dll_timestamp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#sasmodels.generate.dll_timestamp" title="Link to this definition">¶</a></dt>
+<dd><p>Return a timestamp for the model corresponding to the most recently
+changed file or dependency.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.find_xy_mode">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">find_xy_mode</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#sasmodels.generate.find_xy_mode" title="Link to this definition">¶</a></dt>
+<dd><p>Return the xy mode as qa, qac, qabc or qxy.</p>
+<p>Note this is not a C parser, and so can be easily confused by
+non-standard syntax.  Also, it will incorrectly identify the following
+as having 2D models:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/*</span>
+<span class="n">double</span> <span class="n">Iqac</span><span class="p">(</span><span class="n">qab</span><span class="p">,</span> <span class="n">qc</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span> <span class="p">{</span> <span class="o">...</span> <span class="n">fill</span> <span class="n">this</span> <span class="ow">in</span> <span class="n">later</span> <span class="o">...</span> <span class="p">}</span>
+<span class="o">*/</span>
+</pre></div>
+</div>
+<p>If you want to comment out the function, use // on the front of the
+line:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/*</span>
+<span class="o">//</span> <span class="n">double</span> <span class="n">Iqac</span><span class="p">(</span><span class="n">qab</span><span class="p">,</span> <span class="n">qc</span><span class="p">,</span> <span class="o">...</span><span class="p">)</span> <span class="p">{</span> <span class="o">...</span> <span class="n">fill</span> <span class="n">this</span> <span class="ow">in</span> <span class="n">later</span> <span class="o">...</span> <span class="p">}</span>
+<span class="o">*/</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.format_units">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">format_units</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">units</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sasmodels.generate.format_units" title="Link to this definition">¶</a></dt>
+<dd><p>Convert units into ReStructured Text format.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.get_data_path">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">get_data_path</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">external_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.generate.get_data_path" title="Link to this definition">¶</a></dt>
+<dd><p>Search for the target file relative in the installed application.</p>
+<p>Search first in the location of the generate module in case we are
+running directly from the distribution.  Search next to the python
+executable for windows installs.  Search in the ../Resources directory
+next to the executable for Mac OS/X installs.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.indent">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">indent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sasmodels.generate.indent" title="Link to this definition">¶</a></dt>
+<dd><p>Indent a string of text with <em>depth</em> additional spaces on each line.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.kernel_name">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">kernel_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">variant</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sasmodels.generate.kernel_name" title="Link to this definition">¶</a></dt>
+<dd><p>Name of the exported kernel symbol.</p>
+<p><em>variant</em> is “Iq”, “Iqxy” or “Imagnetic”.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.load_kernel_module">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">load_kernel_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ModuleType</span></span></span><a class="headerlink" href="#sasmodels.generate.load_kernel_module" title="Link to this definition">¶</a></dt>
+<dd><p>Return the kernel module named in <em>model_name</em>.</p>
+<p>If the name ends in <em>.py</em> then load it as a custom model using
+<a class="reference internal" href="custom.__init__.html#sasmodels.custom.__init__.load_custom_kernel_module" title="sasmodels.custom.__init__.load_custom_kernel_module"><code class="xref py py-func docutils literal notranslate"><span class="pre">custom.__init__.load_custom_kernel_module()</span></code></a>, otherwise
+load it as a builtin from <em>sasmodels.models</em>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.load_template">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">load_template</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sasmodels.generate.load_template" title="Link to this definition">¶</a></dt>
+<dd><p>Load template file from sasmodels resource directory.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.main">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.generate.main" title="Link to this definition">¶</a></dt>
+<dd><p>Program which prints the source produced by the model.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.make_doc">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">make_doc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sasmodels.generate.make_doc" title="Link to this definition">¶</a></dt>
+<dd><p>Return the documentation for the model.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.make_html">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">make_html</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sasmodels.generate.make_html" title="Link to this definition">¶</a></dt>
+<dd><p>Convert model docs directly to html.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.make_partable">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">make_partable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.Parameter" title="sasmodels.modelinfo.Parameter"><span class="pre">Parameter</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sasmodels.generate.make_partable" title="Link to this definition">¶</a></dt>
+<dd><p>Generate the parameter table to include in the sphinx documentation.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.make_source">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">make_source</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.generate.make_source" title="Link to this definition">¶</a></dt>
+<dd><p>Generate the OpenCL/ctypes kernel from the module info.</p>
+<p>Uses source files found in the given search path.  Returns None if this
+is a pure python model, with no C source components.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.model_sources">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">model_sources</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.generate.model_sources" title="Link to this definition">¶</a></dt>
+<dd><p>Return a list of the sources file paths for the module.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.ocl_timestamp">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">ocl_timestamp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#sasmodels.generate.ocl_timestamp" title="Link to this definition">¶</a></dt>
+<dd><p>Return a timestamp for the model corresponding to the most recently
+changed file or dependency.</p>
+<p>Note that this does not look at the time stamps for the OpenCL header
+information since that need not trigger a recompile of the DLL.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.read_text">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">read_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">f</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.generate.read_text" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.set_integration_size">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">set_integration_size</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.generate.set_integration_size" title="Link to this definition">¶</a></dt>
+<dd><p>Update the model definition, replacing the gaussian integration with
+a gaussian integration of a different size.</p>
+<p>Note: this really ought to be a method in modelinfo, but that leads to
+import loops.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.tag_source">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">tag_source</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sasmodels.generate.tag_source" title="Link to this definition">¶</a></dt>
+<dd><p>Return a unique tag for the source code.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.test_tag_float">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">test_tag_float</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.generate.test_tag_float" title="Link to this definition">¶</a></dt>
+<dd><p>Check that floating point constants are identified and tagged with ‘f’</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.view_html">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">view_html</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.generate.view_html" title="Link to this definition">¶</a></dt>
+<dd><p>Load the model definition and view its help.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.generate.view_html_from_info">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.generate.</span></span><span class="sig-name descname"><span class="pre">view_html_from_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.generate.view_html_from_info" title="Link to this definition">¶</a></dt>
+<dd><p>View the help for a loaded model definition.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">13. Model parser</a><ul>
+<li><a class="reference internal" href="#module-sasmodels.generate"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.generate</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.generate._add_source"><code class="docutils literal notranslate"><span class="pre">_add_source()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate._build_translation"><code class="docutils literal notranslate"><span class="pre">_build_translation()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate._build_translation_vars"><code class="docutils literal notranslate"><span class="pre">_build_translation_vars()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate._build_validity_check"><code class="docutils literal notranslate"><span class="pre">_build_validity_check()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate._call_pars"><code class="docutils literal notranslate"><span class="pre">_call_pars()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate._clean_source_filename"><code class="docutils literal notranslate"><span class="pre">_clean_source_filename()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate._convert_section_titles_to_boldface"><code class="docutils literal notranslate"><span class="pre">_convert_section_titles_to_boldface()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate._convert_type"><code class="docutils literal notranslate"><span class="pre">_convert_type()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate._fix_tgmath_int"><code class="docutils literal notranslate"><span class="pre">_fix_tgmath_int()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate._gen_fn"><code class="docutils literal notranslate"><span class="pre">_gen_fn()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate._kernels"><code class="docutils literal notranslate"><span class="pre">_kernels()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate._search"><code class="docutils literal notranslate"><span class="pre">_search()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate._split_translation"><code class="docutils literal notranslate"><span class="pre">_split_translation()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate._tag_float"><code class="docutils literal notranslate"><span class="pre">_tag_float()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.contains_Fq"><code class="docutils literal notranslate"><span class="pre">contains_Fq()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.contains_shell_volume"><code class="docutils literal notranslate"><span class="pre">contains_shell_volume()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.convert_section_titles_to_boldface"><code class="docutils literal notranslate"><span class="pre">convert_section_titles_to_boldface()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.convert_type"><code class="docutils literal notranslate"><span class="pre">convert_type()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.demo_time"><code class="docutils literal notranslate"><span class="pre">demo_time()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.dll_timestamp"><code class="docutils literal notranslate"><span class="pre">dll_timestamp()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.find_xy_mode"><code class="docutils literal notranslate"><span class="pre">find_xy_mode()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.format_units"><code class="docutils literal notranslate"><span class="pre">format_units()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.get_data_path"><code class="docutils literal notranslate"><span class="pre">get_data_path()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.indent"><code class="docutils literal notranslate"><span class="pre">indent()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.kernel_name"><code class="docutils literal notranslate"><span class="pre">kernel_name()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.load_kernel_module"><code class="docutils literal notranslate"><span class="pre">load_kernel_module()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.load_template"><code class="docutils literal notranslate"><span class="pre">load_template()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.make_doc"><code class="docutils literal notranslate"><span class="pre">make_doc()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.make_html"><code class="docutils literal notranslate"><span class="pre">make_html()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.make_partable"><code class="docutils literal notranslate"><span class="pre">make_partable()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.make_source"><code class="docutils literal notranslate"><span class="pre">make_source()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.model_sources"><code class="docutils literal notranslate"><span class="pre">model_sources()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.ocl_timestamp"><code class="docutils literal notranslate"><span class="pre">ocl_timestamp()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.read_text"><code class="docutils literal notranslate"><span class="pre">read_text()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.set_integration_size"><code class="docutils literal notranslate"><span class="pre">set_integration_size()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.tag_source"><code class="docutils literal notranslate"><span class="pre">tag_source()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.test_tag_float"><code class="docutils literal notranslate"><span class="pre">test_tag_float()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.view_html"><code class="docutils literal notranslate"><span class="pre">view_html()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.generate.view_html_from_info"><code class="docutils literal notranslate"><span class="pre">view_html_from_info()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="exception.html"
+                          title="previous chapter"><span class="section-number">12. </span>Annotate exceptions</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="gengauss.html"
+                          title="next chapter"><span class="section-number">14. </span>Generate Gauss-Legendre integration points</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/dev/sasmodels-api/generate.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="gengauss.html" title="14. Generate Gauss-Legendre integration points"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="exception.html" title="12. Annotate exceptions"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">13. </span>Model parser</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, The SasView Project.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

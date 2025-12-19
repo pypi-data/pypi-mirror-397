@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>31. Sasview interface &#8212; SasView 6.1.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=f0c0c503"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="32. SESANS calculation routines" href="sesans.html" />
+    <link rel="prev" title="30. Convert doc strings the web pages" href="rst2html.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sesans.html" title="32. SESANS calculation routines"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="rst2html.html" title="30. Convert doc strings the web pages"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">31. </span>Sasview interface</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="sasview-interface">
+<h1><span class="section-number">31. </span>Sasview interface<a class="headerlink" href="#sasview-interface" title="Link to this heading">¶</a></h1>
+<section id="module-sasmodels.sasview_model">
+<span id="sasmodels-sasview-model"></span><h2><a class="reference internal" href="#module-sasmodels.sasview_model" title="sasmodels.sasview_model"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.sasview_model</span></code></a><a class="headerlink" href="#module-sasmodels.sasview_model" title="Link to this heading">¶</a></h2>
+<p>Sasview model constructor.</p>
+<p>Given a module defining an OpenCL kernel such as sasmodels.models.cylinder,
+create a sasview model class to run that kernel as follows:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sasmodels.sasview_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_custom_model</span>
+<span class="n">CylinderModel</span> <span class="o">=</span> <span class="n">load_custom_model</span><span class="p">(</span><span class="s1">&#39;sasmodels/models/cylinder.py&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py data">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MODELS">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">MODELS</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel" title="sasmodels.sasview_model.SasviewModel"><span class="pre">SasviewModel</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#sasmodels.sasview_model.MODELS" title="Link to this definition">¶</a></dt>
+<dd><p>set of defined models (standard and custom)</p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MODEL_BY_PATH">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">MODEL_BY_PATH</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel" title="sasmodels.sasview_model.SasviewModel"><span class="pre">SasviewModel</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#sasmodels.sasview_model.MODEL_BY_PATH" title="Link to this definition">¶</a></dt>
+<dd><p>custom model {path: model} mapping so we can check timestamps</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicationModel">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">MultiplicationModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">form_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel" title="sasmodels.sasview_model.SasviewModel"><span class="pre">SasviewModel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">structure_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel" title="sasmodels.sasview_model.SasviewModel"><span class="pre">SasviewModel</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel" title="sasmodels.sasview_model.SasviewModel"><span class="pre">SasviewModel</span></a></span></span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicationModel" title="Link to this definition">¶</a></dt>
+<dd><p>Returns a constructed product model from form_factor and structure_factor.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">MultiplicityInfo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">number</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">choices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_axis_label</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__add__">
+<span class="sig-name descname"><span class="pre">__add__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__add__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self+value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__class__">
+<span class="sig-name descname"><span class="pre">__class__</span></span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__class__" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__class_getitem__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__class_getitem__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__class_getitem__" title="Link to this definition">¶</a></dt>
+<dd><p>See PEP 585</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__contains__">
+<span class="sig-name descname"><span class="pre">__contains__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__contains__" title="Link to this definition">¶</a></dt>
+<dd><p>Return key in self.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__delattr__">
+<span class="sig-name descname"><span class="pre">__delattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__delattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement delattr(self, name).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__dir__">
+<span class="sig-name descname"><span class="pre">__dir__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__dir__" title="Link to this definition">¶</a></dt>
+<dd><p>Default dir() implementation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__doc__">
+<span class="sig-name descname"><span class="pre">__doc__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'MultiplicityInfo(number,</span> <span class="pre">control,</span> <span class="pre">choices,</span> <span class="pre">x_axis_label)'</span></em><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__doc__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__eq__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__format__">
+<span class="sig-name descname"><span class="pre">__format__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format_spec</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__format__" title="Link to this definition">¶</a></dt>
+<dd><p>Default object formatter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__ge__">
+<span class="sig-name descname"><span class="pre">__ge__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__ge__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__getattribute__">
+<span class="sig-name descname"><span class="pre">__getattribute__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__getattribute__" title="Link to this definition">¶</a></dt>
+<dd><p>Return getattr(self, name).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__getitem__">
+<span class="sig-name descname"><span class="pre">__getitem__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__getitem__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self[key].</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__getnewargs__">
+<span class="sig-name descname"><span class="pre">__getnewargs__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__getnewargs__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self as a plain tuple.  Used by copy and pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__getstate__">
+<span class="sig-name descname"><span class="pre">__getstate__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__getstate__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__gt__">
+<span class="sig-name descname"><span class="pre">__gt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__gt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__hash__" title="Link to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__init_subclass__" title="Link to this definition">¶</a></dt>
+<dd><p>This method is called when a class is subclassed.</p>
+<p>The default implementation does nothing. It may be
+overridden to extend subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__iter__">
+<span class="sig-name descname"><span class="pre">__iter__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__iter__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement iter(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__le__">
+<span class="sig-name descname"><span class="pre">__le__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__le__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__len__">
+<span class="sig-name descname"><span class="pre">__len__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__len__" title="Link to this definition">¶</a></dt>
+<dd><p>Return len(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__lt__">
+<span class="sig-name descname"><span class="pre">__lt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__lt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__match_args__">
+<span class="sig-name descname"><span class="pre">__match_args__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('number',</span> <span class="pre">'control',</span> <span class="pre">'choices',</span> <span class="pre">'x_axis_label')</span></em><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__match_args__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__module__">
+<span class="sig-name descname"><span class="pre">__module__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sasmodels.sasview_model'</span></em><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__module__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__mul__">
+<span class="sig-name descname"><span class="pre">__mul__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__mul__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self*value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__ne__">
+<span class="sig-name descname"><span class="pre">__ne__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__ne__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self!=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__new__">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">_cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">number</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">control</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">choices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_axis_label</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__new__" title="Link to this definition">¶</a></dt>
+<dd><p>Create new instance of MultiplicityInfo(number, control, choices, x_axis_label)</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__reduce__">
+<span class="sig-name descname"><span class="pre">__reduce__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__reduce__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__reduce_ex__">
+<span class="sig-name descname"><span class="pre">__reduce_ex__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protocol</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__reduce_ex__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__repr__" title="Link to this definition">¶</a></dt>
+<dd><p>Return a nicely formatted representation string</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__rmul__">
+<span class="sig-name descname"><span class="pre">__rmul__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__rmul__" title="Link to this definition">¶</a></dt>
+<dd><p>Return value*self.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__setattr__">
+<span class="sig-name descname"><span class="pre">__setattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__setattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement setattr(self, name, value).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__sizeof__">
+<span class="sig-name descname"><span class="pre">__sizeof__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__sizeof__" title="Link to this definition">¶</a></dt>
+<dd><p>Size of object in memory, in bytes.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__slots__">
+<span class="sig-name descname"><span class="pre">__slots__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">()</span></em><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__slots__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__str__" title="Link to this definition">¶</a></dt>
+<dd><p>Return str(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.__subclasshook__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__subclasshook__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.__subclasshook__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract classes can override this to customize issubclass().</p>
+<p>This is invoked early on by abc.ABCMeta.__subclasscheck__().
+It should return True, False or NotImplemented.  If it returns
+NotImplemented, the normal algorithm is used.  Otherwise, it
+overrides the normal algorithm (and the outcome is cached).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo._asdict">
+<span class="sig-name descname"><span class="pre">_asdict</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo._asdict" title="Link to this definition">¶</a></dt>
+<dd><p>Return a new dict which maps field names to their values.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo._field_defaults">
+<span class="sig-name descname"><span class="pre">_field_defaults</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo._field_defaults" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo._fields">
+<span class="sig-name descname"><span class="pre">_fields</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">('number',</span> <span class="pre">'control',</span> <span class="pre">'choices',</span> <span class="pre">'x_axis_label')</span></em><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo._fields" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo._make">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">_make</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iterable</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo._make" title="Link to this definition">¶</a></dt>
+<dd><p>Make a new MultiplicityInfo object from a sequence or iterable</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo._replace">
+<span class="sig-name descname"><span class="pre">_replace</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwds</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo._replace" title="Link to this definition">¶</a></dt>
+<dd><p>Return a new MultiplicityInfo object replacing specified fields with new values</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.choices">
+<span class="sig-name descname"><span class="pre">choices</span></span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.choices" title="Link to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.control">
+<span class="sig-name descname"><span class="pre">control</span></span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.control" title="Link to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.count">
+<span class="sig-name descname"><span class="pre">count</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.count" title="Link to this definition">¶</a></dt>
+<dd><p>Return number of occurrences of value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.index">
+<span class="sig-name descname"><span class="pre">index</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">9223372036854775807</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.index" title="Link to this definition">¶</a></dt>
+<dd><p>Return first index of value.</p>
+<p>Raises ValueError if the value is not present.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.number">
+<span class="sig-name descname"><span class="pre">number</span></span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.number" title="Link to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfo.x_axis_label">
+<span class="sig-name descname"><span class="pre">x_axis_label</span></span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfo.x_axis_label" title="Link to this definition">¶</a></dt>
+<dd><p>Alias for field number 3</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.MultiplicityInfoType">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">MultiplicityInfoType</span></span><a class="headerlink" href="#sasmodels.sasview_model.MultiplicityInfoType" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo" title="sasmodels.sasview_model.MultiplicityInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiplicityInfo</span></code></a></p>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SUPPORT_OLD_STYLE_PLUGINS">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">SUPPORT_OLD_STYLE_PLUGINS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#sasmodels.sasview_model.SUPPORT_OLD_STYLE_PLUGINS" title="Link to this definition">¶</a></dt>
+<dd><p>True if pre-existing plugins, with the old names and parameters, should
+continue to be supported.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">SasviewModel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">multiplicity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Sasview wrapper for opencl/ctypes model.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__class__">
+<span class="sig-name descname"><span class="pre">__class__</span></span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__class__" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__delattr__">
+<span class="sig-name descname"><span class="pre">__delattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__delattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement delattr(self, name).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__dict__">
+<span class="sig-name descname"><span class="pre">__dict__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">mappingproxy({'__module__':</span> <span class="pre">'sasmodels.sasview_model',</span> <span class="pre">'__doc__':</span> <span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Sasview</span> <span class="pre">wrapper</span> <span class="pre">for</span> <span class="pre">opencl/ctypes</span> <span class="pre">model.\n</span>&#160;&#160;&#160; <span class="pre">',</span> <span class="pre">'_model':</span> <span class="pre">None,</span> <span class="pre">'_model_info':</span> <span class="pre">None,</span> <span class="pre">'id':</span> <span class="pre">None,</span> <span class="pre">'name':</span> <span class="pre">None,</span> <span class="pre">'description':</span> <span class="pre">None,</span> <span class="pre">'category':</span> <span class="pre">None,</span> <span class="pre">'orientation_params':</span> <span class="pre">None,</span> <span class="pre">'magnetic_params':</span> <span class="pre">None,</span> <span class="pre">'fixed':</span> <span class="pre">None,</span> <span class="pre">'input_name':</span> <span class="pre">'Q',</span> <span class="pre">'input_unit':</span> <span class="pre">'A^{-1}',</span> <span class="pre">'output_name':</span> <span class="pre">'Intensity',</span> <span class="pre">'output_unit':</span> <span class="pre">'cm^{-1}',</span> <span class="pre">'cutoff':</span> <span class="pre">1e-05,</span> <span class="pre">'non_fittable':</span> <span class="pre">(),</span> <span class="pre">'is_structure_factor':</span> <span class="pre">False,</span> <span class="pre">'is_form_factor':</span> <span class="pre">False,</span> <span class="pre">'is_multiplicity_model':</span> <span class="pre">False,</span> <span class="pre">'multiplicity_info':</span> <span class="pre">None,</span> <span class="pre">'params':</span> <span class="pre">None,</span> <span class="pre">'dispersion':</span> <span class="pre">None,</span> <span class="pre">'details':</span> <span class="pre">None,</span> <span class="pre">'multiplicity':</span> <span class="pre">None,</span> <span class="pre">'_persistency_dict':</span> <span class="pre">None,</span> <span class="pre">'__init__':</span> <span class="pre">&lt;function</span> <span class="pre">SasviewModel.__init__&gt;,</span> <span class="pre">'__get_state__':</span> <span class="pre">&lt;function</span> <span class="pre">SasviewModel.__get_state__&gt;,</span> <span class="pre">'__set_state__':</span> <span class="pre">&lt;function</span> <span class="pre">SasviewModel.__set_state__&gt;,</span> <span class="pre">'__str__':</span> <span class="pre">&lt;function</span> <span class="pre">SasviewModel.__str__&gt;,</span> <span class="pre">'is_fittable':</span> <span class="pre">&lt;function</span> <span class="pre">SasviewModel.is_fittable&gt;,</span> <span class="pre">'getProfile':</span> <span class="pre">&lt;function</span> <span class="pre">SasviewModel.getProfile&gt;,</span> <span class="pre">'setParam':</span> <span class="pre">&lt;function</span> <span class="pre">SasviewModel.setParam&gt;,</span> <span class="pre">'getParam':</span> <span class="pre">&lt;function</span> <span class="pre">SasviewModel.getParam&gt;,</span> <span class="pre">'getParamList':</span> <span class="pre">&lt;function</span> <span class="pre">SasviewModel.getParamList&gt;,</span> <span class="pre">'getDispParamList':</span> <span class="pre">&lt;function</span> <span class="pre">SasviewModel.getDispParamList&gt;,</span> <span class="pre">'clone':</span> <span class="pre">&lt;function</span> <span class="pre">SasviewModel.clone&gt;,</span> <span class="pre">'run':</span> <span class="pre">&lt;function</span> <span class="pre">SasviewModel.run&gt;,</span> <span class="pre">'runXY':</span> <span class="pre">&lt;function</span> <span class="pre">SasviewModel.runXY&gt;,</span> <span class="pre">'evalDistribution':</span> <span class="pre">&lt;function</span> <span class="pre">SasviewModel.evalDistribution&gt;,</span> <span class="pre">'calc_composition_models':</span> <span class="pre">&lt;function</span> <span class="pre">SasviewModel.calc_composition_models&gt;,</span> <span class="pre">'calculate_Iq':</span> <span class="pre">&lt;function</span> <span class="pre">SasviewModel.calculate_Iq&gt;,</span> <span class="pre">'_calculate_Iq':</span> <span class="pre">&lt;function</span> <span class="pre">SasviewModel._calculate_Iq&gt;,</span> <span class="pre">'calculate_ER':</span> <span class="pre">&lt;function</span> <span class="pre">SasviewModel.calculate_ER&gt;,</span> <span class="pre">'calculate_VR':</span> <span class="pre">&lt;function</span> <span class="pre">SasviewModel.calculate_VR&gt;,</span> <span class="pre">'set_dispersion':</span> <span class="pre">&lt;function</span> <span class="pre">SasviewModel.set_dispersion&gt;,</span> <span class="pre">'_dispersion_mesh':</span> <span class="pre">&lt;function</span> <span class="pre">SasviewModel._dispersion_mesh&gt;,</span> <span class="pre">'_get_weights':</span> <span class="pre">&lt;function</span> <span class="pre">SasviewModel._get_weights&gt;,</span> <span class="pre">'runTests':</span> <span class="pre">&lt;classmethod(&lt;function</span> <span class="pre">SasviewModel.runTests&gt;)&gt;,</span> <span class="pre">'__dict__':</span> <span class="pre">&lt;attribute</span> <span class="pre">'__dict__'</span> <span class="pre">of</span> <span class="pre">'SasviewModel'</span> <span class="pre">objects&gt;,</span> <span class="pre">'__weakref__':</span> <span class="pre">&lt;attribute</span> <span class="pre">'__weakref__'</span> <span class="pre">of</span> <span class="pre">'SasviewModel'</span> <span class="pre">objects&gt;,</span> <span class="pre">'__annotations__':</span> <span class="pre">{'_model':</span> <span class="pre">'KernelModel',</span> <span class="pre">'_model_info':</span> <span class="pre">'ModelInfo',</span> <span class="pre">'id':</span> <span class="pre">'str',</span> <span class="pre">'name':</span> <span class="pre">'str',</span> <span class="pre">'description':</span> <span class="pre">'str',</span> <span class="pre">'category':</span> <span class="pre">'str',</span> <span class="pre">'orientation_params':</span> <span class="pre">'list[str]',</span> <span class="pre">'magnetic_params':</span> <span class="pre">'list[str]',</span> <span class="pre">'fixed':</span> <span class="pre">'list[str]',</span> <span class="pre">'non_fittable':</span> <span class="pre">'Sequence[str]',</span> <span class="pre">'multiplicity_info':</span> <span class="pre">'MultiplicityInfoType',</span> <span class="pre">'params':</span> <span class="pre">'dict[str,</span> <span class="pre">float]',</span> <span class="pre">'dispersion':</span> <span class="pre">'dict[str,</span> <span class="pre">Any]',</span> <span class="pre">'details':</span> <span class="pre">'dict[str,</span> <span class="pre">Sequence[Any]]',</span> <span class="pre">'multiplicity':</span> <span class="pre">'Optional[int]',</span> <span class="pre">'_persistency_dict':</span> <span class="pre">'dict[str,</span> <span class="pre">tuple[np.ndarray,</span> <span class="pre">np.ndarray]]'}})</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__dict__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__dir__">
+<span class="sig-name descname"><span class="pre">__dir__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__dir__" title="Link to this definition">¶</a></dt>
+<dd><p>Default dir() implementation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__doc__">
+<span class="sig-name descname"><span class="pre">__doc__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Sasview</span> <span class="pre">wrapper</span> <span class="pre">for</span> <span class="pre">opencl/ctypes</span> <span class="pre">model.\n</span>&#160;&#160;&#160; <span class="pre">'</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__doc__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__eq__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__format__">
+<span class="sig-name descname"><span class="pre">__format__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format_spec</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__format__" title="Link to this definition">¶</a></dt>
+<dd><p>Default object formatter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__ge__">
+<span class="sig-name descname"><span class="pre">__ge__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__ge__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__get_state__">
+<span class="sig-name descname"><span class="pre">__get_state__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bumps_model.html#sasmodels.bumps_model.Any" title="typing.Any"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__get_state__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__getattribute__">
+<span class="sig-name descname"><span class="pre">__getattribute__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__getattribute__" title="Link to this definition">¶</a></dt>
+<dd><p>Return getattr(self, name).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__getstate__">
+<span class="sig-name descname"><span class="pre">__getstate__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__getstate__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__gt__">
+<span class="sig-name descname"><span class="pre">__gt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__gt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__hash__" title="Link to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">multiplicity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__init_subclass__" title="Link to this definition">¶</a></dt>
+<dd><p>This method is called when a class is subclassed.</p>
+<p>The default implementation does nothing. It may be
+overridden to extend subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__le__">
+<span class="sig-name descname"><span class="pre">__le__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__le__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__lt__">
+<span class="sig-name descname"><span class="pre">__lt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__lt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__module__">
+<span class="sig-name descname"><span class="pre">__module__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sasmodels.sasview_model'</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__module__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__ne__">
+<span class="sig-name descname"><span class="pre">__ne__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__ne__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self!=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__new__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__new__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__reduce__">
+<span class="sig-name descname"><span class="pre">__reduce__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__reduce__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__reduce_ex__">
+<span class="sig-name descname"><span class="pre">__reduce_ex__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protocol</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__reduce_ex__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__repr__" title="Link to this definition">¶</a></dt>
+<dd><p>Return repr(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__set_state__">
+<span class="sig-name descname"><span class="pre">__set_state__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bumps_model.html#sasmodels.bumps_model.Any" title="typing.Any"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__set_state__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__setattr__">
+<span class="sig-name descname"><span class="pre">__setattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__setattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement setattr(self, name, value).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__sizeof__">
+<span class="sig-name descname"><span class="pre">__sizeof__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__sizeof__" title="Link to this definition">¶</a></dt>
+<dd><p>Size of object in memory, in bytes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__str__" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>string representation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__subclasshook__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__subclasshook__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__subclasshook__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract classes can override this to customize issubclass().</p>
+<p>This is invoked early on by abc.ABCMeta.__subclasscheck__().
+It should return True, False or NotImplemented.  If it returns
+NotImplemented, the normal algorithm is used.  Otherwise, it
+overrides the normal algorithm (and the outcome is cached).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.__weakref__">
+<span class="sig-name descname"><span class="pre">__weakref__</span></span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.__weakref__" title="Link to this definition">¶</a></dt>
+<dd><p>list of weak references to the object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel._calculate_Iq">
+<span class="sig-name descname"><span class="pre">_calculate_Iq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel._calculate_Iq" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel._dispersion_mesh">
+<span class="sig-name descname"><span class="pre">_dispersion_mesh</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel._dispersion_mesh" title="Link to this definition">¶</a></dt>
+<dd><p>Create a mesh grid of dispersion parameters and weights.</p>
+<p>Returns [p1,p2,…],w where pj is a vector of values for parameter j
+and w is a vector containing the products for weights for each
+parameter set in the vector.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel._get_weights">
+<span class="sig-name descname"><span class="pre">_get_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">par</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.Parameter" title="sasmodels.modelinfo.Parameter"><span class="pre">Parameter</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel._get_weights" title="Link to this definition">¶</a></dt>
+<dd><p>Return dispersion weights for parameter</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel._model">
+<span class="sig-name descname"><span class="pre">_model</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="kernel.html#sasmodels.kernel.KernelModel" title="sasmodels.kernel.KernelModel"><span class="pre">KernelModel</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel._model" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel._model_info">
+<span class="sig-name descname"><span class="pre">_model_info</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel._model_info" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel._persistency_dict">
+<span class="sig-name descname"><span class="pre">_persistency_dict</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel._persistency_dict" title="Link to this definition">¶</a></dt>
+<dd><p>memory for polydispersity array if using ArrayDispersion (used by sasview).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.calc_composition_models">
+<span class="sig-name descname"><span class="pre">calc_composition_models</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.calc_composition_models" title="Link to this definition">¶</a></dt>
+<dd><p>returns parts of the composition model or None if not a composition
+model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.calculate_ER">
+<span class="sig-name descname"><span class="pre">calculate_ER</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.calculate_ER" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate the effective radius for P(q)*S(q)</p>
+<p><em>mode</em> is the R_eff type, which defaults to 1 to match the ER
+calculation for sasview models from version 3.x.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>the value of the effective radius</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.calculate_Iq">
+<span class="sig-name descname"><span class="pre">calculate_Iq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">OrderedDict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.calculate_Iq" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate Iq for one set of q with the current parameters.</p>
+<p>If the model is 1D, use <em>q</em>.  If 2D, use <em>qx</em>, <em>qy</em>.</p>
+<p>This should NOT be used for fitting since it copies the <em>q</em> vectors
+to the card for each evaluation.</p>
+<p>The returned tuple contains the scattering intensity followed by a
+callable which returns a dictionary of intermediate data from
+ProductKernel.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.calculate_VR">
+<span class="sig-name descname"><span class="pre">calculate_VR</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.calculate_VR" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate the volf ratio for P(q)*S(q)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>the value of the form:shell volume ratio</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.category">
+<span class="sig-name descname"><span class="pre">category</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.category" title="Link to this definition">¶</a></dt>
+<dd><p>default model category</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.clone">
+<span class="sig-name descname"><span class="pre">clone</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel" title="sasmodels.sasview_model.SasviewModel"><span class="pre">SasviewModel</span></a></span></span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.clone" title="Link to this definition">¶</a></dt>
+<dd><p>Return a identical copy of self</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.cutoff">
+<span class="sig-name descname"><span class="pre">cutoff</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">1e-05</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.cutoff" title="Link to this definition">¶</a></dt>
+<dd><p>default cutoff for polydispersity</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.description">
+<span class="sig-name descname"><span class="pre">description</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.description" title="Link to this definition">¶</a></dt>
+<dd><p>short model description</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.details">
+<span class="sig-name descname"><span class="pre">details</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="bumps_model.html#sasmodels.bumps_model.Any" title="typing.Any"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.details" title="Link to this definition">¶</a></dt>
+<dd><p>units and limits for each parameter</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.dispersion">
+<span class="sig-name descname"><span class="pre">dispersion</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bumps_model.html#sasmodels.bumps_model.Any" title="typing.Any"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.dispersion" title="Link to this definition">¶</a></dt>
+<dd><p>values for dispersion width, npts, nsigmas and type</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.evalDistribution">
+<span class="sig-name descname"><span class="pre">evalDistribution</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">qdist</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">ndarray</span></span></span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.evalDistribution" title="Link to this definition">¶</a></dt>
+<dd><p>Evaluate a distribution of q-values.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>qdist</strong> – array of q or a list of arrays [qx,qy]</p>
+</dd>
+</dl>
+<ul class="simple">
+<li><p>For 1D, a numpy array is expected as input</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>  <span class="n">evalDistribution</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+
+<span class="n">where</span> <span class="o">*</span><span class="n">q</span><span class="o">*</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">numpy</span> <span class="n">array</span><span class="o">.</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>For 2D, a list of <em>[qx,qy]</em> is expected with 1D arrays as input</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">qx</span> <span class="o">=</span> <span class="p">[</span> <span class="n">qx</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">qx</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">qx</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="o">....</span><span class="p">]</span>
+<span class="n">qy</span> <span class="o">=</span> <span class="p">[</span> <span class="n">qy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">qy</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">qy</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="o">....</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>If the model is 1D only, then</p>
+<div class="math notranslate nohighlight">
+\[q = \sqrt{q_x^2+q_y^2}\]</div>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.fixed">
+<span class="sig-name descname"><span class="pre">fixed</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.fixed" title="Link to this definition">¶</a></dt>
+<dd><p>names of the fittable parameters</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.getDispParamList">
+<span class="sig-name descname"><span class="pre">getDispParamList</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.getDispParamList" title="Link to this definition">¶</a></dt>
+<dd><p>Return a list of polydispersity parameters for the model</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.getParam">
+<span class="sig-name descname"><span class="pre">getParam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.getParam" title="Link to this definition">¶</a></dt>
+<dd><p>Set the value of a model parameter</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> – name of the parameter</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.getParamList">
+<span class="sig-name descname"><span class="pre">getParamList</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.getParamList" title="Link to this definition">¶</a></dt>
+<dd><p>Return a list of all available parameters for the model</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.getProfile">
+<span class="sig-name descname"><span class="pre">getProfile</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.getProfile" title="Link to this definition">¶</a></dt>
+<dd><p>Get SLD profile</p>
+<dl class="simple">
+<dt>: return: (z, beta) where z is a list of depth of the transition points</dt><dd><p>beta is a list of the corresponding SLD values</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.id">
+<span class="sig-name descname"><span class="pre">id</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.id" title="Link to this definition">¶</a></dt>
+<dd><p>load/save name for the model</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.input_name">
+<span class="sig-name descname"><span class="pre">input_name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Q'</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.input_name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.input_unit">
+<span class="sig-name descname"><span class="pre">input_unit</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'A^{-1}'</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.input_unit" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.is_fittable">
+<span class="sig-name descname"><span class="pre">is_fittable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">par_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.is_fittable" title="Link to this definition">¶</a></dt>
+<dd><p>Check if a given parameter is fittable or not</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>par_name</strong> – the parameter name to check</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.is_form_factor">
+<span class="sig-name descname"><span class="pre">is_form_factor</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.is_form_factor" title="Link to this definition">¶</a></dt>
+<dd><p>True if model should appear as a form factor</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.is_multiplicity_model">
+<span class="sig-name descname"><span class="pre">is_multiplicity_model</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.is_multiplicity_model" title="Link to this definition">¶</a></dt>
+<dd><p>True if model has multiplicity</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.is_structure_factor">
+<span class="sig-name descname"><span class="pre">is_structure_factor</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.is_structure_factor" title="Link to this definition">¶</a></dt>
+<dd><p>True if model should appear as a structure factor</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.magnetic_params">
+<span class="sig-name descname"><span class="pre">magnetic_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.magnetic_params" title="Link to this definition">¶</a></dt>
+<dd><p>names of the magnetic parameters in the order they appear</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.multiplicity">
+<span class="sig-name descname"><span class="pre">multiplicity</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.multiplicity" title="Link to this definition">¶</a></dt>
+<dd><p>multiplicity value, or None if no multiplicity on the model</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.multiplicity_info">
+<span class="sig-name descname"><span class="pre">multiplicity_info</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo" title="sasmodels.sasview_model.MultiplicityInfo"><span class="pre">MultiplicityInfo</span></a></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.multiplicity_info" title="Link to this definition">¶</a></dt>
+<dd><p>Multiplicity information</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.name" title="Link to this definition">¶</a></dt>
+<dd><p>display name for the model</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.non_fittable">
+<span class="sig-name descname"><span class="pre">non_fittable</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">()</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.non_fittable" title="Link to this definition">¶</a></dt>
+<dd><p>parameters that are not fitted</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.orientation_params">
+<span class="sig-name descname"><span class="pre">orientation_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.orientation_params" title="Link to this definition">¶</a></dt>
+<dd><p>names of the orientation parameters in the order they appear</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.output_name">
+<span class="sig-name descname"><span class="pre">output_name</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'Intensity'</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.output_name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.output_unit">
+<span class="sig-name descname"><span class="pre">output_unit</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'cm^{-1}'</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.output_unit" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.params">
+<span class="sig-name descname"><span class="pre">params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.params" title="Link to this definition">¶</a></dt>
+<dd><p>parameter {name: value} mapping</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.run">
+<span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.run" title="Link to this definition">¶</a></dt>
+<dd><p>Evaluate the model</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> – input q, or [q,phi]</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>scattering function P(q)</p>
+</dd>
+</dl>
+<p><strong>DEPRECATED</strong>: use calculate_Iq instead</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.runTests">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">runTests</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.runTests" title="Link to this definition">¶</a></dt>
+<dd><p>Run any tests built into the model and captures the test output.</p>
+<p>Returns success flag and output</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.runXY">
+<span class="sig-name descname"><span class="pre">runXY</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x:</span> <span class="pre">float</span> <span class="pre">|</span> <span class="pre">[&lt;class</span> <span class="pre">'float'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">&lt;class</span> <span class="pre">'float'&gt;]</span> <span class="pre">|</span> <span class="pre">~collections.abc.Sequence[float]</span> <span class="pre">=</span> <span class="pre">0.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.runXY" title="Link to this definition">¶</a></dt>
+<dd><p>Evaluate the model in cartesian coordinates</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> – input q, or [qx, qy]</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>scattering function P(q)</p>
+</dd>
+</dl>
+<p><strong>DEPRECATED</strong>: use calculate_Iq instead</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.setParam">
+<span class="sig-name descname"><span class="pre">setParam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.setParam" title="Link to this definition">¶</a></dt>
+<dd><p>Set the value of a model parameter</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> – name of the parameter</p></li>
+<li><p><strong>value</strong> – value of the parameter</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.SasviewModel.set_dispersion">
+<span class="sig-name descname"><span class="pre">set_dispersion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameter</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dispersion</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="weights.html#sasmodels.weights.Dispersion" title="sasmodels.weights.Dispersion"><span class="pre">Dispersion</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.sasview_model.SasviewModel.set_dispersion" title="Link to this definition">¶</a></dt>
+<dd><p>Set the dispersion object for a model parameter</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parameter</strong> – name of the parameter [string]</p></li>
+<li><p><strong>dispersion</strong> – dispersion object of type Dispersion</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="sasmodels.sasview_model._CACHED_MODULE">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">_CACHED_MODULE</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ModuleType</span><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">{}</span></em><a class="headerlink" href="#sasmodels.sasview_model._CACHED_MODULE" title="Link to this definition">¶</a></dt>
+<dd><p>Track modules that we have loaded so we can determine whether the model
+has changed since we last reloaded.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.sasview_model._generate_model_attributes">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">_generate_model_attributes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="bumps_model.html#sasmodels.bumps_model.Any" title="typing.Any"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.sasview_model._generate_model_attributes" title="Link to this definition">¶</a></dt>
+<dd><p>Generate the class attributes for the model.</p>
+<p>This should include all the information necessary to query the model
+details so that you do not need to instantiate a model to query it.</p>
+<p>All the attributes should be immutable to avoid accidents.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.sasview_model._make_standard_model">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">_make_standard_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel" title="sasmodels.sasview_model.SasviewModel"><span class="pre">SasviewModel</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.sasview_model._make_standard_model" title="Link to this definition">¶</a></dt>
+<dd><p>Load the sasview model defined by <em>name</em>.</p>
+<p><em>name</em> can be a standard model name or a path to a custom model.</p>
+<p>Returns a class that can be used directly as a sasview model.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.sasview_model._register_old_models">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">_register_old_models</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.sasview_model._register_old_models" title="Link to this definition">¶</a></dt>
+<dd><p>Place the new models into sasview under the old names.</p>
+<p>Monkey patch sas.sascalc.fit as sas.models so that sas.models.pluginmodel
+is available to the plugin modules.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.find_model">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">find_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">modelname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel" title="sasmodels.sasview_model.SasviewModel"><span class="pre">SasviewModel</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.sasview_model.find_model" title="Link to this definition">¶</a></dt>
+<dd><p>Find a model by name.  If the model name ends in py, try loading it from
+custom models, otherwise look for it in the list of builtin models.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.load_custom_model">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">load_custom_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel" title="sasmodels.sasview_model.SasviewModel"><span class="pre">SasviewModel</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.sasview_model.load_custom_model" title="Link to this definition">¶</a></dt>
+<dd><p>Load a custom model given the model path.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.load_standard_models">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">load_standard_models</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel" title="sasmodels.sasview_model.SasviewModel"><span class="pre">SasviewModel</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.sasview_model.load_standard_models" title="Link to this definition">¶</a></dt>
+<dd><p>Load and return the list of predefined models.</p>
+<p>If there is an error loading a model, then a traceback is logged and the
+model is not returned.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.magnetic_demo">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">magnetic_demo</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.sasview_model.magnetic_demo" title="Link to this definition">¶</a></dt>
+<dd><p>Demostrate call to magnetic model.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.make_model_from_info">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">make_model_from_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel" title="sasmodels.sasview_model.SasviewModel"><span class="pre">SasviewModel</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.sasview_model.make_model_from_info" title="Link to this definition">¶</a></dt>
+<dd><p>Convert <em>model_info</em> into a SasView model wrapper.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.reset_environment">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">reset_environment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.sasview_model.reset_environment" title="Link to this definition">¶</a></dt>
+<dd><p>Clear the compute engine context so that the GUI can change devices.</p>
+<p>This removes all compiled kernels, even those that are active on fit
+pages, but they will be restored the next time they are needed.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.test_cylinder">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">test_cylinder</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#sasmodels.sasview_model.test_cylinder" title="Link to this definition">¶</a></dt>
+<dd><p>Test that the cylinder model runs, returning the value at [0.1,0.1].</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.test_empty_distribution">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">test_empty_distribution</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.sasview_model.test_empty_distribution" title="Link to this definition">¶</a></dt>
+<dd><p>Make sure that sasmodels returns NaN when there are no polydispersity points</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.test_model_list">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">test_model_list</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.sasview_model.test_model_list" title="Link to this definition">¶</a></dt>
+<dd><p>Make sure that all models build as sasview models</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.test_old_name">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">test_old_name</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.sasview_model.test_old_name" title="Link to this definition">¶</a></dt>
+<dd><p>Load and run cylinder model as sas.models.CylinderModel</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.test_product">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">test_product</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#sasmodels.sasview_model.test_product" title="Link to this definition">¶</a></dt>
+<dd><p>Test that 2-D hardsphere model runs and doesn’t produce NaN.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.test_rpa">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">test_rpa</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#sasmodels.sasview_model.test_rpa" title="Link to this definition">¶</a></dt>
+<dd><p>Test that the 2-D RPA model runs</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.test_structure_factor">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">test_structure_factor</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="headerlink" href="#sasmodels.sasview_model.test_structure_factor" title="Link to this definition">¶</a></dt>
+<dd><p>Test that 2-D hardsphere model runs and doesn’t produce NaN.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.sasview_model.test_structure_factor_background">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.sasview_model.</span></span><span class="sig-name descname"><span class="pre">test_structure_factor_background</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.sasview_model.test_structure_factor_background" title="Link to this definition">¶</a></dt>
+<dd><p>Check that sasview model and direct model match, with background=0.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">31. Sasview interface</a><ul>
+<li><a class="reference internal" href="#module-sasmodels.sasview_model"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.sasview_model</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MODELS"><code class="docutils literal notranslate"><span class="pre">MODELS</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MODEL_BY_PATH"><code class="docutils literal notranslate"><span class="pre">MODEL_BY_PATH</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicationModel"><code class="docutils literal notranslate"><span class="pre">MultiplicationModel()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__add__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__add__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__class__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__class__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__class_getitem__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__class_getitem__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__contains__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__contains__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__delattr__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__delattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__dir__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__dir__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__doc__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__doc__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__eq__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__eq__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__format__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__format__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__ge__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__ge__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__getattribute__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__getattribute__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__getitem__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__getitem__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__getnewargs__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__getnewargs__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__getstate__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__getstate__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__gt__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__gt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__hash__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__hash__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__init__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__init_subclass__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__iter__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__iter__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__le__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__le__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__len__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__len__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__lt__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__lt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__match_args__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__match_args__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__module__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__module__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__mul__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__mul__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__ne__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__ne__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__new__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__new__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__reduce__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__reduce__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__reduce_ex__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__reduce_ex__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__repr__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__repr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__rmul__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__rmul__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__setattr__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__setattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__sizeof__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__sizeof__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__slots__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__slots__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__str__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.__subclasshook__"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.__subclasshook__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo._asdict"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo._asdict()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo._field_defaults"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo._field_defaults</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo._fields"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo._fields</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo._make"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo._make()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo._replace"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo._replace()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.choices"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.choices</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.control"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.control</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.count"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.count()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.index"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.index()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.number"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.number</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfo.x_axis_label"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfo.x_axis_label</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.MultiplicityInfoType"><code class="docutils literal notranslate"><span class="pre">MultiplicityInfoType</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SUPPORT_OLD_STYLE_PLUGINS"><code class="docutils literal notranslate"><span class="pre">SUPPORT_OLD_STYLE_PLUGINS</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel"><code class="docutils literal notranslate"><span class="pre">SasviewModel</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__class__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__class__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__delattr__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__delattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__dict__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__dict__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__dir__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__dir__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__doc__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__doc__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__eq__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__eq__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__format__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__format__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__ge__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__ge__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__get_state__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__get_state__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__getattribute__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__getattribute__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__getstate__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__getstate__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__gt__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__gt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__hash__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__hash__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__init__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__init_subclass__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__le__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__le__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__lt__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__lt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__module__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__module__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__ne__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__ne__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__new__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__new__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__reduce__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__reduce__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__reduce_ex__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__reduce_ex__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__repr__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__repr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__set_state__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__set_state__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__setattr__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__setattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__sizeof__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__sizeof__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__str__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__subclasshook__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__subclasshook__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.__weakref__"><code class="docutils literal notranslate"><span class="pre">SasviewModel.__weakref__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel._calculate_Iq"><code class="docutils literal notranslate"><span class="pre">SasviewModel._calculate_Iq()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel._dispersion_mesh"><code class="docutils literal notranslate"><span class="pre">SasviewModel._dispersion_mesh()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel._get_weights"><code class="docutils literal notranslate"><span class="pre">SasviewModel._get_weights()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel._model"><code class="docutils literal notranslate"><span class="pre">SasviewModel._model</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel._model_info"><code class="docutils literal notranslate"><span class="pre">SasviewModel._model_info</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel._persistency_dict"><code class="docutils literal notranslate"><span class="pre">SasviewModel._persistency_dict</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.calc_composition_models"><code class="docutils literal notranslate"><span class="pre">SasviewModel.calc_composition_models()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.calculate_ER"><code class="docutils literal notranslate"><span class="pre">SasviewModel.calculate_ER()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.calculate_Iq"><code class="docutils literal notranslate"><span class="pre">SasviewModel.calculate_Iq()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.calculate_VR"><code class="docutils literal notranslate"><span class="pre">SasviewModel.calculate_VR()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.category"><code class="docutils literal notranslate"><span class="pre">SasviewModel.category</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.clone"><code class="docutils literal notranslate"><span class="pre">SasviewModel.clone()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.cutoff"><code class="docutils literal notranslate"><span class="pre">SasviewModel.cutoff</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.description"><code class="docutils literal notranslate"><span class="pre">SasviewModel.description</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.details"><code class="docutils literal notranslate"><span class="pre">SasviewModel.details</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.dispersion"><code class="docutils literal notranslate"><span class="pre">SasviewModel.dispersion</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.evalDistribution"><code class="docutils literal notranslate"><span class="pre">SasviewModel.evalDistribution()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.fixed"><code class="docutils literal notranslate"><span class="pre">SasviewModel.fixed</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.getDispParamList"><code class="docutils literal notranslate"><span class="pre">SasviewModel.getDispParamList()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.getParam"><code class="docutils literal notranslate"><span class="pre">SasviewModel.getParam()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.getParamList"><code class="docutils literal notranslate"><span class="pre">SasviewModel.getParamList()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.getProfile"><code class="docutils literal notranslate"><span class="pre">SasviewModel.getProfile()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.id"><code class="docutils literal notranslate"><span class="pre">SasviewModel.id</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.input_name"><code class="docutils literal notranslate"><span class="pre">SasviewModel.input_name</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.input_unit"><code class="docutils literal notranslate"><span class="pre">SasviewModel.input_unit</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.is_fittable"><code class="docutils literal notranslate"><span class="pre">SasviewModel.is_fittable()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.is_form_factor"><code class="docutils literal notranslate"><span class="pre">SasviewModel.is_form_factor</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.is_multiplicity_model"><code class="docutils literal notranslate"><span class="pre">SasviewModel.is_multiplicity_model</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.is_structure_factor"><code class="docutils literal notranslate"><span class="pre">SasviewModel.is_structure_factor</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.magnetic_params"><code class="docutils literal notranslate"><span class="pre">SasviewModel.magnetic_params</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.multiplicity"><code class="docutils literal notranslate"><span class="pre">SasviewModel.multiplicity</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.multiplicity_info"><code class="docutils literal notranslate"><span class="pre">SasviewModel.multiplicity_info</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.name"><code class="docutils literal notranslate"><span class="pre">SasviewModel.name</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.non_fittable"><code class="docutils literal notranslate"><span class="pre">SasviewModel.non_fittable</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.orientation_params"><code class="docutils literal notranslate"><span class="pre">SasviewModel.orientation_params</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.output_name"><code class="docutils literal notranslate"><span class="pre">SasviewModel.output_name</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.output_unit"><code class="docutils literal notranslate"><span class="pre">SasviewModel.output_unit</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.params"><code class="docutils literal notranslate"><span class="pre">SasviewModel.params</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.run"><code class="docutils literal notranslate"><span class="pre">SasviewModel.run()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.runTests"><code class="docutils literal notranslate"><span class="pre">SasviewModel.runTests()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.runXY"><code class="docutils literal notranslate"><span class="pre">SasviewModel.runXY()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.setParam"><code class="docutils literal notranslate"><span class="pre">SasviewModel.setParam()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.SasviewModel.set_dispersion"><code class="docutils literal notranslate"><span class="pre">SasviewModel.set_dispersion()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sasmodels.sasview_model._CACHED_MODULE"><code class="docutils literal notranslate"><span class="pre">_CACHED_MODULE</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model._generate_model_attributes"><code class="docutils literal notranslate"><span class="pre">_generate_model_attributes()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model._make_standard_model"><code class="docutils literal notranslate"><span class="pre">_make_standard_model()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model._register_old_models"><code class="docutils literal notranslate"><span class="pre">_register_old_models()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.find_model"><code class="docutils literal notranslate"><span class="pre">find_model()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.load_custom_model"><code class="docutils literal notranslate"><span class="pre">load_custom_model()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.load_standard_models"><code class="docutils literal notranslate"><span class="pre">load_standard_models()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.magnetic_demo"><code class="docutils literal notranslate"><span class="pre">magnetic_demo()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.make_model_from_info"><code class="docutils literal notranslate"><span class="pre">make_model_from_info()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.reset_environment"><code class="docutils literal notranslate"><span class="pre">reset_environment()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.test_cylinder"><code class="docutils literal notranslate"><span class="pre">test_cylinder()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.test_empty_distribution"><code class="docutils literal notranslate"><span class="pre">test_empty_distribution()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.test_model_list"><code class="docutils literal notranslate"><span class="pre">test_model_list()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.test_old_name"><code class="docutils literal notranslate"><span class="pre">test_old_name()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.test_product"><code class="docutils literal notranslate"><span class="pre">test_product()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.test_rpa"><code class="docutils literal notranslate"><span class="pre">test_rpa()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.test_structure_factor"><code class="docutils literal notranslate"><span class="pre">test_structure_factor()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.sasview_model.test_structure_factor_background"><code class="docutils literal notranslate"><span class="pre">test_structure_factor_background()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="rst2html.html"
+                          title="previous chapter"><span class="section-number">30. </span>Convert doc strings the web pages</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="sesans.html"
+                          title="next chapter"><span class="section-number">32. </span>SESANS calculation routines</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/dev/sasmodels-api/sasview_model.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sesans.html" title="32. SESANS calculation routines"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="rst2html.html" title="30. Convert doc strings the web pages"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">31. </span>Sasview interface</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, The SasView Project.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

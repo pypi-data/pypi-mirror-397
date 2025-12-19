@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>4. Batch compare models on different compute engines &#8212; SasView 6.1.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=f0c0c503"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="5. Model conversion table" href="conversion_table.html" />
+    <link rel="prev" title="3. Compare models on different compute engines" href="compare.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="conversion_table.html" title="5. Model conversion table"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="compare.html" title="3. Compare models on different compute engines"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">4. </span>Batch compare models on different compute engines</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="batch-compare-models-on-different-compute-engines">
+<h1><span class="section-number">4. </span>Batch compare models on different compute engines<a class="headerlink" href="#batch-compare-models-on-different-compute-engines" title="Link to this heading">¶</a></h1>
+<section id="module-sasmodels.compare_many">
+<span id="sasmodels-compare-many"></span><h2><a class="reference internal" href="#module-sasmodels.compare_many" title="sasmodels.compare_many"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.compare_many</span></code></a><a class="headerlink" href="#module-sasmodels.compare_many" title="Link to this heading">¶</a></h2>
+<p>Program to compare results from many random parameter sets for a given model.</p>
+<p>The result is a comma separated value (CSV) table that can be redirected
+from standard output into a file and loaded into a spreadsheet.</p>
+<p>The models are compared for each parameter set and if the difference is
+greater than expected for that precision, the parameter set is labeled
+as bad and written to the output, along with the random seed used to
+generate that parameter value.  This seed can be used with <a class="reference internal" href="compare.html#module-sasmodels.compare" title="sasmodels.compare"><code class="xref py py-mod docutils literal notranslate"><span class="pre">compare</span></code></a>
+to reload and display the details of the model.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.compare_many.calc_stats">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.compare_many.</span></span><span class="sig-name descname"><span class="pre">calc_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">np.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="bumps_model.html#sasmodels.bumps_model.Any" title="sasmodels.bumps_model.Any"><span class="pre">Any</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.compare_many.calc_stats" title="Link to this definition">¶</a></dt>
+<dd><p>Calculate statistics between the target value and the computed value.</p>
+<p><em>target</em> and <em>value</em> are the vectors being compared, with the
+difference normalized by <em>target</em> to get relative error.  Only
+the elements listed in <em>index</em> are used, though index may be
+and empty slice defined by <em>slice(None, None)</em>.</p>
+<p>Returns:</p>
+<blockquote>
+<div><p><em>maxrel</em> the maximum relative difference</p>
+<p><em>rel95</em> the relative difference with the 5% biggest differences ignored</p>
+<p><em>maxabs</em> the maximum absolute difference for the 5% biggest differences</p>
+<p><em>maxval</em> the maximum value for the 5% biggest differences</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.compare_many.compare_instance">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.compare_many.</span></span><span class="sig-name descname"><span class="pre">compare_instance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="bumps_model.html#sasmodels.bumps_model.Any" title="sasmodels.bumps_model.Any"><span class="pre">Any</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">N</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mono</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'single'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">comp</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'double'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.compare_many.compare_instance" title="Link to this definition">¶</a></dt>
+<dd><p>Compare the model under different calculation engines.</p>
+<p><em>name</em> is the name of the model.</p>
+<p><em>data</em> is the data object giving <span class="math notranslate nohighlight">\(q, \Delta q\)</span> calculation points.</p>
+<p><em>index</em> is the active set of points.</p>
+<p><em>N</em> is the number of comparisons to make.</p>
+<p><em>cutoff</em> is the polydispersity weight cutoff to make the calculation
+a little bit faster.</p>
+<p><em>base</em> and <em>comp</em> are the names of the calculation engines to compare.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.compare_many.main">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.compare_many.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">argv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.compare_many.main" title="Link to this definition">¶</a></dt>
+<dd><p>Main program.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.compare_many.print_column_headers">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.compare_many.</span></span><span class="sig-name descname"><span class="pre">print_column_headers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pars</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.compare_many.print_column_headers" title="Link to this definition">¶</a></dt>
+<dd><p>Generate column headers for the differences and for the parameters,
+and print them to standard output.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.compare_many.print_help">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.compare_many.</span></span><span class="sig-name descname"><span class="pre">print_help</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.compare_many.print_help" title="Link to this definition">¶</a></dt>
+<dd><p>Print usage string, the option description and the list of available models.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.compare_many.print_usage">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.compare_many.</span></span><span class="sig-name descname"><span class="pre">print_usage</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.compare_many.print_usage" title="Link to this definition">¶</a></dt>
+<dd><p>Print the command usage string.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">4. Batch compare models on different compute engines</a><ul>
+<li><a class="reference internal" href="#module-sasmodels.compare_many"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.compare_many</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.compare_many.calc_stats"><code class="docutils literal notranslate"><span class="pre">calc_stats()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.compare_many.compare_instance"><code class="docutils literal notranslate"><span class="pre">compare_instance()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.compare_many.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.compare_many.print_column_headers"><code class="docutils literal notranslate"><span class="pre">print_column_headers()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.compare_many.print_help"><code class="docutils literal notranslate"><span class="pre">print_help()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.compare_many.print_usage"><code class="docutils literal notranslate"><span class="pre">print_usage()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="compare.html"
+                          title="previous chapter"><span class="section-number">3. </span>Compare models on different compute engines</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="conversion_table.html"
+                          title="next chapter"><span class="section-number">5. </span>Model conversion table</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/dev/sasmodels-api/compare_many.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="conversion_table.html" title="5. Model conversion table"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="compare.html" title="3. Compare models on different compute engines"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">4. </span>Batch compare models on different compute engines</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, The SasView Project.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

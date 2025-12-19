@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>6. Sasview to sasmodel converter &#8212; SasView 6.1.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=f0c0c503"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="7. Load custom kernel modules" href="custom.__init__.html" />
+    <link rel="prev" title="5. Model conversion table" href="conversion_table.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="custom.__init__.html" title="7. Load custom kernel modules"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="conversion_table.html" title="5. Model conversion table"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">6. </span>Sasview to sasmodel converter</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="sasview-to-sasmodel-converter">
+<h1><span class="section-number">6. </span>Sasview to sasmodel converter<a class="headerlink" href="#sasview-to-sasmodel-converter" title="Link to this heading">¶</a></h1>
+<section id="module-sasmodels.convert">
+<span id="sasmodels-convert"></span><h2><a class="reference internal" href="#module-sasmodels.convert" title="sasmodels.convert"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.convert</span></code></a><a class="headerlink" href="#module-sasmodels.convert" title="Link to this heading">¶</a></h2>
+<p>Convert models to and from sasview.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.convert._check_one">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.convert.</span></span><span class="sig-name descname"><span class="pre">_check_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.convert._check_one" title="Link to this definition">¶</a></dt>
+<dd><p>Generate a random set of parameters for <em>name</em>, and check that they can
+be converted back to SasView 3.x and forward again to sasmodels.  Raises
+an error if the parameters are changed.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.convert._conversion_target">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.convert.</span></span><span class="sig-name descname"><span class="pre">_conversion_target</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(3,</span> <span class="pre">1,</span> <span class="pre">2)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.convert._conversion_target" title="Link to this definition">¶</a></dt>
+<dd><p>Find the sasmodel name which translates into the sasview name.</p>
+<p>Note: <em>CoreShellEllipsoidModel</em> translates into <em>core_shell_ellipsoid:1</em>.
+This is necessary since there is only one variant in sasmodels for the
+two variants in sasview.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.convert._convert_pars">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.convert.</span></span><span class="sig-name descname"><span class="pre">_convert_pars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mapping</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.convert._convert_pars" title="Link to this definition">¶</a></dt>
+<dd><p>Rename the parameters and any associated polydispersity attributes.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.convert._dot_pd_to_underscore_pd">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.convert.</span></span><span class="sig-name descname"><span class="pre">_dot_pd_to_underscore_pd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">par</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.convert._dot_pd_to_underscore_pd" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.convert._get_translation_table">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.convert.</span></span><span class="sig-name descname"><span class="pre">_get_translation_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(3,</span> <span class="pre">1,</span> <span class="pre">2)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.convert._get_translation_table" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.convert._hand_convert">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.convert.</span></span><span class="sig-name descname"><span class="pre">_hand_convert</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oldpars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(3,</span> <span class="pre">1,</span> <span class="pre">2)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.convert._hand_convert" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.convert._hand_convert_3_1_2_to_4_1">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.convert.</span></span><span class="sig-name descname"><span class="pre">_hand_convert_3_1_2_to_4_1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oldpars</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.convert._hand_convert_3_1_2_to_4_1" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.convert._is_sld">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.convert.</span></span><span class="sig-name descname"><span class="pre">_is_sld</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">par</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.convert._is_sld" title="Link to this definition">¶</a></dt>
+<dd><p>Return True if parameter is a magnetic magnitude or SLD parameter.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.convert._pd_to_underscores">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.convert.</span></span><span class="sig-name descname"><span class="pre">_pd_to_underscores</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pars</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.convert._pd_to_underscores" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.convert._remove_pd">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.convert.</span></span><span class="sig-name descname"><span class="pre">_remove_pd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.convert._remove_pd" title="Link to this definition">¶</a></dt>
+<dd><p>Remove polydispersity from the parameter list.</p>
+<p>Note: operates in place</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.convert._rename_magnetic_angles">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.convert.</span></span><span class="sig-name descname"><span class="pre">_rename_magnetic_angles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pars</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.convert._rename_magnetic_angles" title="Link to this definition">¶</a></dt>
+<dd><p>Change name of magnetic angle.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.convert._rename_magnetic_pars">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.convert.</span></span><span class="sig-name descname"><span class="pre">_rename_magnetic_pars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pars</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.convert._rename_magnetic_pars" title="Link to this definition">¶</a></dt>
+<dd><p>Change from M0:par to par_M0, etc.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.convert._rescale">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.convert.</span></span><span class="sig-name descname"><span class="pre">_rescale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">par</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.convert._rescale" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.convert._rescale_sld">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.convert.</span></span><span class="sig-name descname"><span class="pre">_rescale_sld</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.convert._rescale_sld" title="Link to this definition">¶</a></dt>
+<dd><p>rescale all sld parameters in the new model definition by <em>scale</em> so the
+numbers are nicer.  Relies on the fact that all sld parameters in the
+new model definition end with sld.  For backward conversion use
+<em>scale=1e-6</em>.  For forward conversion use <em>scale=1e6</em>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.convert._revert_pars">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.convert.</span></span><span class="sig-name descname"><span class="pre">_revert_pars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mapping</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.convert._revert_pars" title="Link to this definition">¶</a></dt>
+<dd><p>Rename the parameters and any associated polydispersity attributes.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.convert._trim_vectors">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.convert.</span></span><span class="sig-name descname"><span class="pre">_trim_vectors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oldpars</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.convert._trim_vectors" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.convert.constrain_new_to_old">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.convert.</span></span><span class="sig-name descname"><span class="pre">constrain_new_to_old</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pars</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.convert.constrain_new_to_old" title="Link to this definition">¶</a></dt>
+<dd><p>Restrict parameter values to those that will match sasview.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.convert.convert_model">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.convert.</span></span><span class="sig-name descname"><span class="pre">convert_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_underscore</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model_version</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(3,</span> <span class="pre">1,</span> <span class="pre">2)</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.convert.convert_model" title="Link to this definition">¶</a></dt>
+<dd><p>Convert model from old style parameter names to new style.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.convert.revert_name">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.convert.</span></span><span class="sig-name descname"><span class="pre">revert_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.convert.revert_name" title="Link to this definition">¶</a></dt>
+<dd><p>Translate model name back to the name used in SasView 3.x</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.convert.revert_pars">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.convert.</span></span><span class="sig-name descname"><span class="pre">revert_pars</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pars</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.convert.revert_pars" title="Link to this definition">¶</a></dt>
+<dd><p>Convert model from new style parameter names to old style.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.convert.test_backward_forward">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.convert.</span></span><span class="sig-name descname"><span class="pre">test_backward_forward</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.convert.test_backward_forward" title="Link to this definition">¶</a></dt>
+<dd><p>Test conversion of model parameters from 4.x to 3.x and back.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">6. Sasview to sasmodel converter</a><ul>
+<li><a class="reference internal" href="#module-sasmodels.convert"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.convert</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.convert._check_one"><code class="docutils literal notranslate"><span class="pre">_check_one()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.convert._conversion_target"><code class="docutils literal notranslate"><span class="pre">_conversion_target()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.convert._convert_pars"><code class="docutils literal notranslate"><span class="pre">_convert_pars()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.convert._dot_pd_to_underscore_pd"><code class="docutils literal notranslate"><span class="pre">_dot_pd_to_underscore_pd()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.convert._get_translation_table"><code class="docutils literal notranslate"><span class="pre">_get_translation_table()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.convert._hand_convert"><code class="docutils literal notranslate"><span class="pre">_hand_convert()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.convert._hand_convert_3_1_2_to_4_1"><code class="docutils literal notranslate"><span class="pre">_hand_convert_3_1_2_to_4_1()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.convert._is_sld"><code class="docutils literal notranslate"><span class="pre">_is_sld()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.convert._pd_to_underscores"><code class="docutils literal notranslate"><span class="pre">_pd_to_underscores()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.convert._remove_pd"><code class="docutils literal notranslate"><span class="pre">_remove_pd()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.convert._rename_magnetic_angles"><code class="docutils literal notranslate"><span class="pre">_rename_magnetic_angles()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.convert._rename_magnetic_pars"><code class="docutils literal notranslate"><span class="pre">_rename_magnetic_pars()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.convert._rescale"><code class="docutils literal notranslate"><span class="pre">_rescale()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.convert._rescale_sld"><code class="docutils literal notranslate"><span class="pre">_rescale_sld()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.convert._revert_pars"><code class="docutils literal notranslate"><span class="pre">_revert_pars()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.convert._trim_vectors"><code class="docutils literal notranslate"><span class="pre">_trim_vectors()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.convert.constrain_new_to_old"><code class="docutils literal notranslate"><span class="pre">constrain_new_to_old()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.convert.convert_model"><code class="docutils literal notranslate"><span class="pre">convert_model()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.convert.revert_name"><code class="docutils literal notranslate"><span class="pre">revert_name()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.convert.revert_pars"><code class="docutils literal notranslate"><span class="pre">revert_pars()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.convert.test_backward_forward"><code class="docutils literal notranslate"><span class="pre">test_backward_forward()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="conversion_table.html"
+                          title="previous chapter"><span class="section-number">5. </span>Model conversion table</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="custom.__init__.html"
+                          title="next chapter"><span class="section-number">7. </span>Load custom kernel modules</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/dev/sasmodels-api/convert.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="custom.__init__.html" title="7. Load custom kernel modules"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="conversion_table.html" title="5. Model conversion table"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">6. </span>Sasview to sasmodel converter</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, The SasView Project.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>

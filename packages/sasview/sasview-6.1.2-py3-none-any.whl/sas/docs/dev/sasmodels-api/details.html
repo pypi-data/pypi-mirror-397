@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>10. Parameter packing for kernel calls &#8212; SasView 6.1.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../../_static/documentation_options.js?v=f0c0c503"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="11. Simple interface" href="direct_model.html" />
+    <link rel="prev" title="9. Data layout and plotting routines" href="data.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="direct_model.html" title="11. Simple interface"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="data.html" title="9. Data layout and plotting routines"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" accesskey="U">Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">10. </span>Parameter packing for kernel calls</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="parameter-packing-for-kernel-calls">
+<h1><span class="section-number">10. </span>Parameter packing for kernel calls<a class="headerlink" href="#parameter-packing-for-kernel-calls" title="Link to this heading">¶</a></h1>
+<section id="module-sasmodels.details">
+<span id="sasmodels-details"></span><h2><a class="reference internal" href="#module-sasmodels.details" title="sasmodels.details"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.details</span></code></a><a class="headerlink" href="#module-sasmodels.details" title="Link to this heading">¶</a></h2>
+<section id="kernel-call-details">
+<h3>Kernel Call Details<a class="headerlink" href="#kernel-call-details" title="Link to this heading">¶</a></h3>
+<p>When calling sas computational kernels with polydispersity there are a
+number of details that need to be sent to the caller.  This includes the
+list of polydisperse parameters, the number of points in the polydispersity
+weight distribution, and which parameter is the “theta” parameter for
+polar coordinate integration.  The <a class="reference internal" href="#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><code class="xref py py-class docutils literal notranslate"><span class="pre">CallDetails</span></code></a> object maintains
+this data.  Use <a class="reference internal" href="#sasmodels.details.make_details" title="sasmodels.details.make_details"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_details()</span></code></a> to build a <em>details</em> object which
+can be passed to one of the computational kernels.</p>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">sasmodels.details.</span></span><span class="sig-name descname"><span class="pre">CallDetails</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Manage the polydispersity information for the kernel call.</p>
+<p>Conceptually, a polydispersity calculation is an integral over a mesh
+in n-D space where n is the number of polydisperse parameters.  In order
+to keep the program responsive, and not crash the GPU, only a portion
+of the mesh is computed at a time.  Meshes with a large number of points
+will therefore require many calls to the polydispersity loop.  Restarting
+a nested loop in the middle requires that the indices of the individual
+mesh dimensions can be computed for the current loop location.  This
+is handled by the <em>pd_stride</em> vector, with n//stride giving the loop
+index and n%stride giving the position in the sub loops.</p>
+<p>One of the parameters may be the latitude.  When integrating in polar
+coordinates, the total circumference decreases as latitude varies from
+pi r^2 at the equator to 0 at the pole, and the weight associated
+with a range of latitude values needs to be scaled by this circumference.
+This scale factor needs to be updated each time the theta value
+changes.  <em>theta_par</em> indicates which of the values in the parameter
+vector is the latitude parameter, or -1 if there is no latitude
+parameter in the model.  In practice, the normalization term cancels
+if the latitude is not a polydisperse parameter.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__class__">
+<span class="sig-name descname"><span class="pre">__class__</span></span><a class="headerlink" href="#sasmodels.details.CallDetails.__class__" title="Link to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__delattr__">
+<span class="sig-name descname"><span class="pre">__delattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails.__delattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement delattr(self, name).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__dict__">
+<span class="sig-name descname"><span class="pre">__dict__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">mappingproxy({'__module__':</span> <span class="pre">'sasmodels.details',</span> <span class="pre">'__doc__':</span> <span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Manage</span> <span class="pre">the</span> <span class="pre">polydispersity</span> <span class="pre">information</span> <span class="pre">for</span> <span class="pre">the</span> <span class="pre">kernel</span> <span class="pre">call.\n\n</span>&#160;&#160;&#160; <span class="pre">Conceptually,</span> <span class="pre">a</span> <span class="pre">polydispersity</span> <span class="pre">calculation</span> <span class="pre">is</span> <span class="pre">an</span> <span class="pre">integral</span> <span class="pre">over</span> <span class="pre">a</span> <span class="pre">mesh\n</span>&#160;&#160;&#160; <span class="pre">in</span> <span class="pre">n-D</span> <span class="pre">space</span> <span class="pre">where</span> <span class="pre">n</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">number</span> <span class="pre">of</span> <span class="pre">polydisperse</span> <span class="pre">parameters.</span>&#160; <span class="pre">In</span> <span class="pre">order\n</span>&#160;&#160;&#160; <span class="pre">to</span> <span class="pre">keep</span> <span class="pre">the</span> <span class="pre">program</span> <span class="pre">responsive,</span> <span class="pre">and</span> <span class="pre">not</span> <span class="pre">crash</span> <span class="pre">the</span> <span class="pre">GPU,</span> <span class="pre">only</span> <span class="pre">a</span> <span class="pre">portion\n</span>&#160;&#160;&#160; <span class="pre">of</span> <span class="pre">the</span> <span class="pre">mesh</span> <span class="pre">is</span> <span class="pre">computed</span> <span class="pre">at</span> <span class="pre">a</span> <span class="pre">time.</span>&#160; <span class="pre">Meshes</span> <span class="pre">with</span> <span class="pre">a</span> <span class="pre">large</span> <span class="pre">number</span> <span class="pre">of</span> <span class="pre">points\n</span>&#160;&#160;&#160; <span class="pre">will</span> <span class="pre">therefore</span> <span class="pre">require</span> <span class="pre">many</span> <span class="pre">calls</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">polydispersity</span> <span class="pre">loop.</span>&#160; <span class="pre">Restarting\n</span>&#160;&#160;&#160; <span class="pre">a</span> <span class="pre">nested</span> <span class="pre">loop</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">middle</span> <span class="pre">requires</span> <span class="pre">that</span> <span class="pre">the</span> <span class="pre">indices</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">individual\n</span>&#160;&#160;&#160; <span class="pre">mesh</span> <span class="pre">dimensions</span> <span class="pre">can</span> <span class="pre">be</span> <span class="pre">computed</span> <span class="pre">for</span> <span class="pre">the</span> <span class="pre">current</span> <span class="pre">loop</span> <span class="pre">location.</span>&#160; <span class="pre">This\n</span>&#160;&#160;&#160; <span class="pre">is</span> <span class="pre">handled</span> <span class="pre">by</span> <span class="pre">the</span> <span class="pre">*pd_stride*</span> <span class="pre">vector,</span> <span class="pre">with</span> <span class="pre">n//stride</span> <span class="pre">giving</span> <span class="pre">the</span> <span class="pre">loop\n</span>&#160;&#160;&#160; <span class="pre">index</span> <span class="pre">and</span> <span class="pre">n%stride</span> <span class="pre">giving</span> <span class="pre">the</span> <span class="pre">position</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">sub</span> <span class="pre">loops.\n\n</span>&#160;&#160;&#160; <span class="pre">One</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">parameters</span> <span class="pre">may</span> <span class="pre">be</span> <span class="pre">the</span> <span class="pre">latitude.</span>&#160; <span class="pre">When</span> <span class="pre">integrating</span> <span class="pre">in</span> <span class="pre">polar\n</span>&#160;&#160;&#160; <span class="pre">coordinates,</span> <span class="pre">the</span> <span class="pre">total</span> <span class="pre">circumference</span> <span class="pre">decreases</span> <span class="pre">as</span> <span class="pre">latitude</span> <span class="pre">varies</span> <span class="pre">from\n</span>&#160;&#160;&#160; <span class="pre">pi</span> <span class="pre">r^2</span> <span class="pre">at</span> <span class="pre">the</span> <span class="pre">equator</span> <span class="pre">to</span> <span class="pre">0</span> <span class="pre">at</span> <span class="pre">the</span> <span class="pre">pole,</span> <span class="pre">and</span> <span class="pre">the</span> <span class="pre">weight</span> <span class="pre">associated\n</span>&#160;&#160;&#160; <span class="pre">with</span> <span class="pre">a</span> <span class="pre">range</span> <span class="pre">of</span> <span class="pre">latitude</span> <span class="pre">values</span> <span class="pre">needs</span> <span class="pre">to</span> <span class="pre">be</span> <span class="pre">scaled</span> <span class="pre">by</span> <span class="pre">this</span> <span class="pre">circumference.\n</span>&#160;&#160;&#160; <span class="pre">This</span> <span class="pre">scale</span> <span class="pre">factor</span> <span class="pre">needs</span> <span class="pre">to</span> <span class="pre">be</span> <span class="pre">updated</span> <span class="pre">each</span> <span class="pre">time</span> <span class="pre">the</span> <span class="pre">theta</span> <span class="pre">value\n</span>&#160;&#160;&#160; <span class="pre">changes.</span>&#160; <span class="pre">*theta_par*</span> <span class="pre">indicates</span> <span class="pre">which</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">values</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">parameter\n</span>&#160;&#160;&#160; <span class="pre">vector</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">latitude</span> <span class="pre">parameter,</span> <span class="pre">or</span> <span class="pre">-1</span> <span class="pre">if</span> <span class="pre">there</span> <span class="pre">is</span> <span class="pre">no</span> <span class="pre">latitude\n</span>&#160;&#160;&#160; <span class="pre">parameter</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">model.</span>&#160; <span class="pre">In</span> <span class="pre">practice,</span> <span class="pre">the</span> <span class="pre">normalization</span> <span class="pre">term</span> <span class="pre">cancels\n</span>&#160;&#160;&#160; <span class="pre">if</span> <span class="pre">the</span> <span class="pre">latitude</span> <span class="pre">is</span> <span class="pre">not</span> <span class="pre">a</span> <span class="pre">polydisperse</span> <span class="pre">parameter.\n</span>&#160;&#160;&#160; <span class="pre">',</span> <span class="pre">'parts':</span> <span class="pre">None,</span> <span class="pre">'__init__':</span> <span class="pre">&lt;function</span> <span class="pre">CallDetails.__init__&gt;,</span> <span class="pre">'pd_par':</span> <span class="pre">&lt;property</span> <span class="pre">object&gt;,</span> <span class="pre">'pd_length':</span> <span class="pre">&lt;property</span> <span class="pre">object&gt;,</span> <span class="pre">'pd_offset':</span> <span class="pre">&lt;property</span> <span class="pre">object&gt;,</span> <span class="pre">'pd_stride':</span> <span class="pre">&lt;property</span> <span class="pre">object&gt;,</span> <span class="pre">'num_eval':</span> <span class="pre">&lt;property</span> <span class="pre">object&gt;,</span> <span class="pre">'num_weights':</span> <span class="pre">&lt;property</span> <span class="pre">object&gt;,</span> <span class="pre">'num_active':</span> <span class="pre">&lt;property</span> <span class="pre">object&gt;,</span> <span class="pre">'theta_par':</span> <span class="pre">&lt;property</span> <span class="pre">object&gt;,</span> <span class="pre">'show':</span> <span class="pre">&lt;function</span> <span class="pre">CallDetails.show&gt;,</span> <span class="pre">'__dict__':</span> <span class="pre">&lt;attribute</span> <span class="pre">'__dict__'</span> <span class="pre">of</span> <span class="pre">'CallDetails'</span> <span class="pre">objects&gt;,</span> <span class="pre">'__weakref__':</span> <span class="pre">&lt;attribute</span> <span class="pre">'__weakref__'</span> <span class="pre">of</span> <span class="pre">'CallDetails'</span> <span class="pre">objects&gt;,</span> <span class="pre">'__annotations__':</span> <span class="pre">{'parts':</span> <span class="pre">'list[&quot;CallDetails&quot;]',</span> <span class="pre">'offset':</span> <span class="pre">'np.ndarray',</span> <span class="pre">'length':</span> <span class="pre">'np.ndarray'}})</span></em><a class="headerlink" href="#sasmodels.details.CallDetails.__dict__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__dir__">
+<span class="sig-name descname"><span class="pre">__dir__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails.__dir__" title="Link to this definition">¶</a></dt>
+<dd><p>Default dir() implementation.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__doc__">
+<span class="sig-name descname"><span class="pre">__doc__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'\n</span>&#160;&#160;&#160; <span class="pre">Manage</span> <span class="pre">the</span> <span class="pre">polydispersity</span> <span class="pre">information</span> <span class="pre">for</span> <span class="pre">the</span> <span class="pre">kernel</span> <span class="pre">call.\n\n</span>&#160;&#160;&#160; <span class="pre">Conceptually,</span> <span class="pre">a</span> <span class="pre">polydispersity</span> <span class="pre">calculation</span> <span class="pre">is</span> <span class="pre">an</span> <span class="pre">integral</span> <span class="pre">over</span> <span class="pre">a</span> <span class="pre">mesh\n</span>&#160;&#160;&#160; <span class="pre">in</span> <span class="pre">n-D</span> <span class="pre">space</span> <span class="pre">where</span> <span class="pre">n</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">number</span> <span class="pre">of</span> <span class="pre">polydisperse</span> <span class="pre">parameters.</span>&#160; <span class="pre">In</span> <span class="pre">order\n</span>&#160;&#160;&#160; <span class="pre">to</span> <span class="pre">keep</span> <span class="pre">the</span> <span class="pre">program</span> <span class="pre">responsive,</span> <span class="pre">and</span> <span class="pre">not</span> <span class="pre">crash</span> <span class="pre">the</span> <span class="pre">GPU,</span> <span class="pre">only</span> <span class="pre">a</span> <span class="pre">portion\n</span>&#160;&#160;&#160; <span class="pre">of</span> <span class="pre">the</span> <span class="pre">mesh</span> <span class="pre">is</span> <span class="pre">computed</span> <span class="pre">at</span> <span class="pre">a</span> <span class="pre">time.</span>&#160; <span class="pre">Meshes</span> <span class="pre">with</span> <span class="pre">a</span> <span class="pre">large</span> <span class="pre">number</span> <span class="pre">of</span> <span class="pre">points\n</span>&#160;&#160;&#160; <span class="pre">will</span> <span class="pre">therefore</span> <span class="pre">require</span> <span class="pre">many</span> <span class="pre">calls</span> <span class="pre">to</span> <span class="pre">the</span> <span class="pre">polydispersity</span> <span class="pre">loop.</span>&#160; <span class="pre">Restarting\n</span>&#160;&#160;&#160; <span class="pre">a</span> <span class="pre">nested</span> <span class="pre">loop</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">middle</span> <span class="pre">requires</span> <span class="pre">that</span> <span class="pre">the</span> <span class="pre">indices</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">individual\n</span>&#160;&#160;&#160; <span class="pre">mesh</span> <span class="pre">dimensions</span> <span class="pre">can</span> <span class="pre">be</span> <span class="pre">computed</span> <span class="pre">for</span> <span class="pre">the</span> <span class="pre">current</span> <span class="pre">loop</span> <span class="pre">location.</span>&#160; <span class="pre">This\n</span>&#160;&#160;&#160; <span class="pre">is</span> <span class="pre">handled</span> <span class="pre">by</span> <span class="pre">the</span> <span class="pre">*pd_stride*</span> <span class="pre">vector,</span> <span class="pre">with</span> <span class="pre">n//stride</span> <span class="pre">giving</span> <span class="pre">the</span> <span class="pre">loop\n</span>&#160;&#160;&#160; <span class="pre">index</span> <span class="pre">and</span> <span class="pre">n%stride</span> <span class="pre">giving</span> <span class="pre">the</span> <span class="pre">position</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">sub</span> <span class="pre">loops.\n\n</span>&#160;&#160;&#160; <span class="pre">One</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">parameters</span> <span class="pre">may</span> <span class="pre">be</span> <span class="pre">the</span> <span class="pre">latitude.</span>&#160; <span class="pre">When</span> <span class="pre">integrating</span> <span class="pre">in</span> <span class="pre">polar\n</span>&#160;&#160;&#160; <span class="pre">coordinates,</span> <span class="pre">the</span> <span class="pre">total</span> <span class="pre">circumference</span> <span class="pre">decreases</span> <span class="pre">as</span> <span class="pre">latitude</span> <span class="pre">varies</span> <span class="pre">from\n</span>&#160;&#160;&#160; <span class="pre">pi</span> <span class="pre">r^2</span> <span class="pre">at</span> <span class="pre">the</span> <span class="pre">equator</span> <span class="pre">to</span> <span class="pre">0</span> <span class="pre">at</span> <span class="pre">the</span> <span class="pre">pole,</span> <span class="pre">and</span> <span class="pre">the</span> <span class="pre">weight</span> <span class="pre">associated\n</span>&#160;&#160;&#160; <span class="pre">with</span> <span class="pre">a</span> <span class="pre">range</span> <span class="pre">of</span> <span class="pre">latitude</span> <span class="pre">values</span> <span class="pre">needs</span> <span class="pre">to</span> <span class="pre">be</span> <span class="pre">scaled</span> <span class="pre">by</span> <span class="pre">this</span> <span class="pre">circumference.\n</span>&#160;&#160;&#160; <span class="pre">This</span> <span class="pre">scale</span> <span class="pre">factor</span> <span class="pre">needs</span> <span class="pre">to</span> <span class="pre">be</span> <span class="pre">updated</span> <span class="pre">each</span> <span class="pre">time</span> <span class="pre">the</span> <span class="pre">theta</span> <span class="pre">value\n</span>&#160;&#160;&#160; <span class="pre">changes.</span>&#160; <span class="pre">*theta_par*</span> <span class="pre">indicates</span> <span class="pre">which</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">values</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">parameter\n</span>&#160;&#160;&#160; <span class="pre">vector</span> <span class="pre">is</span> <span class="pre">the</span> <span class="pre">latitude</span> <span class="pre">parameter,</span> <span class="pre">or</span> <span class="pre">-1</span> <span class="pre">if</span> <span class="pre">there</span> <span class="pre">is</span> <span class="pre">no</span> <span class="pre">latitude\n</span>&#160;&#160;&#160; <span class="pre">parameter</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">model.</span>&#160; <span class="pre">In</span> <span class="pre">practice,</span> <span class="pre">the</span> <span class="pre">normalization</span> <span class="pre">term</span> <span class="pre">cancels\n</span>&#160;&#160;&#160; <span class="pre">if</span> <span class="pre">the</span> <span class="pre">latitude</span> <span class="pre">is</span> <span class="pre">not</span> <span class="pre">a</span> <span class="pre">polydisperse</span> <span class="pre">parameter.\n</span>&#160;&#160;&#160; <span class="pre">'</span></em><a class="headerlink" href="#sasmodels.details.CallDetails.__doc__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__eq__">
+<span class="sig-name descname"><span class="pre">__eq__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails.__eq__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self==value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__format__">
+<span class="sig-name descname"><span class="pre">__format__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format_spec</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails.__format__" title="Link to this definition">¶</a></dt>
+<dd><p>Default object formatter.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__ge__">
+<span class="sig-name descname"><span class="pre">__ge__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails.__ge__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__getattribute__">
+<span class="sig-name descname"><span class="pre">__getattribute__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails.__getattribute__" title="Link to this definition">¶</a></dt>
+<dd><p>Return getattr(self, name).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__getstate__">
+<span class="sig-name descname"><span class="pre">__getstate__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails.__getstate__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__gt__">
+<span class="sig-name descname"><span class="pre">__gt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails.__gt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&gt;value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__hash__">
+<span class="sig-name descname"><span class="pre">__hash__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails.__hash__" title="Link to this definition">¶</a></dt>
+<dd><p>Return hash(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#sasmodels.details.CallDetails.__init__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__init_subclass__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__init_subclass__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails.__init_subclass__" title="Link to this definition">¶</a></dt>
+<dd><p>This method is called when a class is subclassed.</p>
+<p>The default implementation does nothing. It may be
+overridden to extend subclasses.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__le__">
+<span class="sig-name descname"><span class="pre">__le__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails.__le__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__lt__">
+<span class="sig-name descname"><span class="pre">__lt__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails.__lt__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self&lt;value.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__module__">
+<span class="sig-name descname"><span class="pre">__module__</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'sasmodels.details'</span></em><a class="headerlink" href="#sasmodels.details.CallDetails.__module__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__ne__">
+<span class="sig-name descname"><span class="pre">__ne__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails.__ne__" title="Link to this definition">¶</a></dt>
+<dd><p>Return self!=value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__new__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__new__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails.__new__" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__reduce__">
+<span class="sig-name descname"><span class="pre">__reduce__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails.__reduce__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__reduce_ex__">
+<span class="sig-name descname"><span class="pre">__reduce_ex__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">protocol</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails.__reduce_ex__" title="Link to this definition">¶</a></dt>
+<dd><p>Helper for pickle.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__repr__">
+<span class="sig-name descname"><span class="pre">__repr__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails.__repr__" title="Link to this definition">¶</a></dt>
+<dd><p>Return repr(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__setattr__">
+<span class="sig-name descname"><span class="pre">__setattr__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails.__setattr__" title="Link to this definition">¶</a></dt>
+<dd><p>Implement setattr(self, name, value).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__sizeof__">
+<span class="sig-name descname"><span class="pre">__sizeof__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails.__sizeof__" title="Link to this definition">¶</a></dt>
+<dd><p>Size of object in memory, in bytes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__str__">
+<span class="sig-name descname"><span class="pre">__str__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails.__str__" title="Link to this definition">¶</a></dt>
+<dd><p>Return str(self).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__subclasshook__">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">__subclasshook__</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails.__subclasshook__" title="Link to this definition">¶</a></dt>
+<dd><p>Abstract classes can override this to customize issubclass().</p>
+<p>This is invoked early on by abc.ABCMeta.__subclasscheck__().
+It should return True, False or NotImplemented.  If it returns
+NotImplemented, the normal algorithm is used.  Otherwise, it
+overrides the normal algorithm (and the outcome is cached).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.__weakref__">
+<span class="sig-name descname"><span class="pre">__weakref__</span></span><a class="headerlink" href="#sasmodels.details.CallDetails.__weakref__" title="Link to this definition">¶</a></dt>
+<dd><p>list of weak references to the object</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.num_active">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_active</span></span><a class="headerlink" href="#sasmodels.details.CallDetails.num_active" title="Link to this definition">¶</a></dt>
+<dd><p>Number of active polydispersity loops</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.num_eval">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_eval</span></span><a class="headerlink" href="#sasmodels.details.CallDetails.num_eval" title="Link to this definition">¶</a></dt>
+<dd><p>Total size of the pd mesh</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.num_weights">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_weights</span></span><a class="headerlink" href="#sasmodels.details.CallDetails.num_weights" title="Link to this definition">¶</a></dt>
+<dd><p>Total length of all the weight vectors</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.parts">
+<span class="sig-name descname"><span class="pre">parts</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#sasmodels.details.CallDetails.parts" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.pd_length">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pd_length</span></span><a class="headerlink" href="#sasmodels.details.CallDetails.pd_length" title="Link to this definition">¶</a></dt>
+<dd><p>Number of weights for each polydisperse parameter</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.pd_offset">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pd_offset</span></span><a class="headerlink" href="#sasmodels.details.CallDetails.pd_offset" title="Link to this definition">¶</a></dt>
+<dd><p>Offsets for the individual weight vectors in the set of weights</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.pd_par">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pd_par</span></span><a class="headerlink" href="#sasmodels.details.CallDetails.pd_par" title="Link to this definition">¶</a></dt>
+<dd><p>List of polydisperse parameters</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.pd_stride">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">pd_stride</span></span><a class="headerlink" href="#sasmodels.details.CallDetails.pd_stride" title="Link to this definition">¶</a></dt>
+<dd><p>Stride in the pd mesh for each pd dimension</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.show">
+<span class="sig-name descname"><span class="pre">show</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#sasmodels.details.CallDetails.show" title="Link to this definition">¶</a></dt>
+<dd><p>Print the polydispersity call details to the console</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="sasmodels.details.CallDetails.theta_par">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">theta_par</span></span><a class="headerlink" href="#sasmodels.details.CallDetails.theta_par" title="Link to this definition">¶</a></dt>
+<dd><p>Location of the theta parameter in the parameter vector</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.details.convert_magnetism">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.details.</span></span><span class="sig-name descname"><span class="pre">convert_magnetism</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ParameterTable" title="sasmodels.modelinfo.ParameterTable"><span class="pre">ParameterTable</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">values</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="headerlink" href="#sasmodels.details.convert_magnetism" title="Link to this definition">¶</a></dt>
+<dd><p>Convert magnetism values from polar to rectangular coordinates.</p>
+<p>Returns True if any magnetism is present.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.details.correct_theta_weights">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.details.</span></span><span class="sig-name descname"><span class="pre">correct_theta_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ParameterTable" title="sasmodels.modelinfo.ParameterTable"><span class="pre">ParameterTable</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">dispersity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.details.correct_theta_weights" title="Link to this definition">¶</a></dt>
+<dd><p><strong>Deprecated</strong> Theta weights will be computed in the kernel wrapper if
+they are needed.</p>
+<p>If there is a theta parameter, update the weights of that parameter so that
+the cosine weighting required for polar integration is preserved.</p>
+<p>Avoid evaluation strictly at the pole, which would otherwise send the
+weight to zero.  This is probably not a problem in practice (if dispersity
+is +/- 90, then you probably should be using a 1-D model of the circular
+average).</p>
+<p>Note: scale and background parameters are not include in the tuples for
+dispersity and weights, so index is parameters.theta_offset, not
+parameters.theta_offset+2</p>
+<p>Returns updated weights vectors</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.details.dispersion_mesh">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.details.</span></span><span class="sig-name descname"><span class="pre">dispersion_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.details.dispersion_mesh" title="Link to this definition">¶</a></dt>
+<dd><p>Create a mesh grid of dispersion parameters and weights.</p>
+<p><em>mesh</em> is a list of (value, dispersity, weights), where the values
+are the individual parameter values, and (dispersity, weights) is
+the distribution of parameter values.</p>
+<p>Only the volume parameters should be included in this list.  Orientation
+parameters do not affect the calculation of effective radius or volume
+ratio.  This is convenient since it avoids the distinction between
+value and dispersity that is present in orientation parameters but not
+shape parameters.</p>
+<p>Returns [p1,p2,…],w where pj is a vector of values for parameter j
+and w is a vector containing the products for weights for each
+parameter set in the vector.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.details.make_details">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.details.</span></span><span class="sig-name descname"><span class="pre">make_details</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="modelinfo.html#sasmodels.modelinfo.ModelInfo" title="sasmodels.modelinfo.ModelInfo"><span class="pre">ModelInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">length</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_weights</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a></span></span><a class="headerlink" href="#sasmodels.details.make_details" title="Link to this definition">¶</a></dt>
+<dd><p>Return a <a class="reference internal" href="#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><code class="xref py py-class docutils literal notranslate"><span class="pre">CallDetails</span></code></a> object for a polydisperse calculation
+of the model defined by <em>model_info</em>.  Polydispersity is defined by
+the <em>length</em> of the polydispersity distribution for each parameter
+and the <em>offset</em> of the distribution in the polydispersity array.
+Monodisperse parameters should use a polydispersity length of one
+with weight 1.0. <em>num_weights</em> is the total length of the polydispersity
+array.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="sasmodels.details.make_kernel_args">
+<span class="sig-prename descclassname"><span class="pre">sasmodels.details.</span></span><span class="sig-name descname"><span class="pre">make_kernel_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="kernel.html#sasmodels.kernel.Kernel" title="sasmodels.kernel.Kernel"><span class="pre">Kernel</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">ndarray</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sasmodels.details.CallDetails" title="sasmodels.details.CallDetails"><span class="pre">CallDetails</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">ndarray</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">bool</span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#sasmodels.details.make_kernel_args" title="Link to this definition">¶</a></dt>
+<dd><p>Converts (value, dispersity, weight) for each parameter into kernel pars.</p>
+<p>Returns a CallDetails object indicating the polydispersity, a data object
+containing the different values, and the magnetic flag indicating whether
+any magnetic magnitudes are non-zero. Magnetic vectors (M0, phi, theta) are
+converted to rectangular coordinates (mx, my, mz).</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">10. Parameter packing for kernel calls</a><ul>
+<li><a class="reference internal" href="#module-sasmodels.details"><code class="xref py py-mod docutils literal notranslate"><span class="pre">sasmodels.details</span></code></a><ul>
+<li><a class="reference internal" href="#kernel-call-details">Kernel Call Details</a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails"><code class="docutils literal notranslate"><span class="pre">CallDetails</span></code></a><ul>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__class__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__class__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__delattr__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__delattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__dict__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__dict__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__dir__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__dir__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__doc__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__doc__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__eq__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__eq__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__format__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__format__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__ge__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__ge__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__getattribute__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__getattribute__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__getstate__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__getstate__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__gt__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__gt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__hash__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__hash__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__init__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__init__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__init_subclass__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__init_subclass__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__le__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__le__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__lt__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__lt__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__module__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__module__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__ne__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__ne__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__new__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__new__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__reduce__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__reduce__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__reduce_ex__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__reduce_ex__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__repr__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__repr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__setattr__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__setattr__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__sizeof__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__sizeof__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__str__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__str__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__subclasshook__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__subclasshook__()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.__weakref__"><code class="docutils literal notranslate"><span class="pre">CallDetails.__weakref__</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.num_active"><code class="docutils literal notranslate"><span class="pre">CallDetails.num_active</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.num_eval"><code class="docutils literal notranslate"><span class="pre">CallDetails.num_eval</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.num_weights"><code class="docutils literal notranslate"><span class="pre">CallDetails.num_weights</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.parts"><code class="docutils literal notranslate"><span class="pre">CallDetails.parts</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.pd_length"><code class="docutils literal notranslate"><span class="pre">CallDetails.pd_length</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.pd_offset"><code class="docutils literal notranslate"><span class="pre">CallDetails.pd_offset</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.pd_par"><code class="docutils literal notranslate"><span class="pre">CallDetails.pd_par</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.pd_stride"><code class="docutils literal notranslate"><span class="pre">CallDetails.pd_stride</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.show"><code class="docutils literal notranslate"><span class="pre">CallDetails.show()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.CallDetails.theta_par"><code class="docutils literal notranslate"><span class="pre">CallDetails.theta_par</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#sasmodels.details.convert_magnetism"><code class="docutils literal notranslate"><span class="pre">convert_magnetism()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.correct_theta_weights"><code class="docutils literal notranslate"><span class="pre">correct_theta_weights()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.dispersion_mesh"><code class="docutils literal notranslate"><span class="pre">dispersion_mesh()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.make_details"><code class="docutils literal notranslate"><span class="pre">make_details()</span></code></a></li>
+<li><a class="reference internal" href="#sasmodels.details.make_kernel_args"><code class="docutils literal notranslate"><span class="pre">make_kernel_args()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="data.html"
+                          title="previous chapter"><span class="section-number">9. </span>Data layout and plotting routines</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="direct_model.html"
+                          title="next chapter"><span class="section-number">11. </span>Simple interface</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/dev/sasmodels-api/details.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="direct_model.html" title="11. Simple interface"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="data.html" title="9. Data layout and plotting routines"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">SasView 6.1.2 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev.html" >Developer Documentation</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="index.html" >Reference</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href=""><span class="section-number">10. </span>Parameter packing for kernel calls</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2025, The SasView Project.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.2.3.
+    </div>
+  </body>
+</html>
