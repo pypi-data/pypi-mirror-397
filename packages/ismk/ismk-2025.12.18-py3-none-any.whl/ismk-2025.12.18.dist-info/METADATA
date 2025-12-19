@@ -1,0 +1,85 @@
+Metadata-Version: 2.4
+Name: ismk
+Version: 2025.12.18
+Summary: Modified SMK library that supports defining workflows via strings without Snakefile
+Keywords: workflow,pipeline
+Author: xbugs221
+Author-email: xbugs221 <xbugs221@protonmail.com>
+License-Expression: MIT
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Science/Research
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Requires-Dist: uv-build>=0.2.0
+Requires-Dist: appdirs
+Requires-Dist: immutables
+Requires-Dist: configargparse
+Requires-Dist: connection-pool>=0.0.3
+Requires-Dist: docutils
+Requires-Dist: gitpython
+Requires-Dist: humanfriendly
+Requires-Dist: jinja2>=3.0,<4.0
+Requires-Dist: jsonschema
+Requires-Dist: nbformat
+Requires-Dist: packaging>=24.0
+Requires-Dist: psutil
+Requires-Dist: pulp>=2.3.1,<3.4
+Requires-Dist: pyyaml
+Requires-Dist: referencing
+Requires-Dist: requests>=2.8.1,<3.0
+Requires-Dist: reretry
+Requires-Dist: smart-open>=4.0,<8.0
+Requires-Dist: tabulate
+Requires-Dist: throttler
+Requires-Dist: wrapt
+Requires-Dist: yte>=1.5.5,<2.0
+Requires-Dist: dpath>=2.1.6,<3.0.0
+Requires-Dist: conda-inject>=1.3.1,<2.0
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+
+# ismk
+
+ismk is a lightweight fork of Snakemake (v9.14) that makes workflows fileless by design.
+Instead of forcing you to create a Snakefile on disk, ismk lets you define and run workflows directly from Python strings, entirely in-process.
+
+This is especially handy for programmatic or dynamic workflow generation—think “build the Snakefile on the fly, run it immediately, and leave no files behind.”
+
+Updates will be aligned with upstream major releases when needed, rather than tracking every minor version bump.
+
+## What's different from upstream
+
+### Added
+
+- StringSourceFile class (sourcecache.py:105–142)
+  - A SourceFile implementation that keeps Snakefile content in memory
+  - Enables workflows to be sourced straight from strings
+
+- Workflow.include_string() method (workflow.py:1667–1710)
+  - Load Snakefile content directly from a string
+  - Full Snakemake/Snakefile syntax supported
+  - Optional debug mode to print compiled code for easier inspection
+
+- Bug fix (api.py:610–612)
+  - Fixes missing initialization of scheduler_settings when using scheduler='greedy' directly
+
+### Removed
+
+To stay focused on the core library experience, ismk strips out:
+
+- Docs (Please read the official snakemake online docs)
+- Some development tooling configs
+
+Note: The tests/ module itself is kept to support Snakemake’s built-in testing features.
+
+### Others
+
+Performed some code formatting and minor refactoring.
+
+## License
+
+MIT License — same as upstream Snakemake.
