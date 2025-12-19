@@ -1,0 +1,76 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ags-mcp-server"
+version = "1.0.0"
+description = "Model Context Protocol (MCP) server for Anzo Graph Database"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "Apache-2.0"}
+keywords = ["anzo", "mcp", "model-context-protocol", "graph-database", "sparql", "rdf", "knowledge-graph"]
+authors = [
+    {name = "Paresh Khandelwal", email = "khandelwal.paresh@siemens.com"}
+]
+maintainers = [
+    {name = "Paresh Khandelwal", email = "khandelwal.paresh@siemens.com"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Database :: Front-Ends",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "fastmcp>=1.2.0",
+    "python-dotenv>=1.0.0",
+    "requests>=2.31.0",
+    "pyanzo>=2.0.0",
+    "structlog>=24.1.0",
+    "uvicorn>=0.27.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0",
+    "flake8>=6.0",
+    "mypy>=1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/cambridgesemantics/anzo-mcp-server"
+Documentation = "https://docs.cambridgesemantics.com/anzo/"
+Repository = "https://github.com/cambridgesemantics/anzo-mcp-server"
+"Bug Tracker" = "https://github.com/cambridgesemantics/anzo-mcp-server/issues"
+
+[project.scripts]
+ags-mcp-stdio = "ags_mcp.stdio_server:main"
+ags-mcp-http = "ags_mcp.http_server:main"
+
+[tool.setuptools]
+packages = ["ags_mcp", "ags_mcp.tools"]
+
+[tool.setuptools.package-data]
+ags_mcp = ["*.md", "*.yaml"]
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
