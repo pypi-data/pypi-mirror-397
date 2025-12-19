@@ -1,0 +1,45 @@
+Metadata-Version: 2.4
+Name: memex-md-mcp
+Version: 0.1.0
+Summary: MCP server for semantic search over markdown vaults
+Author: Maximilian Wolf
+License-Expression: MIT
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.14
+Requires-Dist: mcp[cli]>=1.0.0
+Requires-Dist: pre-commit>=4.0.0 ; extra == 'dev'
+Requires-Python: >=3.14
+Provides-Extra: dev
+Description-Content-Type: text/markdown
+
+# memex-md-mcp
+
+MCP server for semantic search over markdown vaults.
+
+## Installation
+
+```bash
+# Install from PyPI (when published)
+uvx memex-md-mcp
+
+# Or add to Claude Code
+claude mcp add memex uvx memex-md-mcp -e OBSIDIAN_VAULTS="/path/to/vault1:/path/to/vault2"
+```
+
+## Configuration
+
+Set vault paths via environment variable:
+
+```bash
+OBSIDIAN_VAULTS="/path/to/vault1:/path/to/vault2"
+```
+
+## Development
+
+```bash
+uv sync
+uv run memex-md-mcp
+```
