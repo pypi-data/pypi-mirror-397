@@ -1,0 +1,109 @@
+import functools
+from pathlib import Path
+from typing import Tuple
+
+import click
+
+from .._logging import get_logger
+from ..api.rearrange import rearrange_genome as rearrange_api
+from ..core.utils import read_fastas, read_view, write_fasta
+
+logger = get_logger()
+
+
+def common_io_options(func):
+    """Common I/O options decorator (placeholder for future options)."""
+
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+UTIL_NAME = "viewtools_rearrange_genome"
+
+
+@click.command()
+@click.argument(
+    "fasta",
+    nargs=-1,
+    type=click.Path(exists=True, dir_okay=False, readable=True),
+    required=True,
+)
+@click.option(
+    "--view",
+    "-v",
+    "view_path",
+    required=True,
+    type=click.Path(exists=True, dir_okay=False, readable=True),
+    help="Path to bioframe-style view table (TSV/CSV). Must contain columns:"
+    " chrom, start, end. Optional: name, strand, out_name.",
+)
+@click.option(
+    "--out",
+    "-o",
+    "out_fasta",
+    required=True,
+    help="Output FASTA path ('-' for stdout). Automatically gzipped if ends with .gz",
+)
+@click.option(
+    "--chroms",
+    "-c",
+    multiple=True,
+    help="Restrict output to specific chromosomes (space-separated list)."
+    " E.g. '--chroms chr1 chr2'.",
+)
+@click.option(
+    "--sep",
+    "-s",
+    default=None,
+    help="Separator used in the view file (defaults to tab autodetect).",
+)
+@click.option(
+    "--add-description/--no-add-description",
+    default=False,
+    help="Whether to add detailed description of sequence origin to FASTA headers.",
+)
+@common_io_options
+def cli(
+    fasta: Tuple[Tuple[str, ...]],
+    view_path: str,
+    out_fasta: str,
+    chroms: Tuple[str, ...],
+    sep: str,
+    add_description: bool,
+):
+    """
+    Build a custom reference FASTA from input FASTA(s) using a bioframe-style view file.
+    """
+    # Flatten nested tuples of FASTA paths
+    fasta_files = []
+    for f in fasta:
+        # If the shell expanded *.fa produces multiple files, Click collects them as
+        # tuples
+        if isinstance(f, (tuple, list)):
+            fasta_files.extend(f)
+        else:
+            fasta_files.append(f)
+    fasta_files = [str(Path(f)) for f in fasta_files]
+    logger.info(f"Reading {len(fasta_files)} FASTA file(s)...")
+
+    seqs = read_fastas(fasta_files)
+    view = read_view(view_path, sep)
+    custom = rearrange_api(seqs, view, add_description=add_description)
+
+    if chroms:
+        chroms = set(chroms)
+        custom = {k: v for k, v in custom.items() if k in chroms}
+        logger.info(f"Filtered to {len(custom)} sequences matching --chroms")
+
+    write_fasta(custom, out_fasta)
+
+
+# --------------------------------------------------------------------------- #
+# Entry point
+# --------------------------------------------------------------------------- #
+
+if __name__ == "__main__":
+    cli()
