@@ -1,0 +1,63 @@
+metadata:
+  name: "sklearn-basic"
+  description: "Template project: custom pipeline (sklearn inside) + simple reporting chart"
+  version: "1.0.0"
+
+environment:
+  venv:
+    name: "sklearn-basic-env"
+    requirements_file: "projects/sklearn-basic/requirements.txt"
+    reporting:
+      name: "sklearn-basic-env-reporting"
+      requirements_file: "projects/sklearn-basic/charts/requirements.txt"
+
+reproducibility:
+  random_seed: 42
+
+model:
+  framework: "custom"
+  language: "python"
+  name: "sklearn_basic_custom"
+  version: "1.0.0"
+  parameters:
+    custom_script_path: "projects/sklearn-basic/models/model.py"
+    cache:
+      backend:
+        # Local-first default
+        type: memory
+        # --- GCP example (Firestore + Pub/Sub) ---
+        # type: gcp
+        # gcp_project: <your-gcp-project-id>
+        # credentials_json: keys/firestore.json
+      # Optional object store for cache artifacts.
+      # object_store:
+      #   type: gcs
+      #   bucket: <your-gcs-bucket-name>
+      #   prefix: projects/sklearn-basic/cache/steps
+    executor:
+      n_workers: 2
+    pipeline:
+      process_adjlist: |
+        train_model evaluate_model
+        evaluate_model plot_metrics
+      processes:
+        - name: "train_model"
+          description: "Train a tiny classifier and log loss/accuracy"
+          code_function: "train_model"
+
+        - name: "evaluate_model"
+          description: "Evaluate the trained model and log accuracy"
+          code_function: "evaluate_model"
+
+        - name: "plot_metrics"
+          type: chart
+          description: "Render a basic PNG report from recorded metrics"
+
+reporting:
+  static_entrypoint: "projects/sklearn-basic/charts/plot_metrics.py"
+  charts:
+    - name: "plot_metrics"
+      probe_paths:
+        train: "train_model"
+        eval: "evaluate_model"
+
