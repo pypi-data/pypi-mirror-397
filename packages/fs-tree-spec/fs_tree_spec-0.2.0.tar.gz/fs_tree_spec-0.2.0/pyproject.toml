@@ -1,0 +1,90 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fs-tree-spec"
+version = "0.2.0"
+description = "Translate between ASCII 'tree' text, JSON/YAML tree specs, and real directory structures."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+  { name = "Stephen Wood" }
+]
+keywords = ["filesystem", "tree", "cli", "yaml", "json", "directory", "tool"]
+
+dependencies = []
+
+# ✅ Merge all optional dependencies here
+[project.optional-dependencies]
+yaml = ["PyYAML>=6.0"]
+test = ["pytest"]
+
+[project.scripts]
+fs-tree-spec = "tree_adapter:main"
+
+[project.urls]
+Homepage = "https://github.com/swoodeng/fs-tree-spec"
+Source = "https://github.com/swoodeng/fs-tree-spec"
+Issues = "https://github.com/swoodeng/fs-tree-spec/issues"
+PyPI = "https://pypi.org/project/fs-tree-spec/"
+
+[tool.hatch.build]
+include = ["tree_adapter.py"]
+
+[dependency-groups]
+dev = [
+  "pytest",
+  "pytest-cov",
+  "PyYAML>=6.0",
+  "ruff",
+  "black",
+  "mypy"
+]
+
+# ✅ pytest configuration (quiet mode by default)
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+# linters
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.black]
+line-length = 88
+
+# type checking
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+strict_optional = true
+files = ["tree_adapter.py"]
+
+# coverage
+[tool.coverage.run]
+source = ["tree_adapter"]
+branch = true
+
+[tool.coverage.report]
+# Note: CLI main() is tested via subprocess in test_cli.py but not captured by coverage
+fail_under = 70
+show_missing = true
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
