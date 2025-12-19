@@ -1,0 +1,125 @@
+Metadata-Version: 2.4
+Name: python-bytecode-ir
+Version: 0.1.0a0
+Summary: An expressive set of Python classes modeling Python bytecode as an SSA-form IR.
+Author-email: Jifeng Wu <jifengwu2k@gmail.com>
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/jifengwu2k/python-bytecode-ir
+Project-URL: Bug Tracker, https://github.com/jifengwu2k/python-bytecode-ir/issues
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Requires-Python: >=2
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: enum34; python_version < "3.4"
+Dynamic: license-file
+
+# `python-bytecode-ir`
+
+An expressive set of Python classes modeling Python bytecode as an SSA-form IR. Useful for static analysis and program
+transformation. Upstream and downstream infrastructure still work in progress.
+
+Base Classes
+
+- IRInstruction
+- IRValue
+
+Code Stucture
+
+- IRRegion(IRValue)
+- IRBasicBlock(IRValue)
+
+Atoms
+
+- IRConstant(IRInstruction, IRValue)
+
+Named Variable Access
+
+- IRLoad(IRInstruction, IRValue)
+- IRStore(IRInstruction)
+- IRDelete(IRInstruction)
+
+Special Loads
+
+- IRImport(IRInstruction, IRValue)
+- IRImportFrom(IRInstruction, IRValue)
+- IRImportStar(IRInstruction)
+- IRLoadBuiltIn(IRInstruction, IRValue)
+- IRLoadRegion(IRInstruction, IRValue)
+
+Unary Expressions
+
+- IRUnaryOp(IRInstruction, IRValue)
+
+Binary/In-place Expressions
+
+- IRBinaryOp(IRInstruction, IRValue)
+- IRInPlaceBinaryOp(IRInstruction)
+
+Collection Literals
+
+- IRBuildList(IRInstruction, IRValue)
+- IRBuildTuple(IRInstruction, IRValue)
+- IRBuildSet(IRInstruction, IRValue)
+- IRBuildMap(IRInstruction, IRValue)
+
+Subscriptions
+
+- IRBuildSlice
+- IRLoadSubscr
+- IRStoreSubscr
+- IRDeleteSubscr
+
+Attribute Accesses
+
+- IRLoadAttr(IRInstruction, IRValue)
+- IRLoadSuperAttr(IRInstruction, IRValue)
+- IRStoreAttr(IRInstruction)
+- IRDeleteAttr(IRInstruction)
+
+Unpacking
+
+- IRUnpackSequence(IRInstruction, IRValue)
+- IRUnpackEx(IRInstruction, IRValue)
+
+F-string Related
+
+- IRFormatString(IRInstruction, IRValue)
+- IRConcatenateStrings(IRInstruction, IRValue)
+
+Function Definitions and Calls
+
+- IRMakeFunction(IRInstruction, IRValue)
+- IRCall(IRInstruction, IRValue)
+- IRCallFunctionEx(IRInstruction, IRValue)
+
+Iterators
+
+- IRGetIter(IRInstruction, IRValue)
+
+Basic Block Terminators
+
+- IRForIter(IRInstruction, IRValue)
+- IRYield(IRInstruction, IRValue)
+- IRBranch(IRInstruction)
+- IRJump(IRInstruction)
+- IRReturn(IRInstruction)
+- IRRaise(IRInstruction)
+
+Exception Stack Manipulation
+
+- IRGetException(IRInstruction, IRValue)
+- IRSetException(IRInstruction)
+
+Other
+
+- IRSetupAnnotations(IRInstruction)
+
+## Contributing
+
+Contributions are welcome! Please submit pull requests or open issues on the GitHub repository.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
