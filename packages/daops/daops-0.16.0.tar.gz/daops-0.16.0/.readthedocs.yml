@@ -1,0 +1,33 @@
+# .readthedocs.yml
+# Read the Docs configuration file
+# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
+
+# Required
+version: 2
+
+# Build documentation in the docs/ directory with Sphinx
+sphinx:
+  configuration: docs/conf.py
+  fail_on_warning: true
+
+# Optionally build your docs in additional formats such as PDF and ePub
+formats: [ ]
+
+build:
+  os: "ubuntu-24.04"
+  tools:
+    python: "mambaforge-23.11"
+  jobs:
+    pre_build:
+      - sphinx-apidoc -o docs --private --module-first src/daops
+
+conda:
+  environment: environment-docs.yml
+
+# Optionally set the version of Python and requirements required to build your docs
+python:
+  install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - docs
