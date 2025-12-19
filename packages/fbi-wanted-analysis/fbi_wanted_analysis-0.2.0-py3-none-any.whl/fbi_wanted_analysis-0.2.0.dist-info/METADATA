@@ -1,0 +1,134 @@
+Metadata-Version: 2.3
+Name: fbi-wanted-analysis
+Version: 0.2.0
+Summary: STAT 386 project: analysis of FBI Wanted listings using the FBI Wanted API.
+Author: Dallin Robinson, Michael Stutzman
+License: MIT License
+         
+         Copyright (c) 2025 Dallin Robinson and Michael Stutzman
+         
+         Permission is hereby granted, free of charge, to any person obtaining a copy
+         of this software and associated documentation files (the “Software”), to deal
+         in the Software without restriction, including without limitation the rights
+         to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+         copies of the Software, and to permit persons to whom the Software is
+         furnished to do so, subject to the following conditions:
+         
+         The above copyright notice and this permission notice shall be included in
+         all copies or substantial portions of the Software.
+         
+         THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+         IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+         FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+         AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+         LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+         OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+         THE SOFTWARE.
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Requires-Dist: ipykernel>=7.1.0
+Requires-Dist: jupyter>=1.1.1
+Requires-Dist: matplotlib>=3.10.8
+Requires-Dist: numpy>=2.3.5
+Requires-Dist: pandas>=2.3.3
+Requires-Dist: streamlit>=1.40.0
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+
+# fbi-wanted-analysis
+
+A Python package for retrieving, cleaning, and analyzing data from the FBI Wanted API. This package streamlines FBI dataset exploration into a simple workflow: download → clean → analyze.
+
+## Features
+
+- Live retrieval from the official FBI Wanted API
+- Automated cleaning of publication dates, field office data, and reward text
+- Reward parsing into consistent numeric values (USD)
+- Analysis functions for exploring:
+  - reward trends
+  - geographic patterns
+  - crime subject comparisons
+  - time-series volume patterns
+
+## Installation
+
+```bash
+pip install fbi-wanted-analysis
+```
+
+## Quick Start
+
+```python
+from fbi_wanted_analysis import fetch_current_wanted, clean_wanted
+
+# Pull current FBI wanted data (up to 200 items per page)
+df = fetch_current_wanted(pages=2)
+
+# Clean and parse
+cleaned = clean_wanted(df)
+
+print(cleaned.head())
+```
+
+## Example: Reward amounts by crime type
+
+```python
+from fbi_wanted_analysis import fetch_current_wanted, clean_wanted
+from fbi_wanted_analysis.analysis import reward_by_crime_type
+
+df = clean_wanted(fetch_current_wanted(pages=4))
+summary = reward_by_crime_type(df)
+
+print(summary.head())
+```
+
+### Run the Streamlit App
+
+To launch the interactive visualization dashboard:
+
+```bash
+streamlit run src/fbi_wanted_analysis/streamlit_app.py
+```
+
+This dashboard provides:
+- Volume over time
+- Reward intensity trends
+- Subject‑level reward patterns
+- Field office comparisons
+
+## Project Purpose
+
+This package supports statistical exploration, reproducible reporting, and real-world data analysis. It is also used in a Streamlit dashboard that visualizes reward intensity, volume patterns over time, crime subject distribution, and field-office concentration.
+
+## Contents
+
+Main modules:
+
+- `analysis.py` — analytical methods for research questions
+- `cleaning.py` — parses and normalizes raw FBI data
+- `rewards.py` — extracts numeric dollar values from reward text
+
+The package exposes:
+
+```python
+from fbi_wanted_analysis import fetch_current_wanted, clean_wanted
+```
+
+## Requirements
+
+Python 3.11+
+
+Dependencies:
+- pandas
+- numpy
+- streamlit
+- requests
+
+## Authors
+
+Created by Dallin Robinson and Michael Stutzman
+
+## License
+
+This project is licensed under the MIT License. See the `LICENSE` file for details.
