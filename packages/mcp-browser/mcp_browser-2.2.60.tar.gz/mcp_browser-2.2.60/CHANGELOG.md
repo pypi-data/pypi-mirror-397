@@ -1,0 +1,413 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [2.2.60] - 2025-12-18
+
+### Added
+- ASCII layout extraction CLI command: `mcp-browser browser extract ascii`
+- Extension build versioning scheme (major.minor.patch.build)
+
+## [2.2.59] - 2025-12-18
+
+### Added
+- ASCII layout extraction for `browser_extract` tool - generates token-efficient box diagrams showing page element positions
+- New extract type: `ascii` with configurable `ascii_width` parameter
+- Visual hierarchy understanding without screenshots (~100x smaller than images)
+
+## [2.2.58] - 2025-12-18
+
+### Fixed
+- **Multi-Backend Connection**: Fixed extension failing to work with 2+ running backends
+  - Root cause: Dual connection systems competing (legacy `currentConnection` vs new `ConnectionManager`)
+  - `autoConnect()` used legacy system, popup used new system - causing message routing failures
+  - Migrated ALL connection code to use `ConnectionManager` exclusively:
+    - `tryConnectToPort()` now uses `connectionManager.connectToBackend()` instead of legacy `connectToServer()`
+    - `sendToServer()` uses `connectionManager.primaryPort` and `connectionManager.clients.get()`
+    - `sendHeartbeat()` uses ConnectionManager instead of global `currentConnection`
+    - `flushMessageQueue()` uses ConnectionManager for proper connection routing
+    - `requestGapRecovery()` uses ConnectionManager for sending gap recovery requests
+  - Extension now properly supports connecting to multiple backends simultaneously
+  - Legacy `currentConnection` variable marked deprecated (kept for backward compatibility)
+
+## [2.2.57] - 2025-12-18
+
+### Fixed
+- **Memory Leaks**: Fixed 5 critical memory leaks in Chrome/Firefox extension that could cause browser crashes
+  - **Tab cleanup**: Enhanced `chrome.tabs.onRemoved` to clean ALL tab-related Maps (activePorts, pendingTabs, navigatingTabs, unroutedMessages)
+  - **Message age-out**: Added periodic cleanup to remove messages older than 5 minutes from unroutedMessages buffer
+  - **Gap recovery timeout**: Added 30-second timeout for sequence gap recovery to prevent unbounded buffer growth
+  - **Interval cleanup**: Clear heartbeat intervals and gap recovery timeouts before replacing connections
+  - **Content script cleanup**: Enhanced beforeunload handler to clear timers and remove tracked event listeners
+- **Multi-project support**: Fixed `cleanup_stale_servers()` to only kill servers for the current project
+  - Previously killed ALL mcp-browser processes regardless of which project they belonged to
+  - Now checks process working directory before killing, leaving other projects' servers untouched
+
+## [2.2.56] - 2025-12-18
+
+### Fixed
+- **Multi-project support**: Fixed `cleanup_stale_servers()` to respect project boundaries
+  - Only kills mcp-browser servers for the current project
+  - Servers for other projects are left running
+
+## [2.2.55] - 2025-12-18
+
+
+## [2.2.54] - 2025-12-18
+
+
+## [2.2.53] - 2025-12-18
+
+### Fixed
+- **Connection Stability**: Fixed intermittent "No active browser connection" errors for DOM operations
+  - Root cause: BrowserService couldn't distinguish browser extension connections from CLI connections
+  - DOM commands, screenshots, and content extraction were sometimes routed to CLI connections which can't respond
+  - Added `is_extension` tracking to `BrowserConnection` to identify browser extension connections
+  - DOM operations (`extract_content`, `capture_screenshot`, `send_dom_command`) now use `require_extension=True`
+  - Extension connections are marked when they send `connection_init` handshake
+  - This ensures DOM/screenshot operations are always sent to the correct connection
+
+## [2.2.52] - 2025-12-17
+
+
+## [2.2.51] - 2025-12-17
+
+
+## [2.2.50] - 2025-12-17
+
+
+## [2.2.49] - 2025-12-17
+
+
+## [2.2.48] - 2025-12-16
+
+
+## [2.2.47] - 2025-12-16
+
+
+### Fixed
+- **Chrome Extension**: Fixed character duplication bug in fill functionality
+  - When filling text fields, characters were being doubled (e.g., "mcp-browser" became "mccpp--bbrroowwsseerr")
+  - Root cause: `chrome.tabs.sendMessage()` was broadcasting to ALL frames, causing multiple content scripts to type simultaneously
+  - Fix: Added `{ frameId: 0 }` option to target only the main frame, preventing duplicate execution in iframes
+  - Affects: `background-enhanced.js` dom_command handler and `_sendTabMessage()` helper
+
+## [2.2.46] - 2025-12-16
+
+
+## [2.2.45] - 2025-12-16
+
+### Fixed
+- **CRITICAL**: Fixed race condition causing "No active browser connection" errors
+  - When extension reconnects rapidly, old disconnection would delete NEW connection's mapping
+  - `BrowserState.remove_connection()` now checks if mapping still points to itself before deleting
+  - This was root cause of unstable screenshot/DOM extraction despite extension being connected
+
+## [2.2.44] - 2025-12-16
+
+### Added
+- Setup command now auto-opens Chrome extensions page on macOS when extension version mismatch detected
+  - After `pipx upgrade`, running `mcp-browser setup` detects stale extension versions
+  - On macOS with Chrome running, automatically opens `chrome://extensions/` for easy reload
+  - Shows clear version mismatch warning with reload instructions
+- Extension now shows browser notification when connected to a newer server version
+  - Alerts user to reload extension when server has been upgraded
+
+## [2.2.43] - 2025-12-16
+
+### Fixed
+- MCP mode now falls back to ANY running server if project path doesn't match
+  - Claude Code may spawn `mcp-browser mcp` from a different working directory
+  - Previously, extension commands failed because daemon couldn't be found
+  - Now tries exact project match first, then falls back to any running server
+
+## [2.2.42] - 2025-12-16
+
+### Fixed
+- Server cleanup now checks ALL PIDs on a port, not just the first one
+  - `lsof -ti :port` returns both clients (Chrome) and servers (mcp-browser)
+  - Previously only checked first PID, which could be Chrome Helper, not mcp-browser
+  - Now iterates through all PIDs to find the actual mcp-browser server
+
+## [2.2.41] - 2025-12-16
+
+### Fixed
+- MCP tools now use the correct server port for the current project
+  - Previously, `PortResolver._get_daemon_port()` returned the first running server found
+  - Now it matches server's `project_path` to current working directory
+  - Fixes issue where MCP tools from project A would control browser in project B
+
+## [2.2.40] - 2025-12-16
+
+### Fixed
+- Setup now cleans up ALL duplicate servers for current project before starting
+  - Previously, running setup multiple times could accumulate orphan servers (e.g., mcp-browser on 8851, 8854)
+  - Added `cleanup_project_servers()` that scans port range 8851-8899 and kills any servers running from the same project directory
+  - Uses `lsof -a -p PID -d cwd -Fn` to detect process working directory for accurate orphan detection
+
+## [2.2.39] - 2025-12-16
+
+### Fixed
+- Setup ALWAYS copies fresh extension files on every run
+  - Previously only synced manifest.json but kept old JavaScript files
+  - Now copies all extension files from package source to ensure code is updated
+- Updated all extension manifest versions to 2.2.39
+
+## [2.2.38] - 2025-12-16
+
+### Fixed
+- Broken import in display.py that caused CLI to fail when installed via pip
+  - Changed `from src._version` to `from mcp_browser._version`
+
+## [2.2.37] - 2025-12-16
+
+### Fixed
+- Setup command now always syncs extension version even if extension already installed
+  - Previously, extension version would stay stale after package updates
+  - Extracted `sync_extension_version()` to dedicated extension utility module
+  - Added 6 unit tests for version sync functionality
+
+## [2.2.36] - 2025-12-16
+
+
+## [2.2.35] - 2025-12-16
+
+
+## [2.2.34] - 2025-12-16
+
+
+## [2.2.33] - 2025-12-16
+
+
+## [2.2.32] - 2025-12-16
+
+### Fixed
+- Python 3.14 compatibility fixes
+  - Fixed `asyncio.get_event_loop()` deprecation in ServiceContainer
+  - Replaced deprecated `asyncio.iscoroutinefunction` with `inspect.iscoroutinefunction`
+  - Fixed `websockets.exceptions.ConnectionRefused` deprecation (now OSError)
+- Made `py-mcp-installer` import optional to prevent test failures when not installed
+- Updated Makefile to prefer `.venv/bin/python` over system Python
+
+### Removed
+- Removed outdated `test_implementation.py` that tested deprecated ScreenshotService
+
+## [2.2.31] - 2025-12-16
+
+### Fixed
+- Resolved RuntimeWarning for module import order in CLI
+  - Changed from eager import to lazy import pattern using `__getattr__`
+  - Eliminates warning when running `python -m src.cli.main`
+
+### Changed
+- Improved project organization per standards
+  - Moved `test_applescript_integration.py` to `tests/integration/`
+  - Removed outdated `docs/CHANGELOG.md` duplicate
+  - Moved `BUILD_TRACKING.md` to `docs/developer/`
+  - Removed legacy `Makefile.legacy`
+  - Added `chunk-graph.json` to `.gitignore`
+
+## [2.2.30] - 2025-12-15
+
+### Added
+- Playwright cache cleanup step in quickstart wizard
+- Auto-detects legacy Playwright browser cache and offers to remove it
+- Shows cache size and explains why cleanup is safe (Playwright removed in v2.2.29)
+
+## [2.2.29] - 2025-12-15
+
+### Removed
+- **BREAKING**: Removed Playwright dependency entirely to fix catastrophic memory leak
+- Removed `screenshot_service.py` - Playwright-based screenshot service
+- Removed CDP (Chrome DevTools Protocol) support from `browser_controller.py`
+- Removed Playwright browser installation from quickstart wizard
+- Removed Playwright validation checks
+
+### Fixed
+- **CRITICAL**: Fixed Mach port exhaustion on macOS caused by Playwright browser instances
+  - Playwright browser instances were creating Mach ports for IPC
+  - Ports weren't being cleaned up when browsers close
+  - Accumulated in launchservicesd until system hit port limit
+  - Chrome crash handler crashed repeatedly (87 times in 90 seconds)
+  - Eventually triggered pkill affecting other apps (iTerm2)
+
+### Changed
+- Screenshots now work exclusively via browser extension (not Playwright)
+- Browser control limited to extension and AppleScript fallback (no CDP)
+
+### Note
+Users upgrading from previous versions should run `mcp-browser uninstall --playwright` to clean up Playwright browser cache and free disk space (~100MB+).
+
+## [2.2.28] - 2025-12-15
+
+### Added
+- Auto-detect daemon port for all MCP tools - port parameter now optional
+- Warn and auto-correct when CDP port 9222 is mistakenly used
+- Cache resolved daemon port for performance
+
+## [2.2.27] - 2025-12-15
+
+
+## [2.2.26] - 2025-12-15
+
+
+## [2.1.3] - 2025-12-14
+
+
+## [2.1.2] - 2025-12-13
+
+
+## [2.2.1] - 2025-12-12
+
+### Fixed
+- Added missing `py-mcp-installer` dependency to pyproject.toml that prevented package from running after pip install
+
+## [2.2.0] - 2025-12-12
+
+### Added
+- Icon-based connection status system with colored icons (yellow/green/red) replacing badge-based status
+- Backend server selection UI in extension popup with scan functionality
+- Tab information display in popup when connected
+- Package.json configuration for extension development
+- Icon assets directory with status-specific icons (16px, 32px, 48px, 128px)
+
+### Changed
+- WebSocket message routing with broadcasting system for response messages
+- Browser command routing to ensure proper extension communication
+- Connection manager to prevent unwanted reconnects on intentional close
+- Auto-registration disabled - tabs must be explicitly connected via popup UI
+
+### Fixed
+- Race condition in WebSocket message handler setup by establishing handler before sending messages
+- Error handling for missing browser extension connections
+- Backend discovery and connection flow in popup UI
+- Content extraction message routing with proper requestId handling
+
+## [2.1.1] - 2025-12-11
+
+
+## [2.1.0] - 2025-11-29
+
+
+## [2.1.0] - 2025-11-29
+
+### Added
+- Enhanced uninstall command with granular cleanup options
+- Backup functionality with timestamped archives before removal
+- Safety features: dry-run preview, confirmation prompts
+- Cleanup flags: `--clean-local`, `--clean-global`, `--clean-all`
+- Playwright browser cache removal option (`--playwright`)
+- Directory size calculation and human-readable formatting
+- Comprehensive documentation (UNINSTALL.md, INSTALLATION.md)
+- 25 new unit tests for cleanup functionality
+
+### Features
+- `--clean-local`: Remove local project files (./mcp-browser-extension/, ./.mcp-browser/)
+- `--clean-global`: Remove user data directory (~/.mcp-browser/)
+- `--clean-all`: Complete removal (all of the above + Playwright cache)
+- `--backup`/`--no-backup`: Control backup creation (default: enabled)
+- `--dry-run`: Preview what would be removed without executing
+- `-y`/`--yes`: Skip confirmation prompts for automated workflows
+
+### Safety Enhancements
+- Automatic backups to `~/.mcp-browser-backups/` before removal
+- Interactive confirmation prompts for all destructive operations
+- Preview mode to review changes before execution
+- Selective cleanup levels for user control
+- Graceful error handling with clear messages
+
+### Documentation
+- Comprehensive UNINSTALL.md guide with recovery instructions (620 lines)
+- INSTALLATION.md with platform-specific setup details (773 lines)
+- README.md updated with detailed uninstall scenarios and examples
+- Safety best practices and example workflows
+- Troubleshooting guide for common issues
+
+### Testing
+- 25 new unit tests in `tests/unit/test_uninstall_cleanup.py`
+- Updated integration tests with new flag coverage
+- All 45 tests passing (100% success rate)
+- Test coverage for all cleanup scenarios
+
+### Backward Compatibility
+- No breaking changes to existing functionality
+- Default uninstall behavior preserved (MCP config removal only)
+- All new flags are optional and opt-in
+- Existing tests continue to pass
+
+### Technical Details
+- 10 new helper functions for discovery, backup, and cleanup
+- Rich console output with tables, panels, and color coding
+- Timestamped backup directory naming: `backup-YYYYMMDD-HHMMSS`
+- Size calculation with human-readable formats (B, KB, MB, GB)
+- Selective cleanup based on user flags
+
+## [2.0.11] - 2025-11-18
+
+
+## [2.0.10] - 2025-11-17
+
+### Added
+- AppleScript fallback for browser control on macOS when extension unavailable
+- Automatic fallback logic with configuration-driven mode selection
+- Safari and Google Chrome support via AppleScript automation
+- BrowserController service for unified browser control interface
+- Configuration modes: `auto` (default), `extension`, `applescript`
+- Comprehensive AppleScript fallback documentation (`docs/guides/APPLESCRIPT_FALLBACK.md`)
+- Quick start guide for AppleScript setup (`docs/_archive/APPLESCRIPT_QUICK_START.md`) (archived)
+- macOS permission setup instructions and troubleshooting
+
+### Features
+- Browser navigation without extension
+- Element clicking via CSS selectors
+- Form field filling with event triggering
+- JavaScript execution in browser context
+- Element inspection and information retrieval
+- Clear error messages with actionable permission instructions
+
+### Technical
+- AppleScriptService: macOS browser control via osascript subprocess
+- BrowserController: Automatic method selection (extension → AppleScript → error)
+- Service container integration with dependency injection
+- Platform-specific service registration (macOS only)
+- Performance: 100-500ms per operation (vs 10-50ms for extension)
+
+### Limitations
+- Console log capture requires browser extension (browser security restriction)
+- AppleScript 5-15x slower than extension due to subprocess overhead
+- macOS only feature (Windows/Linux require extension)
+
+### Backward Compatibility
+- No breaking changes
+- Existing configurations continue to work unchanged
+- New services are optional dependencies
+- Extension-only workflows remain unaffected
+
+## [2.0.9] - 2025-11-12
+
+### Added
+- Uninstall command to remove mcp-browser from MCP configuration
+- Support for --target option (claude-code, claude-desktop, both)
+- Comprehensive test suite for uninstall functionality (unit and integration tests)
+- Demo page improvements for Chrome extension
+- Architecture enhancements for better service organization
+
+### Fixed
+- Version synchronization across package files (pyproject.toml and _version.py)
+- Test file organization and duplicate removal
+
+## [2.0.8] - 2025-10-30
+
+### Added
+- Initial version with semantic versioning support
+
+### Changed
+- Implemented centralized version management
+
+### Fixed
+- Version consistency across all package files
