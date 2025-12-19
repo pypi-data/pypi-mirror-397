@@ -1,0 +1,159 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "dark-madr"
+dynamic = ["version"]
+description = "Architecture Decision Records management tool"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [
+    { name = "m1yag1" },
+]
+keywords = ["architecture", "decision", "records", "adr", "madr", "documentation"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Documentation",
+    "Topic :: Software Development :: Documentation",
+    "Typing :: Typed",
+]
+dependencies = [
+    "click>=8.1.0",
+    "jinja2>=3.1.0",
+    "pydantic>=2.0.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "mypy>=1.8.0",
+    "ruff>=0.1.0",
+    "pre-commit>=3.6.0",
+]
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.5.0",
+    "mkdocstrings[python]>=0.24.0",
+]
+
+[project.scripts]
+adr = "adr.cli:main"
+
+[project.urls]
+Documentation = "https://github.com/m1yag1/dark-madr/blob/main/README.md"
+Issues = "https://github.com/m1yag1/dark-madr/issues"
+Source = "https://github.com/m1yag1/dark-madr"
+
+[tool.hatch.version]
+path = "src/adr/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/adr"]
+
+[tool.hatch.build.targets.sdist]
+exclude = ["assets/"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+    "ARG001", # unused arguments
+    "SIM", # flake8-simplify
+    "TID", # flake8-tidy-imports
+    "ICN", # flake8-import-conventions
+    "PL", # pylint
+]
+ignore = [
+    "E501",  # line too long, handled by formatter
+    "PLR0913", # too many arguments to function call
+    "PLR0915", # too many statements
+    "PLR2004", # magic value used in comparison
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*" = ["S101", "TID252"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "--cov=src/adr --cov-report=term-missing --cov-report=html"
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+omit = [
+    "src/adr/__main__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+exclude_also = [
+    "def open_in_editor",
+]
+
+[tool.bandit]
+exclude_dirs = ["tests", ".tox", ".venv"]
+skips = ["B101", "B404", "B603", "B607"]
+
+# Example ADR tool configuration
+[tool.adr]
+# Directory for ADR files (relative to project root)
+dir = "docs/adrs"
+
+# Default template to use
+template = "nygard"
+
+# Default status for new ADRs
+default_status = "proposed"
+
+# Default authors for new ADRs
+default_authors = ["m1yag1"]
