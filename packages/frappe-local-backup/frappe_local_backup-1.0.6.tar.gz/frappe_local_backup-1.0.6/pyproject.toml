@@ -1,0 +1,81 @@
+[project]
+name = "frappe-local-backup"
+version = "1.0.6"
+description = "Backup service for Frappe Cloud sites - Download and manage backups locally"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Hawre", email = "hawre.salih@outlook.com"}
+]
+keywords = ["frappe", "erpnext", "backup", "frappe-cloud", "automation"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: System Administrators",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Archiving :: Backup",
+    "Topic :: System :: Systems Administration",
+]
+dependencies = [
+    "requests>=2.31.0",
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "python-dotenv>=1.0.0",
+    "click>=8.1.0",
+    "rich>=13.7.0",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "apscheduler>=3.10.0",
+    "keyring>=24.0.0",
+    "keyrings.alt>=5.0.0",
+    "pycryptodome>=3.20.0",  # ENFORCED for encryption
+]
+
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+secure-storage = [
+    "pycryptodome>=3.20.0",  # required by keyrings.alt EncryptedKeyring
+]
+gnome = [
+    "secretstorage>=3.3.0",  # for GNOME Keyring integration
+]
+
+[project.urls]
+Homepage = "https://github.com/hawre1987/frappe-local-backup"
+Documentation = "https://github.com/hawre1987/frappe-local-backup#readme"
+Repository = "https://github.com/hawre1987/frappe-local-backup.git"
+Issues = "https://github.com/hawre1987/frappe-local-backup/issues"
+
+[project.scripts]
+frappe-backup = "frappe_local_backup.cli:cli"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.package-data]
+frappe_local_backup = ["py.typed"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
