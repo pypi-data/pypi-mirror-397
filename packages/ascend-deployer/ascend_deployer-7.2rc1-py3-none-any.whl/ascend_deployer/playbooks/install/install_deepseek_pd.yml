@@ -1,0 +1,67 @@
+- hosts: '{{ hosts_name }}'
+  name: load image
+  tasks:
+    - name: load image
+      install_deepseek_pd:
+        action: "install"
+        mindie_image_name: "{{ mindie_image_name | default('') }}"
+        mindie_image_file: "{{ mindie_image_file | default('') }}"
+        resources_dir: "{{ resource_path }}"
+        container_runtime_type: "{{ hostvars[groups['master'][0]].container_runtime_type }}"
+        npu_info: "{{hostvars[groups['worker'][0]].npu_info}}"
+
+
+- hosts:
+    - master[0]
+  name: extract deploy scripts
+  tasks:
+    - name: extract deploy scripts
+      install_deepseek_pd:
+        action: "extract"
+        mindie_image_name: "{{ mindie_image_name | default('') }}"
+        mindie_image_file: "{{ mindie_image_file | default('') }}"
+        npu_info: "{{hostvars[groups['worker'][0]].npu_info}}"
+        resources_dir: "{{ resource_path }}"
+
+
+- hosts:
+    - master[0]
+  name: config user config
+  tasks:
+    - name: configure user config
+      install_deepseek_pd:
+        action: "configure"
+        weight_mount_path: "{{ weight_mount_path | default('') }}"
+        model_weight_path: "{{ model_weight_path | default('') }}"
+        mindie_image_name: "{{ mindie_image_name | default('') }}"
+        mindie_image_file: "{{ mindie_image_file | default('') }}"
+        expert_map_file: "{{expert_map_file  | default('')}}"
+        python_tar: "{{python_tar}}"
+        job_id: "{{ job_id  | default('')}}"
+        p_instances_num: "{{ p_instances_num }}"
+        d_instances_num:  "{{ d_instances_num }}"
+        single_p_instance_pod_num:  "{{ single_p_instance_pod_num }}"
+        single_d_instance_pod_num:  "{{ single_d_instance_pod_num }}"
+        model_name: "{{ model_name  | default('')}}"
+        max_seq_len: "{{ max_seq_len  | default('')}}"
+        mindie_host_log_path: "{{ mindie_host_log_path  | default('')}}"
+        tls_config: "{{ tls_config   }}"
+        resources_dir: "{{ resource_path }}"
+        npu_info: "{{hostvars[groups['worker'][0]].npu_info}}"
+
+
+
+
+- hosts:
+    - master[0]
+  name: start deepseek pd
+  tasks:
+    - name: start deepseek pd
+      ansible.builtin.shell: |
+        source /usr/local/ascendrc && 
+        cd /root/.ascend_deployer/mindie_pd/kubernetes_deploy_scripts/ && 
+        python3 deploy_ac_job.py {% if hostvars[groups['worker'][0]].npu_info.scene | default('') == "a910_93" %}--user_config_path user_config_base_A3.json{% endif %}
+      args:
+        executable: /bin/bash
+
+

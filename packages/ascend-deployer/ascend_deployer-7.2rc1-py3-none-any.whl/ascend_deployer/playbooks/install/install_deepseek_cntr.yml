@@ -1,0 +1,52 @@
+- hosts: '{{ hosts_name }}'
+  name: install deepseek container
+  tasks:
+    - name: Create MindIE service config directory
+      file:
+        path: /root/.ascend_deployer/mindie_service/
+        state: directory
+        mode: '0750'
+        owner: root
+        group: root
+
+    - name: Copy MindIE service config files to nodes
+      copy:
+        src: "{{inventory_dir}}/module_utils/deepseek_cntr/config/"
+        dest: /root/.ascend_deployer/mindie_service/
+        mode: '0644'
+        owner: root
+        group: root
+
+    - name: collect ranktable # 收集ranktable信息
+      install_deepseek_cntr:
+        action: "collect"
+        worker_num: "{{ groups['worker'] | length }}"
+        model_name: "{{ model_name | default('') }}"
+        model_weight_path: "{{ model_weight_path | default('') }}"
+        weight_mount_path: "{{ weight_mount_path | default('') }}"
+        cntr_mnt_path: "{{ cntr_mnt_path | default('') }}"
+        mindie_image_name: "{{ mindie_image_name | default('') }}"
+        mindie_image_file: "{{ mindie_image_file | default('') }}"
+        davinci_devices: "{{ davinci | default([]) }}"
+        npu_info: "{{npu_info}}"
+        master_ip: "{{ mindie_master | default('') }}"
+        node_ip: "{{ inventory_hostname }}"
+
+    - name: install deepseek
+      install_deepseek_cntr:
+        action: "install"
+        worker_num: "{{ groups['worker'] | length }}"
+        model_name: "{{ model_name  | default('') }}"
+        model_weight_path: "{{ model_weight_path | default('') }}"
+        weight_mount_path: "{{ weight_mount_path | default('') }}"
+        cntr_mnt_path: "{{ cntr_mnt_path | default('') }}"
+        mindie_image_name: "{{ mindie_image_name | default('') }}"
+        mindie_image_file: "{{ mindie_image_file | default('') }}"
+        davinci_devices: "{{ davinci | default([]) }}"
+        resources_dir: "{{ resource_path }}"
+        npu_info: "{{npu_info}}"
+        master_ip: "{{ mindie_master  | default('')}}"
+        node_ip: "{{ inventory_hostname }}"
+        all_server_entry: "{{ groups['all'] | map('extract', hostvars, 'server_entry') | select('defined') | list }}"
+
+

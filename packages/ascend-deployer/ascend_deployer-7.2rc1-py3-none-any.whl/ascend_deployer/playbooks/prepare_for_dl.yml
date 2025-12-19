@@ -1,0 +1,11 @@
+- hosts:
+    - master
+    - worker
+  name: prepare for install dl
+  tasks:
+    - name: prepare for install dl
+      prepare_for_dl:
+      delegate_to: "{{ groups['master'][0] }}"
+      when:
+        - groups['master'] is defined
+        - groups['master'] | length > 0

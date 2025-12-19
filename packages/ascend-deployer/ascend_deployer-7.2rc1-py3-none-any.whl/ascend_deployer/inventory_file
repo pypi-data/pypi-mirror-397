@@ -1,0 +1,46 @@
+[hccn]
+
+[hccn:vars]
+gateways=""
+netmask="255.255.255.0"
+roce_port=4791
+bitmap=""
+dscp_tc=""
+common_network="0.0.0.0/0"
+
+[master]
+# 10.10.10.1-10.10.10.9 ansible_ssh_user="root" ansible_ssh_pass="test1234" step_len=3
+
+[worker]
+localhost ansible_connection='local' ansible_ssh_user='root'
+# 10.10.10.1-10.10.10.9 ansible_ssh_user="root" ansible_ssh_pass="test1234" step_len=3
+
+[npu_node]
+# 10.10.10.1-10.10.10.9 ansible_ssh_user="root" ansible_ssh_pass="test1234" step_len=3
+
+[other_build_image]
+
+
+[all:vars]
+SCALE="false"
+RUNNER_IP=""
+WEIGHTS_PATH=""
+
+
+### 以下参数为部署deepseek时填写
+
+mindie_master="" 		# docker容器部署双机deepseek时填写，用于指定mindie master节点的IP，如 10.10.10.1
+weight_mount_path="" 	# 权重挂载目录,用于后续挂载到PD实例的容器，请确保权重在该目录下，如：/mnt/mindie_data/
+model_weight_path=""  	# 权重文件路径，请确保容器内从该路径能访问到权重，如：/mnt/mindie_data/deepseek_diff_level/deepseek_r1_w8a8
+cntr_mnt_path=""		# 创建容器时，容器内挂载目录，建议与weight_mount_path的值一致
+mindie_image_name=""	# 镜像名称(适用于已经装载好mindie镜像的场景), 如：mindie:dev-2.0.RC1.B091-800I-A2-py311-ubuntu22.04-aarch64
+mindie_image_file="" 	# 共享存储镜像文件地址(适配未装载mindie镜像)。填写示例：/mnt/weight/image/mindie_image*.tar.gz
+expert_map_file=""	 	# 专家部署表路径，需要确保部署表所在的路径能够后续再容器中能被加载。填写示例：/mnt/weight/16node_gsm8k.json
+model_name="ds_r1"	# 模型名称
+job_id="mindie-service"  	# 该参数填写Kubernets中的Namespace，启动PD实例的namespace
+p_instances_num=2  	# P实例个数，仅支持典型配置
+d_instances_num=1	 	# D实例个数，仅支持典型配置
+single_p_instance_pod_num=2	# 单个P实例占用pod个数，仅支持典型配置
+single_d_instance_pod_num=4 	# 单个D实例占用pod个数，仅支持典型配置
+max_seq_len=18000		#最大序列长度，填写正整数
+mindie_host_log_path="" 	#mindie日志存储路径

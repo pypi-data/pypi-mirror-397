@@ -1,0 +1,84 @@
+- hosts:
+    - master[0]
+  name: build master0 image for npu-exporter
+  tasks:
+    - name: build master0 npu-exporter image
+      install_npu_exporter:
+        resources_dir: "{{ resource_path }}"
+        step: 'build'
+        is_first_group: "{{ sub_group_idx | default(1) | int == 1 }}"
+
+    - name: set master0 arch
+      set_fact:
+        master0_arch: "{{ ansible_architecture }}"
+
+- hosts:
+    - other_build_image
+  name: build image for npu-exporter
+  tasks:
+    - name: build npu-exporter image
+      install_npu_exporter:
+        resources_dir: "{{ resource_path }}"
+        step: 'build'
+
+- hosts:
+    - master[0]
+  name: fetch master0 npu-exporter image
+  tasks:
+    - name: fetch master0 npu-exporter image
+      scp:
+        ip: "{{ inventory_hostname }}"
+        port: "{{ansible_ssh_port|default('22')}}"
+        remote_user: "{{ ansible_ssh_user }}"
+        passwd: "{{ ansible_ssh_pass | default(omit) }}"
+        src: "{{ npu_exporter_images }}"
+        dest: "{{ resource_path }}/mindxdl/dlImages/{{ ansible_architecture }}/npu-exporter"
+        fetch: 'true'
+      delegate_to: localhost
+
+- hosts:
+    - other_build_image
+  name: fetch npu-exporter image
+  tasks:
+    - name: fetch npu-exporter image
+      scp:
+        ip: "{{ inventory_hostname }}"
+        port: "{{ansible_ssh_port|default('22')}}"
+        remote_user: "{{ ansible_ssh_user }}"
+        passwd: "{{ ansible_ssh_pass | default(omit) }}"
+        src: "{{ npu_exporter_images }}"
+        dest: "{{ resource_path }}/mindxdl/dlImages/{{ ansible_architecture }}/npu-exporter"
+        fetch: 'true'
+      delegate_to: localhost
+      when: ansible_architecture != hostvars[groups['master'][0]].master0_arch
+
+- hosts:
+    - worker
+  name: install or upgrade npu-exporter
+  tasks:
+    - name: push images to remote
+      scp:
+        ip: "{{ inventory_hostname }}"
+        port: "{{ansible_ssh_port|default('22')}}"
+        remote_user: "{{ ansible_ssh_user }}"
+        passwd: "{{ ansible_ssh_pass | default(omit) }}"
+        src: "{{ resource_path }}/mindxdl/dlImages/{{ ansible_architecture }}/npu-exporter/*"
+        dest: "{{ resource_path }}/mindxdl/dlImages/{{ ansible_architecture }}/npu-exporter/"
+      delegate_to: localhost
+
+    - name: install npu-exporter
+      install_npu_exporter:
+        resources_dir: "{{ resource_path }}"
+        node_name: "{{ NODE_NAME }}"
+        container_runtime_type: "{{ hostvars[groups['master'][0]].container_runtime_type }}"
+        step: 'install'
+
+    - name: apply npu-exporter
+      run_once: yes
+      install_npu_exporter:
+        resources_dir: "{{ resource_path }}"
+        node_name: "{{ NODE_NAME }}"
+        container_runtime_type: "{{ hostvars[groups['master'][0]].container_runtime_type }}"
+        step: 'apply'
+      delegate_to: "{{ groups['master'][0] }}"
+      when: sub_group_idx | default(1) | int == 1
