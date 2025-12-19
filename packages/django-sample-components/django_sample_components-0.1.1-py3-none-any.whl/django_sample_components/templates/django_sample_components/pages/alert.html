@@ -1,0 +1,36 @@
+{% extends 'django_sample_components/pages/master.html' %}
+
+{% load sample_tags %}
+
+{% block content %}
+    <h1>Alert Page</h1>
+
+    {% simple_alert %}
+        This is the content for <i>simple_alert</i>.
+    {% endsimple_alert %}
+
+    {% simple_alert type="info" %}
+        info alert example.
+    {% endsimple_alert %}
+
+    {% simple_alert type="success" %}
+        success alert example.
+    {% endsimple_alert %}
+
+    {% simple_alert type="warning" %}
+        warning alert example.
+    {% endsimple_alert %}
+
+    {% simple_alert type="danger" %}
+        danger alert example.
+    {% endsimple_alert %}
+
+
+    {% simple_alert %}
+        Este é o alerta pai.
+        {% simple_alert %}
+            Este é o alerta filho dentro do alerta pai.
+        {% endsimple_alert %}
+    {% endsimple_alert %}
+
+{% endblock %}
