@@ -1,0 +1,16 @@
+# topdogalerts/models/event_type.py
+from __future__ import annotations
+from dataclasses import dataclass
+from typing import Any, Dict, Optional
+
+@dataclass
+class EventType:
+    id: int
+    source_id: int
+    name: Optional[str]
+    listener_healthy: Optional[bool]
+    attribute_schema: Optional[Dict[str, Any]]
+    event_trigger_map: Optional[Dict[str, Any]]
+    listener_trigger_map: Optional[Dict[str, Any]]
+    message_title: Optional[str]
+    message_description: Optional[str]
