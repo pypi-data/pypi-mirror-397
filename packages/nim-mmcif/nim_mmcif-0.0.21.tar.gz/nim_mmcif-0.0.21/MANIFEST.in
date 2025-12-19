@@ -1,0 +1,28 @@
+include README.md
+include LICENSE
+include pyproject.toml
+include setup.py
+include mmcif.nimble
+include build_nim.py
+
+# Include all Nim source files and dummy C extension
+recursive-include nim_mmcif *.nim *.nimble *.cfg *.nim.cfg *.c
+recursive-include tests *.nim *.mmcif *.py *.nims
+
+# Include nimbase headers from nim-extensions
+recursive-include nim-extensions *.h *.c *.json
+
+# Include any compiled extensions (for binary wheels)
+recursive-include nim_mmcif *.so *.dylib *.pyd *.dll
+recursive-include nim_mmcif *.cpython-*.so *.cpython-*.dylib *.cp*-*.pyd
+
+# Exclude build artifacts
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude *~
+global-exclude *.swp
+global-exclude .DS_Store
+recursive-exclude dist *
+recursive-exclude *.egg-info *
+recursive-exclude wheelhouse *
+recursive-exclude build *

@@ -1,0 +1,89 @@
+[build-system]
+requires = [
+    "setuptools>=61.0",
+    "wheel",
+    "nimporter>=1.1.0"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nim-mmcif"
+dynamic = ["version"]
+description = "mmCIF parser written in Nim with Python bindings"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "claude opus"},
+    {name = "lucidrains", email = "lucidrains@gmail.com"},
+]
+requires-python = ">=3.8"
+dependencies = [
+    "setuptools>=61.0",
+    "nimporter>=1.1.0"
+]
+
+keywords = [
+    "mmcif",
+    "cif", 
+    "protein",
+    "structure",
+    "bioinformatics",
+    "structural-biology",
+    "parser",
+    "crystallography",
+    "nim",
+    "pdb"
+]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Other",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/lucidrains/nim-mmcif"
+"Bug Tracker" = "https://github.com/lucidrains/nim-mmcif/issues"
+"Source Code" = "https://github.com/lucidrains/nim-mmcif"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+]
+test = [
+    "pytest>=7.0",
+]
+
+[tool.setuptools]
+packages = ["nim_mmcif"]
+license-files = []
+
+[tool.setuptools.dynamic]
+version = {attr = "nim_mmcif._version.__version__"}
+
+[tool.setuptools.package-data]
+nim_mmcif = [
+    "*.nim",
+    "*.c",
+    "*.so",
+    "*.pyd"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+pythonpath = ["."]
