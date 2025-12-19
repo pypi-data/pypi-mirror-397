@@ -1,0 +1,326 @@
+Metadata-Version: 2.4
+Name: yt-mcp-server-odoo
+Version: 0.1.2
+Summary: MCP Server for Odoo - Enable AI assistants to interact with Odoo ERP
+Project-URL: Homepage, https://yugmatech.com
+Project-URL: Repository, https://github.com/yugmatech/yt-mcp-server-odoo
+Project-URL: Documentation, https://apps.odoo.com/apps/modules/19.0/yt_mcp_server
+Author-email: YugmaTech <hello@yugmatech.com>
+License-Expression: LGPL-3.0
+Keywords: ai,claude,cursor,mcp,model-context-protocol,odoo
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.10
+Requires-Dist: httpx>=0.27.0
+Requires-Dist: mcp>=1.9.4
+Requires-Dist: pydantic-settings>=2.0.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: python-dotenv>=1.0.0
+Provides-Extra: dev
+Requires-Dist: black>=23.0.0; extra == 'dev'
+Requires-Dist: mypy>=1.0.0; extra == 'dev'
+Requires-Dist: pytest-asyncio>=0.21.0; extra == 'dev'
+Requires-Dist: pytest-cov>=4.0.0; extra == 'dev'
+Requires-Dist: pytest>=7.0.0; extra == 'dev'
+Requires-Dist: ruff>=0.1.0; extra == 'dev'
+Description-Content-Type: text/markdown
+
+# YT MCP Server for Odoo
+
+A Python MCP (Model Context Protocol) client that enables AI assistants like Claude, Cursor, and VS Code Copilot to interact with your Odoo ERP system.
+
+## Features
+
+- 🔍 **Search & Read** - Query any Odoo model with natural language
+- ✏️ **Create & Update** - Create and modify records via AI
+- 🗑️ **Delete** - Remove records (with proper permissions)
+- 📊 **Bulk Operations** - Create/update multiple records at once
+- 🔢 **Count & Browse** - Count records or fetch by specific IDs
+- 📝 **Prompt Templates** - Pre-defined prompts for common tasks
+- 🔐 **Secure** - API key authentication with Odoo user permissions
+
+## Installation
+
+### Option 1: Local Development (Recommended)
+
+```bash
+# Navigate to the mcp_client directory
+cd /path/to/yt_mcp_server/mcp_client
+
+# Install in development mode
+pip install -e .
+
+# Or using uv
+uv pip install -e .
+```
+
+### Option 2: Direct from Path
+
+```bash
+# Install directly from local path
+pip install /path/to/yt_mcp_server/mcp_client
+```
+
+### Option 3: Run without Installing
+
+```bash
+# Run directly with Python
+cd /path/to/yt_mcp_server/mcp_client
+python -m yt_mcp_server_odoo
+```
+
+
+---
+
+## Configuration
+
+### Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `ODOO_URL` | Yes | `http://localhost:8069` | Your Odoo instance URL |
+| `ODOO_API_KEY` | Yes | - | API key from MCP Server module |
+| `ODOO_DB` | No | Auto-detect | Database name |
+| `ODOO_USER` | No | - | Username (alternative to API key) |
+| `ODOO_PASSWORD` | No | - | Password (alternative to API key) |
+| `MCP_TRANSPORT` | No | `stdio` | Transport: `stdio` or `streamable-http` |
+| `MCP_HOST` | No | `localhost` | Host for HTTP transport |
+| `MCP_PORT` | No | `8000` | Port for HTTP transport |
+| `DEFAULT_LIMIT` | No | `10` | Default records per query |
+| `MAX_LIMIT` | No | `100` | Maximum records per query |
+| `MAX_SMART_FIELDS` | No | `25` | Max fields for smart selection |
+| `ODOO_YOLO` | No | `off` | YOLO mode: `off`, `read`, `true` |
+
+---
+
+## IDE Setup Guides
+
+### Claude Desktop
+
+**macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`  
+**Windows:** `%APPDATA%\Claude\claude_desktop_config.json`  
+**Linux:** `~/.config/Claude/claude_desktop_config.json`
+
+**Option A: Using installed package**
+```json
+{
+  "mcpServers": {
+    "odoo": {
+      "command": "python",
+      "args": ["-m", "yt_mcp_server_odoo"],
+      "env": {
+        "ODOO_URL": "https://your-odoo.com",
+        "ODOO_API_KEY": "your-api-key-here",
+        "ODOO_DB": "your-database"
+      }
+    }
+  }
+}
+```
+
+**Option B: Using local path directly**
+```json
+{
+  "mcpServers": {
+    "odoo": {
+      "command": "python",
+      "args": ["/path/to/yt_mcp_server/mcp_client/src/yt_mcp_server_odoo/__main__.py"],
+      "env": {
+        "ODOO_URL": "https://your-odoo.com",
+        "ODOO_API_KEY": "your-api-key-here",
+        "ODOO_DB": "your-database"
+      }
+    }
+  }
+}
+```
+
+### Cursor
+
+**Location:** `~/.cursor/mcp.json`
+
+```json
+{
+  "mcpServers": {
+    "odoo": {
+      "command": "python",
+      "args": ["-m", "yt_mcp_server_odoo"],
+      "env": {
+        "ODOO_URL": "https://your-odoo.com",
+        "ODOO_API_KEY": "your-api-key-here",
+        "ODOO_DB": "your-database"
+      }
+    }
+  }
+}
+```
+
+### VS Code (with Copilot/Continue)
+
+**Location:** `.vscode/mcp.json` in your workspace or `~/.vscode/mcp.json` globally
+
+```json
+{
+  "servers": {
+    "odoo": {
+      "command": "python",
+      "args": ["-m", "yt_mcp_server_odoo"],
+      "env": {
+        "ODOO_URL": "https://your-odoo.com",
+        "ODOO_API_KEY": "your-api-key-here",
+        "ODOO_DB": "your-database"
+      }
+    }
+  }
+}
+```
+
+### Windsurf
+
+**Location:** `~/.codeium/windsurf/mcp_config.json`
+
+```json
+{
+  "mcpServers": {
+    "odoo": {
+      "command": "python",
+      "args": ["-m", "yt_mcp_server_odoo"],
+      "env": {
+        "ODOO_URL": "https://your-odoo.com",
+        "ODOO_API_KEY": "your-api-key-here",
+        "ODOO_DB": "your-database"
+      }
+    }
+  }
+}
+```
+
+### Zed
+
+**Location:** `~/.config/zed/settings.json`
+
+```json
+{
+  "context_servers": {
+    "odoo": {
+      "command": {
+        "path": "python",
+        "args": ["-m", "yt_mcp_server_odoo"],
+        "env": {
+          "ODOO_URL": "https://your-odoo.com",
+          "ODOO_API_KEY": "your-api-key-here",
+          "ODOO_DB": "your-database"
+        }
+      }
+    }
+  }
+}
+```
+
+### Custom/Programmatic
+
+```python
+from yt_mcp_server_odoo import OdooMCPServer
+from yt_mcp_server_odoo.config import OdooConfig
+
+config = OdooConfig(
+    odoo_url="https://your-odoo.com",
+    odoo_api_key="your-api-key",
+    odoo_db="your-database"
+)
+
+server = OdooMCPServer(config)
+server.run()
+```
+
+---
+
+## Available MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `list_models` | List all MCP-enabled Odoo models |
+| `search_records` | Search records with domain filters |
+| `get_record` | Get a single record by ID |
+| `create_record` | Create a new record |
+| `update_record` | Update an existing record |
+| `delete_record` | Delete a record |
+| `count_records` | Count records matching a domain |
+| `browse_records` | Get multiple records by IDs |
+| `create_bulk` | Create multiple records at once |
+| `update_bulk` | Update multiple records with different values |
+| `list_prompts` | List available prompt templates |
+
+---
+
+## Usage Examples
+
+Once configured, ask your AI assistant:
+
+```
+"Show me all customers from Spain"
+"Create a new contact named John Doe at Acme Corp"
+"Find unpaid invoices from last month over $1000"
+"Update the phone number for partner ID 42"
+"How many products do we have in stock?"
+"Delete the draft quotation SO0123"
+```
+
+---
+
+## YOLO Mode (Development)
+
+For development/testing, enable YOLO mode to bypass MCP model restrictions:
+
+```json
+{
+  "env": {
+    "ODOO_YOLO": "read"
+  }
+}
+```
+
+| Mode | Effect |
+|------|--------|
+| `off` | Normal - only configured models accessible |
+| `read` | Can read ANY model without MCP config |
+| `true` | Full access to ALL models (dangerous!) |
+
+⚠️ **Warning:** YOLO mode bypasses MCP restrictions but still respects Odoo user permissions.
+
+---
+
+## Getting Your API Key
+
+1. Go to **Settings > MCP Server** in Odoo
+2. Click **Manage API Keys**
+3. Create a new API key for your user
+4. Copy the key (shown only once!)
+
+---
+
+## Troubleshooting
+
+### Connection Failed
+- Check `ODOO_URL` is accessible
+- Ensure MCP Server module is installed and enabled
+- Verify API key is valid
+
+### Model Not Found
+- Ensure model is enabled in **MCP Server > Enabled Models**
+- Check if YOLO mode should be enabled for development
+
+### Permission Denied
+- Verify API key user has access to the model
+- Check model permissions (read/write/create/delete)
+
+---
+
+## License
+
+LGPL-3.0
