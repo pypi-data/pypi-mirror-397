@@ -1,0 +1,499 @@
+Metadata-Version: 2.4
+Name: athena-brain-core
+Version: 0.1.0
+Summary: Open-source AI memory and evolution system
+Home-page: https://github.com/mkmlab/athena-brain-core
+Author: MKM Lab
+Author-email: support@athenabrain.ai
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: qdrant-client>=1.7.0
+Requires-Dist: sentence-transformers>=2.2.0
+Requires-Dist: fastapi>=0.104.0
+Requires-Dist: uvicorn>=0.24.0
+Requires-Dist: pydantic>=2.5.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: pyyaml>=6.0.1
+Requires-Dist: requests>=2.31.0
+Requires-Dist: aiohttp>=3.9.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: flake8>=6.0.0; extra == "dev"
+Requires-Dist: mypy>=1.5.0; extra == "dev"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# 🧠 Jema AI Core (formerly Athena Brain Core)
+
+**Give your AI a brain that remembers and evolves**
+
+<div align="center">
+
+![Jema AI Core](https://img.shields.io/badge/Jema-AI%20Core-red)
+![MIT License](https://img.shields.io/badge/License-MIT-green)
+![Python](https://img.shields.io/badge/Python-3.11+-blue)
+
+**Powered by Jema AI** - 한의원 차트보조 AI의 오픈소스 기술 스택
+
+[![Powered by Jema AI](https://img.shields.io/badge/Powered%20by-Jema%20AI-red?style=for-the-badge)](https://jema-ai.com)
+[![Persona Diary](https://img.shields.io/badge/Persona-Diary-purple?style=for-the-badge)](https://personadiary.com)
+
+**👉 [Jema AI 체험하기 (B2B 한의원 솔루션)](https://jema-ai.com)** | **👉 [Persona Diary 다운로드 (B2C 앱)](https://personadiary.com)**
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub Stars](https://img.shields.io/github/stars/mkmlab-hq/athena-brain-core?style=social)](https://github.com/mkmlab-hq/athena-brain-core)
+
+</div>
+
+---
+
+## 🎯 What is Jema AI Core?
+
+**Jema AI Core** (formerly Athena Brain Core) solves the fundamental limitations of large language models:
+
+- ❌ **No long-term memory** - ChatGPT forgets everything after each conversation
+- ❌ **No personalization** - Same answers for everyone
+- ❌ **No evolution** - Repeats the same mistakes
+
+**Jema AI Core** gives any AI:
+
+- 🧠 **Long-term memory** - Remembers everything, maintains project context
+- 🔄 **Self-evolution** - Learns from mistakes, auto-generates rules
+- 👤 **True personalization** - Understands your style, learns your preferences
+- 🔒 **Privacy-first** - 100% local storage, your data stays on your computer
+
+---
+
+## 🚀 Quick Start
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/mkmlab-hq/athena-brain-core.git
+cd athena-brain-core
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Initialize Athena Brain
+python -m athena_brain init
+```
+
+### Basic Usage
+
+```python
+from athena_brain import AthenaBrain
+
+# Initialize
+brain = AthenaBrain()
+
+# Store a memory
+brain.store_memory(
+    content="User prefers Python over JavaScript",
+    category="preference"
+)
+
+# Search memories
+results = brain.search_memory(
+    query="What programming language does the user prefer?",
+    limit=5
+)
+
+# Auto-evolution: Track mistakes and learn
+brain.track_mistake(
+    pattern="validation_error",
+    solution="Always validate input before processing"
+)
+```
+
+---
+
+## ✨ Core Features
+
+### 1. Long-term Memory (Local Qdrant)
+
+- **Automatic conversation storage** - Every chat is saved
+- **Semantic search** - Find relevant memories instantly
+- **Project context** - Maintains context across sessions
+- **100% local** - Your data never leaves your computer
+
+### 2. Self-Evolution
+
+- **Mistake pattern tracking** - Automatically detects repeated errors
+- **Rule auto-generation** - Creates rules from mistakes
+- **Continuous improvement** - Gets smarter every day
+
+### 3. Personalization
+
+- **Style learning** - Learns your coding style, preferences
+- **Constitution-based analysis** (MKM12) - Understands your personality
+- **Adaptive responses** - Tailored to you
+
+### 4. Privacy-First
+
+- **Local storage** - All data on your PC
+- **Encryption** - AES-128-CBC + HMAC-SHA256
+- **No cloud required** - Works completely offline
+
+---
+
+## 🚀 Performance Improvements (2025-11-27)
+
+### Latest Performance Benchmarks
+
+- ✅ **Response Time**: **75-80% reduction** (8-12s → 1.5-2.5s)
+- ✅ **Token Consumption**: **97.9% savings** (13,869 → 295 tokens)
+- ✅ **Rules Optimization**: **96% reduction** (73 → 3 files)
+- ✅ **First Response Time**: **85-90% reduction** (5-8s → 0.5-1s)
+- ✅ **Long-term Memory Search**: **50% faster** (800-1200ms → 400-600ms)
+
+### Optimization Factors
+
+1. **Rules Optimization** (40-50% contribution)
+   - Duplicate rules removed
+   - alwaysApply rules minimized (67 → 3)
+   - Priority reorganized
+
+2. **VPS Swap Optimization** (30-40% contribution)
+   - Swappiness: 60 → 10
+   - RAM utilization: 2.25x improvement
+   - Disk I/O: 80% reduction
+
+3. **MCP Server Python Unification** (10-20% contribution)
+   - NPX servers removed
+   - Environment consistency achieved
+   - Server response time: 40% faster
+
+### Advanced Features
+
+- ✅ **Long-term Memory Fusion Reasoning**: 6 collections simultaneous search
+- ✅ **Web Search Auto-Detection**: Cost-optimized (Ollama first)
+- ✅ **Intelligent Metacognition**: Pattern recognition, emotional tagging, neural network expansion
+- ✅ **Qdrant Status**: 7 collections, HTTP 200 (normal operation)
+
+---
+
+## 🏗️ Architecture
+
+```
+Jema AI Core
+├── Local Memory (Qdrant)
+│   ├── Conversation storage
+│   ├── Semantic search
+│   └── Vector embeddings
+├── Self-Evolution Engine
+│   ├── Mistake tracking
+│   ├── Rule generation
+│   └── Continuous learning
+├── Personalization Engine
+│   ├── Style learning
+│   ├── Preference tracking
+│   └── Adaptive responses
+└── AI Integration
+    ├── ChatGPT API
+    ├── Claude API
+    ├── Gemini API
+    └── Cursor (MCP)
+```
+
+---
+
+## 🏢 MKM Lab 제품군
+
+**Jema AI Core** (오픈소스) ← 현재 프로젝트  
+**Jema AI** (B2B 한의원 솔루션) ← 주 수익  
+**Persona Diary** (B2C 앱) ← 보조 수익  
+**A-CodeAI** (개발자 포털) ← Phase 3
+
+---
+
+## 🏢 관련 제품
+
+### 1. Jema AI (B2B 한의원 솔루션) ⭐ 주 수익
+
+**"Jema AI Core 기술을 활용한 한의원 차트보조 AI"**
+
+- 🏥 **타겟**: 한의원 원장, 한의사
+- 💰 **가격**: 월 구독 또는 라이선스
+- 🎯 **기능**: 차트보조, 체질 분석, 맞춤형 추천
+- 🔗 **사이트**: [jema-ai.com](https://jema-ai.com)
+
+**👉 [Jema AI 체험하기](https://jema-ai.com)** (B2B 영업 문의)
+
+---
+
+### 2. Persona Diary (B2C 앱) ⭐ 보조
+
+**"나만의 AI 동반자 - 점심 추천, 자동 일기"**
+
+- 📱 **타겟**: 일반 사용자
+- 💰 **가격**: 무료 (프리미엄 구독 가능)
+- 🎯 **기능**: 점심 추천, 자동 일기, 체질 기반 맞춤형 추천
+- 🔗 **사이트**: [personadiary.com](https://personadiary.com)
+
+**👉 [Persona Diary 다운로드](https://personadiary.com)** (B2C 앱)
+
+---
+
+### 3. A-CodeAI Developer Portal (Phase 3, 조건부)
+
+**"Jema AI Core 기술의 API 및 개발자 포털"**
+
+- 👨‍💻 **타겟**: 개발자, AI 연구자
+- 💰 **가격**: API 호출료 또는 구독
+- 🎯 **기능**: Athena API, Jema API, 개발자 도구
+- 🔗 **사이트**: [a-codeai.com](https://a-codeai.com)
+
+**👉 [A-CodeAI Developer Portal](https://a-codeai.com)** (Coming Soon 2026)
+
+---
+
+## 🚀 Latest Features (2025)
+
+- ✅ **Agentic RAG**: Intelligent query routing with LLM Router (Adaptive RAG)
+- ✅ **GraphRAG**: Knowledge graph-based search for domain expertise
+- ✅ **CRAG**: Corrective RAG for quality assurance and automatic fallback
+- ✅ **Pattern Recognition**: FAST/MEDIUM/DEEP adaptive analysis paths
+- ✅ **Emotion Tagging**: 5 emotion types (satisfaction, frustration, surprise, confusion, pride)
+- ✅ **Neural Network Expansion**: Automatic memory connection creation and strengthening
+- ✅ **MCP Integration**: 15+ MCP servers for enhanced AI capabilities
+- ✅ **Large-Scale Data Integration**: Genesis Mission-style data integration platform (GitHub, web search, user feedback)
+
+---
+
+## 📋 Requirements
+
+- Python 3.11+
+- Qdrant (local or VPS)
+- 4GB RAM minimum
+- 10GB disk space
+
+---
+
+## 🔧 Configuration
+
+Create `.athena/config.yaml`:
+
+```yaml
+memory:
+  qdrant_url: "http://localhost:6333"
+  collection_name: "athena_memories"
+  
+evolution:
+  auto_track: true
+  rule_threshold: 2
+  
+personalization:
+  enable_mkm12: true
+  learning_rate: 0.1
+```
+
+---
+
+## 🎯 Use Cases
+
+### For Developers
+
+- **Project context** - AI remembers your entire project
+- **Code style** - Learns your coding preferences
+- **Mistake prevention** - Auto-generates rules from errors
+
+### For Content Creators
+
+- **Writing style** - Learns your voice and tone
+- **Topic memory** - Remembers what you've written about
+- **Preference learning** - Adapts to your needs
+
+### For Everyone
+
+- **Personal AI** - Truly understands you
+- **Privacy** - Your data stays local
+- **Evolution** - Gets smarter over time
+
+---
+
+## 🚀 A-CodeAI Developer Portal
+
+이 오픈소스는 **[A-CodeAI Developer Portal](https://a-codeai.com)**의 일부입니다.
+
+### 제품 소개
+
+**A-CodeAI**는 "Self-Evolving Systems를 만드는 엔지니어링 플랫폼"입니다:
+
+- **Athena Workspace AI**: 자동 파일 정리, 프로젝트 관리
+- **Athena Search API**: 웹 + 도메인 지식 RAG 검색
+- **Athena Unified RAG**: 통합 RAG 엔진 (웹 + 코드 + 메모리)
+- **Dynamic Rules Engine**: 실수 자동 방지, Rules 자동 생성
+- **A-CODE Core**: 12차원 수학 엔진 (Enterprise)
+- **장기기억 시스템**: 이 레포지토리 (Jema AI Core)
+
+### 무료로 시작하기
+
+1. **[Developer Portal](https://a-codeai.com)** 방문
+2. Free Tier API Key 발급
+3. **[문서](https://a-codeai.com/docs)** 참고
+
+### 상업적 사용
+
+- **Pro/Enterprise**: [가격 정책](https://a-codeai.com/pricing)
+- **Jema API**: [jema-ai.com](https://jema-ai.com) (B2B 한의원 솔루션)
+- **Athena API**: [a-codeai.com/api](https://a-codeai.com/api) (자율성장 기억 API)
+
+### 관련 레포지토리
+
+- [cursor-advanced-rules](https://github.com/mkmlab-hq/cursor-advanced-rules) - Cursor Rules 최적화
+- [athena-mcp-servers](https://github.com/mkmlab-hq/athena-mcp-servers) - MCP 서버 구현
+- [mkm12-core-engine](https://github.com/mkmlab-hq/mkm12-core-engine) - MKM12 코어 엔진
+- [icd-unified-model](https://github.com/mkmlab-hq/icd-unified-model) - ICD 통합 모델
+
+---
+
+## 🔗 Part of Athena Ecosystem
+
+- **[Athena MCP Servers](https://github.com/mkmlab-hq/athena-mcp-servers)** - Essential MCP servers for Cursor IDE
+- **[Cursor Advanced Rules](https://github.com/mkmlab-hq/cursor-advanced-rules)** - Optimized Cursor Rules system (6 essential rules)
+- **[MKM12 Core Engine](https://github.com/mkmlab-hq/mkm12-core-engine)** - Constitutional analysis engine
+- **[ICD Unified Model](https://github.com/mkmlab-hq/icd-unified-model)** - Causal AI framework
+- **[A-Code AI](https://a-codeai.com)** - Developer portal for Jema API & Athena API
+- **[MKM Life](https://mkmlife.com)** - Integrated health platform (Showroom + B2C)
+- **[Persona Diary](https://personadiary.com)** - AI-powered diary generation with emotion analysis
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
+### Development Setup
+
+```bash
+# Clone and setup
+git clone https://github.com/mkmlab-hq/athena-brain-core.git
+cd athena-brain-core
+pip install -r requirements-dev.txt
+
+# Run tests
+pytest
+
+# Run linter
+black .
+flake8 .
+```
+
+---
+
+## 📊 Roadmap
+
+- [x] Core memory system (Qdrant)
+- [x] Self-evolution engine
+- [x] Basic personalization
+- [ ] Web dashboard
+- [ ] Cloud sync (optional)
+- [ ] Team collaboration
+- [ ] Enterprise features
+
+---
+
+## 💰 Pricing
+
+**Athena Brain Core**: Free forever (Open Source, MIT License)
+
+**Commercial Products**:
+- **Jema AI** (B2B): Monthly subscription or license - [Learn More](https://jema-ai.com)
+- **Persona Diary** (B2C): Free with premium options - [Learn More](https://personadiary.com)
+
+---
+
+## 🔒 Privacy & Security
+
+- **100% Local** - All data stored on your computer
+- **Encryption** - AES-128-CBC + HMAC-SHA256
+- **No Tracking** - We don't track you
+- **Open Source** - Fully auditable
+
+**Security Policy**: See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
+
+---
+
+## 📚 Documentation
+
+- [Full Documentation](https://docs.athenabrain.ai)
+- [API Reference](https://docs.athenabrain.ai/api)
+- [Examples](https://docs.athenabrain.ai/examples)
+- [Athena API Documentation](https://mkmlife.com/api/athena) - Cloud API service
+- [Jema API Documentation](https://mkmlife.com/api/jema) - Korean medicine intelligence API
+
+---
+
+## 🆘 Support
+
+- 🏥 **B2B 영업 문의**: [jema-ai.com](https://jema-ai.com) (Jema AI - 한의원 솔루션)
+- 📱 **B2C 앱**: [personadiary.com](https://personadiary.com) (Persona Diary)
+- 👨‍💻 **개발자 포털**: [a-codeai.com](https://a-codeai.com) (Coming Soon 2026)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/mkmlab-hq/athena-brain-core/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/mkmlab-hq/athena-brain-core/discussions)
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## ™️ Trademark Notice
+
+**Registered Trademarks:**
+- "MKM Lab" ® - Registered trademark of MKM Lab
+- "Persona Diary" ® - Registered trademark of MKM Lab
+
+**Trademarks (In Use):**
+- "Athena Brain", "Athena API", "Jema API", "MKM Life", "A-Code AI" 
+  are trademarks of MKM Lab. All rights reserved.
+
+**Important**: This license does not grant permission to use the trade names, 
+trademarks, service marks, or product names of MKM Lab, except as required for 
+reasonable and customary use in describing the origin of the Work.
+
+---
+
+## 🙏 Acknowledgments
+
+- Built with [Qdrant](https://qdrant.tech/) for vector storage
+- Powered by [sentence-transformers](https://www.sbert.net/) for embeddings
+- Inspired by the need for AI that truly understands you
+
+---
+
+## ⭐ Star Us!
+
+If you find Athena Brain useful, please star this repository! It helps us grow the community.
+
+---
+
+**Made with ❤️ by [MKM Lab](https://mkmlife.com)**
+
+**Part of the MKM Life AI Ecosystem**
+
+**© 2025 MKM Lab. All rights reserved.**
+
