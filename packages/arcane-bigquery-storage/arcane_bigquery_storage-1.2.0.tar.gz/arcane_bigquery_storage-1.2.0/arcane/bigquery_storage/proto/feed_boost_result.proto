@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package arcane.bigquery.storage.proto;
+
+message FeedBoostResult {
+    string identifier_field = 1;
+    string response = 2; // JSON type is not directly supported in proto3, using string instead
+    int32 config_id = 3;
+    int32 execution_number = 4;
+    google.protobuf.Timestamp timestamp = 5;
+}
