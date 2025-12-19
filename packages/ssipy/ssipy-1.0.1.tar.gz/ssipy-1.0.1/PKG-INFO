@@ -1,0 +1,162 @@
+Metadata-Version: 2.4
+Name: ssipy
+Version: 1.0.1
+Summary: A comprehensive KDD (Knowledge Discovery in Databases) code library with ready-to-use data science snippets
+Author: skIearn Contributors
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/yourusername/skIearn
+Project-URL: Documentation, https://github.com/yourusername/skIearn#readme
+Project-URL: Repository, https://github.com/yourusername/skIearn
+Project-URL: Issues, https://github.com/yourusername/skIearn/issues
+Keywords: data-science,machine-learning,kdd,statistics,outlier-detection,data-preprocessing,imputation,classification,visualization
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Scientific/Engineering :: Information Analysis
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: numpy>=1.20.0
+Requires-Dist: pandas>=1.3.0
+Requires-Dist: matplotlib>=3.4.0
+Requires-Dist: seaborn>=0.11.0
+Requires-Dist: scipy>=1.7.0
+Requires-Dist: scikit-learn>=1.0.0
+Requires-Dist: imbalanced-learn>=0.9.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: flake8>=6.0.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+
+# skIearn
+
+A comprehensive KDD (Knowledge Discovery in Databases) code library providing ready-to-use data science snippets for common machine learning and data preprocessing tasks.
+
+## 🚀 Installation
+
+### From PyPI (when published)
+```bash
+pip install skIearn
+```
+
+### From source
+```bash
+git clone https://github.com/yourusername/skIearn.git
+cd skIearn
+pip install -e .
+```
+
+### Development installation
+```bash
+pip install -e ".[dev]"
+```
+
+## 📖 Usage
+
+### Quick Start
+
+```python
+import skIearn
+
+# Display available code snippets menu
+skIearn.afficher_menu()
+
+# Get a specific code snippet
+skIearn.afficher_code('stats')  # Descriptive statistics
+skIearn.afficher_code('normalite')  # Normality tests
+skIearn.afficher_code('smote')  # SMOTE for class imbalance
+
+# Access code snippets directly as strings
+print(skIearn.stats_descriptives)
+print(skIearn.outliers_iqr)
+```
+
+### Available Code Snippets
+
+#### Statistics & Tests
+- `imports` - All necessary imports
+- `stats` - Descriptive statistics
+- `taille` - Sample size calculation
+- `normalite` - Normality tests (Shapiro-Wilk, KS, D'Agostino, Anderson-Darling)
+- `homogeneite` - Homogeneity tests (Bartlett, Levene, Fligner)
+
+#### Outlier Detection
+- `outliers_iqr` - IQR method (Tukey)
+- `outliers_zscore` - Z-score method
+- `outliers_robust` - Robust Z-score (MAD)
+- `outliers_mahalanobis` - Mahalanobis distance
+- `outliers_lof` - Local Outlier Factor
+- `outliers_isolation` - Isolation Forest
+
+#### Data Preprocessing
+- `winsorisation` - Winsorization of outliers
+- `norm_minmax` - Min-Max normalization
+- `std_zscore` - Z-score standardization
+- `std_robuste` - Robust standardization
+- `boxcox` - Box-Cox transformation
+- `yeojohnson` - Yeo-Johnson transformation
+
+#### Missing Values Imputation
+- `impute_mean` - Mean imputation
+- `impute_median` - Median imputation
+- `impute_knn` - KNN imputation
+- `impute_mice` - MICE (Iterative) imputation
+
+#### Class Imbalance
+- `oversample` - Random Oversampling
+- `undersample` - Random Undersampling
+- `smote` - SMOTE
+- `adasyn` - ADASYN
+
+#### Evaluation & Visualization
+- `metriques` - Classification metrics
+- `viz_normalite` - Normality visualization
+- `viz_roc` - ROC and Precision-Recall curves
+- `eda` - Complete exploratory data analysis
+
+## 📋 Dependencies
+
+- numpy >= 1.20.0
+- pandas >= 1.3.0
+- matplotlib >= 3.4.0
+- seaborn >= 0.11.0
+- scipy >= 1.7.0
+- scikit-learn >= 1.0.0
+- imbalanced-learn >= 0.9.0
+
+## 🔧 Development
+
+### Running Tests
+```bash
+pytest tests/
+```
+
+### Code Formatting
+```bash
+black skIearn/
+flake8 skIearn/
+```
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
