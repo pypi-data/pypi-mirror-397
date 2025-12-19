@@ -1,0 +1,67 @@
+[build-system]
+requires = ["hatchling>=1.21"]
+build-backend = "hatchling.build"
+
+[project]
+name = "motco"
+dynamic = ["version"]
+description = "MOTCO: Multi-omics Trajectory Comparison — latent spaces (PLS, SNF) and group differences"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [
+  { name = "MOTCO Authors" }
+]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Operating System :: OS Independent",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+dependencies = [
+  "numpy>=1.23",
+  "pandas>=1.5",
+  "scipy>=1.9",
+  "scikit-learn==1.8.0",
+  "pandas-stubs~=2.3.3",
+  "scipy-stubs~=1.16.3",
+]
+
+[project.urls]
+Homepage = "https://github.com/"  # update with real URL if available
+
+[project.scripts]
+motco = "motco.cli:main"
+
+[project.optional-dependencies]
+test = [
+  "pytest>=7.0",
+  "pytest-cov>=4.1",
+]
+
+[tool.hatch.version]
+path = "src/motco/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = [
+  "src/motco",
+]
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "src/motco",
+  "README.md",
+  "LICENSE",
+  "pyproject.toml",
+]
+
+[tool.pytest.ini_options]
+testpaths = [
+  "tests",
+]
+python_files = [
+  "test_*.py",
+  "*_test.py",
+]
+addopts = "-ra -v -s"
