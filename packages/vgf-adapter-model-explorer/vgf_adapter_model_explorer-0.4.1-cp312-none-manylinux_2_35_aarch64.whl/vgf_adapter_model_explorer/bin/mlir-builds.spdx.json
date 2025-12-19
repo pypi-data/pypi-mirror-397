@@ -1,0 +1,96 @@
+{
+    "SPDXID": "SPDXRef-DOCUMENT",
+    "creationInfo": {
+        "created": "2025-12-17T17:20:46Z",
+        "creators": [
+            "Organization: Arm Limited (open-source-office@arm.com)"
+        ],
+        "comment": "THIS SOFTWARE BILL OF MATERIALS (\"SBOM\") IS PROVIDED BY ARM LIMITED \"AS IS\" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT ARE DISCLAIMED. IN NO EVENT SHALL ARM LIMITED BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SBOM, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
+    },
+    "dataLicense": "CC0-1.0",
+    "name": "vgf-adapter-model-explorer-mlir-builds-with-llvm-model-converter-patch",
+    "spdxVersion": "SPDX-2.3",
+    "documentNamespace": "https://arm.com/spdx/vgf-adapter-model-explorer-mlir-llvm-147e615a658db0c0679ff2814dbc1bc59ded5160-model_converter-7ab38a34b6c4c6a929427cb70f4446497f87c713-20251217-172046",
+    "packages": [
+        {
+            "SPDXID": "SPDXRef-LLVM",
+            "description": "Base LLVM package used for MLIR builds.",
+            "downloadLocation": "https://github.com/llvm/llvm-project",
+            "filesAnalyzed": false,
+            "licenseDeclared": "Apache-2.0 WITH LLVM-exception",
+            "name": "llvm",
+            "primaryPackagePurpose": "LIBRARY",
+            "versionInfo": "147e615a658db0c0679ff2814dbc1bc59ded5160"
+        },
+        {
+            "SPDXID": "SPDXRef-ModelConverter",
+            "description": "Package providing an LLVM patch for model conversion tooling.",
+            "downloadLocation": "https://github.com/ARM-software/model-converter",
+            "filesAnalyzed": false,
+            "licenseDeclared": "Apache-2.0",
+            "name": "model-converter",
+            "originator": "Organization: Arm Limited (open-source-office@arm.com)",
+            "primaryPackagePurpose": "OTHER",
+            "versionInfo": "7ab38a34b6c4c6a929427cb70f4446497f87c713"
+        },
+        {
+            "SPDXID": "SPDXRef-MLIRTranslateBin",
+            "description": "Binary build of mlir-translate tool, distributed as part of vgf-adapter-model-explorer Python wheel.",
+            "downloadLocation": "https://pypi.org/project/vgf-adapter-model-explorer/",
+            "filesAnalyzed": false,
+            "licenseDeclared": "Apache-2.0 WITH LLVM-exception",
+            "name": "mlir-translate",
+            "originator": "Organization: Arm Limited (open-source-office@arm.com)",
+            "primaryPackagePurpose": "APPLICATION",
+            "versionInfo": "0.4.1-llvm-147e615a658db0c0679ff2814dbc1bc59ded5160-model_converter-7ab38a34b6c4c6a929427cb70f4446497f87c713-20251217-172046"
+        },
+        {
+            "SPDXID": "SPDXRef-MLIRPyBindingsBin",
+            "description": "Binary build of MLIR Python Bindings, distributed as part of vgf-adapter-model-explorer Python wheel.",
+            "downloadLocation": "https://pypi.org/project/vgf-adapter-model-explorer/",
+            "filesAnalyzed": false,
+            "licenseDeclared": "Apache-2.0 WITH LLVM-exception",
+            "name": "mlir-python-bindings",
+            "originator": "Organization: Arm Limited (open-source-office@arm.com)",
+            "primaryPackagePurpose": "APPLICATION",
+            "versionInfo": "0.4.1-llvm-147e615a658db0c0679ff2814dbc1bc59ded5160-model_converter-7ab38a34b6c4c6a929427cb70f4446497f87c713-20251217-172046"
+        }
+    ],
+    "relationships": [
+        {
+            "spdxElementId": "SPDXRef-DOCUMENT",
+            "relatedSpdxElement": "SPDXRef-MLIRTranslateBin",
+            "relationshipType": "DESCRIBES"
+        },
+        {
+            "spdxElementId": "SPDXRef-DOCUMENT",
+            "relatedSpdxElement": "SPDXRef-MLIRPyBindingsBin",
+            "relationshipType": "DESCRIBES"
+        },
+        {
+            "spdxElementId": "SPDXRef-LLVM",
+            "relatedSpdxElement": "SPDXRef-ModelConverter",
+            "relationshipType": "PATCH_APPLIED"
+        },
+        {
+            "spdxElementId": "SPDXRef-MLIRTranslateBin",
+            "relatedSpdxElement": "SPDXRef-LLVM",
+            "relationshipType": "DEPENDS_ON"
+        },
+        {
+            "spdxElementId": "SPDXRef-MLIRTranslateBin",
+            "relatedSpdxElement": "SPDXRef-ModelConverter",
+            "relationshipType": "DEPENDS_ON"
+        },
+        {
+            "spdxElementId": "SPDXRef-MLIRPyBindingsBin",
+            "relatedSpdxElement": "SPDXRef-LLVM",
+            "relationshipType": "DEPENDS_ON"
+        },
+        {
+            "spdxElementId": "SPDXRef-MLIRPyBindingsBin",
+            "relatedSpdxElement": "SPDXRef-ModelConverter",
+            "relationshipType": "DEPENDS_ON"
+        }
+    ]
+}
