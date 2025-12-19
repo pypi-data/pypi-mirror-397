@@ -1,0 +1,91 @@
+[build-system]
+requires = ["hatchling>=1.21.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "netrun-logging"
+version = "2.0.0"
+description = "Unified structured logging service with Azure App Insights integration and namespace packaging"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Daniel Garza", email = "daniel@netrunsystems.com"}
+]
+keywords = ["logging", "structured-logging", "azure", "fastapi", "correlation-id", "namespace"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System :: Logging",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "structlog>=24.0.0",
+    "azure-monitor-opentelemetry>=1.0.0",
+    "python-json-logger>=2.0.0",
+    "fastapi>=0.100.0",
+]
+
+[project.optional-dependencies]
+errors = [
+    "netrun-errors>=2.0.0",
+]
+config = [
+    "netrun-config>=2.0.0",
+]
+auth = [
+    "netrun-auth>=2.0.0",
+]
+all = [
+    "netrun-logging[errors,config,auth]",
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-asyncio>=0.21.0",
+    "mypy>=1.0.0",
+    "ruff>=0.1.0",
+    "bandit>=1.7.0",
+]
+
+[project.urls]
+Homepage = "https://netrunsystems.com"
+Repository = "https://github.com/netrun-services/netrun-logging"
+Documentation = "https://netrun-logging.readthedocs.io"
+Changelog = "https://github.com/netrun-services/netrun-logging/blob/main/CHANGELOG.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["netrun", "netrun_logging"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/netrun", "/netrun_logging", "/tests", "README.md", "LICENSE"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = [
+    "-v",
+    "--cov=netrun.logging",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+select = ["E", "F", "I", "N", "W"]
+ignore = ["E501"]
