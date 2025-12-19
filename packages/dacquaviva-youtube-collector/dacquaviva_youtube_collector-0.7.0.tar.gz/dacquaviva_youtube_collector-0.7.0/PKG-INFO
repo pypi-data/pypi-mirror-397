@@ -1,0 +1,66 @@
+Metadata-Version: 2.4
+Name: dacquaviva-youtube-collector
+Version: 0.7.0
+Summary: A library for collecting video data from YouTube.
+Author-email: Daniele Acquaviva <danieleacquaviva96@gmail.com>
+License: MIT
+Project-URL: Homepage, https://github.com/yourusername/youtube-thumbnails
+Project-URL: Repository, https://github.com/yourusername/youtube-thumbnails
+Keywords: youtube,data collection,video,thumbnails
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: google-api-python-client>=2.0.0
+Requires-Dist: requests>=2.25.1
+Requires-Dist: numpy>=1.20.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: build>=0.10.0; extra == "dev"
+
+# dacquaviva-youtube-collector
+
+Python library for collecting YouTube video data and downloading thumbnails.
+
+## Installation
+
+```bash
+pip install dacquaviva-youtube-collector
+```
+
+## Quick Start
+
+```python
+from youtube_collector import YouTubeClient
+
+# Initialize (uses YOUTUBE_API_KEY environment variable)
+client = YouTubeClient()
+
+# Fetch videos from 7 days ago
+videos = client.fetch_videos_by_publish_date(days_ago=7)
+
+# Download thumbnails
+paths = client.download_thumbnails_bulk(videos)
+
+# Save metadata to CSV
+client.save_to_csv(videos, "dataset.csv")
+```
+
+## API Key Setup
+
+```bash
+export YOUTUBE_API_KEY=your_api_key
+```
+
+Get your key at [Google Cloud Console](https://console.cloud.google.com/)
+
+## License
+
+MIT
