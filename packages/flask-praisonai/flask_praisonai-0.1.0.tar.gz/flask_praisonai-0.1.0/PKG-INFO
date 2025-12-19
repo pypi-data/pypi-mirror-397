@@ -1,0 +1,111 @@
+Metadata-Version: 2.4
+Name: flask-praisonai
+Version: 0.1.0
+Summary: Flask integration for PraisonAI multi-agent framework
+Author-email: Mervin Praison <support@praison.ai>
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/MervinPraison/flask-praisonai
+Project-URL: Documentation, https://docs.praison.ai
+Project-URL: Repository, https://github.com/MervinPraison/flask-praisonai
+Keywords: flask,praisonai,ai-agents,multi-agent,llm,api
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: flask>=2.0.0
+Requires-Dist: httpx>=0.24.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-httpx>=0.21.0; extra == "dev"
+Dynamic: license-file
+
+# flask-praisonai
+
+[Flask](https://flask.palletsprojects.com/) integration for [PraisonAI](https://github.com/MervinPraison/PraisonAI) multi-agent framework.
+
+## Installation
+
+```bash
+pip install flask-praisonai
+```
+
+## Quick Start
+
+```python
+from flask import Flask
+from flask_praisonai import create_blueprint
+
+app = Flask(__name__)
+app.register_blueprint(create_blueprint())
+
+# Now you have:
+# POST /praisonai/query - Send queries to PraisonAI
+# GET /praisonai/agents - List available agents
+
+if __name__ == "__main__":
+    app.run()
+```
+
+## API Endpoints
+
+### POST /praisonai/query
+
+Send a query to PraisonAI agents:
+
+```json
+{
+  "query": "Research AI trends",
+  "agent": "researcher"  // optional
+}
+```
+
+### GET /praisonai/agents
+
+List available PraisonAI agents.
+
+## Using the Client Directly
+
+```python
+from flask_praisonai import PraisonAIClient
+
+client = PraisonAIClient(api_url="http://localhost:8080")
+
+result = client.run_workflow("Research AI trends")
+result = client.run_agent("Write an article", "writer")
+agents = client.list_agents()
+```
+
+## Configuration
+
+```python
+from flask_praisonai import create_blueprint
+
+bp = create_blueprint(
+    api_url="http://localhost:8080",
+    url_prefix="/ai",  # Custom prefix
+)
+```
+
+## Prerequisites
+
+Start PraisonAI server:
+
+```bash
+pip install praisonai
+praisonai serve agents.yaml --port 8080
+```
+
+## Links
+
+- [PraisonAI Documentation](https://docs.praison.ai)
+- [Flask Documentation](https://flask.palletsprojects.com)
+
+## License
+
+MIT
