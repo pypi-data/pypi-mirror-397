@@ -1,0 +1,373 @@
+"""
+PL/M-80 Compiler Driver.
+
+Main entry point for the uplm80 compiler.
+"""
+
+import argparse
+import sys
+from pathlib import Path
+
+from . import __version__
+from .lexer import Lexer
+from .parser import Parser
+from .codegen import CodeGenerator, Target, Mode
+from .postopt import optimize_asm as postopt_optimize
+from .errors import CompilerError, ErrorCollector
+
+# Import AST optimizer (PL/M-80 specific)
+from .ast_optimizer import ASTOptimizer
+# Import peephole optimizer from upeep80 library (language-agnostic)
+from upeep80 import PeepholeOptimizer, InputSyntax
+from upeep80.peephole import Target as PeepholeTarget
+
+
+class Compiler:
+    """
+    PL/M-80 Compiler.
+
+    Pipeline:
+    1. Lexer: Source -> Tokens
+    2. Parser: Tokens -> AST
+    3. AST Optimizer: AST -> Optimized AST
+    4. Code Generator: AST -> Assembly
+    5. Peephole Optimizer: Assembly -> Optimized Assembly
+    6. Post-Assembly Optimizer: Tail merging, skip trick
+    """
+
+    def __init__(
+        self,
+        target: Target = Target.Z80,
+        mode: Mode = Mode.CPM,
+        opt_level: int = 2,
+        debug: bool = False,
+        defines: list[str] | None = None,
+    ) -> None:
+        self.target = target
+        self.mode = mode
+        self.opt_level = opt_level
+        self.debug = debug
+        self.defines = defines or []  # Symbols to define for conditional compilation
+        self.errors = ErrorCollector()
+
+    def compile(self, source: str, filename: str = "<input>") -> str | None:
+        """
+        Compile PL/M-80 source code to assembly.
+
+        Returns the assembly code string, or None if compilation failed.
+        """
+        try:
+            # Phase 1: Lexical Analysis
+            if self.debug:
+                print(f"[DEBUG] Phase 1: Lexing {filename}", file=sys.stderr)
+
+            lexer = Lexer(source, filename)
+
+            # Set command-line defined symbols
+            for symbol in self.defines:
+                lexer.define_symbol(symbol)
+
+            tokens = lexer.tokenize()
+
+            if self.debug:
+                print(f"[DEBUG] Produced {len(tokens)} tokens", file=sys.stderr)
+
+            # Phase 2: Parsing
+            if self.debug:
+                print("[DEBUG] Phase 2: Parsing", file=sys.stderr)
+
+            parser = Parser(tokens, filename)
+            ast = parser.parse_module()
+
+            if self.debug:
+                print(f"[DEBUG] Parsed module: {ast.name}", file=sys.stderr)
+                print(f"[DEBUG]   {len(ast.decls)} declarations", file=sys.stderr)
+                print(f"[DEBUG]   {len(ast.stmts)} statements", file=sys.stderr)
+
+            # Phase 3: AST Optimization
+            if self.opt_level > 0:
+                if self.debug:
+                    print(
+                        f"[DEBUG] Phase 3: AST Optimization (level {self.opt_level})",
+                        file=sys.stderr,
+                    )
+
+                optimizer = ASTOptimizer(self.opt_level)
+                ast = optimizer.optimize(ast)
+
+                if self.debug:
+                    print(f"[DEBUG]   Constants folded: {optimizer.stats.constants_folded}", file=sys.stderr)
+                    print(f"[DEBUG]   Strength reductions: {optimizer.stats.strength_reductions}", file=sys.stderr)
+                    print(f"[DEBUG]   Dead code eliminated: {optimizer.stats.dead_code_eliminated}", file=sys.stderr)
+
+            # Phase 4: Code Generation
+            if self.debug:
+                print(
+                    f"[DEBUG] Phase 4: Code Generation (target: {self.target.name}, mode: {self.mode.name})",
+                    file=sys.stderr,
+                )
+
+            codegen = CodeGenerator(self.target, self.mode)
+            asm_code = codegen.generate(ast)
+
+            if self.debug:
+                print(f"[DEBUG] Generated {len(asm_code.splitlines())} lines of assembly", file=sys.stderr)
+
+            # Phase 5: Peephole Optimization
+            if self.opt_level > 0:
+                if self.debug:
+                    print("[DEBUG] Phase 5: Peephole Optimization", file=sys.stderr)
+
+                # Convert codegen Target to peephole Target (different enum types)
+                # PL/M-80 codegen uses 8080 mnemonics, so specify I8080 input syntax
+                peep_target = PeepholeTarget.Z80 if self.target == Target.Z80 else PeepholeTarget.I8080
+                peephole = PeepholeOptimizer(peep_target, input_syntax=InputSyntax.I8080)
+                asm_code = peephole.optimize(asm_code)
+
+                if self.debug:
+                    for pattern, count in peephole.stats.items():
+                        print(f"[DEBUG]   {pattern}: {count} applied", file=sys.stderr)
+
+            # Phase 6: Post-Assembly Optimization (tail merging)
+            if self.opt_level >= 2:
+                if self.debug:
+                    print("[DEBUG] Phase 6: Post-Assembly Optimization", file=sys.stderr)
+
+                asm_code, savings = postopt_optimize(asm_code, verbose=self.debug)
+
+                if self.debug and savings > 0:
+                    print(f"[DEBUG]   Tail merging saved {savings} bytes", file=sys.stderr)
+
+            return asm_code
+
+        except CompilerError as e:
+            self.errors.add_error(e)
+            return None
+
+    def compile_file(self, input_path: Path, output_path: Path | None = None) -> bool:
+        """
+        Compile a PL/M-80 source file.
+
+        Returns True on success, False on failure.
+        """
+        # Read source file
+        try:
+            source = input_path.read_text()
+        except OSError as e:
+            print(f"Error reading {input_path}: {e}", file=sys.stderr)
+            return False
+
+        # Compile
+        asm_code = self.compile(source, str(input_path))
+
+        if asm_code is None:
+            self.errors.report()
+            return False
+
+        # Determine output path
+        if output_path is None:
+            output_path = input_path.with_suffix(".mac")
+
+        # Write output
+        try:
+            output_path.write_text(asm_code)
+            print(f"Compiled {input_path} -> {output_path}")
+        except OSError as e:
+            print(f"Error writing {output_path}: {e}", file=sys.stderr)
+            return False
+
+        return True
+
+    def compile_files(self, input_paths: list[Path], output_path: Path | None = None) -> bool:
+        """
+        Compile multiple PL/M-80 source files together.
+
+        All files are parsed first, then a unified call graph is built
+        across all modules for optimal local variable storage allocation.
+
+        Returns True on success, False on failure.
+        """
+        if len(input_paths) == 1:
+            return self.compile_file(input_paths[0], output_path)
+
+        try:
+            modules = []
+            filenames = []
+
+            # Phase 1 & 2: Lex and parse all files
+            for input_path in input_paths:
+                try:
+                    source = input_path.read_text()
+                except OSError as e:
+                    print(f"Error reading {input_path}: {e}", file=sys.stderr)
+                    return False
+
+                filename = str(input_path)
+                filenames.append(filename)
+
+                if self.debug:
+                    print(f"[DEBUG] Phase 1: Lexing {filename}", file=sys.stderr)
+
+                lexer = Lexer(source, filename)
+                for symbol in self.defines:
+                    lexer.define_symbol(symbol)
+                tokens = lexer.tokenize()
+
+                if self.debug:
+                    print(f"[DEBUG] Phase 2: Parsing {filename}", file=sys.stderr)
+
+                parser = Parser(tokens, filename)
+                ast = parser.parse_module()
+
+                # Phase 3: AST Optimization
+                if self.opt_level > 0:
+                    if self.debug:
+                        print(f"[DEBUG] Phase 3: AST Optimization for {filename}", file=sys.stderr)
+                    optimizer = ASTOptimizer(self.opt_level)
+                    ast = optimizer.optimize(ast)
+
+                modules.append(ast)
+
+            # Phase 4: Code Generation with unified call graph
+            if self.debug:
+                print(f"[DEBUG] Phase 4: Code Generation (multi-module, {len(modules)} files)", file=sys.stderr)
+
+            codegen = CodeGenerator(self.target, self.mode)
+            asm_code = codegen.generate_multi(modules)
+
+            if self.debug:
+                print(f"[DEBUG] Generated {len(asm_code.splitlines())} lines of assembly", file=sys.stderr)
+
+            # Phase 5: Peephole Optimization
+            if self.opt_level > 0:
+                if self.debug:
+                    print("[DEBUG] Phase 5: Peephole Optimization", file=sys.stderr)
+
+                peep_target = PeepholeTarget.Z80 if self.target == Target.Z80 else PeepholeTarget.I8080
+                peephole = PeepholeOptimizer(peep_target, input_syntax=InputSyntax.I8080)
+                asm_code = peephole.optimize(asm_code)
+
+            # Phase 6: Post-Assembly Optimization
+            if self.opt_level >= 2:
+                if self.debug:
+                    print("[DEBUG] Phase 6: Post-Assembly Optimization", file=sys.stderr)
+                asm_code, savings = postopt_optimize(asm_code, verbose=self.debug)
+
+            # Determine output path
+            if output_path is None:
+                output_path = input_paths[0].with_suffix(".mac")
+
+            # Write output
+            try:
+                output_path.write_text(asm_code)
+                files_str = ', '.join(str(p) for p in input_paths)
+                print(f"Compiled {files_str} -> {output_path}")
+            except OSError as e:
+                print(f"Error writing {output_path}: {e}", file=sys.stderr)
+                return False
+
+            return True
+
+        except CompilerError as e:
+            self.errors.add_error(e)
+            self.errors.report()
+            return False
+
+
+def main() -> None:
+    """Main entry point for the uplm80 compiler."""
+    parser = argparse.ArgumentParser(
+        prog="uplm80",
+        description="Highly optimizing PL/M-80 compiler targeting 8080/Z80",
+    )
+
+    parser.add_argument(
+        "-v", "--version",
+        action="version",
+        version=f"%(prog)s {__version__}",
+    )
+
+    parser.add_argument(
+        "input",
+        type=Path,
+        nargs='+',
+        help="Input PL/M-80 source file(s) (.plm)",
+    )
+
+    parser.add_argument(
+        "-o", "--output",
+        type=Path,
+        default=None,
+        help="Output assembly file (.mac)",
+    )
+
+    parser.add_argument(
+        "-t", "--target",
+        choices=["8080", "z80"],
+        default="z80",
+        help="Target processor (default: z80)",
+    )
+
+    parser.add_argument(
+        "-m", "--mode",
+        choices=["cpm", "bare"],
+        default="cpm",
+        help="Runtime mode: cpm=CP/M program, bare=bare metal (default: cpm)",
+    )
+
+    parser.add_argument(
+        "-O", "--optimize",
+        type=int,
+        choices=[0, 1, 2, 3],
+        default=2,
+        help="Optimization level (default: 2)",
+    )
+
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Enable debug output",
+    )
+
+    parser.add_argument(
+        "-D", "--define",
+        action="append",
+        dest="defines",
+        default=[],
+        metavar="SYMBOL",
+        help="Define conditional compilation symbol (can be repeated)",
+    )
+
+    args = parser.parse_args()
+
+    # TEMPORARY: Force Z80 target during development
+    # DO NOT REMOVE THIS CHECK UNTIL A HUMAN SAYS OK
+    # Claude keeps accidentally switching to 8080 mode
+    if args.target == "8080":
+        print("ERROR: 8080 target is temporarily disabled during development.", file=sys.stderr)
+        print("Use -t z80 or wait for a human to re-enable 8080 support.", file=sys.stderr)
+        sys.exit(1)
+
+    # Select target
+    target = Target.Z80 if args.target == "z80" else Target.I8080
+
+    # Select mode
+    mode = Mode.CPM if args.mode == "cpm" else Mode.BARE
+
+    # Create compiler
+    compiler = Compiler(
+        target=target,
+        mode=mode,
+        opt_level=args.optimize,
+        debug=args.debug,
+        defines=args.defines,
+    )
+
+    # Compile (supports multiple input files)
+    success = compiler.compile_files(args.input, args.output)
+
+    sys.exit(0 if success else 1)
+
+
+if __name__ == "__main__":
+    main()
