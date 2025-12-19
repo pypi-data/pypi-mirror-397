@@ -1,0 +1,46 @@
+
+[build-system]
+requires = ["setuptools>=61.0", 
+            "wheel", 
+            "setuptools-git-versioning>=2.0,<3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "DeltaAgent"
+dynamic = ["version"]
+authors = [
+  { name="Cody Xiaozhan Yang", email="x.yang@cloudfmgroup.com" },
+]
+description = "A library used to fetch data from deltalake tables locally."
+keywords = ["deltalake", "python", "local", "parquet"]
+readme = "DeltaAgent/README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+license = {file = "LICENSE"}
+dependencies = [
+    "tqdm",
+    "pandas",
+    "adlfs",
+    "Office365-REST-Python-Client"
+]
+
+[tool.setuptools]
+# ...
+# By default, include-package-data is true in pyproject.toml,
+# so you do NOT have to specify this line.
+include-package-data = true
+
+# [tool.setuptools.packages.find]
+# include = ["notebooks"]
+# packages = ["DeltaAgent"] # to avoid the error that: Multiple top-level packages discovered in a flat-layout
+
+[tool.setuptools.package-data]
+"*" = ["*.png"]
+
+[tool.setuptools-git-versioning]
+enabled = true
+version_file = "VERSION"
