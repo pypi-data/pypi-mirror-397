@@ -1,0 +1,114 @@
+[tool.poetry]
+name = "ai-infra"
+version = "0.1.156"
+description = "Infrastructure for efficient and scalable AI applications."
+authors = ["Ali Khatami <aliikhatami94@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{ include = "ai_infra", from = "src" }]
+keywords = ["ai", "langchain", "langgraph", "fastapi", "infra", "llm", "mcp"]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Framework :: FastAPI",
+    "Typing :: Typed"
+]
+
+[tool.poetry.urls]
+Homepage = "https://github.com/nfraxlab/ai-infra"
+Repository = "https://github.com/nfraxlab/ai-infra"
+Issues = "https://github.com/nfraxlab/ai-infra/issues"
+Documentation = "https://nfrax.com/ai-infra"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+
+# Core AI/Infra
+fastapi = ">=0.110.0"
+pydantic = ">=2.0"
+python-dotenv = ">=1.0.0"
+pyyaml = ">=6.0"
+
+# LangChain core (always required)
+langgraph = ">=1.0.0"
+langchain = ">=1.0.0"
+langchain-openai = ">=1.0.0"
+langchain-mcp-adapters = ">=0.1.0"
+langsmith = ">=0.4.0"
+
+# Optional LLM provider packages (install via extras)
+langchain-xai = { version = ">=1.0.0", optional = true }
+langchain-anthropic = { version = ">=1.0.0", optional = true }
+langchain-google-genai = { version = ">=3.0.0", optional = true }
+
+# MCP integration
+mcp = {extras = ["cli"], version = ">=1.0.0"}
+
+# Raw provider SDKs for models.list() discovery
+google-genai = { version = ">=1.0.0", optional = true }
+
+# DeepAgents - autonomous agent orchestration (0.2.x adds backends module)
+deepagents = ">=0.2.0"
+
+# Retriever backends
+numpy = ">=1.24.0"
+langchain-text-splitters = ">=0.3.0"
+svc-infra = ">=0.1.0"
+
+# Optional local embeddings (install via extras)
+langchain-huggingface = { version = ">=1.0.0", optional = true }
+sentence-transformers = { version = ">=5.0.0", optional = true }
+
+[tool.poetry.extras]
+# LLM providers (optional - install based on which API key you have)
+anthropic = ["langchain-anthropic"]
+google = ["langchain-google-genai", "google-genai"]
+xai = ["langchain-xai"]
+# All LLM providers
+llm-all = ["langchain-anthropic", "langchain-google-genai", "google-genai", "langchain-xai"]
+# Retriever storage backends
+postgres = ["pgvector", "psycopg2-binary"]
+sqlite = ["sqlite-vss"]
+chroma = ["chromadb"]
+pinecone = ["pinecone-client"]
+qdrant = ["qdrant-client"]
+faiss = ["faiss-cpu"]
+# File loaders
+pdf = ["pypdf"]
+docx = ["python-docx"]
+html = ["beautifulsoup4"]
+csv = ["pandas"]
+# Free local embeddings (no API key needed)
+local-embeddings = ["langchain-huggingface", "sentence-transformers"]
+huggingface = ["langchain-huggingface", "sentence-transformers"]
+# All retriever dependencies
+retriever = ["pypdf", "python-docx", "beautifulsoup4", "pandas"]
+retriever-all = ["pgvector", "psycopg2-binary", "chromadb", "pypdf", "python-docx", "beautifulsoup4", "pandas"]
+retriever-local = ["langchain-huggingface", "sentence-transformers", "pypdf", "python-docx", "beautifulsoup4", "pandas"]
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=8.0.0"
+pytest-asyncio = ">=0.23.0"
+ruff = ">=0.5.0"
+mypy = ">=1.10.0"
+pre-commit = ">=3.0.0"
+types-PyYAML = "*"
+
+[tool.poetry.scripts]
+ai-infra = "ai_infra.cli:main"
+
+[tool.ruff]
+target-version = "py311"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
