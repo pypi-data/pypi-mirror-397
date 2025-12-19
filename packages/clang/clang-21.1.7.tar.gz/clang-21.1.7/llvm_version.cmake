@@ -1,0 +1,2 @@
+set(LLVM_VERSION 21.1.7)
+set(LLVM_SHA256 eeb5296f46eacc0a1fe6c47a1af9e8d4eb2a5da7254fd8dbc4fc1f1be74315a1)
