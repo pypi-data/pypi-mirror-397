@@ -1,0 +1,97 @@
+# yaml-language-server: $schema=cases_template_valid.json
+version: 1.0.1
+cases:
+  bingo_case_001:
+    title: 构建运行内存不足
+    description: 构建运行内存不足
+    matching_rules:
+      - field: message
+        operator: regex
+        value: internal compiler error
+    solution: 构建运行内存不足，请检查宿主机资源状态
+  bingo_case_002:
+    title: conan仓中不存在指定版本的组件
+    description: conan仓中不存在指定版本的组件
+    matching_rules:
+      - field: message
+        operator: regex
+        value: was not found in remote .*
+    solution: conan仓中不存在指定版本的组件，请检查组件是否发布
+  bingo_case_003:
+    title: 未设置对应的conan远程仓
+    description: 未设置对应的conan远程仓
+    matching_rules:
+      - field: message
+        operator: regex
+        value: No remote .* defined in remote
+    solution: 未设置对应的conan远程仓，请参考conan remote add xxx进行设置
+  bingo_case_004:
+    title: 环境未初始化
+    description: 环境未初始化
+    matching_rules:
+      - field: message
+        operator: regex
+        value: CMAKE_C_COMPILER not set, after EnableLanguage
+    solution: 请在manifest目录下执行python3 init.py初始化环境
+  bingo_case_005:
+    title: 无法下载git源码
+    description: 无法下载git源码
+    matching_rules:
+      - field: message
+        operator: regex
+        value: Couldn't checkout .* git
+    solution: 请检查本机git令牌配置，确保存在源码所需令牌
+  bingo_case_006:
+    title: 当前环境缺少待签名的uboot文件
+    description: 当前环境缺少待签名的uboot文件
+    matching_rules:
+      - field: message
+        operator: regex
+        value: 执行失败，打开了自签名模式但未找到待签名的uboot文件，构建失败
+    solution: 下载官网bmc_sdk，替换本地~/sdk, 确保带时间戳结尾的文件存在
+  bingo_case_007:
+    title: Linux权限错误
+    description: Linux权限错误
+    matching_rules:
+      - field: message
+        operator: regex
+        value: Permission denied
+    solution: 请检查对应出错的文件权限，并确认当前用户是否有该操作权限
+  bingo_case_008:
+    title: 依赖组件版本冲突
+    description: 依赖组件版本冲突，请查看日志解决冲突
+    matching_rules:
+      - field: message
+        operator: regex
+        value: "Error: Version conflict: Conflict between .* and .*"
+    solution: | 
+      常见场景：
+      1. 版本级构建：请检查temp/log/task.log查找对应出错的冲突组件，并修复冲突
+      2. 组件构建：请按控制台输出修复冲突组件
+  bingo_case_009:
+    title: 组件没有在manifest中配置
+    description: 发现未配置的组件，请在manifest配置
+    matching_rules:
+      - field: message
+        operator: regex
+        value: "Error: .* 组件没有在manifest中配置.*"
+    solution: | 
+      常见场景：版本级构建：组件没有在manifest中配置，请在对应单板manifest配置依赖组件
+  bingo_case_010:
+    title: conan包出现未知错误
+    description: conan包出现未知错误
+    matching_rules:
+      - field: message
+        operator: regex
+        value: "Error: cannot import name 'decode_text' from 'conans.util.files' .*"
+    solution: | 
+      常见场景：conan卸载失败，请手动执行pip3 uninstall conan卸载，并pip3 install conan进行再次安装
+  bingo_case_011:
+    title: 无法在远程仓找到conan组件包
+    description: 无法在远程仓找到conan组件包
+    matching_rules:
+      - field: message
+        operator: regex
+        value: "Error: Unable to find .* in remotes"
+    solution: | 
+      常见场景：conan组件包未发布，请优先发布组件包
