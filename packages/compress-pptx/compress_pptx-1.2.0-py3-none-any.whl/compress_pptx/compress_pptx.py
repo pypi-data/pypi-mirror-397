@@ -1,0 +1,508 @@
+import glob
+import os
+import shutil
+import tempfile
+import zipfile
+from pathlib import Path
+from typing import List, Optional, TypedDict
+
+from ffmpeg_progress_yield import FfmpegProgress
+from tqdm import tqdm
+from tqdm.contrib.concurrent import process_map
+
+from .util import (
+    convert_size_to_bytes,
+    file_size,
+    human_readable_size,
+    run_command,
+    which,
+)
+
+
+class FileObj(TypedDict):
+    is_image: bool
+    input: str
+    output: str
+    input_size: int
+    output_size: Optional[int]
+    quality: int
+    transparency: str
+    verbose: bool
+    convert_cmd: List[str]
+    ffmpeg_crf: Optional[int]
+    ffmpeg_video_codec: Optional[str]
+    ffmpeg_audio_codec: Optional[str]
+    ffmpeg_extra_options: Optional[str]
+
+
+def _compress_image(file: FileObj):
+    """Compress an image file using ImageMagick."""
+    cmd = file["convert_cmd"] + [
+        file["input"] + "[0]",  # add [0] to use only the first page of TIFFs
+        "-background",
+        file["transparency"],
+        "-flatten",
+        "-quality",
+        str(file["quality"]),
+        file["output"],
+    ]
+    run_command(cmd, verbose=file["verbose"])
+
+
+def _compress_video_with_progress(file: FileObj, pbar_position: int = 1) -> None:
+    """Compress a video file using ffmpeg with progress reporting."""
+    import shlex
+
+    cmd = ["ffmpeg", "-i", file["input"]]
+
+    # Add video codec if specified
+    if file["ffmpeg_video_codec"]:
+        cmd.extend(["-codec:v", file["ffmpeg_video_codec"]])
+
+    # Add CRF if specified
+    if file["ffmpeg_crf"] is not None:
+        cmd.extend(["-crf", str(file["ffmpeg_crf"])])
+
+    # Add audio codec if specified
+    if file["ffmpeg_audio_codec"]:
+        cmd.extend(["-codec:a", file["ffmpeg_audio_codec"]])
+
+    # Add extra options if specified (parse the string into arguments)
+    if file["ffmpeg_extra_options"]:
+        extra_args = shlex.split(file["ffmpeg_extra_options"])
+        cmd.extend(extra_args)
+
+    cmd.extend(["-y", file["output"]])
+
+    if file["verbose"]:
+        print(" ".join([shlex.quote(str(c)) for c in cmd]))
+
+    ff = FfmpegProgress(cmd)
+    filename = Path(file["input"]).name
+    with tqdm(
+        total=100,
+        desc=f"  {filename}",
+        unit="%",
+        position=pbar_position,
+        leave=False,
+        bar_format="{desc}: {percentage:3.0f}%|{bar}| [{elapsed}<{remaining}]",
+    ) as pbar:
+        for progress in ff.run_command_with_progress():
+            pbar.n = progress
+            pbar.refresh()
+
+
+def _has_transparency(input_file: str, identify_cmd: List[str], verbose=False) -> bool:
+    cmd = identify_cmd + ["-format", "%[opaque]", input_file]
+    stdout, _ = run_command(cmd, verbose=verbose)
+    if stdout is not None and stdout.strip() == "False":
+        return True
+    return False
+
+
+class CompressPptxError(SystemError):
+    pass
+
+
+class CompressPptx:
+    DEFAULT_QUALITY = 85
+    DEFAULT_SIZE = "1MiB"
+    DEFAULT_TRANSPARENCY = "white"
+
+    temp_dir: Optional[str]
+
+    def __init__(
+        self,
+        input_file: str,
+        output_file: str,
+        size=convert_size_to_bytes(DEFAULT_SIZE),
+        quality=DEFAULT_QUALITY,
+        transparency=DEFAULT_TRANSPARENCY,
+        skip_transparent_images=False,
+        verbose=False,
+        force=False,
+        compress_media=False,
+        recompress_jpeg=False,
+        use_libreoffice=False,
+        num_cpus=1,
+        extract_dir=None,
+        ffmpeg_crf: Optional[int] = None,
+        ffmpeg_video_codec: Optional[str] = None,
+        ffmpeg_audio_codec: Optional[str] = None,
+        ffmpeg_extra_options: Optional[str] = None,
+    ) -> None:
+        """
+        Compress images in a PowerPoint file or extract media.
+
+        Args:
+            input_file (str): Path to input file
+            output_file (str): Path to output file
+            size (int, optional): Minimum size of images to compress. Defaults to 1MiB.
+            quality (int, optional): JPEG quality to use. Defaults to 85.
+            transparency (str, optional): Color to replace transparency with. Defaults to "white".
+            skip_transparent_images (bool, optional): Skip converting transparent images. Defaults to False.
+            verbose (bool, optional): Show additional info. Defaults to False.
+            force (bool, optional): Force overwriting output file. Defaults to False.
+            compress_media (bool, optional): Compress other media types such as audio and video (requires ffmpeg). Defaults to False.
+            recompress_jpeg (bool, optional): Recompress jpeg images. Defaults to False.
+            use_libreoffice (bool, optional): Use LibreOffice to compress EMF files (only way to compress EMF files under Linux). Defaults to False.
+            num_cpus (int, optional): Number of CPUs to use for parallel processing. Defaults to 1.
+            extract_dir (str, optional): Directory to extract media files to. If set, extraction mode is enabled instead of compression. Defaults to None.
+            ffmpeg_crf (int, optional): FFmpeg CRF value for video encoding. Defaults to None.
+            ffmpeg_video_codec (str, optional): FFmpeg video codec. Defaults to None.
+            ffmpeg_audio_codec (str, optional): FFmpeg audio codec. Defaults to None.
+            ffmpeg_extra_options (str, optional): Extra FFmpeg options as a string. Defaults to None.
+        """
+        self.input_file = input_file
+        self.output_file = output_file
+        self.size = int(size)
+        self.quality = int(quality)
+        self.transparency = str(transparency)
+        self.skip_transparent_images = bool(skip_transparent_images)
+        self.verbose = bool(verbose)
+        self.force = bool(force)
+        self.compress_media = compress_media
+        self.use_libreoffice = use_libreoffice
+        self.num_cpus = num_cpus
+        self.extract_dir = extract_dir
+        self.ffmpeg_crf = ffmpeg_crf
+        self.ffmpeg_video_codec = ffmpeg_video_codec
+        self.ffmpeg_audio_codec = ffmpeg_audio_codec
+        self.ffmpeg_extra_options = ffmpeg_extra_options
+
+        # file extensions and conversions
+        self.image_extensions = [".png", ".emf", ".tiff"]
+        if recompress_jpeg:
+            self.image_extensions.extend([".jpg", ".jpeg"])
+        self.converted_image_extension = ".jpg"
+
+        self.video_extensions = [".mov", ".avi", ".mp4"]
+        self.converted_video_extensions = ".mp4"
+        self.audio_extensions = [".mp3", ".wav"]
+        self.converted_audio_extensions = ".mp3"
+
+        self.file_list: List[FileObj] = []
+
+        # Check for ImageMagick - prefer 'magick' but fall back to 'convert'/'identify'
+        if which("magick") is not None:
+            self.magick_cmd = "magick"
+            self.convert_cmd = ["magick", "convert"]
+            self.identify_cmd = ["magick", "identify"]
+        elif which("convert") is not None and which("identify") is not None:
+            self.magick_cmd = "convert"
+            self.convert_cmd = ["convert"]
+            self.identify_cmd = ["identify"]
+        else:
+            raise CompressPptxError(
+                "ImageMagick not found in PATH. Make sure you have installed ImageMagick and that either 'magick' or 'convert'/'identify' commands are available."
+            )
+
+        required_executables = []
+        # add ffmpeg to required executables if user wants media files to be compressed
+        if self.compress_media:
+            required_executables.append("ffmpeg")
+        # add "unoconv" (libreoffice package) to required executables of user wants emf files compressed
+        if self.use_libreoffice:
+            required_executables.append("unoconv")
+
+        for expected_cmd in required_executables:
+            if which(expected_cmd) is None:
+                raise CompressPptxError(
+                    f"'{expected_cmd}' not found in PATH. Make sure you have installed the required software and that the '{expected_cmd}' command is available."
+                )
+
+        if self.quality < 0 or self.quality > 100:
+            raise CompressPptxError("Quality must be between 0-100!")
+
+        if not Path(self.input_file).exists():
+            raise CompressPptxError(f"No such file: {self.input_file}")
+
+        if not (
+            Path(self.input_file).suffix.endswith("pptx")
+            or Path(self.input_file).suffix.endswith("potx")
+        ):
+            raise CompressPptxError("Input must be a PPTX or POTX file!")
+
+        if self.extract_dir is None:
+            # Only validate output file for compression mode
+            if Path(self.output_file).exists() and not self.force:
+                raise CompressPptxError(
+                    f"Output file {self.output_file} already exists. Use -f/--force to force overwriting."
+                )
+
+        self.temp_dir = None
+
+    def run(self) -> None:
+        if self.extract_dir is not None:
+            # Extraction mode
+            self._extract_media()
+        else:
+            # Compression mode
+            if self.verbose:
+                print(f"Converting {self.input_file} to {self.output_file}")
+
+            with tempfile.TemporaryDirectory() as temp_dir:
+                self.temp_dir = temp_dir
+
+                # Unzip
+                self._unzip()
+
+                # Collect compressible files
+                self._find_files()
+
+                # Compress
+                self._compress_files()
+
+                # Replace rels
+                self._replace_rels()
+
+                # Zip back
+                self._zip()
+
+            # Always print stats to show compression results
+            self._print_stats()
+
+    def _extract_media(self) -> None:
+        """Extract all media files from the presentation to the specified directory."""
+        if self.extract_dir is None:
+            raise RuntimeError("Extract directory not set!")
+
+        # Create output directory if it doesn't exist
+        extract_path = Path(self.extract_dir)
+        extract_path.mkdir(parents=True, exist_ok=True)
+
+        if self.verbose:
+            print(f"Extracting media from {self.input_file} to {self.extract_dir}")
+
+        extracted_count = 0
+        with tempfile.TemporaryDirectory() as temp_dir:
+            self.temp_dir = temp_dir
+
+            # Unzip
+            self._unzip()
+
+            # Find and copy all media files
+            media_dir = Path(self.temp_dir) / "ppt" / "media"
+            if media_dir.exists():
+                for media_file in media_dir.glob("*"):
+                    if media_file.is_file():
+                        dest_file = extract_path / media_file.name
+                        shutil.copy2(media_file, dest_file)
+                        if self.verbose:
+                            print(f"Extracted: {media_file.name}")
+                        extracted_count += 1
+
+        print(f"Extracted {extracted_count} media file(s) to: {self.extract_dir}")
+
+    def _unzip(self) -> None:
+        print("Extracting file ...")
+        with zipfile.ZipFile(self.input_file, "r") as zip_f:
+            zip_f.extractall(self.temp_dir)
+            if self.verbose:
+                print(f"Extracted temp files to {self.temp_dir}")
+
+    def _check_endswith(self, filename: str, extensions: List[str]) -> bool:
+        for ext in extensions:
+            if filename.endswith(ext):
+                return True
+        return False
+
+    def _find_files(self) -> None:
+        if self.temp_dir is None:
+            raise RuntimeError("Temp dir not created!")
+
+        for file in glob.iglob(
+            os.path.join(self.temp_dir, "ppt", "media", "*"), recursive=True
+        ):
+            is_image = True
+            output_extension = self.converted_image_extension
+            # skip unaffected extensions
+            if not (
+                self._check_endswith(file, self.image_extensions)
+            ):  # is not an image
+                if (
+                    self.compress_media
+                ):  # and is also not a media (and compressing media enabled)
+                    is_image = False
+                    if self._check_endswith(file, self.video_extensions):
+                        output_extension = self.converted_video_extensions
+                    elif self._check_endswith(file, self.audio_extensions):
+                        output_extension = self.converted_audio_extensions
+                    else:
+                        continue  ## file is not a media file
+                else:
+                    continue  ## file is not an image
+
+            # skip files that are too small
+            fsize = file_size(file)
+            if fsize < self.size:
+                # print(f"Skipping {Path(file).name} because it is too small")
+                continue
+
+            if is_image:  # image file
+                # skip files with transparency
+                if self.skip_transparent_images and _has_transparency(
+                    file, self.identify_cmd, self.verbose
+                ):
+                    if self.verbose:
+                        print(
+                            f"Skipping {Path(file).name} because it contains transparency"
+                        )
+                    continue
+
+            if self.verbose:
+                print(
+                    f"{Path(file).name} added to conversion queue ({human_readable_size(fsize)})"
+                )
+
+            file_obj: FileObj = {
+                "is_image": is_image,
+                "input": file,
+                "output": (
+                    Path(file).parent
+                    / (Path(file).stem + "-compressed" + output_extension)
+                ).as_posix(),
+                "input_size": fsize,
+                "output_size": None,
+                "quality": self.quality,
+                "transparency": self.transparency,
+                "verbose": self.verbose,
+                "convert_cmd": self.convert_cmd,
+                "ffmpeg_crf": self.ffmpeg_crf,
+                "ffmpeg_video_codec": self.ffmpeg_video_codec,
+                "ffmpeg_audio_codec": self.ffmpeg_audio_codec,
+                "ffmpeg_extra_options": self.ffmpeg_extra_options,
+            }
+
+            self.file_list.append(file_obj)
+
+    def _libreoffice_compress_files(self, files: List[FileObj]):
+        for file in files:
+            cmd = [
+                "unoconv",
+                "-f",
+                "jpg",
+                "-o",
+                file["output"],
+                file["input"],
+            ]
+            run_command(cmd, verbose=file["verbose"])
+
+    def _compress_files(self) -> None:
+        if len(self.file_list) == 0:
+            print("No Files to compress!")
+            return
+
+        for file in self.file_list:
+            if self.verbose:
+                print(f"Compressing {file['input']} to {file['output']}")
+
+        # Separate files by type
+        image_files = [
+            f
+            for f in self.file_list
+            if f["is_image"] and not f["input"].endswith(".emf")
+        ]
+        emf_files = [f for f in self.file_list if f["input"].endswith(".emf")]
+        media_files = [f for f in self.file_list if not f["is_image"]]
+
+        # Compress image files (non-EMF) with ImageMagick
+        if len(image_files) > 0:
+            print(f"Compressing {len(image_files)} image(s) ...")
+            if self.num_cpus > 1:
+                process_map(_compress_image, image_files, max_workers=self.num_cpus)
+            else:
+                for file in image_files:
+                    _compress_image(file)
+
+        # Compress EMF files
+        if len(emf_files) > 0:
+            print(f"Compressing {len(emf_files)} .EMF file(s) ...")
+            if self.use_libreoffice:
+                # compress ".emf" (microsoft) files using libreoffice sequentially
+                # (idk why, but it doesn't work in parallel)
+                self._libreoffice_compress_files(emf_files)
+            else:
+                # compress ".emf" files using "magick convert" which works only on windows
+                if self.num_cpus > 1:
+                    process_map(_compress_image, emf_files, max_workers=self.num_cpus)
+                else:
+                    for file in emf_files:
+                        _compress_image(file)
+
+        # Compress media files (video/audio) with ffmpeg and progress bar
+        if len(media_files) > 0:
+            print(f"Compressing {len(media_files)} media file(s) ...")
+            with tqdm(
+                total=len(media_files),
+                desc="Media files",
+                unit="file",
+                position=0,
+            ) as pbar:
+                for file in media_files:
+                    _compress_video_with_progress(file, pbar_position=1)
+                    pbar.update(1)
+            print()  # newline after progress bars
+
+        # remove borked files
+        warnings = []
+        for file in self.file_list:
+            if not Path(file["output"]).exists():
+                print(f"Warning: could not convert {file['input']}")
+                warnings.append(file)
+            else:
+                output_size = file_size(file["output"])
+                file["output_size"] = output_size
+
+        for w in warnings:
+            self.file_list.remove(w)
+
+        # delete originals
+        for f in self.file_list:
+            os.remove(f["input"])
+
+    def _replace_rels(self) -> None:
+        if self.temp_dir is None:
+            raise RuntimeError("Temp dir not created!")
+
+        if self.verbose:
+            print("Replacing metadata ...")
+
+        for file in glob.iglob(
+            os.path.join(self.temp_dir, "ppt", "**", "*.rels"), recursive=True
+        ):
+            content = ""
+            with open(str(file)) as f:
+                content = f.read()
+
+                for compress_file in self.file_list:
+                    original_file = Path(compress_file["input"]).name
+                    target_file = Path(compress_file["output"]).name
+
+                    if original_file not in content:
+                        continue
+
+                    content = content.replace(original_file, target_file)
+
+            with open(str(file), "w") as f:
+                f.write(content)
+
+    def _zip(self) -> None:
+        if self.temp_dir is None:
+            raise RuntimeError("Temp dir not created!")
+
+        src_path = Path(self.temp_dir)
+        with zipfile.ZipFile(self.output_file, "w", zipfile.ZIP_DEFLATED) as zf:
+            for file in src_path.rglob("*"):
+                zf.write(file, file.relative_to(src_path))
+
+        print(f"Output written to: {self.output_file}")
+
+    def _print_stats(self) -> None:
+        input_size = file_size(self.input_file)
+        output_size = file_size(self.output_file)
+        percentage = round((input_size - output_size) / input_size * 100, 2)
+        print(f"Input file:  {human_readable_size(input_size)}")
+        print(
+            f"Output file: {human_readable_size(output_size)} ({percentage}% reduction)"
+        )
