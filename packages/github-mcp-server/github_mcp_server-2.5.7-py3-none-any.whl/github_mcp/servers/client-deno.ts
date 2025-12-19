@@ -1,0 +1,438 @@
+/**
+ * MCP Client Bridge - Deno-compatible version
+ * 
+ * Connects TypeScript wrappers to the Python GitHub MCP Server via stdio.
+ * This is a Deno-compatible version that doesn't use Node.js built-ins.
+ */
+
+// Declare Deno global for TypeScript
+declare const Deno: {
+    build: { os: string };
+    env: {
+        get(key: string): string | undefined;
+        toObject(): Record<string, string>;
+    };
+    cwd(): string;
+};
+
+// @ts-ignore - Deno npm: specifier (works at runtime)
+import { Client } from "npm:@modelcontextprotocol/sdk@^1.0.0/client/index.js";
+// @ts-ignore - Deno npm: specifier (works at runtime)
+import { StdioClientTransport } from "npm:@modelcontextprotocol/sdk@^1.0.0/client/stdio.js";
+
+// Global client instance (singleton)
+let mcpClient: Client | null = null;
+let mcpTransport: StdioClientTransport | null = null;
+let isInitializing = false;
+
+/**
+ * Standardized error response format
+ */
+interface ErrorResponse {
+  error: true;
+  message: string;
+  code?: string;
+  details?: Record<string, unknown>;
+}
+
+/**
+ * Check if an object is an error response
+ */
+function isErrorResponse(obj: unknown): obj is ErrorResponse {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    'error' in obj &&
+    (obj as Record<string, unknown>).error === true
+  );
+}
+
+/**
+ * Configuration for MCP server connection
+ */
+interface MCPConfig {
+    command: string;
+    args: string[];
+    env?: Record<string, string>;
+}
+
+/**
+ * Get MCP server configuration from environment or defaults
+ */
+function getMCPConfig(): MCPConfig {
+    const isWindows = Deno.build.os === "windows";
+    
+    // Check for custom configuration
+    const customCommand = Deno.env.get("MCP_PYTHON_COMMAND");
+    const customArgs = Deno.env.get("MCP_PYTHON_ARGS");
+    
+    // Get environment variables (Deno-compatible)
+    const env: Record<string, string> = {};
+    for (const [key, value] of Object.entries(Deno.env.toObject())) {
+        env[key] = value as string;
+    }
+    env['MCP_CODE_EXECUTION_MODE'] = 'true';
+    
+    // CRITICAL: Force traditional mode (all tools) for Deno runtime
+    // This ensures execute_code can access all 41 tools internally,
+    // even when Claude Desktop only sees execute_code
+    env['MCP_CODE_FIRST_MODE'] = 'false';
+    
+    if (customCommand) {
+        return {
+            command: customCommand,
+            args: customArgs ? customArgs.split(' ') : ['-m', 'github_mcp_server'],
+            env: env
+        };
+    }
+    
+    // Default configuration - use module execution (works with installed package)
+    // Use python -m github_mcp which calls __main__.py -> server.run()
+    if (isWindows) {
+        return {
+            command: 'cmd',
+            args: ['/c', 'python', '-m', 'github_mcp'],
+            env: env
+        };
+    } else {
+        return {
+            command: 'python',
+            args: ['-m', 'github_mcp'],
+            env: env
+        };
+    }
+}
+
+/**
+ * Initialize connection to Python MCP server
+ * 
+ * @throws Error if connection fails
+ */
+export async function initializeMCPClient(): Promise<void> {
+    // Already initialized
+    if (mcpClient) {
+        return;
+    }
+    
+    // Another initialization in progress
+    if (isInitializing) {
+        // Wait for initialization to complete
+        while (isInitializing) {
+            await new Promise<void>(resolve => setTimeout(() => resolve(), 100));
+        }
+        return;
+    }
+    
+    isInitializing = true;
+    
+    try {
+        const config = getMCPConfig();
+        
+        // CRITICAL: Force traditional mode for internal Deno runtime connection
+        // This ensures all 41 tools are available to execute_code,
+        // even when Claude Desktop is in code-first mode
+        if (config.env) {
+            config.env['MCP_CODE_FIRST_MODE'] = 'false';
+        }
+        
+        console.error('[MCP Bridge] Connecting to Python MCP server...');
+        console.error(`[MCP Bridge] Command: ${config.command} ${config.args.join(' ')}`);
+        console.error('[MCP Bridge] Mode: TRADITIONAL (all 41 tools available internally)');
+        
+        // Create stdio transport
+        mcpTransport = new StdioClientTransport({
+            command: config.command,
+            args: config.args,
+            env: config.env
+        });
+        
+        // Create MCP client
+        mcpClient = new Client({
+            name: 'github-mcp-code-executor',
+            version: '2.2.0'
+        }, {
+            capabilities: {}
+        });
+        
+        // Connect to server
+        await mcpClient.connect(mcpTransport);
+        
+        console.error('[MCP Bridge] ✓ Connected to GitHub MCP Server');
+        
+        // List available tools
+        const tools = await mcpClient.listTools();
+        console.error(`[MCP Bridge] ✓ Found ${tools.tools.length} available tools`);
+        
+    } catch (error: unknown) {
+        mcpClient = null;
+        mcpTransport = null;
+        console.error('[MCP Bridge] ✗ Connection failed:', error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        throw new Error(`Failed to connect to MCP server: ${errorMessage}`);
+    } finally {
+        isInitializing = false;
+    }
+}
+
+/**
+ * Call an MCP tool and return typed result
+ * 
+ * This is the main function that all generated wrappers use.
+ * 
+ * @template T - Expected return type
+ * @param toolName - Name of the MCP tool (e.g., 'github_create_issue')
+ * @param params - Tool parameters
+ * @returns Typed tool result
+ * @throws Error if tool call fails
+ */
+export async function callMCPTool<T = string>(
+    toolName: string,
+    params: Record<string, unknown>
+): Promise<T> {
+    // Ensure connection is established
+    if (!mcpClient) {
+        await initializeMCPClient();
+    }
+    
+    if (!mcpClient) {
+        throw new Error('MCP client not initialized');
+    }
+    
+    try {
+        console.error(`[MCP Bridge] Calling tool: ${toolName}`);
+        
+        // For programmatic use, default to JSON format for READ tools that support it
+        // This ensures TypeScript code gets parseable objects, not markdown strings
+        // NOTE: Write operations (create, update, delete, merge, close) don't have response_format parameter!
+        if (params && typeof params === 'object' && !Array.isArray(params)) {
+            // Only add response_format to READ tools that support it
+            // Write tools (create, update, delete, merge, close) don't have this parameter!
+            const READ_TOOLS_WITH_JSON_SUPPORT = [
+                // List operations
+                'github_list_issues',
+                'github_list_commits',
+                'github_list_pull_requests',
+                'github_list_releases',
+                'github_list_workflows',
+                'github_get_workflow_runs',
+                'github_list_repo_contents',
+                
+                // Search operations
+                'github_search_code',
+                'github_search_repositories',
+                'github_search_issues',
+                
+                // Get/Read operations
+                'github_get_repo_info',
+                // Note: github_get_file_content does NOT support response_format
+                'github_get_pr_details',
+                'github_get_pr_overview_graphql',
+                'github_get_release',
+                'github_get_user_info',
+                
+                // Advanced read operations
+                'github_grep',
+                'workspace_grep'
+                // Note: github_read_file_chunk and workspace_read_file do NOT support response_format
+            ];
+            
+            // Only add if not already specified and tool supports it
+            if (!params.hasOwnProperty('response_format') && 
+                !params.hasOwnProperty('params') && // Don't modify if already wrapped
+                READ_TOOLS_WITH_JSON_SUPPORT.includes(toolName)) {
+                params = { ...params, response_format: 'json' };
+            }
+        }
+        
+        // FastMCP expects arguments wrapped in a 'params' object
+        // when the function signature has a single 'params' parameter
+        const wrappedParams = Object.keys(params).length > 0 ? { params } : {};
+        
+        const response = await mcpClient.callTool({
+            name: toolName,
+            arguments: wrappedParams
+        });
+        
+        // Extract content from response
+        // Response structure can vary, handle both CallToolResult and direct responses
+        const responseAny = response as any;
+        
+        if (responseAny.content && Array.isArray(responseAny.content) && responseAny.content.length > 0) {
+            const content = responseAny.content[0];
+            
+            if (content.type === 'text') {
+                const text = content.text;
+                
+        // Tools that must return raw text/markdown (never JSON-parse)
+        const RAW_TEXT_TOOLS = new Set([
+            'github_get_file_content',
+            'github_read_file_chunk',
+            'workspace_read_file',
+        ]);
+        if (RAW_TEXT_TOOLS.has(toolName)) {
+            return text as unknown as T;
+        }
+                
+                // Check if it's an error message (starts with "Error:")
+                // These should not be parsed as JSON even if they look like it
+                if (text.trim().startsWith('Error:') && !text.trim().startsWith('Error: {')) {
+                    // It's a plain error string, return as-is
+                    return text as unknown as T;
+                }
+                
+                // Try to parse as JSON if possible
+                if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+                    try {
+                        const parsed = JSON.parse(text);
+                        // Check if it's a structured error response
+                        if (isErrorResponse(parsed)) {
+                            throw new Error(parsed.message);
+                        }
+                        return parsed as T;
+                    } catch (parseError) {
+                        // If it's an Error we threw (structured error), re-throw it
+                        if (parseError instanceof Error) {
+                            throw parseError;
+                        }
+                        // If JSON parse fails, check if it's an error message
+                        if (text.includes('Error:') || text.includes('error')) {
+                            return text as unknown as T;
+                        }
+                        // Not JSON, return as-is
+                        return text as unknown as T;
+                    }
+                }
+                
+                // Try to extract JSON from markdown code blocks (fallback)
+                // Handles cases like: ```json\n{...}\n```
+                const jsonBlockMatch = text.match(/```(?:json)?\s*([{[].*?[}\]])\s*```/s);
+                if (jsonBlockMatch) {
+                    try {
+                        const parsed = JSON.parse(jsonBlockMatch[1]);
+                        // Check if it's a structured error response
+                        if (isErrorResponse(parsed)) {
+                            throw new Error(parsed.message);
+                        }
+                        return parsed as T;
+                    } catch (parseError) {
+                        // If it's an Error we threw (structured error), re-throw it
+                        if (parseError instanceof Error) {
+                            throw parseError;
+                        }
+                        // Failed to parse extracted JSON, continue
+                    }
+                }
+                
+                // Return text as-is
+                return text as unknown as T;
+            }
+            
+            throw new Error(`Unexpected content type: ${content.type}`);
+        }
+        
+        // Handle case where response has toolResult directly
+        if (responseAny.toolResult) {
+            return responseAny.toolResult as T;
+        }
+        
+        throw new Error('No content in tool response');
+        
+    } catch (error) {
+        console.error(`[MCP Bridge] Tool call failed: ${toolName}`, error);
+        throw error;
+    }
+}
+
+/**
+ * List all available tools from the MCP server
+ * 
+ * Useful for debugging and validation.
+ * 
+ * @returns Array of tool names
+ */
+export async function listAvailableTools(): Promise<string[]> {
+    if (!mcpClient) {
+        await initializeMCPClient();
+    }
+    
+    if (!mcpClient) {
+        throw new Error('MCP client not initialized');
+    }
+    
+    const tools = await mcpClient.listTools();
+    return tools.tools.map((t: { name: string }) => t.name);
+}
+
+/**
+ * Get detailed information about a specific tool
+ * 
+ * @param toolName - Name of the tool
+ * @returns Tool information including schema
+ */
+export async function getToolInfo(toolName: string): Promise<{ name: string; [key: string]: unknown }> {
+    if (!mcpClient) {
+        await initializeMCPClient();
+    }
+    
+    if (!mcpClient) {
+        throw new Error('MCP client not initialized');
+    }
+    
+    const tools = await mcpClient.listTools();
+    const tool = tools.tools.find((t: { name: string }) => t.name === toolName);
+    
+    if (!tool) {
+        throw new Error(`Tool not found: ${toolName}`);
+    }
+    
+    return tool as { name: string; [key: string]: unknown };
+}
+
+/**
+ * Close the MCP client connection
+ * 
+ * Should be called when done using the client to clean up resources.
+ */
+export async function closeMCPClient(): Promise<void> {
+    if (mcpClient) {
+        console.error('[MCP Bridge] Closing connection...');
+        
+        try {
+            // Give any pending operations a moment to complete
+            await new Promise<void>(resolve => setTimeout(() => resolve(), 50));
+            
+            await mcpClient.close();
+        } catch (error: unknown) {
+            console.error('[MCP Bridge] Error during close:', error);
+        } finally {
+            mcpClient = null;
+            mcpTransport = null;
+            console.error('[MCP Bridge] ✓ Connection closed');
+        }
+    }
+}
+
+/**
+ * Check if client is connected
+ */
+export function isConnected(): boolean {
+    return mcpClient !== null && mcpTransport !== null;
+}
+
+/**
+ * Get connection health status
+ * 
+ * @returns Object with connection status and details
+ */
+export async function getConnectionHealth(): Promise<{
+    connected: boolean;
+    initialized: boolean;
+    transportActive: boolean;
+}> {
+    return {
+        connected: mcpClient !== null,
+        initialized: mcpClient !== null,
+        transportActive: mcpTransport !== null
+    };
+}
+
