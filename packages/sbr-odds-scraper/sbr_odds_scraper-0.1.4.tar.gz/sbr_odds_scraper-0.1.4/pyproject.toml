@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sbr-odds-scraper"
+version = "0.1.4"
+description = "A web scraper that collects historical MLB betting odds from SportsBookReview"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.8"
+authors = [
+    {name = "Arnav Saraogi"}
+]
+maintainers = [
+    {name = "Oronto", email = "vile319@gmail.com"}
+]
+keywords = ["mlb", "baseball", "odds", "betting", "scraper", "sports"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
+]
+dependencies = [
+    "aiohttp>=3.8.0",
+    "requests>=2.25.0",
+    "tqdm>=4.60.0",
+    "pandas>=1.3.0",
+    "nest-asyncio>=1.5.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/ArnavSaraogi/mlb-odds-scraper"
+"Bug Tracker" = "https://github.com/ArnavSaraogi/mlb-odds-scraper/issues"
+"Source" = "https://github.com/ArnavSaraogi/mlb-odds-scraper"
+
+[project.scripts]
+sbr-odds-scraper = "sbr_odds_scraper.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["sbr_odds_scraper*"]
+
