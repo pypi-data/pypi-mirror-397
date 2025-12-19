@@ -1,0 +1,153 @@
+[project]
+authors = [{name = "Mads Nielsen", email = "madsn@msn.com"}]
+dependencies = [
+    "pandas>=1.0",
+    "pysam>=0.19",
+]
+description = "Simulate two-dimensional overlapped pool sequencing data"
+name = "dwf-sim"
+requires-python = ">= 3.10, < 3.11"
+version = "0.1.0"
+license = { file = "LICENSE" }
+readme = { file = "README.md", content-type = "text/markdown" }
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+
+[project.urls]
+Homepage = "https://github.com/madscort/dwf-sim"
+Repository = "https://github.com/madscort/dwf-sim.git"
+Issues = "https://github.com/madscort/dwf-sim/issues"
+
+[project.scripts]
+dwf-sim = "dwf_sim.cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.1.0",
+]
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[tool.pixi.workspace]
+channels = ["conda-forge", "bioconda"]
+platforms = ["osx-arm64", "linux-64"]
+
+[tool.pixi.pypi-dependencies]
+dwf-sim = { path = ".", editable = true }
+
+[tool.pixi.dependencies]
+hatch = ">=1.14.1,<2"
+python = "3.10.*"
+pandas = "*"
+htslib = ">=1.22.1,<2"
+samtools = "*"
+bcftools = "*"
+pysam = "*"
+
+# Build tools
+ruff = ">=0.13.0,<0.14"
+twine = ">=6.2.0,<7"
+rtg-tools = ">=3.13,<4"
+
+[tool.pixi.feature.dev.dependencies]
+pytest = "*"
+pytest-cov = "*"
+ruff = "*"
+
+[tool.pixi.environments]
+default = {solve-group = "default"}
+dev = {features = ["dev"], solve-group = "default"}
+
+[tool.pixi.tasks]
+test = "pytest -q"
+lint = "ruff check ."
+fmt  = "ruff check --fix ."
+cov  = "pytest --cov=dwf_sim --cov-report=term-missing -q"
+
+1kg_test = """
+dwf-sim sample-1kg \
+  --vcf data/all.subset.noSV.sorted.vcf.gz \
+  --sample-table data/sample_population_codes.tsv \
+  --pedigree data/1kGP.3202_samples.pedigree_info.txt \
+  --matrix-size 24 \
+  --non-eur-fraction 0.45 \
+  --reference data/gatk-resource-bundle/hg38/v0/Homo_sapiens_assembly38.fasta \
+  --output-dir 1kg \
+  --verbose
+"""
+
+sim_test = """
+dwf-sim simulate \
+  --matrix-size 2 \
+  --mutation-rate 0.01 \
+  --read-length 150 \
+  --reference tests/data/small_reference.fna \
+  --targeted-bed tests/data/target_calling.bed \
+  --output-dir ./_sim_test_out \
+  --coverage 10
+"""
+
+sim_test_vcf = """
+dwf-sim simulate \
+  --matrix-size 2 \
+  --mutation-rate 0.01 \
+  --read-length 150 \
+  --reference tests/data/small_reference.fna \
+  --targeted-bed tests/data/target_calling.bed \
+  --vcf-dir tests/data \
+  --output-dir ./_sim_test_out \
+  --coverage 10
+"""
+
+bench_pool_test = """
+dwf-sim benchmark \
+  --matrix-context _sim_test_out/matrix_context.json \
+  --gold-standard-dir _sim_test_out/pools \
+  --caller-name GATK \
+  --caller-dir tests/dwf_output \
+  --output-dir ./_bench_pool_test_out \
+  --reference tests/data/small_reference.fna \
+  --sdf-dir tests/data/small_reference.sdf \
+  --bed tests/data/target_calling.bed \
+"""
+
+bench_pins_test = """
+dwf-sim benchmark-pins \
+    --matrix-context _sim_test_out/matrix_context.json \
+    --gold-standard-dir tests/data \
+    --caller-dir tests/dwf_output \
+    --output-dir ./_bench_pins_test_out \
+    --reference tests/data/small_reference.fna \
+    --sdf-dir tests/data/small_reference.sdf \
+    --bed tests/data/target_calling.bed \
+    --caller-suffix _unique_pins.vcf.gz \
+"""
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.hatch.build]
+include = [
+    "src/dwf_sim/py.typed", 
+    "README.md", 
+    "LICENSE",
+    "src/dwf_sim/bin/**/*",
+    "src/dwf_sim/data/**/*",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/dwf_sim"]
