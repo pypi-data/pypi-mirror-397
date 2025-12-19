@@ -1,0 +1,26 @@
+version: 1
+disable_existing_loggers: False
+
+formatters:
+  standard:
+    format: "%(asctime)s [%(levelname)s] %(message)s"
+  debug:
+    format: "%(asctime)s [%(levelname)s] %(name)s:%(funcName)s:%(lineno)d - %(message)s"
+
+handlers:
+  console:
+    level: "INFO"
+    formatter: "standard"
+    class: "logging.StreamHandler"
+    stream: "ext://sys.stdout"
+  file:
+    level: "DEBUG"
+    formatter: "debug"
+    class: "logging.FileHandler"
+    mode: "a"
+
+loggers:
+  open-MaStR:
+    level: "INFO"
+    handlers: ["console", "file"]
+    propagate: no
