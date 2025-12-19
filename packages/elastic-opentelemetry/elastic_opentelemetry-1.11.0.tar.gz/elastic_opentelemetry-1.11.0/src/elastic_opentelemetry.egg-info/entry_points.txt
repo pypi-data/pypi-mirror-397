@@ -1,0 +1,17 @@
+[console_scripts]
+edot-bootstrap = elasticotel.instrumentation.bootstrap:run
+
+[opentelemetry_configurator]
+configurator = elasticotel.distro:ElasticOpenTelemetryConfigurator
+
+[opentelemetry_distro]
+distro = elasticotel.distro:ElasticOpenTelemetryDistro
+
+[opentelemetry_resource_detector]
+_gcp = opentelemetry.resourcedetector.gcp_resource_detector._detector:GoogleCloudResourceDetector
+process_runtime = elasticotel.sdk.resources:ProcessRuntimeResourceDetector
+service_instance = elasticotel.sdk.resources:ServiceInstanceResourceDetector
+telemetry_distro = elasticotel.sdk.resources:TelemetryDistroResourceDetector
+
+[opentelemetry_traces_sampler]
+experimental_composite_parentbased_traceidratio = elasticotel.sdk.sampler:DefaultSampler
