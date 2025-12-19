@@ -1,0 +1,6 @@
+__title__ = "keepachangelog-parser"
+__description__ = "Parses a Keep-A-Changelog into a dict or json"
+__url__ = "https://github.com/frek818/keepachangelog-parser"
+__version__ = "0.2.0"
+__author__ = "Herman Griffin"
+__author_email__ = "herman@justa.dev"
