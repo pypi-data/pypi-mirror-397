@@ -1,0 +1,89 @@
+[project]
+name = "freeai-utils"
+version = "0.6.4"
+description = "A free, zero-config AI utility toolkit with voice, text, image, and web integrations, pdf_docx readability, decider"
+authors = [
+    { name="truongbaan", email="truongbaansoftware@gmail.com" }
+]
+readme = "README.md"
+license =  "MIT" 
+requires-python = ">=3.9.13"
+
+classifiers = [
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence"
+]
+
+# CORE DEPENDENCIES
+dependencies = [
+    "click",
+    "python-dotenv",
+    "requests",
+    "google-genai",
+    "numpy",
+    "langdetect",
+    "pyperclip",
+    "Pillow",
+    "gTTS",
+    "pyttsx3",
+    "playsound==1.2.2", 
+    "lameenc",
+    "librosa",
+    "mutagen",
+    "ffmpeg-python",
+    "imageio-ffmpeg",
+    "sounddevice",
+    "keyboard",
+    "beautifulsoup4",
+    "readability-lxml",
+    "pymupdf", 
+    "pypdf", 
+    "pdfplumber", 
+    "python-docx",
+    "tqdm",
+]
+
+# OPTIONAL DEPENDENCY GROUPS
+[project.optional-dependencies]
+
+# Libraries that contain or rely heavily on machine learning models
+ai = [
+    "openai-whisper",
+    "vosk",
+    "transformers",
+    "diffusers",
+    "easyocr",
+    "haystack-ai",
+    "peft",
+    "accelerate",
+    "sentencepiece",
+    "protobuf", 
+    "ddgs",
+    "translators",
+    "tiktoken",
+    "hf_xet",
+]
+
+all = [
+    "freeai-utils[ai]",
+]
+
+[project.urls]
+Homepage = "https://github.com/truongbaan/Utility-python-library"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["freeai_utils"]
+
+[tool.setuptools.package-data]
+"*" = ["README.md", "API.md", "THIRD_PARTY.md"]
+
+[project.scripts]
+freeai-utils = "freeai_utils.cli:main"
