@@ -1,0 +1,225 @@
+name: Publish to PyPI
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      test_pypi:
+        description: 'Publish to Test PyPI'
+        required: false
+        default: 'true'
+
+jobs:
+  build:
+    name: Build distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build twine
+
+      - name: Build sdist
+        run: python -m build --sdist
+
+      - name: Check package
+        run: twine check dist/*
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: distribution
+          path: dist/
+
+  build-wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-14]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Rust (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install Rust (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          Invoke-WebRequest -Uri https://win.rustup.rs/x86_64 -OutFile rustup-init.exe
+          .\rustup-init.exe -y
+          echo "$env:USERPROFILE\.cargo\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Build wheels
+        run: |
+          python -m pip install cibuildwheel
+          python -m cibuildwheel --output-dir wheelhouse
+        env:
+          CIBW_BUILD: cp38-* cp39-* cp310-* cp311-* cp312-*
+
+      - name: Verify wheels before upload
+        shell: bash
+        run: |
+          python -m pip install twine
+          echo "=== Wheels built ==="
+          ls -la wheelhouse/
+          echo ""
+          echo "=== Verifying each wheel ==="
+          python -c "
+          import zipfile, glob, sys
+          failed = False
+          for f in glob.glob('wheelhouse/*.whl'):
+              print(f'Checking: {f}')
+              try:
+                  with zipfile.ZipFile(f) as zf:
+                      print(f'  OK - {len(zf.namelist())} files')
+              except Exception as e:
+                  print(f'  CORRUPTED: {e}')
+                  failed = True
+          if failed:
+              sys.exit(1)
+          "
+          echo ""
+          echo "=== Twine check ==="
+          twine check wheelhouse/*.whl
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: ./wheelhouse/*.whl
+
+  publish-test-pypi:
+    name: Publish to Test PyPI
+    needs: [build, build-wheels]
+    runs-on: ubuntu-latest
+    if: github.event.inputs.test_pypi == 'true' && github.event_name == 'workflow_dispatch'
+
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: "*"
+          path: dist
+          merge-multiple: true
+
+      - name: List and verify artifacts
+        run: |
+          echo "=== All files in dist/ ==="
+          ls -la dist/
+          echo ""
+          echo "=== Verifying each file ==="
+          python -c "
+          import zipfile, tarfile, glob, sys, os
+          failed = False
+          for f in glob.glob('dist/*'):
+              print(f'Checking: {f} ({os.path.getsize(f)} bytes)')
+              if f.endswith('.whl'):
+                  try:
+                      with zipfile.ZipFile(f) as zf:
+                          print(f'  OK (wheel) - {len(zf.namelist())} files')
+                  except Exception as e:
+                      print(f'  CORRUPTED: {e}')
+                      failed = True
+              elif f.endswith('.tar.gz'):
+                  try:
+                      with tarfile.open(f, 'r:gz') as tf:
+                          print(f'  OK (sdist) - {len(tf.getnames())} files')
+                  except Exception as e:
+                      print(f'  CORRUPTED: {e}')
+                      failed = True
+              else:
+                  print(f'  UNKNOWN FILE TYPE')
+                  failed = True
+          if failed:
+              sys.exit(1)
+          "
+          echo ""
+          echo "=== Twine check ==="
+          python -m pip install twine
+          twine check dist/*
+
+      - name: Publish to Test PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        run: |
+          python -m twine upload --repository testpypi --skip-existing dist/*
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: [build, build-wheels]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release' && github.event.action == 'published'
+
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: "*"
+          path: dist
+          merge-multiple: true
+
+      - name: List and verify artifacts
+        run: |
+          echo "=== All files in dist/ ==="
+          ls -la dist/
+          echo ""
+          echo "=== Verifying each file ==="
+          python -c "
+          import zipfile, tarfile, glob, sys, os
+          failed = False
+          for f in glob.glob('dist/*'):
+              print(f'Checking: {f} ({os.path.getsize(f)} bytes)')
+              if f.endswith('.whl'):
+                  try:
+                      with zipfile.ZipFile(f) as zf:
+                          print(f'  OK (wheel) - {len(zf.namelist())} files')
+                  except Exception as e:
+                      print(f'  CORRUPTED: {e}')
+                      failed = True
+              elif f.endswith('.tar.gz'):
+                  try:
+                      with tarfile.open(f, 'r:gz') as tf:
+                          print(f'  OK (sdist) - {len(tf.getnames())} files')
+                  except Exception as e:
+                      print(f'  CORRUPTED: {e}')
+                      failed = True
+              else:
+                  print(f'  UNKNOWN FILE TYPE')
+                  failed = True
+          if failed:
+              sys.exit(1)
+          "
+          echo ""
+          echo "=== Twine check ==="
+          python -m pip install twine
+          twine check dist/*
+
+      - name: Publish to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          python -m twine upload dist/*

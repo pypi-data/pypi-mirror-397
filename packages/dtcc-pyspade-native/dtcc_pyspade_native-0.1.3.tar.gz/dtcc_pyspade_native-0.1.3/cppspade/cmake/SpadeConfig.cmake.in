@@ -1,0 +1,35 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+# Find required dependencies based on platform
+if(APPLE)
+    # macOS requires CoreFoundation and Security frameworks
+    # These are handled by target properties
+elseif(UNIX)
+    # Linux requires pthread, dl, m
+    find_dependency(Threads REQUIRED)
+endif()
+
+# Include the targets file
+include("${CMAKE_CURRENT_LIST_DIR}/SpadeTargets.cmake")
+
+# Provide variables for compatibility
+set(Spade_FOUND TRUE)
+set(SPADE_FOUND TRUE)
+set(Spade_VERSION @PROJECT_VERSION@)
+set(SPADE_VERSION @PROJECT_VERSION@)
+
+# Check which components are available
+set(Spade_LIBRARIES)
+if(TARGET Spade::spade_wrapper)
+    list(APPEND Spade_LIBRARIES Spade::spade_wrapper)
+endif()
+if(TARGET Spade::spade_wrapper_static)
+    list(APPEND Spade_LIBRARIES Spade::spade_wrapper_static)
+endif()
+
+# For backward compatibility
+set(SPADE_LIBRARIES ${Spade_LIBRARIES})
+
+check_required_components(Spade)

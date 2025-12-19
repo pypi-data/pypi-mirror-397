@@ -1,0 +1,20 @@
+[build-system]
+requires = [
+    "scikit-build-core>=0.4.3",
+    "pybind11>=2.11.0",
+    "dtcc-pyspade-native>=0.1.0",  # C++ library dependency
+]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "example-spade-usage"
+version = "0.1.0"
+description = "Example of using dtcc-pyspade-native in a Python project with C++"
+requires-python = ">=3.8"
+dependencies = [
+    "numpy>=1.20",
+    "dtcc-pyspade-native>=0.1.0",  # Runtime dependency
+]
+
+[tool.scikit-build]
+wheel.packages = ["src/example_pkg"]

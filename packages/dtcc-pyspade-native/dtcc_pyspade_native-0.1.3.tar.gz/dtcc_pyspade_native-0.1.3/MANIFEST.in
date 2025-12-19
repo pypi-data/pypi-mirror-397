@@ -1,0 +1,36 @@
+include README.md
+include LICENSE
+include CHANGELOG.md
+include CONTRIBUTING.md
+include pyproject.toml
+include CMakeLists.txt
+
+recursive-include cmake *.cmake *.cmake.in
+recursive-include src *.py
+
+# Include the cppspade library source
+recursive-include cppspade/include *.h
+recursive-include cppspade/src *.cpp *.rs
+recursive-include cppspade/cmake *.cmake *.cmake.in
+include cppspade/CMakeLists.txt
+include cppspade/Cargo.toml
+
+# Exclude build artifacts
+global-exclude __pycache__
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude *.so
+global-exclude *.dylib
+global-exclude *.dll
+global-exclude .DS_Store
+global-exclude Cargo.lock
+
+prune build
+prune dist
+prune _skbuild
+prune *.egg-info
+prune cppspade/build
+prune cppspade/target
+prune examples
+prune tests
+prune docs
