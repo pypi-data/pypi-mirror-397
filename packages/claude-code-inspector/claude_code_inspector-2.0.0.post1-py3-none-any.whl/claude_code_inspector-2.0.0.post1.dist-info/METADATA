@@ -1,0 +1,110 @@
+Metadata-Version: 2.4
+Name: claude-code-inspector
+Version: 2.0.0.post1
+Summary: DEPRECATED: Use llm-interceptor instead. Intercept and analyze LLM traffic from AI coding tools
+Project-URL: Homepage, https://github.com/chouzz/llm-interceptor
+Project-URL: Documentation, https://github.com/chouzz/llm-interceptor#readme
+Project-URL: Repository, https://github.com/chouzz/llm-interceptor
+Project-URL: Issues, https://github.com/chouzz/llm-interceptor/issues
+Author: chouzz
+License: MIT
+Keywords: agent,ai,debugging,inspect,intercept,llm,mitmproxy,observe,proxy,trace
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Internet :: Proxy Servers
+Classifier: Topic :: Software Development :: Debuggers
+Requires-Python: >=3.10
+Requires-Dist: click>=8.0.0
+Requires-Dist: fastapi>=0.109.0
+Requires-Dist: mitmproxy>=10.0.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: python-multipart>=0.0.9
+Requires-Dist: pyyaml>=6.0.0
+Requires-Dist: rich>=13.0.0
+Requires-Dist: tomli>=2.0.0; python_version < '3.11'
+Requires-Dist: uvicorn>=0.27.0
+Requires-Dist: watchdog>=4.0.0
+Provides-Extra: dev
+Requires-Dist: mypy>=1.0.0; extra == 'dev'
+Requires-Dist: pre-commit>=3.5.0; extra == 'dev'
+Requires-Dist: pytest-asyncio>=0.21.0; extra == 'dev'
+Requires-Dist: pytest>=7.0.0; extra == 'dev'
+Requires-Dist: ruff>=0.1.0; extra == 'dev'
+Description-Content-Type: text/markdown
+
+# ⚠️ DEPRECATED: Claude Code Inspector
+
+> **This package has been renamed and is no longer maintained.**
+>
+> The `claude-code-inspector` package has been completely rebranded as **[LLM Interceptor (LLI)](https://pypi.org/project/llm-interceptor/)**.
+>
+> Please migrate to the new package for continued support and updates.
+
+## 🚨 Important Migration Notice
+
+**This package (`claude-code-inspector`) is deprecated as of version 2.0.0.**
+
+### What Changed
+- **New Package Name**: `llm-interceptor`
+- **New CLI Command**: `lli` (instead of `cci`)
+- **New Repository**: [https://github.com/chouzz/llm-interceptor](https://github.com/chouzz/llm-interceptor)
+
+### Migration Steps
+
+1. **Uninstall the old package:**
+   ```bash
+   pip uninstall claude-code-inspector
+   ```
+
+2. **Install the new package:**
+   ```bash
+   pip install llm-interceptor
+   # or using uv (recommended)
+   uv add llm-interceptor
+   ```
+
+3. **Update your commands:**
+   ```bash
+   # Old command
+   cci watch
+
+   # New command
+   lli watch
+   ```
+
+4. **Update environment variables if needed:**
+   ```bash
+   # The proxy setup remains the same
+   export HTTP_PROXY=http://127.0.0.1:9090
+   export HTTPS_PROXY=http://127.0.0.1:9090
+   export NODE_EXTRA_CA_CERTS=~/.mitmproxy/mitmproxy-ca-cert.pem
+   ```
+
+### Why the Change?
+
+The project has evolved beyond just Claude Code inspection to support a broader range of LLM traffic analysis across multiple AI coding tools and providers. The new name "LLM Interceptor" better reflects this expanded scope.
+
+### Features in LLM Interceptor
+
+- ✅ **Enhanced Watch Mode** - Better session management and real-time capture
+- ✅ **Modern Web UI** - Beautiful React-based interface for trace analysis
+- ✅ **Broader Provider Support** - Anthropic, OpenAI, Google, Groq, Together, Mistral, and more
+- ✅ **Improved Performance** - Better streaming support and data processing
+- ✅ **Active Maintenance** - Regular updates and bug fixes
+
+### Need Help?
+
+- 📖 **Documentation**: [https://github.com/chouzz/llm-interceptor](https://github.com/chouzz/llm-interceptor)
+- 🐛 **Issues**: [Report bugs](https://github.com/chouzz/llm-interceptor/issues)
+- 💬 **Discussions**: [Get help](https://github.com/chouzz/llm-interceptor/discussions)
+
+---
+
+**Please update to `llm-interceptor` as soon as possible. This deprecated package will not receive any future updates or security fixes.**
