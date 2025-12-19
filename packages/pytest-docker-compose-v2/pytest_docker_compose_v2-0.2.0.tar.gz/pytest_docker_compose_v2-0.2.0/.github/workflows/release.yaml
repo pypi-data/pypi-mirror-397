@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    environment: pypi-publish
+    permissions:
+      # for creating github release
+      contents: write
+      # for trusted publishing
+      id-token: write
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v5
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v7
+      with:
+        enable-cache: true
+        python-version: '3.13'
+
+    - name: Install dependencies
+      run: uv sync
+    - name: Run tests
+      run: uv run pytest
+    - name: Create GitHub release
+      uses: softprops/action-gh-release@v1
+      with:
+        name: Release ${{ github.ref }}
+        tag_name: ${{ github.ref }}
+        draft: false
+        prerelease: false
+    - name: Build package
+      run: uv build
+    - name: Publish to PyPI
+      run: uv publish
