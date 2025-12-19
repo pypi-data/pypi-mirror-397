@@ -1,0 +1,65 @@
+Metadata-Version: 2.4
+Name: netrun-core
+Version: 1.0.0
+Summary: Netrun Systems namespace package foundation - provides the unified 'netrun' namespace for all Netrun packages
+Project-URL: Homepage, https://netrunsystems.com
+Project-URL: Documentation, https://docs.netrunsystems.com
+Project-URL: Repository, https://github.com/netrunsystems/netrun-service-library
+Author-email: Netrun Systems <dev@netrunsystems.com>, Daniel Garza <daniel@netrunsystems.com>
+License: MIT
+License-File: LICENSE
+Keywords: enterprise,fastapi,foundation,namespace,netrun
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Framework :: FastAPI
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Typing :: Typed
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+
+# netrun-core
+
+Namespace package foundation for the Netrun Systems enterprise Python toolkit.
+
+## Installation
+
+```bash
+pip install netrun-core
+```
+
+## Purpose
+
+This package establishes the `netrun` namespace that all other Netrun packages share. Install this package to enable unified imports:
+
+```python
+# After installing netrun-core + netrun-auth + netrun-config:
+from netrun.auth import JWTAuthMiddleware
+from netrun.config import Settings
+from netrun.errors import NetrunError
+```
+
+## Available Packages
+
+| Package | Import Path | Description |
+|---------|-------------|-------------|
+| netrun-auth | `netrun.auth` | JWT, OAuth, Azure AD B2C authentication |
+| netrun-config | `netrun.config` | Configuration with Azure Key Vault |
+| netrun-errors | `netrun.errors` | FastAPI error handling |
+| netrun-logging | `netrun.logging` | Structured logging with App Insights |
+| netrun-db-pool | `netrun.db` | Async database connection pooling |
+| netrun-llm | `netrun.llm` | Multi-provider LLM orchestration |
+| netrun-rbac | `netrun.rbac` | Role-based access control |
+| netrun-ratelimit | `netrun.ratelimit` | API rate limiting |
+
+## Requirements
+
+- Python 3.10+
+
+## License
+
+MIT License - Netrun Systems 2025
