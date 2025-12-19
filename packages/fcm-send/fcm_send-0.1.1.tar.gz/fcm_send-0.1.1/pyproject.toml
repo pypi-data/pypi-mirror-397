@@ -1,0 +1,94 @@
+# =============================================================================
+# FCM Notification Sender - Poetry Configuration
+# =============================================================================
+# This project uses Poetry for dependency management and packaging.
+#
+# Quick Start:
+#   poetry install          # Install dependencies
+#   poetry run fcm-send     # Run the CLI
+#   poetry build            # Build package
+#   poetry publish          # Publish to PyPI
+# =============================================================================
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[project]
+name = "fcm-send"
+version = "0.1.1"
+description = "A Python CLI tool for sending Firebase Cloud Messaging (FCM) notifications"
+authors = [
+    { name = "Felipe Ferreira", email = "mfelipeof@gmail.com" }
+]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.9,<4.0"
+keywords = [
+    "firebase",
+    "fcm",
+    "push-notifications",
+    "cloud-messaging",
+    "notifications",
+    "cli",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Communications",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "firebase-admin>=6.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "build>=1.0.0",
+    "twine>=5.0.0",
+    "pylint>=3.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/mfdeveloper/firebase_cloud_messaging_cli"
+Documentation = "https://github.com/mfdeveloper/firebase_cloud_messaging_cli#readme"
+Repository = "https://github.com/mfdeveloper/firebase_cloud_messaging_cli"
+Issues = "https://github.com/mfdeveloper/firebase_cloud_messaging_cli/issues"
+
+[project.scripts]
+fcm-send = "fcm_send:main"
+
+[tool.poetry]
+packages = [{ include = "fcm_send", from = "src" }]
+
+# =============================================================================
+# Tool Configurations
+# =============================================================================
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --cov=src/fcm_send --cov-report=term-missing"
+
+[tool.coverage.run]
+source = ["src/fcm_send"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+]
