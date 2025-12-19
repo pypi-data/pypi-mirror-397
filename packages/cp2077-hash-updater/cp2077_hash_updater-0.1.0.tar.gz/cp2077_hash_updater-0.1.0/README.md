@@ -1,0 +1,22 @@
+### Cyberpunk 2077 hash updater tool
+
+Automatically updates broken Cyberpunk 2077 mangled name hashes for plugins.
+
+**DISCLAIMER:** This tool is almost entirely vibecoded by ChatGPT with [Codex](https://github.com/openai/codex) (I had a subscription and wanted to see how it worked). The fact that it works is a miracle.
+
+This tool relies on the [IDA Domain](https://github.com/HexRaysSA/ida-domain) library for binary analysis and thus **requires IDA Pro to work**.
+
+### Example usage
+Note: some lines have been trimmed.
+```
+uv run .\src\cp2077-hash-updater\ --old-dir .\old\ --new-dir .\new\ --missing-log .\examples\patch_2.3_to_2.31_broken_hashes.txt --out examples/output.json
+
+[run]  build new signature index: .cp2077_cache\new_sig_index.json
+Wrote .cp2077_cache\new_sig_index.json with 300572 functions.
+[run]  export old missing signatures: .cp2077_cache\old_missing_sigs.json
+Wrote .cp2077_cache\old_missing_sigs.json with 10 missing hashes.
+[run]  match function anchors offline: .cp2077_cache\func_updates.json
+[run]  resolve xref anchors in new: .cp2077_cache\xref_updates.json
+[run]  merge results: examples\output.json
+[ok]   wrote examples\output.json
+```
