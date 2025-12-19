@@ -1,0 +1,88 @@
+Metadata-Version: 2.4
+Name: micro-traffic-sim
+Version: 0.0.1
+Summary: Python gRPC client for microscopic traffic simulation
+Author-email: Dmitrii Lopanov <sexykdi@gmail.com>
+License: Apache-2.0
+Project-URL: Homepage, https://github.com/LdDl/micro_traffic_sim_grpc
+Project-URL: Documentation, https://github.com/LdDl/micro_traffic_sim_grpc/tree/main/clients/python
+Project-URL: Repository, https://github.com/LdDl/micro_traffic_sim_grpc
+Project-URL: Issues, https://github.com/LdDl/micro_traffic_sim_grpc/issues
+Keywords: traffic,simulation,grpc,cellular-automata,transportation
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Scientific/Engineering
+Classifier: Typing :: Typed
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: grpcio>=1.60.0
+Requires-Dist: protobuf>=4.25.0
+Provides-Extra: dev
+Requires-Dist: grpcio-tools>=1.60.0; extra == "dev"
+
+# Python Client for micro_traffic_sim gRPC Server
+
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![Typing: Typed](https://img.shields.io/badge/typing-typed-green.svg)](https://peps.python.org/pep-0561/)
+
+Python client library for the microscopic traffic simulation gRPC server with full type hints support.
+
+## Installation
+
+```bash
+pip install micro-traffic-sim
+```
+
+## Usage
+
+```python
+import grpc
+from micro_traffic_sim import (
+    ServiceStub,
+    SessionReq,
+    Cell,
+    Point,
+    ZoneType,
+)
+
+# Connect to server
+channel = grpc.insecure_channel("127.0.0.1:50051")
+client = ServiceStub(channel)
+
+# Create a new session
+response = client.NewSession(SessionReq(srid=0))
+session_id = response.id.value
+
+# Push grid cells, trips, traffic lights, and run simulation...
+```
+
+## Documentation
+
+- **Full Example**: See [examples/](examples/) for a complete simulation workflow
+
+## Running the Example
+
+1. Start the gRPC server:
+```bash
+cargo run --features server --bin micro_traffic_sim
+```
+
+2. Run the example (from repository root):
+```bash
+source clients/python/.venv/bin/activate
+python clients/python/examples/main.py
+```
+
+3. Generate visualization:
+```bash
+python clients/python/examples/main.py > clients/python/examples/output.txt
+gnuplot clients/python/examples/plot_anim.gnuplot
+```
