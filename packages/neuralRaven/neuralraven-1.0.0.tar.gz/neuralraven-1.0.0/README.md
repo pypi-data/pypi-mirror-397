@@ -1,0 +1,99 @@
+# NeuralRaven — Evolutionary Neural Network Library
+
+NeuralRaven is a Python library that implements a fully customizable neural network architecture capable of training itself using an evolutionary algorithm (genetic optimization).  
+Unlike traditional machine-learning libraries, neuralRaven **does not use gradient descent, backpropagation, or optimizers**.  
+Instead, it evolves network weights over generations.
+
+This makes RAVEN suitable for:
+- Environments where gradient-based training performs poorly.
+- Reinforcement learning tasks.
+- Black-box optimization problems.
+- Scenarios with non-differentiable fitness functions.
+
+---
+
+## ✨ Features
+
+- Fully implemented neural network written in Python.
+- Genetic/Evolutionary algorithm for self-training.
+- Support for mutation, crossover, elitism, and population-based evolution.
+- Save/Load functionality for evolved models.
+- Small footprint and easy to integrate.
+- Cross-platform wheel support (Windows, Linux, macOS).
+- Compatible with Python 3.8–3.14.
+
+---
+
+## 📦 Installation
+
+Once the package is published on PyPI:
+
+```bash
+pip install neuralRaven
+```
+If installing from source:
+
+```bash
+pip install .
+```
+
+## 🚀 Quick Example
+
+```bash
+# main.py
+
+import neuralRaven
+
+def main():
+    print("=== Executing in neuralRaven.IO.fromFiles() ===")
+
+    # Name files
+    config_file = "configurationfile"
+    data_file = "datatest"
+
+    try:
+        neuralRaven.IO.fromFiles(config_file, data_file)
+        print("\n=== Execution complete without errors ===")
+    except Exception as e:
+        print("\n*** Error in the execution ***")
+        print(e)
+
+if __name__ == "__main__":
+    main()
+```
+## 📁 Project Structure
+
+```bash
+raven/
+    __init__.py
+    neural_network.py
+    evolutionary.py
+test/
+    test_basic.py
+data/
+    example_input.json
+    example_output.json
+```
+## 🛠 Building Wheels (for PyPI)
+
+This project uses cibuildwheel to build platform-specific wheels.
+
+GitHub Actions workflows:
+
+.github/workflows/build_wheels.yml — builds wheels for Windows/Linux/macOS.
+
+.github/workflows/publish.yml — publishes wheels to PyPI.
+
+## 📄 License
+
+This project is released under the MIT License — see the LICENSE file for details.
+
+## 👥 Authors
+
+**Carlos Gerardo Euresty Uribe**  
+Lead author and primary developer of the neural network architecture and evolutionary algorithm.  
+Email: gerardo.eeuresty@itcelaya.edu.mx
+
+**Jesús Miguel Cerda González**  
+Contributor responsible for packaging the project as a Python library, optimizing modules, and improving usability.  
+Email: cerda.gonzalez.jesus@gmail.com
