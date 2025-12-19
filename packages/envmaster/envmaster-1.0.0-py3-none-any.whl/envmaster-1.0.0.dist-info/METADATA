@@ -1,0 +1,85 @@
+Metadata-Version: 2.4
+Name: envmaster
+Version: 1.0.0
+Summary: Type-safe environment variable management
+Project-URL: Homepage, https://github.com/RedJohnx/pypi_warehouse
+Project-URL: Repository, https://github.com/RedJohnx/pypi_warehouse/tree/main/packages/envmaster
+Author-email: RedJohnx <redjohnx@example.com>
+License-Expression: MIT
+Keywords: config,configuration,env,environment,settings
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+
+# envmaster 🔐
+
+Type-safe environment variable management for Python.
+
+## Installation
+
+```bash
+pip install envmaster
+```
+
+## Usage
+
+```python
+from envmaster import env
+
+# String (required)
+DATABASE_URL = env.str("DATABASE_URL", required=True)
+
+# Boolean with default
+DEBUG = env.bool("DEBUG", default=False)
+
+# Integer with default
+MAX_CONNECTIONS = env.int("MAX_CONNECTIONS", default=10)
+
+# Float
+TIMEOUT = env.float("TIMEOUT", default=30.0)
+
+# List (comma-separated)
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost"])
+
+# JSON
+CONFIG = env.json("CONFIG", default={})
+```
+
+## Methods
+
+| Method | Return Type | Description |
+|--------|-------------|-------------|
+| `env.str()` | str | String value |
+| `env.int()` | int | Integer value |
+| `env.float()` | float | Float value |
+| `env.bool()` | bool | Boolean value |
+| `env.list()` | list | List of strings |
+| `env.json()` | any | Parsed JSON |
+
+## Boolean Values
+
+Truthy: `true`, `1`, `yes`, `on`  
+Falsy: `false`, `0`, `no`, `off`
+
+## Error Handling
+
+```python
+from envmaster import env, EnvError
+
+try:
+    secret = env.str("SECRET_KEY", required=True)
+except EnvError as e:
+    print(f"Configuration error: {e}")
+```
+
+## License
+
+MIT
