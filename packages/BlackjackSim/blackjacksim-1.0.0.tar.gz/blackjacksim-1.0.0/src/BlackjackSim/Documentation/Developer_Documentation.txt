@@ -1,0 +1,303 @@
+BlackJackSim Python Project Developer Documentation
+
+*** Casino Dealer hand play logic:
+
+Count_Max = First ace counts 11, any remaining aces count 1
+Count_Min = All aces count 1
+
+Dealer must hit on 16 or less and stand on 17 or more. Dealer busts on greater than 21.
+
+	If Count_Max <= 16, dealer must hit
+
+	If Count_Max >= 17, dealer must stand
+
+	If Count_Max > 21, that would be a bust, so then
+		If Count_Min <= 16, dealer must hit
+		if Count_Min >= 17, dealer must stand
+		if Count_Min > 21, then dealer busts
+
+	So, proceed to stand or bust using Count_Max,
+		If stand, then done, and report out Count_Max as final hand count
+		If bust, then proceed to stand or bust using Count_Min
+			If stand, then done, and report out Count_Min as final hand count
+			If bust, then report hand status as bust
+
+Some resutls: Playing 100,000 hands with dealer and player both using this logic:
+     Dealer Wins: 49056
+     Player Wins: 41231
+     Pushes: 9713
+     Games Played: 100000
+     Dealer % Wins: 49.056
+     Player % Wins: 41.231
+     Push %: 9.713
+
+
+
+*** Holye Player hand play logic:
+
+Always stand on 17
+
+Always hit on 12 and under
+
+For 13 - 16:
+	Stand, if dealer shows 6 or lower
+	Hit, if dealer shows 7 - 10, J, Q, K, or A
+
+Count an Ace as 1 up to 17 (e.g., hit 2-4-A, counting it as 7)
+
+So, trying to put all this together into a workflow...
+
+	Test hands for each outcome are shown in [].
+
+	Check Count_Max
+		If Count_Max > 17 and <= 21, then stand [A 7] Test 1
+		If Count_Max <= 17 or > 21, then check Count_Min [A 6]; [A 6 5] Test 2
+	Check Count_Min
+		If Count_Min > 21, then bust [A 6 5 K] Test 2
+		If Count_Min >= 17, then stand [A 6 5 7] Test 3
+		If Count_Min <= 12, then hit [A 6 5] Test 2, Test 3
+		If Count_Min >=13 and <= 16, then [A 6 5 2] Test 4
+			If dealer shows <= 6 (their one face up card), then stand (expecting dealer to hit and bust) [show = 6] Test 4
+			If dealer shows 7 - 10, J, Q, K, A, then hit [A 6 5 2 3] [show = 7] Test 5
+	After hitting, return to Check Count_Max
+
+	Construct the following test cases
+	Test 1 "Stand Max": Hand[A 7] Deck[...] show[...] Stand
+	Test 2 "Bust Min": Hand[A 6] Deck[5 K] show[...] Hit Hit Bust
+	Test 3 "stand min over seventeen": Hand[A 6] Deck[5 7] show[...] Hit Hit Stand
+	Test 4 "stand min on show six or under": Hand[A 6] Deck[5 2] show[6] Hit Hit Stand
+	Test 5 "stand min on show over six": Hand[A 6] Deck[5 2 3] show[7] Hit Hit Hit Stand
+
+	Some results: Playing 100,000 hands with dealer using Casino logic and player using this logic:
+		 Dealer Wins: 47803
+		 Player Wins: 43210
+		 Pushes: 8987
+		 Games Played: 100000
+		 Dealer % Wins: 47.803
+		 Player % Wins: 43.21
+		 Push %: 8.987
+
+*** Thinking about how to not pass Hand()s and Deck()s into PlayStrategy().play() ...
+
+	Hoyle player strategy requries the following "access" to the BlackJackSim: (Other current available strategies are same.)
+		(1) Hand.hand_info() - Couls use new BlackJackSim.player_hand_info() and BlackJackSim.dealer_hand_info()
+		The next two, (2) and (3), are used together...
+		(2) Hand.add_cards()  - Could use BlackJackSim.draw_for_player()
+		(3) Deck.draw() - Could use BlackJackSim.draw_for_player()
+		(4) Use new BlackJackSim.get_dealer_show() to get the dealer's face up show card
+
+	Landed on a solution of passing bound methods as arguments to the PlayStrategy().play() method.
+
+*** Thinking about how to implement splitting a player's hand when they are dealt a pair ***
+
+	BlackJackSim.play_game(...) after implementing splitting proceeds as follows:
+		Clear dealer, player, and split hands
+		Deal to dealer as needed - 2 cards, or 1 if dealer_show is provided as argument, or 0 if dealer_down is also provided as argument
+		Deal to player as needed - 0, 1, or 2 cards, depending on player_deal provided as argument
+		Check player and dealer hands for BlackJack
+			If one or both were dealt BlackJack, build GamePlayOutcome and return it
+			If no BlackJacks were dealt, play on
+				Test if player has a pair
+					Enquire of player strategy if the pair should be split
+						Transfer the 2nd card of the pair over to the split hand and draw another card into the split hand
+						Draw a replacement card for the player hand
+						Play the split hand using the player strategy
+				Play the player hand using the player strategy
+				Play the dealer hand using the dealer strategy
+				Build GamePlayOutCome and return it
+
+		Observations and thoughts:
+			(1) Can't just recursively call BlackJackSim.play_game(), because the recursive call would operate on the same BlackJackSim.player_hand data member
+				(a) Could we "recursively" create a new BlackJackSim object to play the second hand after the split?
+				(b) NOTE: Tried this ... and then realized it has the problem of playing a second dealer hand
+			(2) Have to be able to specify the dealer's whole deal, not just the show card.
+				NOTE: It was realized that this is silly reasoning. The dealer only every has one hand to play.
+			(3) Callers of BlackJackSim.play_game() are currently expecting to be returned a single GamePlayOutcome object, with the results of just one game.
+				(a) Could we modify play_game() to return a list or a tuple of GamePlayOutcome objects? The fact that more than one was returned would indicate a split had occurred.
+					(-) Existing callers must be modified to process the list or tuple correctly
+					(+) Seems more "natural" and less "hack-like" and easier to understand than option (b)
+					(+/-) All callers, to handle splits, must check if the list has more than one item in it or the tuple does and branch accordingly
+					(+) A list or tuple could be processed by a for loop
+					(+) A tuple is immutable, unlike a list
+					NOTE: Tried the tuple return concept, but through it out when we switched over to following observation (5) for the solution.
+				(b) Or, could we nest a second GamePlayOutcome object within the first, with the results of the second game of the split?
+					(-) Seems a little "contrived" and "hack-like", and harder to grasp what is the intent
+					(+) Existing callers function without modification, though would ignore the split game
+					(-) No processing of this nesting with a loop
+					(+/-) All callers, to handle splits, must include logic to see if their was a split (the nested object isn't None?) and branch accordingly
+					NOTE: Never tried this. Used the solution hypothesized in observation (5) instead.
+			(4) Can this get deeper ... that is, if the second card dealt to a split produces a pair, could the player split that?
+				(*) I'm (guessing) this isn't part of the casino split rule
+				(*) This should be a rate event
+				(*) But, the simulation logic needs to be able to prevent this from happening, because in theory the recursion would just keep going
+				NOTE: There is no concern with spliting a second time, under the circumstance that another pair is formed by dealing a second card
+				to one of the split hands. The second pair will not be split with the current implementation that follows the concept of observation (5).
+			(5) Now think a better solution is to add a split_hand = Hand() member to the BlackJackSim class, and use it to play
+				the second of the pair of spit hands when a split occurs. And to handle playing out this Hand() within play_game()
+				(a) And why not just embed the information for this split hand into the GamePlayOutcome() class, and not mess around with the complicated tuple.
+
+		As of 24-Jan-2024, Observation (5) is what is implemented in the code, and it tests out okay.
+
+*** Thinking about how to implement requesting input from user without having input(...) calls throughout the class heierarchy ***
+
+		Where is input(...) currently called?
+			(1) main.py, __main__
+			(2) PlayStrategy.py, InteractivePlayerPlayStrategy.split(), InteractivePlayerPlayStrategy.play() 
+
+		Possibilities:
+			(1) Send all input requests to a singleton, and let the singleton decide how to respond.
+				(+) Singelton guarantees the request will be handled
+				(*) Python implementation of singleton pattern: https://python-patterns.guide/gang-of-four/singleton/
+					This URL explains why it is best instead to use the Python Global Object Pattern: https://python-patterns.guide/python/module-globals/
+					I think, but am not certain, that I should be using the Prebound Method version of Global Object Pattern: https://python-patterns.guide/python/prebound-methods/
+			(2) Set up a chain of responsibility, using mix-in class to PlayStrategy, BlackJackSim, And a reworked main.py that has been turned into a class
+				(-) Feels overly complicated given that input requests are only coming from two "locations" in the code base
+
+		What should a request look like?
+				Enum request type:						Return Type:
+				YES_NO (e.g., Do you want to split?)	Bool: True (Yes), False (No)
+				HIT_STAND								Bool: True (Hit), False (Stand)
+				MENU (choose from a list)				Int: Index of item on the menu
+				NUMBER (e.g., games, batches)			Int: User entered integer value
+				CARDS									list of Card(), probably generated from user entered string
+
+		Some simplifying and improving thoughts after starting to implement:
+				(1) Let MENU cover YES_NO and HIT_STAND as specializations
+					(a) For MENU, caller will provide a dictionary where values are the string descriptions of each choice
+						to be presented to the user, and keys are the string response that will indicate having selected that option.
+						For example: {'h': 'Hit', 's': 'Stand'}. The "singleton" will be responsible for presenting a menu of choices
+						to the user, based on the values, and also responsible for returning a key to the caller. The caller will
+						also provide a "query preface" string to be presented by the singleton to explain the purpose of choosing
+						from the menu. For example, 'Player's hand: 2S QH.  Dealer shows: 8C.  '. The singleton, if using the terminal,
+						would assemble the dictionary into something like, 'Choose (h)Hit, (s)Stand: '
+					(b) For NUMBER, caller provides the "query preface" string (e.g., 'HOw many games do you want to automaticall play?') and an empty dictionary.
+						.Singleton queries user with something like, 'How many games do you want to automatically play?  Enter a number:  '.
+					(c) For CARDS, the caller provides the "query preface" string (e.g., 'Enter player deal, e.g., 10H 5S: ').
+						Singleton creates list of Card() objects based on string input by the user.
+	
+	
+	*** Thinking about how to "centralize" providing information to the user ***
+
+		Current list of where and how print(...) is used in the code base.
+		(1) UserResponseCollector.py - Okay, already centralized
+		(2) PlayStrategy.py, InteractivePlayStrategy.play(...) - Inform user an interactive hand is being played
+		(3) PlayStrategy.py, CasinoDealerPlayStrategy.play(...) - 5 instances of debug info, likely not needed with test cases in place
+		(4) Main.py, All the information that needs to be provided to the user about outcomes
+		(5) card.py Card.make_card_list_from_str(...) - Debug info, likely not needed with test cases in place
+		(6) BlackJackSim.py, BlackJackSim.play_game(...) - Inform user that a split is possible and what choice has been made
+		(7) BlackJackSim.py, BlackJackSim.play_games(...) - Inform user which game is currently being played ... basically progress update
+
+		What else could be added?
+		(8) Log to file player hand and HIT, STAND label, to use as training test data for an AI player strategy development
+
+		So ... what types of print(...) do we have?
+		(a) Information that MUST be provided to the user - (4){Ok}, (6){Done}, (7) {Done}
+		(b) Debug information, only provided to developer to help diagnose problems - (2)?, (3), (5) {all Done}
+		(c) Data logging to file, only provided when requested - (8) {Done}
+
+		Scenario (c):
+		Think I'm going to get started here just by using the logging module in python to handle case (8). To learn what that module
+		can do, and since it seems to be a good way to handle this case. Actually, what I need to log for (8) is in
+		HoylePlayerPlayStrategy.play(...). But I need to turn logging on and off at a higher level, at least in BlackJackSim.play_games(...)
+		and more likely in Main, as a option for the user, like, "Do you want to log hit/stand data while the games are played?", and
+		"What file name do you want to log to?". So would probably make good sense to centralize. Otherwise, commenting in and out even
+		for temporary use is going to be spread out in the code base.
+
+		Scenario (b):
+		(2), (3), (5): Remove the print(...) from the code base.
+
+		Scenarios (a):
+		Leave (4) alone. This is currently "the app", so it deciding to print(...) is fine.
+		Convert (6) to logger.debug(...), with configuration of logging such that this would go to stderr if main.py, __main__ set
+			level for the logger to debug. (NOTE: read code comments)
+		Convert (7) to logger.info(...), with configuration of logging such that this should go to stderr
+
+	*** Potentially useful information logging to file handlers using temporary files
+
+		https://stackoverflow.com/questions/23212435/permission-denied-to-write-to-my-temporary-file
+
+	*** Thinking through how to calculate the probability of winning each time a player is about to hit or stand
+
+		Concept: Each time a player is asked to hit or stand, play a bunch of hits and dealer hands. Then compute the probability
+		that hitting (1 card ony) or standing will win the hand.
+		
+		Why: (1) Think of it as a strategy where the player is capable of running such probabilities in his/her head. How does this compare
+		then to the results from the Hoyle strategy? (2) Combined with a non-infinite deck, like a 5-deck shute, this would be a basis
+		from which counting strategies could be developed and assessed.
+		
+		First implementation of this should be a method in BlackJackSim that computes the probability.
+		First "test" of this will be adding it to interactive play, as an optional "additional FYI" for the user to consider.
+		
+		
+		Let's try to work through this:
+		
+		(a) It would need to be a new PlayStrategy, let's call it ProbabilityPlayerPlayStrategy.
+		(b) It's play() method would need to be able to call back and get the entire dealer's hand, not just the show card.
+		(c) Steps in play are along these lines:
+			(1) We already know we don't have any blackjacks, or th
+
+		... blah... blah... blah
+
+		How would I use this type of information in an automated play strategy?
+			
+			(1) Is probability of winning by hitting greater than by standing, then hit, otherwise stand, OR
+			(2) Is probability of winning or pushing by hitting greater than by standing, then hit, otherwise stand
+			
+			(1) prioritizes winning, while (2) prioritizes at least maintaining stake by not losing
+			
+			With this as an automated paly strategy, and noting importantly that it currently includes the probability computed with the dealer's down card fixed,
+			so that it is not only a limit for, let's call it, perfect counting, but also really is like we can see into the dealer's hand.
+
+			Based on 1000 games, with 1000 trials each time there is a hit/stand decision, then results are:
+
+			Dealer wins 44.3 %
+			Player wins 45.6 %
+			Push 10.1 %
+			Dealer Blackjacks 5.2 %
+			Player Blackjacks 5.8 %
+
+			Modified this all so that the dealer's hidden card is also drawn on each trial, so that there is no leakage of hidden information.
+			Based on 1000 games, with 1000 trials each time there is a hit/stand decision, then results are:
+			
+			Dealer wins 49.3 %
+			Player wins 41.5 %
+			Push 9.2 %
+			Dealer Blackjacks 5.5 %
+			Player Blackjacks 5.4 %
+
+			So ... this does not appear to be better than Hoyle strategy. It is about the same as player using Casino Dealer strategy.
+
+			Need to ponder that, as it was my intuition that it should be similar or somewhat better than Hoyle, since it is more
+			situation specific than Hoyle. Some possibilities: (1) Implementation bug; (2) Not enough games/trials for good statistics (grasping at a straw);
+			(3) Prioritze winning over pushing? (4) Hitting too aggressively? Afterall, the Hoyle strategy has the element of standing
+			in hopes that dealer will bust. Maybe need a more complicated hit criteria based on the computed probabilites. Like only hit
+			if hit win/push probability is > X? Like maybe > 50%, because otherwise it's a coin toss, and may as well stand? But that
+			maybe doesn't make sense when the odds of winning are quite low wether you hit or stand?
+
+			Changed the hit/stand logic for auto play to hit only if win probability on hit exceeds win probability on stand, and got these results
+
+			Dealer Wins: 468
+			Player Wins: 463
+			Pushes: 69
+			Games Played: 1000
+			Dealer % Wins: 46.8
+			Player % Wins: 46.3
+			Push %: 6.9
+			Dealer BlackJacks: 44
+			Player BlackJacks: 41
+			Dealer % BlackJacks: 4.4
+			Player % BlackJacks: 4.1
+
+
+*** Preserving here an example of using assertRaises in a unit test as a go-by ***
+
+    def test_draw_too_many_cards(self):
+        from random import seed
+        seed(1234567890)
+        d = Deck()
+        # Note that the second argument to assertRaises(...) must be a callable, with its argument list then following.
+        # Or it might be easier to use the second sytax that has the "with".
+        self.assertRaises(AssertionError, d.draw, 53)
+        # Alternatively, this syntax also works.
+        #with self.assertRaises(AssertionError):
+        #    d.draw(53)
