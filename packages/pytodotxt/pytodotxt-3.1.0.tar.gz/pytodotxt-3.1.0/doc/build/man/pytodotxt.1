@@ -1,0 +1,934 @@
+.\" Man page generated from reStructuredText.
+.
+.
+.nr rst2man-indent-level 0
+.
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.TH "PYTODOTXT" "1" "Dec 18, 2025" "" "pytodotxt"
+.SH NAME
+pytodotxt \- pytodotxt 
+.SH INSTALLING
+.sp
+The easiest way to install pytodotxt is through \X'tty: link https://pypi.org/projects/pytodotxt/'\fI\%PyPi\fP\X'tty: link':
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pip install pytodotxt
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+If you’d rather download the source from the authoritative website, visit
+\X'tty: link https://vonshednob.cc/pytodotxt/releases.html'\fI\%https://vonshednob.cc/pytodotxt/releases.html\fP\X'tty: link' and get the signed source
+tarball from there.
+.SH CHANGELOG
+.sp
+This file contains the changes made between released versions.
+.sp
+The format is based on \X'tty: link https://keepachangelog.com/'\fI\%Keep a changelog\fP\X'tty: link' and the versioning tries to follow
+\X'tty: link https://semver.org'\fI\%Semantic Versioning\fP\X'tty: link'\&.
+.SS Not released yet
+.SS Added
+.INDENT 0.0
+.IP \(bu 2
+\fBTask\fP’s method to serialize itself can be configured through the \fBserializer\fP parameter and property
+.IP \(bu 2
+\fBTodoTxt\fP can be configured to use a different than the default serialization method (\fBserializer\fP parameter and property)
+.IP \(bu 2
+Two serialization methods: \fBserialize_pedantic\fP and \fBserialize_relaxed\fP\&. The pedantic variant is the default and provides the same behaviour as previous versions.
+.UNINDENT
+.sp
+The \fBserialize_relaxed\fP method uses a relaxed interpretation of the \X'tty: link https://github.com/todotxt/todo.txt'\fI\%todo.txt\fP\X'tty: link'
+description and will also produce todo.txt tasks that have a
+“completed on” date, but not a “created on” date (e.g. \fBx 2015\-07\-21 Prepare tea\fP).
+It will also insert a priority marker into completed tasks.
+.SS 3.0.0
+.SS Breaking change
+.INDENT 0.0
+.IP \(bu 2
+\fBTodoTxt.add()\fP now actually sets the \fBTask.linenr\fP property is accordance to the documentation of \fBTask.linenr\fP, starting at \fB0\fP (thanks to Adam)
+.IP \(bu 2
+\fBTodoTxt.save(target=\(dq...\(dq, safe=True)\fP will create the temporary file in the location of the target instead of the location of \fBself.filename\fP (which might be read\-only or on a different filesystem than the target)
+.UNINDENT
+.SS Fixed
+.INDENT 0.0
+.IP \(bu 2
+License specification in \fBpyproject.toml\fP is now a proper SPDX identifier
+.UNINDENT
+.SS 2.0.0
+.SS Changed
+.INDENT 0.0
+.IP \(bu 2
+Behaviour when encountering a \fBa:b:c\fP was changed to interprete this as key \fBa\fP with value \fBb:c\fP instead of \fBa:b\fP with value \fBc\fP
+.IP \(bu 2
+Switched to \fBpyproject.toml\fP
+.UNINDENT
+.SS 1.5.0
+.SS Fixed
+.INDENT 0.0
+.IP \(bu 2
+Blank lines in a \fBtodo.txt\fP file are ignored (they used to create a completely empty \fBTask\fP)
+.UNINDENT
+.SS 1.4.3
+.SS Fixed
+.INDENT 0.0
+.IP \(bu 2
+\fBTask.remove_attribute\fP used to remove everything after the first occurrence of a matching attribute name (thanks to \X'tty: link https://github.com/gal064'\fI\%Gal\fP\X'tty: link')
+.UNINDENT
+.SS 1.4.2
+.SS Fixed
+.INDENT 0.0
+.IP \(bu 2
+Saving an empty \fBTodoTxt\fP would result in a file with a single newline (\X'tty: link https://github.com/vonshednob/pytodotxt/issues/9'\fI\%#9\fP\X'tty: link')
+.UNINDENT
+.SS 1.4.1
+.SS Fixed
+.INDENT 0.0
+.IP \(bu 2
+Missing trailing line separator when serialising a \fBTodoTxt\fP
+.UNINDENT
+.SS Changed
+.INDENT 0.0
+.IP \(bu 2
+\fBTodoTxt.lines\fP calls \fBTodoTxt.build_lines\fP
+.UNINDENT
+.SS 1.4.0
+.SS Fixed
+.INDENT 0.0
+.IP \(bu 2
+\fBTask\fP would add the completion date to its \fBstr\fP representation of a completed task even if there was no creation date set
+.UNINDENT
+.SS Added
+.INDENT 0.0
+.IP \(bu 2
+\fBTodoTxtParser\fP to make the parsing of a \fBtodo.txt\fP file extendable
+.IP \(bu 2
+\fBTodoTxt.write_to_stream\fP to write to an io stream instead of to disk
+.IP \(bu 2
+Documentation. Finally.
+.UNINDENT
+.SS 1.3.0
+.SS Added
+.INDENT 0.0
+.IP \(bu 2
+\fB__repr__\fP for both \fBTask\fP and \fBTodoTxt\fP added (thanks to \X'tty: link https://github.com/seanbreckenridge'\fI\%Sean Breckenridge\fP\X'tty: link')
+.UNINDENT
+.SS 1.2.1
+.SS Fixed
+.INDENT 0.0
+.IP \(bu 2
+Fix crash when creating \fBTask()\fP without any line content
+.UNINDENT
+.SS 1.2.0
+.SS Added
+.INDENT 0.0
+.IP \(bu 2
+Detection of line ending when loading todo.txt files (\X'tty: link https://github.com/vonshednob/pytodotxt/issues/3'\fI\%#3\fP\X'tty: link', thanks to \X'tty: link https://github.com/chaotika'\fI\%chaotika\fP\X'tty: link')
+.IP \(bu 2
+Configurable line ending when saving todo.txt files (thanks to \X'tty: link https://github.com/chaotika'\fI\%chaotika\fP\X'tty: link')
+.UNINDENT
+.SS 1.1.0
+.SS Fixed
+.INDENT 0.0
+.IP \(bu 2
+A task that had no description used to crash pytodotxt when attempting to add an attribute (or a context or a project)
+.UNINDENT
+.SS Added
+.INDENT 0.0
+.IP \(bu 2
+\fBbare_description\fP function of \fBTask\fP to get the description without any properties or contexts/projects (\X'tty: link https://github.com/vonshednob/pytodotxt/issues/2'\fI\%#2\fP\X'tty: link')
+.UNINDENT
+.SS 1.0.7
+.SS Fixed
+.INDENT 0.0
+.IP \(bu 2
+Fixed \fB__getattr__\fP error (thanks to \X'tty: link https://github.com/sandervoerman'\fI\%sandervoerman\fP\X'tty: link')
+.UNINDENT
+.SS 1.0.6
+.SS Fixed
+.INDENT 0.0
+.IP \(bu 2
+Fixed regression when saving with “safe\-save” option
+.UNINDENT
+.SS 1.0.5
+.SS Fixed
+.INDENT 0.0
+.IP \(bu 2
+Bug when saving files on Windows with non\-ansi characters in the path name
+.UNINDENT
+.SS 1.0.4
+.SS Added
+.INDENT 0.0
+.IP \(bu 2
+TodoTxt can be configured for an encoding
+.UNINDENT
+.SS 1.0.3
+.SS Added
+.INDENT 0.0
+.IP \(bu 2
+Caching attributes to prevent repeated reparsing
+.IP \(bu 2
+Have a reference in a task to the file that it belongs to
+.IP \(bu 2
+Convenient access to task’s attributes by task.attr_name, eg. task.attr_due
+for due date
+.UNINDENT
+.SS 1.0.2
+.SS Fixed
+.INDENT 0.0
+.IP \(bu 2
+Bug fix when task consists only of a date
+.UNINDENT
+.SS 1.0.0
+.INDENT 0.0
+.IP \(bu 2
+Splitting package into the basic library and its user\-facing packages
+.UNINDENT
+.SH USAGE EXAMPLES
+.SS Adding a task to a todo.txt file
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+\(dq\(dq\(dqExample how to add a task to an existing todo.txt file\(dq\(dq\(dq
+import pytodotxt
+
+
+todotxt = pytodotxt.TodoTxt(\(dqtodo.txt\(dq)
+todotxt.parse()
+
+new_task = pytodotxt.Task(\(dq(A) Do some more stuff\(dq)
+todotxt.add(new_task)
+
+todotxt.save()
+
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Instead of calling \fBtodotxt.add\fP, you could of course also just call
+\fBtodotxt.tasks.append\fP, but \fBadd\fP will conveniently update
+\fBnew_task.todotxt\fP and \fBlinenr\fP\&.
+.SS Mark all tasks of a file as completed
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+\(dq\(dq\(dqHow to mark tasks as completed\(dq\(dq\(dq
+import datetime
+
+import pytodotxt
+
+
+todotxt = pytodotxt.TodoTxt(\(dqtodo.txt\(dq)
+todotxt.parse()
+
+for task in todotxt.parse():
+    if task.is_completed:
+        continue
+
+    task.completion_date = datetime.date.today()
+    task.is_completed = True
+
+todotxt.save()
+
+.EE
+.UNINDENT
+.UNINDENT
+.SS Have your own custom Task subclass
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+\(dq\(dq\(dqHow to customize your task class\(dq\(dq\(dq
+import pytodotxt
+
+
+class MyTask(pytodotxt.Task): pass
+
+
+todotxt = pytodotxt.TodoTxt(\(dqtodo.txt\(dq,
+                            parser=pytodotxt.TodoTxtParser(task_type=MyTask))
+
+for task in todotxt.parse():
+    assert isinstance(task, MyTask)
+
+.EE
+.UNINDENT
+.UNINDENT
+.SS Use the relaxed serialization when exporting
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+\(dq\(dq\(dqExample how to use the relaxed serialization\(dq\(dq\(dq
+import pytodotxt
+
+todotxt = pytodotxt.TodoTxt(\(dqtodo.txt\(dq,
+                            serializer=pytodotxt.serialize_relaxed)
+todotxt.parse()
+
+# Completed task with a completion date, but without creation date
+# would lose the completion date with the default (pedantic) serializer
+new_task = pytodotxt.Task(\(dqx 2010\-01\-01 Prepare new year\(dq)
+todotxt.add(new_task)
+
+todotxt.save()
+.EE
+.UNINDENT
+.UNINDENT
+.SH AUTHORS
+.sp
+For the time being, this project is authored by
+.INDENT 0.0
+.IP \(bu 2
+Robert Labudda (https://vonshednob.cc/pytodotxt)
+.UNINDENT
+.sp
+Gratitude goes to these individuals for their contribution:
+.INDENT 0.0
+.IP \(bu 2
+Sander Voerman (https://github.com/sandervoerman)
+.IP \(bu 2
+Markus Katharina Brechtel (https://github.com/chaotika)
+.IP \(bu 2
+purarue (https://github.com/purarue)
+.IP \(bu 2
+Sylvain303 (https://github.com/Sylvain303)
+.IP \(bu 2
+gal064 (https://github.com/gal064)
+.UNINDENT
+.SH LICENSE
+.sp
+MIT License
+.sp
+Copyright (c) 2020\-2025 Robert Labudda <\X'tty: link https://vonshednob.cc/pytodotxt/'\fI\%https://vonshednob.cc/pytodotxt/\fP\X'tty: link'>
+.sp
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the “Software”), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+.sp
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+.sp
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+.SH API REFERENCE
+.SS TodoTxt
+.INDENT 0.0
+.TP
+.B class pytodotxt.TodoTxt(filename, encoding=\(aqutf\-8\(aq, parser=None, serializer=None)
+Convenience wrapper for a single todo.txt file
+.sp
+The most common use is:
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.EX
+todotxt = TodoTxt(\(dqtodo.txt\(dq)
+todotxt.parse()
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Use the \fBtasks\fP property to access the parsed entries.
+.INDENT 7.0
+.TP
+.B __init__(filename, encoding=\(aqutf\-8\(aq, parser=None, serializer=None)
+Create a new TodoTxt instance from \fBfilename\fP
+.INDENT 7.0
+.TP
+.B Parameters
+.INDENT 7.0
+.IP \(bu 2
+\fBfilename\fP (\fBstr\fP or \fBpathlib.Path\fP) – the file you wish to use
+.IP \(bu 2
+\fBencoding\fP – what encoding to assume for the content of the file
+.IP \(bu 2
+\fBparser\fP (\fBTodoTxtParser\fP) – This may be a custom parser instance to use
+instead of the default \fBTodoTxtParser\fP\&.
+.IP \(bu 2
+\fBserializer\fP – The serializer that will be used when writing the
+tasks back to disk. Defaults to \fBserialize_pedantic\fP\&.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 7.0
+.TP
+.B add(task)
+Add a task to this container
+.sp
+You could also just \fBappend\fP to \fBself.tasks\fP,
+but this function call will also update the \fBtodotxt\fP and
+\fBlinenr\fP properties of \fBtask\fP\&.
+.INDENT 7.0
+.TP
+.B Parameters
+\fBtask\fP (\fBTask\fP) – The task that should be added to this todo.txt file
+.UNINDENT
+.UNINDENT
+.INDENT 7.0
+.TP
+.B build_lines()
+Returns a list of all tasks converted to string and sorted by linenr
+.UNINDENT
+.INDENT 7.0
+.TP
+.B property lines
+Convenience access to \fBself.build_lines\fP
+.UNINDENT
+.INDENT 7.0
+.TP
+.B parse()
+(Re)parse \fBself.filename\fP
+.sp
+This will try to detect the line separator of the file automatically
+and remember it as \fBself.linesep\fP for the time when you save the
+file back to disk.
+.sp
+Tasks will receive the same serializer as this TodoTxt instance.
+.INDENT 7.0
+.TP
+.B Returns
+the list of all tasks read from the file.
+.UNINDENT
+.UNINDENT
+.INDENT 7.0
+.TP
+.B save(target=None, safe=True, linesep=None)
+Save all tasks to disk
+.sp
+The \fBself.serializer\fP property will be used to serialize each
+individual task.
+.sp
+If \fBtarget\fP is not provided, the \fBfilename\fP property is being
+used as the target file to save to.
+.sp
+If \fBsafe\fP is set (the default), the file will first be written to
+a temporary file in the same folder as the target file and after the
+successful write to disk, it will be moved in place of \fBtarget\fP\&.
+This can cause trouble though with folders that are synchronised to
+some cloud storage.
+.sp
+With \fBlinesep\fP you can specify the line seperator. If it is not set
+it defaults to the systems default line seperator (or the detected
+line separator, if the file has been parsed from disk first).
+.INDENT 7.0
+.TP
+.B Parameters
+.INDENT 7.0
+.IP \(bu 2
+\fBtarget\fP – The file to save to, or \fBNone\fP to use \fBself.filename\fP
+.IP \(bu 2
+\fBsafe\fP – Whether or not to save the file in a way that does not
+destroy the previous file in case on errors.
+.IP \(bu 2
+\fBlinesep\fP – The line separator, or \fBNone\fP to use \fBself.linesep\fP
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 7.0
+.TP
+.B tasks
+The tasks of this file
+.UNINDENT
+.INDENT 7.0
+.TP
+.B write_to_stream(stream, linesep=None)
+Save all tasks, ordered by their line number, to the stream
+.INDENT 7.0
+.TP
+.B Parameters
+.INDENT 7.0
+.IP \(bu 2
+\fBstream\fP – an \fBio.IOBase\fP like stream that accepts bytes being
+written to it.
+.IP \(bu 2
+\fBlinesep\fP – the line separator, or \fBNone\fP to use \fBself.linesep\fP
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.SS Task
+.INDENT 0.0
+.TP
+.B class pytodotxt.Task(line=None, linenr=None, todotxt=None, serializer=None)
+A task of a todo.txt file
+.sp
+The usual way to create a task is to create it from an initial string:
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.EX
+task = Task(\(dq(B) some task\(dq)
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+or:
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.EX
+task = Task()
+task.parse(\(dq(B) some task\(dq)
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+The inverse operation to parsing is to convert the task to a string:
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.EX
+task = Task(\(dq(B) some task\(dq)
+assert str(task) == \(dq(B) some task\(dq
+.EE
+.UNINDENT
+.UNINDENT
+.INDENT 7.0
+.TP
+.B __init__(line=None, linenr=None, todotxt=None, serializer=None)
+Create a new task
+.sp
+If no parameters are provided, an empty task is created.
+.sp
+You may provide a todo.txtlike textual representation of a task
+with the \fBline\fP parameter, which will be parsed and all properties
+will be set accordingly.
+.sp
+In case this task belongs to a container file (\fBtodotxt\fP parameter),
+you can provide the \fBlinenr\fP, if you want to be able to refer to
+it later\-on.
+.sp
+Both \fBtodotxt\fP and \fBlinenr\fP parameter are entirely optional and
+are not connected to any functionality in this class’s functions.
+.sp
+To access \fBkey:value\fP attributes of the task, you can use the
+convenience notion of \fBtask[\(aqattr_key\(aq]\fP which will always result
+in a list. If the task doesn’t have the \fBkey\fP attribute that list
+will be empty though.
+.sp
+Note that attribute keys and values are split at the first \fB:\fP\&. That
+means a task with \fBa:b:c\fP is understood to have the key \fBa\fP and the
+value \fBb:c\fP\&.
+.INDENT 7.0
+.TP
+.B Parameters
+.INDENT 7.0
+.IP \(bu 2
+\fBline\fP – is the raw string representation (one line of a todo.txt
+file).
+.IP \(bu 2
+\fBlinenr\fP – is the line number within the \fBtodotxt\fP file, if any.
+This is purely optional.
+.IP \(bu 2
+\fBtodotxt\fP (\fBNone\fP or \fBTodoTxt\fP\&.) – the \fBTodoTxt\fP container to which this task belongs,
+if any.
+.IP \(bu 2
+\fBserializer\fP – What serializer funtion to use. Defaults to
+\fBserialize_pedantic\fP\&.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 7.0
+.TP
+.B add_attribute(key, value)
+Add the \fBkey:value\fP attribute to the end of the task
+.UNINDENT
+.INDENT 7.0
+.TP
+.B add_context(context)
+Add \fB@context\fP to the end of the task
+.INDENT 7.0
+.TP
+.B Parameters
+\fBcontext\fP – the name of the project, without the leading \fB@\fP
+.UNINDENT
+.UNINDENT
+.INDENT 7.0
+.TP
+.B add_project(project)
+Add \fB+project\fP to the end of the task
+.INDENT 7.0
+.TP
+.B Parameters
+\fBproject\fP – the name of the project, without the leading \fB+\fP
+.UNINDENT
+.UNINDENT
+.INDENT 7.0
+.TP
+.B append(text, add_space=True)
+Append \fBtext\fP to the end of the task
+.INDENT 7.0
+.TP
+.B Parameters
+.INDENT 7.0
+.IP \(bu 2
+\fBtext\fP – The text to append
+.IP \(bu 2
+\fBadd_space\fP – Whether or not to add a space before \fBtext\fP\&.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 7.0
+.TP
+.B property attributes
+A dict of all \fBkey:values\fP attributes
+.sp
+The values portion of the dictionary is always a list.
+.UNINDENT
+.INDENT 7.0
+.TP
+.B bare_description()
+The description of the task without contexts, projects or other attributes
+.sp
+Some parts of the description may look like attributes, but are not,
+like URLs. To make sure that these are not stripped from the
+description, add them to \fBKEYVALUE_ALLOW\fP\&.
+.UNINDENT
+.INDENT 7.0
+.TP
+.B completion_date
+\fBdatetime.date\fP of when the task was completed, or \fBNone\fP
+if no completion date given
+.UNINDENT
+.INDENT 7.0
+.TP
+.B property contexts
+A list of all \fB@context\fP attributes
+.UNINDENT
+.INDENT 7.0
+.TP
+.B creation_date
+\fBdatetime.date\fP of when the task was created, or \fBNone\fP
+if no creation date given
+.UNINDENT
+.INDENT 7.0
+.TP
+.B description
+The descriptive portion of the task (i.e. without the completion
+marker, dates, and priority)
+.UNINDENT
+.INDENT 7.0
+.TP
+.B is_completed
+Whether or not the task is completed
+.UNINDENT
+.INDENT 7.0
+.TP
+.B linenr
+Line number of this task within its todo.txt file (0\-based; the
+first task of a file will have \fBself.linenr == 0\fP). Do not count on
+this always being set!
+.UNINDENT
+.INDENT 7.0
+.TP
+.B parse(line)
+(Re)parse the task
+.sp
+\fBline\fP is the raw string representation of a task, i.e. one line
+of a todo.txt file.
+.UNINDENT
+.INDENT 7.0
+.TP
+.B priority
+Priority of the task, or \fBNone\fP if no priority given
+.UNINDENT
+.INDENT 7.0
+.TP
+.B property projects
+A list of all \fB+project\fP attributes
+.UNINDENT
+.INDENT 7.0
+.TP
+.B remove_attribute(key, value=None)
+Remove attribute \fBkey\fP from the task
+.sp
+If you provide a \fBvalue\fP only the attribute with that key
+and value is removed.
+If no \fBvalue\fP is provided all attributes with that key are removed.
+.INDENT 7.0
+.TP
+.B Parameters
+.INDENT 7.0
+.IP \(bu 2
+\fBkey\fP – The name of the attribute to remove.
+.IP \(bu 2
+\fBvalue\fP – The value of the attribute to remove.
+.UNINDENT
+.TP
+.B Returns
+\fBTrue\fP on success, otherwise \fBFalse\fP
+.UNINDENT
+.UNINDENT
+.INDENT 7.0
+.TP
+.B remove_context(context)
+Remove the first \fB@context\fP attribute from the description.
+.INDENT 7.0
+.TP
+.B Parameters
+\fBcontext\fP – the name of the context attribute to remove,
+without the leading \fB@\fP\&.
+.TP
+.B Returns
+\fBTrue\fP on success, otherwise \fBFalse\fP\&.
+.UNINDENT
+.UNINDENT
+.INDENT 7.0
+.TP
+.B remove_project(project)
+Remove the first \fB+project\fP attribute from the description.
+.INDENT 7.0
+.TP
+.B Parameters
+\fBproject\fP – the name of the project attribute to remove,
+without the leading \fB+\fP
+.TP
+.B Returns
+\fBTrue\fP on success, otherwise \fBFalse\fP\&.
+.UNINDENT
+.UNINDENT
+.INDENT 7.0
+.TP
+.B remove_tag(text, regex)
+Remove the first attribute \fBtext\fP from the description
+.INDENT 7.0
+.TP
+.B Parameters
+\fBregex\fP – The regular expression to use for matching the right
+type of attribute.
+.UNINDENT
+.UNINDENT
+.INDENT 7.0
+.TP
+.B replace_attribute(key, value, newvalue)
+Replace the value of key:value in place with key:newvalue
+.UNINDENT
+.INDENT 7.0
+.TP
+.B replace_context(context, newcontext)
+Replace the first occurrence of @context with @newcontext
+.UNINDENT
+.INDENT 7.0
+.TP
+.B replace_project(project, newproject)
+Replace the first occurrence of @project with @newproject
+.UNINDENT
+.INDENT 7.0
+.TP
+.B replace_tag(value, newvalue, regex)
+Replace the first \fBvalue\fP attribute with \fBnewvalue\fP
+.INDENT 7.0
+.TP
+.B Parameters
+\fBregex\fP – the regular expression to use for matching the right
+type of attribute
+.UNINDENT
+.UNINDENT
+.INDENT 7.0
+.TP
+.B serialize()
+Serialize this task.
+.sp
+Calls the configured serializer, which by default will
+return a todo.txt\-compatible string representation of this task.
+.UNINDENT
+.INDENT 7.0
+.TP
+.B serializer
+The serializer function to use.
+.UNINDENT
+.INDENT 7.0
+.TP
+.B todotxt
+The \fBTodoTxt\fP instance that this task belongs to. Do not count on
+this always being set!
+.UNINDENT
+.UNINDENT
+.SS TodoTxtParser
+.INDENT 0.0
+.TP
+.B class pytodotxt.TodoTxtParser(encoding=\(aqutf\-8\(aq, task_type=None)
+A parser for todo.txt\-like formatted strings or files
+.INDENT 7.0
+.TP
+.B __init__(encoding=\(aqutf\-8\(aq, task_type=None)
+Create a new todo.txt parser
+.INDENT 7.0
+.TP
+.B Parameters
+.INDENT 7.0
+.IP \(bu 2
+\fBencoding\fP – The encoding to assume for the parsing process
+.IP \(bu 2
+\fBtask_type\fP – A subclass of \fBTask\fP to use when parsing the tasks.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.INDENT 7.0
+.TP
+.B linesep
+The line separator. After running any of the parse functions, this
+property will be set to the line separator that was detected in the
+parsed object.
+.UNINDENT
+.INDENT 7.0
+.TP
+.B parse(target)
+Parse the given object
+.sp
+The behaviour of the parser depends a bit on what you pass in.
+It might be a bit surprising, but if you pass in a \fBstr\fP, \fBparse\fP
+will attempt to find tasks in that string.
+.sp
+If you want to parse a file and pass the filename, wrap it in
+\fBpathlib.Path\fP first or use \fBparse_file\fP directly.
+.sp
+When parsing is completed, you can query \fBlinesep\fP to see what
+the line separator was.
+.INDENT 7.0
+.TP
+.B Parameters
+\fBtarget\fP (\fBpathlib.Path\fP, \fBstr\fP, \fBbytes\fP, or any \fBio.IOBase\fP\&.) – the object to parse
+.TP
+.B Returns
+a list of tasks found in \fBtarget\fP
+.UNINDENT
+.UNINDENT
+.INDENT 7.0
+.TP
+.B parse_file(path)
+Parse the content of the file at \fBpath\fP
+.INDENT 7.0
+.TP
+.B Parameters
+\fBpath\fP – The file to parse
+.TP
+.B Returns
+a list of tasks found in \fBfile\fP\&.
+.UNINDENT
+.UNINDENT
+.INDENT 7.0
+.TP
+.B parse_str(text)
+Parse tasks from the given text
+.INDENT 7.0
+.TP
+.B Parameters
+\fBtext\fP – The string containing todo.txt\-like tasks
+.TP
+.B Returns
+a list of tasks found in \fBtext\fP
+.UNINDENT
+.UNINDENT
+.INDENT 7.0
+.TP
+.B parse_stream(stream)
+Parse an io stream
+.INDENT 7.0
+.TP
+.B Parameters
+\fBstream\fP – an io stream to read and parse tasks from
+.TP
+.B Returns
+a list of tasks found in \fBstream\fP
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.SS Serialization
+.INDENT 0.0
+.TP
+.B task.serialize_pedantic()
+Serialize the Task \fBtask\fP in a very strict manner
+.sp
+This serialisation mechanism interpretes the todo.txt standard in a
+restricted manner, not allowing priority markers in completed tasks
+nor “completed on” dates if there is no “created on” date.
+.sp
+The output of this format can still be parsed by pytodotxt.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B task.serialize_relaxed()
+Serialize the Task \fBtask\fP in a relaxed manner
+.sp
+This serialisation mechanism interpretes the todo.txt standard in a
+relaxed manner, allowing priority markers (“(A)”) in completed tasks
+and “completed on” dates even if there is no “created on” date.
+.sp
+The output of this format can still be parsed by pytodotxt.
+.UNINDENT
+.sp
+\fIpytodotxt\fP is a small library to access todo.txt\-like task lists in a
+convenient manner from Python.
+.sp
+The quickest possible way to use pytodotxt is to install it through pypi:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+pip install pytodotxt
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+And then access a \fBtodo.txt\fP through Python like this, for example to
+print all tasks that are not completed yet:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+import pytodotxt
+
+todotxt = pytodotxt.TodoTxt(\(aqtodo.txt\(aq)
+todotxt.parse()
+
+for task in todotxt.tasks:
+    if not task.is_completed:
+        print(task.description)
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+There are \fI\%more examples available\fP, but if you prefer, there’s
+also the full \fI\%API reference here\fP\&.
+.SH AUTHOR
+Robert Labudda
+.SH COPYRIGHT
+2025, Robert Labudda
+.\" Generated by docutils manpage writer.
+.
