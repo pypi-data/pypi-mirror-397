@@ -1,0 +1,487 @@
+#!/usr/bin/env python3
+
+# ----------------------------------------------------------------------------
+#
+#  Herkules
+#  ========
+#  Custom directory walker
+#
+#  Copyright (c) 2022-2025 Martin Zuther (https://www.mzuther.de/)
+#
+#  Redistribution and use in source and binary forms, with or without
+#  modification, are permitted provided that the following conditions
+#  are met:
+#
+#  1. Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer.
+#
+#  2. Redistributions in binary form must reproduce the above
+#     copyright notice, this list of conditions and the following
+#     disclaimer in the documentation and/or other materials provided
+#     with the distribution.
+#
+#  3. Neither the name of the copyright holder nor the names of its
+#     contributors may be used to endorse or promote products derived
+#     from this software without specific prior written permission.
+#
+#  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+#  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+#  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+#  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+#  COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+#  INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+#  (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#  SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+#  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+#  STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+#  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+#  OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+#  Thank you for using free software!
+#
+# ----------------------------------------------------------------------------
+
+import datetime
+import operator
+import os
+import pathlib
+import sys
+
+__version__ = '1.2.0'
+
+
+def _is_directory_included(
+    current_path,
+    dir_entry,
+    follow_symlinks,
+    selector,
+    modified_since,
+    modification_time_in_seconds,
+):
+    if not dir_entry.is_dir(follow_symlinks=follow_symlinks):
+        return False
+
+    # exclude directories
+    if current_path.name in selector['excluded_directory_names']:
+        return False
+
+    # include all directories
+    if modified_since is None:
+        return True
+
+    # directory has been modified
+    return modification_time_in_seconds >= modified_since
+
+
+def _is_file_included(
+    current_path,
+    dir_entry,
+    follow_symlinks,
+    selector,
+    modified_since,
+    modification_time_in_seconds,
+):
+    if not dir_entry.is_file(follow_symlinks=follow_symlinks):
+        return False
+
+    # exclude files
+    for file_name_pattern in selector['excluded_file_names']:
+        if current_path.match(file_name_pattern):
+            return False
+
+    # only include some files
+    for fileglob in selector['included_file_names']:
+        if current_path.match(fileglob):
+            break
+    else:
+        return False
+
+    # include all files
+    if modified_since is None:
+        return True
+
+    # file has been modified
+    return modification_time_in_seconds >= modified_since
+
+
+def _herkules_prepare(
+    root_directory,
+    selector,
+    modified_since,
+):
+    root_directory = pathlib.Path(root_directory)
+
+    if not selector:
+        selector = {}
+
+    if not selector.get('excluded_directory_names'):
+        selector['excluded_directory_names'] = []
+
+    if not selector.get('excluded_file_names'):
+        selector['excluded_file_names'] = []
+
+    # include all files if no globs are specified
+    if not selector.get('included_file_names'):
+        selector['included_file_names'] = ['*']
+
+    # UNIX timestamp, remove digital places after period
+    if isinstance(modified_since, datetime.datetime):
+        modified_since = modified_since.timestamp()
+
+    if modified_since:
+        modified_since = int(modified_since)
+
+    return (root_directory, selector, modified_since)
+
+
+def _convert_relative_to_root(
+    entries,
+    root_directory,
+):
+    entries_relative = []
+
+    # creating a new list should be faster than modifying the existing one
+    # in-place
+    for entry in entries:
+        entry['path'] = pathlib.Path(
+            entry['path'].relative_to(root_directory),
+        )
+
+        entries_relative.append(entry)
+
+    return entries_relative
+
+
+def _convert_flatten_paths(
+    entries,
+):
+    flattened_entries = [entry['path'] for entry in entries]
+
+    return flattened_entries
+
+
+def _convert_dict_of_dicts(
+    entries,
+    root_directory,
+):
+    sorted_entries = sorted(
+        entries,
+        key=lambda k: str(k['path']),
+    )
+
+    result = {}
+    for entry in sorted_entries:
+        # ensure correct types
+        current_path = pathlib.Path(entry['path'])
+        current_mtime = float(entry['mtime'])
+
+        entry['path'] = current_path
+        entry['mtime'] = current_mtime
+
+        entry_id = str(current_path)
+        result[entry_id] = entry
+
+    return result
+
+
+def herkules(
+    root_directory,
+    directories_first=True,
+    include_directories=False,
+    follow_symlinks=False,
+    selector=None,
+    modified_since=None,
+    relative_to_root=False,
+    add_metadata=False,
+):
+    found_entries = _herkules_recurse(
+        root_directory=root_directory,
+        directories_first=directories_first,
+        include_directories=include_directories,
+        follow_symlinks=follow_symlinks,
+        selector=selector,
+        modified_since=modified_since,
+        add_metadata=add_metadata,
+    )
+
+    if relative_to_root:
+        found_entries = _convert_relative_to_root(
+            found_entries,
+            root_directory,
+        )
+
+    if not add_metadata:
+        found_entries = _convert_flatten_paths(
+            found_entries,
+        )
+
+    return found_entries
+
+
+def _herkules_recurse(
+    root_directory,
+    directories_first,
+    include_directories,
+    follow_symlinks,
+    selector,
+    modified_since,
+    add_metadata,
+):
+    root_directory, selector, modified_since = _herkules_prepare(
+        root_directory=root_directory,
+        selector=selector,
+        modified_since=modified_since,
+    )
+
+    directories, files = _herkules_process(
+        root_directory=root_directory,
+        follow_symlinks=follow_symlinks,
+        selector=selector,
+        modified_since=modified_since,
+        add_metadata=add_metadata,
+    )
+
+    # sort results
+    directories.sort(key=operator.itemgetter('path'))
+    files.sort(key=operator.itemgetter('path'))
+
+    # collect results
+    found_entries = []
+
+    if not directories_first:
+        found_entries.extend(files)
+
+    # recurse
+    for current_directory in directories:
+        deep_found_entries = _herkules_recurse(
+            root_directory=current_directory['path'],
+            directories_first=directories_first,
+            include_directories=include_directories,
+            follow_symlinks=follow_symlinks,
+            selector=selector,
+            modified_since=modified_since,
+            add_metadata=add_metadata,
+        )
+
+        if include_directories:
+            found_entries.append(current_directory)
+
+        found_entries.extend(deep_found_entries)
+
+    if directories_first:
+        found_entries.extend(files)
+
+    return found_entries
+
+
+def _herkules_process(
+    root_directory,
+    follow_symlinks,
+    selector,
+    modified_since,
+    add_metadata,
+):
+    directories = []
+    files = []
+
+    # "os.scandir" minimizes system calls (including the retrieval of
+    # timestamps)
+    for dir_entry in os.scandir(root_directory):
+        current_path = root_directory / dir_entry.name
+
+        # "stat" is costly
+        if add_metadata or modified_since:
+            # only include paths modified after a given date; get timestamp of
+            # linked path, not of symlink
+            stat_result = dir_entry.stat(follow_symlinks=True)
+
+            # "st_mtime_ns" gets the exact timestamp, although nanoseconds may
+            # be missing or inexact; any file system idiosyncracies (Microsoft,
+            # I mean you!) shall be handled in the client code
+            modification_time_in_seconds = stat_result.st_mtime_ns / 1e9
+        else:
+            modification_time_in_seconds = None
+
+        # process directories
+        if _is_directory_included(
+            current_path=current_path,
+            dir_entry=dir_entry,
+            follow_symlinks=follow_symlinks,
+            selector=selector,
+            modified_since=modified_since,
+            modification_time_in_seconds=modification_time_in_seconds,
+        ):
+            directories.append(
+                {
+                    'path': current_path,
+                    'mtime': modification_time_in_seconds,
+                }
+            )
+        # process files
+        elif _is_file_included(
+            current_path=current_path,
+            dir_entry=dir_entry,
+            follow_symlinks=follow_symlinks,
+            selector=selector,
+            modified_since=modified_since,
+            modification_time_in_seconds=modification_time_in_seconds,
+        ):
+            files.append(
+                {
+                    'path': current_path,
+                    'mtime': modification_time_in_seconds,
+                }
+            )
+
+    return directories, files
+
+
+def herkules_diff_run(
+    original_paths_or_files,
+    root_directory,
+    directories_first=True,
+    include_directories=False,
+    follow_symlinks=False,
+    selector=None,
+    relative_to_root=False,
+):
+    actual_paths = herkules(
+        root_directory=root_directory,
+        directories_first=directories_first,
+        include_directories=include_directories,
+        follow_symlinks=follow_symlinks,
+        selector=selector,
+        relative_to_root=relative_to_root,
+        add_metadata=True,
+    )
+
+    differing_entries = herkules_diff(
+        original_paths_or_files,
+        actual_paths,
+        root_directory,
+    )
+
+    return differing_entries
+
+
+def _herkules_diff_prepare(
+    original_paths_or_files,
+    actual_paths_or_files,
+    root_directory,
+):
+    # entries must exist
+    if len(original_paths_or_files) < 1:
+        raise ValueError('"original_paths_or_files" contains no entries')
+
+    if len(actual_paths_or_files) < 1:
+        raise ValueError('"actual_paths_or_files" contains no entries')
+
+    original_entry = original_paths_or_files[0]
+    actual_entry = actual_paths_or_files[0]
+
+    # entries must contain metadata; this should catch most issues without
+    # impacting performance
+    if not (isinstance(original_entry, dict) and 'mtime' in original_entry):
+        raise ValueError('"original_paths_or_files" contains no metadata')
+
+    if not (isinstance(actual_entry, dict) and 'mtime' in actual_entry):
+        raise ValueError('"actual_paths_or_files" contains no metadata')
+
+    original_paths = _convert_dict_of_dicts(
+        original_paths_or_files,
+        root_directory,
+    )
+
+    actual_paths = _convert_dict_of_dicts(
+        actual_paths_or_files,
+        root_directory,
+    )
+
+    return original_paths, actual_paths
+
+
+def herkules_diff(
+    original_paths_or_files,
+    actual_paths_or_files,
+    root_directory,
+):
+    original_paths, actual_paths = _herkules_diff_prepare(
+        original_paths_or_files,
+        actual_paths_or_files,
+        root_directory,
+    )
+
+    differing_entries = {
+        'added': [],
+        'modified': [],
+        'deleted': [],
+    }
+
+    for entry_id in original_paths:
+        # check for deletion
+        if entry_id not in actual_paths:
+            original_entry = original_paths[entry_id]
+
+            differing_entries['deleted'].append(original_entry)
+        # check for modification
+        else:
+            original_entry = original_paths[entry_id]
+            actual_entry = actual_paths[entry_id]
+
+            original_mtime = original_entry['mtime']
+            actual_mtime = actual_entry['mtime']
+
+            if original_mtime != actual_mtime:
+                original_entry['mtime_diff'] = actual_mtime - original_mtime
+                differing_entries['modified'].append(original_entry)
+
+    for entry_id in actual_paths:
+        # check for creation
+        if entry_id not in original_paths:
+            actual_entry = actual_paths[entry_id]
+
+            differing_entries['added'].append(actual_entry)
+
+    return differing_entries
+
+
+def main_cli():  # pragma: no coverage
+    if len(sys.argv) < 2:
+        print()
+        print(f'version:   {__version__}')
+        print()
+        print(
+            'HERKULES:  ME WANT EAT DIRECTORIES.  PLEASE SHOW PLACE.  '
+            'THEN ME START EAT.'
+        )
+        print()
+        print(
+            'engineer:  please provide the root directory as first parameter.'
+        )
+        print()
+
+        exit(1)
+
+    SOURCE_DIR = sys.argv[1]
+
+    SELECTOR = {
+        'excluded_directory_names': [],
+        'excluded_file_names': [],
+        'included_file_names': [],
+    }
+
+    MODIFIED_SINCE = None
+
+    # import datetime
+    # MODIFIED_SINCE = datetime.datetime(2022, 12, 1).timestamp()
+
+    for current_path_name in herkules(
+        SOURCE_DIR,
+        selector=SELECTOR,
+        modified_since=MODIFIED_SINCE,
+    ):
+        print(current_path_name)
+
+
+if __name__ == '__main__':  # pragma: no coverage
+    main_cli()
