@@ -1,0 +1,257 @@
+name: Release to PyPI
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  validate:
+    name: Validate Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: get_version
+        run: |
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          echo "tag_version=$TAG_VERSION" >> $GITHUB_OUTPUT
+          echo "Tag version: $TAG_VERSION"
+
+      - name: Get version from __init__.py
+        id: get_pkg_version
+        run: |
+          PKG_VERSION=$(grep '__version__' src/adr/__init__.py | cut -d'"' -f2)
+          echo "pkg_version=$PKG_VERSION" >> $GITHUB_OUTPUT
+          echo "Package version: $PKG_VERSION"
+
+      - name: Verify version match
+        run: |
+          if [ "${{ steps.get_version.outputs.tag_version }}" != "${{ steps.get_pkg_version.outputs.pkg_version }}" ]; then
+            echo "Version mismatch!"
+            echo "   Git tag: v${{ steps.get_version.outputs.tag_version }}"
+            echo "   __init__.py: ${{ steps.get_pkg_version.outputs.pkg_version }}"
+            echo ""
+            echo "Please update src/adr/__init__.py version to match the git tag."
+            exit 1
+          fi
+          echo "Version match confirmed: ${{ steps.get_version.outputs.tag_version }}"
+
+      - name: Check CHANGELOG.md
+        run: |
+          if ! grep -q "\[${{ steps.get_version.outputs.tag_version }}\]" CHANGELOG.md; then
+            echo "Warning: Version ${{ steps.get_version.outputs.tag_version }} not found in CHANGELOG.md"
+            echo "Please update CHANGELOG.md before releasing"
+          else
+            echo "CHANGELOG.md contains entry for ${{ steps.get_version.outputs.tag_version }}"
+          fi
+
+  build:
+    name: Build Package
+    runs-on: ubuntu-latest
+    needs: validate
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install tox
+        run: |
+          uv pip install --system tox tox-uv
+
+      - name: Build package with tox
+        run: |
+          tox -e build
+
+      - name: Verify build
+        run: |
+          ls -lh dist/
+          if [ ! -f dist/dark_madr-*.whl ]; then
+            echo "Build failed: wheel not found"
+            exit 1
+          fi
+          echo "Build successful"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package
+          path: dist/
+          retention-days: 5
+
+  test-package:
+    name: Test Package Installation
+    runs-on: ubuntu-latest
+    needs: build
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package
+          path: dist/
+
+      - name: Install package
+        run: |
+          pip install dist/dark_madr-*.whl
+          adr --help
+          echo "Package installed successfully"
+
+  publish-pypi:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: [build, test-package]
+    environment: pypi
+    permissions:
+      id-token: write
+
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package
+          path: dist/
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Publish to PyPI
+        run: uv publish --trusted-publishing always
+
+  create-github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [validate, build, publish-pypi]
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package
+          path: dist/
+
+      - name: Extract release notes from CHANGELOG
+        id: changelog
+        run: |
+          VERSION=${{ steps.get_version.outputs.version }}
+          if grep -q "\[${VERSION}\]" CHANGELOG.md; then
+            awk "/^## \[${VERSION}\]/,/^## \[/{print}" CHANGELOG.md | sed '$d' > release_notes.md
+
+            cat >> release_notes.md << EOF
+
+          ## Installation
+
+          \`\`\`bash
+          pip install dark-madr==${{ steps.get_version.outputs.version }}
+          \`\`\`
+
+          ## Documentation
+
+          See the [README](https://github.com/m1yag1/adr.py/blob/v${{ steps.get_version.outputs.version }}/README.md) for full documentation.
+          EOF
+          else
+            cat > release_notes.md << EOF
+          Release v${{ steps.get_version.outputs.version }} of the ADR CLI tool.
+
+          ## Installation
+
+          \`\`\`bash
+          pip install dark-madr==${{ steps.get_version.outputs.version }}
+          \`\`\`
+
+          ## Documentation
+
+          See the [README](https://github.com/m1yag1/adr.py/blob/main/README.md) for full documentation.
+          EOF
+          fi
+
+          cat release_notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Release v${{ steps.get_version.outputs.version }}
+          body_path: release_notes.md
+          files: dist/*
+          draft: false
+          prerelease: ${{ contains(steps.get_version.outputs.version, '-') }}
+          generate_release_notes: false
+
+  notify:
+    name: Release Summary
+    runs-on: ubuntu-latest
+    needs: [validate, build, test-package, publish-pypi, create-github-release]
+    if: always()
+
+    steps:
+      - name: Get version
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Success summary
+        if: ${{ !contains(needs.*.result, 'failure') }}
+        run: |
+          echo "Release v${{ steps.get_version.outputs.version }} completed successfully!"
+          echo ""
+          echo "Validation: ${{ needs.validate.result }}"
+          echo "Build: ${{ needs.build.result }}"
+          echo "Test Package: ${{ needs.test-package.result }}"
+          echo "Publish to PyPI: ${{ needs.publish-pypi.result }}"
+          echo "GitHub Release: ${{ needs.create-github-release.result }}"
+          echo ""
+          echo "Package available at:"
+          echo "   - PyPI: https://pypi.org/project/dark-madr/${{ steps.get_version.outputs.version }}/"
+          echo "   - GitHub Release: https://github.com/m1yag1/adr.py/releases/tag/v${{ steps.get_version.outputs.version }}"
+
+      - name: Failure summary
+        if: ${{ contains(needs.*.result, 'failure') }}
+        run: |
+          echo "Release v${{ steps.get_version.outputs.version }} encountered failures"
+          echo ""
+          echo "Validation: ${{ needs.validate.result }}"
+          echo "Build: ${{ needs.build.result }}"
+          echo "Test Package: ${{ needs.test-package.result }}"
+          echo "Publish to PyPI: ${{ needs.publish-pypi.result }}"
+          echo "GitHub Release: ${{ needs.create-github-release.result }}"
+          echo ""
+          echo "Please check the logs and fix any issues before retrying."
+          exit 1
