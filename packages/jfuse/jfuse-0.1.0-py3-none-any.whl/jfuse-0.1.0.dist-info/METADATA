@@ -1,0 +1,178 @@
+Metadata-Version: 2.4
+Name: jfuse
+Version: 0.1.0
+Summary: JAX-based differentiable hydrological modeling framework implementing FUSE and routing
+Author-email: Darri Eythorsson <darri.eythorsson@ucalgary.ca>
+License: MIT
+Project-URL: Homepage, https://github.com/CH-Earth/jfuse
+Project-URL: Documentation, https://jfuse.readthedocs.io
+Project-URL: Repository, https://github.com/CH-Earth/jfuse
+Project-URL: Issues, https://github.com/CH-Earth/jfuse/issues
+Keywords: hydrology,jax,differentiable,machine-learning,fuse,routing,water-resources
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Scientific/Engineering :: Hydrology
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: jax>=0.4.20
+Requires-Dist: jaxlib>=0.4.20
+Requires-Dist: numpy>=1.24.0
+Requires-Dist: xarray>=2023.1.0
+Requires-Dist: netcdf4>=1.6.0
+Requires-Dist: pandas>=2.0.0
+Requires-Dist: optax>=0.1.7
+Requires-Dist: equinox>=0.11.0
+Requires-Dist: typing-extensions>=4.5.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0; extra == "dev"
+Requires-Dist: black>=23.0; extra == "dev"
+Requires-Dist: isort>=5.12; extra == "dev"
+Requires-Dist: mypy>=1.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+Provides-Extra: viz
+Requires-Dist: matplotlib>=3.7.0; extra == "viz"
+Requires-Dist: geopandas>=0.14.0; extra == "viz"
+Requires-Dist: contextily>=1.4.0; extra == "viz"
+Provides-Extra: gpu
+Requires-Dist: jax[cuda12_pip]>=0.4.20; extra == "gpu"
+Provides-Extra: all
+Requires-Dist: jfuse[dev,gpu,viz]; extra == "all"
+Dynamic: license-file
+
+# jFUSE: JAX Implementation of FUSE
+
+A fully differentiable JAX implementation of the Framework for Understanding Structural Errors (FUSE) hydrological model from Clark et al. (2008), with Muskingum-Cunge routing.
+
+## Features
+
+- **Fully differentiable**: Automatic differentiation through the entire model using JAX
+- **JIT-compiled**: Fast execution with XLA compilation
+- **FUSE decision file compatible**: Read standard FUSE decision files to configure model structure
+- **Muskingum-Cunge routing**: Network-based streamflow routing with adaptive parameters
+- **Gradient-based calibration**: Built-in calibration with optax optimizers
+- **GPU-ready**: Seamless scaling to GPU with JAX
+
+### Requirements
+- Python >= 3.9
+- JAX >= 0.4.0
+- equinox >= 0.11.0
+- optax >= 0.1.7
+- numpy
+- xarray (for NetCDF I/O)
+
+## Installation
+
+```bash
+# Clone or download the package
+git clone https://github.com/DarriEy/jFUSE.git
+cd jfuse
+
+# Install in development mode
+pip install -e .
+
+# Or install with all dependencies
+pip install -e ".[dev]"
+
+# Or install with PyPi
+pip install jfuse          # CPU
+pip install jfuse[gpu]     # CUDA
+```
+## Command Line Interface
+
+jFUSE provides a CLI compatible with FUSE file manager format:
+
+```bash
+# Run simulation
+jfuse run fm_catch.txt bow_at_banff
+
+# Run gradient-based calibration
+jfuse run fm_catch.txt bow_at_banff --mode=calib --method=gradient
+
+# Show file manager configuration
+jfuse info fm_catch.txt
+```
+
+## Download Example Data
+
+We provide a ready-to-use example dataset for jFUSE (lumped and distributed setups).
+
+Download the ZIP release asset and unzip it into a `data/` folder:
+
+```bash
+wget https://github.com/DarriEy/jFUSE/releases/download/v0.1.0/jfuse-example-data-v0.1.0.zip
+unzip jfuse-example-data-v0.1.0.zip
+mv jfuse-example-data-v0.1.0 data
+```
+
+## Lumped configuration example
+
+This example calibrates a lumped jFUSE model using ERA5 forcing.
+
+```bash
+jfuse run \
+  data/domain_Bow_at_Banff_lumped_era5/settings/FUSE/fm_catch.txt \
+  Bow_at_Banff_lumped_era5 \
+  --mode=calib \
+  --method=gradient \
+  --loss=kge \
+  --lr=0.01 \
+  --epochs=500 \
+  --plot
+```
+
+## Distributed configuration example
+
+This example calibrates a distributed jFUSE model using a Muskingum–Cunge routing network.
+
+```bash
+jfuse run \
+  data/domain_Bow_at_Banff_distributed/settings/FUSE/fm_catch.txt \
+  Bow_at_Banff_distributed \
+  --mode=calib \
+  --method=gradient \
+  --network=data/domain_Bow_at_Banff_distributed/settings/mizuRoute/topology.nc \
+  --obs-file=data/domain_Bow_at_Banff_distributed/observations/streamflow/preprocessed/Bow_at_Banff_distributed_streamflow_processed.csv \
+  --loss=kge,nse \
+  --lr=0.01 \
+  --epochs=1000 \
+  --plot
+```
+
+## Package Structure
+
+```
+jfuse/
+├── src/jfuse/
+│   ├── fuse/              # FUSE model implementation
+│   │   ├── config.py      # Model configuration & decision file parsing
+│   │   ├── model.py       # Main FUSE model
+│   │   ├── state.py       # States, parameters, forcing
+│   │   └── physics/       # Physical process modules
+│   ├── routing/           # Muskingum-Cunge routing
+│   │   ├── muskingum.py   # Routing physics
+│   │   └── network.py     # River network topology
+│   ├── coupled.py         # FUSE + routing integration
+│   ├── optim/             # Calibration utilities
+│   │   └── calibration.py # Gradient-based calibration
+│   └── io/                # NetCDF I/O utilities
+└── README.md
+```
+
+## License
+
+MIT License - see LICENSE file for details.
+
+## References
+
+- Clark, M. P., et al. (2008). Framework for Understanding Structural Errors (FUSE). Water Resources Research, 44, W00B02.
+- Cunge, J. A. (1969). On the subject of a flood propagation computation method (Muskingum method). Journal of Hydraulic Research, 7(2), 205-230.
