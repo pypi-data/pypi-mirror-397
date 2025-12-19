@@ -1,0 +1,20 @@
+mutation containerIpAddressRangeCreateFromFile ( $accountId:ID! $createIpAddressRangeContainerFromFileInput:CreateIpAddressRangeContainerFromFileInput!) {
+	container ( accountId:$accountId ) {
+		ipAddressRange {
+			createFromFile ( input:$createIpAddressRangeContainerFromFileInput   ) {
+				container {
+					id
+					name
+					description
+					size
+					audit {
+						createdBy
+						lastModifiedBy
+						lastModifiedAt
+						createdAt
+					}
+				}
+			}
+		}
+	}	
+}

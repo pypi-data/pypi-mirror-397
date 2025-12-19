@@ -1,0 +1,18 @@
+query containerList ( $accountId:ID! $containerSearchInput:ContainerSearchInput!) {
+	container ( accountId:$accountId ) {
+		list ( input:$containerSearchInput  )  {
+			containers {
+				id
+				name
+				description
+				size
+				audit {
+					createdBy
+					lastModifiedBy
+					lastModifiedAt
+					createdAt
+				}
+			}
+		}
+	}	
+}
