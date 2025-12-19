@@ -1,0 +1,78 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vibe-checkr"
+version = "0.1.0"
+description = "Scan, lock, and enforce your design system."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.11"
+authors = [
+    {name = "Yagiz", email = "hello@vibecheck.dev"}
+]
+keywords = [
+    "design-system",
+    "tailwind",
+    "css",
+    "linter",
+    "design review",
+    "ai",
+    "vibe-coding",
+    "mcp"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "click>=8.1.0",
+    "rich>=13.0.0",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+mcp = [
+    "mcp>=0.1.0",
+]
+
+[project.scripts]
+vibe = "vibe.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/ihlamury/vibe-check"
+Repository = "https://github.com/ihlamury/vibe-check"
+Issues = "https://github.com/ihlamury/vibe-check/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["vibe*"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "I", "N", "W"]
+ignore = []
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
