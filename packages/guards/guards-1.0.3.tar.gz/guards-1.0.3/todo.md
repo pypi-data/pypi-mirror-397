@@ -1,0 +1,2 @@
+- Unit testing for the library
+- Publish to PyPi
