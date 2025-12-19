@@ -1,0 +1,124 @@
+[build-system]
+requires = [
+    "hatchling",
+]
+build-backend = "hatchling.build"
+
+[project]
+name = "xwschema"
+dynamic = [
+    "version",
+]
+description = "Convenience wrapper for exonware-xwschema - provides 'import xwschema' alias"
+readme = "README.md"
+requires-python = ">=3.12"
+keywords = [
+    "schema",
+    "validation",
+    "structure",
+    "definition",
+    "data-types",
+    "exonware",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "exonware-xwschema",
+]
+authors = [
+    { name = "Eng. Muhammad AlShehri", email = "connect@exonware.com" },
+]
+
+[project.license]
+text = "MIT"
+
+[project.optional-dependencies]
+dev = [
+    "exonware-xwschema[dev]",
+]
+lazy = [
+    "exonware-xwschema[lazy]",
+]
+full = [
+    "exonware-xwschema[full]",
+]
+
+[project.urls]
+Homepage = "https://exonware.com"
+Repository = "https://github.com/exonware/xwschema"
+Documentation = "https://github.com/exonware/xwschema#readme"
+
+[tool.black]
+line-length = 88
+target-version = [
+    "py312",
+]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_any_generics = true
+disallow_untyped_calls = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]
+python_files = [
+    "test_*.py",
+]
+python_classes = [
+    "Test*",
+]
+python_functions = [
+    "test_*",
+]
+addopts = "-v --tb=short -x --strict-markers"
+markers = [
+    "xwschema_core: Core functionality tests (20% tests for 80% value)",
+    "xwschema_unit: Unit tests for individual components",
+    "xwschema_integration: Integration tests between components",
+]
+
+[tool.hatch.version]
+path = "src/exonware/xwschema/version.py"
+
+[tool.hatch.build.targets.wheel]
+only-include = [
+    "README.md",
+    "src/xwschema_wrapper.py",
+]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/docs",
+    "/examples",
+    "/README.md",
+    "/LICENSE",
+    "/requirements.txt",
+    "/.github",
+]
