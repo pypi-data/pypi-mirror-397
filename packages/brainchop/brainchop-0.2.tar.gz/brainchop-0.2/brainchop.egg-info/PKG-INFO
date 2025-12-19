@@ -1,0 +1,117 @@
+Metadata-Version: 2.4
+Name: brainchop
+Version: 0.2
+Summary: Portable and lightweight brain segmentation using tinygrad
+Author-email: Mike Doan <spikedoanz@gmail.com>
+License: MIT
+Project-URL: Homepage, https://github.com/neuroneural/brainchop-cli
+Project-URL: Repository, https://github.com/neuroneural/brainchop-cli
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy
+Requires-Dist: tinygrad
+Requires-Dist: niimath>=1.0.20250804
+Requires-Dist: requests
+Requires-Dist: safetensors
+Provides-Extra: all
+Requires-Dist: mkdocs; extra == "all"
+Requires-Dist: mkdocs-material; extra == "all"
+Requires-Dist: mkdocstrings[python]; extra == "all"
+Requires-Dist: pytest; extra == "all"
+Requires-Dist: ruff; extra == "all"
+Dynamic: license-file
+
+# BrainChop
+
+BrainChop is a lightweight tool for brain segmentation that runs on pretty much everything.
+
+---
+
+## Installation
+
+```bash
+pip install brainchop
+```
+
+For development (includes docs, testing):
+
+```bash
+pip install -e ".[all]"
+```
+
+## CLI Usage
+
+```bash
+# Segment a brain MRI
+brainchop input.nii.gz -o output.nii.gz
+
+# List available models
+brainchop --list
+
+# Use a specific model
+brainchop input.nii.gz -m subcortical -o output.nii.gz
+
+# Skull stripping
+brainchop input.nii.gz --skull-strip -o brain.nii.gz
+
+# With BEAM optimization
+brainchop input.nii.gz -m tissue_fast --beam 2 -o output.nii.gz
+```
+
+## Python API
+
+```python
+import brainchop as bc
+
+# List available models
+print(bc.list_models())
+
+# Load, segment, save
+vol = bc.load("input.nii.gz")
+result = bc.segment(vol, "subcortical")
+bc.save(result, "output.nii.gz")
+
+# With BEAM optimization
+bc.optimize("tissue_fast", beam=2)
+result = bc.segment(vol, "tissue_fast")
+
+# Export to WebGPU
+bc.export("tissue_fast", "/tmp/export")
+```
+
+## Documentation
+
+Serve docs locally:
+
+```bash
+mkdocs serve -w brainchop/
+```
+
+## Docker
+
+```bash
+git clone git@github.com:neuroneural/brainchop-cli.git
+cd brainchop-cli
+docker build -t brainchop .
+```
+
+Then to run:
+
+```bash
+docker run --rm -it --device=nvidia.com/gpu=all -v [[output directory]]:/app brainchop [[input nifti file]] -o [[output nifti file]]
+```
+
+## Requirements
+
+- Python 3.10+
+- tinygrad
+- numpy
+- requests
+
+## License
+
+MIT License
