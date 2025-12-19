@@ -1,0 +1,571 @@
+from abc import ABC, abstractmethod
+from collections.abc import Sequence
+from functools import cached_property
+
+import pandas as pd
+from kumoapi.model_plan import MissingType
+from kumoapi.source_table import UnavailableSourceTable
+from kumoapi.table import Column as ColumnDefinition
+from kumoapi.table import TableDefinition
+from kumoapi.typing import Stype
+from typing_extensions import Self
+
+from kumoai import in_notebook, in_snowflake_notebook
+from kumoai.experimental.rfm.base import Column, DataBackend, SourceColumn
+from kumoai.experimental.rfm.infer import (
+    contains_categorical,
+    contains_id,
+    contains_multicategorical,
+    contains_timestamp,
+    infer_primary_key,
+    infer_time_column,
+)
+
+
+class Table(ABC):
+    r"""A :class:`Table` fully specifies the relevant metadata of a single
+    table, *i.e.* its selected columns, data types, semantic types, primary
+    keys and time columns.
+
+    Args:
+        name: The name of this table.
+        columns: The selected columns of this table.
+        primary_key: The name of the primary key of this table, if it exists.
+        time_column: The name of the time column of this table, if it exists.
+        end_time_column: The name of the end time column of this table, if it
+            exists.
+    """
+    def __init__(
+        self,
+        name: str,
+        columns: Sequence[str] | None = None,
+        primary_key: MissingType | str | None = MissingType.VALUE,
+        time_column: str | None = None,
+        end_time_column: str | None = None,
+    ) -> None:
+
+        self._name = name
+        self._primary_key: str | None = None
+        self._time_column: str | None = None
+        self._end_time_column: str | None = None
+
+        if columns is None:
+            columns = list(self._source_column_dict.keys())
+
+        if len(self._source_column_dict) == 0:
+            raise ValueError(f"Table '{name}' does not hold any column with "
+                             f"a supported data type")
+
+        if isinstance(primary_key, MissingType):
+            primary_key = self._source_primary_key
+
+        self._columns: dict[str, Column] = {}
+        for column_name in columns:
+            self.add_column(column_name)
+
+        if primary_key is not None:
+            if primary_key not in self:
+                self.add_column(primary_key)
+            self.primary_key = primary_key
+
+        if time_column is not None:
+            if time_column not in self:
+                self.add_column(time_column)
+            self.time_column = time_column
+
+        if end_time_column is not None:
+            if end_time_column not in self:
+                self.add_column(end_time_column)
+            self.end_time_column = end_time_column
+
+    @property
+    def name(self) -> str:
+        r"""The name of this table."""
+        return self._name
+
+    # Column ##################################################################
+
+    def has_column(self, name: str) -> bool:
+        r"""Returns ``True`` if this table holds a column with name ``name``;
+        ``False`` otherwise.
+        """
+        return name in self._columns
+
+    def column(self, name: str) -> Column:
+        r"""Returns the data column named with name ``name`` in this table.
+
+        Args:
+            name: The name of the column.
+
+        Raises:
+            KeyError: If ``name`` is not present in this table.
+        """
+        if not self.has_column(name):
+            raise KeyError(f"Column '{name}' not found in table '{self.name}'")
+        return self._columns[name]
+
+    @property
+    def columns(self) -> list[Column]:
+        r"""Returns a list of :class:`Column` objects that represent the
+        columns in this table.
+        """
+        return list(self._columns.values())
+
+    def add_column(self, name: str) -> Column:
+        r"""Adds a column to this table.
+
+        Args:
+            name: The name of the column.
+
+        Raises:
+            KeyError: If ``name`` is already present in this table.
+        """
+        if name in self:
+            raise KeyError(f"Column '{name}' already exists in table "
+                           f"'{self.name}'")
+
+        if name not in self._source_column_dict:
+            raise KeyError(f"Column '{name}' does not exist in the underlying "
+                           f"source table")
+
+        dtype = self._source_column_dict[name].dtype
+
+        try:
+            ser = self._sample_df[name]
+            if contains_id(ser, name, dtype):
+                stype = Stype.ID
+            elif contains_timestamp(ser, name, dtype):
+                stype = Stype.timestamp
+            elif contains_multicategorical(ser, name, dtype):
+                stype = Stype.multicategorical
+            elif contains_categorical(ser, name, dtype):
+                stype = Stype.categorical
+            else:
+                stype = dtype.default_stype
+        except Exception as e:
+            raise RuntimeError(f"Could not obtain semantic type for column "
+                               f"'{name}' in table '{self.name}'. Change "
+                               f"the data type of the column in the source "
+                               f"table or remove it from the table.") from e
+
+        self._columns[name] = Column(
+            name=name,
+            stype=stype,
+            dtype=dtype,
+        )
+
+        return self._columns[name]
+
+    def remove_column(self, name: str) -> Self:
+        r"""Removes a column from this table.
+
+        Args:
+            name: The name of the column.
+
+        Raises:
+            KeyError: If ``name`` is not present in this table.
+        """
+        if name not in self:
+            raise KeyError(f"Column '{name}' not found in table '{self.name}'")
+
+        if self._primary_key == name:
+            self.primary_key = None
+        if self._time_column == name:
+            self.time_column = None
+        if self._end_time_column == name:
+            self.end_time_column = None
+        del self._columns[name]
+
+        return self
+
+    # Primary key #############################################################
+
+    def has_primary_key(self) -> bool:
+        r"""Returns ``True``` if this table has a primary key; ``False``
+        otherwise.
+        """
+        return self._primary_key is not None
+
+    @property
+    def primary_key(self) -> Column | None:
+        r"""The primary key column of this table.
+
+        The getter returns the primary key column of this table, or ``None`` if
+        no such primary key is present.
+
+        The setter sets a column as a primary key on this table, and raises a
+        :class:`ValueError` if the primary key has a non-ID semantic type or
+        if the column name does not match a column in the data frame.
+        """
+        if self._primary_key is None:
+            return None
+        return self[self._primary_key]
+
+    @primary_key.setter
+    def primary_key(self, name: str | None) -> None:
+        if name is not None and name == self._time_column:
+            raise ValueError(f"Cannot specify column '{name}' as a primary "
+                             f"key since it is already defined to be a time "
+                             f"column")
+        if name is not None and name == self._end_time_column:
+            raise ValueError(f"Cannot specify column '{name}' as a primary "
+                             f"key since it is already defined to be an end "
+                             f"time column")
+
+        if self.primary_key is not None:
+            self.primary_key._is_primary_key = False
+
+        if name is None:
+            self._primary_key = None
+            return
+
+        self[name].stype = Stype.ID
+        self[name]._is_primary_key = True
+        self._primary_key = name
+
+    # Time column #############################################################
+
+    def has_time_column(self) -> bool:
+        r"""Returns ``True`` if this table has a time column; ``False``
+        otherwise.
+        """
+        return self._time_column is not None
+
+    @property
+    def time_column(self) -> Column | None:
+        r"""The time column of this table.
+
+        The getter returns the time column of this table, or ``None`` if no
+        such time column is present.
+
+        The setter sets a column as a time column on this table, and raises a
+        :class:`ValueError` if the time column has a non-timestamp semantic
+        type or if the column name does not match a column in the data frame.
+        """
+        if self._time_column is None:
+            return None
+        return self[self._time_column]
+
+    @time_column.setter
+    def time_column(self, name: str | None) -> None:
+        if name is not None and name == self._primary_key:
+            raise ValueError(f"Cannot specify column '{name}' as a time "
+                             f"column since it is already defined to be a "
+                             f"primary key")
+        if name is not None and name == self._end_time_column:
+            raise ValueError(f"Cannot specify column '{name}' as a time "
+                             f"column since it is already defined to be an "
+                             f"end time column")
+
+        if self.time_column is not None:
+            self.time_column._is_time_column = False
+
+        if name is None:
+            self._time_column = None
+            return
+
+        self[name].stype = Stype.timestamp
+        self[name]._is_time_column = True
+        self._time_column = name
+
+    # End Time column #########################################################
+
+    def has_end_time_column(self) -> bool:
+        r"""Returns ``True`` if this table has an end time column; ``False``
+        otherwise.
+        """
+        return self._end_time_column is not None
+
+    @property
+    def end_time_column(self) -> Column | None:
+        r"""The end time column of this table.
+
+        The getter returns the end time column of this table, or ``None`` if no
+        such end time column is present.
+
+        The setter sets a column as an end time column on this table, and
+        raises a :class:`ValueError` if the end time column has a non-timestamp
+        semantic type or if the column name does not match a column in the data
+        frame.
+        """
+        if self._end_time_column is None:
+            return None
+        return self[self._end_time_column]
+
+    @end_time_column.setter
+    def end_time_column(self, name: str | None) -> None:
+        if name is not None and name == self._primary_key:
+            raise ValueError(f"Cannot specify column '{name}' as an end time "
+                             f"column since it is already defined to be a "
+                             f"primary key")
+        if name is not None and name == self._time_column:
+            raise ValueError(f"Cannot specify column '{name}' as an end time "
+                             f"column since it is already defined to be a "
+                             f"time column")
+
+        if self.end_time_column is not None:
+            self.end_time_column._is_end_time_column = False
+
+        if name is None:
+            self._end_time_column = None
+            return
+
+        self[name].stype = Stype.timestamp
+        self[name]._is_end_time_column = True
+        self._end_time_column = name
+
+    # Metadata ################################################################
+
+    @property
+    def metadata(self) -> pd.DataFrame:
+        r"""Returns a :class:`pandas.DataFrame` object containing metadata
+        information about the columns in this table.
+
+        The returned dataframe has columns ``name``, ``dtype``, ``stype``,
+        ``is_primary_key``, ``is_time_column`` and ``is_end_time_column``,
+        which provide an aggregate view of the properties of the columns of
+        this table.
+
+        Example:
+            >>> # doctest: +SKIP
+            >>> import kumoai.experimental.rfm as rfm
+            >>> table = rfm.LocalTable(df=..., name=...).infer_metadata()
+            >>> table.metadata
+                name        dtype    stype  is_primary_key  is_time_column  is_end_time_column
+            0   CustomerID  float64  ID     True            False           False
+        """  # noqa: E501
+        cols = self.columns
+
+        return pd.DataFrame({
+            'name':
+            pd.Series(dtype=str, data=[c.name for c in cols]),
+            'dtype':
+            pd.Series(dtype=str, data=[c.dtype for c in cols]),
+            'stype':
+            pd.Series(dtype=str, data=[c.stype for c in cols]),
+            'is_primary_key':
+            pd.Series(
+                dtype=bool,
+                data=[self._primary_key == c.name for c in cols],
+            ),
+            'is_time_column':
+            pd.Series(
+                dtype=bool,
+                data=[self._time_column == c.name for c in cols],
+            ),
+            'is_end_time_column':
+            pd.Series(
+                dtype=bool,
+                data=[self._end_time_column == c.name for c in cols],
+            ),
+        })
+
+    def print_metadata(self) -> None:
+        r"""Prints the :meth:`~metadata` of this table."""
+        num_rows_repr = ''
+        if self._num_rows is not None:
+            num_rows_repr = ' ({self._num_rows:,} rows)'
+
+        if in_snowflake_notebook():
+            import streamlit as st
+            md_repr = f"### 🏷️ Metadata of Table `{self.name}`{num_rows_repr}"
+            st.markdown(md_repr)
+            st.dataframe(self.metadata, hide_index=True)
+        elif in_notebook():
+            from IPython.display import Markdown, display
+            md_repr = f"### 🏷️ Metadata of Table `{self.name}`{num_rows_repr}"
+            display(Markdown(md_repr))
+            df = self.metadata
+            try:
+                if hasattr(df.style, 'hide'):
+                    display(df.style.hide(axis='index'))  # pandas=2
+                else:
+                    display(df.style.hide_index())  # pandas<1.3
+            except ImportError:
+                print(df.to_string(index=False))  # missing jinja2
+        else:
+            print(f"🏷️ Metadata of Table '{self.name}'{num_rows_repr}")
+            print(self.metadata.to_string(index=False))
+
+    def infer_primary_key(self, verbose: bool = True) -> Self:
+        r"""Infers the primary key in this table.
+
+        Args:
+            verbose: Whether to print verbose output.
+        """
+        if self.has_primary_key():
+            return self
+
+        def _set_primary_key(primary_key: str) -> None:
+            self.primary_key = primary_key
+            if verbose:
+                print(f"Detected primary key '{primary_key}' in table "
+                      f"'{self.name}'")
+
+        if primary_key := self._source_primary_key:
+            _set_primary_key(primary_key)
+            return self
+
+        unique_keys = [
+            column.name for column in self._source_column_dict.values()
+            if column.is_unique_key
+        ]
+        if len(unique_keys) == 1:  # NOTE No composite keys yet.
+            _set_primary_key(unique_keys[0])
+            return self
+
+        candidates = [
+            column.name for column in self.columns if column.stype == Stype.ID
+        ]
+        if len(candidates) == 0:
+            for column in self.columns:
+                if self.name.lower() == column.name.lower():
+                    candidates.append(column.name)
+                elif (self.name.lower().endswith('s')
+                      and self.name.lower()[:-1] == column.name.lower()):
+                    candidates.append(column.name)
+
+        if primary_key := infer_primary_key(
+                table_name=self.name,
+                df=self._sample_df,
+                candidates=candidates,
+        ):
+            _set_primary_key(primary_key)
+            return self
+
+        return self
+
+    def infer_time_column(self, verbose: bool = True) -> Self:
+        r"""Infers the time column in this table.
+
+        Args:
+            verbose: Whether to print verbose output.
+        """
+        if self.has_time_column():
+            return self
+
+        candidates = [
+            column.name for column in self.columns
+            if column.stype == Stype.timestamp
+            and column.name != self._end_time_column
+        ]
+
+        if time_column := infer_time_column(
+                df=self._sample_df,
+                candidates=candidates,
+        ):
+            self.time_column = time_column
+
+            if verbose:
+                print(f"Detected time column '{time_column}' in table "
+                      f"'{self.name}'")
+
+        return self
+
+    def infer_metadata(self, verbose: bool = True) -> Self:
+        r"""Infers metadata, *i.e.*, primary keys and time columns, in this
+        table.
+
+        Args:
+            verbose: Whether to print verbose output.
+        """
+        logs = []
+
+        if not self.has_primary_key():
+            self.infer_primary_key(verbose=False)
+            if self.has_primary_key():
+                logs.append(f"primary key '{self._primary_key}'")
+
+        if not self.has_time_column():
+            self.infer_time_column(verbose=False)
+            if self.has_time_column():
+                logs.append(f"time column '{self._time_column}'")
+
+        if verbose and len(logs) > 0:
+            print(f"Detected {' and '.join(logs)} in table '{self.name}'")
+
+        return self
+
+    # Helpers #################################################################
+
+    def _to_api_table_definition(self) -> TableDefinition:
+        return TableDefinition(
+            cols=[
+                ColumnDefinition(col.name, col.stype, col.dtype)
+                for col in self.columns
+            ],
+            source_table=UnavailableSourceTable(table=self.name),
+            pkey=self._primary_key,
+            time_col=self._time_column,
+            end_time_col=self._end_time_column,
+        )
+
+    @property
+    def _source_primary_key(self) -> str | None:
+        primary_keys = [
+            column.name for column in self._source_column_dict.values()
+            if column.is_primary_key
+        ]
+        if len(primary_keys) == 1:  # NOTE No composite keys yet.
+            return primary_keys[0]
+
+        return None
+
+    # Python builtins #########################################################
+
+    def __hash__(self) -> int:
+        special_columns = [
+            self.primary_key,
+            self.time_column,
+            self.end_time_column,
+        ]
+        return hash(tuple(self.columns + special_columns))
+
+    def __contains__(self, name: str) -> bool:
+        return self.has_column(name)
+
+    def __getitem__(self, name: str) -> Column:
+        return self.column(name)
+
+    def __delitem__(self, name: str) -> None:
+        self.remove_column(name)
+
+    def __repr__(self) -> str:
+        return (f'{self.__class__.__name__}(\n'
+                f'  name={self.name},\n'
+                f'  num_columns={len(self.columns)},\n'
+                f'  primary_key={self._primary_key},\n'
+                f'  time_column={self._time_column},\n'
+                f'  end_time_column={self._end_time_column},\n'
+                f')')
+
+    # Abstract Methods ########################################################
+
+    @property
+    @abstractmethod
+    def backend(self) -> DataBackend:
+        r"""The data backend of this table."""
+
+    @cached_property
+    def _source_column_dict(self) -> dict[str, SourceColumn]:
+        return {col.name: col for col in self._get_source_columns()}
+
+    @abstractmethod
+    def _get_source_columns(self) -> list[SourceColumn]:
+        pass
+
+    @cached_property
+    def _sample_df(self) -> pd.DataFrame:
+        return self._get_sample_df()
+
+    @abstractmethod
+    def _get_sample_df(self) -> pd.DataFrame:
+        pass
+
+    @cached_property
+    def _num_rows(self) -> int | None:
+        return self._get_num_rows()
+
+    @abstractmethod
+    def _get_num_rows(self) -> int | None:
+        pass
