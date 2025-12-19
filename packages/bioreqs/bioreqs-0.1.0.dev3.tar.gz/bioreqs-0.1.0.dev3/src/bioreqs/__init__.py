@@ -1,0 +1,32 @@
+"""
+BioReqs: Bioinformatic Requisitions
+===================================
+
+Client libraries for various bioinformatics web APIs.
+
+"""
+from . import ncbi
+from .ncbi import (
+    Entrez,
+    NCBI_EMAIL,
+    NCBI_TOKEN,
+    USER_AGENT
+)
+
+
+__all__ = [
+	# : modules
+	#
+	"ncbi",
+	
+	# : classes
+	#
+	"Entrez",
+	
+	# : constants
+	#
+    "NCBI_EMAIL",
+	"NCBI_TOKEN",
+    "USER_AGENT"
+]
+
