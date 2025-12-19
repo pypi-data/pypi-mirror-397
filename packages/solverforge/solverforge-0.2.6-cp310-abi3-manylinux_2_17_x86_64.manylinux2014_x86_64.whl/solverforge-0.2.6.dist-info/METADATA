@@ -1,0 +1,83 @@
+Metadata-Version: 2.4
+Name: solverforge
+Version: 0.2.6
+Classifier: Programming Language :: Rust
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Summary: Python bindings for SolverForge constraint solver
+Keywords: constraint,solver,optimization,scheduling,planning
+License: Apache-2.0
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown; charset=UTF-8; variant=GFM
+Project-URL: Homepage, https://solverforge.org
+Project-URL: Documentation, https://docs.solverforge.org
+Project-URL: Repository, https://github.com/solverforge/solverforge
+Project-URL: Bug Tracker, https://github.com/solverforge/solverforge/issues
+Project-URL: Changelog, https://github.com/solverforge/solverforge/blob/main/CHANGELOG.md
+
+# SolverForge
+
+Python bindings for the SolverForge constraint solver.
+
+## Installation
+
+```bash
+pip install solverforge
+```
+
+## Quick Start
+
+```python
+from solverforge import (
+    planning_entity,
+    planning_solution,
+    PlanningId,
+    PlanningVariable,
+    HardSoftScore,
+)
+
+@planning_entity
+class Lesson:
+    id: str
+    subject: str
+    timeslot: str | None = None
+    room: str | None = None
+
+@planning_solution
+class Timetable:
+    timeslots: list[str]
+    rooms: list[str]
+    lessons: list[Lesson]
+    score: HardSoftScore | None = None
+```
+
+## Features
+
+- Declarative domain modeling with decorators
+- Constraint streams for defining optimization rules
+- Multiple score types (Simple, HardSoft, HardMediumSoft)
+- Automatic WASM constraint compilation
+
+## Requirements
+
+- Python 3.10+
+- Java 24+ (for solver service)
+
+## Documentation
+
+- [User Guide](https://docs.solverforge.org)
+- [API Reference](https://docs.solverforge.org/python)
+- [Examples](https://github.com/solverforge/solverforge/tree/main/examples)
+
+## License
+
+Apache-2.0
+
