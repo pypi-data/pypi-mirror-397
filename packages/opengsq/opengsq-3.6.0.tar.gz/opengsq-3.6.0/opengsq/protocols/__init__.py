@@ -1,0 +1,101 @@
+from opengsq.protocols.aoe1 import AoE1
+from opengsq.protocols.aoe2 import AoE2
+from opengsq.protocols.ase import ASE
+from opengsq.protocols.avp2 import AVP2
+from opengsq.protocols.battlefield import Battlefield
+from opengsq.protocols.battlefield2 import Battlefield2
+from opengsq.protocols.cod1 import CoD1
+from opengsq.protocols.cod4 import CoD4
+from opengsq.protocols.cod5 import CoD5
+from opengsq.protocols.directplay import DirectPlay
+from opengsq.protocols.doom3 import Doom3
+from opengsq.protocols.eldewrito import ElDewrito
+from opengsq.protocols.eos import EOS
+from opengsq.protocols.fivem import FiveM
+from opengsq.protocols.flatout2 import Flatout2
+from opengsq.protocols.gamespy1 import GameSpy1
+from opengsq.protocols.gamespy2 import GameSpy2
+from opengsq.protocols.gamespy3 import GameSpy3
+from opengsq.protocols.gamespy4 import GameSpy4
+from opengsq.protocols.halo1 import Halo1
+from opengsq.protocols.jediknight import JediKnight
+from opengsq.protocols.kaillera import Kaillera
+from opengsq.protocols.killingfloor import KillingFloor
+from opengsq.protocols.minecraft import Minecraft
+from opengsq.protocols.nadeo import Nadeo
+from opengsq.protocols.palworld import Palworld
+from opengsq.protocols.quake1 import Quake1
+from opengsq.protocols.quake2 import Quake2
+from opengsq.protocols.quake3 import Quake3
+from opengsq.protocols.raknet import RakNet
+from opengsq.protocols.renegadex import RenegadeX
+from opengsq.protocols.samp import Samp
+from opengsq.protocols.satisfactory import Satisfactory
+from opengsq.protocols.scum import Scum
+from opengsq.protocols.source import Source
+from opengsq.protocols.ssc import SSC
+from opengsq.protocols.supcom import SupCom
+from opengsq.protocols.stronghold_ce import StrongholdCE
+from opengsq.protocols.stronghold_crusader import StrongholdCrusader
+from opengsq.protocols.teamspeak3 import TeamSpeak3
+from opengsq.protocols.trackmania_nations import TrackmaniaNations
+from opengsq.protocols.toxikk import Toxikk
+from opengsq.protocols.udk import UDK
+from opengsq.protocols.unreal2 import Unreal2
+from opengsq.protocols.ut3 import UT3
+from opengsq.protocols.vcmp import Vcmp
+from opengsq.protocols.w40kdow import W40kDow
+from opengsq.protocols.warcraft3 import Warcraft3
+from opengsq.protocols.won import WON
+
+__all__ = [
+    "AoE1",
+    "AoE2",
+    "ASE",
+    "AVP2",
+    "Battlefield",
+    "Battlefield2",
+    "CoD1",
+    "CoD4",
+    "CoD5",
+    "DirectPlay",
+    "Doom3",
+    "ElDewrito",
+    "EOS",
+    "FiveM",
+    "Flatout2",
+    "GameSpy1",
+    "GameSpy2",
+    "GameSpy3",
+    "GameSpy4",
+    "Halo1",
+    "JediKnight",
+    "Kaillera",
+    "KillingFloor",
+    "Minecraft",
+    "Nadeo",
+    "Palworld",
+    "Quake1",
+    "Quake2",
+    "Quake3",
+    "RakNet",
+    "RenegadeX",
+    "Samp",
+    "Satisfactory",
+    "Scum",
+    "Source",
+    "SSC",
+    "SupCom",
+    "StrongholdCE",
+    "StrongholdCrusader",
+    "TeamSpeak3",
+    "TrackmaniaNations",
+    "Toxikk",
+    "UDK",
+    "Unreal2",
+    "UT3",
+    "Vcmp",
+    "W40kDow",
+    "Warcraft3",
+    "WON",
+]
