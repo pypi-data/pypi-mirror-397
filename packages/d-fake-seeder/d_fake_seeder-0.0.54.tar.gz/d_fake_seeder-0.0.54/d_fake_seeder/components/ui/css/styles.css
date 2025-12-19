@@ -1,0 +1,395 @@
+.statusbar {
+    padding: 50px;
+    margin: 50px;
+}
+
+columnview column header {
+    padding: 5px;
+    margin: 0;
+}
+
+/* Progress bar styling to make them more prominent */
+.thick-progress-bar {
+    min-height: 40px;
+    border-radius: 8px;
+}
+
+.thick-progress-bar > trough {
+    min-height: 40px;
+    border-radius: 8px;
+    background-color: #e0e0e0;
+}
+
+.thick-progress-bar > trough > progress {
+    min-height: 40px;
+    border-radius: 8px;
+    background-color: #4a90e2;
+}
+
+/* More aggressive approach - target all progress bars in columnview */
+columnview progressbar {
+    min-height: 40px;
+    border-radius: 8px;
+}
+
+columnview progressbar > trough {
+    min-height: 40px;
+    border-radius: 8px;
+    background-color: #e0e0e0;
+}
+
+columnview progressbar > trough > progress {
+    min-height: 40px;
+    border-radius: 8px;
+    background-color: #4a90e2;
+}
+
+/* Even more specific selectors for GTK4 ColumnView */
+columnview listitem progressbar {
+    min-height: 40px;
+}
+
+columnview listitem progressbar > trough {
+    min-height: 40px;
+}
+
+columnview listitem progressbar > trough > progress {
+    min-height: 40px;
+}
+
+/* Target the specific column that contains progress bars */
+columnview column progressbar {
+    min-height: 40px;
+}
+
+/* Force row height in columnview */
+columnview listitem {
+    min-height: 50px;
+    padding: 5px 0;
+}
+
+/* Force the columnview itself to have larger rows */
+columnview {
+    /* This property might be available in some GTK4 versions */
+    -gtk-dpi: 120;
+}
+
+/* Alternative approach - add padding to all cells */
+columnview listitem > * {
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+/* Status indicators for connections */
+.success {
+    color: #4caf50;
+}
+
+.error {
+    color: #f44336;
+}
+
+/* Shutdown Progress Overlay Styling */
+.shutdown-overlay {
+    background-color: rgba(30, 30, 30, 0.95);
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.shutdown-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 10px;
+}
+
+.shutdown-progress {
+    min-height: 24px;
+    border-radius: 12px;
+    margin: 10px 0;
+}
+
+.shutdown-progress > trough {
+    min-height: 24px;
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.shutdown-progress > trough > progress {
+    min-height: 24px;
+    border-radius: 12px;
+    background: linear-gradient(90deg, #4a90e2, #357abd);
+}
+
+.shutdown-component {
+    font-size: 14px;
+    color: #e0e0e0;
+    padding: 2px 0;
+    font-family: monospace;
+}
+
+.shutdown-timer {
+    font-size: 12px;
+    color: #b0b0b0;
+    font-family: monospace;
+}
+
+
+/* GTK4 compatible animation - using simpler opacity transition */
+.shutdown-warning {
+    color: #ff6b6b;
+    font-size: 14px;
+    font-weight: bold;
+    margin-top: 10px;
+    /* Remove animation that may not be supported in GTK CSS */
+}
+
+/* Monitoring Tab Styles */
+.metric-tile {
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.03);
+    /* Removed min-width: 320px - now controlled by FlowBox responsive layout */
+    min-height: 180px;
+}
+
+.live-graph {
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Notebook Tab Styles (chunky tabs to match filter items) */
+notebook > header > tabs > tab {
+    padding: 8px 16px;
+    min-height: 36px;
+    font-size: 13px;
+}
+
+notebook > header > tabs > tab label {
+    font-size: 13px;
+    font-weight: normal;
+}
+
+/* Sidebar Filter Styles (Deluge-style) */
+.sidebar {
+    min-width: 200px;
+    background-color: @theme_base_color;
+    border-right: 1px solid @borders;
+}
+
+.sidebar-expander {
+    padding: 10px 12px;
+    min-height: 36px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-expander > title {
+    font-weight: bold;
+    font-size: 12px;
+    text-transform: uppercase;
+    opacity: 0.9;
+    padding: 4px 0;
+}
+
+.sidebar-listbox {
+    background-color: transparent;
+    border: none;
+}
+
+.sidebar-listbox > row {
+    padding: 0;
+    border: none;
+    background-color: transparent;
+}
+
+.sidebar-listbox > row:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-listbox > row:selected {
+    background-color: @theme_selected_bg_color;
+    color: @theme_selected_fg_color;
+}
+
+.sidebar-listbox > row:selected:hover {
+    background-color: @theme_selected_bg_color;
+}
+
+.filter-item {
+    padding: 6px 12px;
+    min-height: 32px;
+}
+
+.filter-item image {
+    opacity: 0.7;
+    margin-right: 8px;
+}
+
+.filter-item label {
+    font-size: 13px;
+}
+
+.filter-item .count-badge {
+    opacity: 0.6;
+    font-size: 11px;
+    font-weight: bold;
+    color: @theme_fg_color;
+    padding: 2px 6px;
+    border-radius: 10px;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-listbox > row:selected .filter-item .count-badge {
+    background-color: rgba(255, 255, 255, 0.2);
+    opacity: 0.9;
+}
+
+
+/* ===================================================================
+   Paned Separator Styling - Enhanced Visibility and Usability
+   ================================================================ */
+
+/* Base separator styling for all paned widgets */
+paned > separator {
+    min-width: 5px;
+    min-height: 5px;
+    background-color: @theme_bg_color;
+    background-image: linear-gradient(
+        to bottom,
+        shade(@theme_bg_color, 0.9),
+        shade(@theme_bg_color, 1.1)
+    );
+    border-left: 1px solid shade(@theme_bg_color, 0.8);
+    border-right: 1px solid shade(@theme_bg_color, 0.8);
+}
+
+/* Horizontal paned separator (for sidebar split) */
+paned.horizontal > separator {
+    min-width: 6px;
+    background-image: linear-gradient(
+        to right,
+        shade(@theme_bg_color, 0.85),
+        shade(@theme_bg_color, 0.95),
+        shade(@theme_bg_color, 0.85)
+    );
+    border-left: 1px solid shade(@theme_bg_color, 0.75);
+    border-right: 1px solid shade(@theme_bg_color, 0.75);
+}
+
+/* Vertical paned separator (for top/bottom split) */
+paned.vertical > separator {
+    min-height: 6px;
+    background-image: linear-gradient(
+        to bottom,
+        shade(@theme_bg_color, 0.85),
+        shade(@theme_bg_color, 0.95),
+        shade(@theme_bg_color, 0.85)
+    );
+    border-top: 1px solid shade(@theme_bg_color, 0.75);
+    border-bottom: 1px solid shade(@theme_bg_color, 0.75);
+}
+
+/* Hover effect for better discoverability */
+paned > separator:hover {
+    background-color: shade(@theme_bg_color, 0.95);
+    border-color: shade(@theme_selected_bg_color, 0.7);
+}
+
+/* Visual grip/handle indicator in the middle of separator */
+paned.horizontal > separator:hover {
+    background-image: linear-gradient(
+        to right,
+        shade(@theme_bg_color, 0.85),
+        shade(@theme_selected_bg_color, 0.3) 45%,
+        shade(@theme_selected_bg_color, 0.5) 50%,
+        shade(@theme_selected_bg_color, 0.3) 55%,
+        shade(@theme_bg_color, 0.85)
+    );
+}
+
+paned.vertical > separator:hover {
+    background-image: linear-gradient(
+        to bottom,
+        shade(@theme_bg_color, 0.85),
+        shade(@theme_selected_bg_color, 0.3) 45%,
+        shade(@theme_selected_bg_color, 0.5) 50%,
+        shade(@theme_selected_bg_color, 0.3) 55%,
+        shade(@theme_bg_color, 0.85)
+    );
+}
+
+/* Active (dragging) state */
+paned > separator:active {
+    background-color: @theme_selected_bg_color;
+}
+
+/* ===================================================================
+   Notebook Tab Scrolling - Enhanced when tabs overflow
+   ================================================================ */
+
+/* Style the scroll arrows that appear when notebook is scrollable */
+notebook > header > tabs > arrow {
+    min-width: 20px;
+    min-height: 20px;
+    padding: 4px;
+    background-color: @theme_bg_color;
+    border: 1px solid shade(@theme_bg_color, 0.8);
+    border-radius: 3px;
+}
+
+notebook > header > tabs > arrow:hover {
+    background-color: shade(@theme_bg_color, 0.95);
+    border-color: @theme_selected_bg_color;
+}
+
+notebook > header > tabs > arrow:active {
+    background-color: shade(@theme_bg_color, 0.9);
+}
+
+notebook > header > tabs > arrow:disabled {
+    opacity: 0.3;
+}
+
+/* Ensure tabs container scrolls smoothly */
+notebook > header > tabs {
+    transition: margin 0.2s ease-in-out;
+}
+
+/* Add subtle shadow when tabs are scrolled */
+notebook > header.left > tabs:not(:first-child) {
+    box-shadow: inset 0 10px 10px -10px rgba(0, 0, 0, 0.2);
+}
+
+notebook > header.left > tabs:not(:last-child) {
+    box-shadow: inset 0 -10px 10px -10px rgba(0, 0, 0, 0.2);
+}
+
+/* =========================================
+   Monitoring Tab - Responsive Tile Layout
+   ========================================= */
+
+/* FlowBox container for metric tiles */
+.monitoring-flowbox {
+    transition: all 300ms ease-in-out;
+}
+
+/* Individual metric tiles with smooth transitions */
+.monitoring-tile {
+    transition: all 300ms ease-in-out;
+    border-radius: 8px;
+    background: alpha(@window_bg_color, 0.5);
+}
+
+/* Metric tile frame styling - adds transition to existing .metric-tile */
+.metric-tile {
+    transition: all 300ms ease-in-out;
+}
+
+.metric-tile:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.5);
+}
