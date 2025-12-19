@@ -1,0 +1,99 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "e-commerce-trust-score"
+dynamic = ["version"]
+description = "A Python client library for analyzing URL trust scores using AI-powered analysis"
+readme = "README_PYPI.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Vivian Li", email = "vivian@example.com"}
+]
+keywords = ["trust-score", "url-analysis", "security", "claude", "ai", "mcp"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "claude-agent-sdk>=0.1.0",
+    "anyio>=4.0.0",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "httpx>=0.25.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+server = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/e-commerce-trust-score"
+Documentation = "https://github.com/yourusername/e-commerce-trust-score#readme"
+Repository = "https://github.com/yourusername/e-commerce-trust-score"
+Issues = "https://github.com/yourusername/e-commerce-trust-score/issues"
+
+# No CLI scripts - server deployment is separate
+# [project.scripts]
+
+[tool.setuptools.dynamic]
+version = {attr = "commerce_trust_score.__version__.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["commerce_trust_score*"]
+exclude = ["tests*", "venv*"]
+
+[tool.setuptools.package-data]
+commerce_trust_score = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --cov=commerce_trust_score --cov-report=term-missing"
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = []
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
