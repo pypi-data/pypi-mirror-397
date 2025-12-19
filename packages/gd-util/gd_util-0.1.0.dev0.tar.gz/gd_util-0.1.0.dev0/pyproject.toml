@@ -1,0 +1,41 @@
+[project]
+name = "gd-util"
+dynamic = ["version"]
+requires-python = ">=3.9,<3.14"
+readme = { file = "README.md", content-type = "text/markdown" }
+
+dependencies = [
+    "numpy",
+    "treelib",
+    "PyYAML",
+    "matplotlib",
+    "pandas",
+    "param",
+    "pymoo",
+    "smt",
+    "vtk",
+    "pyvista",
+    "meshio",
+    "pymmg",
+]
+
+# [project.optional-dependencies]
+# mesh = ["vtk", "pyvista", "meshio", "pymmg"]
+
+[build-system]
+requires = ["setuptools>=61", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+version_scheme = "release-branch-semver"
+local_scheme = "no-local-version"
+
+[tool.setuptools]
+packages = ["g_util"]
+
+[dependency-groups]
+dev = ["build", "twine", "pytest>=8.0", "pytest-cov>=5.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --cov=g_util --cov-report=term-missing"
