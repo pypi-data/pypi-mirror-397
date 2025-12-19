@@ -1,0 +1,44 @@
+# MOA Telehealth Governor - Control Plane Stack
+# Purpose: Start all services in correct order with health checks
+
+version: "3.9"
+
+services:
+  governor:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: moa-governor
+    ports:
+      - "8000:8000"
+    environment:
+      - MOA_MODE=prod
+      - PYTHONPATH=/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    volumes:
+      - ../config:/app/config:ro
+      - audit_logs:/app/var/audit
+    restart: unless-stopped
+    depends_on:
+      - policy-source
+
+  policy-source:
+    image: python:3.11-slim
+    container_name: moa-policy-hub
+    command: ["python", "-m", "http.server", "8080", "--directory", "/policies"]
+    volumes:
+      - ../config/rules:/policies:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  audit_logs:
+    driver: local

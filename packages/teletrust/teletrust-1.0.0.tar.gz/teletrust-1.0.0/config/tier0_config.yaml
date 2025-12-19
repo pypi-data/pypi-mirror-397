@@ -1,0 +1,28 @@
+physics:
+  thresholds_path: "config/thresholds.yaml"
+
+gate:
+  weights:
+    spectral_anomaly: 0.4
+    rail_conflict: 0.3
+    flag_detection: 0.3
+  thresholds:
+    green_max: 30
+    yellow_max: 70
+
+router:
+  models:
+    local: "llama-3-8b"
+    mid: "gpt-4o-mini"
+    frontier: "gpt-4o"
+  cost_estimates_usd:
+    local_per_1k: 0.02
+    mid_per_1k: 0.15
+    frontier_per_1k: 0.60
+
+budgets:
+  monthly_cap: 500.0
+  current_spend: 0.0
+
+qc:
+  enabled: true

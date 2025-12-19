@@ -1,0 +1,37 @@
+{
+	"actorSpecification": 1,
+	"name": "mcp-regulatory-gateway",
+	"title": "MCP Regulatory Gateway",
+	"description": "Real-time healthcare regulatory compliance lookup via MCP protocol. Query eCFR federal regulations, NLM billing codes, and state telehealth statutes.",
+	"version": "1.0",
+	"buildTag": "latest",
+	"input": "./input_schema.json",
+	"output": "./output_schema.json",
+	"storages": {
+		"dataset": "./dataset_schema.json"
+	},
+	"dockerfile": "../Dockerfile",
+	"monetization": {
+		"pricingModel": "PAY_PER_EVENT",
+		"events": [
+			{
+				"name": "regulation_lookup",
+				"title": "Regulation Lookup",
+				"description": "Query eCFR federal regulations",
+				"pricePerEvent": 0.02
+			},
+			{
+				"name": "billing_code_lookup",
+				"title": "Billing Code Lookup",
+				"description": "Query NLM/HCPCS billing codes",
+				"pricePerEvent": 0.02
+			},
+			{
+				"name": "compliance_check",
+				"title": "Compliance Check",
+				"description": "State telehealth compliance verification",
+				"pricePerEvent": 0.05
+			}
+		]
+	}
+}

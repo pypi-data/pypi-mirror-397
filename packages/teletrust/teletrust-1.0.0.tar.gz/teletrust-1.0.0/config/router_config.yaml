@@ -1,0 +1,155 @@
+﻿# MOA Router Configuration
+# =========================
+# Swappable model tiers - change providers without code changes
+
+# Zone-to-Tier Mapping (HARDCODED - core logic)
+zones:
+  GREEN:
+    tier: local
+    description: "Local/free models - 90% of traffic"
+  YELLOW:
+    tier: mid
+    description: "Mid-tier API - complex tasks"
+  RED:
+    tier: frontier
+    description: "Frontier model + human escalation"
+
+# Provider Configuration (SWAPPABLE)
+providers:
+  local:
+    # Option 1: Ollama (local)
+    ollama:
+      enabled: true
+      endpoint: "http://127.0.0.1:11434/api/generate"
+      model: "llama3.2:3b"
+      cost_per_1k: 0.0
+    # Option 2: LM Studio (local)
+    lmstudio:
+      enabled: false
+      endpoint: "http://localhost:1234/v1/completions"
+      model: "local-model"
+      cost_per_1k: 0.0
+
+  mid:
+    # Option 1: Cloud Run (your deployed MOA)
+    cloudrun:
+      enabled: true
+      endpoint: "${CLOUD_RUN_URL}/govern"
+      cost_per_1k: 0.001
+    # Option 2: Gemini Flash
+    gemini_flash:
+      enabled: false
+      endpoint: "https://generativelanguage.googleapis.com/v1beta"
+      model: "gemini-1.5-flash"
+      cost_per_1k: 0.00035
+      api_key_env: "GOOGLE_API_KEY"
+
+  frontier:
+    # Option 1: Claude (high reasoning)
+    claude:
+      enabled: true
+      endpoint: "https://api.anthropic.com/v1/messages"
+      model: "claude-sonnet-4-20250514"
+      cost_per_1k: 0.003
+      api_key_env: "ANTHROPIC_API_KEY"
+    # Option 2: GPT-4
+    openai:
+      enabled: false
+      endpoint: "https://api.openai.com/v1/chat/completions"
+      model: "gpt-4o"
+      cost_per_1k: 0.005
+      api_key_env: "OPENAI_API_KEY"
+
+# Workforce Agent Definitions (Phase 2)
+workforce:
+  planner:
+    model: "ollama:llama3.2:3b"
+    role: "Break task into steps"
+    tier: local
+  builder:
+    model: "ollama:llama3.2:3b"
+    role: "Generate code"
+    tier: local
+  reviewer:
+    model: "claude-sonnet"
+    role: "Review and approve"
+    tier: frontier
+  security:
+    model: "local_heuristic"
+    role: "Scan for secrets, validate sandbox"
+    tier: local
+  release:
+    model: "local_heuristic"
+    role: "Generate Auditor Pack, push to registry"
+    tier: local
+
+# Packaging Levels (SERVICE TIERS)
+packaging:
+  # Level 1: Python function (import and use)
+  function:
+    entry: "from moa_telehealth_governor.src.governor import TelehealthGovernor"
+    use_case: "Embed in your own Python app"
+
+  # Level 2: PyPI package
+  pypi:
+    name: "moa-governor"
+    install: "pip install moa-governor"
+    use_case: "Any Python project"
+
+  # Level 3: FastAPI service
+  service:
+    port: 8000
+    endpoint: "/govern"
+    use_case: "Microservice / Docker / Cloud Run"
+    stripe_metering: true
+
+  # Level 4: Desktop app (Tauri/Electron)
+  desktop:
+    framework: "tauri" # or electron
+    features: ["system_tray", "61_node_graph", "kill_button"]
+    use_case: "Local orchestration dashboard"
+
+  # Level 5: Browser extension
+  extension:
+    manifest_v3: true
+    intercepts: ["LLM API calls"]
+    use_case: "Wrap any web-based AI with MOA"
+
+# Consensus Models (3 Masters)
+consensus:
+  master_a:
+    name: "Content"
+    current_model: "ollama:gemma2:2b"
+    swap_to: ["claude", "gpt-4o"]
+  master_b:
+    name: "Resource"
+    current_model: "local_heuristic"
+    swap_to: ["gemini-flash"]
+  master_c:
+    name: "Governance"
+    current_model: "grammar_validator"
+    swap_to: ["claude", "gemini-pro"]
+
+# Network Enforcement (pfSense Integration)
+network_enforcement:
+  enabled: true
+  pfsense_agent: "M:\\source\\pfSense_automation\\PfSenseAgent.ps1"
+  local_only_mode:
+    block_endpoints:
+      - "api.openai.com"
+      - "api.anthropic.com"
+      - "generativelanguage.googleapis.com"
+    allow_endpoints:
+      - "localhost"
+      - "127.0.0.1"
+      - "10.10.10.1" # pfSense
+
+# Power Automate Integration
+power_automate:
+  enabled: false
+  webhook_url: "${POWER_AUTOMATE_WEBHOOK}"
+  triggers:
+    - zone: RED
+      action: "notify_teams"
+    - zone: YELLOW
+      action: "log_to_sharepoint"

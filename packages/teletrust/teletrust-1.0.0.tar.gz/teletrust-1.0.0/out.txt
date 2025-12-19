@@ -1,0 +1,81 @@
+C:\Users\Mike\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langsmith\schemas.py:23: UserWarning: Core Pydantic V1 functionality isn't compatible with Python 3.14 or greater.
+  from pydantic.v1 import (
+============================= test session starts =============================
+platform win32 -- Python 3.14.1, pytest-9.0.1, pluggy-1.6.0 -- C:\Users\Mike\AppData\Local\Python\pythoncore-3.14-64\python.exe
+cachedir: .pytest_cache
+rootdir: M:\workspace
+configfile: pyproject.toml
+plugins: anyio-4.12.0, langsmith-0.4.56
+collecting ... collected 4 items
+
+tests\test_api_integration.py::TestApiIntegration::test_govern_allow_context FAILED [ 25%]
+tests\test_api_integration.py::TestApiIntegration::test_govern_deny_context PASSED [ 50%]
+tests\test_api_integration.py::TestApiIntegration::test_health PASSED    [ 75%]
+tests\test_api_integration.py::TestApiIntegration::test_strip_log_via_api FAILED [100%]
+
+================================== FAILURES ===================================
+________________ TestApiIntegration.test_govern_allow_context _________________
+
+self = <test_api_integration.TestApiIntegration testMethod=test_govern_allow_context>
+
+    def test_govern_allow_context(self):
+        # Valid Context (FL Reg present)
+        payload = {
+            "session_id": "test_api_1",
+            "text": "Hello, I am ready for the consultation.",
+            "context": {
+                "patient_state": "FL",
+                "provider_home_state": "NY",
+                "provider_type": "MD",
+                "service_mode": "video",
+                "telehealth_registration_number": "TPMC999"
+            }
+        }
+        response = self.client.post("/govern", json=payload, headers=self.auth_headers)
+        self.assertEqual(response.status_code, 200)
+        res = response.json()
+>       self.assertEqual(res["compliance_verdict"], "ALLOW")
+E       AssertionError: 'DENY' != 'ALLOW'
+E       - DENY
+E       + ALLOW
+
+tests\test_api_integration.py:33: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[BILLING] Client: client_demo | Cost: $0.0000 | Zone: RED
+__________________ TestApiIntegration.test_strip_log_via_api __________________
+
+self = <test_api_integration.TestApiIntegration testMethod=test_strip_log_via_api>
+
+    def test_strip_log_via_api(self):
+        # DSM Content
+        payload = {
+            "session_id": "test_api_3",
+            "text": "Checking DSM.",
+            "context": {
+                "patient_state": "CA",
+                "standard": "DSM",
+                "dsm_excerpt": "Code 123"
+            }
+        }
+        response = self.client.post("/govern", json=payload, headers=self.auth_headers)
+        self.assertEqual(response.status_code, 200)
+        res = response.json()
+>       self.assertEqual(res["compliance_verdict"], "ALLOW")
+E       AssertionError: 'DENY' != 'ALLOW'
+E       - DENY
+E       + ALLOW
+
+tests\test_api_integration.py:68: AssertionError
+---------------------------- Captured stdout call -----------------------------
+[BILLING] Client: client_demo | Cost: $0.0000 | Zone: RED
+============================== slowest durations ==============================
+0.04s call     moa_telehealth_governor/tests/test_api_integration.py::TestApiIntegration::test_strip_log_via_api
+0.03s call     moa_telehealth_governor/tests/test_api_integration.py::TestApiIntegration::test_govern_allow_context
+0.03s call     moa_telehealth_governor/tests/test_api_integration.py::TestApiIntegration::test_govern_deny_context
+0.01s call     moa_telehealth_governor/tests/test_api_integration.py::TestApiIntegration::test_health
+
+(8 durations < 0.005s hidden.  Use -vv to show these durations.)
+=========================== short test summary info ===========================
+FAILED tests\test_api_integration.py::TestApiIntegration::test_govern_allow_context
+FAILED tests\test_api_integration.py::TestApiIntegration::test_strip_log_via_api
+========================= 2 failed, 2 passed in 1.06s =========================

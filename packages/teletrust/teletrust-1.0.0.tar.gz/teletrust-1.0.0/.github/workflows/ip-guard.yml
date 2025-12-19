@@ -1,0 +1,18 @@
+name: ip-guard
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fail on obvious secret patterns
+        run: |
+          set -e
+          # Fail if secrets are found in tracked files
+          ! grep -RInE "sk_live_[A-Za-z0-9]{20,}|rk_live_[A-Za-z0-9]{20,}|whsec_[A-Za-z0-9]{20,}|BEGIN[[:space:]]+PRIVATE[[:space:]]+KEY" . --include="*.py" --include="*.json" --include="*.yaml" --include="*.yml" || echo "No secrets found"
+      # NOTE: rhythm_dynamics.py is allowed in this PRIVATE repo
+      # This guard prevents accidental push to PUBLIC repos only

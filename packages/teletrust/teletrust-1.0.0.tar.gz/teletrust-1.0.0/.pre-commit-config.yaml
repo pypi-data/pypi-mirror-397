@@ -1,0 +1,24 @@
+repos:
+  - repo: local
+    hooks:
+      - id: secrets-scan
+        name: Secrets Scanner
+        entry: python scripts/secrets_scan.py
+        language: system
+        types: [python, json, yaml, markdown]
+        pass_filenames: false
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']

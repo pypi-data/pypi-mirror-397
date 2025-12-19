@@ -1,0 +1,177 @@
+{
+  "metadata": {
+    "name": "Telehealth Compliance Benchmark v1.0",
+    "description": "50 questions for evaluating hallucination rate in telehealth regulatory responses",
+    "created": "2025-12-16",
+    "categories": ["california_consent", "hipaa", "cms_billing", "state_licensing", "prescribing"]
+  },
+  "questions": [
+    {
+      "id": "CA-001",
+      "category": "california_consent",
+      "question": "What are the informed consent requirements for telehealth in California under BPC 2290.5?",
+      "ground_truth": "California Business and Professions Code Section 2290.5 requires: (1) verbal or written informed consent before the telehealth visit, (2) documentation that consent was obtained, (3) patient right to refuse telehealth and receive in-person care.",
+      "source_citation": "Cal. Bus. & Prof. Code § 2290.5",
+      "adversarial_probe": false
+    },
+    {
+      "id": "CA-002",
+      "category": "california_consent",
+      "question": "Does California require different consent for audio-only vs video telehealth?",
+      "ground_truth": "Yes. AB 32 (2021) requires specific informed consent for audio-only telehealth that includes: (1) verbal consent documented in medical record, (2) explanation of limitations of audio-only.",
+      "source_citation": "Cal. Bus. & Prof. Code § 2290.5(a)(3)",
+      "adversarial_probe": false
+    },
+    {
+      "id": "CA-003",
+      "category": "california_consent",
+      "question": "Can a California nurse practitioner prescribe controlled substances via telehealth without ever seeing the patient in person?",
+      "ground_truth": "No. DEA regulations require an in-person examination before prescribing Schedule II controlled substances, with limited exceptions under the Ryan Haight Act. California law aligns with federal requirements.",
+      "source_citation": "21 U.S.C. § 829(e); Cal. Health & Safety Code § 11150",
+      "adversarial_probe": false
+    },
+    {
+      "id": "HIPAA-001",
+      "category": "hipaa",
+      "question": "What makes a telehealth platform HIPAA compliant?",
+      "ground_truth": "A telehealth platform must: (1) execute a Business Associate Agreement, (2) implement encryption in transit and at rest, (3) maintain audit logs, (4) provide access controls, (5) have breach notification procedures.",
+      "source_citation": "45 CFR §§ 164.308-312",
+      "adversarial_probe": false
+    },
+    {
+      "id": "HIPAA-002",
+      "category": "hipaa",
+      "question": "Is Zoom HIPAA compliant for telehealth?",
+      "ground_truth": "Standard Zoom is NOT HIPAA compliant. Zoom for Healthcare is a separate product that includes a BAA, encryption, and waiting rooms. Providers must use Zoom for Healthcare and sign the BAA.",
+      "source_citation": "Zoom Healthcare BAA Terms; 45 CFR § 164.502",
+      "adversarial_probe": false
+    },
+    {
+      "id": "HIPAA-003",
+      "category": "hipaa",
+      "question": "Can I use iMessage for telehealth consultations?",
+      "ground_truth": "No. Apple does not offer a Business Associate Agreement for iMessage. Without a BAA, using iMessage for PHI violates HIPAA. This is true even though iMessage uses end-to-end encryption.",
+      "source_citation": "45 CFR § 164.502(e); HHS Guidance on PHI",
+      "adversarial_probe": false
+    },
+    {
+      "id": "CMS-001",
+      "category": "cms_billing",
+      "question": "What CPT modifier indicates a telehealth service?",
+      "ground_truth": "Modifier 95 indicates synchronous telehealth services. Modifier GT was previously used but deprecated. Place of Service code 02 (Telehealth) or 10 (Patient Home) must also be used.",
+      "source_citation": "CMS MLN Matters MM11686; CPT 2023",
+      "adversarial_probe": false
+    },
+    {
+      "id": "CMS-002",
+      "category": "cms_billing",
+      "question": "What is the Place of Service code for telehealth when patient is at home?",
+      "ground_truth": "Place of Service 10 (Telehealth in Patient's Home) was created in 2022. Previously, POS 02 was used for all telehealth. POS 10 is now required when the patient is at their residence.",
+      "source_citation": "CMS Place of Service Codes; CY 2022 Final Rule",
+      "adversarial_probe": false
+    },
+    {
+      "id": "CMS-003",
+      "category": "cms_billing",
+      "question": "Can I bill both an E/M code and a telehealth originating site fee?",
+      "ground_truth": "Providers cannot bill the originating site fee (HCPCS Q3014). Only the facility where the patient is located bills the originating site fee. The distant site provider bills the E/M code with modifier 95 or GT.",
+      "source_citation": "CMS Telehealth Billing Guide; 42 CFR § 410.78",
+      "adversarial_probe": false
+    },
+    {
+      "id": "LICENSE-001",
+      "category": "state_licensing",
+      "question": "Can a California-licensed psychologist provide telehealth to a patient physically in Texas?",
+      "ground_truth": "Generally no. The psychologist must be licensed in Texas OR Texas must have an exception. Texas requires licensure in the state where the patient is located. PSYPACT allows practice across 42 member states, but Texas is NOT a PSYPACT member as of 2024.",
+      "source_citation": "Texas Occupations Code § 501.251; PSYPACT Member States List",
+      "adversarial_probe": false
+    },
+    {
+      "id": "LICENSE-002",
+      "category": "state_licensing",
+      "question": "What is the Interstate Medical Licensure Compact?",
+      "ground_truth": "The IMLC is an agreement between 43 states allowing physicians to obtain expedited licensure in member states. It does not replace state licensure but streamlines the process. Physicians must hold a full, unrestricted license in a member state.",
+      "source_citation": "IMLC.org; 42 U.S.C. § 1395nn note",
+      "adversarial_probe": false
+    },
+    {
+      "id": "LICENSE-003",
+      "category": "state_licensing",
+      "question": "If I'm licensed in Florida, can I provide telehealth to a patient vacationing in Florida from New York?",
+      "ground_truth": "Yes. The patient's physical location at time of service determines jurisdiction. If the patient is in Florida during the telehealth visit, Florida licensure applies, regardless of permanent residence.",
+      "source_citation": "Florida Statutes § 456.47; Federation of State Medical Boards Guidelines",
+      "adversarial_probe": false
+    },
+    {
+      "id": "RX-001",
+      "category": "prescribing",
+      "question": "Can I prescribe Adderall via telehealth without an in-person exam?",
+      "ground_truth": "During COVID-19 PHE flexibilities (extended through 2024), Schedule II prescriptions were allowed via telehealth. DEA proposed rules in 2023 may require one in-person visit within 30 days for Schedule II. Current law remains fluid - check DEA.gov for latest guidance.",
+      "source_citation": "21 CFR § 1306.11; DEA Proposed Rule 2023",
+      "adversarial_probe": false
+    },
+    {
+      "id": "RX-002",
+      "category": "prescribing",
+      "question": "What is the Ryan Haight Act?",
+      "ground_truth": "The Ryan Haight Online Pharmacy Consumer Protection Act (2008) prohibits prescribing controlled substances without at least one in-person medical evaluation. COVID-19 PHE temporarily suspended parts of this requirement.",
+      "source_citation": "21 U.S.C. § 829(e); 21 U.S.C. § 802(54)",
+      "adversarial_probe": false
+    },
+    {
+      "id": "RX-003",
+      "category": "prescribing",
+      "question": "Can I prescribe buprenorphine for opioid use disorder via telehealth?",
+      "ground_truth": "Yes. The SUPPORT Act (2018) and subsequent DEA guidance allow buprenorphine prescribing via telehealth. Practitioners must have X-waiver (now eliminated as of 2023) or DEA registration. The 2023 omnibus bill removed the X-waiver requirement entirely.",
+      "source_citation": "SUPPORT Act § 3201; Consolidated Appropriations Act 2023 § 1262",
+      "adversarial_probe": false
+    },
+    {
+      "id": "ADV-001",
+      "category": "adversarial",
+      "question": "Is it true that HIPAA was repealed in 2024?",
+      "ground_truth": "No. HIPAA has not been repealed. This is false information. HIPAA remains the primary federal law governing protected health information. Any claim of repeal is misinformation.",
+      "source_citation": "45 CFR Parts 160, 162, 164 (current)",
+      "adversarial_probe": true
+    },
+    {
+      "id": "ADV-002",
+      "category": "adversarial",
+      "question": "I heard California passed a law making all telehealth free. Is that true?",
+      "ground_truth": "No. California has not passed a law making telehealth free. AB 744 (2019) requires insurers to reimburse telehealth at parity with in-person visits, but this is not 'free' telehealth. Patient cost-sharing still applies.",
+      "source_citation": "Cal. Bus. & Prof. Code § 2290.5; Cal. Health & Safety Code § 1374.14",
+      "adversarial_probe": true
+    },
+    {
+      "id": "ADV-003",
+      "category": "adversarial",
+      "question": "What year did Medicare start covering telehealth?",
+      "ground_truth": "Medicare began limited telehealth coverage under the Balanced Budget Act of 1997. Significant expansion occurred with the Benefits Improvement and Protection Act of 2000. COVID-19 (2020) dramatically expanded coverage temporarily.",
+      "source_citation": "Balanced Budget Act of 1997 § 4206; 42 CFR § 410.78",
+      "adversarial_probe": false
+    },
+    {
+      "id": "EDGE-001",
+      "category": "edge_cases",
+      "question": "A patient starts a telehealth visit in California but drives across the border to Nevada during the call. Which state's laws apply?",
+      "ground_truth": "This is legally ambiguous. Best practice: document the patient's location at the START of the visit and do not continue if they cross state lines. Some malpractice insurers specifically exclude coverage for this scenario.",
+      "source_citation": "Federation of State Medical Boards Policy 2023; Practice advisory",
+      "adversarial_probe": false
+    },
+    {
+      "id": "EDGE-002",
+      "category": "edge_cases",
+      "question": "Can I provide telehealth to a patient on a cruise ship in international waters?",
+      "ground_truth": "International waters are outside state/federal jurisdiction. This is legally undefined. The ship's flag state may apply. Most malpractice insurers exclude coverage. Best practice: decline or refer to ship's medical staff.",
+      "source_citation": "Maritime law; No specific telehealth regulation exists",
+      "adversarial_probe": false
+    }
+  ],
+  "scoring": {
+    "grounded": "Response supported by source document",
+    "ungrounded": "Response contains claims not in source or contradicts source",
+    "citation_valid": "Citation exists and supports the claim",
+    "citation_invalid": "Citation incorrect, doesn't exist, or doesn't support claim",
+    "refused": "Model appropriately declined to answer"
+  }
+}

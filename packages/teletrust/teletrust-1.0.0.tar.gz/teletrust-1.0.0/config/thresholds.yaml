@@ -1,0 +1,30 @@
+# thresholds.yaml
+# Calibrated 2024-12-11 based on tests/calibrate_gate.py
+
+gate:
+  entropy:
+    # The "Human Band" where cognitive presence is detected
+    standard_min: 3.20
+    standard_max: 5.10
+
+    # Absolute cutoffs for automated rejection
+    critical_min: 2.00 # Below this is almost certainly a bot
+    critical_max: 6.00 # Above this is keysmashing/random noise
+
+  rail_variance:
+    min_variance: 0.05
+
+risk:
+  green_max: 30
+  yellow_max: 70
+
+rails:
+  names: ["clinical", "billing", "policy"]
+
+audit:
+  enabled: true
+  log_path: "esm_audit.log"
+  prime_codec:
+    activity_bin_count: 7
+    entropy_bin_count: 7
+    pattern_bin_count: 7

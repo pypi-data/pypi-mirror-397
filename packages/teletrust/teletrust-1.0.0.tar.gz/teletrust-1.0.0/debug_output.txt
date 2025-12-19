@@ -1,0 +1,88 @@
+C:\Users\Mike\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\langsmith\schemas.py:23: UserWarning: Core Pydantic V1 functionality isn't compatible with Python 3.14 or greater.
+  from pydantic.v1 import (
+============================= test session starts =============================
+platform win32 -- Python 3.14.1, pytest-9.0.1, pluggy-1.6.0
+rootdir: M:\workspace
+configfile: pyproject.toml
+plugins: anyio-4.12.0, langsmith-0.4.56
+collected 15 items
+
+tests\test_api_integration.py FFAILED: moa_telehealth_governor/tests/test_api_integration.py::TestApiIntegration::test_govern_allow_context
+tests\test_api_integration.py:33: in test_govern_allow_context
+    self.assertEqual(res["compliance_verdict"], "ALLOW")
+E   AssertionError: 'DENY' != 'ALLOW'
+E   - DENY
+E   + ALLOW
+..FFAILED: moa_telehealth_governor/tests/test_api_integration.py::TestApiIntegration::test_strip_log_via_api
+tests\test_api_integration.py:68: in test_strip_log_via_api
+    self.assertEqual(res["compliance_verdict"], "ALLOW")
+E   AssertionError: 'DENY' != 'ALLOW'
+E   - DENY
+E   + ALLOW
+                                       [ 26%]
+tests\test_audit_logger.py .                                             [ 33%]
+tests\test_compliance_harness.py FFAILED: moa_telehealth_governor/tests/test_compliance_harness.py::TestComplianceHarness::test_fl_registration
+tests\test_compliance_harness.py:74: in test_fl_registration
+    self.assertEqual(res2.verdict, "ALLOW")
+E   AssertionError: 'DENY' != 'ALLOW'
+E   - DENY
+E   + ALLOW
+....                                   [ 66%]
+tests\test_ledger_wiring.py FFAILED: moa_telehealth_governor/tests/test_ledger_wiring.py::TestLedgerWiring::test_governor_records_events
+tests\test_ledger_wiring.py:53: in test_governor_records_events
+    self.assertEqual(res.compliance_verdict, "ALLOW")
+E   AssertionError: 'DENY' != 'ALLOW'
+E   - DENY
+E   + ALLOW
+                                            [ 73%]
+tests\test_monetization.py ....                                          [100%]
+
+================================== FAILURES ===================================
+________________ TestApiIntegration.test_govern_allow_context _________________
+tests\test_api_integration.py:33: in test_govern_allow_context
+    self.assertEqual(res["compliance_verdict"], "ALLOW")
+E   AssertionError: 'DENY' != 'ALLOW'
+E   - DENY
+E   + ALLOW
+---------------------------- Captured stdout call -----------------------------
+[BILLING] Client: client_demo | Cost: $0.0000 | Zone: RED
+__________________ TestApiIntegration.test_strip_log_via_api __________________
+tests\test_api_integration.py:68: in test_strip_log_via_api
+    self.assertEqual(res["compliance_verdict"], "ALLOW")
+E   AssertionError: 'DENY' != 'ALLOW'
+E   - DENY
+E   + ALLOW
+---------------------------- Captured stdout call -----------------------------
+[BILLING] Client: client_demo | Cost: $0.0000 | Zone: RED
+_________________ TestComplianceHarness.test_fl_registration __________________
+tests\test_compliance_harness.py:74: in test_fl_registration
+    self.assertEqual(res2.verdict, "ALLOW")
+E   AssertionError: 'DENY' != 'ALLOW'
+E   - DENY
+E   + ALLOW
+________________ TestLedgerWiring.test_governor_records_events ________________
+tests\test_ledger_wiring.py:53: in test_governor_records_events
+    self.assertEqual(res.compliance_verdict, "ALLOW")
+E   AssertionError: 'DENY' != 'ALLOW'
+E   - DENY
+E   + ALLOW
+============================== warnings summary ===============================
+moa_telehealth_governor/tests/test_audit_logger.py::TestAuditLogger::test_end_to_end_logging
+  M:\workspace\moa_telehealth_governor\src\governance\audit_logger.py:48: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    "ts": datetime.utcnow().isoformat() + "Z",
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+============================== slowest durations ==============================
+0.03s call     moa_telehealth_governor/tests/test_api_integration.py::TestApiIntegration::test_strip_log_via_api
+0.02s call     moa_telehealth_governor/tests/test_ledger_wiring.py::TestLedgerWiring::test_governor_records_events
+0.02s call     moa_telehealth_governor/tests/test_api_integration.py::TestApiIntegration::test_govern_allow_context
+0.02s call     moa_telehealth_governor/tests/test_api_integration.py::TestApiIntegration::test_govern_deny_context
+0.01s call     moa_telehealth_governor/tests/test_audit_logger.py::TestAuditLogger::test_end_to_end_logging
+
+(40 durations < 0.005s hidden.  Use -vv to show these durations.)
+=========================== short test summary info ===========================
+FAILED tests\test_api_integration.py::TestApiIntegration::test_govern_allow_context
+FAILED tests\test_api_integration.py::TestApiIntegration::test_strip_log_via_api
+FAILED tests\test_compliance_harness.py::TestComplianceHarness::test_fl_registration
+FAILED tests\test_ledger_wiring.py::TestLedgerWiring::test_governor_records_events
+=================== 4 failed, 11 passed, 1 warning in 1.20s ===================

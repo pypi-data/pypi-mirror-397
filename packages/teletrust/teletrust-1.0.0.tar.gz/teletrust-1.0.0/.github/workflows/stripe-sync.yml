@@ -1,0 +1,38 @@
+name: stripe-sync
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (no changes)'
+        required: false
+        default: 'false'
+
+jobs:
+  sync-products:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install stripe python-dotenv
+
+      - name: Sync Stripe Products
+        env:
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+        run: |
+          if [ "${{ inputs.dry_run }}" == "true" ]; then
+            echo "DRY RUN - Would sync products:"
+            python -c "from src.billing.stripe_product_sync import PRODUCTS; print(PRODUCTS)"
+          else
+            python -m src.billing.stripe_product_sync
+          fi

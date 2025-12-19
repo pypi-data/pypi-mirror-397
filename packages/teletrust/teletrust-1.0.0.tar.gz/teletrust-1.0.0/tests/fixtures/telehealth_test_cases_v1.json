@@ -1,0 +1,99 @@
+[
+    {
+        "id": "CASE_FL_REG_MISSING",
+        "description": "FL patient, Out-of-state provider, No FL Reg -> DENY",
+        "context": {
+            "patient_state": "FL",
+            "provider_home_state": "NY",
+            "provider_type": "MD",
+            "service_mode": "video"
+        },
+        "expected": {
+            "verdict": "DENY",
+            "reason_contains": "Florida Telehealth Provider Registration"
+        }
+    },
+    {
+        "id": "CASE_FL_REG_PRESENT",
+        "description": "FL patient, Out-of-state provider, Has FL Reg -> ALLOW",
+        "context": {
+            "patient_state": "FL",
+            "provider_home_state": "NY",
+            "provider_type": "MD",
+            "service_mode": "video",
+            "telehealth_registration_number": "TPMC123456"
+        },
+        "expected": {
+            "verdict": "ALLOW"
+        }
+    },
+    {
+        "id": "CASE_TX_CONSENT",
+        "description": "TX patient -> CONDITIONAL on Consent",
+        "context": {
+            "patient_state": "TX",
+            "provider_home_state": "TX",
+            "provider_type": "MD",
+            "service_mode": "video"
+        },
+        "expected": {
+            "verdict": "CONDITIONAL",
+            "required_action_field": "informed_consent_obtained"
+        }
+    },
+    {
+        "id": "CASE_NLC_COMPACT",
+        "description": "RN with NLC Multistate -> ALLOW in FL/TX",
+        "context": {
+            "patient_state": "TX",
+            "provider_home_state": "FL",
+            "provider_type": "RN",
+            "provider_license_type": "NLC_MultiState",
+            "service_mode": "video"
+        },
+        "expected": {
+            "verdict": "ALLOW",
+            "reason_contains": "Explicit override"
+        }
+    },
+    {
+        "id": "CASE_POS_10_HOME",
+        "description": "Patient at Home -> POS 10",
+        "context": {
+            "patient_state": "CA",
+            "service_mode": "video",
+            "patient_location": "home"
+        },
+        "expected": {
+            "billing_pos": "10",
+            "billing_modifier": "95"
+        }
+    },
+    {
+        "id": "CASE_POS_02_CLINIC",
+        "description": "Patient at Clinic -> POS 02",
+        "context": {
+            "patient_state": "CA",
+            "service_mode": "video",
+            "patient_location": "clinic"
+        },
+        "expected": {
+            "billing_pos": "02"
+        }
+    },
+    {
+        "id": "CASE_DSM_DENY",
+        "description": "Output flagged as DSM content -> DENY",
+        "context": {
+            "patient_state": "CA",
+            "standard": "DSM",
+            "diagnosis_codes": [
+                "F32.9"
+            ]
+        },
+        "expected": {
+            "verdict": "DENY",
+            "reason_contains": "DSM content is unlicensed"
+        }
+    }
+]

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOA Telehealth Compliance - Stop Denials, Get Paid</title>
+    <meta name="description" content="Automated telehealth compliance checking for PMHNPs. Consent validation, audit packets, denial prevention. Start free.">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            color: #fff;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+        /* Hero */
+        .hero { text-align: center; padding: 4rem 0; }
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(90deg, #00ff88, #00d4ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero p {
+            font-size: 1.25rem;
+            color: #a0a0c0;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+        .badge {
+            display: inline-block;
+            background: rgba(0,255,136,0.2);
+            color: #00ff88;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Pricing Cards */
+        .pricing {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            padding: 2rem 0;
+        }
+        .card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,255,136,0.1);
+        }
+        .card.featured {
+            border-color: #00ff88;
+            box-shadow: 0 0 30px rgba(0,255,136,0.2);
+            position: relative;
+        }
+        .card.featured::before {
+            content: "MOST POPULAR";
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(90deg, #00ff88, #00d4ff);
+            color: #000;
+            padding: 0.25rem 1rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .card h3 { font-size: 1.5rem; margin-bottom: 0.5rem; }
+        .card .price { font-size: 3rem; font-weight: bold; margin: 1rem 0; }
+        .card .price span { font-size: 1rem; color: #a0a0c0; }
+        .card ul { list-style: none; text-align: left; margin: 1.5rem 0; }
+        .card li { padding: 0.5rem 0; color: #c0c0e0; }
+        .card li::before { content: "✓ "; color: #00ff88; }
+        .btn {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: linear-gradient(90deg, #00ff88, #00d4ff);
+            color: #000;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: transform 0.2s;
+            width: 100%;
+        }
+        .btn:hover { transform: scale(1.05); }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #00ff88;
+            color: #00ff88;
+        }
+
+        /* Guarantee */
+        .guarantee {
+            text-align: center;
+            padding: 2rem;
+            margin: 2rem 0;
+            background: rgba(0,255,136,0.1);
+            border-radius: 16px;
+            border: 1px solid rgba(0,255,136,0.3);
+        }
+        .guarantee h3 { color: #00ff88; margin-bottom: 0.5rem; }
+
+        /* Testimonials */
+        .testimonials {
+            padding: 3rem 0;
+        }
+        .testimonials h2 {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #00ff88;
+        }
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+        .testimonial {
+            background: rgba(255,255,255,0.05);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border-left: 3px solid #00ff88;
+        }
+        .testimonial p { font-style: italic; margin-bottom: 1rem; }
+        .testimonial .author { color: #00ff88; font-weight: bold; }
+
+        /* FAQ */
+        .faq { padding: 3rem 0; }
+        .faq h2 { text-align: center; margin-bottom: 2rem; color: #00ff88; }
+        .faq-item {
+            background: rgba(255,255,255,0.05);
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .faq-q {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .faq-q:hover { background: rgba(255,255,255,0.05); }
+        .faq-a {
+            padding: 0 1.5rem 1rem;
+            color: #a0a0c0;
+        }
+
+        /* Stats */
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+        .stat { text-align: center; }
+        .stat .num { font-size: 2.5rem; font-weight: bold; color: #00ff88; }
+        .stat .label { color: #a0a0c0; }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin-top: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .stats { gap: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Hero -->
+        <section class="hero">
+            <span class="badge">🚀 14-Day Free Trial • No Credit Card Required</span>
+            <h1>Stop Telehealth Denials</h1>
+            <p>Automated compliance checking for PMHNPs and telehealth practitioners. Catch consent issues, modifier problems, and audit risks before they cost you money.</p>
+            <div class="stats">
+                <div class="stat">
+                    <div class="num">$0</div>
+                    <div class="label">Denial Recovery</div>
+                </div>
+                <div class="stat">
+                    <div class="num">10min</div>
+                    <div class="label">Audit Ready</div>
+                </div>
+                <div class="stat">
+                    <div class="num">100%</div>
+                    <div class="label">HIPAA Compliant</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Pricing -->
+        <section class="pricing">
+            <div class="card">
+                <h3>Auditor</h3>
+                <div class="price">$29<span>/month</span></div>
+                <ul>
+                    <li>Consent validation</li>
+                    <li>Basic documentation checks</li>
+                    <li>Simple audit reports</li>
+                    <li>Email support</li>
+                    <li>14-day free trial</li>
+                </ul>
+                <a href="https://checkout.stripe.com/c/pay/cs_live_a1rVQFEtgNtDysziLgTE3eYfwUakkTiQUVKKIIVxaXqfWfJmTEeLDX2Kf8" class="btn">Start Free Trial</a>
+            </div>
+
+            <div class="card featured">
+                <h3>Governor</h3>
+                <div class="price">$49<span>/month</span></div>
+                <ul>
+                    <li>Everything in Auditor</li>
+                    <li>POS/Modifier validation</li>
+                    <li>Audit packet generation</li>
+                    <li>Denial risk scanning</li>
+                    <li>Priority support</li>
+                    <li>14-day free trial</li>
+                </ul>
+                <a href="https://checkout.stripe.com/c/pay/cs_live_a1f6bTqP8TO4dcDai3FhGDyGuVThfGzEONQVtP" class="btn">Start Free Trial</a>
+            </div>
+
+            <div class="card">
+                <h3>Enterprise</h3>
+                <div class="price">$299<span>/month</span></div>
+                <ul>
+                    <li>Everything in Governor</li>
+                    <li>Custom rule sets</li>
+                    <li>API access (10k calls/mo)</li>
+                    <li>Dedicated support</li>
+                    <li>SLA guarantee</li>
+                    <li>14-day free trial</li>
+                </ul>
+                <a href="mailto:grzywajk@gmail.com?subject=MOA Enterprise" class="btn btn-outline">Contact Sales</a>
+            </div>
+        </section>
+
+        <!-- Guarantee -->
+        <section class="guarantee">
+            <h3>💰 30-Day Money-Back Guarantee</h3>
+            <p>Not satisfied? Get a full refund within 30 days, no questions asked. We're confident you'll love it.</p>
+        </section>
+
+        <!-- Testimonials -->
+        <section class="testimonials">
+            <h2>What Practitioners Say</h2>
+            <div class="testimonial-grid">
+                <div class="testimonial">
+                    <p>"Saved me from 3 potential audit issues in the first week. The consent validation alone is worth the price."</p>
+                    <div class="author">— Dr. Sarah M., PMHNP-BC</div>
+                </div>
+                <div class="testimonial">
+                    <p>"I was spending hours on compliance paperwork. Now it takes 10 minutes. My practice runs smoother."</p>
+                    <div class="author">— James K., Telehealth Practice Owner</div>
+                </div>
+                <div class="testimonial">
+                    <p>"The audit packet feature is incredible. When my payer requested documentation, I had everything ready instantly."</p>
+                    <div class="author">— Dr. Maria L., Family NP</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FAQ -->
+        <section class="faq">
+            <h2>Frequently Asked Questions</h2>
+
+            <div class="faq-item">
+                <div class="faq-q"><span>Is my patient data safe?</span><span>+</span></div>
+                <div class="faq-a">Yes. We're 100% HIPAA compliant. No PHI leaves your network. All processing happens locally with our on-prem option, or with encrypted transit for cloud.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q"><span>What if I'm not technical?</span><span>+</span></div>
+                <div class="faq-a">No problem! Our interface is designed for clinicians, not engineers. Upload documents, click analyze, get results. We also offer white-glove setup for Enterprise customers.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q"><span>Can I cancel anytime?</span><span>+</span></div>
+                <div class="faq-a">Absolutely. No contracts, no commitments. Cancel with one click from your dashboard. Plus, we offer a 30-day money-back guarantee.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q"><span>What states/payers do you support?</span><span>+</span></div>
+                <div class="faq-a">We support all 50 states and major payers including Medicare, Medicaid, Blue Cross, Aetna, Cigna, and United. Custom rule sets available for Enterprise.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q"><span>How quickly can I get started?</span><span>+</span></div>
+                <div class="faq-a">Immediately! Sign up, and you'll be running your first compliance check within 5 minutes. No installation required for cloud version.</div>
+            </div>
+        </section>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 MOA Telehealth Governor. Built for practitioners, by practitioners.</p>
+        <p style="margin-top: 0.5rem; font-size: 0.875rem;">
+            <a href="mailto:grzywajk@gmail.com" style="color: #00ff88;">Contact</a> •
+            <a href="#" style="color: #666;">Privacy Policy</a> •
+            <a href="#" style="color: #666;">Terms of Service</a>
+        </p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,67 @@
+name: Security Scan
+
+on:
+    push:
+        branches: [main, master]
+    pull_request:
+        branches: [main, master]
+
+jobs:
+    secrets-scan:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+
+            - name: Install detect-secrets
+              run: pip install detect-secrets
+
+            - name: Run detect-secrets
+              run: |
+                  detect-secrets scan --baseline .secrets.baseline
+                  detect-secrets audit .secrets.baseline --report --fail-on-unaudited
+
+            - name: Run custom secrets scanner
+              run: python scripts/secrets_scan.py
+              continue-on-error: false
+
+    nan-inf-guard-test:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v5
+              with:
+                  python-version: "3.11"
+
+            - name: Install dependencies
+              run: pip install -r requirements.txt
+
+            - name: Test NaN/Inf Guard
+              run: |
+                  python -c "
+                  import sys
+                  sys.path.insert(0, '.')
+                  from src.governance.moa_gate import MoaTokenGate
+                  gate = MoaTokenGate()
+
+                  # Test NaN
+                  result = gate.evaluate({'spectral_state': {'entropy': float('nan')}})
+                  assert result['action'] == 'BLOCK', 'NaN should BLOCK'
+                  assert 'CRITICAL_NAN_INF_DETECTED' in result['flags']
+
+                  # Test Inf
+                  result = gate.evaluate({'spectral_state': {'entropy': float('inf')}})
+                  assert result['action'] == 'BLOCK', 'Inf should BLOCK'
+
+                  # Test normal
+                  result = gate.evaluate({'spectral_state': {'entropy': 4.0}})
+                  assert result['action'] == 'PASS', 'Normal entropy should PASS'
+
+                  print('✅ NaN/Inf Guard Tests PASSED')
+                  "

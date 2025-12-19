@@ -1,0 +1,46 @@
+#!/bin/sh
+# .githooks/pre-commit
+# POLICY: Fail-closed on secrets and critical config changes
+
+echo ">>> RUNNING PRE-COMMIT SECURITY CHECKS..."
+
+# 1. Block .env files (but allow .env.example)
+if git diff --cached --name-only | grep -E '^\\.env$|^\\.env\\.' | grep -v '\\.env\\.example$' >/dev/null 2>&1; then
+    echo "❌ ERROR: Attempting to commit .env file. This is FORBIDDEN."
+    echo "   Action: Remove .env from staging (git reset .env) and add to .gitignore."
+    exit 1
+fi
+
+# 2. Block config/secrets/
+if git diff --cached --name-only | grep -E '^config/secrets/' >/dev/null 2>&1; then
+    echo "❌ ERROR: Attempting to commit files in config/secrets/. This is FORBIDDEN."
+    exit 1
+fi
+
+# 3. Block LICENSE changes without override
+if git diff --cached --name-only | grep -E '^LICENSE$' >/dev/null 2>&1; then
+    if [ ! -f ".allow_license_change" ]; then
+        echo "❌ ERROR: LICENSE change detected. This requires manual override."
+        echo "   Action: Create '.allow_license_change' file if this is intentional."
+        exit 1
+    fi
+fi
+
+# 4. Scan for secrets using Python scanner
+if [ -f "scripts/secrets_scan.py" ]; then
+    echo "Running secrets_scan.py..."
+    if ! python scripts/secrets_scan.py; then
+        echo "❌ ERROR: Secrets scan failed. Review the files listed above."
+        exit 1
+    fi
+else
+    # Fallback to Basic heuristic if script missing
+    if git diff --cached --name-only -z | xargs -0 grep -lE 'API_KEY|SECRET=|PRIVATE_KEY' --exclude=".githooks/pre-commit" 2>/dev/null; then
+        echo "⚠️  WARNING: Potential secret pattern found in staged files."
+        echo "   Review the files listed above. If safe, run: git commit --no-verify"
+        exit 1
+    fi
+fi
+
+echo "✅ PRE-COMMIT CHECKS PASSED."
+exit 0

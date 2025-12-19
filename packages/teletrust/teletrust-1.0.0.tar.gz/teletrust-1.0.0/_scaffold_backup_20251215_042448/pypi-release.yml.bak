@@ -1,0 +1,67 @@
+name: pypi-release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+  id-token: write  # Required for PyPI Trusted Publishing (OIDC)
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    environment: pypi  # Optional: use GitHub environment for additional protection
+
+    steps:
+      - name: Checkout (pinned action)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for version detection
+
+      - name: Set up Python (pinned)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip build twine
+
+      - name: Build package
+        run: |
+          set -euo pipefail
+          python -m build
+          echo "=== Built artifacts ==="
+          ls -lah dist/
+
+      - name: Verify artifacts (fail-closed)
+        run: |
+          set -euo pipefail
+          # Must have wheel
+          if ! ls dist/*.whl 1>/dev/null 2>&1; then
+            echo "FATAL: Missing wheel file"
+            exit 1
+          fi
+          # Must have sdist
+          if ! ls dist/*.tar.gz 1>/dev/null 2>&1; then
+            echo "FATAL: Missing sdist file"
+            exit 1
+          fi
+          # Verify with twine
+          python -m twine check dist/*
+          echo "✅ Artifacts verified"
+
+      - name: Publish to PyPI (Trusted Publishing - no tokens needed)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # No api-token needed - uses OIDC identity
+
+      - name: Create audit record
+        run: |
+          echo "Published to PyPI at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "Tag: ${{ github.ref_name }}"
+          echo "SHA: ${{ github.sha }}"
+          sha256sum dist/* > dist/SHA256SUMS.txt
+          cat dist/SHA256SUMS.txt

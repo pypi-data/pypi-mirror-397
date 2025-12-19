@@ -1,0 +1,104 @@
+[
+    {
+        "id": "DSM_CONTENT_STRIP_LOG",
+        "description": "Input with DSM content -> ALLOW but Redacted + Logged",
+        "context": {
+            "patient_state": "CA",
+            "provider_home_state": "CA",
+            "provider_licenses": [
+                "CA"
+            ],
+            "standard": "DSM",
+            "dsm_excerpt": "Diagnostic criteria for F32.9..."
+        },
+        "expected": {
+            "verdict": "ALLOW",
+            "sanitization_tag": "DSM",
+            "usage_event": "ip_redaction"
+        }
+    },
+    {
+        "id": "CPT_DESCRIPTOR_INPUT_STRIP_LOG",
+        "description": "Input with CPT Descriptor -> ALLOW but Redacted + Logged",
+        "context": {
+            "patient_state": "CA",
+            "provider_home_state": "CA",
+            "provider_licenses": [
+                "CA"
+            ],
+            "cpt_code": "90837",
+            "cpt_descriptor": "Psychotherapy, 60 minutes..."
+        },
+        "expected": {
+            "verdict": "ALLOW",
+            "sanitization_tag": "CPT",
+            "usage_event": "ip_redaction"
+        }
+    },
+    {
+        "id": "CASE_POS_10_HOME_V101",
+        "description": "Patient at Home -> POS 10 (Regression Check)",
+        "context": {
+            "patient_state": "TX",
+            "service_mode": "video",
+            "patient_location": "home",
+            "provider_home_state": "TX",
+            "provider_licenses": [
+                "TX"
+            ]
+        },
+        "expected": {
+            "billing_pos": "10",
+            "billing_modifier": "95"
+        }
+    },
+    {
+        "id": "CASE_POS_02_NOT_HOME",
+        "description": "Patient NOT at Home -> POS 02",
+        "context": {
+            "patient_state": "TX",
+            "service_mode": "video",
+            "patient_location": "work",
+            "provider_home_state": "TX",
+            "provider_licenses": [
+                "TX"
+            ]
+        },
+        "expected": {
+            "billing_pos": "02",
+            "billing_modifier": "95"
+        }
+    },
+    {
+        "id": "LICENSURE_FAIL_CA",
+        "description": "Patient in CA, Provider in NY (No CA License) -> DENY",
+        "context": {
+            "patient_state": "CA",
+            "service_mode": "video",
+            "provider_home_state": "NY",
+            "provider_licenses": [
+                "NY",
+                "FL"
+            ]
+        },
+        "expected": {
+            "verdict": "DENY"
+        }
+    },
+    {
+        "id": "LICENSURE_PASS_CA_MULTI",
+        "description": "Patient in CA, Provider in NY (Has CA License) -> ALLOW",
+        "context": {
+            "patient_state": "CA",
+            "service_mode": "video",
+            "provider_home_state": "NY",
+            "provider_licenses": [
+                "NY",
+                "CA"
+            ]
+        },
+        "expected": {
+            "verdict": "ALLOW"
+        }
+    }
+]

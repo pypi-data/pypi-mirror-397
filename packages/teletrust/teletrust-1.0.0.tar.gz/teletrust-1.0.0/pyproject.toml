@@ -1,0 +1,59 @@
+[project]
+name = "teletrust"
+version = "1.0.0"
+description = "AI-powered telehealth compliance gateway with deterministic safety"
+readme = "README.md"
+license = {text = "Proprietary"}
+authors = [
+    {name = "Michael Ordon", email = "grzywajk@gmail.com"}
+]
+requires-python = ">=3.10"
+keywords = ["telehealth", "compliance", "hipaa", "ai-safety", "llm-governance"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Healthcare Industry",
+    "License :: Other/Proprietary License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.22.0",
+    "pydantic>=2.0.0",
+    "stripe>=5.0.0",
+    "openai>=1.0.0",
+    "requests>=2.31.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+teletrust = "src.cli:main"
+teletrust-server = "src.api.main:start_server"
+
+[project.urls]
+Homepage = "https://github.com/yourusername/teletrust"
+Documentation = "https://teletrust.dev/docs"
+Repository = "https://github.com/yourusername/teletrust"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
