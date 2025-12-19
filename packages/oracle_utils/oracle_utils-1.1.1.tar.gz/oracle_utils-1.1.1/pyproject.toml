@@ -1,0 +1,55 @@
+[project]
+name = "oracle_utils"
+dynamic = ["version"]
+description = "Oracle SQLPlus Automation for Database Scripting"
+readme = "src/README.md"
+license = "MIT"
+requires-python = ">=3.8"
+authors = [
+    { name = "Michael Minichino", email = "info@unix.us.com" },
+]
+keywords = ["oracle", "database", "sqlplus", "backup", "automation"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Topic :: Database",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+dependencies = []
+
+[project.urls]
+"Homepage" = "https://github.com/mminichino/oracle-scripts/tree/master/src"
+
+[project.scripts]
+db_config = "oracle_utils.db_config:main"
+config_query = "oracle_utils.config_query:main"
+rman_script = "oracle_utils.rman_script:main"
+
+[dependency-groups]
+test = [
+    "pytest>=8.1.1",
+    "pytest-asyncio>=0.23.6",
+    "pytest-rerunfailures>=10.3",
+    "pytest-mock>=3.6.1",
+]
+dev = [
+    "hatch",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/oracle_utils/__init__.py"
+
+[tool.hatch.build.targets.sdist]
+packages = ["src/oracle_utils"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/oracle_utils"]
