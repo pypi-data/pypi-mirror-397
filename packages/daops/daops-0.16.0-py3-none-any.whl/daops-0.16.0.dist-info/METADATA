@@ -1,0 +1,130 @@
+Metadata-Version: 2.4
+Name: daops
+Version: 0.16.0
+Summary: Dataset-Aware Operations.
+Keywords: daops
+Author-email: Elle Smith <eleanor.smith@stfc.ac.uk>
+Maintainer-email: Trevor James Smith <smith.trevorj@ouranos.ca>, Carsten Ehbrecht <ehbrecht@dkrz.de>
+Requires-Python: >=3.11
+Description-Content-Type: text/x-rst
+License-Expression: BSD-3-Clause
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Console
+Classifier: Environment :: Web Environment
+Classifier: Intended Audience :: End Users/Desktop
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: System Administrators
+Classifier: Intended Audience :: Science/Research
+Classifier: Natural Language :: English
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Security
+Classifier: Topic :: Internet
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: System :: Distributed Computing
+Classifier: Topic :: System :: Systems Administration :: Authentication/Directory
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+License-File: LICENSE
+Requires-Dist: cftime
+Requires-Dist: clisops >=0.17.0
+Requires-Dist: h5netcdf
+Requires-Dist: dask[complete] >=2024.12.0
+Requires-Dist: elasticsearch >=8.0.1,<9.0
+Requires-Dist: numpy >=1.26.0
+Requires-Dist: roocs_grids >=0.1.2
+Requires-Dist: xarray >=2025.6.0
+Requires-Dist: xesmf >=0.9.2
+Requires-Dist: loguru >=0.5.3
+Requires-Dist: intake >=0.7.0,<2.0
+Requires-Dist: pandas >=2.1
+Requires-Dist: aiohttp
+Requires-Dist: fsspec
+Requires-Dist: zarr >=2.13.3
+Requires-Dist: zstandard
+Requires-Dist: black >=25.12.0 ; extra == "dev"
+Requires-Dist: bump-my-version >=1.2.0 ; extra == "dev"
+Requires-Dist: coverage[toml] >=7.6.0 ; extra == "dev"
+Requires-Dist: h5netcdf >=1.5.0 ; extra == "dev"
+Requires-Dist: jinja2 ; extra == "dev"
+Requires-Dist: packaging >=24.2 ; extra == "dev"
+Requires-Dist: pip >=25.2 ; extra == "dev"
+Requires-Dist: pre-commit >=3.5.0 ; extra == "dev"
+Requires-Dist: pytest-loguru >=0.3.0 ; extra == "dev"
+Requires-Dist: pytest >=8.0.0 ; extra == "dev"
+Requires-Dist: pytest-cov >=6.0.0 ; extra == "dev"
+Requires-Dist: pytest-timeout >=2.4.0 ; extra == "dev"
+Requires-Dist: ruff >=0.14.9 ; extra == "dev"
+Requires-Dist: tox >=4.18.1 ; extra == "dev"
+Requires-Dist: watchdog >=4.0 ; extra == "dev"
+Requires-Dist: ipykernel ; extra == "docs"
+Requires-Dist: ipython >=8.5.0 ; extra == "docs"
+Requires-Dist: jupyter_client ; extra == "docs"
+Requires-Dist: matplotlib >=3.5.0 ; extra == "docs"
+Requires-Dist: nbconvert ; extra == "docs"
+Requires-Dist: nbsphinx ; extra == "docs"
+Requires-Dist: netcdf4 ; extra == "docs"
+Requires-Dist: sphinx >=7.1.0,<8.2 ; extra == "docs"
+Requires-Dist: sphinx-rtd-theme >=1.0 ; extra == "docs"
+Project-URL: Changelog, https://daops.readthedocs.io/en/stable/history.html
+Project-URL: Homepage, https://daops.readthedocs.io/
+Project-URL: Issue tracker, https://github.com/roocs/daops/issues
+Project-URL: Source, https://github.com/roocs/daops
+Provides-Extra: dev
+Provides-Extra: docs
+
+daops - data-aware operations
+=============================
+
+.. image:: https://img.shields.io/pypi/v/daops.svg
+    :target: https://pypi.python.org/pypi/daops
+    :alt: PyPI
+
+.. image:: https://github.com/roocs/daops/workflows/build/badge.svg
+    :target: https://github.com/roocs/daops/actions
+    :alt: Build Status
+
+.. image:: https://readthedocs.org/projects/daops/badge/?version=latest
+    :target: https://daops.readthedocs.io/en/latest/?badge=latest
+    :alt: Documentation
+
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/python/black
+    :alt: Python Black
+
+The ``daops`` library (pronounced "day-ops") provides a python interface to a
+set of operations suitable for working with climate simulation outputs. It is
+typically used with ESGF data sets that are described in NetCDF files. ``daops``
+is unique in that it accesses a store of *fixes* defined for datasets that are
+irregular when compared with others in their *population*.
+
+When a ``daops`` operation, such as ``subset``\ , is requested, the library will look
+up a database of known fixes before performing and calculations or transformations.
+The data will be loaded and *fixed* using the `xarray <http://xarray.pydata.org/>`_
+library before the any actual operations are sent to its sister library
+`clisops <https://github.com/roocs/clisops>`_.
+
+* Free software: BSD
+* Documentation: https://daops.readthedocs.io
+
+Features
+--------
+
+The package has the following features:
+
+* Ability to run *data-reduction* operations on large climate data sets.
+* Knowledge of irregularities/anomalies in some climate data sets.
+* Ability to apply *fixes* to those data sets before operating on them.
+  This process is called *normalisation* of the data sets.
+
+Credits
+=======
+
+This package was created with ``Cookiecutter`` and the ``cedadev/cookiecutter-pypackage`` project template.
+
+* Cookiecutter: https://github.com/audreyr/cookiecutter
+* cookiecutter-pypackage: https://github.com/cedadev/cookiecutter-pypackage
+
