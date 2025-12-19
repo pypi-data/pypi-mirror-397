@@ -1,0 +1,130 @@
+Metadata-Version: 2.4
+Name: gcell
+Version: 0.1.1
+Summary: A Python library that represents different entities in a cell
+Author-email: Xi Fu <fuxialexander@gmail.com>
+Maintainer-email: Xi Fu <fuxialexander@gmail.com>
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/fuxialexander/gcell
+Project-URL: Repository, https://github.com/fuxialexander/gcell
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Science/Research
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Scientific/Engineering :: Bio-Informatics
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: biopython
+Requires-Dist: genomespy
+Requires-Dist: gprofiler-official
+Requires-Dist: gradio
+Requires-Dist: hydra-core
+Requires-Dist: lingam
+Requires-Dist: matplotlib
+Requires-Dist: jupyter-packaging
+Requires-Dist: MOODS-python
+Requires-Dist: networkx
+Requires-Dist: numpy
+Requires-Dist: omegaconf
+Requires-Dist: openpyxl
+Requires-Dist: pandas
+Requires-Dist: plotly
+Requires-Dist: pooch
+Requires-Dist: pyarrow
+Requires-Dist: pyBigWig
+Requires-Dist: pyfaidx
+Requires-Dist: pyranges
+Requires-Dist: requests
+Requires-Dist: s3fs
+Requires-Dist: scipy
+Requires-Dist: seaborn
+Requires-Dist: seqlogo
+Requires-Dist: tqdm
+Requires-Dist: xmlschema
+Requires-Dist: zarr<3
+Requires-Dist: nglview<4
+Requires-Dist: py3Dmol
+Provides-Extra: test
+Requires-Dist: pytest>=8.2; extra == "test"
+Requires-Dist: pytest-nunit; extra == "test"
+Requires-Dist: pytest-mock; extra == "test"
+Requires-Dist: pytest-cov; extra == "test"
+Requires-Dist: profimp; extra == "test"
+Provides-Extra: dev
+Requires-Dist: setuptools_scm; extra == "dev"
+Requires-Dist: pre-commit; extra == "dev"
+Requires-Dist: towncrier; extra == "dev"
+Requires-Dist: ipykernel; extra == "dev"
+Requires-Dist: jupyter; extra == "dev"
+Requires-Dist: jupyter-packaging; extra == "dev"
+Requires-Dist: nglview; extra == "dev"
+Requires-Dist: py3Dmol; extra == "dev"
+Requires-Dist: nbsphinx; extra == "dev"
+Requires-Dist: nbformat; extra == "dev"
+Requires-Dist: snapatac2; extra == "dev"
+Requires-Dist: scanpy; extra == "dev"
+Requires-Dist: scikit-misc; extra == "dev"
+Provides-Extra: doc
+Requires-Dist: sphinx>=7; extra == "doc"
+Requires-Dist: sphinx-book-theme>=1.1.0; extra == "doc"
+Requires-Dist: scanpydoc>=0.14.1; extra == "doc"
+Requires-Dist: sphinx-autodoc-typehints>=1.25.2; extra == "doc"
+Requires-Dist: myst-parser>=2; extra == "doc"
+Requires-Dist: myst-nb>=1.1.2; extra == "doc"
+Requires-Dist: sphinx-design; extra == "doc"
+Requires-Dist: sphinx-tabs; extra == "doc"
+Requires-Dist: jupyter-packaging; extra == "doc"
+Requires-Dist: readthedocs-sphinx-search; extra == "doc"
+Requires-Dist: sphinxext-opengraph; extra == "doc"
+Requires-Dist: sphinx-copybutton; extra == "doc"
+Requires-Dist: nbsphinx>=0.9; extra == "doc"
+Requires-Dist: ipython>=7.20; extra == "doc"
+Requires-Dist: matplotlib!=3.6.1; extra == "doc"
+Requires-Dist: sphinxcontrib-bibtex; extra == "doc"
+Requires-Dist: setuptools; extra == "doc"
+Requires-Dist: towncrier; extra == "doc"
+Provides-Extra: gpu
+Requires-Dist: culingam; extra == "gpu"
+
+# gcell
+
+[![Documentation Status](https://readthedocs.org/projects/gcell/badge/?version=latest)](https://gcell.readthedocs.io/en/latest/)
+
+`gcell` is a comprehensive toolkit for genomic data analysis, focusing on cell type-specific regulatory analysis, DNA sequence manipulation, protein structure prediction, and pathway analysis. It integrates various modules to facilitate the study of different aspects of gene expression regulation.
+
+# News
+- I dropped `graphviz` and `pygraphviz` dependency due to complexity of maintain installing across different platform. It only affects the network layout for drawing causal graph. `nx.spring_layout(G)` is used instead of `nx.nx_agraph.graphviz_layout(G)` now, which is uglier unforturnately.
+- Feature: Now you can load pre-infered cell types on getdemo website easily:
+```python
+from gcell.cell.celltype import GETDemoLoader
+g = GETDemoLoader()
+print(g.available_celltypes) # this gives you a list of cell type names
+g.load_celltype('Plasma Cell')
+```
+- Fix: `zarr` has been limited to `<3.0.0` to avoid s3 problem
+
+
+## Goal
+The long term goal of this package is to create a open-source, community-involved python-centric playground/tool-set for future AI Agent to discover new biology through predictive model.
+
+
+## Key Modules
+
+- **Celltype**: Tools for cell type analysis, including gene expression and motif analysis. Basis for `get_model` interpretation analysis.
+- **DNA**: Functions for DNA sequence manipulation, motif scanning, and track visualization.
+- **RNA**: Classes for handling GENCODE gene annotations and GTF files.
+- **Protein**: Functionality for protein domain analysis (Uniprot, InterPro) and AlphaFold2 predictions parsing as well as retrieve protein-protein interaction networks from the STRING database..
+- **Pathway**: Tools for pathway (GO, KEGG, Reactome, etc.) analysis using gprofiler.
+
+
+## Installation
+
+```
+pip install git+https://github.com/GET-Foundation/gcell.git@main
+```
+
+## License
+
+`gcell` is open-source software licensed under the MIT License. See the LICENSE file for more details.
