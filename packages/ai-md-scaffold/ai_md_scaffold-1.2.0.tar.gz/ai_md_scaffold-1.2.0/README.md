@@ -1,0 +1,257 @@
+# 🚀 ai-md-scaffold
+
+> **Turn AI-generated Markdown into real project files — instantly.**
+
+`ai-md-scaffold` is a lightweight **CLI tool and Python library** that converts **AI-generated Markdown** (from ChatGPT, DeepSeek, Claude, Gemini, etc.) into a **real project directory structure** with actual files.
+
+No more manual copy-paste.  
+No cleanup.  
+No broken file paths.
+
+---
+
+## ✨ Why ai-md-scaffold?
+
+AI tools are great at generating code — but terrible at delivering it in a usable format.
+
+This tool bridges that gap.
+
+**You give Markdown.  
+It creates real files.**
+
+---
+
+## ✨ Features
+
+- ✅ Convert AI Markdown into real files & folders
+- ✅ **Multi-format Support**: Works with Bold titles (`**file**`) or Headers (`### file`)
+- ✅ **Smart Cleanup**: Automatically removes emojis (`📁`, `📄`), numbering (`1.`), and comments
+- ✅ **Auto-Deduplication**: Handles duplicate filenames by renaming them (e.g., `file_2.js`)
+- ✅ Supports `.env`, `Dockerfile`, config files
+- ✅ Safe overwrite handling
+- ✅ Dry-run preview mode
+- ✅ Works as **CLI** or **Python library**
+- ✅ Zero dependencies
+
+---
+
+## 📦 Installation
+
+```bash
+pip install ai-md-scaffold
+
+```
+
+Verify installation:
+
+```bash
+ai-md-scaffold --version
+
+```
+
+---
+
+## 🚀 Quick Start (CLI)
+
+### 1. Default Format (Bold Titles)
+
+Best for prompts like *"Use **path/to/file** for filenames"*.
+
+```bash
+ai-md-scaffold project.md
+
+```
+
+### 2. Header Format (New!)
+
+Best for prompts like *"Use ### path/to/file for filenames"*. Handles emojis and comments automatically.
+
+```bash
+ai-md-scaffold project.md --format 2
+
+```
+
+### Other Options
+
+```bash
+# Overwrite existing files
+ai-md-scaffold project.md --overwrite
+
+# Preview only (no files written)
+ai-md-scaffold project.md --dry-run
+
+```
+
+---
+
+## 🧠 Supported Markdown Formats
+
+`ai-md-scaffold` supports two common AI output styles.
+
+### Format 1: Bold Titles (Default)
+
+Matches files wrapped in bold asterisks `**...**`.
+
+**Input Example:**
+
+````markdown
+# 📁 Project Structure
+
+Here is the **src/main.py** file:
+```python
+print("Hello")
+
+```
+
+And here is **README.md**:
+...
+
+````
+
+> ✅ Robust: Handles prefixes like `1. **file.js**` or `# **file.js**`
+
+### Format 2: Header Titles (`--format 2`)
+Matches files in Markdown headers (`#`, `##`, `###`).
+
+**Input Example:**
+````markdown
+### 1. src/main.py
+```python
+print("Hello")
+
+```
+
+### 📄 package.json (Backend)
+
+```json
+{}
+
+```
+
+### 📁 src/components/App.jsx
+
+...
+
+````
+
+> ✅ **Smart Parser**:
+> - Ignores numbering (`1.`, `2.`)
+> - Removes emojis (`📁`, `📄`)
+> - Removes comments in parentheses `(Backend)`
+> - Renames duplicates automatically (`App.jsx` -> `App_2.jsx`)
+
+---
+
+## 🤖 Recommended AI Prompt
+
+To get perfect results, append one of these prompts to your AI request:
+
+### Option A (For Default Format)
+```text
+Output code in Markdown.
+IMPORTANT: Precede each code block with the filename in bold, like: **path/to/file.ext**
+
+```
+
+### Option B (For Header Format)
+
+```text
+Output code in Markdown.
+IMPORTANT: Use headers for filenames, like: ### path/to/file.ext
+
+```
+
+---
+
+## 🧩 Python Library Usage
+
+You can use `ai-md-scaffold` as a Python module.
+
+```python
+from ai_md_scaffold import parse_markdown, generate
+
+# Read AI-generated markdown
+with open("project.md") as f:
+    markdown_text = f.read()
+
+# Parse markdown (fmt=1 for Bold, fmt=2 for Headers)
+files = parse_markdown(markdown_text, fmt=2)
+
+# Generate files
+generate(files, root="my_project", overwrite=False, dry_run=False)
+
+```
+
+---
+
+## ⚙️ CLI Options
+
+| Option | Description |
+| --- | --- |
+| `--format` | `1` = Bold `**file**` (default), `2` = Headers `### file` |
+| `--dry-run` | Preview files without writing |
+| `--overwrite` | Overwrite existing files |
+| `--no-interactive` | Disable prompts |
+| `--version` | Show version |
+
+---
+
+## 🧪 Example Output
+
+```bash
+$ ai-md-scaffold project.md --format 2
+
+Root folder detected: pdf-tools
+Use this folder? [Y/n] y
+[INFO] Created: pdf-tools/server/package.json
+[INFO] Created: pdf-tools/server/app.js
+[INFO] Created: pdf-tools/client/src/App.jsx
+
+Project successfully generated
+
+```
+
+---
+
+## 🛡️ Safety & Stability
+
+* Does **not** execute code
+* Does **not** guess file paths
+* Does **not** hallucinate structure
+* Only uses what exists in Markdown
+
+---
+
+## 📦 Package Details
+
+* **Name:** ai-md-scaffold
+* **CLI:** ai-md-scaffold
+* **Python import:** ai_md_scaffold
+* **Python:** >= 3.8
+* **License:** MIT
+
+---
+
+## 🧭 Use Cases
+
+* Generate full-stack projects from DeepSeek, ChatGPT, Claude, Gemini, etc
+* Convert AI answers into real repos
+* Automate scaffolding
+* Developer productivity tooling
+* AI-assisted coding workflows
+
+---
+
+## 📜 License
+
+MIT License — free for personal & commercial use.
+
+---
+
+## ❤️ Author Note
+
+This tool exists because AI should **build projects**, not just talk about them.
+
+If you find this useful — ⭐ star the repo, share it, or build on top of it.
+
+Happy scaffolding 🚀
