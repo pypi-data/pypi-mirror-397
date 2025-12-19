@@ -1,0 +1,222 @@
+## Data Ingestion Python SDK
+
+### Overview
+- **Endpoints**: `GET /healthz`, `POST /v1/jobs/`, `GET /v1/jobs/{id}`, `PUT /v1/files/`, `GET /v1/files/`, `POST /v1/token/generate`, `GET /v1/token/list`, `POST /v1/token/revoke`
+- **Models**: All requests/responses are strict Pydantic models
+- **Auth**: Bearer token required
+- **Python**: 3.9+
+
+### Install
+From PyPI:
+```bash
+pip install trelent-data-ingestion
+```
+
+From source (editable):
+```bash
+pip install -e ./sdk/python
+```
+
+### Configuration
+Provide a base URL and bearer token via environment variables or explicitly.
+
+If you instantiate `DataIngestionClient()` without arguments, these environment variables are required:
+- `DATA_INGESTION_API_URL` or `DATA_INGESTION_API_BASE_URL`
+- `DATA_INGESTION_API_TOKEN`
+
+If you pass credentials explicitly, the environment variables are not needed:
+
+```python
+from trelent_data_ingestion_sdk import SDKConfig, DataIngestionClient
+
+# Option 1: From environment (raises ValueError if vars are missing)
+client = DataIngestionClient()
+
+# Option 2: Explicit config (no env vars needed)
+cfg = SDKConfig(base_url="https://api.example.com", token="<bearer>")
+client = DataIngestionClient(cfg)
+
+# Option 3: Direct arguments (no env vars needed)
+client = DataIngestionClient(base_url="https://api.example.com", token="<bearer>")
+```
+
+### Quickstart
+```python
+from trelent_data_ingestion_sdk import (
+    DataIngestionClient,
+    S3Connector,
+    S3SignedUrlOutput,
+    JobInput,
+)
+
+with DataIngestionClient() as client:
+    # Health check
+    print(client.healthz())
+
+    # Submit a job using S3
+    job = JobInput(
+        connector=S3Connector(
+            bucket_name="my-bucket",
+            prefixes=["docs/a.pdf", "docs/b.pdf"],
+        ),
+        output=S3SignedUrlOutput(expires_minutes=60),
+    )
+    resp = client.submit_job(job)
+    print("submitted:", resp.job_id)
+
+    # Poll status
+    status = client.get_job_status(resp.job_id, include_markdown=True)
+    print(status.status)
+```
+
+If you need to override the environment at runtime:
+```python
+# Via config object
+cfg = SDKConfig(base_url="https://api.example.com", token="<bearer>")
+client = DataIngestionClient(cfg)
+
+# Or directly
+client = DataIngestionClient(base_url="https://api.example.com", token="<bearer>")
+```
+
+### Connectors
+- **`S3Connector`**: Process files from S3
+  - `bucket_name: str`
+  - `prefixes: list[str | S3Prefix]` - prefixes to search (recursive by default)
+- **`UrlConnector`**: Process files from URLs
+  - `urls: list[str]`
+- **`FileUploadConnector`**: Process files uploaded via `/v1/files/`
+  - `file_ids: list[UUID]`
+
+String prefixes are searched recursively by default. Use `S3Prefix` to disable recursive searching:
+```python
+from trelent_data_ingestion_sdk.models import S3Prefix, S3Connector
+
+connector = S3Connector(
+    bucket_name="my-bucket",
+    prefixes=[
+        "reports/2024/",  # Recursive (default)
+        S3Prefix(prefix="logs/", recursive=False),  # Non-recursive
+    ],
+)
+```
+
+### Outputs
+- **`S3SignedUrlOutput`**: Get presigned URLs for results
+  - `expires_minutes: int` (default 1440)
+- **`BucketOutput`**: Write results to an S3 bucket
+  - `bucket_name: str`
+  - `prefix: str`
+
+### API Methods
+
+| Method | Description |
+|--------|-------------|
+| `client.healthz()` | Check API health |
+| `client.submit_job(JobInput)` | Submit a processing job |
+| `client.get_job_status(job_id, include_markdown=False, include_file_metadata=False)` | Get job status and results |
+| `client.upload_file(file_data, filename, content_type, expires_in_days)` | Upload a file for processing |
+| `client.list_files()` | List uploaded files |
+| `client.generate_token(GenerateTokenRequest)` | Generate a scoped JWT token |
+| `client.list_tokens(ListTokensParams)` | List tokens with optional filters |
+| `client.revoke_token(RevokeTokenRequest)` | Revoke a token by ID |
+
+### Token Generation
+Generate scoped JWT tokens for delegated access:
+
+```python
+from trelent_data_ingestion_sdk import (
+    DataIngestionClient,
+    GenerateTokenRequest,
+    TokenPermission,
+)
+
+with DataIngestionClient() as client:
+    req = GenerateTokenRequest(
+        subject="user@example.com",
+        permissions={TokenPermission.WORKFLOW_DOCUMENT, TokenPermission.FILE_UPLOAD},
+        expires_seconds=3600,
+    )
+    resp = client.generate_token(req)
+    print(resp.token)
+```
+
+Available permissions:
+- `TokenPermission.WORKFLOW_ADMIN` - Full workflow access
+- `TokenPermission.WORKFLOW_VIDEO` - Process video files
+- `TokenPermission.WORKFLOW_DOCUMENT` - Process documents
+- `TokenPermission.FILE_ADMIN` - Full file access
+- `TokenPermission.FILE_LIST` - List uploaded files
+- `TokenPermission.FILE_UPLOAD` - Upload files
+- `TokenPermission.TOKEN_LIST` - List tokens
+- `TokenPermission.TOKEN_REVOKE` - Revoke tokens
+
+### File Upload
+Upload files directly for processing:
+
+```python
+from trelent_data_ingestion_sdk import DataIngestionClient, FileUploadConnector, JobInput, S3SignedUrlOutput
+
+with DataIngestionClient() as client:
+    # Upload a file
+    with open("document.pdf", "rb") as f:
+        upload = client.upload_file(f.read(), "document.pdf", "application/pdf")
+
+    # Process the uploaded file
+    job = JobInput(
+        connector=FileUploadConnector(file_ids=[upload.id]),
+        output=S3SignedUrlOutput(expires_minutes=60),
+    )
+    resp = client.submit_job(job)
+```
+
+### Markdown Fragmentation
+Split large markdown documents into smaller chunks for embedding or processing:
+
+```python
+from trelent_data_ingestion_sdk import fragment_markdown, MAX_FRAGMENT_CHARS
+
+fragments = fragment_markdown(markdown_content)
+# Or with custom size
+fragments = fragment_markdown(markdown_content, max_fragment_chars=10000)
+```
+
+### Delivery Payloads
+When status is `Completed`, `JobStatusResponse.delivery` maps input identifiers to delivery items:
+
+**Signed URLs:**
+```python
+status = client.get_job_status(job_id, include_markdown=True)
+for key, item in status.delivery.items():
+    print(f"{key}: {item.markdown_delivery.url}")
+    print(f"Markdown: {item.markdown}")
+```
+
+**Bucket pointers:**
+```python
+for key, item in status.delivery.items():
+    print(f"{key}: s3://{item.markdown_delivery.bucket_name}/{item.markdown_delivery.object_key}")
+```
+
+### Error Handling
+- **Config validation**: `ValueError` if missing `base_url` or `token`
+- **HTTP errors**: `requests.HTTPError` on non-2xx responses
+- **Parsing**: `pydantic.ValidationError` on invalid payloads
+
+### Development
+Build locally:
+```bash
+uv build --directory sdk/python
+```
+
+Run tests across Python versions:
+```bash
+uvx tox
+```
+
+Bump version:
+```bash
+uv version --bump patch --directory sdk/python --no-sync
+```
+
+Publish via the repo's GitHub Action (PyPI Trusted Publisher).
