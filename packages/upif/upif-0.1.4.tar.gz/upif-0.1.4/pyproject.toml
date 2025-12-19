@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel", "Cython"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "upif"
+version = "0.1.4"
+description = "Universal Prompt Injection Firewall - A local-first AI security layer."
+authors = [
+  { name = "Yash Dhone", email = "yash.dhone01@gmail.com" },
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.0",
+    "cryptography>=41.0",
+    "setuptools",
+    "requests",
+]
+
+[project.optional-dependencies]
+pro = [
+    "onnxruntime>=1.16",
+    "tokenizers>=0.14",
+]
+dev = [
+    "pytest",
+    "hypothesis",
+]
+
+[tool.setuptools]
+packages = {find = {}}
+include-package-data = true
+
+[tool.setuptools.package-data]
+upif = ["data/*.json"]
+
+[tool.cibuildwheel]
+# Build for Python 3.10, 3.11, 3.12 on Linux, Windows, and macOS
+build = "cp310-* cp311-* cp312-*"
+skip = "pp* *musllinux*" # Skip PyPy and Musl Linux for now to save time/complexity
+
+[tool.cibuildwheel.linux]
+archs = ["x86_64"] # Standard Colab/Server architecture
+
+[tool.cibuildwheel.windows]
+archs = ["AMD64"]
+
+[tool.cibuildwheel.macos]
+archs = ["x86_64", "arm64"] # Intel and Apple Silicon
