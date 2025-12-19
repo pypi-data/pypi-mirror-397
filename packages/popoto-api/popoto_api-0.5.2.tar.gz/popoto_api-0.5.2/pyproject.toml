@@ -1,0 +1,47 @@
+[project]
+name = "popoto-api"
+dynamic = ["version"]
+
+authors = [
+  { name="Aaron Bangs", email="aaron@delresearch.com" },
+  { name="Edgar Bangs", email="edgar@delresearch.com" },
+  { name="James A. DellaMorte", email="jamesanthony@popotomodem.com"},
+  { name="Jim DellaMorte", email="jim@delresearch.com" },
+  { name="Joseph DellaMorte", email="joseph@delresearch.com"},
+  { name="John DellaMorte", email="john@delresearch.com"}
+]
+description = "Package containing the Popoto Modem Python API."
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Operating System :: OS Independent",
+]
+[project.optional-dependencies]
+all = [
+  "scipy",
+  "numpy",
+  "progressbar"
+]
+test = [
+  "pytest",
+]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "code"
+path = "pipeline/version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/popoto_api", "src/popoto_data_server", "src/popoto"]
+
+[project.scripts]
+popoto-data-server = "popoto_data_server.pds:main"

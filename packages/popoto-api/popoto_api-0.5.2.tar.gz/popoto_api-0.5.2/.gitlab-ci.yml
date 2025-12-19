@@ -1,0 +1,98 @@
+stages:
+  - jira
+  - test
+  - build
+  - dev-deploy
+  - public-deploy-pypi-test
+  - public-deploy-pypi
+include:
+  - component: $CI_SERVER_FQDN/components/jira-verification/verify_branch@~latest
+    inputs:
+      stage: jira
+
+test-get-version:
+  stage: test
+  image: python:3.11
+  script:
+    - pip install --upgrade pip
+    - pip install .[test]
+    - pytest --capture=tee-sys -q
+  tags:
+    - linux/amd64
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+/
+
+build:
+  stage: build
+  image: python:3.11
+  script:
+    - pip install --upgrade pip
+    - pip install build hatchling hatch-vcs
+    - python -m build
+    - ls -lh dist/
+  artifacts:
+    paths:
+      - dist/
+  tags:
+    - linux/amd64
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+/
+
+deploy-to-gitlab:
+  stage: dev-deploy
+  image: python:3.11
+  dependencies:
+    - build
+  variables:
+    TWINE_USERNAME: gitlab-ci-token
+    TWINE_PASSWORD: $CI_JOB_TOKEN
+  script:
+    - pip install --upgrade pip
+    - pip install twine
+    - python -m twine upload --verbose --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*
+  tags:
+    - linux/amd64
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+/
+
+deploy-to-pypi-test:
+  stage: public-deploy-pypi-test
+  image: python:3.11
+  dependencies:
+    - build
+  variables:
+    TWINE_USERNAME: __token__
+    TWINE_PASSWORD: $TEST_PYPI_API_TOKEN
+  script:
+    - pip install --upgrade pip
+    - pip install twine
+    - python -m twine upload --verbose -r testpypi dist/*
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+/
+      when: manual
+  tags:
+    - linux/amd64
+
+deploy-to-pypi:
+  stage: public-deploy-pypi
+  image: python:3.11
+  dependencies:
+    - build
+  variables:
+    TWINE_USERNAME: __token__
+    TWINE_PASSWORD: $PYPI_API_TOKEN
+  script:
+    - pip install --upgrade pip
+    - pip install twine
+    - python -m twine upload --verbose dist/*
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v\d+\.\d+/
+      when: manual
+  tags:
+    - linux/amd64
