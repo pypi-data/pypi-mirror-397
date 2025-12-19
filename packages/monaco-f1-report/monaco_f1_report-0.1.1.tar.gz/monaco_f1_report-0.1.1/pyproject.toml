@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "monaco-f1-report"  # package name for PyPi.
+version = "0.1.1"
+description = "Formula 1 Monaco 2018 Qualification report generator"
+readme = "README.md"
+authors = [
+    {name = "Oleksii Ovcharuk", email = "ovcharuk19951209@gmail.com"}
+]
+license = { file = "LICENSE" }
+requires-python = ">=3.8"
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = []
+
+[project.scripts]
+monaco-report = "monaco_report.main:main"
+
+[tool.setuptools.packages.find]
+include = ["monaco_report"]
+
+[tool.setuptools.package-data]
+monaco_report = ["data/*.txt", "data/*.log"]
