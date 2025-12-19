@@ -1,0 +1,202 @@
+import std/[os, strutils, parseopt, json, tables],
+  boxy, windy, vmath, fidget2, fidget2/hybridrender, webby,
+  mettascope/[replays, common, panels, utils, timeline,
+  worldmap, minimap, agenttraces, footer, envconfig, vibes, notebook, replayloader]
+
+proc parseArgs() =
+  ## Parse command line arguments.
+  var p = initOptParser(commandLineParams())
+  while true:
+    p.next()
+    case p.kind
+    of cmdEnd:
+      break
+    of cmdLongOption, cmdShortOption:
+      case p.key
+      of "replay", "r":
+        commandLineReplay = p.val
+      else:
+        quit("Unknown option: " & p.key)
+    of cmdArgument:
+      quit("Unknown option: " & p.key)
+
+proc parseUrlParams() =
+  ## Parse URL parameters.
+  let url = parseUrl(window.url)
+  commandLineReplay = url.query["replay"]
+
+find "/UI/Main":
+
+  onLoad:
+    # We need to build the atlas before loading the replay.
+    buildAtlas()
+    
+    window.onFileDrop = proc(fileName: string, fileData: string) =
+      echo "File dropped: ", fileName, " (", fileData.len, " bytes)"
+      if fileName.endsWith(".json.z"):
+        try:
+          common.replay = loadReplay(fileData, fileName)
+          onReplayLoaded()
+          echo "Successfully loaded replay: ", fileName
+        except:
+          echo "Error loading replay file: ", getCurrentExceptionMsg()
+      else:
+        echo "Ignoring dropped file (not .json.z): ", fileName
+
+    when defined(emscripten):
+      setupPostMessageReplayHandler(cast[pointer](window))
+
+    utils.typeface = readTypeface(dataDir / "fonts" / "Inter-Regular.ttf")
+
+    rootArea.split(Vertical)
+    rootArea.split = 0.30
+
+    rootArea.areas[0].split(Horizontal)
+    rootArea.areas[0].split = 0.7
+
+    rootArea.areas[1].split(Vertical)
+    rootArea.areas[1].split = 0.6
+
+    objectInfoPanel = rootArea.areas[0].areas[0].addPanel(ObjectInfo, "Object")
+    environmentInfoPanel = rootArea.areas[0].areas[0].addPanel(EnvironmentInfo, "Environment")
+
+    worldMapPanel = rootArea.areas[1].areas[0].addPanel(WorldMap, "Map")
+    minimapPanel = rootArea.areas[0].areas[1].addPanel(Minimap, "Minimap")
+
+    #agentTracesPanel = rootArea.areas[1].areas[0].addPanel(AgentTraces, "Agent Traces")
+    # agentTablePanel = rootArea.areas[1].areas[1].addPanel(AgentTable, "Agent Table")
+
+    vibePanel = rootArea.areas[1].areas[1].addPanel(VibePanel, "Vibe Selector")
+
+    rootArea.refresh()
+
+    globalTimelinePanel = Panel(panelType: GlobalTimeline, node: find("GlobalTimeline"))
+    globalFooterPanel = Panel(panelType: GlobalFooter, node: find("GlobalFooter"))
+    globalHeaderPanel = Panel(panelType: GlobalHeader, node: find("GlobalHeader"))
+
+    worldMapPanel.node.onRenderCallback = proc(thisNode: Node) =
+      bxy.saveTransform()
+      worldMapPanel.rect = irect(
+        thisNode.absolutePosition.x,
+        thisNode.absolutePosition.y,
+        thisNode.size.x,
+        thisNode.size.y
+      )
+      if not common.replay.isNil and worldMapPanel.pos == vec2(0, 0):
+        fitVisibleMap(worldMapPanel)
+      adjustPanelForResize(worldMapPanel)
+      bxy.translate(worldMapPanel.rect.xy.vec2 * window.contentScale)
+      drawWorldMap(worldMapPanel)
+      bxy.restoreTransform()
+
+    minimapPanel.node.onRenderCallback = proc(thisNode: Node) =
+      bxy.saveTransform()
+      minimapPanel.rect = irect(
+        thisNode.absolutePosition.x,
+        thisNode.absolutePosition.y,
+        thisNode.size.x,
+        thisNode.size.y
+      )
+      bxy.translate(minimapPanel.rect.xy.vec2 * window.contentScale)
+      drawMinimap(minimapPanel)
+      bxy.restoreTransform()
+
+    # agentTracesPanel.node.onRenderCallback = proc(thisNode: Node) =
+    #   bxy.saveTransform()
+    #   agentTracesPanel.rect = irect(
+    #     thisNode.absolutePosition.x,
+    #     thisNode.absolutePosition.y,
+    #     thisNode.size.x,
+    #     thisNode.size.y
+    #   )
+    #   bxy.translate(agentTracesPanel.rect.xy.vec2 * window.contentScale)
+    #   drawAgentTraces(agentTracesPanel)
+    #   bxy.restoreTransform()
+
+    globalTimelinePanel.node.onRenderCallback = proc(thisNode: Node) =
+      bxy.saveTransform()
+      globalTimelinePanel.rect = irect(
+        thisNode.position.x,
+        thisNode.position.y,
+        thisNode.size.x,
+        thisNode.size.y
+      )
+      timeline.drawTimeline(globalTimelinePanel)
+      bxy.restoreTransform()
+
+    case common.playMode
+    of Historical:
+      if commandLineReplay != "":
+        if commandLineReplay.startsWith("http"):
+          common.replay = EmptyReplay
+          echo "fetching replay from URL: ", commandLineReplay
+          let req = startHttpRequest(commandLineReplay)
+          req.onError = proc(msg: string) =
+            # TODO: Show error to user.
+            echo "onError: " & msg
+            echo getCurrentException().getStackTrace()
+          req.onResponse = proc(response: HttpResponse) =
+            if response.code != 200:
+              # TODO: Show error to user.
+              echo "Error loading replay: HTTP ", response.code, " ", response.body
+              return
+            echo "replay fetched, loading..."
+            common.replay = loadReplay(response.body, commandLineReplay)
+            onReplayLoaded()
+        else:
+          echo "Loading replay from file: ", commandLineReplay
+          common.replay = loadReplay(commandLineReplay)
+          onReplayLoaded()
+      elif common.replay == nil:
+        let defaultReplay = dataDir / "replays" / "pens.json.z"
+        echo "Loading replay from default file: ", defaultReplay
+        common.replay = loadReplay(defaultReplay)
+        onReplayLoaded()
+    of Realtime:
+      echo "Realtime mode"
+      onReplayLoaded()
+
+  onFrame:
+
+    playControls()
+
+    # super+w or super+q closes window on Mac.
+    when defined(macosx):
+      let superDown = window.buttonDown[KeyLeftSuper] or window.buttonDown[KeyRightSuper]
+      if superDown and (window.buttonPressed[KeyW] or window.buttonPressed[KeyQ]):
+        window.closeRequested = true
+
+    if window.buttonReleased[MouseLeft]:
+      mouseCaptured = false
+      mouseCapturedPanel = nil
+
+    if window.buttonPressed[KeyF8]:
+      fitFullMap(worldMapPanel)
+
+when isMainModule:
+
+  # Check if the data directory exists.
+  let dataDir = "packages/mettagrid/nim/mettascope/data"
+  if not dirExists(dataDir):
+    echo "Data directory does not exist: ", dataDir
+    echo "Please run it from the root of the project."
+    quit(1)
+
+  when defined(emscripten):
+    parseUrlParams()
+  else:
+    parseArgs()
+
+  startFidget(
+    figmaUrl = "https://www.figma.com/design/hHmLTy7slXTOej6opPqWpz/MetaScope-V2-Rig",
+    windowTitle = "MettaScope",
+    entryFrame = "UI/Main",
+    windowStyle = DecoratedResizable,
+    dataDir = dataDir
+  )
+
+  while isRunning():
+    tickFidget()
+    when not defined(emscripten):
+      pollHttp()
+  closeFidget()
