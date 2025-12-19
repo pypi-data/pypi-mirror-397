@@ -1,0 +1,89 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "github-mcp-server"
+version = "2.5.7"
+description = "The most AI-optimized GitHub MCP server: 112 tools, code-first architecture (98% token reduction), compact responses (80-97% smaller). Built for efficient AI development."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "MCP Labs", email = "licensing@mcplabs.co.uk" }]
+license = "AGPL-3.0-or-later"
+keywords = ["mcp", "model-context-protocol", "github", "api", "ai", "assistant", "claude"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "mcp>=1.0.0,<2.0.0",
+    "httpx>=0.25.0",
+    "pydantic>=2.0.0",
+    "PyJWT>=2.8.0",
+    "click>=8.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/crypto-ninja/mcp-server-for-Github"
+Documentation = "https://github.com/crypto-ninja/mcp-server-for-Github#readme"
+Repository = "https://github.com/crypto-ninja/mcp-server-for-Github"
+Issues = "https://github.com/crypto-ninja/mcp-server-for-Github/issues"
+Changelog = "https://github.com/crypto-ninja/mcp-server-for-Github/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0",
+    "pytest-httpx>=0.21.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "pip-audit>=2.6.0",
+    "python-dotenv>=1.0.0",  # For test scripts
+]
+
+[project.scripts]
+github-mcp-cli = "github_mcp.cli:cli"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+exclude = [
+    ".github",
+    "*.yml",
+    "*.yaml",
+    "test_pkg",
+    "test_install",
+    "test_install2",
+    ".venv",
+    "venv",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+# Allow module-level imports after sys.path modifications (needed for tests)
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["E402"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"github_mcp" = [
+    "deno.json",
+    "deno_executor/*.ts",
+    "deno_executor/*.md",
+    "servers/*.ts",
+    "servers/*.json",
+    "servers/github/**/*.ts",
+]
+
