@@ -1,0 +1,58 @@
+"""{{ feature_name | capitalize }} feature configuration.
+
+This module defines the feature configuration class that registers
+the feature with the main application.
+"""
+
+from dataclasses import dataclass, field
+
+
+@dataclass
+class {{ feature_name | capitalize }}FeatureConfig:
+    """Configuration for the {{ feature_name }} feature.
+
+    Attributes:
+        name: The feature name (used for routing prefix).
+        verbose_name: Human-readable name for the feature.
+        description: Description of the feature's functionality.
+        prefix: URL prefix for the feature's routes.
+        tags: OpenAPI tags for the feature's routes.
+    """
+
+    name: str = "{{ feature_name }}"
+    verbose_name: str = "{{ feature_name | capitalize | replace('_', ' ') }}"
+    description: str = "{{ feature_description | default(feature_name | capitalize | replace('_', ' ') + ' management') }}"
+    prefix: str = "/{{ feature_name | replace('_', '-') }}"
+    tags: list[str] = field(default_factory=lambda: ["{{ feature_name | replace('_', ' ') }}"])
+
+
+# Feature configuration instance
+feature_config = {{ feature_name | capitalize }}FeatureConfig()
+
+
+# Optional lifecycle hooks for feature initialization and cleanup.
+# These are called by core.features.run_startup_hooks() and run_shutdown_hooks()
+# during application startup/shutdown if using auto-discovery.
+#
+# Uncomment and implement as needed:
+#
+# async def on_startup() -> None:
+#     """Called when the application starts.
+#
+#     Use this for feature-specific initialization like:
+#     - Loading feature-specific configuration
+#     - Initializing feature-level caches
+#     - Setting up feature-specific connections
+#     """
+#     pass
+#
+#
+# async def on_shutdown() -> None:
+#     """Called when the application shuts down.
+#
+#     Use this for feature-specific cleanup like:
+#     - Closing feature-level connections
+#     - Flushing caches
+#     - Cleaning up resources
+#     """
+#     pass
