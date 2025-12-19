@@ -1,0 +1,93 @@
+swagger: "2.0"
+info:
+  title: Flask REST-API Starter Kit
+  description: Flask REST-API Starter Kit
+  version: "1.0"
+basePath: /api/v1
+host: 127.0.0.1:5000
+schemes:
+  - https
+tags:
+  - name: Auth
+    description: User Authentication
+  - name: Users
+    description: Users Management
+securityDefinitions:
+  Bearer:
+    type: apiKey
+    name: Authorization
+    in: header
+    description: "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'"
+
+security:
+  - Bearer: []
+
+paths:
+  # Authentication and User Management
+  /auth/signup:
+    post:
+      tags:
+        - Auth
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string            
+      responses:
+        201:
+          description: User registered successfully
+        400:
+          description: Invalid input
+        500:
+          description: Internal server error
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        200:
+          description: User logged in successfully
+          schema:
+            type: object
+            properties:
+              token:
+                type: string
+        401:
+          description: Unauthorized
+        500:
+          description: Internal server error
+        400:
+          description: Invalid input
+  /auth/me:
+    get:
+      tags:
+        - Auth
+      summary: Get current user information
+      responses:
+        200:
+          description: User information retrieved successfully
+          schema:
+            $ref: "#/definitions/User"
+        401:
+          description: Unauthorized
+        500:
+          description: Internal server error
