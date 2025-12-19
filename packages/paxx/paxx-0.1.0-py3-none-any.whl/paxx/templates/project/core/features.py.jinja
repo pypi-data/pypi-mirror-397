@@ -1,0 +1,265 @@
+"""Feature discovery and registration utilities for {{ project_name }}.
+
+This module provides optional utilities for auto-discovering and registering
+features in the features/ directory. This is an optional convenience feature -
+you can always register routers manually in main.py if preferred.
+
+Usage:
+    from core.features import discover_features, register_features
+
+    # In create_app():
+    features = discover_features()
+    register_features(app, features)
+"""
+
+from __future__ import annotations
+
+import importlib
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from fastapi import FastAPI
+
+
+@dataclass
+class FeatureConfig:
+    """Base configuration for an feature.
+
+    Features can customize their configuration by creating a config.py module
+    with an FeatureConfig subclass and an feature_config instance.
+
+    Attributes:
+        name: The feature name (used for internal reference).
+        verbose_name: Human-readable name for the feature.
+        description: Description of the feature's functionality.
+        prefix: URL prefix for the feature's routes.
+        tags: OpenAPI tags for the feature's routes.
+    """
+
+    name: str
+    verbose_name: str = ""
+    description: str = ""
+    prefix: str = ""
+    tags: list[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        """Set defaults based on name if not provided."""
+        if not self.verbose_name:
+            self.verbose_name = self.name.replace("_", " ").title()
+        if not self.prefix:
+            self.prefix = f"/{self.name.replace('_', '-')}"
+        if not self.tags:
+            self.tags = [self.name.replace("_", " ")]
+
+
+@dataclass
+class DiscoveredFeature:
+    """Represents a discovered feature with its components.
+
+    Attributes:
+        name: The feature directory name.
+        config: The feature's configuration.
+        router: The feature's FastAPI router (if found).
+        on_startup: Optional startup hook.
+        on_shutdown: Optional shutdown hook.
+    """
+
+    name: str
+    config: FeatureConfig
+    router: Any | None = None
+    on_startup: Callable[[], Any] | None = None
+    on_shutdown: Callable[[], Any] | None = None
+
+
+def discover_features(features_dir: Path | None = None) -> list[DiscoveredFeature]:
+    """Discover all features in the features/ directory.
+
+    This function scans the features directory for valid feature modules and
+    extracts their configuration, routers, and lifecycle hooks.
+
+    An feature is considered valid if:
+    - It's a directory under features/
+    - It contains an __init__.py file
+
+    Args:
+        features_dir: Path to the features directory. Defaults to ./features/
+
+    Returns:
+        List of DiscoveredFeature instances for each valid feature.
+
+    Example:
+        features = discover_features()
+        for feature in features:
+            print(f"Found feature: {feature.name} at {feature.config.prefix}")
+    """
+    if features_dir is None:
+        features_dir = Path.cwd() / "features"
+
+    discovered: list[DiscoveredFeature] = []
+
+    if not features_dir.exists():
+        return discovered
+
+    for feature_path in sorted(features_dir.iterdir()):
+        if not feature_path.is_dir():
+            continue
+        if not (feature_path / "__init__.py").exists():
+            continue
+
+        feature_name = feature_path.name
+
+        # Try to load config
+        config = _load_feature_config(feature_name)
+
+        # Try to load router
+        router = _load_feature_router(feature_name)
+
+        # Try to load lifecycle hooks
+        on_startup, on_shutdown = _load_feature_hooks(feature_name)
+
+        discovered.append(
+            DiscoveredFeature(
+                name=feature_name,
+                config=config,
+                router=router,
+                on_startup=on_startup,
+                on_shutdown=on_shutdown,
+            )
+        )
+
+    return discovered
+
+
+def _load_feature_config(feature_name: str) -> FeatureConfig:
+    """Load feature configuration from the feature's config module.
+
+    Args:
+        feature_name: The feature directory name.
+
+    Returns:
+        FeatureConfig instance (either from feature's config.py or a default).
+    """
+    try:
+        config_module = importlib.import_module(f"features.{feature_name}.config")
+        if hasattr(config_module, "feature_config"):
+            return config_module.feature_config
+    except ImportError:
+        pass
+
+    # Return default config
+    return FeatureConfig(name=feature_name)
+
+
+def _load_feature_router(feature_name: str) -> object | None:
+    """Load the router from the feature's routes module.
+
+    Args:
+        feature_name: The feature directory name.
+
+    Returns:
+        The feature's router if found, None otherwise.
+    """
+    try:
+        routes_module = importlib.import_module(f"features.{feature_name}.routes")
+        if hasattr(routes_module, "router"):
+            return routes_module.router
+    except ImportError:
+        pass
+
+    return None
+
+
+def _load_feature_hooks(
+    feature_name: str,
+) -> tuple[Callable[[], Any] | None, Callable[[], Any] | None]:
+    """Load lifecycle hooks from the feature's config module.
+
+    Args:
+        feature_name: The feature directory name.
+
+    Returns:
+        Tuple of (on_startup, on_shutdown) callables, or None for each.
+    """
+    on_startup = None
+    on_shutdown = None
+
+    try:
+        config_module = importlib.import_module(f"features.{feature_name}.config")
+        if hasattr(config_module, "on_startup"):
+            on_startup = config_module.on_startup
+        if hasattr(config_module, "on_shutdown"):
+            on_shutdown = config_module.on_shutdown
+    except ImportError:
+        pass
+
+    return on_startup, on_shutdown
+
+
+def register_features(app: "FastAPI", discovered_features: list[DiscoveredFeature]) -> None:
+    """Register discovered features with the FastAPI application.
+
+    This function includes each feature's router with its configured prefix
+    and tags.
+
+    Args:
+        app: The FastAPI application instance.
+        discovered_features: List of DiscoveredFeature instances.
+
+    Example:
+        features = discover_features()
+        register_features(app, features)
+    """
+    for discovered in discovered_features:
+        if discovered.router is not None:
+            app.include_router(
+                discovered.router,
+                prefix=discovered.config.prefix,
+                tags=discovered.config.tags,
+            )
+
+
+async def run_startup_hooks(discovered_features: list[DiscoveredFeature]) -> None:
+    """Run startup hooks for all discovered features.
+
+    This should be called during application startup, typically
+    in the lifespan context manager.
+
+    Args:
+        discovered_features: List of DiscoveredFeature instances.
+
+    Example:
+        @asynccontextmanager
+        async def lifespan(app: FastAPI):
+            features = discover_features()
+            await run_startup_hooks(features)
+            yield
+            await run_shutdown_hooks(features)
+    """
+    import asyncio
+
+    for discovered in discovered_features:
+        if discovered.on_startup is not None:
+            result = discovered.on_startup()
+            if asyncio.iscoroutine(result):
+                await result
+
+
+async def run_shutdown_hooks(discovered_features: list[DiscoveredFeature]) -> None:
+    """Run shutdown hooks for all discovered features.
+
+    This should be called during application shutdown, typically
+    in the lifespan context manager.
+
+    Args:
+        discovered_features: List of DiscoveredFeature instances.
+    """
+    import asyncio
+
+    for discovered in discovered_features:
+        if discovered.on_shutdown is not None:
+            result = discovered.on_shutdown()
+            if asyncio.iscoroutine(result):
+                await result

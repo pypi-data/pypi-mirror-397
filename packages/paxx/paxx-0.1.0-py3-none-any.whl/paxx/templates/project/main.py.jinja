@@ -1,0 +1,79 @@
+"""{{ project_name }} Application Entry Point.
+
+This module provides the application factory and FastAPI app instance.
+"""
+
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from db.database import close_db
+from core.exceptions import register_exception_handlers
+from core.middleware import register_middleware
+from settings import settings
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    """Manage application lifespan events.
+
+    Startup:
+        - Database connections are established (handled by engine)
+
+    Shutdown:
+        - Database connections are closed
+    """
+    # Startup
+    yield
+    # Shutdown
+    await close_db()
+
+
+def create_app() -> FastAPI:
+    """Create and configure the FastAPI application.
+
+    Returns:
+        Configured FastAPI application instance.
+
+    Example:
+        app = create_app()
+
+        # Register routers
+        from features.users.routes import router as users_router
+        app.include_router(users_router, prefix="/users", tags=["users"])
+    """
+    app = FastAPI(
+        title=settings.app_name,
+        debug=settings.debug,
+        lifespan=lifespan,
+    )
+
+    # Register exception handlers
+    register_exception_handlers(app)
+
+    # Register custom middleware
+    register_middleware(app)
+
+    # Configure CORS
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+    return app
+
+
+# Create application instance
+app = create_app()
+
+
+# Health check endpoint
+@app.get("/health")
+async def health_check() -> dict[str, str]:
+    """Health check endpoint."""
+    return {"status": "healthy"}
