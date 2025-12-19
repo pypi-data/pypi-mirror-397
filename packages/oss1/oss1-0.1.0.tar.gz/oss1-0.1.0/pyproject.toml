@@ -1,0 +1,24 @@
+[project]
+name = "oss1"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [{ name = "董 福州 (DONG FUZHOU)", email = "sneakydog@yeah.net" }]
+requires-python = ">=3.10"
+dependencies = [
+    "aioboto3>=15.5.0",
+    "aiofiles>=25.1.0",
+    "minio>=7.2.20",
+    "mypy-boto3-s3>=1.42.10",
+]
+
+[project.scripts]
+asynclocalstorageservice = "oss1:main"
+
+[project.entry-points."storage"]
+local = "oss1.local:AsyncLocalStorageService"
+s3 = "oss1.s3:AsyncS3StorageService"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
