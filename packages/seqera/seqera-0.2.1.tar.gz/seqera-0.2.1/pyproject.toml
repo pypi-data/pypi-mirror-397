@@ -1,0 +1,43 @@
+# pyproject.toml
+[build-system]
+requires = ["hatchling>=1.22"]
+build-backend = "hatchling.build"
+
+[project]
+name = "seqera"
+version = "0.2.1"
+description = "Seqera AI CLI – terminal assistant for Nextflow, bioinformatics, and workflow management"
+readme = "README.md"
+requires-python = ">=3.13"
+license = { text = "Custom" }
+keywords = [
+    "bioinformatics",
+    "nextflow",
+    "workflows",
+    "ai ide",
+    "ai assistant"
+]
+authors = [{ name = "Seqera", email = "support@seqera.io" }]
+dependencies = [
+    "click>=8.1.3",
+    "rich>=13.7.0",
+    "python-dotenv>=1.0.0",
+    "websocket-client>=1.7.0",
+    "requests>=2.32.0",
+    "prompt-toolkit>=3.0.0",
+    "keyring>=24.3.0",
+    "mcp>=1.0.0"  # MCP SDK for local execution server
+]
+
+[project.urls]
+Homepage = "https://docs.seqera.io/platform-cloud/seqera-ai"
+Issues = "https://feedback.seqera.io/seqera-ai-feature-requests"
+Documentation = "https://docs.seqera.io/platform-cloud/seqera-ai"
+Changelog = "https://docs.seqera.io/changelog/tags/seqera-cloud"
+Twitter = "https://x.com/SeqeraLabs"
+
+[project.scripts]
+seqera = "seqera_ai.cli:cli_seqera"  # Main CLI command (landing screen with 'ai' subcommand)
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/seqera_ai"]

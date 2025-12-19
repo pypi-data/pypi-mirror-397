@@ -1,0 +1,170 @@
+Metadata-Version: 2.4
+Name: seqera
+Version: 0.2.1
+Summary: Seqera AI CLI – terminal assistant for Nextflow, bioinformatics, and workflow management
+Project-URL: Homepage, https://docs.seqera.io/platform-cloud/seqera-ai
+Project-URL: Issues, https://feedback.seqera.io/seqera-ai-feature-requests
+Project-URL: Documentation, https://docs.seqera.io/platform-cloud/seqera-ai
+Project-URL: Changelog, https://docs.seqera.io/changelog/tags/seqera-cloud
+Project-URL: Twitter, https://x.com/SeqeraLabs
+Author-email: Seqera <support@seqera.io>
+License: Custom
+License-File: LICENSE
+Keywords: ai assistant,ai ide,bioinformatics,nextflow,workflows
+Requires-Python: >=3.13
+Requires-Dist: click>=8.1.3
+Requires-Dist: keyring>=24.3.0
+Requires-Dist: mcp>=1.0.0
+Requires-Dist: prompt-toolkit>=3.0.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: requests>=2.32.0
+Requires-Dist: rich>=13.7.0
+Requires-Dist: websocket-client>=1.7.0
+Description-Content-Type: text/markdown
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/seqeralabs/logos/master/seqera/seqera_logo_color.png" alt="Seqera" width="300">
+</p>
+
+# Seqera AI CLI
+
+AI-powered assistant for bioinformatics workflows and Seqera Platform.
+
+> ⚠️ **Beta Release**: Seqera AI CLI is currently in beta. Features and commands may change as we continue to improve the product.
+
+> 💡 **Free Credits**: Seqera Cloud users receive $20 in free credits to get started with Seqera AI. [Contact us](https://seqera.io/platform/seqera-ai/request-credits/) for additional credits.
+
+Seqera AI CLI is an intelligent command-line assistant that helps you build, run, and manage bioinformatics workflows. Powered by advanced AI, it provides an interactive terminal experience for working with Nextflow pipelines and Seqera Platform.
+
+Seqera AI has access to:
+
+- **Your Seqera Platform workspace**: View and manage workflows, pipelines, and data through your authenticated account
+- **Your local environment**: Execute commands and edit files in your working directory (with configurable approval controls)
+- **AI capabilities**: Natural language understanding, code generation, and intelligent suggestions
+
+## Installation
+
+```bash
+pip install seqera
+```
+
+## Quick Start
+
+```bash
+# Authenticate with Seqera Platform
+seqera login
+
+# Start the AI assistant
+seqera ai
+```
+
+## Features
+
+### Natural language interface
+
+Interact with Seqera Platform using plain English. Ask questions, launch workflows, and manage pipelines through conversational commands.
+
+### Workflow management
+
+Launch, monitor, and debug Nextflow workflows directly from your terminal. Get real-time status updates, view logs, and analyze run metrics.
+
+### Pipeline development
+
+Generate Nextflow configurations, create pipeline schemas, and convert scripts from other workflow languages (WDL, Snakemake) to Nextflow.
+
+### nf-core integration
+
+Search and discover nf-core modules, get detailed execution information, and access ready-to-run Nextflow commands for over 1,000 standardized bioinformatics tools.
+
+### Data management
+
+Browse cloud storage through data links, manage datasets, generate download and upload URLs, and access reference genomes and sequencing data.
+
+### Wave containers
+
+Build containerized environments on-the-fly with conda packages, pip packages, or custom Docker images. Create reproducible containers for your bioinformatics tools without writing Dockerfiles.
+
+### Local file operations
+
+Edit files, run commands, and manage your local development environment with AI assistance and configurable approval modes.
+
+### Seqera Platform integration
+
+Full access to Platform capabilities including compute environments, datasets, data links, and workspace management.
+
+## Usage
+
+```bash
+# Interactive mode (default)
+seqera ai
+
+# Single query mode
+seqera ai "List my running workflows"
+
+# With working directory
+seqera ai -w /path/to/pipeline
+
+# Show help
+seqera --help
+seqera ai --help
+```
+
+### Command approval modes
+
+Control which commands run automatically with the `--approval-mode` flag:
+
+| Mode      | Behavior                                                                                      |
+| --------- | --------------------------------------------------------------------------------------------- |
+| `basic`   | Only safe-list commands run automatically; everything else prompts for approval               |
+| `default` | Safe-list commands and file edits within workdir run automatically; dangerous commands prompt |
+| `full`    | Everything runs automatically unless on the dangerous list                                    |
+
+```bash
+# Start with full approval mode
+seqera ai --approval-mode full
+
+# Change mode during session
+/approval full
+```
+
+### Built-in commands
+
+```bash
+/                           Show available commands
+/approval                   Show or set local approval mode
+/schema                     Generate Nextflow schema
+/debug                      Run pipeline diagnostics
+/migrate-from-wdl           Migrate from WDL to Nextflow
+/migrate-from-snakemake     Migrate from Snakemake to Nextflow
+/write-nf-test              Write nf-tests for untested code
+/debug-last-run             Debug last local run
+/debug-last-run-on-seqera   Debug last Seqera Platform run
+```
+
+## Authentication
+
+```bash
+# Browser-based login (recommended)
+seqera login
+
+# Check authentication status
+seqera status
+
+# Log out
+seqera logout
+```
+
+## Requirements
+
+- Python 3.13 or later
+- Seqera Platform account
+
+## Documentation
+
+For detailed documentation, visit [seqera.io/docs](https://docs.seqera.io/platform-cloud/seqera-ai).
+
+## Support
+
+- [Request additional credits](https://seqera.io/platform/seqera-ai/request-credits/)
+- [Community support](https://community.seqera.io/)
+- [Report issues](https://feedback.seqera.io/seqera-ai-feature-requests)
