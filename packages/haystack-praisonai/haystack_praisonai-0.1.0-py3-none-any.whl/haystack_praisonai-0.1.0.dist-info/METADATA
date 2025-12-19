@@ -1,0 +1,89 @@
+Metadata-Version: 2.4
+Name: haystack-praisonai
+Version: 0.1.0
+Summary: Haystack integration for PraisonAI multi-agent framework
+Author-email: Mervin Praison <support@praison.ai>
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/MervinPraison/haystack-praisonai
+Project-URL: Documentation, https://docs.praison.ai
+Project-URL: Repository, https://github.com/MervinPraison/haystack-praisonai
+Keywords: haystack,praisonai,ai-agents,multi-agent,llm,rag
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: haystack-ai>=2.0.0
+Requires-Dist: httpx>=0.24.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: pytest-httpx>=0.21.0; extra == "dev"
+Dynamic: license-file
+
+# haystack-praisonai
+
+[Haystack](https://haystack.deepset.ai/) integration for [PraisonAI](https://github.com/MervinPraison/PraisonAI) multi-agent framework.
+
+## Installation
+
+```bash
+pip install haystack-praisonai
+```
+
+## Quick Start
+
+```python
+from haystack import Pipeline
+from haystack_praisonai import PraisonAIComponent
+
+# Create pipeline with PraisonAI component
+pipeline = Pipeline()
+pipeline.add_component("praisonai", PraisonAIComponent())
+
+# Run the pipeline
+result = pipeline.run({"praisonai": {"query": "Research the latest AI trends"}})
+print(result["praisonai"]["response"])
+```
+
+## Using a Specific Agent
+
+```python
+from haystack_praisonai import PraisonAIComponent
+
+# Use a specific agent
+researcher = PraisonAIComponent(agent="researcher")
+result = researcher.run(query="Research quantum computing")
+print(result["response"])
+```
+
+## Configuration
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `api_url` | `http://localhost:8080` | PraisonAI server URL |
+| `agent` | `None` | Specific agent to run |
+| `timeout` | `300` | Request timeout in seconds |
+
+## Prerequisites
+
+Start PraisonAI server:
+
+```bash
+pip install praisonai
+praisonai serve agents.yaml --port 8080
+```
+
+## Links
+
+- [PraisonAI Documentation](https://docs.praison.ai)
+- [Haystack Documentation](https://docs.haystack.deepset.ai)
+
+## License
+
+MIT
