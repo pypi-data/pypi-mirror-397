@@ -1,0 +1,1 @@
+import{j as r}from"./@radix-DGuLZ9Nd.js";import{F as s}from"./Wizard-AO0QdYUm.js";import{a}from"./ProviderRadio-CEsB8y8p.js";function n({children:o,displayCancel:t=!0}){return r.jsxs(s,{children:[t&&r.jsx(a,{}),o]})}export{n as S};
