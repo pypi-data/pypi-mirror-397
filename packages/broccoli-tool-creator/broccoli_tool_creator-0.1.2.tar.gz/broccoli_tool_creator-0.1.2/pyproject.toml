@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "broccoli-tool-creator"
+version = "0.1.2"
+authors = [
+  { name="utkarsh-dailoqa", email="utkarsh.rastogi@dailoqa.com" },
+]
+description = "Automated tool creation for Broccoli Backend from FastAPI endpoints"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "fastapi>=0.100.0",
+    "pydantic>=2.0.0",
+    "requests>=2.25.1",
+    "sqlalchemy>=2.0.0",
+    "httpx>=0.24.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["broccoli_tool_creator*"]
+
+[tool.setuptools.package-data]
+broccoli_tool_creator = ["data/*.db"]
