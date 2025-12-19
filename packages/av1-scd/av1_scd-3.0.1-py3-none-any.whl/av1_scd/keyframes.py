@@ -1,0 +1,46 @@
+from av1_scd import log
+from av1_scd import option as opt
+import typing as typ
+
+
+def process_keyframe(keyframes: list[typ.Any], frame_count: int) -> list[int]:
+    min_kf_dist = opt.min_scene_len
+    max_kf_dist = opt.max_scene_len
+
+    keyframes_a = sorted(int(fr) for fr in keyframes)
+
+    if keyframes_a[0] != 0:
+        keyframes_a.insert(0, 0)
+
+    warn_vid_frame(frame_count, keyframes_a)
+
+    keyframes_cut = [keyframes_a[0]]
+
+    for i in range(1, len(keyframes_a)):
+        prev = keyframes_a[i - 1]
+        curr = keyframes_a[i]
+        frame_diff = curr - prev
+
+        # Insert intermediate keyframes if too long
+        x = 1
+        while (frame_diff >= max_kf_dist) and (
+            curr - (prev + max_kf_dist * x)
+        ) >= min_kf_dist:
+            split_point = prev + max_kf_dist * x
+            keyframes_cut.append(split_point)
+            x += 1
+
+        # Add this keyframe if far enough from previous
+        if (curr - keyframes_cut[-1]) >= min_kf_dist:
+            keyframes_cut.append(curr)
+
+    if keyframes_cut[-1] != frame_count:
+        keyframes_cut.append(frame_count)
+
+    return sorted(set(keyframes_cut))
+
+
+def warn_vid_frame(frame_count: int, keyframes: list[int]):
+    """Warn if last keyframe not match frame of video"""
+    if frame_count - opt.max_scene_len > keyframes[-1]:
+        log.warning_log("Possible frame mismatch. This may cause by broken decoding")
