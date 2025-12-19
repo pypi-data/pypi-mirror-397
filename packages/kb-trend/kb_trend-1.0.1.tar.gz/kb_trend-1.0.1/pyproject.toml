@@ -1,0 +1,98 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "kb-trend"
+version = "1.0.1"
+description = "Swedish National Library newspaper trend scraper"
+authors = [
+    {name = "Mathias Johansson", email = "MathiasJoha@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "CC BY NC"}
+keywords = ["kb", "newspaper", "scraper", "trends", "swedish"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Intended Audience :: Science/Research",
+    "Topic :: Text Processing",
+]
+
+dependencies = [
+    "typer[all]>=0.9.0",
+    "httpx>=0.25.0",
+    "sqlalchemy>=2.0.0",
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "PyYAML>=6.0",
+    "loguru>=0.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+    "pytest-asyncio>=0.21.0",
+    "respx>=0.20.0",
+    "mypy>=1.7.0",
+    "ruff>=0.1.0",
+    "types-PyYAML>=6.0.0",
+]
+
+[project.scripts]
+kb-trend = "kb_trend.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/matjoha/kb-trend"
+Repository = "https://github.com/matjoha/kb-trend"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/kb_trend"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --cov=kb_trend --cov-report=term-missing --cov-report=xml"
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+exclude = ["tests/"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/**" = ["D"]
+
+[tool.coverage.run]
+source = ["src/kb_trend"]
+omit = ["*/tests/*", "*/__main__.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]
