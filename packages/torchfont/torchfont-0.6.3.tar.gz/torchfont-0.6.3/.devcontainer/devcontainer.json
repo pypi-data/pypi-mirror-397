@@ -1,0 +1,42 @@
+{
+	"name": "maturin",
+	"image": "ghcr.io/astral-sh/uv:python3.13-trixie",
+	"features": {
+		"ghcr.io/devcontainers/features/common-utils:2": {},
+		"ghcr.io/devcontainers/features/rust:1": {}
+	},
+	"mounts": [
+		{
+			"source": "uv-cache",
+			"target": "/root/.cache/uv",
+			"type": "volume"
+		},
+		{
+			"target": "${containerWorkspaceFolder}/.venv",
+			"type": "volume"
+		},
+		{
+			"target": "${containerWorkspaceFolder}/target",
+			"type": "volume"
+		},
+		{
+			"source": "torchfont",
+			"target": "${containerWorkspaceFolder}/data",
+			"type": "volume"
+		}
+	],
+	"containerEnv": {
+		"UV_LINK_MODE": "copy"
+	},
+	"postCreateCommand": "uv sync --all-groups",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"charliermarsh.ruff",
+				"ms-python.python",
+				"rust-lang.rust-analyzer",
+				"tamasfe.even-better-toml"
+			]
+		}
+	}
+}
