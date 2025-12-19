@@ -1,0 +1,92 @@
+Metadata-Version: 2.4
+Name: yfinance_extended
+Version: 0.1.1
+Summary: Extension of yfinance package to download wide-form stock data from Yahoo! Finance
+Home-page: https://github.com/zhaohan-dong/yfinance-extended
+Author: Zhaohan Dong
+Author-email: 65422392+zhaohan-dong@users.noreply.github.com
+License: bsd-3-clause
+Platform: any
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Development Status :: 3 - Alpha
+Classifier: Operating System :: OS Independent
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Office/Business :: Financial
+Classifier: Topic :: Office/Business :: Financial :: Investment
+Classifier: Topic :: Scientific/Engineering :: Interface Engine/Protocol Translator
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: yfinance>=0.2.18
+Requires-Dist: pyarrow>=12.0.0
+Requires-Dist: pydantic>=2.8.2
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license
+Dynamic: license-file
+Dynamic: platform
+Dynamic: requires-dist
+Dynamic: summary
+
+# yfinance Package with Wide-Form Data Support and Data Export
+
+**Note: currently being refactored to use Spark DataFrame instead of pandas to perform transformations.**
+
+`yfinance-extended` extends `yfinance` package by Ran Aroussi and make it easier to:
+
+1. Retrieve multiple-ticker intraday price data in a wide-form `pandas` dataframe;
+2. Read options data for all available expiration dates;
+3. Retrieve top-of-the-book bid-ask prices and size
+
+## Sample Usage
+
+### Get Historical Data
+
+Getting past five days of minute-by-minute prices of Apple, Inc., including pre-/post-market data.
+
+```python
+import yfinance_extended as yfe
+
+aapl = yfe.StockSymbols(symbols="AAPL")
+aapl_price_df = get_historical_prices(aapl, period="5d", interval="1m", prepost=True)
+
+symbols = yfe.StockSymbols(symbols=["AAPL", "GOOGL"])
+prices_df = get_historical_prices(symbols, period="5d", interval="1m", prepost=True)
+```
+
+### Read all Available Options Information
+
+```python
+aapl = yfe.StockSymbols(symbols="AAPL")
+options_df = yfe.get_live_options(aapl)
+```
+
+### Get Top-of-the-Book Data
+
+```python
+aapl = yfe.StockSymbols(symbols="AAPL")
+aapl_price_df = yfe.get_live_quote(aapl)
+live_prices_df = loader.get_prices(["AAPL", "GOOGL"])
+```
+
+Alternatively, if you wish to save all data into one file:
+
+```python
+# Write to one file
+yfe.to_parquet(prices_df, filepath="./data/datafile.parquet")
+
+# Read from the file
+prices_df = yfe.read_parquet(filepath="./data/datafile.parquet")
+```
