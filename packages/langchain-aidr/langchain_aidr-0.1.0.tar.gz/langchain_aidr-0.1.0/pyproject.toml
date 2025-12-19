@@ -1,0 +1,83 @@
+[project]
+name = "langchain-aidr"
+version = "0.1.0"
+description = "LangChain integrations for CrowdStrike AIDR"
+readme = "README.md"
+license = "MIT"
+authors = [
+    { name = "CrowdStrike", email = "support@crowdstrike.com" },
+]
+classifiers = [
+    "Typing :: Typed",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: OS Independent",
+    "Operating System :: POSIX",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.13"
+dependencies = [
+    "crowdstrike-aidr ~=0.2.0",
+    "langchain-core ~=1.1.3",
+    "pydantic ~=2.12.5",
+    "typing-extensions ~=4.15.0",
+]
+
+[project.urls]
+"Source Code" = "https://github.com/CrowdStrike/langchain-aidr"
+"Release Notes" = "https://github.com/CrowdStrike/langchain-aidr/releases"
+
+[dependency-groups]
+dev = [
+    "langchain-tests ==1.0.2",
+    "mypy ==1.19.0",
+    "pytest ==8.4.2",
+    "ruff ==0.14.8",
+]
+
+[build-system]
+requires = [
+    "pdm-backend==2.4.6",
+]
+build-backend = "pdm.backend"
+
+[tool.mypy]
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+addopts = "--tb=short"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_mode = "auto"
+filterwarnings = [
+    "error",
+]
+testpaths = [
+    "tests",
+]
+xfail_strict = true
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "I",
+    "PTH",
+    "TC",
+    "UP",
+]
+
+[tool.ruff.lint.flake8-type-checking]
+runtime-evaluated-base-classes = [
+    "pydantic.BaseModel",
+    "langchain_core.load.serializable.Serializable",
+    "langchain_core.runnables.base.RunnableSerializable",
+]
