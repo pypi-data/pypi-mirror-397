@@ -1,0 +1,141 @@
+# Velox-Core ⚡
+**The High-Performance Middleware Engine for LLMs**
+
+Velox is not just another API wrapper. It is a **motor** designed for professional AI developers who need control, observability, and resilience. 
+
+![Velox Core Futuristic Engine](C:/Users/TOONOO/.gemini/antigravity/brain/6989180b-0a18-451b-a573-3df6a4bb6134/velox_core_brand_image_1766061599148.png)
+
+## 🌟 Why Velox?
+
+Building production-grade AI applications is more than just sending a prompt to OpenAI. It requires handling complex infrastructure challenges that often clutter business logic. We built Velox to solve these core pain points:
+
+1.  **The "Spaghetti Pipeline" Problem**: Most developers manually chain retries, logs, and caches. Velox uses a **Middleware Architecture** (inspired by Express.js/FastAPI) to keep your code clean and modular.
+2.  **Uncontrolled Costs**: High-end models like GPT-4 are expensive. Velox's **Semantic Router** automatically diverts trivial fluff to cheaper models, while the **Cost Optimizer** prevents recursive agents from draining your budget.
+3.  **Privacy & Compliance**: Sending user data to third-party LLMs is a risk. **PII Guard** ensures sensitive data (emails, phones, credit cards) is redacted *before* it leaves your infrastructure.
+4.  **Observability Vacuum**: Standard SDKs don't tell you why a request failed or how much it actually cost in real-time. Velox's **Advanced Dashboard** provides a "Hacker-style" TUI for live telemetry.
+
+## 🆕 New in v0.1.0
+
+We've just supercharged Velox with these powerful additions:
+- **Multi-Provider Support**: Seamlessly switch between OpenAI, Claude (Anthropic), Gemini (Google), Mistral, and Groq.
+- **Semantic Routing**: Native intelligence to route simple prompts to cheaper models automatically.
+- **PII Guard**: Built-in regex engine to redact sensitive information before it hits the cloud.
+- **Cost Optimizer**: Strict USD budget enforcement at the middleware level.
+
+## 📦 Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/your-repo/velox-core
+cd velox-core
+
+# Install in development mode
+pip install -e .
+```
+
+## 🚀 Usage Guide
+
+Velox is designed to be progressive. Start simple, then stack power.
+
+### 1. The Fundamental Motor
+The simplest way to get started. Just a provider and a prompt.
+
+```python
+import asyncio
+from velox.core.engine import Velox
+from velox.providers.mock import MockProvider
+
+async def main():
+    motor = Velox()
+    motor.use(MockProvider(response_text="Ignition successful."))
+    
+    response = await motor.prompt("Status?")
+    print(f"Velox: {response}")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+### 2. The Production Stack (Security & Speed)
+This is how you use Velox in a real app: layered with security and optimization.
+
+```python
+from velox.core.engine import Velox
+from velox.providers.openai import OpenAIProvider
+from velox.layers import (
+    AdvancedDashboardLayer, 
+    PIIGuardLayer, 
+    SemanticRouterLayer,
+    CostOptimizerLayer
+)
+
+async def main():
+    motor = Velox()
+    
+    # Order matters: Redact -> Route -> Limit -> Log
+    motor.add(PIIGuardLayer())               # 1. Zero-trust PII masking
+    motor.add(SemanticRouterLayer(           # 2. Fast-path trivial queries
+        simple_model="gpt-3.5-turbo",
+        threshold_chars=40 
+    ))
+    motor.add(CostOptimizerLayer(            # 3. Budget safety net
+        max_cost_usd=0.05, 
+        per_request=True 
+    ))
+    motor.add(AdvancedDashboardLayer())      # 4. Live telemetry UI
+    
+    motor.use(OpenAIProvider(model="gpt-4o"))
+    
+    # If this message contains an email, it's redacted before GPT-4 sees it.
+    # If the message is just "Hi", it stays on GPT-3.5.
+    await motor.prompt("My email is ceo@company.com, summarize this project.")
+```
+
+### 3. Agentic & Shadow Mode
+Test new models in the background without affecting users.
+
+```python
+from velox.layers.shadow import ShadowLayer
+
+# Main model handles the user. 
+# Shadow model (Llama-3) runs in parallel; 
+# results are logged for performance comparison.
+motor.add(ShadowLayer(llama_provider, name="Llama-Testing"))
+motor.use(gpt4_provider)
+```
+
+## 🧩 Supported Providers
+
+Velox is engine-agnostic. Use any of the major providers with a consistent interface:
+
+| Provider | Class | Notes |
+| :--- | :--- | :--- |
+| **OpenAI** | `OpenAIProvider` | Native SDK integration |
+| **Anthropic** | `AnthropicProvider` | High-speed `httpx` implementation |
+| **Google** | `GoogleGeminiProvider` | Official Gemini SDK support |
+| **Mistral** | `MistralProvider` | OpenAI-compatible via `httpx` |
+| **Groq** | `GroqProvider` | Ultra-fast inference via `httpx` |
+
+## 🧩 Middleware Layers Table
+
+| Layer | Purpose | Key Feature |
+| :--- | :--- | :--- |
+| `PIIGuardLayer` | **Data Privacy** | Automatic Regex-based PII redaction (Email, Phone, etc.) |
+| `SemanticRouterLayer`| **Intelligence** | Routes prompts to different models based on complexity |
+| `CostOptimizerLayer` | **Safety** | Enforces budget limits in USD to prevent overspending |
+| `AdvancedDashboard` | **Observability** | Live Hacker-style TUI with metrics and telemetry |
+| `AutoToolingLayer` | **Agentic** | Simplifies function calling and tool orchestration |
+| `ShadowLayer` | **Testing** | Runs background models for A/B performance comparison |
+| `RetryLayer` | **Resilience** | Configurable exponential backoff for API failures |
+| `CacheLayer` | **Efficiency** | Exact and Semantic caching to save time/tokens |
+
+---
+
+## 👨‍💻 Author
+
+**Zied Boughdir**
+- 📧 Email: [ZiedBoughdir@gmail.com](mailto:ZiedBoughdir@gmail.com)
+- ⚡ Project: Velox-Core Engine
+
+## 📄 License
+MIT
