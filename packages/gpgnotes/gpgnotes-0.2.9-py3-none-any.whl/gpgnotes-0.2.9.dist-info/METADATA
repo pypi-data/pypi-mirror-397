@@ -1,0 +1,202 @@
+Metadata-Version: 2.4
+Name: gpgnotes
+Version: 0.2.9
+Summary: GPGNotes - A CLI note-taking tool with GPG encryption, tagging, and Git sync
+Author-email: "Oscar Valenzuela B." <oscar.valenzuela.b@gmail.com>
+License: Apache-2.0
+Project-URL: Homepage, https://github.com/oscarvalenzuelab/GPGNotes
+Project-URL: Repository, https://github.com/oscarvalenzuelab/GPGNotes
+Project-URL: Bug Tracker, https://github.com/oscarvalenzuelab/GPGNotes/issues
+Keywords: notes,cli,markdown,encryption,gpg,git,tagging,search
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: End Users/Desktop
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Office/Business
+Classifier: Topic :: Text Processing :: Markup :: Markdown
+Classifier: Environment :: Console
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: click>=8.1.0
+Requires-Dist: python-frontmatter>=1.0.0
+Requires-Dist: gitpython>=3.1.0
+Requires-Dist: python-gnupg>=0.5.0
+Requires-Dist: prompt-toolkit>=3.0.0
+Requires-Dist: rich>=13.0.0
+Requires-Dist: pyyaml>=6.0.0
+Requires-Dist: python-slugify>=8.0.0
+Requires-Dist: scikit-learn>=1.0.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+Provides-Extra: llm
+Requires-Dist: openai>=1.0.0; extra == "llm"
+Requires-Dist: anthropic>=0.18.0; extra == "llm"
+Requires-Dist: ollama>=0.1.0; extra == "llm"
+Provides-Extra: import
+Requires-Dist: python-docx>=1.0.0; extra == "import"
+Requires-Dist: pypdf>=4.0.0; extra == "import"
+Requires-Dist: striprtf>=0.0.26; extra == "import"
+Dynamic: license-file
+
+# GPGNotes
+
+[![Tests](https://github.com/oscarvalenzuelab/GPGNotes/workflows/Tests/badge.svg)](https://github.com/oscarvalenzuelab/GPGNotes/actions/workflows/test.yml)
+[![Lint](https://github.com/oscarvalenzuelab/GPGNotes/workflows/Lint/badge.svg)](https://github.com/oscarvalenzuelab/GPGNotes/actions/workflows/lint.yml)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+
+A CLI note-taking tool with GPG encryption, automatic tagging, full-text search, and Git synchronization.
+
+## Features
+
+- **Markdown Notes** - Write notes in plain markdown with YAML frontmatter
+- **GPG Encryption** - Every note is encrypted individually with GPG
+- **Full-Text Search** - Fast SQLite FTS5-powered search across all notes
+- **Auto-Tagging** - Intelligent tag generation using TF-IDF
+- **Git Sync** - Automatic synchronization with private GitHub repositories
+- **Daily Notes** - Captain's Log style quick entries with summaries ([docs](docs/daily-notes.md))
+- **Note Templates** - Built-in templates (meeting, project, bug, journal, research) with custom template support
+- **Version History** - Git-based version tracking with history, diff, and restore commands
+- **Markdown Rendering** - Rich terminal preview with formatted display
+- **URL Import** - Web clipper to import content from URLs
+- **Pagination** - Interactive pagination for list and search results
+- **AI Enhancement** - Optional LLM-powered note refinement ([docs](docs/ai-enhancement.md))
+- **Import/Export** - Support for PDF, DOCX, RTF formats ([docs](docs/import-export.md))
+
+## Installation
+
+### Prerequisites
+
+- Python 3.11 or higher
+- GPG (GnuPG) installed on your system
+  - **Linux**: `sudo apt install gnupg` (Debian/Ubuntu)
+  - **macOS**: `brew install gnupg`
+
+### Install from PyPI
+
+```bash
+pip install gpgnotes
+```
+
+With optional dependencies:
+```bash
+pip install gpgnotes[llm]      # AI enhancement
+pip install gpgnotes[import]   # PDF/DOCX import/export
+```
+
+### Install from source
+
+```bash
+git clone https://github.com/oscarvalenzuelab/GPGNotes.git
+cd GPGNotes
+pip install -e .
+```
+
+## Quick Start
+
+### 1. Initialize
+
+```bash
+notes init
+```
+
+This guides you through:
+- Selecting a GPG key
+- Testing encryption
+- Configuring your editor
+- Setting up Git sync (optional)
+
+**Don't have a GPG key?** Create one:
+```bash
+gpg --full-generate-key
+```
+
+### 2. Create a note
+
+```bash
+notes new "My First Note"
+```
+
+### 3. Search and manage
+
+```bash
+notes search "keyword"
+notes list
+notes open <note-id>
+notes sync
+```
+
+## Command Reference
+
+| Command | Description |
+|---------|-------------|
+| `notes new "Title"` | Create a new note |
+| `notes new --template meeting` | Create note from template |
+| `notes list` | List all notes |
+| `notes list --preview` | List with content preview |
+| `notes list --page-size 10` | List with custom pagination |
+| `notes recent` | Show 5 most recent notes |
+| `notes search "query"` | Full-text search |
+| `notes search --tag work` | Search by tag |
+| `notes open <id>` | Open note by ID |
+| `notes open "title"` | Open by title (fuzzy match) |
+| `notes open --last` | Open most recent note |
+| `notes show <id> --render` | Display note with formatting |
+| `notes preview <id>` | Rich markdown preview |
+| `notes history <id>` | Show version history |
+| `notes diff <id> --from <commit>` | Compare versions |
+| `notes restore <id> --version <commit>` | Restore previous version |
+| `notes template list` | List all templates |
+| `notes template show <name>` | Preview a template |
+| `notes tags` | List all tags |
+| `notes delete <id>` | Delete a note |
+| `notes sync` | Sync with Git |
+| `notes config --show` | Show configuration |
+| `notes daily "entry"` | Quick daily log entry ([docs](docs/daily-notes.md)) |
+| `notes daily --time "entry"` | Entry with timestamp |
+| `notes today` | Open today's daily note |
+| `notes yesterday` | Open yesterday's note |
+| `notes daily show` | View today's entries |
+| `notes daily summary --month` | Generate monthly summary |
+| `notes enhance <id>` | AI enhancement ([docs](docs/ai-enhancement.md)) |
+| `notes import file.pdf` | Import file ([docs](docs/import-export.md)) |
+| `notes import <url>` | Import from URL (web clipper) |
+| `notes clip <url>` | Web clipper shortcut |
+| `notes export <id>` | Export note ([docs](docs/import-export.md)) |
+
+### Interactive Mode
+
+Run `notes` without arguments for interactive mode with:
+- Tab completion for note titles
+- Command history (Up/Down arrows)
+- Quick search by typing
+
+## Security
+
+- **GPG Encryption**: All notes encrypted with AES256
+- **Local-first**: Your data stays on your machine
+- **Private repos**: Git sync for private repositories only
+- **Encrypted secrets**: API keys stored with GPG encryption
+
+## Documentation
+
+- [Configuration & Note Format](docs/configuration.md)
+- [Daily Notes (Captain's Log)](docs/daily-notes.md)
+- [AI Enhancement](docs/ai-enhancement.md)
+- [Import & Export](docs/import-export.md)
+- [Spell Checking](docs/spell-checking.md)
+
+## License
+
+Apache License 2.0 - see [LICENSE](LICENSE) for details.
+
+---
+
+**Note**: This is an early release. Always backup your notes!
