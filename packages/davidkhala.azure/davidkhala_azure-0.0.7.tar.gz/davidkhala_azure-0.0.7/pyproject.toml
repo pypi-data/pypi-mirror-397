@@ -1,0 +1,38 @@
+[project]
+name = "davidkhala.azure"
+version = "0.0.7"
+description = "Lightweight Azure utilities providing simplified interface"
+authors = [{ name = "David Liu", email = "david-khala@hotmail.com" }]
+requires-python = ">=3.10"
+readme = "README.md"
+dependencies = [
+    "azure-identity",
+    "davidkhala-utils",
+]
+[project.urls]
+Source = "https://github.com/davidkhala/azure-utils/tree/main/py"
+
+[project.optional-dependencies]
+log = [
+    "azure-monitor-ingestion",
+    "azure-mgmt-monitor>=7.0.0b3",
+    "azure-mgmt-loganalytics>=13.0.0b4",
+]
+tenant = ["azure-mgmt-resource"]
+ai = [
+    "azure-ai-agents",
+    "azure-ai-projects>=2.0.0b1", "openai" # for get_openai_client()
+]
+
+[dependency-groups]
+dev = ["pytest", "pip"]
+[tool.uv]
+prerelease = "allow"
+
+[tool.hatch.build.targets.sdist]
+include = ["davidkhala"]
+[tool.hatch.build.targets.wheel]
+include = ["davidkhala"]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
