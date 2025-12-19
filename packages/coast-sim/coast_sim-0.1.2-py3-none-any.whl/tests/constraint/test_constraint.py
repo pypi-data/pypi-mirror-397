@@ -1,0 +1,935 @@
+"""Tests for conops.constraint module."""
+
+from unittest.mock import patch
+
+import numpy as np
+import pytest
+
+from conops import Constraint
+
+
+class TestConstraintInit:
+    """Test Constraint initialization."""
+
+    def test_constraint_init_defaults_bestroll(self, constraint):
+        """Test Constraint initialization with default bestroll."""
+        assert constraint.bestroll == 0.0
+
+    def test_constraint_init_defaults_bestpointing(self, constraint):
+        """Test Constraint initialization with default bestpointing."""
+        assert np.array_equal(constraint.bestpointing, np.array([-1, -1, -1]))
+
+    def test_constraint_init_defaults_ephem(self, constraint):
+        """Test Constraint initialization with default ephem."""
+        assert constraint.ephem is None
+
+    def test_constraint_init_has_sun_constraint(self, constraint):
+        """Test Constraint has sun_constraint."""
+        assert constraint.sun_constraint is not None
+
+    def test_constraint_init_has_anti_sun_constraint(self, constraint):
+        """Test Constraint has anti_sun_constraint."""
+        assert constraint.anti_sun_constraint is not None
+
+    def test_constraint_init_has_moon_constraint(self, constraint):
+        """Test Constraint has moon_constraint."""
+        assert constraint.moon_constraint is not None
+
+    def test_constraint_init_has_earth_constraint(self, constraint):
+        """Test Constraint has earth_constraint."""
+        assert constraint.earth_constraint is not None
+
+    def test_constraint_init_has_panel_constraint(self, constraint):
+        """Test Constraint has panel_constraint."""
+        assert constraint.panel_constraint is not None
+
+    def test_constraint_ephemeris_assertion_in_sun(self):
+        """Test constraint in_sun asserts ephemeris is set."""
+        constraint = Constraint(ephem=None)
+
+        with pytest.raises(AssertionError, match="Ephemeris must be set"):
+            constraint.in_sun(45.0, 30.0, 1700000000.0)
+
+    def test_constraint_ephemeris_assertion_in_panel(self):
+        """Test constraint in_panel asserts ephemeris is set."""
+        constraint = Constraint(ephem=None)
+
+        with pytest.raises(AssertionError, match="Ephemeris must be set"):
+            constraint.in_panel(45.0, 30.0, 1700000000.0)
+
+    def test_constraint_ephemeris_assertion_in_anti_sun(self):
+        """Test constraint in_anti_sun asserts ephemeris is set."""
+        constraint = Constraint(ephem=None)
+
+        with pytest.raises(AssertionError, match="Ephemeris must be set"):
+            constraint.in_anti_sun(45.0, 30.0, 1700000000.0)
+
+    def test_constraint_ephemeris_assertion_in_earth(self):
+        """Test constraint in_earth asserts ephemeris is set."""
+        constraint = Constraint(ephem=None)
+
+        with pytest.raises(AssertionError, match="Ephemeris must be set"):
+            constraint.in_earth(45.0, 30.0, 1700000000.0)
+
+    def test_constraint_ephemeris_assertion_in_moon(self):
+        """Test constraint in_moon asserts ephemeris is set."""
+        constraint = Constraint(ephem=None)
+
+        with pytest.raises(AssertionError, match="Ephemeris must be set"):
+            constraint.in_moon(45.0, 30.0, 1700000000.0)
+
+
+class TestConstraintProperties:
+    """Test Constraint model properties."""
+
+    def test_constraint_bestpointing_default(self, constraint):
+        """Test bestpointing default value."""
+        expected = np.array([-1, -1, -1])
+        assert np.array_equal(constraint.bestpointing, expected)
+
+    def test_constraint_bestroll_default(self, constraint):
+        """Test bestroll default value."""
+        assert constraint.bestroll == 0.0
+
+    def test_constraint_exclusion_from_serialization(self, constraint):
+        """Test that ephem is excluded from model serialization."""
+        # ephem is marked with exclude=True in Field definition
+        # so it should not appear in model_dump
+        dumped = constraint.model_dump(exclude_unset=False)
+        assert "ephem" not in dumped
+
+
+class TestInSunMethod:
+    """Test in_sun method - requires actual Ephemeris, skip detailed tests."""
+
+    def test_in_sun_requires_ephemeris(self):
+        """Test in_sun raises assertion without ephemeris."""
+        constraint = Constraint(ephem=None)
+
+        with pytest.raises(AssertionError, match="Ephemeris must be set"):
+            constraint.in_sun(45.0, 30.0, 1700000000.0)
+
+
+class TestInPanelMethod:
+    """Test in_panel method - requires actual Ephemeris."""
+
+    def test_in_panel_requires_ephemeris(self):
+        """Test in_panel raises assertion without ephemeris."""
+        constraint = Constraint(ephem=None)
+
+        with pytest.raises(AssertionError, match="Ephemeris must be set"):
+            constraint.in_panel(45.0, 30.0, 1700000000.0)
+
+
+class TestInAntiSunMethod:
+    """Test in_anti_sun method - requires actual Ephemeris."""
+
+    def test_in_anti_sun_requires_ephemeris(self):
+        """Test in_anti_sun raises assertion without ephemeris."""
+        constraint = Constraint(ephem=None)
+
+        with pytest.raises(AssertionError, match="Ephemeris must be set"):
+            constraint.in_anti_sun(45.0, 30.0, 1700000000.0)
+
+
+class TestInEarthMethod:
+    """Test in_earth method - requires actual Ephemeris."""
+
+    def test_in_earth_requires_ephemeris(self):
+        """Test in_earth raises assertion without ephemeris."""
+        constraint = Constraint(ephem=None)
+
+        with pytest.raises(AssertionError, match="Ephemeris must be set"):
+            constraint.in_earth(45.0, 30.0, 1700000000.0)
+
+
+class TestInMoonMethod:
+    """Test in_moon method - requires actual Ephemeris."""
+
+    def test_in_moon_requires_ephemeris(self):
+        """Test in_moon raises assertion without ephemeris."""
+        constraint = Constraint(ephem=None)
+
+        with pytest.raises(AssertionError, match="Ephemeris must be set"):
+            constraint.in_moon(45.0, 30.0, 1700000000.0)
+
+
+class TestInOccultMethod:
+    """Test in_constraint method logic."""
+
+    @patch("conops.Constraint.in_panel")
+    @patch("conops.Constraint.in_moon")
+    @patch("conops.Constraint.in_earth")
+    @patch("conops.Constraint.in_anti_sun")
+    @patch("conops.Constraint.in_sun")
+    def test_in_constraint_no_violations(
+        self, mock_sun, mock_antisun, mock_earth, mock_moon, mock_panel, constraint
+    ):
+        """Test in_constraint with no violations."""
+        mock_sun.return_value = False
+        mock_antisun.return_value = False
+        mock_earth.return_value = False
+        mock_moon.return_value = False
+        mock_panel.return_value = False
+
+        result = constraint.in_constraint(45.0, 30.0, 1700000000.0)
+
+        assert result is False
+
+    @patch("conops.Constraint.in_panel")
+    @patch("conops.Constraint.in_moon")
+    @patch("conops.Constraint.in_earth")
+    @patch("conops.Constraint.in_anti_sun")
+    @patch("conops.Constraint.in_sun")
+    def test_in_constraint_sun_violation(
+        self, mock_sun, mock_antisun, mock_earth, mock_moon, mock_panel, constraint
+    ):
+        """Test in_constraint with sun constraint violation."""
+        mock_sun.return_value = True
+        mock_antisun.return_value = False
+        mock_earth.return_value = False
+        mock_moon.return_value = False
+        mock_panel.return_value = False
+
+        result = constraint.in_constraint(45.0, 30.0, 1700000000.0)
+
+        assert result is True
+
+    @patch("conops.Constraint.in_panel")
+    @patch("conops.Constraint.in_moon")
+    @patch("conops.Constraint.in_earth")
+    @patch("conops.Constraint.in_anti_sun")
+    @patch("conops.Constraint.in_sun")
+    def test_in_constraint_multiple_violations(
+        self, mock_sun, mock_antisun, mock_earth, mock_moon, mock_panel, constraint
+    ):
+        """Test in_constraint with multiple violations."""
+        mock_sun.return_value = True
+        mock_antisun.return_value = False
+        mock_earth.return_value = True
+        mock_moon.return_value = False
+        mock_panel.return_value = False
+
+        result = constraint.in_constraint(45.0, 30.0, 1700000000.0)
+
+        assert result is True
+
+
+class TestInOccultCountMethod:
+    """Test in_constraint_count method logic."""
+
+    @patch("conops.Constraint.in_earth")
+    @patch("conops.Constraint.in_anti_sun")
+    @patch("conops.Constraint.in_moon")
+    @patch("conops.Constraint.in_sun")
+    def test_in_constraint_count_no_violations(
+        self, mock_sun, mock_moon, mock_antisun, mock_earth, constraint
+    ):
+        """Test in_constraint_count with no violations."""
+        mock_sun.return_value = False
+        mock_moon.return_value = False
+        mock_antisun.return_value = False
+        mock_earth.return_value = False
+
+        count = constraint.in_constraint_count(45.0, 30.0, 1700000000.0)
+
+        assert count == 0
+
+    @patch("conops.Constraint.in_earth")
+    @patch("conops.Constraint.in_anti_sun")
+    @patch("conops.Constraint.in_moon")
+    @patch("conops.Constraint.in_sun")
+    def test_in_constraint_count_sun_only(
+        self, mock_sun, mock_moon, mock_antisun, mock_earth, constraint
+    ):
+        """Test in_constraint_count with only sun violation."""
+        mock_sun.return_value = True
+        mock_moon.return_value = False
+        mock_antisun.return_value = False
+        mock_earth.return_value = False
+
+        count = constraint.in_constraint_count(45.0, 30.0, 1700000000.0)
+
+        assert count == 2
+
+
+class TestInGalConsMethod:
+    """Test ingalcons method - which appears to be missing from implementation."""
+
+    def test_ingalcons_not_implemented(self, constraint):
+        """Test that ingalcons method doesn't exist (likely legacy code reference)."""
+        # The method is called in in_constraint_count with hardonly=False, but doesn't exist
+        assert not hasattr(constraint, "ingalcons")
+
+
+class TestConstraintFloatTimeReturnsScalar:
+    """Test that float time returns scalar value, not array."""
+
+    @patch("rust_ephem.SunConstraint.in_constraint")
+    def test_in_sun_with_float_returns_scalar(
+        self, mock_in_constraint, constraint_with_ephem
+    ):
+        """Test in_sun with float time returns scalar."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_sun(45.0, 30.0, 1700000000.0)
+
+        # Should be scalar, not array
+        assert isinstance(result, bool)
+
+    @patch("rust_ephem.SunConstraint.in_constraint")
+    def test_in_sun_with_float_returns_true(
+        self, mock_in_constraint, constraint_with_ephem
+    ):
+        """Test in_sun with float time returns True."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_sun(45.0, 30.0, 1700000000.0)
+
+        assert result
+
+    @patch("rust_ephem.SunConstraint.in_constraint")
+    def test_in_sun_with_float_called(self, mock_in_constraint, constraint_with_ephem):
+        """Test in_sun with float time calls constraint."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        _ = constraint_with_ephem.in_sun(45.0, 30.0, 1700000000.0)
+
+        # Verify the constraint was called
+        assert mock_in_constraint.called
+
+    @patch("rust_ephem.AndConstraint.in_constraint")
+    def test_in_panel_with_float_returns_scalar(
+        self, mock_in_constraint, constraint_with_ephem
+    ):
+        """Test in_panel with float time returns scalar."""
+        # Mock the in_constraint method to return False
+        mock_in_constraint.return_value = False
+
+        result = constraint_with_ephem.in_panel(45.0, 30.0, 1700000000.0)
+
+        # Should be scalar, not array
+        assert isinstance(result, bool)
+
+    @patch("rust_ephem.AndConstraint.in_constraint")
+    def test_in_panel_with_float_returns_false(
+        self, mock_in_constraint, constraint_with_ephem
+    ):
+        """Test in_panel with float time returns False."""
+        # Mock the in_constraint method to return False
+        mock_in_constraint.return_value = False
+
+        result = constraint_with_ephem.in_panel(45.0, 30.0, 1700000000.0)
+
+        assert not result
+
+    @patch("rust_ephem.AndConstraint.in_constraint")
+    def test_in_panel_with_float_called(
+        self, mock_in_constraint, constraint_with_ephem
+    ):
+        """Test in_panel with float time calls constraint."""
+        # Mock the in_constraint method to return False
+        mock_in_constraint.return_value = False
+
+        _ = constraint_with_ephem.in_panel(45.0, 30.0, 1700000000.0)
+
+        # Verify the constraint was called
+        assert mock_in_constraint.called
+
+    @patch("rust_ephem.SunConstraint.in_constraint")
+    def test_in_anti_sun_with_float_returns_scalar(
+        self, mock_in_constraint, constraint_with_ephem
+    ):
+        """Test in_anti_sun with float time returns scalar."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_anti_sun(45.0, 30.0, 1700000000.0)
+
+        # Should be scalar, not array
+        assert isinstance(result, bool)
+
+    @patch("rust_ephem.SunConstraint.in_constraint")
+    def test_in_anti_sun_with_float_returns_true(
+        self, mock_in_constraint, constraint_with_ephem
+    ):
+        """Test in_anti_sun with float time returns True."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_anti_sun(45.0, 30.0, 1700000000.0)
+
+        assert result
+
+    @patch("rust_ephem.SunConstraint.in_constraint")
+    def test_in_anti_sun_with_float_called(
+        self, mock_in_constraint, constraint_with_ephem
+    ):
+        """Test in_anti_sun with float time calls constraint."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        _ = constraint_with_ephem.in_anti_sun(45.0, 30.0, 1700000000.0)
+
+        # Verify the constraint was called
+        assert mock_in_constraint.called
+
+    @patch("rust_ephem.EarthLimbConstraint.in_constraint")
+    def test_in_earth_with_float_returns_scalar(
+        self, mock_in_constraint, constraint_with_ephem
+    ):
+        """Test in_earth with float time returns scalar."""
+        # Mock the in_constraint method to return False
+        mock_in_constraint.return_value = False
+
+        result = constraint_with_ephem.in_earth(45.0, 30.0, 1700000000.0)
+
+        # Should be scalar, not array
+        assert isinstance(result, bool)
+
+    @patch("rust_ephem.EarthLimbConstraint.in_constraint")
+    def test_in_earth_with_float_returns_false(
+        self, mock_in_constraint, constraint_with_ephem
+    ):
+        """Test in_earth with float time returns False."""
+        # Mock the in_constraint method to return False
+        mock_in_constraint.return_value = False
+
+        result = constraint_with_ephem.in_earth(45.0, 30.0, 1700000000.0)
+
+        assert not result
+
+    @patch("rust_ephem.EarthLimbConstraint.in_constraint")
+    def test_in_earth_with_float_called(
+        self, mock_in_constraint, constraint_with_ephem
+    ):
+        """Test in_earth with float time calls constraint."""
+        # Mock the in_constraint method to return False
+        mock_in_constraint.return_value = False
+
+        _ = constraint_with_ephem.in_earth(45.0, 30.0, 1700000000.0)
+
+        # Verify the constraint was called
+        assert mock_in_constraint.called
+
+    @patch("rust_ephem.MoonConstraint.in_constraint")
+    def test_in_moon_with_float_returns_scalar(
+        self, mock_in_constraint, constraint_with_ephem
+    ):
+        """Test in_moon with float time returns scalar."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_moon(45.0, 30.0, 1700000000.0)
+
+        # Should be scalar, not array
+        assert isinstance(result, bool)
+
+    @patch("rust_ephem.MoonConstraint.in_constraint")
+    def test_in_moon_with_float_returns_true(
+        self, mock_in_constraint, constraint_with_ephem
+    ):
+        """Test in_moon with float time returns True."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_moon(45.0, 30.0, 1700000000.0)
+
+        assert result
+
+    @patch("rust_ephem.MoonConstraint.in_constraint")
+    def test_in_moon_with_float_called(self, mock_in_constraint, constraint_with_ephem):
+        """Test in_moon with float time calls constraint."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        _ = constraint_with_ephem.in_moon(45.0, 30.0, 1700000000.0)
+
+        # Verify the constraint was called
+        assert mock_in_constraint.called
+
+    @patch("conops.Constraint.in_earth")
+    @patch("conops.Constraint.in_anti_sun")
+    @patch("conops.Constraint.in_moon")
+    @patch("conops.Constraint.in_sun")
+    def test_in_constraint_count_all_violations(
+        self, mock_sun, mock_moon, mock_antisun, mock_earth, constraint
+    ):
+        """Test in_constraint_count with all hard constraints violated."""
+        mock_sun.return_value = True
+        mock_moon.return_value = True
+        mock_antisun.return_value = True
+        mock_earth.return_value = True
+
+        count = constraint.in_constraint_count(45.0, 30.0, 1700000000.0)
+
+        assert count == 8
+
+
+class TestConstraintWithTimeObjects:
+    """Test constraint methods with Time objects instead of floats."""
+
+    @patch("rust_ephem.AndConstraint.in_constraint")
+    def test_in_panel_with_time_object_returns_array(
+        self, mock_in_constraint, constraint_with_ephem, time_list
+    ):
+        """Test in_panel with Time object returns array."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_panel(45.0, 30.0, time_list[0].timestamp())
+
+        assert isinstance(result, bool)
+
+    @patch("rust_ephem.AndConstraint.in_constraint")
+    def test_in_panel_with_time_object_returns_length_2(
+        self, mock_in_constraint, constraint_with_ephem, time_list
+    ):
+        """Test in_panel with Time object returns array of length 2."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_panel(45.0, 30.0, time_list[0].timestamp())
+
+        assert isinstance(result, bool)
+
+    @patch("rust_ephem.AndConstraint.in_constraint")
+    def test_in_panel_with_time_object_called(
+        self, mock_in_constraint, constraint_with_ephem, time_list
+    ):
+        """Test in_panel with Time object calls evaluate."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        _ = constraint_with_ephem.in_panel(45.0, 30.0, time_list[0].timestamp())
+
+        assert mock_in_constraint.called
+
+    @patch("rust_ephem.AndConstraint.in_constraint")
+    def test_in_panel_with_time_object_second_call_returns_array(
+        self, mock_in_constraint, constraint_with_ephem, time_list
+    ):
+        """Test in_panel with Time object second call returns array."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_panel(45.0, 30.0, time_list[0].timestamp())
+
+        assert isinstance(result, bool)
+
+    @patch("rust_ephem.AndConstraint.in_constraint")
+    def test_in_panel_with_time_object_second_call_returns_length_2(
+        self, mock_in_constraint, constraint_with_ephem, time_list
+    ):
+        """Test in_panel with Time object second call returns array of length 2."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_panel(45.0, 30.0, time_list[0].timestamp())
+
+        assert isinstance(result, bool)
+
+    @patch("conops.Constraint.in_panel")
+    @patch("conops.Constraint.in_moon")
+    @patch("conops.Constraint.in_earth")
+    @patch("conops.Constraint.in_anti_sun")
+    @patch("conops.Constraint.in_sun")
+    def test_in_constraint_with_time_object_returns_array(
+        self,
+        mock_sun,
+        mock_antisun,
+        mock_earth,
+        mock_moon,
+        mock_panel,
+        constraint,
+        time_list,
+    ):
+        """Test in_constraint with Time object returns array."""
+        mock_sun.return_value = True
+        mock_antisun.return_value = False
+        mock_earth.return_value = False
+        mock_moon.return_value = False
+        mock_panel.return_value = False
+
+        result = constraint.in_constraint(45.0, 30.0, time_list[0].timestamp())
+
+        assert isinstance(result, bool)
+
+    @patch("conops.Constraint.in_panel")
+    @patch("conops.Constraint.in_moon")
+    @patch("conops.Constraint.in_earth")
+    @patch("conops.Constraint.in_anti_sun")
+    @patch("conops.Constraint.in_sun")
+    def test_in_constraint_with_time_object_first_element_true(
+        self,
+        mock_sun,
+        mock_antisun,
+        mock_earth,
+        mock_moon,
+        mock_panel,
+        constraint,
+        time_list,
+    ):
+        """Test in_constraint with Time object first element is True."""
+        mock_sun.return_value = True
+        mock_antisun.return_value = False
+        mock_earth.return_value = False
+        mock_moon.return_value = False
+        mock_panel.return_value = False
+
+        result = constraint.in_constraint(45.0, 30.0, time_list[0].timestamp())
+
+        assert result  # sun violation
+
+    @patch("conops.Constraint.in_panel")
+    @patch("conops.Constraint.in_moon")
+    @patch("conops.Constraint.in_earth")
+    @patch("conops.Constraint.in_anti_sun")
+    @patch("conops.Constraint.in_sun")
+    def test_in_constraint_with_time_object_second_element_true(
+        self,
+        mock_sun,
+        mock_antisun,
+        mock_earth,
+        mock_moon,
+        mock_panel,
+        constraint,
+        time_list,
+    ):
+        """Test in_constraint with Time object second element is True."""
+        mock_sun.return_value = False
+        mock_antisun.return_value = False
+        mock_earth.return_value = False
+        mock_moon.return_value = True
+        mock_panel.return_value = False
+
+        result = constraint.in_constraint(45.0, 30.0, time_list[1].timestamp())
+
+        assert result  # moon violation
+
+    @patch("rust_ephem.SunConstraint.in_constraint")
+    def test_in_sun_with_time_object_returns_array(
+        self, mock_in_constraint, constraint_with_ephem, time_list
+    ):
+        """Test in_sun with datetime list returns array."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_sun(45.0, 30.0, time_list[0].timestamp())
+
+        assert isinstance(result, bool)
+
+    @patch("rust_ephem.SunConstraint.in_constraint")
+    def test_in_sun_with_time_object_returns_length_2(
+        self, mock_in_constraint, constraint_with_ephem, time_list
+    ):
+        """Test in_sun with datetime list returns array of length 2."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_sun(45.0, 30.0, time_list[0].timestamp())
+
+        assert isinstance(result, bool)
+
+    @patch("rust_ephem.SunConstraint.in_constraint")
+    def test_in_anti_sun_with_time_object_returns_array(
+        self, mock_in_constraint, constraint_with_ephem, time_list
+    ):
+        """Test in_anti_sun with datetime list returns array."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_anti_sun(45.0, 30.0, time_list[0].timestamp())
+
+        assert isinstance(result, bool)
+
+    @patch("rust_ephem.SunConstraint.in_constraint")
+    def test_in_anti_sun_with_time_object_returns_length_2(
+        self, mock_in_constraint, constraint_with_ephem, time_list
+    ):
+        """Test in_anti_sun with datetime list returns array of length 2."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_anti_sun(45.0, 30.0, time_list[0].timestamp())
+
+        assert isinstance(result, bool)
+
+    @patch("rust_ephem.EarthLimbConstraint.in_constraint")
+    def test_in_earth_with_time_object_returns_array(
+        self, mock_in_constraint, constraint_with_ephem, time_list
+    ):
+        """Test in_earth with datetime list returns array."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_earth(45.0, 30.0, time_list[0].timestamp())
+
+        assert isinstance(result, bool)
+
+    @patch("rust_ephem.EarthLimbConstraint.in_constraint")
+    def test_in_earth_with_time_object_returns_length_2(
+        self, mock_in_constraint, constraint_with_ephem, time_list
+    ):
+        """Test in_earth with datetime list returns array of length 2."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_earth(45.0, 30.0, time_list[0].timestamp())
+
+        assert isinstance(result, bool)
+
+    @patch("rust_ephem.MoonConstraint.in_constraint")
+    def test_in_moon_with_time_object_returns_array(
+        self, mock_in_constraint, constraint_with_ephem, time_list
+    ):
+        """Test in_moon with datetime list returns array."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_moon(45.0, 30.0, time_list[0].timestamp())
+
+        assert isinstance(result, bool)
+
+    @patch("rust_ephem.MoonConstraint.in_constraint")
+    def test_in_moon_with_time_object_returns_length_2(
+        self, mock_in_constraint, constraint_with_ephem, time_list
+    ):
+        """Test in_moon with datetime list returns array of length 2."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_moon(45.0, 30.0, time_list[0].timestamp())
+
+        assert isinstance(result, bool)
+
+    @patch("rust_ephem.EclipseConstraint.in_constraint")
+    def test_in_eclipse_with_time_object_returns_array(
+        self, mock_in_constraint, constraint_with_ephem, time_list
+    ):
+        """Test in_eclipse with datetime list returns array."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_eclipse(45.0, 30.0, time_list[0].timestamp())
+
+        assert isinstance(result, bool)
+
+    @patch("rust_ephem.EclipseConstraint.in_constraint")
+    def test_in_eclipse_with_time_object_returns_length_2(
+        self, mock_in_constraint, constraint_with_ephem, time_list
+    ):
+        """Test in_eclipse with datetime list returns array of length 2."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_eclipse(45.0, 30.0, time_list[0].timestamp())
+
+        assert isinstance(result, bool)
+
+
+class TestConstraintEdgeCases:
+    """Test edge cases and additional paths."""
+
+    @patch("conops.Constraint.in_panel")
+    @patch("conops.Constraint.in_moon")
+    @patch("conops.Constraint.in_earth")
+    @patch("conops.Constraint.in_anti_sun")
+    @patch("conops.Constraint.in_sun")
+    def test_in_constraint_panel_violation(
+        self, mock_sun, mock_antisun, mock_earth, mock_moon, mock_panel, constraint
+    ):
+        """Test in_constraint with panel constraint violation."""
+        mock_sun.return_value = False
+        mock_antisun.return_value = False
+        mock_earth.return_value = False
+        mock_moon.return_value = False
+        mock_panel.return_value = True
+
+        result = constraint.in_constraint(45.0, 30.0, 1700000000.0)
+
+        assert result is True
+
+    @patch("conops.Constraint.in_panel")
+    @patch("conops.Constraint.in_moon")
+    @patch("conops.Constraint.in_earth")
+    @patch("conops.Constraint.in_anti_sun")
+    @patch("conops.Constraint.in_sun")
+    def test_in_constraint_antisun_violation(
+        self, mock_sun, mock_antisun, mock_earth, mock_moon, mock_panel, constraint
+    ):
+        """Test in_constraint with antisun constraint violation."""
+        mock_sun.return_value = False
+        mock_antisun.return_value = True
+        mock_earth.return_value = False
+        mock_moon.return_value = False
+        mock_panel.return_value = False
+
+        result = constraint.in_constraint(45.0, 30.0, 1700000000.0)
+
+        assert result is True
+
+    @patch("conops.Constraint.in_panel")
+    @patch("conops.Constraint.in_moon")
+    @patch("conops.Constraint.in_earth")
+    @patch("conops.Constraint.in_anti_sun")
+    @patch("conops.Constraint.in_sun")
+    def test_in_constraint_moon_violation(
+        self, mock_sun, mock_antisun, mock_earth, mock_moon, mock_panel, constraint
+    ):
+        """Test in_constraint with moon constraint violation."""
+        mock_sun.return_value = False
+        mock_antisun.return_value = False
+        mock_earth.return_value = False
+        mock_moon.return_value = True
+        mock_panel.return_value = False
+
+        result = constraint.in_constraint(45.0, 30.0, 1700000000.0)
+
+        assert result is True
+
+    @patch("conops.Constraint.in_panel")
+    @patch("conops.Constraint.in_moon")
+    @patch("conops.Constraint.in_earth")
+    @patch("conops.Constraint.in_anti_sun")
+    @patch("conops.Constraint.in_sun")
+    def test_in_constraint_earth_violation(
+        self, mock_sun, mock_antisun, mock_earth, mock_moon, mock_panel, constraint
+    ):
+        """Test in_constraint with earth constraint violation."""
+        mock_sun.return_value = False
+        mock_antisun.return_value = False
+        mock_earth.return_value = True
+        mock_moon.return_value = False
+        mock_panel.return_value = False
+
+        result = constraint.in_constraint(45.0, 30.0, 1700000000.0)
+
+        assert result is True
+
+    @patch("conops.Constraint.in_earth")
+    @patch("conops.Constraint.in_anti_sun")
+    @patch("conops.Constraint.in_moon")
+    @patch("conops.Constraint.in_sun")
+    def test_in_constraint_count_moon_only(
+        self, mock_sun, mock_moon, mock_antisun, mock_earth, constraint
+    ):
+        """Test in_constraint_count with only moon violation."""
+        mock_sun.return_value = False
+        mock_moon.return_value = True
+        mock_antisun.return_value = False
+        mock_earth.return_value = False
+
+        count = constraint.in_constraint_count(45.0, 30.0, 1700000000.0)
+
+        assert count == 2
+
+    @patch("conops.Constraint.in_earth")
+    @patch("conops.Constraint.in_anti_sun")
+    @patch("conops.Constraint.in_moon")
+    @patch("conops.Constraint.in_sun")
+    def test_in_constraint_count_antisun_only(
+        self, mock_sun, mock_moon, mock_antisun, mock_earth, constraint
+    ):
+        """Test in_constraint_count with only antisun violation."""
+        mock_sun.return_value = False
+        mock_moon.return_value = False
+        mock_antisun.return_value = True
+        mock_earth.return_value = False
+
+        count = constraint.in_constraint_count(45.0, 30.0, 1700000000.0)
+
+        assert count == 2
+
+    @patch("conops.Constraint.in_earth")
+    @patch("conops.Constraint.in_anti_sun")
+    @patch("conops.Constraint.in_moon")
+    @patch("conops.Constraint.in_sun")
+    def test_in_constraint_count_earth_only(
+        self, mock_sun, mock_moon, mock_antisun, mock_earth, constraint
+    ):
+        """Test in_constraint_count with only earth violation."""
+        mock_sun.return_value = False
+        mock_moon.return_value = False
+        mock_antisun.return_value = False
+        mock_earth.return_value = True
+
+        count = constraint.in_constraint_count(45.0, 30.0, 1700000000.0)
+
+        assert count == 2
+
+
+class TestInEclipseMethod:
+    """Test in_eclipse method - requires actual Ephemeris."""
+
+    def test_in_eclipse_requires_ephemeris(self):
+        """Test in_eclipse raises assertion without ephemeris."""
+        constraint = Constraint(ephem=None)
+
+        with pytest.raises(AssertionError, match="Ephemeris must be set"):
+            constraint.in_eclipse(45.0, 30.0, 1700000000.0)
+
+    @patch("rust_ephem.EclipseConstraint.in_constraint")
+    def test_in_eclipse_with_float_returns_scalar(
+        self, mock_in_constraint, constraint_with_ephem
+    ):
+        """Test in_eclipse with float time returns scalar."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_eclipse(45.0, 30.0, 1700000000.0)
+
+        # Should be scalar, not array
+        assert isinstance(result, bool)
+
+    @patch("rust_ephem.EclipseConstraint.in_constraint")
+    def test_in_eclipse_with_float_returns_true(
+        self, mock_in_constraint, constraint_with_ephem
+    ):
+        """Test in_eclipse with float time returns True."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_eclipse(45.0, 30.0, 1700000000.0)
+
+        assert result
+
+    @patch("rust_ephem.EclipseConstraint.in_constraint")
+    def test_in_eclipse_with_float_called(
+        self, mock_in_constraint, constraint_with_ephem
+    ):
+        """Test in_eclipse with float time calls constraint."""
+        # Mock the in_constraint method to return True
+        mock_in_constraint.return_value = True
+
+        _ = constraint_with_ephem.in_eclipse(45.0, 30.0, 1700000000.0)
+
+        assert mock_in_constraint.called
+
+
+class TestConstraintProperty:
+    """Test Constraint.constraint property."""
+
+    def test_constraint_property_sets_constraint_cache(self, constraint):
+        """Test that accessing constraint property sets _constraint_cache."""
+        _ = constraint.constraint
+        assert constraint._constraint_cache is not None
+
+
+class TestConstraintInSun:
+    """Test Constraint in_sun method behavior."""
+
+    @patch("rust_ephem.SunConstraint.in_constraint")
+    def test_in_sun_calls_underlying_constraint(
+        self, mock_in_constraint, constraint_with_ephem
+    ):
+        """Test that in_sun calls the underlying SunConstraint."""
+        mock_in_constraint.return_value = True
+
+        result = constraint_with_ephem.in_sun(45.0, 30.0, 1700000000.0)
+
+        assert result is True
+        mock_in_constraint.assert_called_once()
