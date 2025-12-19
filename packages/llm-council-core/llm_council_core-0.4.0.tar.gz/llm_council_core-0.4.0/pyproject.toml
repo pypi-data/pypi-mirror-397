@@ -1,0 +1,83 @@
+[project]
+name = "llm-council-core"
+dynamic = ["version"]
+description = "Multi-LLM council system with peer review and synthesis"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Amiable" }]
+maintainers = [{ email = "contact@amiable.dev" }]
+keywords = [
+    "llm",
+    "ai",
+    "openrouter",
+    "council",
+    "multi-model",
+    "claude",
+    "gpt",
+    "gemini",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+# Core dependencies - minimal for library usage
+dependencies = ["python-dotenv>=1.0.0", "httpx>=0.27.0"]
+
+[project.optional-dependencies]
+# HTTP server dependencies - install with: pip install "llm-council-core[http]"
+http = ["fastapi>=0.100.0", "uvicorn>=0.20.0"]
+# MCP server dependencies - install with: pip install "llm-council-core[mcp]"
+mcp = ["mcp>=1.22.0"]
+# Secure key storage via system keychain - install with: pip install "llm-council-core[secure]"
+secure = ["keyring>=23.0.0"]
+# All server dependencies
+all = ["llm-council-core[http,mcp]"]
+# Development dependencies
+dev = ["pytest>=7.0", "pytest-asyncio>=0.21.0", "ruff>=0.1.0", "pytest-cov>=4.0.0", "tomli>=2.0.0; python_version<'3.11'"]
+
+[project.urls]
+Homepage = "https://github.com/amiable-dev/llm-council"
+Repository = "https://github.com/amiable-dev/llm-council"
+Issues = "https://github.com/amiable-dev/llm-council/issues"
+Documentation = "https://github.com/amiable-dev/llm-council#readme"
+
+[project.scripts]
+llm-council = "llm_council.cli:main"
+
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/llm_council/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/llm_council"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+ignore = ["E501"]                  # Line too long (handled by formatter)
