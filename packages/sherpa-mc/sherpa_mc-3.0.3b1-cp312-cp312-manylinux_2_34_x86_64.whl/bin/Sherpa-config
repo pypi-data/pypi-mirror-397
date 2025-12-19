@@ -1,0 +1,42 @@
+#!/bin/sh
+
+case $1 in
+  --version)
+    echo 3.0.3;;
+  --prefix)
+    echo /tmp/tmpwhn7wifh/wheel/platlib;;
+  --libs)
+    echo -L${SHERPA_LIBRARY_PATH:-/tmp/tmpwhn7wifh/wheel/platlib/lib64/SHERPA-MC} -lSherpaMain    -L/tmp/tmpwhn7wifh/build/EXTERNALINSTALL/lhapdf//tmp/tmpwhn7wifh/wheel/platlib/lib64/SHERPA-MC -lLHAPDF;;
+  --python-libs)
+    echo /tmp/tmpwhn7wifh/wheel/platlib;;
+  --load-mpi4py)
+    echo ;;
+  --incdir)
+    echo ${SHERPA_INCLUDE_PATH:-/tmp/tmpwhn7wifh/wheel/platlib/include/SHERPA-MC};;
+  --libdir)
+    echo ${SHERPA_LIBRARY_PATH:-/tmp/tmpwhn7wifh/wheel/platlib/lib64/SHERPA-MC};;
+  --datadir)
+    echo ${SHERPA_SHARE_PATH:-/tmp/tmpwhn7wifh/wheel/platlib/share/SHERPA-MC};;
+  --ldflags)
+    echo -L${SHERPA_LIBRARY_PATH:-/tmp/tmpwhn7wifh/wheel/platlib/lib64/SHERPA-MC} -lSherpaMain    -L/tmp/tmpwhn7wifh/build/EXTERNALINSTALL/lhapdf//tmp/tmpwhn7wifh/wheel/platlib/lib64/SHERPA-MC -lLHAPDF;;
+  --cppflags)
+    echo -I${SHERPA_INCLUDE_PATH:-/tmp/tmpwhn7wifh/wheel/platlib/include/SHERPA-MC}    ;;
+  --cxx)
+    echo g++;;
+  --fc)
+    echo gfortran;;
+  *)
+    echo "Sherpa-config: configuration tool for the Monte Carlo";
+    echo "               event generator Sherpa: http://sherpa.hepforge.org";
+    echo "Options:";
+    echo "  Sherpa-config --version     : returns Sherpa version";
+    echo "  Sherpa-config --prefix      : returns the installation path";
+    echo "  Sherpa-config --incdir      : returns the path of Sherpa headers";
+    echo "  Sherpa-config --libs        : returns the linker line to link with Sherpa";
+    echo "  Sherpa-config --datadir     : returns the path of Sherpa data (like Decaydata, PDFs)";
+    echo "  Sherpa-config --ldflags     : returns the LDFLAGS used for Sherpa";
+    echo "  Sherpa-config --cppflags    : returns the preprocessor FLAGS needed for Sherpa headers";
+    echo "  Sherpa-config --cxx         : returns the C++ compiler used";
+    echo "  Sherpa-config --fc          : returns the FORTRAN compiler used";
+    echo "  Sherpa-config --python-libs : returns the installation path of python libraries";;
+esac
