@@ -1,0 +1,26 @@
+-- CUSTOM_TEMPLATE: This is a custom version of the Snowflake table metadata query
+WITH rc_cte AS (
+    SELECT COUNT(*) AS ROW_COUNT FROM {{ fully_qualified_name }} {% if has_where_clause %} WHERE {{ where_clause }} {% endif %} LIMIT 1
+)
+
+SELECT
+    C.COLUMN_NAME as COLUMN_VALIDATED,
+    C.ORDINAL_POSITION AS ORDINAL_POSITION,
+    C.DATA_TYPE AS DATA_TYPE,
+    C.CHARACTER_MAXIMUM_LENGTH AS CHARACTER_MAXIMUM_LENGTH,
+    CASE
+        -- 53 represents the standard IEEE 754 double-precision floating-point precision in bits,
+        -- which is Snowflake's internal representation for FLOAT types.
+        WHEN C.DATA_TYPE = 'FLOAT' THEN 53
+        ELSE C.NUMERIC_PRECISION
+    END AS NUMERIC_PRECISION,
+    C.NUMERIC_SCALE AS NUMERIC_SCALE,
+    C.IS_NULLABLE AS IS_NULLABLE,
+    rc.ROW_COUNT
+FROM {{ database_name }}.INFORMATION_SCHEMA.COLUMNS C
+CROSS JOIN rc_cte rc
+WHERE 1=1 -- CUSTOM_TEMPLATE modification
+    AND C.TABLE_NAME = '{{ table_name }}'
+    AND C.TABLE_SCHEMA = '{{ schema_name }}'
+    AND C.TABLE_CATALOG = '{{ database_name }}'
+ORDER BY C.ORDINAL_POSITION
