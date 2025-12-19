@@ -1,0 +1,162 @@
+Metadata-Version: 2.4
+Name: easy-start-sms
+Version: 0.1.0
+Summary: A Python package for SMS integration, easy to start
+Home-page: https://gitee.com/guolei19850528/easy_start_sms
+Author: guolei
+Author-email: 174000902@qq.com
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: httpx>=0.26.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: diskcache>=5.6.1
+Requires-Dist: redis>=4.5.4
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# easy_start_sms
+
+一个简单易用的Python短信集成包，支持同步和异步发送方式，提供简洁的API接口。
+
+## 功能特点
+
+- 支持同步和异步短信发送
+- 自动处理API认证和签名生成
+- 提供简洁的API接口
+- 基于httpx实现高性能HTTP请求
+- 支持多手机号批量发送
+
+## 安装方法
+
+使用pip安装：
+
+```bash
+pip install easy-start-sms
+```
+
+或者从源码安装：
+
+```bash
+git clone https://gitee.com/guolei19850528/easy_start_sms.git
+cd easy_start_sms
+pip install -e .
+```
+
+## 依赖项
+
+- httpx>=0.26.0：用于HTTP请求
+- pydantic>=2.0.0：用于数据验证
+- diskcache>=5.6.1：用于缓存
+- redis>=4.5.4：用于Redis支持
+
+## 快速开始
+
+### 同步发送短信
+
+```python
+from easy_start_sms.lmobile import Sender
+
+# 初始化发送器
+sender = Sender(
+    account_id="your_account_id",
+    password="your_password",
+    product_id="your_product_id"
+)
+
+# 发送短信
+state, response_json, response = sender.send_sms(
+    phone_nos="13800138000",
+    content="【测试】这是一条测试短信"
+)
+
+# 输出结果
+print(f"发送结果: {state}")
+print(f"响应数据: {response_json}")
+```
+
+### 异步发送短信
+
+```python
+import asyncio
+from easy_start_sms.lmobile import Sender
+
+async def main():
+    # 初始化发送器
+    sender = Sender(
+        account_id="your_account_id",
+        password="your_password",
+        product_id="your_product_id"
+    )
+
+    # 异步发送短信
+    state, response_json, response = await sender.async_send_sms(
+        phone_nos="13800138000,13900139000",
+        content="【测试】这是一条批量测试短信"
+    )
+
+    # 输出结果
+    print(f"发送结果: {state}")
+    print(f"响应数据: {response_json}")
+
+# 运行异步函数
+asyncio.run(main())
+```
+
+## API文档
+
+### Sender类
+
+#### 初始化参数
+
+```python
+Sender(
+    base_url: str = "https://api.51welink.com/",  # API基础URL
+    account_id: str = "",  # 账号ID
+    password: str = "",  # 账号密码
+    product_id: Union[int, str] = 0,  # 产品ID
+    smms_encrypt_key: str = "SMmsEncryptKey"  # 加密密钥
+)
+```
+
+#### 方法
+
+- `client(**kwargs)`: 创建同步HTTP客户端
+- `async_client(**kwargs)`: 创建异步HTTP客户端
+- `send_sms(client=None, phone_nos="", content="", **kwargs)`: 同步发送短信
+- `async_send_sms(client=None, phone_nos="", content="", **kwargs)`: 异步发送短信
+
+#### 发送短信方法参数
+
+- `client`: 可选的HTTP客户端实例，如果不提供则自动创建
+- `phone_nos`: 手机号码，多个号码用逗号分隔
+- `content`: 短信内容
+- `**kwargs`: 传递给request方法的额外参数
+
+#### 返回值
+
+所有发送短信的方法都返回一个三元组：
+- `state`: bool，表示发送是否成功
+- `response_json`: dict，API返回的JSON数据
+- `response`: httpx.Response，原始响应对象
+
+## 测试
+
+运行测试用例：
+
+```bash
+python -m unittest tests/test_lmobile.py
+```
+
+## 项目结构
