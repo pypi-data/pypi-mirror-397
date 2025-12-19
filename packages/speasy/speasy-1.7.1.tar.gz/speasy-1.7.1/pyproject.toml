@@ -1,0 +1,97 @@
+[build-system]
+build-backend = "flit_core.buildapi"
+requires = ["flit_core"]
+
+[project]
+name = 'speasy'
+version = "1.7.1"
+description = "A simple Python package to deal with main Space Physics WebServices (CDA, CSA, AMDA and SSC)."
+keywords = ["satellite", "plasma-physics", "nasa-data", "amda", "cdpp", "CDF"]
+authors = [
+    { name = "Alexis Jeandet", email = "alexis.jeandet@member.fsf.org" }
+]
+
+maintainers = [
+    { name = "Alexis Jeandet", email = "alexis.jeandet@member.fsf.org" }
+]
+
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+readme = "README.md"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Physics",
+    "License :: OSI Approved :: MIT License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14"
+]
+dependencies = ['PyYAML',
+ 'appdirs',
+ 'astropy',
+ 'astroquery',
+ 'diskcache',
+ 'humanize',
+ 'matplotlib',
+ 'numpy',
+ 'packaging',
+ 'pandas',
+ 'pyistp>=0.7.2',
+ 'python-dateutil',
+ 'requests',
+ 'scipy',
+ 'tqdm',
+ 'urllib3>=1.26.0',
+ 'certifi',
+ 'pysocks'
+]
+
+
+[project.urls]
+homepage = "https://github.com/SciQLop/speasy"
+
+[project.optional-dependencies]
+zstd = ["pyzstd"]
+
+[tool.ruff.lint]
+select = ["NPY201"]
+
+
+[tool.bumpversion]
+current_version = "1.7.1"
+commit = true
+tag = true
+tag_name = "v{new_version}"
+
+[[tool.bumpversion.files]]
+filename = "VERSION"
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+
+[[tool.bumpversion.files]]
+filename = "speasy/__init__.py"
+search = "__version__ = '{current_version}'"
+replace = "__version__ = '{new_version}'"
+
+[[tool.bumpversion.files]]
+filename = "docs/conf.py"
+search = "version = '{current_version}'"
+replace = "version = '{new_version}'"
+
+[[tool.bumpversion.files]]
+filename = "CITATION.cff"
+search = 'version: {current_version}'
+replace = 'version: {new_version}'
+
+[[tool.bumpversion.files]]
+filename = "CITATION.cff"
+regex = true
+search = "date-released: \\d{{4}}-\\d{{2}}-\\d{{2}}"
+replace = "date-released: {utcnow:%Y-%m-%d}"
