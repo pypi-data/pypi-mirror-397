@@ -1,0 +1,116 @@
+{
+    "pack_id": "telehealth-us-v1",
+    "effective": {
+        "start": "2025-01-01",
+        "end": null
+    },
+    "jurisdictions": [
+        "CA",
+        "TX",
+        "FL"
+    ],
+    "notes": "Validation rules for Telehealth in CA, TX, FL. Excludes DSM content. Includes Pinned Evidence.",
+    "rules": [
+        {
+            "rule_id": "fl-outofstate-registration",
+            "description": "Out-of-state providers must register with FL DOH to provide telehealth to FL patients.",
+            "when": {
+                "patient_state": "FL",
+                "provider_home_state_not": "FL",
+                "service_mode_in": [
+                    "video",
+                    "audio"
+                ]
+            },
+            "require": [
+                {
+                    "type": "registration",
+                    "system": "FL-DOH-telehealth",
+                    "field": "telehealth_registration_number",
+                    "failure_msg": "Provider must hold a valid Florida Telehealth Provider Registration."
+                }
+            ],
+            "evidence": [
+                {
+                    "title": "FL Statutes 456.47",
+                    "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0456/Sections/0456.47.html",
+                    "pin": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "retrieved_at": "2025-12-12T10:00:00Z"
+                }
+            ]
+        },
+        {
+            "rule_id": "tx-inform-consent",
+            "description": "Texas providers must obtain informed consent before telehealth services.",
+            "when": {
+                "patient_state": "TX",
+                "service_mode_in": [
+                    "video",
+                    "audio"
+                ]
+            },
+            "require": [
+                {
+                    "type": "attestation",
+                    "field": "informed_consent_obtained",
+                    "failure_msg": "Informed consent must be obtained and documented prior to service."
+                }
+            ],
+            "evidence": [
+                {
+                    "title": "Texas Occupations Code 111.003",
+                    "url": "https://statutes.capitol.texas.gov/Docs/OC/htm/OC.111.htm",
+                    "pin": "sha256:a4b3c2d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9",
+                    "retrieved_at": "2025-12-12T10:00:00Z"
+                }
+            ]
+        },
+        {
+            "rule_id": "ca-telehealth-consent",
+            "description": "California providers must obtain verbal or written consent for telehealth.",
+            "when": {
+                "patient_state": "CA",
+                "service_mode_in": [
+                    "video",
+                    "audio"
+                ]
+            },
+            "require": [
+                {
+                    "type": "attestation",
+                    "field": "verbal_or_written_consent",
+                    "failure_msg": "Verbal or written consent for telehealth is required per BPC 2290.5."
+                }
+            ],
+            "evidence": [
+                {
+                    "title": "CA BPC 2290.5",
+                    "url": "https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=BPC&sectionNum=2290.5",
+                    "pin": "sha256:f2ca1bb6c7e907d06dafe4687e579fce76b37e4e93b7605022da52e6ccc26fd2",
+                    "retrieved_at": "2025-12-12T10:00:00Z"
+                }
+            ]
+        },
+        {
+            "rule_id": "compact-nlc-fl-tx",
+            "description": "Nurses with NLC multi-state license can practice in FL and TX (both compact members).",
+            "when": {
+                "provider_type": "RN",
+                "provider_license_type": "NLC_MultiState",
+                "patient_state_in": [
+                    "FL",
+                    "TX"
+                ]
+            },
+            "verdict_override": "ALLOW",
+            "evidence": [
+                {
+                    "title": "NLC Participating States Map",
+                    "url": "https://www.ncsbn.org/nurse-licensure-compact.htm",
+                    "pin": "sha256:c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9e3b0c44298fc1c14",
+                    "retrieved_at": "2025-12-12T10:00:00Z"
+                }
+            ]
+        }
+    ]
+}

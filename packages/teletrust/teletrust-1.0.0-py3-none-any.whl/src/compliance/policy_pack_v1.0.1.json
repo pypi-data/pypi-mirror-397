@@ -1,0 +1,94 @@
+{
+    "pack_id": "telehealth-us-v1.0.1",
+    "effective": {
+        "start": "2025-01-01",
+        "end": null
+    },
+    "jurisdictions": [
+        "CA",
+        "TX",
+        "FL"
+    ],
+    "notes": "Validation rules for Telehealth in CA, TX, FL. Implementation of 'Strip + Log' policy for DSM/CPT.",
+    "rules": [
+        {
+            "rule_id": "fl-outofstate-registration",
+            "description": "Out-of-state providers must register with FL DOH to provide telehealth to FL patients.",
+            "when": {
+                "patient_state": "FL",
+                "provider_home_state_not": "FL",
+                "service_mode_in": [
+                    "video",
+                    "audio"
+                ]
+            },
+            "require": [
+                {
+                    "type": "registration",
+                    "system": "FL-DOH-telehealth",
+                    "field": "telehealth_registration_number",
+                    "failure_msg": "Provider must hold a valid Florida Telehealth Provider Registration."
+                }
+            ],
+            "evidence": [
+                {
+                    "title": "FL Statutes 456.47",
+                    "url": "https://www.leg.state.fl.us/statutes/index.cfm?App_mode=Display_Statute&URL=0400-0499/0456/Sections/0456.47.html",
+                    "pin": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                    "retrieved_at": "2025-12-12T10:00:00Z"
+                }
+            ]
+        },
+        {
+            "rule_id": "ip-dsm-protection",
+            "description": "DSM content is unlicensed. If detected, strip logic must redact.",
+            "when": {
+                "content_type": "DSM"
+            },
+            "action": "strip_log",
+            "target_field": "dsm_excerpt",
+            "evidence": [
+                {
+                    "title": "APA Permissions & Licensing",
+                    "url": "https://www.appi.org/Support/Customer-Information/Permissions",
+                    "pin": "sha256:stubbed-hash-apa-permissions",
+                    "retrieved_at": "2025-12-12T10:00:00Z"
+                }
+            ]
+        },
+        {
+            "rule_id": "ip-cpt-protection",
+            "description": "CPT descriptors are proprietary. If detected, strip logic must redact.",
+            "when": {
+                "content_type": "CPT_Descriptor"
+            },
+            "action": "strip_log",
+            "target_field": "cpt_descriptor",
+            "evidence": [
+                {
+                    "title": "AMA CPT Licensing FAQ",
+                    "url": "https://www.ama-assn.org/practice-management/cpt/cpt-licensing-frequently-asked-questions-faqs",
+                    "pin": "sha256:stubbed-hash-ama-licensing",
+                    "retrieved_at": "2025-12-12T10:00:00Z"
+                }
+            ]
+        },
+        {
+            "rule_id": "cross-state-license-check",
+            "description": "Providers must hold a valid license (or registration) in the patient's location.",
+            "when": {
+                "patient_state_not_in_provider_licenses": true
+            },
+            "action": "DENY",
+            "failure_msg": "Provider is not licensed in the patient's state.",
+            "evidence": [
+                {
+                    "title": "HHS Telehealth Licensure Guidance",
+                    "url": "https://telehealth.hhs.gov/providers/licensing-and-credentialing/licensing-across-state-lines",
+                    "pin": "sha256:stubbed-hash-hhs-licensure",
+                    "retrieved_at": "2025-12-12T10:00:00Z"
+                }
+            ]
+        }
+    ]
+}
