@@ -1,0 +1,64 @@
+Metadata-Version: 2.4
+Name: dmmp
+Version: 0.3.1
+Summary: Directory metadata mapper protocol for documenting directories
+Project-URL: Homepage, https://github.com/GabrielvMarinho/dmmp
+Project-URL: Repository, https://github.com/GabrielvMarinho/dmmp
+Project-URL: Issues, https://github.com/GabrielvMarinho/dmmp/issues
+Author-email: Gabriel Volles Marinho <gabrielvmarinho1711@gmail.com>
+License-Expression: MIT
+License-File: LICENSE
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.9
+Requires-Dist: colorama>=0.4.6
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: tomli-w==1.2.0
+Requires-Dist: tqdm>=4.60.0
+Description-Content-Type: text/markdown
+
+# DMMP - Directory Metadata Mapper Protocol
+Mapper that generates a group of .md files that represent a specific directory in a file system path, creating linked files that follow the [markdown syntax](https://www.markdownguide.org/).
+
+## Standard metadata format
+```ddmp
+unique_id
+output_folder_path/
+output_file_name
+"""
+output_file_description
+"""
+```
+
+The output_file_name lets you link files, the syntax is:
+
+```
+"""
+this file is linked to [[other_unique_id]]
+"""
+```
+
+Populate a specific directory and its subdirectories in this fashion (in .dmmp files).
+
+After doing so, run something like the following:
+```
+python -m dmmp --dirs-to-map "C:\Path1" 1 --save-path "C:\Path2" --metadata-file-names "name"
+```
+C:\Path1 --> path of input.  
+1 ----------> number of nested folders to check.  
+C:\Path2 --> path of output.  
+name -----> name on which the metadata files will be on, without extension.
+
+Now on the output path, you should see a folder that represents the data you provided as input.
+
+## Configuration file
+
+After you do those steps, you will see a config.toml in the path you executed the script, to not repeat yourself, you can run the same exact command with this argument:
+
+```
+python -m dmmp --config-file config.toml  
+```
+
+
+## More about the arguments
+
+If you want to make your commands more powerful, run `python -m dmmp -h` to list all possible arguments and what they do.
