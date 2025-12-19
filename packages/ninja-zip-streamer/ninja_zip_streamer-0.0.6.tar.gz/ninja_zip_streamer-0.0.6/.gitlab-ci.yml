@@ -1,0 +1,41 @@
+include:
+  - project: "teledec/pycode-quality"
+    ref: "main"
+    file:
+      - ".gitlab/ci/static-analysis.yml"
+      - ".gitlab/ci/pip.yml"
+   
+variables:
+  PYTHON_IMG: python:3.12-slim
+  PIP_PACKAGE_URL: "https://upload.pypi.org/legacy/"
+  TWINE_USERNAME: __token__
+  TWINE_PASSWORD: ${PYPI_TOKEN}
+
+stages:
+  - Static Analysis
+  - Pip
+
+.static_analysis_base:
+  allow_failure: true
+
+Tests:
+  except: [tags]
+  stage: Static Analysis
+  coverage: '/^TOTAL.+?(\d+\%)$/'
+  image: python:3.12-slim
+  script:
+    - apt update && apt install -yq git
+    - pip install . coverage pytest
+    - coverage run -m pytest -rsvvv --junit-xml=report.xml tests -o log_cli=true -s
+    - coverage report -m
+    - coverage xml
+    - coverage html
+  artifacts:
+    paths:
+      - htmlcov/
+      - coverage.xml
+    when: always
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
