@@ -1,0 +1,189 @@
+Metadata-Version: 2.4
+Name: adafruit-circuitpython-checkbox
+Version: 1.0.0
+Summary: A displayio based CheckBox widget. It includes a text label and a box that can be checked or unchecked.
+Author-email: Adafruit Industries <circuitpython@adafruit.com>
+License: MIT
+Project-URL: Homepage, https://github.com/adafruit/Adafruit_CircuitPython_CheckBox
+Keywords: adafruit,blinka,circuitpython,micropython,checkbox,checkbox,check,box,widget,GUI,UI,interface,toggle
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Topic :: Software Development :: Embedded Systems
+Classifier: Topic :: System :: Hardware
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Description-Content-Type: text/x-rst
+License-File: LICENSE
+Requires-Dist: Adafruit-Blinka
+Requires-Dist: adafruit-circuitpython-anchored-group
+Requires-Dist: adafruit-circuitpython-display-text
+Provides-Extra: optional
+Dynamic: license-file
+
+Introduction
+============
+
+
+.. image:: https://readthedocs.org/projects/adafruit-circuitpython-checkbox/badge/?version=latest
+    :target: https://docs.circuitpython.org/projects/checkbox/en/latest/
+    :alt: Documentation Status
+
+
+.. image:: https://raw.githubusercontent.com/adafruit/Adafruit_CircuitPython_Bundle/main/badges/adafruit_discord.svg
+    :target: https://adafru.it/discord
+    :alt: Discord
+
+
+.. image:: https://github.com/adafruit/Adafruit_CircuitPython_CheckBox/workflows/Build%20CI/badge.svg
+    :target: https://github.com/adafruit/Adafruit_CircuitPython_CheckBox/actions
+    :alt: Build Status
+
+
+.. image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
+    :target: https://github.com/astral-sh/ruff
+    :alt: Code Style: Ruff
+
+A displayio based CheckBox widget. It includes a text label and a box that can be checked or unchecked.
+
+
+Dependencies
+=============
+This driver depends on:
+
+* `Adafruit CircuitPython <https://github.com/adafruit/circuitpython>`_
+
+Please ensure all dependencies are available on the CircuitPython filesystem.
+This is easily achieved by downloading
+`the Adafruit library and driver bundle <https://circuitpython.org/libraries>`_
+or individual libraries can be installed using
+`circup <https://github.com/adafruit/circup>`_.
+
+
+Works with any displayio compatible display.
+
+Installing from PyPI
+=====================
+
+On supported GNU/Linux systems like the Raspberry Pi, you can install the driver locally `from
+PyPI <https://pypi.org/project/adafruit-circuitpython-checkbox/>`_.
+To install for current user:
+
+.. code-block:: shell
+
+    pip3 install adafruit-circuitpython-checkbox
+
+To install system-wide (this may be required in some cases):
+
+.. code-block:: shell
+
+    sudo pip3 install adafruit-circuitpython-checkbox
+
+To install in a virtual environment in your current project:
+
+.. code-block:: shell
+
+    mkdir project-name && cd project-name
+    python3 -m venv .venv
+    source .env/bin/activate
+    pip3 install adafruit-circuitpython-checkbox
+
+Installing to a Connected CircuitPython Device with Circup
+==========================================================
+
+Make sure that you have ``circup`` installed in your Python environment.
+Install it with the following command if necessary:
+
+.. code-block:: shell
+
+    pip3 install circup
+
+With ``circup`` installed and your CircuitPython device connected use the
+following command to install:
+
+.. code-block:: shell
+
+    circup install adafruit_checkbox
+
+Or the following command to update an existing version:
+
+.. code-block:: shell
+
+    circup update
+
+Usage Example
+=============
+
+.. code-block:: python
+
+    import terminalio
+    from displayio import Group
+    import supervisor
+    import time
+
+    from adafruit_display_text.bitmap_label import Label
+    from adafruit_checkbox import CheckBox
+    from adafruit_usb_host_mouse import find_and_init_boot_mouse
+
+    display = supervisor.runtime.display
+
+    # group to hold visual elements
+    main_group = Group()
+
+    # make the group visible on the display
+    display.root_group = main_group
+
+    # set up USB host mouse
+    mouse = find_and_init_boot_mouse()
+    if mouse is None:
+        raise RuntimeError("No mouse found connected to USB Host")
+
+    # timestamp of last increment
+    last_count_time = 0
+    # counter variable
+    i = 0
+
+    # initialize and show a CheckBox
+    keep_counting_checkbox = CheckBox(terminalio.FONT, text="Keep Counting", checked=True)
+    keep_counting_checkbox.anchor_point = (0, 0)
+    keep_counting_checkbox.anchored_position = (2, 2)
+    main_group.append(keep_counting_checkbox)
+
+    # label to hold the current count
+    count_label = Label(terminalio.FONT, text=str(i), color=0xFFFFFF)
+    count_label.anchor_point = (0, 0)
+    count_label.anchored_position = (2, 20)
+    main_group.append(count_label)
+
+    # add the mouse cursor to the main group
+    main_group.append(mouse.tilegrid)
+    while True:
+        # update mouse
+        pressed_btns = mouse.update()
+
+        # if the checkbox was left clicked
+        if pressed_btns is not None and "left" in pressed_btns:
+            if keep_counting_checkbox.contains((mouse.x, mouse.y)):
+                # toggle the checked state
+                keep_counting_checkbox.checked = not keep_counting_checkbox.checked
+
+        if keep_counting_checkbox.checked:
+            # increment the counter ever 0.5 seconds and update the label
+            if time.monotonic() > last_count_time + 0.5:
+                last_count_time = time.monotonic()
+                i += 1
+                count_label.text = str(i)
+
+
+Documentation
+=============
+API documentation for this library can be found on `Read the Docs <https://docs.circuitpython.org/projects/checkbox/en/latest/>`_.
+
+For information on building library documentation, please check out
+`this guide <https://learn.adafruit.com/creating-and-sharing-a-circuitpython-library/sharing-our-docs-on-readthedocs#sphinx-5-1>`_.
+
+Contributing
+============
+
+Contributions are welcome! Please read our `Code of Conduct
+<https://github.com/adafruit/Adafruit_CircuitPython_CheckBox/blob/HEAD/CODE_OF_CONDUCT.md>`_
+before contributing to help this project stay welcoming.
