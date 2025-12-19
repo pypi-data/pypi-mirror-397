@@ -1,0 +1,33 @@
+[build-system]
+build-backend = "cmeel"
+requires = [
+  "cmeel[build]",
+  "cmeel-boost ~= 1.89.0",
+  "libcrocoddyl[build]",
+  "proxsuite[build]",
+  "libpinocchio[build]"
+]
+
+[project]
+dependencies = [
+  "cmeel-boost ~= 1.89.0",
+  "libcrocoddyl",
+  "proxsuite",
+  "libpinocchio"
+]
+description = "A fast and flexible implementation of Rigid Body Dynamics algorithms and their analytical derivatives"
+license = "BSD-3-Clause"
+name = "libmim-solvers"
+version = "0.2.0"
+
+[project.urls]
+changelog = "https://github.com/machines-in-motion/mim_solvers/blob/devel/CHANGELOG.md"
+homepage = "https://github.com/cmake-wheel/libmim_solvers"
+upstream = "https://github.com/machines-in-motion/mim_solvers"
+
+[tool.cmeel]
+configure-args = [
+  "-DBUILD_PYTHON_INTERFACE=OFF",
+  "-DBUILD_WITH_PROXSUITE=ON"
+]
+has-sitelib = false
