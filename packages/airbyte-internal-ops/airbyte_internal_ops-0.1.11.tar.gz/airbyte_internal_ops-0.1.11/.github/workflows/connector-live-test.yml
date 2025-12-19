@@ -1,0 +1,117 @@
+name: Connector Live Test
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+    inputs:
+      connector_image:
+        description: "Full connector image name with tag (e.g., airbyte/source-github:1.0.0). Optional if connector_name or connection_id is provided."
+        required: false
+        type: string
+      connector_name:
+        description: "Connector name to build from source (e.g., 'source-pokeapi'). If provided, builds the image locally."
+        required: false
+        type: string
+      airbyte_ref:
+        description: "Git ref or PR number to checkout from airbyte repo (e.g., 'master', '70847', 'refs/pull/70847/head'). Only used when connector_name is provided."
+        required: false
+        type: string
+        default: "master"
+      command:
+        description: "Airbyte command to run"
+        required: false
+        type: choice
+        options:
+          - spec
+          - check
+          - discover
+          - read
+        default: check
+      connection_id:
+        description: "Airbyte Cloud connection ID to fetch config/catalog from. If provided, connector_image can be auto-detected."
+        required: false
+        type: string
+      state_path:
+        description: "Path to state JSON file (optional for read)"
+        required: false
+        type: string
+
+jobs:
+  live-test:
+    name: Run Live Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: uv sync --group dev
+
+      - name: Resolve Airbyte ref
+        if: ${{ inputs.connector_name != '' }}
+        id: resolve-airbyte-ref
+        run: |
+          REF="${{ inputs.airbyte_ref }}"
+          # If the input is all digits, treat it as a PR number
+          if [[ "$REF" =~ ^[0-9]+$ ]]; then
+            echo "resolved_ref=refs/pull/${REF}/head" >> "$GITHUB_OUTPUT"
+            echo "Resolved PR number $REF to refs/pull/${REF}/head"
+          else
+            echo "resolved_ref=$REF" >> "$GITHUB_OUTPUT"
+            echo "Using ref as-is: $REF"
+          fi
+
+      - name: Checkout Airbyte repo
+        if: ${{ inputs.connector_name != '' }}
+        uses: actions/checkout@v6
+        with:
+          repository: airbytehq/airbyte
+          ref: ${{ steps.resolve-airbyte-ref.outputs.resolved_ref }}
+          path: airbyte
+          fetch-depth: 1
+
+      - name: Run Live Test
+        id: live-test
+        env:
+          AIRBYTE_CLOUD_CLIENT_ID: ${{ secrets.AIRBYTE_CLOUD_CLIENT_ID }}
+          AIRBYTE_CLOUD_CLIENT_SECRET: ${{ secrets.AIRBYTE_CLOUD_CLIENT_SECRET }}
+        run: |
+          ARGS=(--command "${{ inputs.command }}")
+
+          if [ -n "${{ inputs.connector_image }}" ]; then
+            ARGS+=(--connector-image "${{ inputs.connector_image }}")
+          fi
+
+          if [ -n "${{ inputs.connector_name }}" ]; then
+            ARGS+=(--connector-name "${{ inputs.connector_name }}")
+            ARGS+=(--repo-root "${{ github.workspace }}/airbyte")
+          fi
+
+          if [ -n "${{ inputs.connection_id }}" ]; then
+            ARGS+=(--connection-id "${{ inputs.connection_id }}")
+          fi
+
+          if [ -n "${{ inputs.state_path }}" ]; then
+            ARGS+=(--state-path "${{ inputs.state_path }}")
+          fi
+
+          uv run airbyte-ops cloud connector live-test "${ARGS[@]}"
+
+      - name: Upload Test Artifacts
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: live-test-artifacts-${{ github.run_id }}
+          path: /tmp/live_test_artifacts/
+          retention-days: 7

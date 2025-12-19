@@ -1,0 +1,33 @@
+# CI smoke test for live_tests code changes
+# Runs a lightweight regression test to validate live_tests code works correctly
+name: Live Tests CI
+
+permissions:
+  contents: read
+  checks: write
+
+on:
+  pull_request:
+    paths:
+      - 'src/airbyte_ops_mcp/live_tests/**'
+      - '.github/workflows/live-tests-ci.yml'
+      - '.github/workflows/connector-regression-test.yml'
+
+  # Allow manual triggering for testing
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke-test:
+    name: Live Tests Smoke Test
+    uses: ./.github/workflows/connector-regression-test.yml
+    with:
+      # Use source-pokeapi as a stable, public connector for smoke testing
+      target_image: "airbyte/source-pokeapi:0.3.0"
+      control_image: "airbyte/source-pokeapi:0.2.0"
+      # spec is the fastest command and doesn't require credentials
+      command: "spec"
+    # No secrets needed for spec command with public connector
