@@ -1,0 +1,92 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = [
+    "setuptools-scm[simple]>=8",
+    "setuptools>=80"
+]
+
+[project]
+authors = [
+    {email = "tim@cerazone.net", name = "Tim Cera"}
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+dependencies = [
+    "astronomia",
+    "cltoolbox",
+    "dateparser",
+    "numpy",
+    "pandas[excel]",
+    "pint",
+    "pint-pandas",
+    "pydantic",
+    "pyparsing",
+    "pywavelets",
+    "scipy",
+    "skyfield",
+    "tabulate"
+]
+description = "Command line script and Python library perform tidally-based analysis of water level data."
+dynamic = ["readme", "version"]
+keywords = [
+    "cli-app",
+    "python",
+    "tidal-analysis",
+    "tide-analysis",
+    "tide-filter",
+    "tide-prediction"
+]
+license = {text = "BSD-3-Clause"}
+name = "tappy"
+requires-python = ">=3.10"
+
+[project.scripts]
+tappy = "tappy.tappy:main"
+
+[project.urls]
+bitbucket = "https://bitbucket.org/timcera/tappy/src/main/"
+documentation = "https://timcera.bitbucket.io/tappy/docs/index.html#tappy-documentation"
+github = "https://github.com/timcera/tappy"
+
+[tool]
+
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "$version"
+update_changelog_on_bump = true
+version = "1.2.1"
+version_files = ["VERSION"]
+
+[tool.isort]
+profile = "black"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.setuptools]
+include-package-data = true
+license-files = ["LICENSE.txt"]
+
+[tool.setuptools.dynamic]
+readme = {file = "README.rst"}
+version = {file = "VERSION"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
