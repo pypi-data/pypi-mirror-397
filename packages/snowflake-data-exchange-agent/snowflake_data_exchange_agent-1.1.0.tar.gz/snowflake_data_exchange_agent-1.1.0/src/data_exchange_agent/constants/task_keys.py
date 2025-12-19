@@ -1,0 +1,11 @@
+"""Task-related constants."""
+
+SOURCE_TYPE = "source_type"
+ENGINE = "engine"
+STATEMENT = "statement"
+UPLOAD_PATH = "upload_path"
+ID = "id"
+STATUS = "status"
+DETAILS = "details"
+UPLOAD_TYPE = "upload_type"
+TOTAL = "total"

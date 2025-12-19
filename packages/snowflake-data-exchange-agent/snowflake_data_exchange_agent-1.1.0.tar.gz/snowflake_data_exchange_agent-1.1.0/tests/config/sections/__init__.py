@@ -1,0 +1,1 @@
+"""Configuration sections tests package."""
