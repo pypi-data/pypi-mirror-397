@@ -1,0 +1,30 @@
+kafka:
+  bootstrap.servers: pkc-123456.us-west-2.aws.confluent.cloud:9092
+  reject_topics_prefixes: ["clone","dim_","src_"]
+  cluster_id: lkc-
+  cluster_type: dev
+  src_topic_prefix: cdc
+confluent_cloud:
+  environment_id: env-nknqp3
+  region: us-west-2
+  provider: aws
+  organization_id: id-org-test
+  page_size: 100
+flink:
+  compute_pool_id: lfcp-xvrvmz
+  compule_pool_ids: [lfcp-xvrvmz,  lfcp-d3n9zz]
+  catalog_name: j9r-env
+  database_name: j9r-kafka
+  max_cfu: 5
+  max_cfu_percent_before_allocation: 0.7
+app:
+  delta_max_time_in_min: 15  # this is to apply randomly to the event timestamp to create out of order
+  logging: INFO
+  products: ["p1", "p2", "p3"]
+  post_fix_unit_test: _ut # keep this way to get unit test of test_test_mgr to work.
+  accepted_common_products: ['common', 'seeds']
+  sql_content_modifier: shift_left.core.utils.table_worker.ReplaceEnvInSqlContent
+  translator_to_flink_sql_agent: shift_left.core.utils.spark_sql_code_agent.SparkToFlinkSqlAgent
+  dml_naming_convention_modifier: shift_left.core.utils.naming_convention.DmlNameModifier
+  compute_pool_naming_convention_modifier: shift_left.core.utils.naming_convention.ComputePoolNameModifier
+  modified_flink_files_file_name: modified_flink_files_jb.txt

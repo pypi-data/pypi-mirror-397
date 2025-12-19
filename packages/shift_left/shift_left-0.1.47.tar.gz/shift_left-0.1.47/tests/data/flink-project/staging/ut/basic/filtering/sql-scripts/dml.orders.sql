@@ -1,0 +1,1 @@
+INSERT INTO orders VALUES (1, 'Order1', 99.99),(2, 'Order2', 149.99),(3, 'Order3', 199.99);

@@ -1,0 +1,11 @@
+INSERT INTO w2_returns_t
+SELECT 
+    w2.return_id,
+    w2.employee_id,
+    w2.employee_ssn,
+    returns.tax_year,
+    returns.business_id,
+    ROW(returns.tax_year) AS submission_details,
+    ROW(MAP('businessId', returns.business_id), ROW(w2.employee_id, w2.employee_ssn)) AS return_data
+FROM form_w2_t w2
+JOIN etf_returns_t returns ON w2.return_id = returns.return_id;
