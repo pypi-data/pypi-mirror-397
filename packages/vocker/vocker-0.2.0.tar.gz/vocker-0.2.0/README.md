@@ -1,0 +1,28 @@
+# vocker
+
+Manager for complete Python environments written with security in mind. Mostly for Windows.
+
+## Why
+
+OK so here's a typical experience. You're working on different Python projects which require incompatible versions of dependencies. For example, one of them needs `libfoo==1.0.0` and the other needs `libfoo>3.0.0`. There's just no way to satisfy both. Python people encourage you to create different virtualenvs ("venvs") for different purposes. Sometimes a user reports a bug that they experience with some very specific version of a dependency, so you need to create yet another venv just to investigate that.
+
+Here's a problem: every venv you install takes up a few hundred megabytes of disk space, and a lot of it is for completely redundant files. You were conned into buying an overpriced non-modular computer, so now your tiny non-upgradeable SSD space is now filled with many copies of the same files. You regret your life choices. Wouldn't it be nice if the duplicate files across different venvs didn't take up any additional space?
+
+Users often report bugs against very specific versions of your software, and the café you work at has pretty slow WiFi. Installing hundreds of megabytes of the same packages over and over quickly grows tiresome. Wouldn't it be nice if you could just copy an existing venv and just tweak it a bit, for example replace the few packages that are actually different?
+
+Finally, some of your nontechnical users refuse to compile and install their own software, but they do want to sometimes have multiple versions installed for testing purposes. However, they also bought non-upgradeable hardware so they don't want multiple copies of the same files that are identical across different versions of the software. Wouldn't it be nice if installing a new venv somehow recycled the existing files from the currently-installed venvs?
+
+Some of your users are paranoid about security. Wouldn't it be nice if the software integrity of the venv-based software package were guaranteed through hashing and Merkle trees?
+
+That's why.
+
+## Goals
+
+- Developers can easily create images, and then distribute them to users who use them to run applications. The users don't necessarily use vocker directly to create containers, they may use some extra layer on top of it (like an installer that provides a GUI and maybe digital signature verification).
+- Developers can easily create images from existing images by tweaking whatever needs to be different. For example, installing new software or modifying files.
+- Image creation should be reproducible. That is, creating a Python environment and then turning it into an image should give you exactly the same image if you do that a second time. The resulting image hash should be identical.
+- Developers can easily audit existing images by just rebuilding them from scratch and checking whether the final result is the same.
+
+## Non-goals
+
+- Digital signature verification.

@@ -1,0 +1,42 @@
+[tool.black]
+line-length = 100
+
+[project]
+name = "vocker"
+version = "0.2.0"
+description = "Docker-like manager for virtualenvs"
+readme = "README.md"
+license = { text = "General Public License v3" }
+authors = [
+    { name = "Eduard Christian Dumitrescu", email = "eduard.c.dumitrescu@gmail.com" },
+]
+dependencies = [
+    "atomicwrites",
+    "attrs",
+    "boltons",
+    "cached_property",
+    "filelock",
+    "immutabledict",
+    "marshmallow",
+    "platformdirs",
+    "sansio_tools>=1.0.0",
+    "sqlalchemy_boltons>=2.4.0",
+    "SQLAlchemy",
+    "structlog",
+    "cbor2",
+]
+
+[project.optional-dependencies]
+zstandard = [
+    "pyzstd",
+]
+tests = [
+    "pytest",
+]
+
+[project.urls]
+Homepage = "https://hydra.ecd.space/deaduard/vocker/"
+Changelog = "https://hydra.ecd.space/deaduard/vocker/file?name=CHANGELOG.md&ci=trunk"
+
+[tool.setuptools.package-data]
+"vocker" = ["py.typed"]
