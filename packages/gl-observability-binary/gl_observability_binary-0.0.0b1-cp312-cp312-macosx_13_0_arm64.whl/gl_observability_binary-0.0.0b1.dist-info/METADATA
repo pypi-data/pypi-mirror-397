@@ -1,0 +1,217 @@
+Metadata-Version: 2.2
+Name: gl-observability-binary
+Version: 0.0.0b1
+Summary: SDK for Observability tools
+Author-email: HansSeanNathanael <hans.s.nathanael@gdplabs.id>
+Requires-Python: <3.14,>=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi<1.0.0,>=0.115.6
+Requires-Dist: requests<3.0.0,>=2.31.0
+Requires-Dist: httpx<1.0.0,>=0.27.0
+Requires-Dist: langchain-core<1.0.0,>=0.3
+Requires-Dist: sentry-sdk<3.0.0,>=2.20.0
+Requires-Dist: opentelemetry-api
+Requires-Dist: opentelemetry-sdk
+Requires-Dist: opentelemetry-exporter-otlp-proto-http
+Requires-Dist: opentelemetry-exporter-otlp-proto-grpc
+Requires-Dist: opentelemetry-instrumentation-fastapi
+Requires-Dist: opentelemetry-instrumentation-langchain
+Requires-Dist: opentelemetry-instrumentation-requests
+Requires-Dist: opentelemetry-instrumentation-httpx
+Provides-Extra: dev
+Requires-Dist: pytest<9.0.0,>=8.3.4; extra == "dev"
+Requires-Dist: pre-commit<4.0.0,>=3.7.0; extra == "dev"
+Requires-Dist: pytest-cov<6.0.0,>=5.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio<1.0.0,>=0.25.3; extra == "dev"
+Requires-Dist: pytest-mock<4.0.0,>=3.14.0; extra == "dev"
+Requires-Dist: coverage<8.0.0,>=7.6.10; extra == "dev"
+Requires-Dist: mypy<2.0.0,>=1.11.2; extra == "dev"
+Requires-Dist: ruff<1.0.0,>=0.11.12; extra == "dev"
+
+# GL Observability
+
+`gl-observability` is a comprehensive SDK for implementing observability in Python applications. It provides easy-to-use wrappers for OpenTelemetry, Sentry, and custom logging handlers with PII redaction capabilities.
+
+## Key Features
+
+- 📊 **OpenTelemetry Integration**: simplified initialization for tracing and metrics.
+- 🛡️ **Sentry Support**: easy setup for error tracking and performance monitoring.
+- 🕵️ **PII Redaction**: custom logging handlers to redact PII using Regex or NER (Named Entity Recognition).
+- 🔌 **Framework Support**: built-in support for FastAPI, Langchain, HTTPX, and Requests instrumentation.
+
+## Installation
+
+### Prerequisites
+
+- Python 3.11-3.13 - [Install here](https://www.python.org/downloads/)
+- Pip (if using pip) - [Install here](https://pip.pypa.io/en/stable/installation/)
+- Poetry 2.1.3+ (if using Poetry) - [Install here](https://python-poetry.org/docs/#installation)
+- uv (if using uv) - [Install here](https://docs.astral.sh/uv/guides/install-python/)
+- Git (if using Git) - [Install here](https://git-scm.com/downloads)
+- For git installation, access to the [GDP Labs SDK github repository](https://github.com/GDP-ADMIN/gl-sdk)
+
+### 1. Installation from Pypi
+
+Choose one of the following methods to install the package:
+
+#### Using pip
+
+```bash
+pip install gl-observability-binary
+```
+
+#### Using Poetry
+
+```bash
+poetry add gl-observability-binary
+```
+
+#### Using uv
+
+```bash
+uv add gl-observability-binary
+```
+
+### 2. Development Installation (Git)
+
+For development purposes, you can install directly from the Git repository:
+
+```bash
+poetry add "git+ssh://git@github.com/GDP-ADMIN/gl-sdk.git#subdirectory=libs/gl-observability"
+```
+
+## Usage
+
+### 1. Telemetry Initialization
+
+The library uses a unified `init_telemetry` function that takes a `TelemetryConfig` object. You can configure it for OpenTelemetry, Sentry, or both.
+
+#### OpenTelemetry Configuration (External Exporter)
+
+This setup sends traces to an external OTLP collector (e.g., Jaeger, Tempo).
+
+```python
+from fastapi import FastAPI
+from gl_observability.backend import FastAPIConfig, OpenTelemetryConfig
+from gl_observability import TelemetryConfig, init_telemetry
+
+# 1. Setup FastAPI Config (optional, if using FastAPI)
+app = FastAPI()
+fastapi_config = FastAPIConfig(app=app)
+
+# 2. Configure OpenTelemetry
+otel_config = OpenTelemetryConfig(
+    endpoint="localhost:4317",  # OTLP endpoint
+    use_grpc=False,             # Use gRPC or HTTP
+    fastapi_config=fastapi_config,
+    use_langchain=True,         # Enable Langchain instrumentation
+    use_httpx=True,             # Enable HTTPX instrumentation
+    use_requests=True,          # Enable Requests instrumentation
+    attributes={"service.name": "my-service", "env": "production"}
+)
+
+# 3. Initialize Telemetry
+init_telemetry(TelemetryConfig(otel_config=otel_config))
+```
+
+#### Sentry Configuration
+
+This setup sends errors and traces to Sentry.
+
+```python
+from gl_observability.backend import SentryConfig
+from gl_observability import TelemetryConfig, init_telemetry
+
+def traces_sampler(sampling_context: dict) -> float:
+    """Custom trace sampler."""
+    return 1.0
+
+# 1. Configure Sentry
+sentry_config = SentryConfig(
+    dsn="your-sentry-dsn",
+    environment="production",
+    release="1.0.0",
+    traces_sampler=traces_sampler,
+    send_default_pii=True
+)
+
+# 2. Initialize Telemetry
+init_telemetry(TelemetryConfig(sentry_config=sentry_config))
+```
+
+#### Sentry with OpenTelemetry
+
+This setup combines Sentry with OpenTelemetry instrumentation, allowing Sentry to capture OTel spans.
+
+```python
+from fastapi import FastAPI
+from gl_observability.backend import FastAPIConfig, OpenTelemetryConfig, SentryConfig
+from gl_observability import TelemetryConfig, init_telemetry
+
+app = FastAPI()
+fastapi_config = FastAPIConfig(app=app)
+
+# 1. Configure OpenTelemetry (without endpoint, as Sentry handles export)
+otel_config = OpenTelemetryConfig(
+    attributes={"service.name": "my-service"},
+    fastapi_config=fastapi_config,
+    use_langchain=True
+)
+
+# 2. Configure Sentry with OTel config
+sentry_config = SentryConfig(
+    dsn="your-sentry-dsn",
+    environment="production",
+    open_telemetry_config=otel_config
+)
+
+# 3. Initialize Telemetry
+init_telemetry(TelemetryConfig(sentry_config=sentry_config))
+```
+
+### 2. Logging Handlers
+
+The library provides logging handlers to automatically redact Personally Identifiable Information (PII) from logs.
+
+#### Regex-based PII Redaction
+
+Uses regular expressions to mask common PII patterns like KTP, NPWP, Phone Numbers, and Email.
+
+```python
+import logging
+from gl_observability.logs.regex_pii_logger_handler import init_regex_pii_logging_handler
+
+# Initialize the handler for a specific logger
+init_regex_pii_logging_handler(
+    logger_name="my_application_logger",
+    pii_regex_process_enabled=True
+)
+
+logger = logging.getLogger("my_application_logger")
+logger.info("User email is john.doe@example.com and phone is 08123456789")
+# Output: User email is jo******om and phone is 0812******6789
+```
+
+#### NER-based PII Redaction (Named Entity Recognition)
+
+Uses an external API to perform Named Entity Recognition for more advanced PII detection and redaction.
+
+> [!WARNING]
+> The NER logging handler makes synchronous API calls for each log record, which may impact performance.
+
+```python
+import logging
+from gl_observability.logs.ner_pii_logger_handler import init_ner_pii_logging_handler
+
+# Initialize the handler
+init_ner_pii_logging_handler(
+    logger_name="my_application_logger",
+    api_url="https://your-ner-api.com/anonymize",
+    api_field="text",  # The field name in API response containing the redacted text
+    pii_ner_process_enabled=True
+)
+
+logger = logging.getLogger("my_application_logger")
+logger.info("My KTP is 3525011212941001")
+# Output will be redacted based on API response
+```
