@@ -1,0 +1,615 @@
+Metadata-Version: 2.4
+Name: uzpreprocessor
+Version: 1.0.5
+Summary: Uzbek text preprocessing library for converting numbers, dates, times, and currency to words
+Home-page: https://github.com/jakharbek/py-uzpreprocessor
+Author: Javhar Abdulatipov
+Author-email: Javhar Abdulatipov <jakharbek@gmail.com>
+License: MIT
+Project-URL: Homepage, https://github.com/jakharbek/py-uzpreprocessor
+Project-URL: Documentation, https://github.com/jakharbek/py-uzpreprocessor#readme
+Project-URL: Repository, https://github.com/jakharbek/py-uzpreprocessor
+Project-URL: Issues, https://github.com/jakharbek/py-uzpreprocessor/issues
+Keywords: uzbek,text,preprocessing,nlp,numbers,dates,currency,words,conversion,latin
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Text Processing :: Linguistic
+Classifier: Topic :: Utilities
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: mypy>=1.0.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+Dynamic: author
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-python
+
+# UzPreprocessor
+
+[![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyPI version](https://badge.fury.io/py/uzpreprocessor.svg)](https://badge.fury.io/py/uzpreprocessor)
+
+**UzPreprocessor** is a comprehensive Python library for converting numbers, dates, times, and currency amounts to Uzbek (Latin) words. Perfect for legal documents, invoices, receipts, and text preprocessing tasks.
+
+## 🌟 NEW: Automatic Text Processing
+
+```python
+from uzpreprocessor import UzPreprocessor
+
+processor = UzPreprocessor()
+
+text = """Shartnoma No.123
+Sana: 2025-09-18, soat 14:35
+Summa: 12500 so'm (15% chegirma)"""
+
+# One method processes everything automatically!
+result = processor.process(text)
+print(result)
+```
+
+Output:
+```
+Shartnoma No. bir yuz yigirma uchinchi
+Sana: ikki ming yigirma beshinchi yil o'n sakkizinchi sentabr, soat o'n to'rt soat o'ttiz besh daqiqa
+Summa: o'n ikki ming besh yuz so'm (o'n besh foiz chegirma)
+```
+
+## Features
+
+✨ **Number Conversion**
+- Integers (arbitrary size)
+- Decimal numbers (up to 12 digits precision)
+- Negative numbers
+- Ordinal numbers
+
+💰 **Currency Conversion**
+- Uzbek so'm and tiyin
+- Automatic handling of decimal places
+
+📅 **Date Conversion**
+- Multiple input formats (ISO, European, US, text)
+- Supports English and Uzbek month names
+- Legal date format support
+
+⏰ **Time Conversion**
+- 24-hour and 12-hour (AM/PM) formats
+- Spoken Uzbek time periods (ertalab, tushlikdan keyin, kechqurun, etc.)
+- Multiple time formats with flexible parsing
+
+🔗 **DateTime Conversion**
+- Combined date and time conversion
+- ISO datetime format support
+
+📝 **Text Preprocessing**
+- Convert number markers (№1, #1, 1№, etc.) to words
+- Legal document markers (п., ст., гл., разд., etc.)
+- Process text files
+- Flexible configuration options
+
+## Installation
+
+```bash
+pip install uzpreprocessor
+```
+
+## Quick Start
+
+### Basic Usage
+
+```python
+from uzpreprocessor import UzPreprocessor
+
+# Initialize the processor
+processor = UzPreprocessor()
+
+# Convert numbers
+print(processor.number.number(123))
+# Output: bir yuz yigirma uch
+
+print(processor.number.number(123.456))
+# Output: bir yuz yigirma uch butun to'rt yuz ellik olti mingdan
+
+# Convert currency
+print(processor.number.money(12345.67))
+# Output: o'n ikki ming uch yuz qirq besh so'm oltmish yetti tiyin
+
+# Convert percentages
+print(processor.number.percent(12.345))
+# Output: o'n ikki butun uch yuz qirq besh mingdan foiz
+
+# Convert dates
+print(processor.date.date("2025-09-18"))
+# Output: ikki ming yigirma beshinchi yil o'n sakkizinchi sentabr
+
+# Convert time
+print(processor.time.time("14:35:08"))
+# Output: o'n to'rt soat o'ttiz besh daqiqa sakkiz soniya
+
+# Convert datetime
+print(processor.datetime.datetime("2025-09-18T14:35:08"))
+# Output: ikki ming yigirma beshinchi yil o'n sakkizinchi sentabr o'n to'rt soat o'ttiz besh daqiqa sakkiz soniya
+
+# Text preprocessing
+print(processor.text.process("Bu №1 va #2 sonlar"))
+# Output: Bu birinchi va ikkinchi sonlar
+
+print(processor.text.process("Maqola №15, п.3 va ст.4"))
+# Output: Maqola o'n beshinchi, punkt uchinchi va modda to'rtinchi
+```
+
+### Advanced Usage
+
+#### Direct Class Usage
+
+```python
+from uzpreprocessor import UzNumberToWords, UzDateToWords, UzTimeToWords, UzDateAndTimeToWords, UzTextPreprocessor
+
+# Create converters
+number_converter = UzNumberToWords()
+date_converter = UzDateToWords(number_converter)
+time_converter = UzTimeToWords(number_converter)
+datetime_converter = UzDateAndTimeToWords(date_converter, time_converter)
+
+# Use individual converters
+print(date_converter.date("18 September 2025"))
+# Output: ikki ming yigirma beshinchi yil o'n sakkizinchi sentabr
+
+print(time_converter.time("2 PM"))
+# Output: tushlikdan keyin soat o'n to'rt
+```
+
+## Detailed Examples
+
+### Number Conversion
+
+```python
+from uzpreprocessor import UzNumberToWords
+
+conv = UzNumberToWords()
+
+# Integers
+print(conv.number(0))          # nol
+print(conv.number(5))          # besh
+print(conv.number(42))         # qirq ikki
+print(conv.number(123))        # bir yuz yigirma uch
+print(conv.number(1000000))    # bir million
+
+# Decimals
+print(conv.number(123.456))    # bir yuz yigirma uch butun to'rt yuz ellik olti mingdan
+print(conv.number(0.5))        # nol butun besh o'ndan
+
+# Negative numbers
+print(conv.number(-42))        # minus qirq ikki
+
+# Ordinal numbers
+print(conv.ordinal(5))         # beshinchi
+print(conv.ordinal(123))       # bir yuz yigirma uchinchi
+```
+
+### Currency Conversion
+
+```python
+from uzpreprocessor import UzNumberToWords
+
+conv = UzNumberToWords()
+
+print(conv.money(1000))        # bir ming so'm
+print(conv.money(12345.67))    # o'n ikki ming uch yuz qirq besh so'm oltmish yetti tiyin
+print(conv.money(0.50))        # nol so'm ellik tiyin
+print(conv.money(-100))        # minus bir yuz so'm
+```
+
+### Date Conversion
+
+The library supports multiple date formats:
+
+```python
+from uzpreprocessor import UzPreprocessor
+
+processor = UzPreprocessor()
+
+# ISO format
+print(processor.date.date("2025-09-18"))
+
+# European format
+print(processor.date.date("18.09.2025"))
+print(processor.date.date("18/09/2025"))
+
+# US format
+print(processor.date.date("09/18/2025"))
+
+# Text format (English)
+print(processor.date.date("18 September 2025"))
+print(processor.date.date("September 18, 2025"))
+
+# Text format (Uzbek)
+print(processor.date.date("18 sentabr 2025"))
+
+# Legal format
+print(processor.date.date("2025-yil 18-sentabr"))
+
+# Python date objects
+from datetime import date
+print(processor.date.date(date(2025, 9, 18)))
+```
+
+### Time Conversion
+
+```python
+from uzpreprocessor import UzPreprocessor
+
+processor = UzPreprocessor()
+
+# 24-hour format (formal mode)
+print(processor.time.time("14:35"))        # o'n to'rt soat o'ttiz besh daqiqa
+print(processor.time.time("14:35:08"))     # o'n to'rt soat o'ttiz besh daqiqa sakkiz soniya
+print(processor.time.time("00:00"))        # nol soat
+
+# 12-hour format with AM/PM (spoken mode)
+print(processor.time.time("2 PM"))         # tushlikdan keyin soat o'n to'rt
+print(processor.time.time("2:35 PM"))      # tushlikdan keyin soat o'n to'rt o'ttiz besh daqiqa
+print(processor.time.time("7 AM"))         # ertalab soat yetti
+
+# Various formats
+print(processor.time.time("14.35"))        # o'n to'rt soat o'ttiz besh daqiqa
+print(processor.time.time("14 35"))        # o'n to'rt soat o'ttiz besh daqiqa
+print(processor.time.time("14:35:08Z"))    # o'n to'rt soat o'ttiz besh daqiqa sakkiz soniya
+
+# Python time objects
+from datetime import time
+print(processor.time.time(time(14, 35, 8)))
+```
+
+**Time Periods (for AM/PM format):**
+- `ertalab` - 5:00-10:59
+- `tushlikdan oldin` - 11:00-12:59
+- `tushlikdan keyin` - 13:00-17:59
+- `kechqurun` - 18:00-22:59
+- `tun` - 23:00-4:59
+
+### DateTime Conversion
+
+```python
+from uzpreprocessor import UzPreprocessor
+
+processor = UzPreprocessor()
+
+# ISO datetime format
+print(processor.datetime.datetime("2025-09-18T14:35:08"))
+# Output: ikki ming yigirma beshinchi yil o'n sakkizinchi sentabr o'n to'rt soat o'ttiz besh daqiqa sakkiz soniya
+
+# Python datetime objects
+from datetime import datetime
+dt = datetime(2025, 9, 18, 14, 35, 8)
+print(processor.datetime.datetime(dt))
+```
+
+### Automatic Text Processing (Recommended)
+
+The `process()` method automatically detects and converts ALL formats in text:
+
+```python
+from uzpreprocessor import UzPreprocessor, ProcessingConfig
+
+processor = UzPreprocessor()
+
+# Process any text - automatically detects dates, times, money, percentages, markers
+text = """Shartnoma No.123
+Sana: 2025-09-18, soat 14:35
+Summa: 12500 so'm (15% chegirma bilan)
+Art.5, p.3 asosida, 1-bob, 2-modda
+
+Jadval #45:
+- 1-chi element: 100 dona
+- 2-chi element: 250 dona
+
+Jami: 15750 so'm"""
+
+result = processor.process(text)
+print(result)
+# Output:
+# Shartnoma No. bir yuz yigirma uchinchi
+# Sana: ikki ming yigirma beshinchi yil o'n sakkizinchi sentabr, soat o'n to'rt soat o'ttiz besh daqiqa
+# Summa: o'n ikki ming besh yuz so'm (o'n besh foiz chegirma bilan)
+# art. beshinchi, p. uchinchi asosida, birinchi bob, ikkinchi modda
+# ...
+
+# Analyze text to see what was detected
+analysis = processor.analyze(text)
+print(f"Found {analysis['total_tokens']} tokens: {analysis['type_counts']}")
+# Found 17 tokens: {'MARKER': 4, 'DATE': 1, 'TIME': 1, 'MONEY': 2, 'PERCENT': 1, 'SUFFIX': 5, 'NUMBER': 3}
+
+# Selective processing
+print(processor.numbers_only("12345 dona"))  # Process only numbers
+print(processor.dates_only("2025-09-18"))    # Process only dates
+print(processor.times_only("14:35"))         # Process only times
+print(processor.money_only("12500 so'm"))    # Process only money
+
+# Custom configuration
+config = ProcessingConfig(
+    process_numbers=True,
+    process_dates=True,
+    process_times=False,  # Skip time processing
+    preserve_original=True  # Keep original in parentheses
+)
+custom_processor = UzPreprocessor(config)
+```
+
+### Text Marker Preprocessing (Direct)
+
+```python
+from uzpreprocessor import UzPreprocessor
+
+processor = UzPreprocessor()
+
+# Number markers (№, #)
+print(processor.text.process("Bu №1 va #2 sonlar"))
+# Output: Bu birinchi va ikkinchi sonlar
+
+print(processor.text.process("1№, 2№, 10№"))
+# Output: birinchi, ikkinchi, o'ninchi
+
+# Latin markers
+print(processor.text.process("No.1 No.2"))
+# Output: No. birinchi No. ikkinchi
+
+print(processor.text.process("art.1 sec.2 ch.3"))
+# Output: art. birinchi sec. ikkinchi ch. uchinchi
+
+print(processor.text.process("p.1 b.2 m.3 st.4"))
+# Output: p. birinchi b. ikkinchi m. uchinchi st. to'rtinchi
+
+# Uzbek suffixes
+print(processor.text.process("1-chi, 2-chi, 3-chi"))
+# Output: birinchi-chi, ikkinchi-chi, uchinchi-chi
+
+print(processor.text.process("1-son, 2-bob, 3-modda"))
+# Output: birinchi-son, ikkinchi-bob, uchinchi-modda
+
+print(processor.text.process("1-qism, 2-bo'lim, 3-band"))
+# Output: birinchi-qism, ikkinchi-bo'lim, uchinchi-band
+
+# Process file
+processor.text.process_file("document.txt", "document_processed.txt")
+
+# Customize processing
+processor.text.process("№1 art.2 3-chi", 
+                       convert_numbers=True, 
+                       convert_markers=True,
+                       convert_suffixes=True)
+```
+
+**Supported number signs:**
+- `№1`, `№ 1` - numero sign before
+- `1№`, `1 №` - numero sign after
+- `#1`, `# 1` - hash before
+- `1#`, `1 #` - hash after
+
+**Supported Latin markers:**
+- `No.`, `N.` - number
+- `p.` - punkt/point
+- `b.`, `b-` - band/bob
+- `m.` - modda
+- `st.` - statya
+- `ch.` - chapter
+- `art.` - article
+- `sec.` - section
+- `pt.` - point
+- `par.` - paragraph
+- `item.`, `fig.`, `tab.`, `eq.`, `ex.`, `app.`
+
+**Supported Uzbek suffixes:**
+- `-chi` - ordinal suffix
+- `-son` - number suffix
+- `-raqam` - digit suffix
+- `-band` - band suffix
+- `-modda` - article suffix
+- `-bob` - chapter suffix
+- `-qism` - part suffix
+- `-bo'lim` - section suffix
+- `-punkt` - punkt suffix
+- `-jadval` - table suffix
+- `-rasm` - figure suffix
+- `-misol` - example suffix
+- `-ilova` - appendix suffix
+
+## API Reference
+
+### UzPreprocessor
+
+Main convenience class that provides all conversion functionality.
+
+#### Properties
+
+- `number` - Access number converter (UzNumberToWords)
+- `date` - Access date converter (UzDateToWords)
+- `time` - Access time converter (UzTimeToWords)
+- `datetime` - Access datetime converter (UzDateAndTimeToWords)
+- `text` - Access text marker preprocessor (UzTextPreprocessor)
+- `processor` - Access automatic text processor (UzTextProcessor)
+
+#### Methods
+
+- `process(text, config=None)` - Automatically process text (detects all formats)
+- `process_file(input_path, output_path=None, encoding='utf-8')` - Process text file
+- `analyze(text)` - Analyze text and return found tokens info
+- `numbers_only(text)` - Process only numbers
+- `dates_only(text)` - Process only dates
+- `times_only(text)` - Process only times
+- `money_only(text)` - Process only money amounts
+
+### UzTextProcessor
+
+Unified text processor with automatic format detection.
+
+#### Methods
+
+- `process(text, config=None)` - Process text with all format detection
+- `process_file(input_path, output_path=None, encoding='utf-8')` - Process file
+- `analyze(text)` - Analyze text and return token information
+- `tokenize(text)` - Split text into tokens
+
+### ProcessingConfig
+
+Configuration for text processing.
+
+#### Options
+
+- `process_numbers` - Process plain numbers (default: True)
+- `process_ordinals` - Process ordinal notations like "5-inchi" (default: True)
+- `process_money` - Process currency amounts (default: True)
+- `process_percent` - Process percentages (default: True)
+- `process_dates` - Process dates (default: True)
+- `process_times` - Process times (default: True)
+- `process_datetimes` - Process ISO datetimes (default: True)
+- `process_markers` - Process number markers №, #, No. (default: True)
+- `process_suffixes` - Process Uzbek suffixes -chi, -bob, etc. (default: True)
+- `preserve_original` - Keep original in parentheses (default: False)
+- `min_number` - Minimum number to process (default: 0)
+- `max_number` - Maximum number to process (default: 10^15)
+
+### UzNumberToWords
+
+Converts numbers, currency, and percentages to Uzbek words.
+
+#### Methods
+
+- `number(value)` - Convert number to words
+- `money(amount)` - Convert currency to words (so'm/tiyin)
+- `percent(value)` - Convert percentage to words
+- `ordinal(value)` - Convert number to ordinal form
+
+### UzDateToWords
+
+Converts dates to Uzbek words.
+
+#### Methods
+
+- `date(value)` - Convert date to words
+
+**Supported input types:**
+- String (various formats)
+- `datetime.date` object
+- `datetime.datetime` object
+
+### UzTimeToWords
+
+Converts time to Uzbek words.
+
+#### Methods
+
+- `time(value)` - Convert time to words
+
+**Supported input types:**
+- String (various formats)
+- `datetime.time` object
+- `datetime.datetime` object
+
+**Modes:**
+- **Formal mode**: Standard 24-hour format (e.g., "14:35")
+- **Spoken mode**: 12-hour format with AM/PM (e.g., "2 PM")
+
+### UzDateAndTimeToWords
+
+Combines date and time conversion.
+
+#### Methods
+
+- `datetime(value)` - Convert datetime to words
+
+**Supported input types:**
+- String (ISO format)
+- `datetime.datetime` object
+
+### UzTextPreprocessor
+
+Processes text to convert number markers to Uzbek words.
+
+#### Methods
+
+- `process(text, convert_numbers=True, convert_markers=True, convert_suffixes=True)` - Process text string
+- `process_file(input_path, output_path=None, convert_numbers=True, convert_markers=True, convert_suffixes=True, encoding='utf-8')` - Process text file
+
+**Parameters:**
+- `convert_numbers` - If True, convert № and # markers
+- `convert_markers` - If True, convert Latin markers (No., art., sec., etc.)
+- `convert_suffixes` - If True, convert Uzbek suffixes (-chi, -son, -bob, etc.)
+
+## Performance
+
+The library is optimized for performance:
+
+- **Compiled regex patterns** for faster parsing
+- **Efficient string operations** with minimal allocations
+- **Optimized data structures** (tuples for immutable data, dicts for O(1) lookups)
+- **No external dependencies** (uses only Python standard library)
+
+## Requirements
+
+- Python 3.8 or higher
+- No external dependencies (uses only standard library)
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Inspired by the need for Uzbek text preprocessing in legal and financial documents
+- Built with attention to accuracy and performance
+
+## Changelog
+
+### 1.0.0 (2025-01-XX)
+
+- Initial release
+- Number to words conversion
+- Date to words conversion
+- Time to words conversion
+- Currency conversion
+- Percentage conversion
+- Support for multiple input formats
+- Optimized performance
+
+## Documentation
+
+- [Installation Guide](INSTALL.md) - Detailed installation instructions
+- [Deployment Guide](DEPLOY.md) - Complete guide for publishing to PyPI
+- [Quick Deploy](QUICK_DEPLOY.md) - Quick reference for deployment
+- [Project Structure](PROJECT_STRUCTURE.md) - Project organization
+- [Optimizations](OPTIMIZATIONS.md) - Performance optimizations
+
+## Support
+
+For issues, questions, or contributions, please visit:
+- [GitHub Issues](https://github.com/jakharbek/py-uzpreprocessor/issues)
+- [GitHub Repository](https://github.com/jakharbek/py-uzpreprocessor)
+
+---
+
+Made with ❤️ for the Uzbek developer community
+
