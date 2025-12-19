@@ -1,0 +1,62 @@
+[build-system]
+requires = ["hatchling>=1.26", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "xint-sdk"
+dynamic = ["version"]
+description = "Xint SDK"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Xint Team", email = "contact@xint.io" }
+]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+]
+
+dependencies = [
+  "pycryptodomex==3.23.0",
+  "requests==2.32.5",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pyright<2.0.0,>=1.1.400",
+    "ruff<1.0.0,>=0.9.2",
+    "pytest<9.0.0,>=8.3.4",
+]
+
+[project.urls]
+Homepage = "https://xint.io"
+Issues = "https://xint.io"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/xint_sdk"]
+include = [
+  "src/xint-sdk/py.typed",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.format]
+indent-style = "space"
+line-ending = "lf"
+quote-style = "double"
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "ASYNC", "COM", "C4", "DTZ", "ISC", "LOG", "PIE", "RET", "SIM", "TID251", "N", "RUF", "I"]
+ignore = ["E501", "COM812", "ASYNC110", "RET504", "RUF100", "N806"]
