@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chakra-qtquick"
+version = "0.5.1"
+description = "A modern QML component library inspired by Chakra UI"
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+authors = [
+    {name = "ASLant", email = "aslant0607@gmail.com"}
+]
+keywords = ["qml", "qt", "pyside6", "ui", "components", "chakra-ui"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: User Interfaces",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "pyside6>=6.5.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "build>=1.2.2.post1",
+    "twine>=6.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/Y-ASLant/chakra-ui-qml"
+Repository = "https://github.com/Y-ASLant/chakra-ui-qml"
+Documentation = "https://github.com/Y-ASLant/chakra-ui-qml/tree/main/docs"
+Issues = "https://github.com/Y-ASLant/chakra-ui-qml/issues"
+
+[tool.setuptools]
+packages = ["chakra_ui", "chakra_ui.fonts"]
+package-dir = {"chakra_ui" = "src/components", "chakra_ui.fonts" = "src/components/fonts"}
+
+[tool.setuptools.package-data]
+chakra_ui = ["*.qml", "qmldir", "fonts/*.ttf"]
