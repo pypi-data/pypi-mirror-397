@@ -1,0 +1,1786 @@
+{
+    "group_rank(ts_backfill(<capex_field/>, 200) / ts_backfill(<revenue_field/>, 200), industry)": {
+        "template_explanation": "Industry-relative capital-expenditure intensity: rewards firms that are currently investing most aggressively in growth (capex / revenue) versus peers, under the assumption that high reinvestment rates today translate into faster future revenue and margin expansion.",
+        "seed_alpha_settings": {
+            "instrumentType": "EQUITY",
+            "region": "USA",
+            "universe": "TOP3000",
+            "delay": 1,
+            "decay": 0,
+            "neutralization": "SLOW_AND_FAST",
+            "truncation": 0.01,
+            "pasteurization": "ON",
+            "unitHandling": "VERIFY",
+            "nanHandling": "ON",
+            "maxTrade": "OFF",
+            "language": "FASTEXPR",
+            "visualization": false,
+            "startDate": "2013-01-20",
+            "endDate": "2023-01-20"
+        },
+        "placeholder_candidates": {
+            "<capex_field/>": {
+                "type": "data_field",
+                "candidates": [
+                    {
+                        "id": "capex",
+                        "description": "Capital Expenditures"
+                    },
+                    {
+                        "id": "mdl177_valueanalystmodel_qva_capexdep",
+                        "description": "Capex to Depreciation Rank"
+                    },
+                    {
+                        "id": "mdl177_2_valueanalystmodel_qva_capexdep",
+                        "description": "Capex to Depreciation Rank"
+                    },
+                    {
+                        "id": "mdl177_valanalystmodel_qva_capexdep",
+                        "description": "Capex to Depreciation Rank"
+                    },
+                    {
+                        "id": "mdl177_valueanalystmodel_qva_capexdep_alt",
+                        "description": "Capex to Depreciation Rank"
+                    },
+                    {
+                        "id": "mdl77_2growthanalystmodel_qga_epscapex",
+                        "description": "EPS Growth to CapEx Link"
+                    },
+                    {
+                        "id": "mdl177_2_growthanalystmodel_qga_epscapex",
+                        "description": "EPS Growth to CapEx Link"
+                    },
+                    {
+                        "id": "mdl77_growthanalystmodel_qga_epscapex",
+                        "description": "EPS Growth to CapEx Link"
+                    },
+                    {
+                        "id": "mdl177_growthanalystmodel_qga_epscapex_alt",
+                        "description": "EPS Growth to CapEx Link"
+                    },
+                    {
+                        "id": "capex_to_total_assets",
+                        "description": "Capital Expenditure-to-Total Assets"
+                    },
+                    {
+                        "id": "fnd23_intfvalld1_xecs",
+                        "description": "capital expenditures."
+                    },
+                    {
+                        "id": "fnd23_intfvm_xecs",
+                        "description": "capital expenditures."
+                    },
+                    {
+                        "id": "short_term_contracts_executed",
+                        "description": "capital expenditures."
+                    },
+                    {
+                        "id": "fnd23_intfvmalld1_xecs",
+                        "description": "capital expenditures."
+                    },
+                    {
+                        "id": "fnd23_annfv1a_xecs",
+                        "description": "capital expenditures."
+                    },
+                    {
+                        "id": "fnd23_annfvmfm2_xecs",
+                        "description": "capital expenditures."
+                    },
+                    {
+                        "id": "fnd23_cf_mvb_xecs",
+                        "description": "capital expenditures."
+                    },
+                    {
+                        "id": "fnd23_cf_m_xecs",
+                        "description": "[Quarterly] Capital Expenditures"
+                    },
+                    {
+                        "id": "fnd23_cf_m_xeci",
+                        "description": "[Quarterly] Capital Expenditures"
+                    },
+                    {
+                        "id": "cap",
+                        "description": "Daily market capitalization (in millions)"
+                    },
+                    {
+                        "id": "mdl50_bk_market_cap",
+                        "description": "Market cap"
+                    },
+                    {
+                        "id": "imb5_mktcap",
+                        "description": "Market Cap"
+                    },
+                    {
+                        "id": "oth335_combined_all_region_mktcap",
+                        "description": "Market Cap"
+                    },
+                    {
+                        "id": "oth335_hc_combined_all_region_mktcap",
+                        "description": "Market Cap"
+                    },
+                    {
+                        "id": "rsk62_risk_backfill_logcap",
+                        "description": "log(cap)"
+                    },
+                    {
+                        "id": "rsk62_beta_factor_1_100_logcap",
+                        "description": "log(cap)"
+                    },
+                    {
+                        "id": "fnd17_csptrendgr",
+                        "description": "Capital Spending growth rate, 5 year"
+                    },
+                    {
+                        "id": "fnd17_alldelay1_csptrendgr",
+                        "description": "Capital Spending Growth Rate, 5-Year"
+                    },
+                    {
+                        "id": "fnd17_qcapspps",
+                        "description": "Capital Spending per Share. most recent quarter"
+                    },
+                    {
+                        "id": "fnd17_alldelay1_ttmcapspps",
+                        "description": "Capital Spending per share, trailing 12 months"
+                    },
+                    {
+                        "id": "fnd17_alldelay1_qcapspps",
+                        "description": "Capital Spending per Share - Most Recent Quarter"
+                    },
+                    {
+                        "id": "fnd17_ttmcapspps",
+                        "description": "Capital Spending per share, trailing 12 month"
+                    },
+                    {
+                        "id": "fnd17_acapspps",
+                        "description": "Capital Spending per Share, most recent fiscal year"
+                    },
+                    {
+                        "id": "assets",
+                        "description": "Assets - Total"
+                    },
+                    {
+                        "id": "fnd89_asset_41_11",
+                        "description": "Current Asset Accruals / Total Assets"
+                    },
+                    {
+                        "id": "fnd89_asset_43_11",
+                        "description": "Current Asset Accruals / Total Assets"
+                    },
+                    {
+                        "id": "fnd89_asset_42_11",
+                        "description": "Current Asset Accruals / Total Assets"
+                    },
+                    {
+                        "id": "fnd89_asset_62_11",
+                        "description": "Financial Asset Accruals / Total Assets"
+                    },
+                    {
+                        "id": "fnd89_asset_63_11",
+                        "description": "Financial Asset Accruals / Total Assets"
+                    },
+                    {
+                        "id": "fnd89_asset_64_11",
+                        "description": "Financial Asset Accruals / Total Assets"
+                    },
+                    {
+                        "id": "fnd89_asset_61_11",
+                        "description": "Financial Asset Accruals / Total Assets"
+                    },
+                    {
+                        "id": "fnd89_asset_62_21",
+                        "description": "Financial Asset Accruals /  Current Assets"
+                    }
+                ]
+            },
+            "<revenue_field/>": {
+                "type": "data_field",
+                "candidates": [
+                    {
+                        "id": "revenue",
+                        "description": "Revenue - Total"
+                    },
+                    {
+                        "id": "star_rev_surprise_prediction_fy2",
+                        "description": "Revenue predicted surprise pct - forward 2 years"
+                    },
+                    {
+                        "id": "star_rev_surprise_prediction_fy1",
+                        "description": "Revenue predicted surprise pct - forward 1 year"
+                    },
+                    {
+                        "id": "star_rev_surprise_prediction_12m",
+                        "description": "Revenue predicted surprise pct - forward 12 months"
+                    },
+                    {
+                        "id": "star_rev_surprise_prediction_fq2",
+                        "description": "Revenue predicted surprise pct - forward 2 quarters"
+                    },
+                    {
+                        "id": "star_rev_surprise_prediction_fq1",
+                        "description": "Revenue predicted surprise pct - forward 1 quarter"
+                    },
+                    {
+                        "id": "revenue_per_share_quarterly_non_annualized",
+                        "description": "Revenue per share for the most recent quarter, not annualized."
+                    },
+                    {
+                        "id": "revenue_per_share_quarterly",
+                        "description": "Revenue per share for the most recent quarter, annualized."
+                    },
+                    {
+                        "id": "star_rev_smart_estimate_fq1",
+                        "description": "FQ1 SmartEstimate"
+                    },
+                    {
+                        "id": "star_rev_smart_estimate_12m",
+                        "description": "F12M SmartEstimate"
+                    },
+                    {
+                        "id": "sales",
+                        "description": "Sales/Turnover (Net)"
+                    },
+                    {
+                        "id": "sales_estimate_maximum",
+                        "description": "Sales - The highest estimation"
+                    },
+                    {
+                        "id": "sales_guidance_value_quarterly",
+                        "description": "Sales - guidance value"
+                    },
+                    {
+                        "id": "sales_estimate_minimum",
+                        "description": "Sales - The lowest estimation"
+                    },
+                    {
+                        "id": "sales_estimate_count_2",
+                        "description": "Number of Sales estimates"
+                    },
+                    {
+                        "id": "sales_estimate_count",
+                        "description": "Sales - number of estimations"
+                    },
+                    {
+                        "id": "sales_min_guidance_quarterly",
+                        "description": "Minimum guidance value for Sales"
+                    },
+                    {
+                        "id": "sales_estimate_standard_deviation",
+                        "description": "Sales - standard deviation of estimations"
+                    },
+                    {
+                        "id": "sales_estimate_average_annual",
+                        "description": "Sales - mean of estimations"
+                    },
+                    {
+                        "id": "sales_estimate_average_quarterly",
+                        "description": "Sales - mean of estimations"
+                    },
+                    {
+                        "id": "mdl31_v14_ab1_ass_tvr_prior_y",
+                        "description": "Prior year turnover"
+                    },
+                    {
+                        "id": "mdl31_ab1_ass_tvr_prior_y",
+                        "description": "Prior year turnover"
+                    },
+                    {
+                        "id": "mdl31_v14_ab1_ass_tvr_last_qtr",
+                        "description": "Last quarter asset turnover"
+                    },
+                    {
+                        "id": "mdl31_v14_ab1_ass_tvr_prior_qtr",
+                        "description": "Prior quarter asset turnover"
+                    },
+                    {
+                        "id": "mdl31_ab1_ass_tvr_last_y",
+                        "description": "Last year asset turnover"
+                    },
+                    {
+                        "id": "mdl31_v14_ab1_ass_tvr_last_y",
+                        "description": "Last year asset turnover"
+                    },
+                    {
+                        "id": "mdl31_ab1_ass_tvr_prior_qtr",
+                        "description": "Prior quarter asset turnover"
+                    },
+                    {
+                        "id": "mdl31_ab1_ass_tvr_last_qtr",
+                        "description": "Last quarter asset turnover"
+                    },
+                    {
+                        "id": "mdl31_v14_ab1_ass_tvr_t4q",
+                        "description": "Trailing 4 Quarters asset turnover"
+                    },
+                    {
+                        "id": "mdl31_ab1_ass_tvr_t4q",
+                        "description": "Trailing 4 Quarters asset turnover"
+                    },
+                    {
+                        "id": "fnd23_intfvalld1_nirv",
+                        "description": "Net Revenues"
+                    },
+                    {
+                        "id": "mdl31_ass_tvr_last_y",
+                        "description": "The amount of revenue generated for each unit of assets. Also known as TAT.  Asset Turnover = Net Revenue/Total Assets"
+                    },
+                    {
+                        "id": "mdl31_ass_tvr_prior_y",
+                        "description": "The amount of revenue generated for each unit of assets. Also known as TAT.  Asset Turnover = Net Revenue/Total Assets"
+                    },
+                    {
+                        "id": "mdl31_ass_tvr_t4q",
+                        "description": "The amount of revenue generated for each unit of assets. Also known as TAT.  Asset Turnover = Net Revenue/Total Assets"
+                    },
+                    {
+                        "id": "mdl31_ass_tvr_prior_qtr",
+                        "description": "The amount of revenue generated for each unit of assets. Also known as TAT.  Asset Turnover = Net Revenue/Total Assets"
+                    },
+                    {
+                        "id": "fnd23_intfvalld1_rrov",
+                        "description": "Reported Operating Revenue"
+                    },
+                    {
+                        "id": "fnd23_intfvalld1_zhbs",
+                        "description": "Operating Revenue per ASK captures the total operating revenues earned per available seat kilometer of the airline."
+                    },
+                    {
+                        "id": "fnd23_intfvalld1_aebm",
+                        "description": "Breakeven load factor, total - %. The breakeven load factor is the passenger load factor that results in operating revenues being equal to operating expenses, assuming constant revenue per passenger mile and expenses."
+                    },
+                    {
+                        "id": "fnd3_a_revenue_fast_d1",
+                        "description": "Annual Revenue"
+                    }
+                ]
+            }
+        }
+    },
+    "ts_zscore(ts_delta(ts_backfill(<net_ppe_field/>, 252), 252), industry)": {
+        "template_explanation": "Industry-neutral one-year change in net PP&E standardized by its own history: captures acceleration/deceleration in installed capital stock, flagging companies that are either scaling up (positive z-score) or divesting/rightsizing (negative z-score) relative to their sector.",
+        "seed_alpha_settings": {
+            "instrumentType": "EQUITY",
+            "region": "USA",
+            "universe": "TOP3000",
+            "delay": 1,
+            "decay": 0,
+            "neutralization": "SLOW_AND_FAST",
+            "truncation": 0.01,
+            "pasteurization": "ON",
+            "unitHandling": "VERIFY",
+            "nanHandling": "ON",
+            "maxTrade": "OFF",
+            "language": "FASTEXPR",
+            "visualization": false,
+            "startDate": "2013-01-20",
+            "endDate": "2023-01-20"
+        },
+        "placeholder_candidates": {
+            "<net_ppe_field/>": {
+                "type": "data_field",
+                "candidates": [
+                    {
+                        "id": "mdl219_1_nopatmargin",
+                        "description": "NOPAT margin calculated as net operating profit after tax divided by net sales."
+                    },
+                    {
+                        "id": "mdl219_1_nnastp",
+                        "description": "Net net current assets-to-price ratio calculated as current assets minus liabilities divided by price."
+                    },
+                    {
+                        "id": "fnd28_value_18297a",
+                        "description": "value of annual field: Trade Receivables - Net"
+                    },
+                    {
+                        "id": "fnd28_wast_value_02513a",
+                        "description": "value of annual field: Other Intangibles - Net"
+                    },
+                    {
+                        "id": "fnd28_wsbsht_value_02513a",
+                        "description": "value of annual field: Other Intangibles - Net"
+                    },
+                    {
+                        "id": "fnd28_value_18297q",
+                        "description": "value of quarterly field: Trade Receivables - Net"
+                    },
+                    {
+                        "id": "fnd28_wast_value_02507a",
+                        "description": "value of annual field: Brands, Patents - Net"
+                    },
+                    {
+                        "id": "fnd28_wsbsht_value_02507a",
+                        "description": "value of annual field: Brands, Patents - Net"
+                    },
+                    {
+                        "id": "fnd28_wcbshtasseta_value_02501a",
+                        "description": "value of annual field: Property, Plant & Equipment - Net"
+                    },
+                    {
+                        "id": "fnd3_q_epp_fast_d1",
+                        "description": "Quarterly Property, Plant & Equipment"
+                    },
+                    {
+                        "id": "fnd3_q_epp",
+                        "description": "Quarterly Property, Plant & Equipment"
+                    },
+                    {
+                        "id": "fnd3_A_epp",
+                        "description": "Annual Property, Plant & Equipment"
+                    },
+                    {
+                        "id": "fnd3_a_epp_fast_d1",
+                        "description": "Annual Property, Plant & Equipment"
+                    },
+                    {
+                        "id": "fnd23_annfvadjfieldsacctadj_ctpa",
+                        "description": "gross property, plant & equipment."
+                    },
+                    {
+                        "id": "fnd23_intfvadjfieldsacctadj_dlo_ctpa",
+                        "description": "gross property, plant & equipment."
+                    },
+                    {
+                        "id": "fnd23_intfvalld1_ctpa",
+                        "description": "gross property, plant & equipment."
+                    },
+                    {
+                        "id": "fnd23_annfv1a_ctpa",
+                        "description": "gross property, plant & equipment."
+                    },
+                    {
+                        "id": "fnd23_intfvadjfieldsacctadj_ctpa",
+                        "description": "gross property, plant & equipment."
+                    },
+                    {
+                        "id": "fnd23_intfvm_ctpa",
+                        "description": "gross property, plant & equipment."
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_bs_q_bs_net_fix_asset",
+                        "description": "Net Fixed Assets"
+                    },
+                    {
+                        "id": "fnd72_bs_net_fix_asset",
+                        "description": "Net Fixed Assets"
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_bs_q_1_bs_net_fix_asset",
+                        "description": "Net Fixed Assets"
+                    },
+                    {
+                        "id": "fnd72_1_bs_net_fix_asset",
+                        "description": "Net Fixed Assets"
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_bs_a_bs_net_fix_asset",
+                        "description": "Net Fixed Assets"
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_cr_q_net_fix_asset_turn",
+                        "description": "Financial ratio of net sales to net fixed assets"
+                    },
+                    {
+                        "id": "mdl219_1_nfaldebt",
+                        "description": "Net fixed assets-to-long-term debt ratio measuring asset coverage."
+                    },
+                    {
+                        "id": "mdl219_2_nfaldebt",
+                        "description": "Net fixed assets-to-long-term debt ratio measuring asset coverage for the second module."
+                    },
+                    {
+                        "id": "mdl177_global_all_delay_1_nfaldebt",
+                        "description": "Net Fixed Assets to Long-term Debt: It is defined as the most recent quarterly reported net fixed assets divided by the total long-term debt."
+                    },
+                    {
+                        "id": "mdl177_liquidityriskfactor_nfaldebt_alt",
+                        "description": "Net Fixed Assets to Long-term Debt : It is defined as the most recent quarterly reported net fixed assets divided by the total long-term debt."
+                    },
+                    {
+                        "id": "fnd23_capex",
+                        "description": "capital expenditure"
+                    },
+                    {
+                        "id": "fnd3_a_capexgross_fast_d1",
+                        "description": "Annual Capital Expenditure Payments (Gross)"
+                    },
+                    {
+                        "id": "fnd3_a_capexgross",
+                        "description": "Annual Capital Expenditure Payments (Gross)"
+                    },
+                    {
+                        "id": "mdl262_capx_compustatdeltapredict_annual_funda_predict",
+                        "description": "Predict value of Capital Expenditure"
+                    },
+                    {
+                        "id": "mdl262_trkdpitpredictivecapex_prediction",
+                        "description": "Predict value of Capital Expenditure"
+                    },
+                    {
+                        "id": "fnd3_A_capexgross",
+                        "description": "Annual Capital Expenditure Payments (Gross)"
+                    },
+                    {
+                        "id": "pv87_capital_expenditure_actual",
+                        "description": "Capital Expenditure Actual"
+                    },
+                    {
+                        "id": "fnd3_Q_capexgross",
+                        "description": "Quarterly Capital Expenditure Payments (Gross)"
+                    }
+                ]
+            }
+        }
+    },
+    "group_rank(ts_backfill(<ebitda_field/>, 200) / ts_backfill(<net_ppe_field/>, 200), subindustry)": {
+        "template_explanation": "Sub-industry ranking of operating cash yield per dollar of net PP&E: identifies operators that sweat their capital base most efficiently, implying either superior technology or asset-utilization that can drive outsized economic profits.",
+        "seed_alpha_settings": {
+            "instrumentType": "EQUITY",
+            "region": "USA",
+            "universe": "TOP3000",
+            "delay": 1,
+            "decay": 0,
+            "neutralization": "SLOW_AND_FAST",
+            "truncation": 0.01,
+            "pasteurization": "ON",
+            "unitHandling": "VERIFY",
+            "nanHandling": "ON",
+            "maxTrade": "OFF",
+            "language": "FASTEXPR",
+            "visualization": false,
+            "startDate": "2013-01-20",
+            "endDate": "2023-01-20"
+        },
+        "placeholder_candidates": {
+            "<ebitda_field/>": {
+                "type": "data_field",
+                "candidates": [
+                    {
+                        "id": "ebitda",
+                        "description": "Earnings Before Interest"
+                    },
+                    {
+                        "id": "ebitda_reported_value",
+                        "description": "EBITDA value for the quarter."
+                    },
+                    {
+                        "id": "ebitda_per_share_trailing_twelve_months",
+                        "description": "EBITDA per share for the trailing twelve months."
+                    },
+                    {
+                        "id": "mdl38_rel_val_ev_ebitda",
+                        "description": "Global-relative (1-100) EV/EBITDA Rank"
+                    },
+                    {
+                        "id": "mdl38_v14_rel_val_ev_ebitda",
+                        "description": "Global-relative (1-100) EV/EBITDA Rank"
+                    },
+                    {
+                        "id": "ev_to_ebitda_component_rank",
+                        "description": "Global-relative rank for the enterprise value to EBITDA ratio component."
+                    },
+                    {
+                        "id": "ev_ebitda_relative_score_main",
+                        "description": "Relative ranking score for the enterprise value to EBITDA ratio component."
+                    },
+                    {
+                        "id": "ebitda_annual",
+                        "description": "Earnings before interest, taxes, depreciation, and amortization for the most recent fiscal year."
+                    },
+                    {
+                        "id": "ev_ebitda_relative_score_float",
+                        "description": "Relative ranking score for the enterprise value to EBITDA ratio component (float type)."
+                    },
+                    {
+                        "id": "fnd3_A_ope_cf",
+                        "description": "Annual Operating Cash Flow"
+                    },
+                    {
+                        "id": "fnd3_a_ope_cf",
+                        "description": "Annual Operating Cash Flow"
+                    },
+                    {
+                        "id": "fnd3_q_ope_cf_fast_d1",
+                        "description": "Quarterly Operating Cash Flow"
+                    },
+                    {
+                        "id": "fnd3_a_ope_cf_fast_d1",
+                        "description": "Annual Operating Cash Flow"
+                    },
+                    {
+                        "id": "fnd3_q_ope_cf",
+                        "description": "Quarterly Operating Cash Flow"
+                    },
+                    {
+                        "id": "fnd3_Q_ope_cf",
+                        "description": "Quarterly Operating Cash Flow"
+                    },
+                    {
+                        "id": "mdl109_matrix_cfoyld",
+                        "description": "Operating cash flow yield"
+                    },
+                    {
+                        "id": "mdl219_1_ocfmargin",
+                        "description": "Operating cash flow margin calculated as operating cash flow divided by sales."
+                    },
+                    {
+                        "id": "mdl109_matrix_cfoyld_fy1",
+                        "description": "Operating cash flow yield, FY1"
+                    },
+                    {
+                        "id": "mdl177_fa_ocfratio",
+                        "description": "Operating Cash Flow Ratio"
+                    },
+                    {
+                        "id": "fnd28_a_value_08381",
+                        "description": "value of field: Cash Earnings Return on Equity"
+                    },
+                    {
+                        "id": "mdl177_2_sensitivityfactor400_ceroe",
+                        "description": "Cash Earnings Return On Equity"
+                    },
+                    {
+                        "id": "mdl177_sensitivityfactor_ceroe",
+                        "description": "Cash Earnings Return On Equity"
+                    },
+                    {
+                        "id": "cash_earnings_return_on_equity",
+                        "description": "Cash Earnings Return On Equity"
+                    },
+                    {
+                        "id": "mdl177_2_globaldevnorthamericasensitivityfactor_ceroe",
+                        "description": "Cash Earnings Return On Equity"
+                    },
+                    {
+                        "id": "mdl177_sensitivityfactor3_ceroe",
+                        "description": "Cash Earnings Return On Equity"
+                    },
+                    {
+                        "id": "fnd28_annualprof_value_08381a",
+                        "description": "value of annual field: Cash Earnings Return on Equity"
+                    },
+                    {
+                        "id": "fnd28_annualprofq_value_08381q",
+                        "description": "value of quarterly field: Cash Earnings Return on Equity"
+                    },
+                    {
+                        "id": "fnd28_pftlta_value_08381a",
+                        "description": "value of annual field: Cash Earnings Return on Equity"
+                    },
+                    {
+                        "id": "fnd65_allcap_sedol_chg3yocfast",
+                        "description": "It is defined as the most recently reported trailing 12-month operating cash flow (OCF) minus the OCF 12 quarters ago deflated by the average total assets."
+                    },
+                    {
+                        "id": "mdl230_us5000_cusip_chg3yocfast",
+                        "description": "It is defined as the most recently reported trailing 12-month operating cash flow (OCF) minus the OCF 12 quarters ago deflated by the average total assets."
+                    },
+                    {
+                        "id": "mdl230_totalcap_cusip_pctchg3yocf",
+                        "description": "It is defined as the percent change in a stock's most recent trailing 12-month operating cash flow per share (OCF) compared to its OCF 12 quarters ago."
+                    },
+                    {
+                        "id": "fnd65_totalcap_cusip_chg3yocfast",
+                        "description": "It is defined as the most recently reported trailing 12-month operating cash flow (OCF) minus the OCF 12 quarters ago deflated by the average total assets."
+                    },
+                    {
+                        "id": "fnd65_us5000_cusip_chg3yocfast",
+                        "description": "It is defined as the most recently reported trailing 12-month operating cash flow (OCF) minus the OCF 12 quarters ago deflated by the average total assets."
+                    },
+                    {
+                        "id": "mdl230_allcap_sedol_chg3yocfast",
+                        "description": "It is defined as the most recently reported trailing 12-month operating cash flow (OCF) minus the OCF 12 quarters ago deflated by the average total assets."
+                    },
+                    {
+                        "id": "mdl230_totalcap_cusip_chg3yocfast",
+                        "description": "It is defined as the most recently reported trailing 12-month operating cash flow (OCF) minus the OCF 12 quarters ago deflated by the average total assets."
+                    },
+                    {
+                        "id": "mdl230_totalcap_cusip_pctchgocf",
+                        "description": "It is defined as the percent change of a stock's most recent trailing 12-month operating cash flow per share (OCF) as compared to the OCF 4 quarters ago."
+                    },
+                    {
+                        "id": "mdl230_us5000_cusip_pctchgocf",
+                        "description": "It is defined as the percent change of a stock's most recent trailing 12-month operating cash flow per share (OCF) as compared to the OCF 4 quarters ago."
+                    },
+                    {
+                        "id": "mdl230_allcap_sedol_pctchgocf",
+                        "description": "It is defined as the percent change of a stock's most recent trailing 12-month operating cash flow per share (OCF) as compared to the OCF 4 quarters ago."
+                    },
+                    {
+                        "id": "ebit",
+                        "description": "Earnings Before Interest and Taxes"
+                    },
+                    {
+                        "id": "fnd2_ebitdm",
+                        "description": "EBIT, Domestic"
+                    },
+                    {
+                        "id": "fnd2_ebitfr",
+                        "description": "EBIT, Foreign"
+                    },
+                    {
+                        "id": "fnd13_sbit",
+                        "description": "Normalized EBIT"
+                    },
+                    {
+                        "id": "fnd23_icsm_m_tibs",
+                        "description": "[Quarterly] Normalized EBIT"
+                    },
+                    {
+                        "id": "ebit_trailing_twelve_months",
+                        "description": "Earnings before interest and taxes for the trailing twelve months."
+                    }
+                ]
+            },
+            "<net_ppe_field/>": {
+                "type": "data_field",
+                "candidates": [
+                    {
+                        "id": "fnd13_balancesheetq_nppa",
+                        "description": "Property/Plant/Equipment, Total - Net"
+                    },
+                    {
+                        "id": "fnd13_rkdbalancesheetq_nppa",
+                        "description": "Property/Plant/Equipment, Total - Net"
+                    },
+                    {
+                        "id": "fnd13_aptc",
+                        "description": "Property/Plant/Equipment, Total - Gross"
+                    },
+                    {
+                        "id": "fnd7_ointfund_qtnepp",
+                        "description": "Quarterly Fundamental Item: Property, Plant, and Equipment - Total (Net)"
+                    },
+                    {
+                        "id": "pv20_q_1_ard_property_plant_equip_net",
+                        "description": "ARD Property Plant & Equipment - Net"
+                    },
+                    {
+                        "id": "fnd23_intfvalld1_nppa",
+                        "description": "net property, plant and equipment."
+                    },
+                    {
+                        "id": "fnd23_nppv",
+                        "description": "Other Property/Plant/Equipment - Net"
+                    },
+                    {
+                        "id": "fnd23_annfv1a_nppa",
+                        "description": "net property, plant and equipment."
+                    },
+                    {
+                        "id": "fnd23_annfvadjfieldsacctadj_dlo_nppa",
+                        "description": "net property, plant and equipment."
+                    },
+                    {
+                        "id": "fnd23_intfvm_nppa",
+                        "description": "net property, plant and equipment."
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_bs_q_bs_net_fix_asset",
+                        "description": "Net Fixed Assets"
+                    },
+                    {
+                        "id": "fnd72_bs_net_fix_asset",
+                        "description": "Net Fixed Assets"
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_bs_q_1_bs_net_fix_asset",
+                        "description": "Net Fixed Assets"
+                    },
+                    {
+                        "id": "fnd72_1_bs_net_fix_asset",
+                        "description": "Net Fixed Assets"
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_bs_a_bs_net_fix_asset",
+                        "description": "Net Fixed Assets"
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_cr_q_net_fix_asset_turn",
+                        "description": "Financial ratio of net sales to net fixed assets"
+                    },
+                    {
+                        "id": "mdl219_1_nfaldebt",
+                        "description": "Net fixed assets-to-long-term debt ratio measuring asset coverage."
+                    },
+                    {
+                        "id": "mdl219_2_nfaldebt",
+                        "description": "Net fixed assets-to-long-term debt ratio measuring asset coverage for the second module."
+                    },
+                    {
+                        "id": "mdl177_global_all_delay_1_nfaldebt",
+                        "description": "Net Fixed Assets to Long-term Debt: It is defined as the most recent quarterly reported net fixed assets divided by the total long-term debt."
+                    },
+                    {
+                        "id": "mdl177_liquidityriskfactor_nfaldebt_alt",
+                        "description": "Net Fixed Assets to Long-term Debt : It is defined as the most recent quarterly reported net fixed assets divided by the total long-term debt."
+                    },
+                    {
+                        "id": "rsk62_beta_1_100_pb",
+                        "description": "book value"
+                    },
+                    {
+                        "id": "rsk62_beta_factor_1_100_pb",
+                        "description": "book value"
+                    },
+                    {
+                        "id": "rsk62_risk_backfill_pb",
+                        "description": "book value"
+                    },
+                    {
+                        "id": "rsk62_beta_factor_5_100_pb",
+                        "description": "book value"
+                    },
+                    {
+                        "id": "rsk62_risk_pb",
+                        "description": "book value"
+                    },
+                    {
+                        "id": "rsk62_beta_5_100_pb",
+                        "description": "book value"
+                    },
+                    {
+                        "id": "rsk62_id_pb",
+                        "description": "Date Index of book value"
+                    },
+                    {
+                        "id": "mdl219_1_pb",
+                        "description": "Book-to-market ratio calculated as book value divided by market price."
+                    },
+                    {
+                        "id": "oth432_bkvlps_compustatdeltapredict_annual_funda_predict",
+                        "description": "Predicted value of book value per share"
+                    },
+                    {
+                        "id": "oth496_ff_tang_assets_debt",
+                        "description": "Tangible assets to debt"
+                    },
+                    {
+                        "id": "accumulated_depreciation_2",
+                        "description": "Total depreciation accumulated on tangible assets to date."
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_cr_q_tce_ratio",
+                        "description": "Measure of financial strength which shows the tangible value of equity as a percentage of tangible assets"
+                    },
+                    {
+                        "id": "assets",
+                        "description": "Assets - Total"
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_cr_q_px_to_tang_bv_per_sh",
+                        "description": "Also known as Price to Net Tangible Assets per Share, ratio of the stock price to the tangible book value per share"
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_cr_q_tangible_common_equity",
+                        "description": "Also known as Net Tangible Assets, measures the company's common equity by adjusting the share capital, additional paid-in capital, and retained earnings by the amount of intangible assets disclosed by the company"
+                    },
+                    {
+                        "id": "mdl313_iai",
+                        "description": "Intangible Asset Intensity Score"
+                    },
+                    {
+                        "id": "mdl313_us_iai",
+                        "description": "Intangible Asset Intensity Score"
+                    },
+                    {
+                        "id": "mdl313_ico",
+                        "description": "Organizational Capital Intensity Score"
+                    },
+                    {
+                        "id": "mdl313_us_ico",
+                        "description": "Organizational Capital Intensity Score"
+                    }
+                ]
+            }
+        }
+    },
+    "ts_rank(ts_backfill(<gross_ppe_field/>, 200) / ts_backfill(<accum_depr_field/>, 200), 252)": {
+        "template_explanation": "Vintage-adjusted capital-stock age proxy (gross / accumulated depreciation) ranked through time: firms with younger capital (high rank) should face lower maintenance costs and higher productivity, offering a relative edge as input prices or rates rise.",
+        "seed_alpha_settings": {
+            "instrumentType": "EQUITY",
+            "region": "USA",
+            "universe": "TOP3000",
+            "delay": 1,
+            "decay": 0,
+            "neutralization": "SLOW_AND_FAST",
+            "truncation": 0.01,
+            "pasteurization": "ON",
+            "unitHandling": "VERIFY",
+            "nanHandling": "ON",
+            "maxTrade": "OFF",
+            "language": "FASTEXPR",
+            "visualization": false,
+            "startDate": "2013-01-20",
+            "endDate": "2023-01-20"
+        },
+        "placeholder_candidates": {
+            "<gross_ppe_field/>": {
+                "type": "data_field",
+                "candidates": [
+                    {
+                        "id": "fnd13_statementq_prgs",
+                        "description": "Gross Profit"
+                    },
+                    {
+                        "id": "fnd13_rkdincomestatementq_prgs",
+                        "description": "Gross Profit"
+                    },
+                    {
+                        "id": "fnd13_aing",
+                        "description": "Intangibles - Gross"
+                    },
+                    {
+                        "id": "rsk62_beta_5_100_margin",
+                        "description": "gross margin"
+                    },
+                    {
+                        "id": "rsk62_beta_1_100_margin",
+                        "description": "gross margin"
+                    },
+                    {
+                        "id": "rsk62_beta_factor_5_100_margin",
+                        "description": "gross margin"
+                    },
+                    {
+                        "id": "rsk62_risk_backfill_margin",
+                        "description": "gross margin"
+                    },
+                    {
+                        "id": "rsk62_beta_factor_1_100_margin",
+                        "description": "gross margin"
+                    },
+                    {
+                        "id": "rsk62_risk_margin",
+                        "description": "gross margin"
+                    },
+                    {
+                        "id": "fnd23_intfvmalld1_verr",
+                        "description": "gross revenue."
+                    },
+                    {
+                        "id": "fnd23_annfvadjfieldsacctadj_ctpa",
+                        "description": "gross property, plant & equipment."
+                    },
+                    {
+                        "id": "fnd23_intfvadjfieldsacctadj_dlo_ctpa",
+                        "description": "gross property, plant & equipment."
+                    },
+                    {
+                        "id": "fnd23_intfvalld1_ctpa",
+                        "description": "gross property, plant & equipment."
+                    },
+                    {
+                        "id": "fnd23_annfv1a_ctpa",
+                        "description": "gross property, plant & equipment."
+                    },
+                    {
+                        "id": "fnd23_intfvadjfieldsacctadj_ctpa",
+                        "description": "gross property, plant & equipment."
+                    },
+                    {
+                        "id": "fnd23_intfvm_ctpa",
+                        "description": "gross property, plant & equipment."
+                    },
+                    {
+                        "id": "fnd23_annfvadjfieldsacctadj_dlo_ctpa",
+                        "description": "gross property, plant & equipment."
+                    },
+                    {
+                        "id": "fnd23_blsmvb_ctpa",
+                        "description": "gross property, plant & equipment."
+                    },
+                    {
+                        "id": "fnd23_intfvmalld1_ctpa",
+                        "description": "gross property, plant & equipment."
+                    },
+                    {
+                        "id": "mdl219_1_nopatmargin",
+                        "description": "NOPAT margin calculated as net operating profit after tax divided by net sales."
+                    },
+                    {
+                        "id": "mdl219_1_nnastp",
+                        "description": "Net net current assets-to-price ratio calculated as current assets minus liabilities divided by price."
+                    },
+                    {
+                        "id": "fnd28_value_18297a",
+                        "description": "value of annual field: Trade Receivables - Net"
+                    },
+                    {
+                        "id": "fnd28_wast_value_02513a",
+                        "description": "value of annual field: Other Intangibles - Net"
+                    },
+                    {
+                        "id": "fnd28_wsbsht_value_02513a",
+                        "description": "value of annual field: Other Intangibles - Net"
+                    },
+                    {
+                        "id": "fnd28_value_18297q",
+                        "description": "value of quarterly field: Trade Receivables - Net"
+                    },
+                    {
+                        "id": "fnd28_wast_value_02507a",
+                        "description": "value of annual field: Brands, Patents - Net"
+                    },
+                    {
+                        "id": "fnd28_wsbsht_value_02507a",
+                        "description": "value of annual field: Brands, Patents - Net"
+                    },
+                    {
+                        "id": "fnd28_wcbshtasseta_value_02501a",
+                        "description": "value of annual field: Property, Plant & Equipment - Net"
+                    },
+                    {
+                        "id": "fnd23_intfvalld1_xecs",
+                        "description": "capital expenditures."
+                    },
+                    {
+                        "id": "fnd23_intfvm_xecs",
+                        "description": "capital expenditures."
+                    },
+                    {
+                        "id": "short_term_contracts_executed",
+                        "description": "capital expenditures."
+                    },
+                    {
+                        "id": "fnd23_intfvmalld1_xecs",
+                        "description": "capital expenditures."
+                    },
+                    {
+                        "id": "fnd23_annfv1a_xecs",
+                        "description": "capital expenditures."
+                    },
+                    {
+                        "id": "fnd23_annfvmfm2_xecs",
+                        "description": "capital expenditures."
+                    },
+                    {
+                        "id": "fnd23_cf_mvb_xecs",
+                        "description": "capital expenditures."
+                    },
+                    {
+                        "id": "fnd23_cf_m_xecs",
+                        "description": "[Quarterly] Capital Expenditures"
+                    },
+                    {
+                        "id": "fnd23_cf_m_xeci",
+                        "description": "[Quarterly] Capital Expenditures"
+                    },
+                    {
+                        "id": "mdl262_sgpp_trkdpitdeltapredict_funda_predict",
+                        "description": "Predict value of Gross Margin"
+                    },
+                    {
+                        "id": "mdl262_sgrp_trkdpitdeltapredict_funda_predict",
+                        "description": "Predict value of Gross Margin"
+                    }
+                ]
+            },
+            "<accum_depr_field/>": {
+                "type": "data_field",
+                "candidates": [
+                    {
+                        "id": "fnd72_s_pit_or_bs_q_bs_accum_depr",
+                        "description": "Accumulated Depreciation"
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_bs_a_bs_accum_depr",
+                        "description": "Accumulated Depreciation"
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_bs_q_1_bs_accum_depr",
+                        "description": "Accumulated Depreciation"
+                    },
+                    {
+                        "id": "fnd3_a_acc_dep",
+                        "description": "Annual Accumulated Depreciation"
+                    },
+                    {
+                        "id": "oth685_econaccumdep",
+                        "description": "Economic Accumulated Depreciation."
+                    },
+                    {
+                        "id": "fnd3_Q_acc_dep",
+                        "description": "Quarterly Accumulated Depreciation"
+                    },
+                    {
+                        "id": "fnd3_q_acc_dep",
+                        "description": "Quarterly Accumulated Depreciation"
+                    },
+                    {
+                        "id": "fnd13_adep",
+                        "description": "Accumulated Depreciation, Total"
+                    },
+                    {
+                        "id": "depreciation_and_amortization_journal",
+                        "description": "Journal entry or record for depreciation and amortization."
+                    },
+                    {
+                        "id": "depreciation_expense_total",
+                        "description": "Total depreciation expense for the period."
+                    },
+                    {
+                        "id": "depre_amort",
+                        "description": "Depreciation and Amortization - Total"
+                    },
+                    {
+                        "id": "depreciation_expense",
+                        "description": "Expense recognized for the allocation of tangible asset costs over their useful lives."
+                    },
+                    {
+                        "id": "depreciation_of_property_plant_equipment",
+                        "description": "[Quarterly] Domestic Pension Plan Expense"
+                    },
+                    {
+                        "id": "depreciation_and_amortization_expense",
+                        "description": "[Quarterly] Deferred Tax - Local"
+                    },
+                    {
+                        "id": "fnd23_intfvm_pedv",
+                        "description": "Deprecation"
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_is_q_pxe_rped_si",
+                        "description": "Depreciation Expense"
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_is_a_pxe_rped_si",
+                        "description": "Depreciation Expense"
+                    },
+                    {
+                        "id": "accumulated_depreciation",
+                        "description": "Cumulative depreciation expense recognized to date."
+                    },
+                    {
+                        "id": "equipment_depreciation_expense",
+                        "description": "Depreciation expense for equipment during the period."
+                    },
+                    {
+                        "id": "fnd17_pxepedq",
+                        "description": "Depreciation expense - (SCF) most recent quarter"
+                    },
+                    {
+                        "id": "fnd17_pxepedmtt",
+                        "description": "Depreciation expense - (SCF) trailing 12 month"
+                    },
+                    {
+                        "id": "mdl219_1_nopatmargin",
+                        "description": "NOPAT margin calculated as net operating profit after tax divided by net sales."
+                    },
+                    {
+                        "id": "mdl219_1_nnastp",
+                        "description": "Net net current assets-to-price ratio calculated as current assets minus liabilities divided by price."
+                    },
+                    {
+                        "id": "fnd28_value_18297a",
+                        "description": "value of annual field: Trade Receivables - Net"
+                    },
+                    {
+                        "id": "fnd28_wast_value_02513a",
+                        "description": "value of annual field: Other Intangibles - Net"
+                    },
+                    {
+                        "id": "fnd28_wsbsht_value_02513a",
+                        "description": "value of annual field: Other Intangibles - Net"
+                    },
+                    {
+                        "id": "fnd28_value_18297q",
+                        "description": "value of quarterly field: Trade Receivables - Net"
+                    },
+                    {
+                        "id": "fnd28_wast_value_02507a",
+                        "description": "value of annual field: Brands, Patents - Net"
+                    },
+                    {
+                        "id": "fnd28_wsbsht_value_02507a",
+                        "description": "value of annual field: Brands, Patents - Net"
+                    },
+                    {
+                        "id": "fnd28_wcbshtasseta_value_02501a",
+                        "description": "value of annual field: Property, Plant & Equipment - Net"
+                    },
+                    {
+                        "id": "fnd7_ointfund_qpd",
+                        "description": "Quarterly Fundamental Item: Total Depreciation and Amortization"
+                    },
+                    {
+                        "id": "accumulated_depreciation_2",
+                        "description": "Total depreciation accumulated on tangible assets to date."
+                    },
+                    {
+                        "id": "fnd23_blsm_peda",
+                        "description": "[Quarterly] Accumulated Depreciation, Total"
+                    },
+                    {
+                        "id": "mdl262_dpq_compustatdeltapredict_funda_predict",
+                        "description": "Predict value of Depreciation and Amortization - Total"
+                    },
+                    {
+                        "id": "fnd13_rkdincomestatementq_pede",
+                        "description": "Depreciation"
+                    },
+                    {
+                        "id": "fnd23_intfvalld1_pedv",
+                        "description": "Depreciation"
+                    }
+                ]
+            }
+        }
+    },
+    "trade_when(group_zscore(ts_backfill(<net_ppe_field/>, 200) / ts_backfill(<total_assets_field/>, 200), industry) > 0.8, ts_delta(<momentum_field/>, 60), 0)": {
+        "template_explanation": "Conditional momentum: only buy recent winners (60-day return change) among the top-quintile most capital-intensive names within each industry, betting that operating leverage embedded in heavy assets amplifies positive price trends.",
+        "seed_alpha_settings": {
+            "instrumentType": "EQUITY",
+            "region": "USA",
+            "universe": "TOP3000",
+            "delay": 1,
+            "decay": 0,
+            "neutralization": "SLOW_AND_FAST",
+            "truncation": 0.01,
+            "pasteurization": "ON",
+            "unitHandling": "VERIFY",
+            "nanHandling": "ON",
+            "maxTrade": "OFF",
+            "language": "FASTEXPR",
+            "visualization": false,
+            "startDate": "2013-01-20",
+            "endDate": "2023-01-20"
+        },
+        "placeholder_candidates": {
+            "<net_ppe_field/>": {
+                "type": "data_field",
+                "candidates": [
+                    {
+                        "id": "mdl219_1_nopatmargin",
+                        "description": "NOPAT margin calculated as net operating profit after tax divided by net sales."
+                    },
+                    {
+                        "id": "mdl219_1_nnastp",
+                        "description": "Net net current assets-to-price ratio calculated as current assets minus liabilities divided by price."
+                    },
+                    {
+                        "id": "fnd28_value_18297a",
+                        "description": "value of annual field: Trade Receivables - Net"
+                    },
+                    {
+                        "id": "fnd28_wast_value_02513a",
+                        "description": "value of annual field: Other Intangibles - Net"
+                    },
+                    {
+                        "id": "fnd28_wsbsht_value_02513a",
+                        "description": "value of annual field: Other Intangibles - Net"
+                    },
+                    {
+                        "id": "fnd28_value_18297q",
+                        "description": "value of quarterly field: Trade Receivables - Net"
+                    },
+                    {
+                        "id": "fnd28_wast_value_02507a",
+                        "description": "value of annual field: Brands, Patents - Net"
+                    },
+                    {
+                        "id": "fnd28_wsbsht_value_02507a",
+                        "description": "value of annual field: Brands, Patents - Net"
+                    },
+                    {
+                        "id": "fnd28_wcbshtasseta_value_02501a",
+                        "description": "value of annual field: Property, Plant & Equipment - Net"
+                    },
+                    {
+                        "id": "fnd3_q_epp_fast_d1",
+                        "description": "Quarterly Property, Plant & Equipment"
+                    },
+                    {
+                        "id": "fnd3_q_epp",
+                        "description": "Quarterly Property, Plant & Equipment"
+                    },
+                    {
+                        "id": "fnd3_A_epp",
+                        "description": "Annual Property, Plant & Equipment"
+                    },
+                    {
+                        "id": "fnd3_a_epp_fast_d1",
+                        "description": "Annual Property, Plant & Equipment"
+                    },
+                    {
+                        "id": "fnd23_annfvadjfieldsacctadj_ctpa",
+                        "description": "gross property, plant & equipment."
+                    },
+                    {
+                        "id": "fnd23_intfvadjfieldsacctadj_dlo_ctpa",
+                        "description": "gross property, plant & equipment."
+                    },
+                    {
+                        "id": "fnd23_intfvalld1_ctpa",
+                        "description": "gross property, plant & equipment."
+                    },
+                    {
+                        "id": "fnd23_annfv1a_ctpa",
+                        "description": "gross property, plant & equipment."
+                    },
+                    {
+                        "id": "fnd23_intfvadjfieldsacctadj_ctpa",
+                        "description": "gross property, plant & equipment."
+                    },
+                    {
+                        "id": "fnd23_intfvm_ctpa",
+                        "description": "gross property, plant & equipment."
+                    },
+                    {
+                        "id": "fnd3_Q_nic",
+                        "description": "Quarterly Net Income"
+                    },
+                    {
+                        "id": "fnd3_q_nic_fast_d1",
+                        "description": "Quarterly Net Income"
+                    },
+                    {
+                        "id": "fnd3_q_nic",
+                        "description": "Quarterly Net Income"
+                    },
+                    {
+                        "id": "annual_net_income_total_fast_d1",
+                        "description": "Net income for the year."
+                    },
+                    {
+                        "id": "annual_net_income_total",
+                        "description": "Net income for the year."
+                    },
+                    {
+                        "id": "annual_net_income_from_continuing_ops_fast_d1",
+                        "description": "Net income from continuing operations for the year."
+                    },
+                    {
+                        "id": "annual_net_income_from_continuing_ops",
+                        "description": "Net income from continuing operations for the year."
+                    },
+                    {
+                        "id": "anl14_actvalue_ndebt_fy0",
+                        "description": "Net Debt - recent last year"
+                    },
+                    {
+                        "id": "anl14_numofests_ntp_fp1",
+                        "description": "Num of Estimations of Net Profit - upcoming quarter"
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_bs_q_bs_net_fix_asset",
+                        "description": "Net Fixed Assets"
+                    },
+                    {
+                        "id": "fnd72_bs_net_fix_asset",
+                        "description": "Net Fixed Assets"
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_bs_q_1_bs_net_fix_asset",
+                        "description": "Net Fixed Assets"
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_bs_q_1_bs_gross_fix_asset",
+                        "description": "Gross Fixed Assets"
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_bs_q_bs_gross_fix_asset",
+                        "description": "Gross Fixed Assets"
+                    },
+                    {
+                        "id": "fnd72_1_bs_net_fix_asset",
+                        "description": "Net Fixed Assets"
+                    },
+                    {
+                        "id": "fnd72_bs_gross_fix_asset",
+                        "description": "Gross Fixed Assets"
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_bs_a_bs_net_fix_asset",
+                        "description": "Net Fixed Assets"
+                    },
+                    {
+                        "id": "fnd72_1_bs_gross_fix_asset",
+                        "description": "Gross Fixed Assets"
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_bs_a_bs_gross_fix_asset",
+                        "description": "Gross Fixed Assets"
+                    },
+                    {
+                        "id": "fnd13_statementq_prgs",
+                        "description": "Gross Profit"
+                    },
+                    {
+                        "id": "fnd13_rkdincomestatementq_prgs",
+                        "description": "Gross Profit"
+                    },
+                    {
+                        "id": "fnd13_aing",
+                        "description": "Intangibles - Gross"
+                    },
+                    {
+                        "id": "rsk62_beta_5_100_margin",
+                        "description": "gross margin"
+                    },
+                    {
+                        "id": "rsk62_beta_1_100_margin",
+                        "description": "gross margin"
+                    },
+                    {
+                        "id": "rsk62_beta_factor_5_100_margin",
+                        "description": "gross margin"
+                    },
+                    {
+                        "id": "rsk62_risk_backfill_margin",
+                        "description": "gross margin"
+                    },
+                    {
+                        "id": "rsk62_beta_factor_1_100_margin",
+                        "description": "gross margin"
+                    },
+                    {
+                        "id": "rsk62_risk_margin",
+                        "description": "gross margin"
+                    },
+                    {
+                        "id": "fnd23_intfvmalld1_verr",
+                        "description": "gross revenue."
+                    }
+                ]
+            },
+            "<total_assets_field/>": {
+                "type": "data_field",
+                "candidates": [
+                    {
+                        "id": "fnd72_s_pit_or_bs_a_bs_tot_asset",
+                        "description": "Total Assets"
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_bs_q_1_bs_tot_asset",
+                        "description": "Total Assets"
+                    },
+                    {
+                        "id": "fnd72_s_pit_or_bs_q_bs_tot_asset",
+                        "description": "Total Assets"
+                    },
+                    {
+                        "id": "fnd13_rkdbalancesheetq_atot",
+                        "description": "Total Assets"
+                    },
+                    {
+                        "id": "fnd13_balancesheetq_atot",
+                        "description": "Total Assets"
+                    },
+                    {
+                        "id": "fnd3_A_assets",
+                        "description": "Annual Total assets"
+                    },
+                    {
+                        "id": "fnd3_a_assets",
+                        "description": "Annual Total assets"
+                    },
+                    {
+                        "id": "fnd3_a_assets_fast_d1",
+                        "description": "Annual Total assets"
+                    },
+                    {
+                        "id": "fnd28_value_05194q",
+                        "description": "value of quarterly field: Common Shares Used to Calculate Fully Diluted EPS Balance Sheet Assets"
+                    },
+                    {
+                        "id": "fnd28_ndda2_value_05194a",
+                        "description": "value of annual field: Common Shares Used to Calculate Fully Diluted EPS Balance Sheet Assets"
+                    },
+                    {
+                        "id": "fnd28_nddq1_value_05194q",
+                        "description": "value of quarterly field: Common Shares Used to Calculate Fully Diluted EPS Balance Sheet Assets"
+                    },
+                    {
+                        "id": "fnd28_annsttc_value_05194a",
+                        "description": "value of annual field: Common Shares Used to Calculate Fully Diluted EPS Balance Sheet Assets"
+                    },
+                    {
+                        "id": "fnd28_dvfq2_value_05194q",
+                        "description": "value of quarterly field: Common Shares Used to Calculate Fully Diluted EPS Balance Sheet Assets"
+                    },
+                    {
+                        "id": "assets",
+                        "description": "Assets - Total"
+                    },
+                    {
+                        "id": "oth395_major_32_21",
+                        "description": "Asset-related field (balance sheet) / Current Assets"
+                    },
+                    {
+                        "id": "oth395_major_22_11",
+                        "description": "Asset-related field (balance sheet) / Total Assets"
+                    },
+                    {
+                        "id": "oth395_major_21_21",
+                        "description": "Asset-related field (balance sheet) / Current Assets"
+                    },
+                    {
+                        "id": "oth395_major_31_11",
+                        "description": "Asset-related field (balance sheet) / Total Assets"
+                    },
+                    {
+                        "id": "pv104_lsts_mean",
+                        "description": "Last Size"
+                    },
+                    {
+                        "id": "pv104_lsbs_mean",
+                        "description": "Last Bid Size"
+                    },
+                    {
+                        "id": "pv104_lsas_mean",
+                        "description": "Last Ask Size"
+                    },
+                    {
+                        "id": "pv104_hasz_mean",
+                        "description": "Interval High Ask Size"
+                    },
+                    {
+                        "id": "pv104_hbsz_mean",
+                        "description": "Interval High Bid Size"
+                    },
+                    {
+                        "id": "pv104_lbsz_mean",
+                        "description": "Interval Low Bid Size"
+                    },
+                    {
+                        "id": "pv104_hlts_mean",
+                        "description": "Interval High Last Size"
+                    },
+                    {
+                        "id": "pv104_lasz_mean",
+                        "description": "Interval Low Ask Size"
+                    },
+                    {
+                        "id": "pv104_tasz_mean",
+                        "description": "Interval Time-Weighted Ask Size"
+                    },
+                    {
+                        "id": "rsk62_beta_1_100_pb",
+                        "description": "book value"
+                    },
+                    {
+                        "id": "rsk62_beta_factor_1_100_pb",
+                        "description": "book value"
+                    },
+                    {
+                        "id": "rsk62_risk_backfill_pb",
+                        "description": "book value"
+                    },
+                    {
+                        "id": "rsk62_beta_factor_5_100_pb",
+                        "description": "book value"
+                    },
+                    {
+                        "id": "rsk62_risk_pb",
+                        "description": "book value"
+                    },
+                    {
+                        "id": "rsk62_beta_5_100_pb",
+                        "description": "book value"
+                    },
+                    {
+                        "id": "mdl313_iai",
+                        "description": "Intangible Asset Intensity Score"
+                    },
+                    {
+                        "id": "mdl313_us_iai",
+                        "description": "Intangible Asset Intensity Score"
+                    },
+                    {
+                        "id": "fnd89_asset_62_21",
+                        "description": "Financial Asset Accruals /  Current Assets"
+                    },
+                    {
+                        "id": "fnd6_cptnewqv1300_atq",
+                        "description": "Assets - Total"
+                    },
+                    {
+                        "id": "fnd6_cptmfmq_atq",
+                        "description": "Assets - Total"
+                    },
+                    {
+                        "id": "fnd6_newqint_atq",
+                        "description": "Assets - Total"
+                    },
+                    {
+                        "id": "fnd6_mfma1_at",
+                        "description": "Assets - Total"
+                    },
+                    {
+                        "id": "fnd6_cptmfmq_actq",
+                        "description": "Current Assets - Total"
+                    },
+                    {
+                        "id": "fnd6_cptnewqv1300_actq",
+                        "description": "Current Assets - Total"
+                    },
+                    {
+                        "id": "assets_curr",
+                        "description": "Current Assets - Total"
+                    },
+                    {
+                        "id": "fnd6_newa1v1300_act",
+                        "description": "Current Assets - Total"
+                    },
+                    {
+                        "id": "fnd6_newqint_actq",
+                        "description": "Current Assets - Total"
+                    }
+                ]
+            },
+            "<momentum_field/>": {
+                "type": "data_field",
+                "candidates": [
+                    {
+                        "id": "star_pm2_industry",
+                        "description": "Price Momentum Industry_Component"
+                    },
+                    {
+                        "id": "star_pm_industry",
+                        "description": "Price Momentum Industry_Component"
+                    },
+                    {
+                        "id": "star_pm2_global_rank",
+                        "description": "Price Momentum Global Rank"
+                    },
+                    {
+                        "id": "star_pm2_region_rank",
+                        "description": "Price Momentum Region Rank"
+                    },
+                    {
+                        "id": "star_pm_region_rank",
+                        "description": "Price Momentum Region Rank"
+                    },
+                    {
+                        "id": "star_pm_global_rank",
+                        "description": "Price Momentum Global Rank"
+                    },
+                    {
+                        "id": "star_pm_longterm",
+                        "description": "Price Momentum Long Term Component"
+                    },
+                    {
+                        "id": "returns",
+                        "description": "Daily returns"
+                    },
+                    {
+                        "id": "pv47_spret",
+                        "description": "specific return"
+                    },
+                    {
+                        "id": "pv47_for_statssimple_only_spret",
+                        "description": "specific return"
+                    },
+                    {
+                        "id": "mdl177_pricemomentumfactor_actrtn60m",
+                        "description": "60-Month Active Return with 1-Month Lag"
+                    },
+                    {
+                        "id": "mdl177_2_pricemomentumfactor_actrtn60m",
+                        "description": "60-Month Active Return with 1-Month Lag"
+                    },
+                    {
+                        "id": "pv87_rtn1260d_mean",
+                        "description": "Total return, past 60M"
+                    },
+                    {
+                        "id": "mdl177_pricemomentumfactor_actrtn2m",
+                        "description": "2-Month Active Return"
+                    },
+                    {
+                        "id": "mdl77_2priceanalystmodel_qpa_indrs",
+                        "description": "Industry Relative Strength: Industry Relative Strength"
+                    },
+                    {
+                        "id": "mdl77_2priceanalystmodel_srjdaksr_apq",
+                        "description": "Risk Adj Relative Strength : Risk Adj Relative Strength"
+                    },
+                    {
+                        "id": "mdl77_priceanalystmodel_qpa_indrs",
+                        "description": "Industry Relative Strength"
+                    },
+                    {
+                        "id": "mdl177_2_priceanalystmodel_qpa_indrs",
+                        "description": "Industry Relative Strength"
+                    },
+                    {
+                        "id": "mdl177_priceanalystmodel_qpa_indrs_alt",
+                        "description": "Industry Relative Strength"
+                    },
+                    {
+                        "id": "pv87_last_high_rsi",
+                        "description": "Relative Strength Index using"
+                    },
+                    {
+                        "id": "mdl77_priceanalystmodel_srjdaksr_apq",
+                        "description": "Risk-Adjusted Relative Strength"
+                    },
+                    {
+                        "id": "pv87_interval_vwap_rsi",
+                        "description": "Relative Strength Index using"
+                    },
+                    {
+                        "id": "mdl177_priceanalystmodel_qpa_rskadjrs_alt",
+                        "description": "Risk Adj Relative Strength"
+                    },
+                    {
+                        "id": "pv87_last_price_rsi",
+                        "description": "Relative Strength Index using"
+                    },
+                    {
+                        "id": "pv87_rtn21d_mean",
+                        "description": "Total return, past 1M"
+                    },
+                    {
+                        "id": "pv87_rtn2520d_mean",
+                        "description": "Total return, past 120M"
+                    },
+                    {
+                        "id": "pv87_rtn63d_mean",
+                        "description": "3-month total return"
+                    },
+                    {
+                        "id": "mdl230_totalcap_cusip_dtsm1_rd",
+                        "description": "It is defined as the standard deviation of stock's daily total return over the trailing one month."
+                    },
+                    {
+                        "id": "mdl230_us5000_cusip_dtsm1_rd",
+                        "description": "It is defined as the standard deviation of stock's daily total return over the trailing one month."
+                    },
+                    {
+                        "id": "fnd17_alldelay1_chpctpricewtd",
+                        "description": "Week to Date price change in percentage"
+                    },
+                    {
+                        "id": "fnd17_chpctpricewtd",
+                        "description": "Week to Date price change in percentage"
+                    },
+                    {
+                        "id": "fnd17_alldelay1_chpctpriceqtd",
+                        "description": "Quarter to Date price change in percentage"
+                    },
+                    {
+                        "id": "mdl26_price_change_30",
+                        "description": "price change in days: 30"
+                    },
+                    {
+                        "id": "mdl50_bk_price_change_6m",
+                        "description": "Last 6 month stock price change"
+                    },
+                    {
+                        "id": "fnd17_chpctpriceqtd",
+                        "description": "Quarter to Date price change in percentage"
+                    },
+                    {
+                        "id": "fnd17_alldelay1_chpctpricemtd",
+                        "description": "Month to Date price change in percentage"
+                    },
+                    {
+                        "id": "fnd17_chpctpricemtd",
+                        "description": "Month to Date price change in percentage"
+                    }
+                ]
+            }
+        }
+    }
+}
