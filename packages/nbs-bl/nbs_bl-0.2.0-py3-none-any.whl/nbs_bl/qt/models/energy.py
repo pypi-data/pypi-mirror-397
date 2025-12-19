@@ -1,0 +1,53 @@
+from ..widgets.energy import EnergyControl, EnergyMonitor
+from nbs_gui.models import PseudoPositionerModel, PVPositionerModel, PVModel
+
+
+# Copied from ucal as an example
+class EnergyModel:
+    default_controller = EnergyControl
+    default_monitor = EnergyMonitor
+
+    def __init__(
+        self,
+        name,
+        obj,
+        group,
+        long_name,
+        **kwargs,
+    ):
+        print("Initializing Energy")
+        self.name = name
+        self.obj = obj
+        self.energy = PseudoPositionerModel(name, obj, group, name)
+        self.grating_motor = PVPositionerModel(
+            name=obj.monoen.gratingx.name,
+            obj=obj.monoen.gratingx,
+            group=group,
+            long_name=f"{name} Grating",
+        )
+        self.cff = PVModel(
+            obj.monoen.cff.name, obj.monoen.cff, group=group, long_name=f"{name} CFF"
+        )
+        self.real_motors = self.energy.real_motors
+        self.group = group
+        self.label = long_name
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        print("Done Initializing Energy")
+
+    def iter_models(self):
+        """
+        Yield contained energy-related models for traversal.
+
+        Yields
+        ------
+        BaseModel
+            Contained models.
+        """
+        yield from (
+            self.energy,
+            self.grating_motor,
+            self.cff,
+        )
+        for motor in self.real_motors:
+            yield motor
