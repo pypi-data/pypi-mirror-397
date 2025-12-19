@@ -1,0 +1,4 @@
+MAX_RES = 95
+MAX_SIZE = 2500
+MAX_QUAL = 95
+IMG_PATH = "output"
