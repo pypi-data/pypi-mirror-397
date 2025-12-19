@@ -1,0 +1,611 @@
+# JAX Image Tools Python API
+
+[![Tests](https://github.com/TheJacksonLaboratory/pyjit/actions/workflows/tests.yml/badge.svg)](https://github.com/TheJacksonLaboratory/pyjit/actions/workflows/tests.yml)
+[![Style](https://github.com/TheJacksonLaboratory/pyjit/actions/workflows/style.yml/badge.svg)](https://github.com/TheJacksonLaboratory/pyjit/actions/workflows/style.yml)
+[![Coverage](https://github.com/TheJacksonLaboratory/pyjit/actions/workflows/coverage.yml/badge.svg)](https://github.com/TheJacksonLaboratory/pyjit/actions/workflows/coverage.yml)
+
+![PyPI - License](https://img.shields.io/pypi/l/jax-pyjit?style=for-the-badge)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/jax-pyjit?style=for-the-badge)
+[![PyPI - Version](https://img.shields.io/pypi/v/jax-pyjit?style=for-the-badge&logo=pypi&logoColor=%23fff)](https://pypi.org/project/jax-pyjit/)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/jax-pyjit?style=for-the-badge)](https://pypi.org/project/jax-pyjit/)
+
+[PyPI Project](https://pypi.org/project/jax-pyjit)
+
+## Introduction
+The pyjit package contains code common to JAX Image Tools (JIT), mostly DL and AI tools.
+It contains a python client which can be authenticated with a JIT server and allows
+users to submit image analysis and chain together different analysis steps. Any user with
+Jackson Laborator credentials, usually given to students and collaborators may auth with the
+server and use these tools. The development server is located at: https://imagetools-dev.jax.org/
+for the user interface and https://imagetools-dev.jax.org/api/webjars/swagger-ui/index.html for
+the backend analysis server.
+
+## Quick Start
+### Install
+
+`poetry add jax-pyjit`
+
+### Usage for Common Tools
+Data Access Object Example
+```
+from orgjax.pyjit.dao import StorageKey
+```
+This provides an easy way to create JSON objects used with the JIT server. Therefore
+when creating new image analysis tools it is a useful addition.
+
+### Usage of JIT Client
+jax-pyjit contains a requests-based client which allows an authenticated user
+to submit runs and chain together image analysis tools. 
+Jackson Laboratory give credentials to students, external users and collaborators.
+If you already have credentials, you will be able to use these examples if not then
+please get in touch and your application to use our JIT Server will be reviewed.
+Alternatively you may install your own JIT Server (this requires expert kubernetes
+knowledge as it is a fully distributed design using temporal.io).
+
+#### Examples:
+
+``` python
+Except of examples (see examples/*.py)
+
+from orgjax.pyjit.dao import (
+    StorageKey, 
+    Tools, 
+    Input, 
+    Protocol, 
+    UntypedStatus
+)
+
+from orgjax.pyjit.client import (
+    run_workflow,
+    submit_workflow,
+    monitor_workflow,
+    is_storage_result,
+    random_string,
+    delete,
+    download,
+    get_report,
+)
+
+from orgjax.pyjit.templates import create_template_request
+from orgjax.pyjit.model.crop import SegmentationRequest, Polygon
+from orgjax.pyjit.model.convert import ConvertRequest, Compression
+from orgjax.pyjit.model import (
+    DeconvolutionRequest, 
+    EdofRequest,
+    AlignmentRequest,
+    YoloSegdetectRequest
+)
+from orgjax.pyjit.auth import check_auth
+from typing import List
+from pathlib import Path
+
+SERVER_URI = "Your JAX Image Tools Server..." # e.g. "https://imagetools-dev.jax.org/api" 
+
+def download_example():
+    """
+    Download an example image from JIT to local disk, you can do this with any result too.
+    """
+    image: StorageKey = StorageKey(
+        "jax-cimg-sample-data", "Fibers and Nuclei/87_1.ndpi", protocol=Protocol.GS
+    )
+    local_path: Path = Path("./")  # Specify the dir where we want it.
+    download(image, dir=local_path)
+    print(f"Downloaded image to {local_path.resolve()}")
+    return
+
+
+def example_slide_crop():
+    """
+    Just run a slide crop to completion
+    """
+
+    # We are going to slide crop an image called
+    # GRS17_58416_74_AA_Massons.ndpi
+    # It is in the GCS of gs://jax-cimg-sample-data/Slide Cropping/GRS17_58416_74_AA_Massons.ndpi
+
+    # 1. Create a slide crop request, other requests exist...
+    request: SegmentationRequest = create_template_request(Tools.CROP)
+
+    # 2. Create the input object which specifies the selection
+    # and the request. NOTE sometimes everything is defined in the request
+    # and the selection in the file tree is not used. It depends on the tool.
+    image: StorageKey = StorageKey(
+        "jax-cimg-sample-data",
+        "Slide Cropping/GRS17_58416_74_AA_Massons.ndpi",
+        protocol=Protocol.GS,
+    )
+    input: Input = Input(image, request)
+
+    # 3. Run it
+    result = run_workflow(input, Tools.CROP, server_uri=SERVER_URI)
+    print(result)
+    # it is possible to download the results here if desired
+
+    return
+
+
+def example_slide_crop_whole_folder():
+    """
+    Just run a slide crop to completion
+    """
+
+    # We are going to slide crop a directory of images
+    # 1. Create a slide crop request, other requests exist...
+    request: SegmentationRequest = create_template_request(Tools.CROP)
+    request.regionSettings.zip = False  # We want unzipped tiffs back
+
+    # 2. Create the input object which specifies the selection
+    # and the request. NOTE sometimes everything is defined in the request
+    # and the selection in the file tree is not used. It depends on the tool.
+    dir: StorageKey = StorageKey(
+        "jax-cimg-sample-data", "Slide Cropping/test_folder/", protocol=Protocol.GS
+    )
+
+    # 3. Say where we want the results to go
+    # unlike the UI - it can be another bucket!
+    output: StorageKey = dir.clone().set_file_name("crop_whole_folder")
+    request.outputDir = output
+
+    # Create the input
+    input: Input = Input(dir, request)
+
+    # 4. Run it
+    result = run_workflow(input, Tools.CROP, server_uri=SERVER_URI)
+    print(result)
+
+    # 5. Delete results folder as a test (WARNING don't do this if you want the results!).
+    delete(output)
+
+
+def example_alignment():
+    """
+    Just run an alignment to completion and print the results.
+    You could then optionally deconcolvolute the aligned image for
+    example as a test but that is not done here because it is not
+    especially interesting.
+    """
+
+    # 1. Create a request.
+    request: AlignmentRequest = create_template_request(Tools.ALIGNMENT)
+
+    # 2. Define all the selections in the request itself
+    nz: StorageKey = StorageKey(
+        "jax-cimg-sample-data", "Alignment/NZ-Small.tif", protocol=Protocol.GS
+    )
+    bf: StorageKey = StorageKey(
+        "jax-cimg-sample-data", "Alignment/BF-Small.tif", protocol=Protocol.GS
+    )
+    shg: StorageKey = StorageKey(
+        "jax-cimg-sample-data", "Alignment/SHG-Small.tif", protocol=Protocol.GS
+    )
+    request.align = nz
+    request.reference = bf
+    request.shg = shg
+
+    # Define the output. NOTE that alignment does not allow overwriting files.
+    dir: str = "output_{}".format(random_string(4))
+    sift_out: StorageKey = nz.clone().set_file_name(f"{dir}/sift_out.tif")
+    over_res: StorageKey = nz.clone().set_file_name(f"{dir}/over_res.tif")
+    request.siftOutput = sift_out
+    request.overlayedResult = over_res
+
+    # 3. Create the input object which specifies the selection
+    # and the request. NOTE sometimes everything is defined in the request
+    # and the selection in the file tree is not used. It depends on the tool.
+    input: Input = Input(nz, request)
+
+    # 3. Run it
+    result = run_workflow(input, Tools.ALIGNMENT, server_uri=SERVER_URI)
+    print(result)
+    return
+
+
+def example_slide_crop_then_deconvolution():
+    """
+    Run a slide crop to completion followed by a deconvolution
+    """
+
+    # We are going to slide crop an image then deconvolute it
+
+    # A) Slide Crop first
+    # 1. Create a slide crop request, other requests exist...
+    request: SegmentationRequest = create_template_request(Tools.CROP)
+    request.regionSettings.zip = False  # We want unzipped tiffs back
+
+    # 2. Create the input object
+    image: StorageKey = StorageKey(
+        "jax-cimg-sample-data",
+        "Slide Cropping/124374_1_TA_SiriusRed.ndpi",
+        protocol=Protocol.GS,
+    )
+    input: Input = Input(image, request)
+
+    # 3. Run it
+    result: UntypedStatus = run_workflow(input, Tools.CROP)
+    results: List = result["results"]
+
+    # B) Now Deconvolute one of the cropped images
+    # This contains two uris of the found images e.g.
+    # [0] gs://jax-cimg-sample-data/Slide Cropping/124374_1_TA_SiriusRed_3/r2_8368x9328_s1.tiff
+    # [1] gs://jax-cimg-sample-data/Slide Cropping/124374_1_TA_SiriusRed_3/r1_8384x9552_s1.tiff
+    image: StorageKey = StorageKey.from_uri(results[0])
+
+    # We are not generating concrete types for requests yet
+    # So you have to use dict style setters.
+    request: DeconvolutionRequest = create_template_request(Tools.DECONVOLUTION)
+    request.inputPath = image
+
+    # The results require storage keys put in the request
+    # Since create_template_request does not have concrete types
+    # we have to use to_dict to convert them.
+    stain1: StorageKey = image.clone().set_file_name("decon_results/stain1.tiff")
+    request.stain1ImageOutput = stain1
+
+    stain2: StorageKey = image.clone().set_file_name("decon_results/stain2.tiff")
+    request.stain2ImageOutput = stain2
+
+    norm: StorageKey = image.clone().set_file_name("decon_results/norm.tiff")
+    request.normalizedImageOutput = norm
+
+    input: Input = Input(image, request)
+    result = run_workflow(input, Tools.DECONVOLUTION, server_uri=SERVER_URI)
+    results: List = result['results']
+    
+    print("Deconvolution results:")
+    print(results)
+    return
+
+
+def example_do_work_before_completion():
+    """
+    Run a slide crop but start to work on the results as they come
+    in not when analysis is complete. For large files with many crops
+    like the eyeball slices this can save a lot of time and spread
+    the computation out.
+    """
+
+    # A) Slide Crop first
+    # 1. Create a slide crop request, other requests exist...
+    request: SegmentationRequest = create_template_request(Tools.CROP)
+    request.regionSettings.zip = False  # We want unzipped tiffs
+
+    # 2. Create the input object
+    image: StorageKey = StorageKey(
+        "jax-cimg-sample-data",
+        "Slide Cropping/124374_1_TA_SiriusRed.ndpi",
+        protocol=Protocol.GS,
+    )
+    input: Input = Input(image, request)
+
+    # 3. Submit it
+    monitor_uri: str = submit_workflow(input, Tools.CROP, server_uri=SERVER_URI)
+    
+    # 4. Monitor it but do work as results come in
+    processed_results: List = []
+
+    def subscriber(status: UntypedStatus):
+        results: List = status["results"]
+        if results is None:
+            return
+        new_results = [
+            item
+            for item in results
+            if item not in processed_results and is_storage_result(item)
+        ]
+        for result in new_results:
+            print(f"\nNew result available: {result}")
+            print("...do some work on it here...")
+
+        processed_results.extend(new_results)
+
+    final_status: UntypedStatus = monitor_workflow(
+        monitor_uri, query_interval=1, subscriber=subscriber
+    )
+    results: List = final_status["results"]
+    print(results)
+
+
+def example_slide_crop_then_edof():
+    """
+    Run a slide crop to completion followed by extended depth of field (EDoF)
+    """
+
+    # A) Slide Crop first
+
+    # Image on which we will do a crop.
+    image: StorageKey = StorageKey(
+        "jax-cimg-sample-data",
+        "Slide Cropping/3D_ndpi/LDS5667D1_80_MTC_5L_1micron_1ROI.ndpi",
+        protocol=Protocol.GS,
+    )
+
+    # Create a slide crop request, other requests exist...
+    request: SegmentationRequest = create_template_request(Tools.CROP)
+    request.regionSettings.zip = False  # We want unzipped tiffs for EDoF
+
+    # In this example we do not use automatic cropping, we set the region ourselves.
+    request.regionSettings.findRegions = False  # Don't automatically find regions
+
+    # Add one manual region, here we use a box.
+    # It is also possible to use geojson (@see geojson example).
+    request.regionSettings.manualRegions = [
+        Polygon(
+            npoints= 4,
+            xpoints= [11543, 12793, 12793, 11543],
+            ypoints= [4559, 4559, 3666, 3666],
+        )
+    ]
+
+    # 2. Create the input object
+    input: Input = Input(image, request)
+
+    # 3. Run it
+    result: UntypedStatus = run_workflow(input, Tools.CROP, server_uri=SERVER_URI)
+    results: List = result['results']
+
+    # B) Now EDoF one of the cropped images
+    request: EdofRequest = create_template_request(Tools.EDOF)
+
+    # Make the slide cropper results into StorageKeys for the EDoF input
+    input: List[StorageKey] = [StorageKey.from_uri(path) for path in results]
+    request.inputFiles = input
+    
+    # Set the output locations to places near the result image.
+    first: StorageKey = input[0]
+    output_img: StorageKey = first.clone().set_file_name(
+        "edof_results/output_image.tiff"
+    )
+    request.outputPath = output_img
+
+    output_zmap: StorageKey = first.clone().set_file_name(
+        "edof_results/output_zmap.tiff"
+    )
+    request.outputZmap = output_zmap
+
+    # EDoF is one of the tools which does not use the input selection
+    # Here we just set it to the first image as if the user had selected it.
+    input: Input = Input(first, request)
+    result: UntypedStatus = run_workflow(input, Tools.EDOF, server_uri=SERVER_URI)
+    results: List = result['results']
+    print("EDoF results:")
+    print(results)
+
+
+def example_slide_crop_using_geojson():
+    """
+    Run a slide crop from geojson as if an upstream process has written geojson
+    to define regions of interest.
+    """
+    # A different way of making the key.
+    image: StorageKey = StorageKey.from_uri(
+        "gs://jax-cimg-sample-data/Slide Cropping/geojson_crop/GRS17_58416_74_AA_Massons.ndpi"
+    )
+    # In the directory Slide Cropping/geojson_crop/ there is a geojson file of the same name as the image.
+    # When request['regionSettings']['findRegions'] = False, this will be used in preference.
+
+    # Create a slide crop request, other requests exist...
+    request: SegmentationRequest = create_template_request(Tools.CROP)
+    request.regionSettings.zip = False  # We want unzipped tiffs for EDoF
+    request.regionSettings.findRegions = False  # Don't automatically find regions, we use geojson
+
+    input: Input = Input(image, request)
+    result: UntypedStatus = run_workflow(input, Tools.CROP, server_uri=SERVER_URI)
+    results: List = result['results']
+    
+    print("Slide crop from geojson results:")
+    print(results)
+
+
+def example_convert_large_vsi_to_tiff():
+    """
+    Run a conversion of a vsi file to tiff.
+    This will take a while to run if it is working correctly
+    because the vsi has a large sub-database.
+    """
+
+    request = create_template_request(
+        Tools.CONVERT
+    )  # NOTE there are a lot of options it supports all of convert on BioFormats.
+    request["outFile"] = "41004_JJT-D02105-BM.tiff"
+    request["uploadDir"] = (
+        StorageKey(
+            "jax-cimg-sample-data",
+            "vsi_conversion/example_convert/",
+            protocol=Protocol.GS,
+        )
+    ).to_dict()
+
+    image: StorageKey = StorageKey(
+        "jax-cimg-sample-data",
+        "vsi_conversion/41004_JJT-D02105-BM.vsi",
+        protocol=Protocol.GS,
+    )
+    input: Input = Input(image, request)
+    
+    result: UntypedStatus = run_workflow(input, Tools.CONVERT, server_uri=SERVER_URI)
+    report: List = result['results']
+
+    print("Conversion report file:")
+    print(report)
+
+
+def example_convert_ndpi_to_tiff_using_regions():
+    """
+    Run a conversion and also use regions to extract (manual slide crop).
+    NOTE: convert does not crop or tile in parallel unlike slide cropper so may be slower.
+    """
+
+    request = create_template_request(
+        Tools.CONVERT
+    )  # NOTE there are a lot of options it supports all of convert on BioFormats.
+    request["outFile"] = "GRS17_58416_74_AA_Massons.tiff"
+    request["uploadDir"] = (
+        StorageKey(
+            "jax-cimg-sample-data",
+            "vsi_conversion/example_convert/",
+            protocol=Protocol.GS,
+        )
+    ).to_dict()
+
+    # These are small and will not be interesting to look at.
+    request["manualRegions"] = [
+        {"npoints": 4, "xpoints": [0, 0, 100, 100], "ypoints": [0, 100, 100, 0]},
+        {"npoints": 4, "xpoints": [100, 100, 200, 200], "ypoints": [0, 100, 100, 0]},
+        {"npoints": 4, "xpoints": [200, 200, 300, 300], "ypoints": [0, 100, 100, 0]},
+    ]
+    image: StorageKey = StorageKey(
+        "jax-cimg-sample-data",
+        "Slide Cropping/GRS17_58416_74_AA_Massons.ndpi",
+        protocol=Protocol.GS,
+    )
+    input: Input = Input(image, request)
+    
+    result: UntypedStatus = run_workflow(input, Tools.CONVERT, server_uri=SERVER_URI)
+    report: List = result['results']
+
+    print("Conversion report file:")
+    print(report)
+
+    # With convert often we tile large images into many tiles. If this happens
+    # the resulting data for all the paths of the files would be too large to
+    # send back. Instead convert writes all these paths to a text file and returns
+    # the location of that. In this case we have three, so not large but the tile
+    # example below would be.
+    lines = get_report(report[0])
+    print("Conversion results:")
+    print(lines)
+
+
+def example_convert_to_tiles():
+    """
+    Run a conversion of an image to tiles.
+    NOTE: convert does not crop or tile in parallel unlike slide cropper so may be slower.
+    This example will run for a long time! Pick a smaller image or a bigger tile size to test.
+    """
+
+    request: ConvertRequest = create_template_request(Tools.CONVERT)  # NOTE there are a lot of options it supports all of convert on BioFormats.
+    request.outFile = "GRS17_58416_74_AA_Massons.tiff"
+    request.uploadDir = StorageKey(
+            "jax-cimg-sample-data",
+            "vsi_conversion/example_convert/tiles/",
+            protocol=Protocol.GS,
+        )
+
+    request.outFile = "Massons_tile_%x_%y.tiff"
+    request.tilex = 512
+    request.tiley = 512
+    request.series = 1
+    request.compression = Compression.LZW
+
+    image: StorageKey = StorageKey(
+        "jax-cimg-sample-data",
+        "Slide Cropping/GRS17_58416_74_AA_Massons.ndpi",
+        protocol=Protocol.GS,
+    )
+    input: Input = Input(image, request)
+
+    result: UntypedStatus = run_workflow(input, Tools.CONVERT, server_uri=SERVER_URI)
+    report: List = result['results']
+
+    lines = get_report(report[0])
+    print("Tiles:")
+    print(lines)
+
+
+def example_convert_then_decon():
+
+    request = create_template_request(
+        Tools.CONVERT
+    )  # NOTE there are a lot of options it supports all of convert on BioFormats.
+    request["outFile"] = "GRS17_58416_74_AA_Massons.tiff"
+    request["uploadDir"] = (
+        StorageKey(
+            "jax-cimg-sample-data",
+            "vsi_conversion/example_convert/decon/",
+            protocol=Protocol.GS,
+        )
+    ).to_dict()
+    request["series"] = 2
+
+    image: StorageKey = StorageKey(
+        "jax-cimg-sample-data",
+        "Slide Cropping/GRS17_58416_74_AA_Massons.ndpi",
+        protocol=Protocol.GS,
+    )
+    input: Input = Input(image, request)
+    
+    result: UntypedStatus = run_workflow(input, Tools.CONVERT, server_uri=SERVER_URI)
+    report: List = result['results']
+
+    lines = get_report(report[0])
+    print("Conversion results:")
+    print(lines)
+
+    image: StorageKey = StorageKey.from_uri(lines[0].strip())
+    input: Input = Input(image, request)
+
+    request = create_template_request(Tools.DECONVOLUTION)
+    request["inputPath"] = image.to_dict()
+
+    # The results require storage keys put in the request
+    # Since create_template_request does not have concrete types
+    # we have to use to_dict to convert them.
+    stain1: StorageKey = image.clone().set_file_name("decon_results/stain1.tiff")
+    request["stain1ImageOutput"] = stain1.to_dict()
+
+    stain2: StorageKey = image.clone().set_file_name("decon_results/stain2.tiff")
+    request["stain2ImageOutput"] = stain2.to_dict()
+
+    norm: StorageKey = image.clone().set_file_name("decon_results/norm.tiff")
+    request["normalizedImageOutput"] = norm.to_dict()
+
+    input: Input = Input(image, request)
+    result = run_workflow(input, Tools.DECONVOLUTION, server_uri=SERVER_URI)
+    results: List = result['results']
+
+    print("Deconvolution results:")
+    print(results)
+
+
+
+def example_yolo():
+
+    # 1. Create a request.
+    request: YoloSegdetectRequest = create_template_request(Tools.YOLO_SEGDETECT)
+
+    # 2. Select the image
+    image: StorageKey = StorageKey(
+        "jax-cimg-sample-data",
+        "Demonstrations/Yolo/XXX-lab_maclem_20230922_40X_1859_1R_LE_HE_r1.tiff",
+        protocol=Protocol.GS,
+    )
+    
+    request.inputPaths = [image]
+    request.weightsPath = "/yolo-segdetect-worker-temporal/models/yolov8_retina_seg_detect.pt"
+    request.outputPath = StorageKey(
+        "jax-cimg-sample-data",
+        "Demonstrations/Yolo/test_pyjit",
+        protocol=Protocol.GS,
+    )
+    request.overlapX = 60
+    request.overlapY = 60
+    request.confidence = 0.6
+    request.iouThreshold = 0.8
+    request.nmsThreshold= 0.8
+    request.level = 0
+
+    # 3. Create the input object which specifies the selection
+    # and the request. NOTE sometimes everything is defined in the request
+    # and the selection in the file tree is not used. It depends on the tool.
+    input: Input = Input(image, request)
+
+    # 3. Run it
+    result = run_workflow(input, Tools.YOLO_SEGDETECT, server_uri=SERVER_URI)
+    print(result)
+    return
+
+
+```
+
+
+
