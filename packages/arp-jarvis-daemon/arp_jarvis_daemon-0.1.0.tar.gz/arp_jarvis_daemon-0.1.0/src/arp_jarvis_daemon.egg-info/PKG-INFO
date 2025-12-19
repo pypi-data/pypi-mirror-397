@@ -1,0 +1,248 @@
+Metadata-Version: 2.4
+Name: arp-jarvis-daemon
+Version: 0.1.0
+Summary: Jarvis Daemon core library for managing ARP runtime instances.
+Author: Agent Runtime Protocol
+License: MIT License
+        
+        Copyright (c) 2025 Agent Runtime Protocol 
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: arp-standard-py<0.2.0,>=0.1.0
+Requires-Dist: fastapi>=0.115
+Requires-Dist: uvicorn>=0.30
+Provides-Extra: dev
+Requires-Dist: pytest>=7; extra == "dev"
+Requires-Dist: pytest-cov>=4; extra == "dev"
+Requires-Dist: pyright>=1.1.0; extra == "dev"
+Dynamic: license-file
+
+# arp-jarvis-daemon
+
+Daemon core + HTTP server for managing local ARP runtime instances (spawn/stop/list) and routing run requests to them.
+
+Implements the ARP Daemon API `v1` and can run fully standalone.
+
+This single CLI has two modes:
+
+- **Server mode (default):** `arp-jarvis-daemon` (or `arp-jarvis-daemon serve`) starts the HTTP server.
+- **Client mode:** `arp-jarvis-daemon <subcommand>` talks to a running daemon server over HTTP.
+
+## Install
+
+From PyPI:
+
+```bash
+pipx install arp-jarvis-daemon
+
+python3 -m pip install arp-jarvis-daemon
+```
+
+From local repo source (with dev dependencies):
+
+```bash
+python3 -m pip install -e ".[dev]"
+```
+
+> The local editable installation is for when you are making changes to this daemon repo, and has dependencies like `pyright` installed.
+
+## Run the daemon server 
+
+```bash
+arp-jarvis-daemon --host 127.0.0.1 --port 8082
+```
+
+Or alternatively:
+
+```bash
+arp-jarvis-daemon serve --host 127.0.0.1 --port 8082
+```
+
+OpenAPI docs (FastAPI) are available at `http://127.0.0.1:8082/docs`.
+
+### Data directory layout
+
+By default, the daemon stores state/artifacts under `~/.arp/daemon` (override with `--data-dir`):
+
+- Runtime profiles (safe list): `<data-dir>/runtime_profiles.json`
+- Instance registry (persisted): `<data-dir>/instances.json`
+- Cached venvs (managed runtimes): `<data-dir>/venvs/<runtime_profile>/...`
+- Run artifacts: `<data-dir>/runs/<run_id>/...` (includes `trace.jsonl`)
+
+### Pip/index policy for managed runtimes (optional)
+
+```bash
+arp-jarvis-daemon --pip-index-url https://pypi.org/simple
+arp-jarvis-daemon --pip-no-index
+arp-jarvis-daemon --pip-extra-index-url https://<private-index>/simple --pip-trusted-host <private-index-host>
+arp-jarvis-daemon --pip-upgrade-pip
+```
+
+These flags only apply in **server mode** (they affect how the daemon runs `pip install` for managed runtimes).
+
+## Client mode quickstart (profiles → instances → runs)
+
+Terminal A: start the daemon server.
+
+Terminal B: point the CLI client at the server:
+
+```bash
+export ARP_DAEMON_URL=http://127.0.0.1:8082
+arp-jarvis-daemon runtime-profiles list
+```
+
+## Runtime profiles (safe list)
+
+The daemon only creates managed runtime instances from **runtime profiles** (safe list). This is specifically designed with security in mind: we do not want jarvis daemon to become a remote code execution engine.
+
+Profiles are stored in `<data-dir>/runtime_profiles.json` (by default `~/.arp/daemon/runtime_profiles.json`).
+
+A sample runtime profile JSON file is provided in [`jarvis-runtime-profile.json`](./jarvis-runtime-profile.json).
+
+Profiles must include an exec config under `extensions["arp.jarvis.exec"]` (namespaced extension key).
+
+`pip_spec` must be pinned (one of):
+
+- `pkg==version`
+- local path (`/abs/path`, `./rel/path`, `../rel/path`, `file:///...`)
+- `name @ file:///...` (recommended for local dev)
+
+Example request payload (pip driver, recommended): `jarvis-runtime-profile.json`
+
+```json
+{
+  "runtime_name": "arp-jarvis-runtime",
+  "extensions": {
+    "arp.jarvis.exec": {
+      "driver": "pip",
+      "pip_spec": "arp-jarvis-runtime==v0.1.0", // if you want to use package from local repo of a runtime, do something like "your-runtime-package @ file:///path/to/your/runtime"
+      "entrypoint": "arp-jarvis-runtime", // Or your runtime's CLI starting point.
+      "entrypoint_args": ["serve"]
+    }
+  }
+}
+```
+
+Tip: for repo-local dev, run `python3 scripts/bootstrap_jarvis_local.py` to upsert a working profile that points at your local `arp/JARVIS_Runtime` checkout.
+
+CLI:
+
+```bash
+arp-jarvis-daemon runtime-profiles upsert jarvis-local --request-json ./jarvis-runtime-profile.json
+arp-jarvis-daemon runtime-profiles list
+arp-jarvis-daemon runtime-profiles delete jarvis-local
+```
+
+## Managed instances (create/list/delete)
+
+These commands talk to a running daemon server. Set `--daemon-url` (or `ARP_DAEMON_URL`) if not using the default `http://127.0.0.1:8082`.
+
+Create instances from a runtime profile:
+
+```bash
+arp-jarvis-daemon start --runtime-profile jarvis-local --count 1 --tool-registry-url http://127.0.0.1:8000
+```
+
+List instances:
+
+```bash
+arp-jarvis-daemon list
+```
+
+Delete an instance (managed: stop process + remove record; external: deregister only):
+
+```bash
+arp-jarvis-daemon delete <instance_id>
+```
+
+Overrides for managed instances:
+
+- `--tool-registry-url` is passed to the runtime as `ARP_TOOL_REGISTRY_URL`
+- `--env KEY=VALUE` and `--arg ...` are passed through to the runtime process
+
+Managed runtimes are installed into cached venvs under `<data-dir>/venvs/<runtime_profile>/`.
+
+## Unmanaged instances (register/unregister)
+
+Register an already-running runtime endpoint (daemon will route runs to it, but will not start/stop it):
+
+```bash
+arp-jarvis-daemon register --runtime-api-endpoint http://127.0.0.1:43120
+```
+
+## Runs (submit/status/result/trace)
+
+Submit a run request (JSON file containing a `RunRequest`), routed by runtime profile:
+
+A sample `run-request.json` is provided in this repo as a reference:
+
+```json
+{
+  "input": { "goal": "Say hello" },
+  "runtime_selector": { "runtime_profile": "jarvis-local" }
+}
+```
+
+```bash
+arp-jarvis-daemon run --request-json ./run-request.json
+arp-jarvis-daemon status <run_id>
+arp-jarvis-daemon result <run_id>
+arp-jarvis-daemon trace <run_id>
+```
+
+To target a specific instance, use `runtime_selector.instance_id` instead of `runtime_profile`.
+
+## Traces and run artifacts
+
+The daemon stores run artifacts under `<data-dir>/runs/<run_id>/` (by default `<data-dir>` is `~/.arp/daemon`).
+
+- Trace JSONL: `<data-dir>/runs/<run_id>/trace.jsonl`
+- API: `GET /v1/runs/{run_id}/trace` returns `trace_uri` and (when available) parsed `events`.
+
+## Dev scripts
+
+- Start server with repo-local data dir: `scripts/dev_server.sh`
+- Bootstrap local runtime profile + create instance: `scripts/bootstrap_jarvis_local.py`
+- Submit a run and poll for result: `scripts/submit_run.py`
+
+End-to-end (3 terminals):
+
+- Terminal A: `arp-jarvis-tool-registry`
+- Terminal B: `bash scripts/dev_server.sh`
+- Terminal C: `python3 scripts/bootstrap_jarvis_local.py --tool-registry-url http://127.0.0.1:8000 && python3 scripts/submit_run.py --goal "Say hello" --runtime-profile jarvis-local`
+
+Daemon API endpoints (selected):
+- `GET /v1/health`
+- `GET /v1/version`
+- `GET /v1/admin/runtime-profiles`
+- `PUT /v1/admin/runtime-profiles/{runtime_profile}`
+- `DELETE /v1/admin/runtime-profiles/{runtime_profile}`
+- `GET /v1/instances`
+- `POST /v1/instances`
+- `POST /v1/instances:register`
+- `DELETE /v1/instances/{instance_id}`
+- `GET /v1/runs`
+- `POST /v1/runs`
+- `GET /v1/runs/{run_id}`
+- `GET /v1/runs/{run_id}/result`
+- `GET /v1/runs/{run_id}/trace`
