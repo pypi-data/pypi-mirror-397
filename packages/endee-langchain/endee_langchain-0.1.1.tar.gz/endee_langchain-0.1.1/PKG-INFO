@@ -1,0 +1,461 @@
+Metadata-Version: 2.4
+Name: endee-langchain
+Version: 0.1.1
+Summary: High Speed Vector Database for Faster and Efficient  ANN Searches with LangChain
+Home-page: https://endee.io
+Author: Endee Labs
+Author-email: support@endee.io
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+Requires-Dist: langchain>=0.3.25
+Requires-Dist: langchain-core>=0.3.59
+Requires-Dist: endee>=0.1.4
+Requires-Dist: numpy
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# Endee LangChain Integration
+
+This package provides an integration between [Endee](https://endee.io) (a high speed vector database) and [LangChain](https://www.langchain.com/), allowing you to use Endee as a vector store backend for LangChain.
+
+## Features
+
+- **Multiple Distance Metrics**: Support for cosine, L2, and inner product distance metrics
+- **Configurable Precision**: Choose between medium (INT8, default), fp16, high (INT16), and ultra-high (FP32) precision levels for optimal performance/accuracy trade-offs
+- **Client-Side Encryption**: Optional encryption support for secure vector storage
+- **Metadata Filtering**: Filter search results based on metadata 
+- **High Performance**: Optimized for speed and efficiency with vector data
+
+## Installation
+
+```bash
+pip install endee-langchain
+```
+
+This will install both the `endee-langchain` package and its dependencies (`endee`, `langchain`, and `langchain-core`).
+
+## Quick Start
+
+```python
+import os
+from langchain_openai import OpenAIEmbeddings
+from langchain_core.documents import Document
+from endee.endee_client import Endee
+from endee_langchain import EndeeVectorStore
+
+# Configure your Endee credentials
+api_token = os.environ.get("ENDEE_API_TOKEN")
+nd = Endee(token=api_token)
+
+# Initialize embedding model
+embedding_model = OpenAIEmbeddings()
+
+# Initialize the vector store
+vector_store = EndeeVectorStore.from_params(
+    embedding=embedding_model,
+    api_token=api_token,
+    index_name="my_langchain_vectors",
+    dimension=1536,
+    space_type="cosine",
+    precision="medium"  # Options: "medium", "fp16", "high", "ultra-high"
+)
+
+# Add documents
+texts = [
+    "Endee is the world's fastest vector database",
+    "LangChain is a framework for developing applications powered by language models",
+    "Vector databases store vector embeddings and enable fast similarity search."
+]
+
+metadatas = [
+    {"source": "product", "category": "database"},
+    {"source": "github", "category": "framework"},
+    {"source": "textbook", "category": "security"}
+]
+
+vector_store.add_texts(texts=texts, metadatas=metadatas)
+
+# Search similar documents
+results = vector_store.similarity_search("How do vector databases work?", k=2)
+
+# Process results
+for doc in results:
+    print(f"Content: {doc.page_content}")
+    print(f"Metadata: {doc.metadata}")
+    print()
+```
+
+## Client-Side Encryption
+
+Endee supports optional client-side encryption to protect your sensitive vector data. When enabled, vectors are encrypted before being sent to the database.
+
+### Enabling Encryption
+
+```python
+from endee.endee_client import Endee
+from endee_langchain import EndeeVectorStore
+from langchain_openai import OpenAIEmbeddings
+
+# Initialize Endee client
+api_token = os.environ.get("ENDEE_API_TOKEN")
+nd = Endee(token=api_token)
+
+# Generate a secure encryption key
+encryption_key = nd.generate_key()
+
+# IMPORTANT: Store this key securely! You'll need it to access your data
+print(f"Encryption key: {encryption_key}")
+# Save this key in a secure location (e.g., environment variable, secrets manager)
+
+# Create an encrypted vector store
+vector_store = EndeeVectorStore.from_params(
+    embedding=OpenAIEmbeddings(),
+    api_token=api_token,
+    index_name="encrypted_vectors",
+    dimension=1536,
+    space_type="cosine",
+    precision="medium",
+    encryption_key=encryption_key  # Enable encryption
+)
+
+# Add encrypted documents
+texts = ["Sensitive information", "Confidential data"]
+vector_store.add_texts(texts=texts)
+
+# Search works transparently with encryption
+results = vector_store.similarity_search("confidential", k=2)
+```
+
+### Accessing Existing Encrypted Index
+
+When accessing an existing encrypted index, you must provide the same encryption key that was used to create it:
+
+```python
+# Retrieve your stored encryption key
+encryption_key = os.environ.get("ENDEE_ENCRYPTION_KEY")
+
+# Access the encrypted vector store
+vector_store = EndeeVectorStore.from_params(
+    embedding=OpenAIEmbeddings(),
+    api_token=api_token,
+    index_name="encrypted_vectors",
+    encryption_key=encryption_key  # Must match the key used during creation
+)
+
+# Now you can search and add documents
+results = vector_store.similarity_search("query", k=5)
+```
+
+### Encryption Best Practices
+
+1. **Store keys securely**: Never hardcode encryption keys in your code. Use environment variables, secrets managers (AWS Secrets Manager, Azure Key Vault, etc.), or secure key management systems.
+
+2. **Key backup**: Make sure to backup your encryption key in a secure location. If you lose the key, you cannot access your encrypted data.
+
+3. **Key rotation**: For enhanced security, consider implementing key rotation policies for your encrypted indexes.
+
+4. **Access control**: Limit access to encryption keys to only authorized personnel and applications.
+
+### Example with Environment Variables
+
+```python
+import os
+from endee.endee_client import Endee
+from endee_langchain import EndeeVectorStore
+from langchain_openai import OpenAIEmbeddings
+
+# Load credentials from environment
+api_token = os.environ.get("ENDEE_API_TOKEN")
+encryption_key = os.environ.get("ENDEE_ENCRYPTION_KEY")
+
+# If no key exists, generate and store one
+if not encryption_key:
+    nd = Endee(token=api_token)
+    encryption_key = nd.generate_key()
+    print("Generated new encryption key. Store this securely:")
+    print(f"export ENDEE_ENCRYPTION_KEY={encryption_key}")
+
+# Create encrypted vector store
+vector_store = EndeeVectorStore.from_params(
+    embedding=OpenAIEmbeddings(),
+    api_token=api_token,
+    index_name="secure_index",
+    dimension=1536,
+    encryption_key=encryption_key
+)
+```
+
+### Encryption vs Non-Encryption
+
+```python
+# Without encryption (default)
+unencrypted_store = EndeeVectorStore.from_params(
+    embedding=OpenAIEmbeddings(),
+    api_token=api_token,
+    index_name="public_index",
+    dimension=1536
+    # No encryption_key parameter
+)
+
+# With encryption
+encrypted_store = EndeeVectorStore.from_params(
+    embedding=OpenAIEmbeddings(),
+    api_token=api_token,
+    index_name="secure_index",
+    dimension=1536,
+    encryption_key=encryption_key  # Encryption enabled
+)
+```
+
+**Note**: Encryption is completely optional. If you don't provide an `encryption_key`, your data will be stored without encryption (which is fine for non-sensitive data).
+
+## Understanding Precision Levels
+
+Endee supports different precision levels (quantization) that allow you to balance between memory usage, search speed, and accuracy:
+
+| Precision | Quantization | Data Type | Memory per Vector | Search Speed | Best For |
+|-----------|--------------|-----------|-------------------|--------------|----------|
+| `medium` | 8-bit | INT8 | Smallest (1x) | Fastest | Large-scale applications, millions of vectors (default) |
+| `fp16` | 16-bit | FP16 | Small (2x) | Very Fast | Balanced performance and accuracy |
+| `high` | 16-bit | INT16 | Small (2x) | Very Fast | Production workloads |
+| `ultra-high` | 32-bit | FP32 | Large (4x) | Slower | Maximum accuracy requirements |
+
+**Memory Usage Example:** For a 1536-dimensional vector:
+- `medium` (INT8): 1.5 KB per vector
+- `fp16` / `high` (16-bit): 3 KB per vector  
+- `ultra_high` (FP32): 6 KB per vector
+
+### Example: Choosing Precision Level
+
+```python
+# For maximum speed and memory efficiency with large datasets (default)
+fast_store = EndeeVectorStore.from_params(
+    embedding=OpenAIEmbeddings(),
+    api_token=api_token,
+    index_name="fast_index",
+    dimension=1536,
+    precision="medium"  # 8-bit quantization (INT8) - This is the default
+)
+
+# For balanced float precision (recommended for most cases)
+fp16_store = EndeeVectorStore.from_params(
+    embedding=OpenAIEmbeddings(),
+    api_token=api_token,
+    index_name="fp16_index",
+    dimension=1536,
+    precision="fp16"  # 16-bit floating point
+)
+
+# For balanced integer precision
+balanced_store = EndeeVectorStore.from_params(
+    embedding=OpenAIEmbeddings(),
+    api_token=api_token,
+    index_name="balanced_index",
+    dimension=1536,
+    precision="high"  # 16-bit integer (INT16)
+)
+
+# For maximum accuracy
+accurate_store = EndeeVectorStore.from_params(
+    embedding=OpenAIEmbeddings(),
+    api_token=api_token,
+    index_name="accurate_index",
+    dimension=1536,
+    precision="ultra-high"  # 32-bit floating point (FP32)
+)
+```
+
+## Filtering Search Results
+You can filter search results based on metadata using flexible query operators. Here's an example using a filter:
+
+### Search with a filter
+```python
+query = "Tell me about Endee"
+filter_dict = {"category": {"$eq": "database"}}
+ 
+filtered_results = vector_store.similarity_search(
+    query=query,
+    k=3,
+    filter=filter_dict
+)
+
+print(f"Query: '{query}' with filter: {filter_dict}")
+print(f"\nFound {len(filtered_results)} filtered results:")
+for i, doc in enumerate(filtered_results):
+    print(f"\nResult {i+1}:")
+    print(f"Content: {doc.page_content}")
+    print(f"Metadata: {doc.metadata}")
+```
+
+## Supported Filter Operators
+
+- **`$eq`**: Matches records with metadata values equal to a specified value  
+  **Example:**
+  ```json
+  {
+    "category": { "$eq": "database" }
+  }
+  ```
+
+- **`$in`**: Matches records with metadata values that are in a specified array  
+  **Example:**
+  ```json
+  {
+    "category": { "$in": ["database", "framework"] }
+  }
+  ```
+
+- **`$range`**: Matches numeric metadata fields within a given range  
+  **Format:** `[min, max]`  
+  **Example:**
+  ```json
+  {
+    "score": { "$range": [0, 10] }
+  }
+  ```
+
+## Using with LangChain
+
+Endee can be used anywhere a LangChain vector store is needed:
+
+```python
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnablePassthrough
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from endee_langchain import EndeeVectorStore
+
+# Initialize your vector store
+vector_store = EndeeVectorStore.from_params(
+    embedding=OpenAIEmbeddings(),
+    api_token="your_api_token",
+    index_name="your_index_name",
+    dimension=1536,
+    precision="medium"
+)
+
+# Create a retriever
+retriever = vector_store.as_retriever()
+
+# Create the RAG chain
+model = ChatOpenAI()
+prompt = ChatPromptTemplate.from_template(
+    """Answer the following question based on the provided context:
+    
+    Context: {context}
+    Question: {question}
+    """
+)
+
+rag_chain = (
+    {"context": retriever, "question": RunnablePassthrough()}
+    | prompt
+    | model
+    | StrOutputParser()
+)
+
+# Use the chain
+response = rag_chain.invoke("What is Endee?")
+print(response)
+```
+
+## Creating from Documents
+
+You can also create a vector store directly from LangChain documents:
+
+```python
+from langchain_core.documents import Document
+
+documents = [
+    Document(
+        page_content="Endee is the world's fastest vector database",
+        metadata={"source": "product", "category": "database"}
+    ),
+    Document(
+        page_content="LangChain is a framework for developing applications",
+        metadata={"source": "github", "category": "framework"}
+    )
+]
+
+vector_store = EndeeVectorStore.from_documents(
+    documents=documents,
+    embedding=OpenAIEmbeddings(),
+    api_token="your_api_token",
+    index_name="doc_index",
+    dimension=1536,
+    precision="medium"
+)
+
+# With encryption
+encrypted_vector_store = EndeeVectorStore.from_documents(
+    documents=documents,
+    embedding=OpenAIEmbeddings(),
+    api_token="your_api_token",
+    index_name="encrypted_doc_index",
+    dimension=1536,
+    precision="medium",
+    encryption_key=encryption_key  # Add encryption
+)
+```
+
+## API Reference
+
+### EndeeVectorStore
+
+The main class for integrating with LangChain. Key methods include:
+
+- `__init__`: Initialize with a Endee index or parameters to create a new one
+- `from_params`: Create a vector store using an API token
+- `from_texts`: Create a vector store from a list of texts
+- `from_documents`: Create a vector store from LangChain documents
+- `add_texts`: Add text documents with optional metadata
+- `similarity_search`: Search for similar documents
+- `similarity_search_with_score`: Search and return similarity scores
+- `delete`: Delete documents by ID or filter
+
+### Configuration Options
+
+The `EndeeVectorStore` constructor and `from_params` method accept the following parameters:
+
+- `embedding`: LangChain embedding function to use
+- `api_token`: Your Endee API token
+- `index_name`: Name of the Endee index
+- `dimension`: Vector dimension (required when creating a new index)
+- `space_type`: Distance metric, one of "cosine", "l2", or "ip" (default: "cosine")
+- `precision`: Precision level, one of "medium" (INT8, default), "fp16" (FP16), "high" (INT16), or "ultra-high" (FP32)
+- `encryption_key`: Optional encryption key for client-side encryption (default: None)
+- `text_key`: Key to use for storing text in metadata (default: "text")
+
+## Performance Tips
+
+1. **Choose the right precision**: The default `"medium"` (INT8) works well for most large-scale applications. Use `"fp16"` (FP16) or `"high"` (INT16) for better accuracy, and `"ultra-high"` (FP32) only when maximum accuracy is required.
+
+2. **Batch operations**: When adding many documents, use larger batch sizes for better performance:
+   ```python
+   vector_store.add_texts(
+       texts=large_text_list,
+       metadatas=metadata_list,
+       batch_size=1000  # Adjust based on your data
+   )
+   ```
+
+3. **Use metadata filtering**: Pre-filter your search space using metadata to improve both speed and relevance:
+   ```python
+   results = vector_store.similarity_search(
+       query="your query",
+       k=10,
+       filter={"category": {"$eq": "relevant_category"}}
+   )
+   ```
+
+4. **Encryption considerations**: Encryption adds minimal overhead to operations. Use it for sensitive data without significant performance concerns. However, ensure you have a robust key management strategy in place.
