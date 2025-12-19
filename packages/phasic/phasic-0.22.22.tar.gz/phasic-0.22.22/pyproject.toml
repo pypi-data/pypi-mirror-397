@@ -1,0 +1,175 @@
+
+# [build-system]
+# requires = ["setuptools >= 77.0.3", "pybind11>=2.10.0", "eigen"]
+# build-backend = "setuptools.build_meta"
+[build-system]
+requires = ["setuptools", "wheel", "scikit-build-core", "pybind11>=2.10.0"]
+build-backend = "scikit_build_core.build"
+
+[tool.scikit-build]
+cmake.verbose = true
+cmake.minimum-version = "3.30"
+wheel.packages = ["src/phasic"]
+
+[project]
+name = "phasic"
+version = "0.22.22"
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Education",
+  "Topic :: Software Development :: Build Tools",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+requires-python = ">= 3.9"
+dependencies = [
+  'pybind11>=2.10.0',
+  'jax',
+  'numpy',
+  'eigen',
+  "ipython",
+  "ipykernel",
+  "ipywidgets",
+  "json5",
+  "requests",
+  'graphviz',
+  'nlohmann_json',
+  'seaborn',
+  'pyyaml',
+  'psutil',
+  'rich',
+  'tqdm',
+  'multiprocess>=0.70.0',  # For parallel trace computation (uses dill)
+]
+authors = [
+  # {name = "Tobias Røikjer", email = ""},
+  {name = "Kasper Munch", email = "kaspermunch@birc.au.dk"},
+]
+maintainers = [
+  {name = "Kasper Munch", email = "kaspermunch@birc.au.dk"},
+]
+description = ""
+keywords = ["",]
+readme = "README.md"
+license = {file = "LICENSE.txt"}
+
+[project.optional-dependencies]
+jax = [
+  'jax>=0.4.0',
+#  'jaxlib',
+]
+ipfs = [
+    'ipfshttpclient>=0.8.0',
+    'requests>=2.25.0',
+]
+dev = [
+    "pytest",
+    "tszip>=0.2.5",
+]
+# docs = [
+#     "sphinx",
+#     "sphinx-rtd-theme",
+# ]
+
+[project.urls]
+Homepage = "https://munch-group.org/phasic"
+Documentation = "https://munch-group.org/phasic"
+Repository = "https://github.com/munch-group/phasic.git"
+Issues = "https://github.com/munch-group/phasic/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]  # list of folders that contain the packages (["."] by default)
+include = ["phasic*"]  # package names should match these glob patterns (["*"] by default)
+# exclude = ["my_package.tests*"]  # exclude packages matching these glob patterns (empty by default)
+namespaces = false  # to disable scanning PEP 420 namespaces (true by default)
+
+
+#pip install -e . --no-deps --force-reinstall
+
+
+
+[tool.pixi.workspace]
+channels = ["conda-forge", "munch-group"]
+platforms = ["osx-arm64", "linux-64"]
+
+[tool.pixi.dependencies]
+python = ">=3.9,<3.14"
+git = ">=2.51.0,<3"
+gh = ">=2.81.0,<3"
+quartodoc = "*"
+pip = "*"
+cmake = ">=4.1.2,<5"
+eigen = ">=3.4.0,<4"
+nlohmann_json = ">=3.11.0"
+ipykernel = ">=7.1.0,<8"
+graphviz = ">=13.1.2,<14"
+nbformat = ">=5.10.4,<6"
+nbclient = ">=0.10.2,<0.11"
+setuptools = ">=80.9.0,<81"
+wheel = ">=0.45.1,<0.46"
+scikit-build-core = ">=0.11.6,<0.12"
+pybind11 = ">=2.10.0"
+jax = ">=0.7.2,<0.8"
+equinox = ">=0.13.2,<0.14"
+ipfshttpclient = ">=0.8.0a2,<0.9"
+py-spy = ">=0.4.1,<0.5"
+gitui = ">=0.27.0,<0.28"
+jupyter = ">=1.1.1,<2"
+notebook = ">=7.4.7,<8"
+nodejs = ">=24.4.1,<24.10"
+electron = ">=1.6.15,<2"
+nbstripout = ">=0.8.1,<0.9"
+pytest = ">=9.0.1,<10"
+json5 = ">=0.12.1,<0.13"
+geopandas = ">=1.1.1,<2"
+geodatasets = ">=2024.8.0,<2025"
+
+# [tool.pixi.pypi-dependencies]
+
+
+[tool.pixi.environments]
+default = {solve-group = "default"}
+
+[tool.pixi.tasks.git-remove-untracked]
+cmd = "git clean -fd"
+description = "Removes untracked files and directories but respects your .gitignores"
+
+[tool.pixi.tasks.install-dev]
+cmd = "XLA_FFI_INCLUDE_DIR=$(python -c 'from jax import ffi; print(ffi.include_dir())') pip install --no-build-isolation --force-reinstall --no-deps ."
+description = "Install phasic in development mode with FFI support"
+
+# [tool.pixi.tasks.test]
+# cmd = "python -m unittest"
+# description = "Run tests"
+
+ # setup-kernel = "python -m ipykernel install --user --name franklin --display-name 'Franklin Python'"
+# quarto-render = { cmd = "quarto render", env = { QUARTO_PYTHON = ".pixi/envs/default/bin/python" } }
+
+[tool.pixi.tasks.bump-version]
+args = [
+  { "arg" = "kind", "default" = "patch" },  # can be patch, minor, major
+  { "arg" = "flag", "default" = "" },     # can be --pre, --release
+]
+cmd = "./scripts/bump_version.py --{{ kind }} {{ flag }} &&  git add -u &&  git commit -m '{{ kind }} {{ flag }} version bump' && git push" 
+description = "Bump version patch and build/release conda packages"
+
+[tool.pixi.tasks.bump-changelog]
+cmd = "./scripts/bump_changelog.py --yes"
+description = "Bump version patch and build/release conda packages"
+
+[tool.pixi.tasks.acp]
+args = [
+  { "arg" = "message", "default" = "update" },  # can be --patch, --minor, --major
+]
+cmd = "git add -u ; git commit -m '{{ message }}' ; git push"
+description = "git add commit push of tracked files with optional message"
+
+[tool.pixi.tasks.github-release]
+cmd = "./scripts/release-tag.sh"
+description = "Release latest version on Github"
+

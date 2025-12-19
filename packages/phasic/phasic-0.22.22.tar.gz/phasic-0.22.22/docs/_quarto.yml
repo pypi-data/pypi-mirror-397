@@ -1,0 +1,270 @@
+project:
+  type: website
+  output-dir: _build
+  # resources:
+  # - objects.txt
+  # - objects-test.txt
+
+  # pre-render: generate-gallery.ts
+  # # Hack to clean temporary file
+  # # post-render:
+  # #   - find galleries/ -name "gallery-styles.css" -delete
+
+
+
+
+execute:
+  freeze: auto
+  echo: true
+
+metadata-files:
+  - api/_sidebar.yml
+
+filters:
+  - "interlinks"
+
+interlinks:
+  fast: true
+  sources:
+    python:
+      url: https://docs.python.org/3/
+    griffe:
+      url: https://mkdocstrings.github.io/griffe/
+    numpy:
+      url: https://numpy.org/doc/stable/
+    pandas:
+      url: https://pandas.pydata.org/docs/
+    matplotlib:
+      url: https://matplotlib.org/stable/
+    scipy:
+      url: https://docs.scipy.org/doc/scipy/
+    statsmodels:
+      url: https://www.statsmodels.org/stable/ 
+    jax:
+      url: https://docs.jax.dev/en/latest/     
+    # quartodoc-test:
+    #   url: https://machow.github.io/quartodoc
+    #   inv: objects-test.txt
+
+website:
+  # title: "phasic"
+  title: ""
+  page-navigation: true
+
+  # announcement: 
+  #   icon: exclamation-lg
+  #   dismissable: true
+  #   content: "**Alert** - this is some information that you should pay attention to"
+  #   type: info
+  #   position: above-navbar
+
+
+  # render:
+  #   # - "**/*.qmd"  # render all qmd files
+  #   # - "!draft-*.qmd"  # except those starting with draft-
+  #   # - "!internal/"  # exclude entire directories
+  #   - "!pages/tutorials/rabbits_full_py_api_example.ipynb"
+
+  navbar:
+    logo: logo.png
+    logo-alt: "Phasic"  # For accessibility
+    logo-href: "/index.html"  # Where clicking the logo goes
+
+    left:
+      - href: pages/getting_started.html
+        text: Documentation
+      - href: api/
+        text: Python API reference
+      - href: r_api/
+        text: R API reference
+      - href: c_api/
+        text: C API reference
+      # - file: examples/
+      #   text: Examples
+    right:
+      - icon: github
+        href: https://github.com/munch-group/phasic/
+  sidebar:
+    - id: pages
+      title: Get Started
+      style: floating
+      align: left
+      contents:
+        - pages/getting_started.qmd
+        - section: "Tutorials"
+          contents:
+            - pages/tutorials/quickstart.ipynb
+            - pages/tutorials/full_api/rabbits_full_py_api_example.ipynb
+            - pages/tutorials/full_api/coalescent_full_py_api_example.ipynb
+            - pages/tutorials/state_space_construction.ipynb
+            # - pages/tutorials/caching_guide.qmd
+            # - pages/tutorials/config_system.qmd
+            # - pages/tutorials/explicit_config_system.qmd
+            - pages/tutorials/simple_example.ipynb
+            - pages/tutorials/full_api/somecode.ipynb
+            # - pages/tutorials/test_hierarchical_caching.ipynb
+        - section: "Bayesian inference"
+          contents:
+            - pages/tutorials/svgd/svgd.ipynb
+            - pages/tutorials/svgd/caching.qmd
+            - pages/tutorials/svgd/svgd_trace_eval.qmd
+            - pages/tutorials/svgd/svgd_step_sizes.qmd
+            - pages/tutorials/svgd/ffi_and_openmp.qmd
+            - pages/tutorials/svgd/caching.qmd
+            - pages/tutorials/svgd/ffi_and_openmp.qmd
+            - pages/tutorials/svgd/svgd_step_sizes.qmd
+            - pages/tutorials/svgd/svgd_trace_eval.qmd
+            - pages/tutorials/svgd/svgd.ipynb
+            - pages/tutorials/svgd/trace_ipfs.ipynb
+        - section: "Distributed Computing"
+          contents:
+            - pages/tutorials/distributed/distributed_computing_complete_guide.ipynb
+            - pages/tutorials/distributed/slurm_cluster_setup.ipynb
+            - pages/tutorials/utils/cpu_monitoring.ipynb
+        - section: "State space patterns"
+          contents:
+            - pages/tutorials/modelling/state_lumping.ipynb
+            - pages/tutorials/modelling/laplace.ipynb
+            - pages/tutorials/modelling/epochs.ipynb
+            - pages/tutorials/modelling/joint_prob.ipynb
+            - pages/tutorials/modelling/cont_and_discrete.ipynb
+            - pages/tutorials/modelling/epochs.ipynb
+            - pages/tutorials/modelling/joint_prob.ipynb
+            - pages/tutorials/modelling/laplace.ipynb
+            - pages/tutorials/modelling/state_lumping.ipynb
+        - section: "Popgen examples"
+          contents:
+            - pages/tutorials/popgen/python/coalescent-jointprob.ipynb
+            - pages/tutorials/popgen/python/isolation_migration.ipynb
+            # - pages/tutorials/popgen/python/two-island-two-locus-arg.ipynb
+            - pages/tutorials/popgen/python/arg-two-island.ipynb
+            - pages/tutorials/popgen/python/coalescent-epoques.ipynb
+            - pages/tutorials/popgen/python/coalescent-im-model.ipynb
+            - pages/tutorials/popgen/python/coalescent-jointprob-ffi.ipynb
+            - pages/tutorials/popgen/python/coalescent-laplace.ipynb
+            - pages/tutorials/popgen/python/coalescent-minvar-theta.ipynb
+            - pages/tutorials/popgen/python/coalescent-partitions.ipynb
+            - pages/tutorials/popgen/python/coalescent-selection.ipynb
+            - pages/tutorials/popgen/python/coalescent.ipynb
+            - pages/tutorials/popgen/python/im_model.ipynb
+            - pages/tutorials/popgen/python/index_prop_mapping.ipynb
+            - pages/tutorials/popgen/python/plot.ipynb
+            - pages/tutorials/popgen/python/SFS.ipynb
+            - pages/tutorials/popgen/python/showcase.ipynb
+            - pages/tutorials/popgen/python/smc-prime-tree-levels.py
+            - pages/tutorials/popgen/python/two_locus_two_island-discrete.ipynb
+            - pages/tutorials/popgen/python/two_locus_two_island.ipynb
+            # - pages/
+        - section: "Phase-type distributions"
+          contents:
+            - pages/background/math_and_alg.qmd
+        - section: "Devel"
+          contents:
+            - pages/architecture/architecture.qmd
+            - pages/architecture/explicit_config_system.qmd
+            - pages/architecture/config_system.qmd
+            - pages/architecture/caching_guide.qmd
+            - href: https://github.com/munch-group/phasic/issues
+              text: Issue Tracker
+        # - galleries/examples/index.qmd
+
+lightbox: true
+
+format:
+  html:
+    grid:
+      sidebar-width: 330px
+      body-width: 900px
+      margin-width: 270px
+      gutter-width: 1.5rem
+      # margin-left, margin-right, margin-top, margin-bottom
+
+    theme: [cosmo, numpy.theme, custom.scss] # numpy.theme for code highlighting
+    # theme: 
+    #   light: [cosmo, numpy.theme]
+    #   dark: [darkly, numpy-dark.theme]    
+    css:
+      - api/_styles-quartodoc.css
+      - numpy.css  # for code box styles highlighting styles
+      # - styles.css
+
+      # - custom.css
+      # - numpy-navbar-sidebar.css
+
+    notebook-links: true
+    callout-icon: false
+    code-overflow: wrap
+    fig-align: center    
+    html-math-method: katex
+    toc: true
+    mermaid:
+      theme: neutral     
+    linkcolor: "#0D7D92"
+
+
+quartodoc:
+  package: phasic
+  # package: null
+  # source_dir: ../src/cpp
+  style: pkgdown
+  dir: api
+  dynamic: true  # Use runtime import for compiled extensions
+  parser: numpy  # Use numpy docstring parser (more lenient)
+  render_interlinks: true
+  options:
+    signature_name: full
+    include_inherited: true
+    include_empty: false  # Skip items that can't be loaded
+  renderer:
+    style: markdown
+    table_style: description-list
+  sidebar: "api/_sidebar.yml"
+  css: "api/_styles-quartodoc.css"
+
+  sections:
+    - title: Graph Construction
+      package: phasic
+      desc: |
+        Graph components (Vertex and Edge are documented as part of Graph)
+      contents:
+        - Graph
+
+    - title: JAX-compatible utils
+      package: phasic
+      desc: |
+        JAX-compatible phase-type distribution computations with FFI integration.
+        Supports JIT compilation, automatic differentiation, and vmap/pmap parallelization.
+      contents:
+        - compute_pmf_ffi
+        - compute_moments_ffi
+        - compute_pmf_and_moments_ffi
+
+    - title: Inference
+      package: phasic
+      desc: |
+        SVGD
+      contents:
+        - SVGD
+
+    - title: Distributed Computing
+      package: phasic
+      desc: |
+        Multi-node distributed computing utilities for SLURM clusters.
+        Simplifies scaling from single machine to 100+ nodes with automatic
+        JAX distributed initialization and configuration management.
+      contents:
+        # - subtitle: "Distributed Initialization"
+        #   desc: "Auto-detection and setup for multi-node computing"
+        - DistributedConfig
+        - initialize_distributed
+        - detect_slurm_environment
+        - get_coordinator_address
+        - configure_jax_devices
+        - initialize_jax_distributed
+        # - subtitle: "Cluster Configuration"
+        #   desc: "YAML-based cluster configuration management"
+        - ClusterConfig
+        - load_config
+        - get_default_config
+        - validate_config
+        - suggest_config

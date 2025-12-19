@@ -1,0 +1,103 @@
+{% set pyproject = load_file_data("../pyproject.toml", from_recipe_dir=True) %}
+
+package:
+  name: phasic
+  version: {{ pyproject.get("project").get("version") }}
+  # version: '0.20.0'
+
+source:
+  git_url: https://github.com/munch-group/phasic.git
+
+outputs:
+    - name: phasic
+      requirements:
+        build:
+          - {{ compiler('c') }}
+          - {{ compiler('cxx') }}
+          - python #{{ python }}
+          - cmake>=3.30
+          - ninja
+          - pybind11>=2.10.0
+          - eigen
+          - nlohmann_json
+        host:
+          - python #{{ python }}
+          - scikit-build-core
+          - pybind11>=2.10.0
+          - eigen
+          - nlohmann_json
+          - jax >=0.4.0
+          - jaxlib >=0.4.0
+        run:
+          - python #{{ python }}
+          - pybind11>=2.10.0
+          - eigen
+          - numpy
+          - python-graphviz
+          - ipython
+          - seaborn
+          - tqdm
+          - pyyaml
+          - psutil
+          - rich
+          - jax >=0.4.0
+          - jaxlib >=0.4.0
+      build:
+        number: 1
+        noarch: false
+        script: |
+          # set CMAKE_GENERATOR=
+          ninja --version || where ninja || echo "Ninja not found!"
+          export XLA_FFI_INCLUDE_DIR=$($PYTHON -c "from jax import ffi; print(ffi.include_dir())")  # [not win]
+          set "XLA_FFI_INCLUDE_DIR=%PYTHON% -c \"from jax import ffi; print(ffi.include_dir())\""  # [win]
+          "$PYTHON" -m pip install . -vv   # [not win]
+          "%PYTHON%" -m pip install . -vv  # [win]
+
+      channels:  # channels for your library dependencies
+        - conda-forge
+        # - defaults
+      dependencies:   # Keep this block with only these two packages
+        - anaconda-client
+        - conda-build
+        - conda-verify
+        # - conda-package-handling
+      test:
+        imports:
+          - phasic
+        # commands:
+        #   - "$PYTHON -c 'import phasic as ptd ; print(ptd.Graph(4).vertices_length() == 1)'" # [not win]
+        #   - '"%PYTHON%" -c "import phasic as ptd ; print(ptd.Graph(4).vertices_length() == 1)"' # [win]
+
+
+    - name: r-phasic
+      requirements:
+        build:
+          - r-base
+        host:
+          - r-base
+          - r-reticulate >=1.28
+          - r-r6
+        run:
+          - r-base
+          - r-reticulate >=1.28
+          - r-r6
+          - phasic  # Depends on Python package (same version)
+      build:
+        number: 1
+        noarch: generic  # Pure R package, no compilation
+        script: |
+          $R CMD INSTALL --build .  # [not win]
+          "%R%" CMD INSTALL --build .  # [win]
+      channels:
+        - conda-forge
+      test:
+        commands:
+          # Test that R package loads
+          - $R -e "library('phasic')"  # [not win]
+          - "%R%" -e "library('phasic')"  # [win]
+
+about:
+  home: https://github.com/munch-group/phasic.git
+  license: MIT
+  dev_url: https://github.com/munch-group/phasic.git
+  doc_url: https://munch-group.org/phasic
