@@ -1,0 +1,69 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "django-admin-ai-search"
+version = "0.1.1"
+description = "AI-powered natural language search for Django Admin"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+    { name = "Anh Tran", email = "anh.q.tran@eastagile.com" },
+]
+keywords = ["django", "admin", "ai", "search", "llm", "natural-language"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Framework :: Django :: 4.2",
+    "Framework :: Django :: 5.0",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+]
+dependencies = [
+    "django>=4.2",
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.0",
+    "pytest>=8.0",
+    "pytest-cov>=6.0",
+    "pytest-django>=4.5",
+    "ruff>=0.8",
+]
+
+[project.urls]
+Homepage = "https://github.com/quanhea/django-admin-ai-search"
+Documentation = "https://github.com/quanhea/django-admin-ai-search#readme"
+Repository = "https://github.com/quanhea/django-admin-ai-search"
+Issues = "https://github.com/quanhea/django-admin-ai-search/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/django_admin_ai_search"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "tests.settings"
+pythonpath = ["src", "."]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = ["E501"]  # Line length handled by formatter, ignore in prompt strings
