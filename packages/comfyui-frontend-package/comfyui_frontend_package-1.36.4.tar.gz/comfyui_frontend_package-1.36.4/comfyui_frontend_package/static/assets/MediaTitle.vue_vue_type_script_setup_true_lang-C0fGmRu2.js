@@ -1,0 +1,2 @@
+import{dn as n}from"./index-xLwXl4ov.js";import{bq as l,E as t,c as m,d as c,t as i}from"./vendor-other-yzRpIrj2.js";const r=["title"],_=l({__name:"MediaTitle",props:{fileName:{}},setup(a){const e=a,o=t(()=>e.fileName),s=t(()=>n(e.fileName));return(p,f)=>(c(),m("h3",{class:"m-0 line-clamp-1 text-sm font-bold text-base-foreground",title:o.value},i(s.value),9,r))}});export{_};
+//# sourceMappingURL=MediaTitle.vue_vue_type_script_setup_true_lang-C0fGmRu2.js.map
