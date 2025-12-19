@@ -1,0 +1,57 @@
+# Thank you: https://github.com/pypa/sampleproject
+# Thank you ChatGPT 4o for helping understand the details 
+# 2025-03-28
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+
+name = "pypdfcodebook"
+version = "0.5.2"
+
+description = "Package that generates a PDF codebook based on specified data structure and datafile."
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MPL-2.0"
+keywords = ["codebook", "pdf", "pypdfcodebook"]
+authors = [{ name = "Nathanael Rosenheim", email = "nrosenheim@gmail.com" }]
+maintainers = [{ name = "Nathanael Rosenheim", email = "nrosenheim@gmail.com" }]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12"
+]
+
+# Dependencies required to run the package
+# issues with using pip to manage dependencies
+# manually set up environment 
+dependencies = [
+  "pandas>=2.2",
+  "numpy>=1.26",
+  "fpdf2>=2.7",
+  "pillow>=12.0.0",
+  "seaborn>=0.12"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+pypdfcodebook = ["*.png"]
+
+[project.optional-dependencies]
+dev = ["pytest", "black"]      # For development (formatting, debugging, etc.)
+test = ["pytest", "coverage"]  # For testing and code coverage
+docs = ["sphinx", "mkdocs"]    # For generating documentation
+
+[project.urls]
+"Homepage" = "https://github.com/npr99/pypdfcodebook"
+"Repository" = "https://github.com/npr99/pypdfcodebook"
+"Bug Reports" = "https://github.com/npr99/pypdfcodebook/issues"
