@@ -1,0 +1,503 @@
+/*
+Kryten Shell - Solarized Dark Theme
+
+Based on Ethan Schoonover's Solarized color palette.
+https://ethanschoonover.com/solarized/
+
+Solarized Dark Base Colors:
+- base03:  #002b36 (background)
+- base02:  #073642 (background highlights)
+- base01:  #586e75 (comments, secondary content)
+- base00:  #657b83 (body text)
+- base0:   #839496 (body text)
+- base1:   #93a1a1 (emphasis)
+- base2:   #eee8d5 (background highlights)
+- base3:   #fdf6e3 (background)
+
+Accent Colors:
+- yellow:  #b58900
+- orange:  #cb4b16
+- red:     #dc322f
+- magenta: #d33682
+- violet:  #6c71c4
+- blue:    #268bd2
+- cyan:    #2aa198
+- green:   #859900
+*/
+
+/* ===== Global Styles ===== */
+
+$background: #002b36;
+$background-light: #073642;
+$foreground: #839496;
+$foreground-dim: #586e75;
+$foreground-bright: #93a1a1;
+
+$accent-blue: #268bd2;
+$accent-cyan: #2aa198;
+$accent-green: #859900;
+$accent-yellow: #b58900;
+$accent-orange: #cb4b16;
+$accent-red: #dc322f;
+$accent-magenta: #d33682;
+$accent-violet: #6c71c4;
+
+$border: $foreground-dim;
+$border-focus: $accent-cyan;
+
+/* Root screen */
+Screen {
+    background: $background;
+    color: $foreground;
+}
+
+/* ===== Header & Footer ===== */
+
+Header {
+    background: $background-light;
+    color: $accent-cyan;
+    text-style: bold;
+    dock: top;
+    height: 1;
+}
+
+Footer {
+    background: $background-light;
+    color: $foreground-dim;
+    dock: bottom;
+    height: 1;
+}
+
+/* ===== Status Bar ===== */
+
+#status-bar {
+    background: $background-light;
+    color: $foreground;
+    height: 1;
+    dock: bottom;
+    padding: 0 1;
+}
+
+#status-bar .connected {
+    color: $accent-green;
+}
+
+#status-bar .disconnected {
+    color: $accent-red;
+}
+
+#status-bar .channel-name {
+    color: $accent-cyan;
+    text-style: bold;
+}
+
+/* ===== Tab Navigation ===== */
+
+TabbedContent {
+    background: $background;
+}
+
+Tabs {
+    background: $background-light;
+    dock: top;
+}
+
+Tab {
+    background: $background-light;
+    color: $foreground-dim;
+    padding: 0 2;
+}
+
+Tab:hover {
+    background: $background;
+    color: $foreground-bright;
+}
+
+Tab.-active {
+    background: $background;
+    color: $accent-cyan;
+    text-style: bold;
+}
+
+Tab:focus {
+    text-style: bold;
+}
+
+TabPane {
+    background: $background;
+    padding: 1;
+}
+
+/* ===== Panels & Containers ===== */
+
+.panel {
+    background: $background;
+    border: solid $border;
+    padding: 1;
+}
+
+.panel:focus-within {
+    border: solid $border-focus;
+}
+
+.panel-title {
+    background: $background-light;
+    color: $accent-cyan;
+    text-style: bold;
+    text-align: center;
+    padding: 0 1;
+}
+
+Horizontal {
+    height: auto;
+}
+
+Vertical {
+    height: auto;
+}
+
+/* ===== Log/Message Displays ===== */
+
+RichLog {
+    background: $background;
+    color: $foreground;
+    border: none;
+    scrollbar-background: $background-light;
+    scrollbar-color: $foreground-dim;
+    scrollbar-color-active: $accent-cyan;
+    scrollbar-color-hover: $foreground;
+}
+
+RichLog:focus {
+    border: none;
+}
+
+/* Chat-specific log styling */
+#chat-log {
+    height: 1fr;
+}
+
+#events-log {
+    height: 1fr;
+}
+
+/* ===== Data Tables ===== */
+
+DataTable {
+    background: $background;
+    color: $foreground;
+    border: solid $border;
+}
+
+DataTable:focus {
+    border: solid $border-focus;
+}
+
+DataTable > .datatable--header {
+    background: $background-light;
+    color: $accent-cyan;
+    text-style: bold;
+}
+
+DataTable > .datatable--cursor {
+    background: $background-light;
+    color: $foreground-bright;
+}
+
+DataTable > .datatable--hover {
+    background: $background-light;
+}
+
+DataTable > .datatable--even-row {
+    background: $background;
+}
+
+DataTable > .datatable--odd-row {
+    background: #012b38;
+}
+
+/* ===== Tree Views (for KV Inspector) ===== */
+
+Tree {
+    background: $background;
+    color: $foreground;
+    border: solid $border;
+}
+
+Tree:focus {
+    border: solid $border-focus;
+}
+
+Tree > .tree--cursor {
+    background: $background-light;
+    color: $foreground-bright;
+}
+
+Tree > .tree--guides {
+    color: $foreground-dim;
+}
+
+Tree > .tree--label {
+    color: $foreground;
+}
+
+/* ===== Input & Command Line ===== */
+
+Input {
+    background: transparent;
+    color: #839496;
+    border: none;
+    padding: 0;
+}
+
+Input:focus {
+    border: none;
+}
+
+Input.-invalid {
+    border: none;
+}
+
+#command-input {
+    dock: bottom;
+    height: 3;
+    background: $background-light;
+    padding: 0 1;
+    layout: horizontal;
+}
+
+/* ===== Output Log ===== */
+
+#output-log {
+    height: 1fr;
+    background: $background;
+    border: none;
+    padding: 0 1;
+    scrollbar-size: 1 1;
+}
+
+#command-prompt {
+    color: $accent-cyan;
+    text-style: bold;
+}
+
+/* ===== Buttons ===== */
+
+Button {
+    background: $background-light;
+    color: $foreground;
+    border: solid $border;
+    min-width: 10;
+}
+
+Button:hover {
+    background: $background;
+    color: $foreground-bright;
+    border: solid $foreground;
+}
+
+Button:focus {
+    border: solid $border-focus;
+    text-style: bold;
+}
+
+Button.-primary {
+    background: $accent-blue;
+    color: $background;
+}
+
+Button.-primary:hover {
+    background: #3d9be0;
+}
+
+Button.-success {
+    background: $accent-green;
+    color: $background;
+}
+
+Button.-warning {
+    background: $accent-yellow;
+    color: $background;
+}
+
+Button.-error {
+    background: $accent-red;
+    color: $background;
+}
+
+/* ===== Labels & Text ===== */
+
+Label {
+    color: $foreground;
+}
+
+.label-muted {
+    color: $foreground-dim;
+}
+
+.label-bright {
+    color: $foreground-bright;
+}
+
+.label-success {
+    color: $accent-green;
+}
+
+.label-warning {
+    color: $accent-yellow;
+}
+
+.label-error {
+    color: $accent-red;
+}
+
+.label-info {
+    color: $accent-cyan;
+}
+
+/* ===== Specific Semantic Colors ===== */
+
+/* Chat message types */
+.chat-system {
+    color: $accent-yellow;
+}
+
+.chat-user {
+    color: $accent-cyan;
+}
+
+.chat-bot {
+    color: $accent-green;
+}
+
+.chat-error {
+    color: $accent-red;
+}
+
+.chat-timestamp {
+    color: $foreground-dim;
+}
+
+.chat-username {
+    color: $accent-blue;
+    text-style: bold;
+}
+
+/* Event types */
+.event-info {
+    color: $accent-cyan;
+}
+
+.event-warning {
+    color: $accent-yellow;
+}
+
+.event-error {
+    color: $accent-red;
+}
+
+.event-success {
+    color: $accent-green;
+}
+
+.event-debug {
+    color: $foreground-dim;
+}
+
+/* Playlist states */
+.playlist-current {
+    color: $accent-green;
+    text-style: bold;
+}
+
+.playlist-queued-by {
+    color: $accent-blue;
+}
+
+.playlist-duration {
+    color: $foreground-dim;
+}
+
+/* KV Inspector */
+.kv-bucket {
+    color: $accent-cyan;
+    text-style: bold;
+}
+
+.kv-key {
+    color: $accent-blue;
+}
+
+.kv-value {
+    color: $foreground;
+}
+
+/* ===== Modal Dialogs ===== */
+
+ModalScreen {
+    align: center middle;
+}
+
+#dialog {
+    background: $background-light;
+    border: solid $border-focus;
+    padding: 1 2;
+    width: 60;
+    height: auto;
+}
+
+#dialog-title {
+    color: $accent-cyan;
+    text-style: bold;
+    text-align: center;
+    padding-bottom: 1;
+}
+
+/* ===== Loading & Progress ===== */
+
+LoadingIndicator {
+    color: $accent-cyan;
+}
+
+ProgressBar {
+    color: $accent-cyan;
+}
+
+ProgressBar > .bar--bar {
+    color: $accent-green;
+}
+
+/* ===== Static Content ===== */
+
+Static {
+    color: $foreground;
+}
+
+/* ===== Scrollbars ===== */
+
+* {
+    scrollbar-background: $background-light;
+    scrollbar-color: $foreground-dim;
+    scrollbar-color-active: $accent-cyan;
+    scrollbar-color-hover: $foreground;
+}
+
+/* ===== Help & Documentation ===== */
+
+.help-text {
+    color: $foreground-dim;
+    text-style: italic;
+}
+
+.command-name {
+    color: $accent-cyan;
+    text-style: bold;
+}
+
+.command-arg {
+    color: $accent-yellow;
+}
+
+.command-optional {
+    color: $foreground-dim;
+}
