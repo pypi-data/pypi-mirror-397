@@ -1,0 +1,281 @@
+# robin-logs
+
+Sistema de logs estructurado y fácil de integrar para aplicaciones FastAPI.
+
+## 🚀 Características
+
+- **Instalable vía pip** - Librería desacoplada y reutilizable
+- **Logs estructurados en JSON** - Fácil de procesar y analizar
+- **Rotación automática** - Gestión inteligente del tamaño de archivos
+- **Retención configurable** - Limpieza automática de logs antiguos
+- **API REST integrada** - Consulta logs sin abrir archivos
+- **Filtros avanzados** - Por módulo, nivel, tiempo, etc.
+- **Sin dependencias externas** - No requiere ELK, Loki, ni servicios externos
+- **Convivencia perfecta** - Se integra en tu FastAPI existente
+
+## 📦 Instalación
+
+```bash
+pip install robin-logs
+```
+
+## 🎯 Inicio Rápido
+
+```python
+from fastapi import FastAPI
+from robin_logs import setup_logging, register_log_routes, LogConfig
+
+# Crear tu aplicación FastAPI
+app = FastAPI()
+
+# Configurar el sistema de logs
+config = LogConfig(
+    log_directory="./logs",
+    retention_hours=72,  # 3 días
+    max_bytes=10 * 1024 * 1024,  # 10MB por archivo
+    enable_api=True,
+    api_prefix="/logs"
+)
+
+# Inicializar el sistema
+setup_logging(config)
+
+# Registrar endpoints de logs en tu FastAPI
+register_log_routes(app, config)
+
+# Tus rutas existentes...
+@app.get("/")
+async def root():
+    return {"message": "Hello World"}
+```
+
+### Escribir Logs
+
+```python
+from robin_logs import get_logger
+
+# Obtener logger para tu módulo
+logger = get_logger("whatsapp")
+
+# Escribir logs con metadatos
+logger.info(
+    "Mensaje enviado correctamente",
+    extra={
+        "phone": "+573001234567",
+        "message_id": "msg_123",
+        "status": "delivered"
+    }
+)
+
+logger.error(
+    "Error al enviar mensaje",
+    extra={
+        "phone": "+573001234567",
+        "error_code": "TIMEOUT",
+        "retry_count": 3
+    }
+)
+```
+
+### Consultar Logs
+
+Una vez integrada la librería, puedes consultar logs a través de HTTP:
+
+```bash
+# Obtener todos los logs
+GET http://localhost:8000/logs
+
+# Logs de un módulo específico
+GET http://localhost:8000/logs/whatsapp
+
+# Últimos errores de las últimas 2 horas
+GET http://localhost:8000/logs/whatsapp?level=ERROR&last=2h&limit=100
+
+# Logs en un rango de tiempo específico
+GET http://localhost:8000/logs?from=2025-12-17T00:00:00&to=2025-12-17T23:59:59
+
+# Listar módulos disponibles
+GET http://localhost:8000/logs/modules/list
+```
+
+## ⚙️ Configuración
+
+```python
+from robin_logs import LogConfig
+
+config = LogConfig(
+    # Almacenamiento
+    log_directory="./logs",
+    log_filename_pattern="{module}.log",
+    max_bytes=10 * 1024 * 1024,  # 10MB
+    backup_count=5,
+    
+    # Retención y limpieza
+    retention_hours=72,  # 3 días
+    auto_cleanup=True,
+    cleanup_interval_hours=24,
+    
+    # Formato
+    json_format=True,
+    log_level="INFO",
+    include_timestamp=True,
+    timezone="UTC",
+    
+    # API
+    enable_api=True,
+    api_prefix="/logs",
+    
+    # Seguridad
+    require_auth=False,  # Activar para proteger endpoints
+    api_key_header="X-API-Key",
+    api_key="tu-api-key-secreta",  # Requerido si require_auth=True
+)
+```
+
+### Seguridad (Opcional)
+
+```python
+config = LogConfig(
+    enable_api=True,
+    require_auth=True,
+    api_key="mi-clave-super-secreta-123"
+)
+
+setup_logging(config)
+register_log_routes(app, config)
+```
+
+Luego, para consultar logs:
+
+```bash
+curl -H "X-API-Key: mi-clave-super-secreta-123" \
+     http://localhost:8000/logs/whatsapp
+```
+
+## 📚 Ejemplos
+
+### Módulo de WhatsApp
+
+```python
+from robin_logs import get_logger
+
+logger = get_logger("whatsapp")
+
+async def send_message(phone: str, message: str):
+    logger.info("Iniciando envío de mensaje", extra={
+        "phone": phone,
+        "message_length": len(message)
+    })
+    
+    try:
+        # ... lógica de envío ...
+        logger.info("Mensaje enviado exitosamente", extra={
+            "phone": phone,
+            "message_id": "msg_123"
+        })
+    except Exception as e:
+        logger.error("Error al enviar mensaje", extra={
+            "phone": phone,
+            "error": str(e)
+        })
+        raise
+```
+
+### Múltiples Módulos
+
+```python
+# whatsapp.py
+whatsapp_logger = get_logger("whatsapp")
+
+# instagram.py
+instagram_logger = get_logger("instagram")
+
+# email.py
+email_logger = get_logger("email")
+
+# Cada módulo escribe en su propio archivo:
+# - logs/whatsapp.log
+# - logs/instagram.log
+# - logs/email.log
+```
+
+### Middleware de Logging
+
+```python
+from fastapi import FastAPI, Request
+from robin_logs import get_logger
+import time
+
+app = FastAPI()
+logger = get_logger("api")
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+    
+    logger.info("Request iniciado", extra={
+        "method": request.method,
+        "path": request.url.path,
+        "client": request.client.host
+    })
+    
+    response = await call_next(request)
+    
+    duration = time.time() - start_time
+    logger.info("Request completado", extra={
+        "method": request.method,
+        "path": request.url.path,
+        "status_code": response.status_code,
+        "duration_ms": round(duration * 1000, 2)
+    })
+    
+    return response
+```
+
+## 🔍 Filtros de Consulta
+
+| Parámetro | Tipo | Descripción | Ejemplo |
+|-----------|------|-------------|---------|
+| `module` | string | Filtrar por módulo | `whatsapp` |
+| `level` | string | Nivel de log | `ERROR`, `INFO`, `WARNING` |
+| `from` | datetime | Timestamp inicial (ISO 8601) | `2025-12-17T00:00:00` |
+| `to` | datetime | Timestamp final (ISO 8601) | `2025-12-17T23:59:59` |
+| `last` | string | Rango relativo | `2h`, `30m`, `1d` |
+| `limit` | int | Máximo de resultados | `200` (default: 1000) |
+| `order` | string | Orden de resultados | `asc`, `desc` (default: desc) |
+
+### Ejemplos de Consultas
+
+```bash
+# Errores de WhatsApp en las últimas 2 horas
+GET /logs/whatsapp?level=ERROR&last=2h
+
+# Todos los logs de hoy
+GET /logs?from=2025-12-17T00:00:00&to=2025-12-17T23:59:59
+
+# Últimos 50 logs de Instagram
+GET /logs/instagram?limit=50&order=asc
+```
+
+## 📝 Formato de Logs
+
+Los logs se guardan en formato JSON por defecto:
+
+```json
+{
+  "timestamp": "2025-12-17 10:30:45",
+  "level": "INFO",
+  "module": "whatsapp",
+  "message": "Mensaje enviado correctamente",
+  "phone": "+573001234567",
+  "message_id": "msg_123"
+}
+```
+
+## 📄 Licencia
+
+MIT License - Ver archivo `LICENSE` para más detalles.
+
+---
+
+Desarrollado con ❤️ por el equipo de Robin
