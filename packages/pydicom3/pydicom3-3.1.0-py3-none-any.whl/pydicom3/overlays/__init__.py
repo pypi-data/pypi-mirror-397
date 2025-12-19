@@ -1,0 +1,1 @@
+from pydicom3.overlays.numpy_handler import get_overlay_array
