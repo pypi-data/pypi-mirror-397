@@ -1,0 +1,539 @@
+Metadata-Version: 2.4
+Name: kytchen-rlm
+Version: 1.0.0
+Summary: Kytchen RLM - Recursive Language Models with BYOLLM pantry storage + sandboxed prep + sauce (audit trail)
+Project-URL: Homepage, https://kytchen.dev
+Project-URL: Repository, https://github.com/shannon-labs/kytchen
+Author: Shannon Labs
+License: MIT License
+        
+        Copyright (c) 2025 Shannon Labs Inc.
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+License-File: LICENSE
+Requires-Python: >=3.10
+Requires-Dist: httpx>=0.27.0
+Provides-Extra: api
+Requires-Dist: asyncpg>=0.29.0; extra == 'api'
+Requires-Dist: fastapi>=0.110.0; extra == 'api'
+Requires-Dist: minio>=7.2.0; extra == 'api'
+Requires-Dist: python-multipart>=0.0.9; extra == 'api'
+Requires-Dist: sentry-sdk[fastapi]>=2.0.0; extra == 'api'
+Requires-Dist: sqlalchemy[asyncio]>=2.0.0; extra == 'api'
+Requires-Dist: stripe>=7.0.0; extra == 'api'
+Requires-Dist: uvicorn>=0.27.0; extra == 'api'
+Provides-Extra: cli
+Requires-Dist: keyring>=25.0.0; extra == 'cli'
+Requires-Dist: python-dotenv>=1.0.0; extra == 'cli'
+Requires-Dist: questionary>=2.0.0; extra == 'cli'
+Requires-Dist: rich>=13.0.0; extra == 'cli'
+Requires-Dist: typer[all]>=0.12.0; extra == 'cli'
+Provides-Extra: converters
+Requires-Dist: openpyxl>=3.1; extra == 'converters'
+Requires-Dist: pypdf>=4.0; extra == 'converters'
+Requires-Dist: python-docx>=1.0; extra == 'converters'
+Provides-Extra: dev
+Requires-Dist: mypy>=1.8.0; extra == 'dev'
+Requires-Dist: pytest-asyncio>=0.23.0; extra == 'dev'
+Requires-Dist: pytest>=8.0.0; extra == 'dev'
+Provides-Extra: e2b
+Requires-Dist: e2b-code-interpreter>=0.0.11; extra == 'e2b'
+Provides-Extra: exporters
+Requires-Dist: markdown>=3.5.0; extra == 'exporters'
+Provides-Extra: mcp
+Requires-Dist: mcp>=1.0.0; extra == 'mcp'
+Provides-Extra: ocr
+Requires-Dist: pillow>=10.0; extra == 'ocr'
+Requires-Dist: pytesseract>=0.3; extra == 'ocr'
+Provides-Extra: openai-tokens
+Requires-Dist: tiktoken>=0.7.0; extra == 'openai-tokens'
+Provides-Extra: pdf
+Requires-Dist: weasyprint>=60.0; extra == 'pdf'
+Provides-Extra: pdf-simple
+Requires-Dist: fpdf2>=2.7.0; extra == 'pdf-simple'
+Provides-Extra: rich
+Requires-Dist: rich>=13.0.0; extra == 'rich'
+Provides-Extra: yaml
+Requires-Dist: pyyaml>=6.0; extra == 'yaml'
+Description-Content-Type: text/markdown
+
+# Kytchen
+
+> Too many cooks in the kitchen. Yes chef.
+
+**BYOLLM MCP servers for recursive reasoning over documents.** Kytchen is your organized prep space: pantry (storage) + prep (tools) + sauce (audit trail), so your LLM can cook the final answer.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![PyPI version](https://img.shields.io/pypi/v/kytchen.svg)](https://pypi.org/project/kytchen/)
+
+## Quick Start
+
+```bash
+pip install 'kytchen[mcp]'
+kytchen-rlm install        # auto-detects Claude Desktop, Cursor, Windsurf, VS Code
+kytchen-rlm doctor         # verify installation
+```
+
+## What This Repo Contains
+
+Kytchen is a **monorepo** that includes:
+
+- **`kytchen/`**: the core Python package
+  - **RLM core** (recursive reasoning loop)
+  - **Sandboxed REPL** and built-in analysis helpers
+  - **MCP servers** (`kytchen-mcp`, `kytchen-local`, `kytchen-mcp-cloud`)
+  - **Cloud API** (FastAPI) for hosted datasets + runs + streaming
+  - **Exporters** ("sauce" / audit trail → Markdown/PDF, etc.)
+- **`kytchen-sdk/`**: a separate Python SDK package (`kytchen_sdk`) for the Cloud API
+- **`kytchen-web/`**: the Next.js dashboard + TypeScript client (UI for datasets/runs/streaming)
+- **`docs/`**: product + architecture docs
+
+If you’re handing this to another AI for advice, the key is: **Kytchen is BYOLLM**. It provides *context infrastructure + tools + audit trail*; it does **not** provide model inference.
+
+## High-Level Architecture
+
+There are three related but distinct ways to use Kytchen:
+
+1. **Local MCP server** (`kytchen-local`)
+   - No DB required
+   - Stores context in a sandboxed Python REPL session and exposes tools via MCP
+
+2. **Cloud API** (`kytchen.api.app`)
+   - FastAPI backend for datasets/runs/tool sessions
+   - Supports **streaming query progress** (SSE)
+   - Intended to back the web dashboard + SDKs
+
+3. **SDKs / Web UI**
+   - `kytchen-sdk/` (Python) and `kytchen-web/` (Next.js + TS client)
+   - Call the Cloud API
+
+Conceptually:
+
+```
+┌──────────────────────────────────────────────────────────┐
+│ Your LLM client (Claude/Cursor/Windsurf/...)             │
+│ - Has the model subscription / provider key (BYOLLM)     │
+└──────────────────────────────────────────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────────────────┐
+│ Kytchen (tools + context + evidence)                     │
+│ - Pantry: datasets/context stored once                   │
+│ - Prep: tools to search/peek/compute                     │
+│ - Sauce: citations/evidence + metrics + trajectory       │
+└──────────────────────────────────────────────────────────┘
+```
+
+## Repository Layout
+
+```text
+.
+├── kytchen/                      # core python package
+│   ├── core.py                   # recursive loop (RLM runner)
+│   ├── repl/                      # sandboxed REPL + helpers + citations
+│   ├── mcp/                       # MCP servers (cloud + local)
+│   ├── api/                       # FastAPI backend (Cloud)
+│   ├── exporters/                 # sauce/audit exports
+│   └── converters/                # pdf/docx/xlsx → text
+├── kytchen-sdk/                  # Python SDK (httpx client)
+├── kytchen-web/                  # Next.js dashboard + TS client
+└── docs/                         # product + architecture docs
+```
+
+## File Converters (PDF / DOCX / XLSX)
+
+Install optional converter dependencies:
+
+```bash
+pip install 'kytchen[mcp,converters]'
+```
+
+Then use these MCP tools (in `kytchen-local`) to load large documents without context stuffing:
+
+```text
+convert_pdf(file_path="...", pages="1-5", context_id="doc")
+convert_docx(file_path="...", context_id="doc")
+convert_xlsx(file_path="...", formulas="evaluated", context_id="sheet")
+```
+
+Optional OCR:
+
+```bash
+pip install 'kytchen[ocr]'
+```
+
+<details>
+<summary>Manual configuration</summary>
+
+Add to your MCP client config:
+```json
+{
+  "mcpServers": {
+    "kytchen": {
+      "command": "kytchen",
+      "env": { "KYTCHEN_API_KEY": "kyt_sk_..." }
+    },
+    "kytchen-local": {
+      "command": "kytchen-local"
+    }
+  }
+}
+```
+</details>
+
+## How It Works
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  CONTEXT  →  stored once as `ctx`                                │
+└──────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌──────────────────────────────────────────────────────────────────┐
+│  🔧 80+ TOOLS                                                    │
+├──────────────────────────────────────────────────────────────────┤
+│  extract_*  │ emails, IPs, money, dates, URLs, functions, TODOs │
+│  grep/head  │ filter lines, sort, uniq, columns                 │
+│  search     │ regex with context, contains, find_all            │
+│  stats      │ word_count, frequency, ngrams, diff               │
+│  transform  │ replace, split, before/after, normalize           │
+│  validate   │ is_email, is_url, is_json, is_ip                  │
+│  convert    │ to_json, to_snake_case, slugify                   │
+└──────────────────────────────────────────────────────────────────┘
+                                 │
+                                 ▼
+┌──────────────────────────────────────────────────────────────────┐
+│  📋 EVIDENCE  →  cite() accumulates provenance with line numbers │
+└──────────────────────────────────────────────────────────────────┘
+                                 │
+                        ┌────────┴────────┐
+                        ▼                 ▼
+                    Continue          Finalize
+                  (loop back)    (answer + citations)
+```
+
+The model sees metadata, not full text. It writes Python to explore iteratively. Sauce (evidence) auto-accumulates.
+
+## Kytchen Cloud API (FastAPI)
+
+The Cloud API lives in `kytchen/api/app.py`.
+
+**Core endpoints (high signal):**
+
+- **`GET /healthz`**: health check
+- **`GET /v1/datasets`**: list datasets for workspace (workspace comes from API key)
+- **`POST /v1/datasets`**: upload dataset (`multipart/form-data`)
+- **`POST /v1/query`**: run a query and return a full `QueryResult`
+- **`POST /v1/query/stream`**: *SSE* streaming query progress ("Glass Kitchen")
+- **`POST /v1/tool_call`**: tool execution endpoint (powers the sandbox + citations)
+
+**BYOLLM detail:** `/v1/query` and `/v1/query/stream` accept a `provider` and `provider_api_key` so the user can bring their own Anthropic/OpenAI key. Kytchen is not an inference service.
+
+### QueryResult shape
+
+The backend returns:
+
+- `id`: run id
+- `answer`: string
+- `evidence`: list of citations (snippet + optional line_range + note)
+- `metrics`: token/cost accounting (baseline estimate + actual)
+
+### Streaming (`/v1/query/stream`)
+
+This endpoint is `text/event-stream` and emits JSON payloads in the form:
+
+- `{"type": "started", ...}`
+- `{"type": "step", ...}` (trajectory updates)
+- `{"type": "completed", ...}` or `{"type": "error", ...}`
+
+If you’re integrating a UI, the `step` events are what power real-time progress rendering.
+
+## Python SDK (Cloud)
+
+The Python SDK lives in `kytchen-sdk/` and is intended for calling the Cloud API from Python apps.
+
+- Entry point: `kytchen_sdk.client.KytchenClient`
+- Dataset operations: `client.datasets.*`
+- Query:
+  - `await client.query(...)` → `QueryResult`
+  - `async for event in client.query_stream(...)` → `RunEvent` stream (SSE)
+
+See `kytchen-sdk/README.md` and `kytchen-sdk/examples/basic.py`.
+
+## Web Dashboard
+
+The Next.js app is in `kytchen-web/`.
+
+It is meant to:
+
+- manage workspaces/datasets
+- visualize query progress via streaming ("open kitchen")
+- show metrics + evidence ("sauce")
+
+See `kytchen-web/README.md` for frontend-local setup.
+
+## Example
+
+```
+You: Load this contract and find all liability exclusions
+
+[AI calls load_context, search_context, cite(), evaluate_progress, finalize]
+
+AI: Found 3 liability exclusions:
+    1. Section 4.2: Consequential damages excluded (lines 142-158)
+    2. Section 7.1: Force majeure carve-out (lines 289-301)
+    3. Section 9.3: Cap at contract value (lines 445-452)
+
+    Sauce: [4 citations with line ranges]
+```
+
+## When to Use
+
+| Use Kytchen | Skip Kytchen |
+|-----------|------------|
+| Long documents (>10 pages) | Short docs (<30k tokens) |
+| Need regex search | Simple lookups |
+| Need computation on extracted data | Latency-critical apps |
+| Want citations with line numbers | |
+| Iterative analysis across turns | |
+
+<details>
+<summary><strong>MCP Tools Reference</strong></summary>
+
+| Tool | Purpose |
+|------|---------|
+| `load_context` | Store document in sandboxed REPL as `ctx` |
+| `peek_context` | View character or line ranges |
+| `search_context` | Regex search with evidence logging |
+| `exec_python` | Run code against context (includes `cite()` helper) |
+| `chunk_context` | Split into navigable chunks with metadata |
+| `think` | Structure reasoning sub-steps |
+| `evaluate_progress` | Check confidence and convergence |
+| `get_evidence` | Retrieve citation trail with filtering |
+| `get_status` | Session state and metrics |
+| `summarize_so_far` | Compress history to manage context |
+| `finalize` | Complete with answer and citations |
+
+</details>
+
+<details>
+<summary><strong>REPL Helpers</strong> (80+ functions available in exec_python)</summary>
+
+**Core:**
+`peek`, `lines`, `search`, `chunk`, `cite`
+
+**Extraction (auto-detect from context):**
+`extract_numbers`, `extract_money`, `extract_percentages`, `extract_dates`, `extract_times`, `extract_timestamps`, `extract_emails`, `extract_urls`, `extract_ips`, `extract_phones`, `extract_paths`, `extract_env_vars`, `extract_versions`, `extract_uuids`, `extract_hashes`, `extract_hex`
+
+**Code analysis:**
+`extract_functions`, `extract_classes`, `extract_imports`, `extract_comments`, `extract_strings`, `extract_todos`
+
+**Log analysis:**
+`extract_log_levels`, `extract_exceptions`, `extract_json_objects`
+
+**Statistics:**
+`word_count`, `char_count`, `line_count`, `sentence_count`, `paragraph_count`, `unique_words`, `word_frequency`, `ngrams`
+
+**Line operations (grep-like):**
+`head`, `tail`, `grep`, `grep_v`, `grep_c`, `uniq`, `sort_lines`, `number_lines`, `strip_lines`, `blank_lines`, `non_blank_lines`, `columns`
+
+**Text manipulation:**
+`replace_all`, `split_by`, `between`, `before`, `after`, `truncate`, `wrap_text`, `indent_text`, `dedent_text`, `normalize_whitespace`, `remove_punctuation`, `to_lower`, `to_upper`, `to_title`
+
+**Pattern matching:**
+`contains`, `contains_any`, `contains_all`, `count_matches`, `find_all`, `first_match`
+
+**Comparison:**
+`diff`, `similarity`, `common_lines`, `diff_lines`
+
+**Collections:**
+`dedupe`, `flatten`, `first`, `last`, `take`, `drop`, `partition`, `group_by`, `frequency`, `sample_items`, `shuffle_items`
+
+**Validation:**
+`is_numeric`, `is_email`, `is_url`, `is_ip`, `is_uuid`, `is_json`, `is_blank`
+
+**Conversion:**
+`to_json`, `from_json`, `to_csv_row`, `from_csv_row`, `to_int`, `to_float`, `to_snake_case`, `to_camel_case`, `to_pascal_case`, `to_kebab_case`, `slugify`
+
+```python
+# Examples
+emails = extract_emails()  # Auto-extracts from ctx
+money = extract_money()    # Finds $1,234.56 patterns
+errors = grep("ERROR")     # Filter lines
+word_frequency(top_n=10)   # Most common words
+```
+
+</details>
+
+<details>
+<summary><strong>Sandbox Builtins</strong></summary>
+
+**Types:** `bool`, `int`, `float`, `str`, `dict`, `list`, `set`, `tuple`, `type`, `frozenset`, `bytes`, `bytearray`, `complex`, `slice`, `object`
+
+**Functions:** `len`, `range`, `enumerate`, `zip`, `map`, `filter`, `iter`, `next`, `callable`, `min`, `max`, `sum`, `sorted`, `reversed`, `any`, `all`, `abs`, `round`, `pow`, `divmod`, `repr`, `ascii`, `chr`, `ord`, `format`, `hex`, `oct`, `bin`, `print`, `isinstance`, `issubclass`, `hash`, `id`
+
+**Exceptions:** `Exception`, `ValueError`, `TypeError`, `RuntimeError`, `KeyError`, `IndexError`, `ZeroDivisionError`, `NameError`, `AttributeError`, `StopIteration`, `AssertionError`, `LookupError`, `ArithmeticError`, `UnicodeError`
+
+**Imports:** `re`, `json`, `csv`, `math`, `statistics`, `collections`, `itertools`, `functools`, `datetime`, `textwrap`, `difflib`, `random`, `string`, `hashlib`, `base64`, `urllib.parse`, `html`
+
+</details>
+
+<details>
+<summary><strong>Configuration</strong></summary>
+
+**Environment Variables:**
+| Variable | Purpose |
+|----------|---------|
+| `KYTCHEN_MAX_ITERATIONS` | Iteration limit |
+| `KYTCHEN_MAX_COST` | Cost limit in USD |
+
+**CLI Commands:**
+```bash
+kytchen-rlm install              # Interactive installer
+kytchen-rlm install <client>     # Install to specific client
+kytchen-rlm uninstall <client>   # Remove from client
+kytchen-rlm doctor               # Verify installation
+```
+
+Supported clients: `claude-desktop`, `cursor`, `windsurf`, `vscode`, `claude-code`
+
+</details>
+
+<details>
+<summary><strong>Security</strong></summary>
+
+The sandbox is best-effort, not hardened.
+
+**Blocked:** `open`, `os`, `subprocess`, `socket`, `eval`, `exec`, dunder access, imports outside allowlist
+
+**For production:** Run in a container with resource limits. Do not expose to untrusted users without additional isolation.
+
+</details>
+
+## Development
+
+```bash
+git clone https://github.com/shannon-labs/kytchen.git
+cd kytchen
+pip install -e '.[dev,mcp]'
+pytest -q  # 230 tests
+```
+
+### Backend API (dev mode)
+
+```bash
+pip install -e '.[dev,api]'
+export KYTCHEN_DEV_MODE=1
+uvicorn kytchen.api.app:app --reload
+```
+
+### MCP server (local)
+
+```bash
+pip install -e '.[mcp]'
+python -m kytchen.mcp.server
+```
+
+### Frontend (Next.js)
+
+```bash
+cd kytchen-web
+npm install
+npm run dev
+```
+
+## Self-Hosting
+
+The repo includes Docker assets (see `docker-compose.yml` at the repo root if present in your checkout).
+
+At minimum you’ll need:
+
+- a way to store dataset bytes (filesystem / S3-compatible storage / MinIO)
+- an API key bootstrap flow (for local dev, a static key is fine)
+
+If you’re self-hosting and using BYOLLM:
+
+- Your client still supplies `provider_api_key` when calling `/v1/query`.
+
+## Configuration
+
+Common environment variables:
+
+- **`KYTCHEN_DEV_MODE=1`**: run the API in in-memory mode (no DB)
+- **`KYTCHEN_PROVIDER`**: default provider name (e.g. `anthropic`, `openai`)
+- **`KYTCHEN_MODEL`**: default model name
+
+The web app uses `kytchen-web/.env.local` for Supabase + API endpoints.
+
+## Glossary (Project Terms)
+
+- **Pantry**: stored datasets/context
+- **Prep**: tools and sandboxed REPL operations
+- **Sauce**: evidence/citations (provenance)
+- **Ticket / Run**: a query execution with a trajectory
+- **Trajectory**: step-by-step trace of the reasoning loop
+- **Glass Kitchen**: streaming progress UX (SSE)
+
+## If You’re Another AI Reading This
+
+Useful entry points (high-signal files):
+
+- `kytchen/core.py`: RLM loop orchestration, trajectory creation, provider calls
+- `kytchen/repl/sandbox.py` + `kytchen/repl/helpers.py`: sandbox + evidence (`cite`) primitives
+- `kytchen/api/app.py`: Cloud API routes (`/v1/query`, `/v1/query/stream`, datasets)
+- `kytchen-sdk/kytchen_sdk/client.py`: Python SDK calling conventions + expected shapes
+- `docs/WORKSPACE_ARCHITECTURE.md`: product + API design intent
+
+When giving advice, clarify:
+
+- Is the goal **MCP local tooling** or **Cloud API + dashboard**?
+- Is the issue about **streaming**, **evidence/audit**, **dataset processing**, or **self-hosting**?
+
+## Recent Changes
+
+### v0.2.0 (December 2025)
+
+**80+ new REPL helpers** for document analysis:
+- 16 extraction functions (emails, IPs, money, dates, phones, URLs, paths, versions, UUIDs, functions, classes, TODOs, log levels)
+- 8 statistics (word/line/char count, word frequency, n-grams)
+- 12 grep-like line operations (head, tail, grep, sort, uniq, columns)
+- 15 text manipulation (replace, split, before/after, truncate, normalize)
+- 6 pattern matching (contains, count_matches, find_all)
+- 4 comparison (diff, similarity)
+- 11 collection utilities (dedupe, flatten, group_by, frequency)
+- 7 validators (is_email, is_url, is_ip, is_uuid, is_json)
+- 11 converters (to_json, to_snake_case, slugify)
+
+**30+ new builtins:** `map`, `filter`, `iter`, `next`, `repr`, `chr`, `ord`, `pow`, `divmod`, `hash`, `id`, `callable`, `frozenset`, `bytes`, `slice`...
+
+**6 new allowed imports:** `random`, `string`, `hashlib`, `base64`, `urllib.parse`, `html`
+
+### v0.1.3 (December 2025)
+
+- Added `type` builtin to sandbox
+- Added `NameError` and `AttributeError` exceptions
+
+## Research
+
+Inspired by [Recursive Language Models](https://alexzhang13.github.io/blog/2025/rlm/) by Alex Zhang and Omar Khattab.
+
+## License
+
+MIT
