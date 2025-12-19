@@ -1,0 +1,85 @@
+Metadata-Version: 2.4
+Name: color-spreadsheet
+Version: 0.1.1
+Summary: Apply color coding to Excel spreadsheet cells based on content type
+Author-email: Max Shron <max@shron.net>
+License-File: LICENSE.txt
+Requires-Python: >=3.9
+Requires-Dist: openpyxl
+Description-Content-Type: text/markdown
+
+# color-spreadsheet
+
+Apply color coding to Excel spreadsheet cells based on content type.
+
+## Overview
+
+`color-spreadsheet` is a Python package that automatically color-codes cells in Excel spreadsheets based on their content type. This makes it easier to visually distinguish between hardcoded inputs, formulas, and cross-sheet references.
+
+## Installation
+
+```bash
+pip install color-spreadsheet
+```
+
+## Usage
+
+### Command Line
+
+```bash
+color-spreadsheet --input="input.xlsx" --output="output.xlsx"
+```
+
+### Full Options
+
+```bash
+color-spreadsheet --input="input.xlsx" --output="output.xlsx" --colorway="standard-financial"
+```
+
+### List Available Colorways
+
+```bash
+color-spreadsheet --list-colorways
+```
+
+### Python API
+
+```python
+from color_spreadsheet import process_workbook
+from color_spreadsheet.colorways.registry import get_colorway
+
+# Get the colorway
+colorway = get_colorway("standard-financial")
+
+# Process the workbook
+stats = process_workbook("input.xlsx", "output.xlsx", colorway)
+
+# Print statistics
+print(f"Processed {stats.total_cells_processed} cells")
+```
+
+## Color Scheme
+
+The default `standard-financial` colorway uses the following color scheme:
+
+- **Blue** (0000FF): Hardcoded values (numbers, dates, booleans) - These are your inputs
+- **Black** (000000): Formulas referencing cells in the same sheet
+- **Green** (008000): Formulas referencing cells in other sheets (cross-sheet references)
+- **Unchanged**: Text labels (left as default formatting)
+
+This color scheme makes it easy to:
+- Identify which cells contain hardcoded data that may need updating
+- Trace formula dependencies within and across sheets
+- Distinguish between data inputs and calculated values
+
+## Extensibility
+
+The package is designed with an extensible colorway architecture. Future versions will support additional colorways, and you can create custom colorways by extending the `Colorway` base class.
+
+## License
+
+MIT License - see LICENSE file for details.
+
+## Author
+
+Maxwell Shron (max@shron.net), aided by Claude Code
