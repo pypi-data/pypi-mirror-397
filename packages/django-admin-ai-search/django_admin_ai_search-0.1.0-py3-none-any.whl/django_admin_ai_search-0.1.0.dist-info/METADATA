@@ -1,0 +1,291 @@
+Metadata-Version: 2.4
+Name: django-admin-ai-search
+Version: 0.1.0
+Summary: AI-powered natural language search for Django Admin
+Project-URL: Homepage, https://github.com/quanhea/django-admin-ai-search
+Project-URL: Documentation, https://github.com/quanhea/django-admin-ai-search#readme
+Project-URL: Repository, https://github.com/quanhea/django-admin-ai-search
+Project-URL: Issues, https://github.com/quanhea/django-admin-ai-search/issues
+Author-email: Anh Tran <anh.q.tran@eastagile.com>
+License-Expression: MIT
+License-File: LICENSE
+Keywords: admin,ai,django,llm,natural-language,search
+Classifier: Development Status :: 3 - Alpha
+Classifier: Environment :: Web Environment
+Classifier: Framework :: Django
+Classifier: Framework :: Django :: 4.2
+Classifier: Framework :: Django :: 5.0
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Internet :: WWW/HTTP :: Dynamic Content
+Requires-Python: >=3.10
+Requires-Dist: django>=4.2
+Description-Content-Type: text/markdown
+
+# Django Admin AI Search
+
+[![PyPI version](https://img.shields.io/pypi/v/django-admin-ai-search.svg)](https://pypi.org/project/django-admin-ai-search/)
+[![Python versions](https://img.shields.io/pypi/pyversions/django-admin-ai-search.svg)](https://pypi.org/project/django-admin-ai-search/)
+[![Django versions](https://img.shields.io/badge/django-4.2%20%7C%205.0%20%7C%205.1-blue.svg)](https://pypi.org/project/django-admin-ai-search/)
+[![CI](https://github.com/quanhea/django-admin-ai-search/actions/workflows/ci.yml/badge.svg)](https://github.com/quanhea/django-admin-ai-search/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/quanhea/django-admin-ai-search/branch/main/graph/badge.svg)](https://codecov.io/gh/quanhea/django-admin-ai-search)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+AI-powered natural language search for Django Admin. Ask questions like "Find all users created today" or "Show orders over $1000" and get instant results.
+
+## Installation
+
+```bash
+pip install django-admin-ai-search
+```
+
+## Quick Start
+
+### 1. Add to INSTALLED_APPS
+
+Add `django_admin_ai_search` **before** `django.contrib.admin`:
+
+```python
+INSTALLED_APPS = [
+    "django_admin_ai_search",  # Must be before django.contrib.admin
+    "django.contrib.admin",
+    # ...
+]
+```
+
+### 2. Add URL patterns
+
+```python
+from django.urls import include, path
+from django_admin_ai_search.urls import get_urlpatterns as get_ai_search_urls
+
+urlpatterns = [
+    path("admin/ai-search/", include("django_admin_ai_search.urls")),
+    path("admin/", admin.site.urls),
+    # ...
+]
+
+# Add search page URLs
+urlpatterns += get_ai_search_urls()
+```
+
+### 3. Configure your LLM generator
+
+Create a generator class that implements the `QueryGenerator` protocol:
+
+```python
+# myapp/generators.py
+import json
+from openai import OpenAI
+from django_admin_ai_search import get_system_prompt
+
+class OpenAIGenerator:
+    def __init__(self):
+        self.client = OpenAI()  # Uses OPENAI_API_KEY env var
+
+    def generate(self, user_query: str, model_schema: list[dict]) -> dict:
+        response = self.client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": get_system_prompt(model_schema)},
+                {"role": "user", "content": user_query},
+            ]
+        )
+        return json.loads(response.choices[0].message.content)
+```
+
+### 4. Add settings
+
+```python
+DJANGO_ADMIN_AI_SEARCH = {
+    "GENERATOR": "myapp.generators.OpenAIGenerator",
+    "CACHE_TIMEOUT": 3600,  # Cache results for 1 hour (optional)
+    "CACHE_PREFIX": "ai_search",  # Cache key prefix (optional)
+}
+```
+
+## Generator Examples
+
+<details>
+<summary><b>OpenAI</b></summary>
+
+```python
+import json
+from openai import OpenAI
+from django_admin_ai_search import get_system_prompt
+
+class OpenAIGenerator:
+    def __init__(self, model: str = "gpt-4"):
+        self.client = OpenAI()
+        self.model = model
+
+    def generate(self, user_query: str, model_schema: list[dict]) -> dict:
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": get_system_prompt(model_schema)},
+                {"role": "user", "content": user_query},
+            ]
+        )
+        return json.loads(response.choices[0].message.content)
+```
+
+</details>
+
+<details>
+<summary><b>Anthropic</b></summary>
+
+```python
+import json
+from anthropic import Anthropic
+from django_admin_ai_search import get_system_prompt
+
+class AnthropicGenerator:
+    def __init__(self, model: str = "claude-sonnet-4-20250514"):
+        self.client = Anthropic()
+        self.model = model
+
+    def generate(self, user_query: str, model_schema: list[dict]) -> dict:
+        response = self.client.messages.create(
+            model=self.model,
+            max_tokens=1024,
+            system=get_system_prompt(model_schema),
+            messages=[{"role": "user", "content": user_query}]
+        )
+        return json.loads(response.content[0].text)
+```
+
+</details>
+
+<details>
+<summary><b>AWS Bedrock</b></summary>
+
+```python
+import json
+import boto3
+from django_admin_ai_search import get_system_prompt
+
+class BedrockGenerator:
+    def __init__(self, model_id: str = "anthropic.claude-3-sonnet-20240229-v1:0"):
+        self.client = boto3.client("bedrock-runtime")
+        self.model_id = model_id
+
+    def generate(self, user_query: str, model_schema: list[dict]) -> dict:
+        response = self.client.converse(
+            modelId=self.model_id,
+            system=[{"text": get_system_prompt(model_schema)}],
+            messages=[{"role": "user", "content": [{"text": user_query}]}]
+        )
+        return json.loads(response["output"]["message"]["content"][0]["text"])
+```
+
+</details>
+
+<details>
+<summary><b>LangChain</b></summary>
+
+```python
+import json
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate
+from django_admin_ai_search import get_system_prompt
+
+class LangChainGenerator:
+    def __init__(self):
+        self.llm = ChatOpenAI(model="gpt-4", temperature=0)
+
+    def generate(self, user_query: str, model_schema: list[dict]) -> dict:
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", get_system_prompt(model_schema)),
+            ("human", "{query}"),
+        ])
+        chain = prompt | self.llm
+        response = chain.invoke({"query": user_query})
+        return json.loads(response.content)
+```
+
+</details>
+
+<details>
+<summary><b>Pydantic-AI</b></summary>
+
+```python
+from pydantic import BaseModel
+from pydantic_ai import Agent
+from django_admin_ai_search import get_system_prompt
+
+class QueryResult(BaseModel):
+    code: str
+    explanation: str
+    app_label: str
+    model_name: str
+
+class PydanticAIGenerator:
+    def __init__(self):
+        self.agent = Agent("openai:gpt-4", result_type=QueryResult)
+
+    def generate(self, user_query: str, model_schema: list[dict]) -> dict:
+        result = self.agent.run_sync(
+            user_query,
+            system_prompt=get_system_prompt(model_schema)
+        )
+        return result.data.model_dump()
+```
+
+</details>
+
+## Configuration Options
+
+```python
+DJANGO_ADMIN_AI_SEARCH = {
+    # Required: Your generator class or instance
+    "GENERATOR": "myapp.generators.OpenAIGenerator",
+
+    # Optional: Cache timeout in seconds (default: 3600)
+    "CACHE_TIMEOUT": 3600,
+
+    # Optional: Cache key prefix (default: "django_admin_ai_search")
+    "CACHE_PREFIX": "django_admin_ai_search",
+}
+```
+
+## How It Works
+
+1. User enters a natural language query in the Django admin search box
+2. The package extracts schema information from all registered admin models
+3. Your generator receives the query and schema, calls your LLM, and returns structured JSON
+4. The package executes the generated Django ORM code safely
+5. Results are displayed in a dynamic table with clickable links to admin change pages
+
+## Security
+
+- Only **read-only** queries are allowed (no UPDATE, DELETE, CREATE, etc.)
+- Queries are limited to 50 results
+- Only models registered in Django admin are queryable
+- Staff authentication required for all endpoints
+
+## Development
+
+```bash
+# Clone the repository
+git clone https://github.com/quanhea/django-admin-ai-search.git
+cd django-admin-ai-search
+
+# Install dependencies with uv
+uv sync
+
+# Run tests
+uv run pytest
+
+# Build package
+uv build
+```
+
+## License
+
+MIT
