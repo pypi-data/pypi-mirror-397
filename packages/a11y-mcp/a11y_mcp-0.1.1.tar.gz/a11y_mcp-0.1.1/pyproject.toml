@@ -1,0 +1,95 @@
+[project]
+name = "a11y-mcp"
+version = "0.1.1"
+description = "MCP server for accessibility testing with Cloudflare bypass using Camoufox and axe-core"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Antonio Ramirez"}
+]
+keywords = [
+    "mcp",
+    "model-context-protocol",
+    "accessibility",
+    "a11y",
+    "axe-core",
+    "wcag",
+    "cloudflare",
+    "deque",
+    "testing",
+    "automation",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = [
+    "mcp>=1.2.0",
+    "camoufox[geoip]>=0.4.0",
+    "pydantic>=2.0",
+    "jinja2>=3.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/antonio-rmrz/a11y-mcp"
+Repository = "https://github.com/antonio-rmrz/a11y-mcp"
+Documentation = "https://github.com/antonio-rmrz/a11y-mcp#readme"
+Issues = "https://github.com/antonio-rmrz/a11y-mcp/issues"
+Changelog = "https://github.com/antonio-rmrz/a11y-mcp/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21",
+    "ruff>=0.1.0",
+    "build>=1.0.0",
+    "twine>=4.0.0",
+]
+
+[project.scripts]
+a11y-mcp = "a11y_mcp.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/a11y_mcp"]
+
+[tool.hatch.build.targets.wheel.sources]
+"src" = ""
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/a11y_mcp/assets/axe.min.js" = "a11y_mcp/assets/axe.min.js"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/scripts",
+    "/tests",
+    "/README.md",
+    "/LICENSE",
+    "/CHANGELOG.md",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
