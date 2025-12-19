@@ -1,0 +1,194 @@
+[<img src="https://github.com/a-fuchs/jupyter-micropython-extended-kernel/blob/main/assets/images/Logo.png?raw=true" width="64" align="center" title="Logo">](https://github.com/a-fuchs/jupyter-micropython-extended-kernel) &emsp;  **Jupyter MicroPython extended Kernel**
+
+---
+
+# Jupyter MicroPython extended Kernel
+
+---
+## Description
+Tested with [MicroPython](https://micropython.org) v1.12 - v1.27 on ESP32-Boards in [Jupyter Lab](https://jupyter.org/).
+
+Typically used with MicroPython boards over the
+* USB / Serial interface.
+
+It also allows
+* serial connection with the Uart-REPL, f.e. classic BlueTooth with HC-05/HC-06,
+* connecting over WiFi with the Web-REPL and
+* connecting over Bluetooth Low Energy with the BLE-REPL (based on [bleak](https://github.com/hbldh/bleak)).
+
+
+With the cell magic `%%iPython` you can run normal Python in MicroPython-Jupyter Notebooks.  
+Within such a Python cell functions and variables on the controller can be accessed with the special functions `micropython_eval`, `micropython_value` and `micropython_run`, meaning, for example, that data captured by the controller can be displayed directly with matplotlib.
+
+For details see [Example](#idExamples) further down, the [KernelTest.ipynb](https://github.com/a-fuchs/jupyter-micropython-extended-kernel/blob/main/KernelTest.ipynb) Notebook and the [example Notebooks](https://github.com/a-fuchs/jupyter-micropython-extended-kernel/blob/main/notebooks/Index.ipynb).
+
+---
+## Background
+
+Why another MicroPython kernel for JuypterLab?
+
+After using [Julian Todd's excellent kernel](https://github.com/goatchurchprime/jupyter_micropython_kernel) for a while, I wanted to program an ESP32 via a BLE connection instead of USB. I simply couldn't establish a connection with [Carlos Gil Gonzalez's great kernel](https://github.com/Carglglz/jupyter_upydevice_kernel). However, this kernel offers a **very useful feature**: calling IPython code in a MicroPython notebook and facilitating data exchange between MicroPython and IPython. Another kernel is [Jos Verlinde's](https://github.com/Josverl/micropython-magic). It allows you to call MicroPython code in an IPython notebook using a Cell Magic. But I wanted the exact opposite: an IPython cell in a MicroPython notebook.
+
+Therefore, I took Todd's kernel as a base, did a little refactoring and added the ideas from the other two kernels.<br/>
+The BLE connection is implemented with the [bleak](https://github.com/hbldh/bleak) library, which doesn't require administrator privileges for installation on Windows, which is important in environments with restricted rights, such as is common in many schools.
+
+
+---
+## Installation
+### Install [JupyterLab](https://jupyter.org/)
+If not done yet, set up [JupyterLab](https://jupyter.org/install):
+
+**Linux:**
+```
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+or **Windows:**
+```bash
+python -m venv .venv
+.venv\Scripts\activate
+```
+
+Then (Linux, Windows):
+```bash
+pip install --upgrade pip
+pip install jupyterlab
+```
+### Install JupyterLab MicroPython extended Kernel
+#### Requirements
+**Linux & Macintosh:**  
+On Linux and Macintosh systems a USB driver is generally already installed.<br/>
+If you are on **Linux** and don't have the correct permissions to access the Serial ports you will get a "permissions error".  Fix it by adding yourself to the dialout and tty groups:
+
+    sudo usermod -a -G tty your_user_name
+    sudo usermod -a -G dialout your_user_name
+
+**Windows:**  
+On Windows systems, usually a USB driver needs to be installed: <br/>
+in most cases, you will need the [CP210x Universal Windows Driver](https://www.silabs.com/documents/public/software/CP210x_Universal_Windows_Driver.zip)
+from the [Silicon Lab download site](https://www.silabs.com/software-and-tools/usb-to-uart-bridge-vcp-drivers?tab=downloads).<br/>
+ Extract this file and, on standard 64-bit Windows systems (almost all of them these days), run the file `CP210xVCPInstaller_x64.exe`.
+
+#### Install dependencies:
+```
+pip install --upgrade unsync, bleak, pyserial, websocket-client
+```
+    
+#### Install the kernel:
+```
+pip install jupyter-micropython-extended-kernel
+```
+and register the kernel within JupyterLab so it can be selected for use in
+notebooks:
+```
+python -m jupyter_micropython_extended_kernel.install
+```
+
+See also [Installing the kernel](https://github.com/a-fuchs/jupyter-micropython-extended-kernel/blob/main/KernelTest.ipynb) if in a running JupyterLab environment.
+
+
+---
+## Running
+### Start JupyterLab:
+
+**Linux:**
+```
+jupyter lab --notebook-dir ~
+```
+**Windows:**
+```
+jupyter lab --notebook-dir %USERPROFILE%
+```
+
+In the launcher click on the `MicroPython - extended - USB` button to create a new NoteBook or, if a NoteBook is already loaded, select the `MicroPython - Extended - USB`-kernel in the upper right corner.
+
+If not already running on your ESP32 or ESP8266, you have to flash [MicroPython](https://micropython.org) to your ESP32 or ESP8266. Please look at [micropython.org/download](https://micropython.org/download/) for how to do it, or f.e. [here](https://gitlab.fosbos-rosenheim.de/pub/00-installationsanleitungen/-/blob/main/MicropythonInstall/index.ipynb?ref_type=heads).
+
+### Connect controller:
+
+Now connect the ESP32 or ESP8266 using a USB cable, write the following command into the first cell and run it:
+```
+%serialconnect
+```
+ 
+If everything goes well, you see something like
+
+    [...]
+    Connecting to --port=/dev/ttyUSB0 --baud=115200  
+     ** Connected to SerialPort: port=/dev/ttyUSB0 baudrate=115200 **
+    Ready.
+
+This differs from system to system and what you have done before, but `Ready.` should appear at the end.  
+
+### Program!
+Now execute in a cell:
+```python
+print( "Hello world!" )
+```
+This gives:
+```
+Hello world!
+```
+as output.
+
+For more **examples** please go to the [KernelTest.ipynb](https://github.com/a-fuchs/jupyter-micropython-extended-kernel/blob/main/KernelTest.ipynb) notebook.
+
+
+
+---
+<a id="idExamples"></a>
+## Example:
+
+---
+**MicroPython cell:**
+```python
+import random
+
+def getRandom( bits, offset=2**7, factor=1 ):
+    return ( random.getrandbits(bits)-offset ) * factor
+```
+---
+**Python-3 cells:**  
+
+Calling function `getRandom` on controller with default parameters and print return value on local PC:
+```python
+%%iPython
+# Test call with default parameters:
+iRandom = micropython_run( "getRandom", 8 )
+print( f"iRandom = {iRandom}" )
+```
+Call `micropython_run( 'getRandom', bits=1, offset=0.5, factor=2 )` in a loop and display data in a dynamically updated plot:
+```python
+%%iPython
+# load libraries to display the plots
+import bqplot.pyplot as plt
+import numpy as np
+from time import sleep
+
+plt.clear()  # clear any previous plots
+plt.show()
+
+aData   = []
+dataSum = 0
+
+for i in range(100):
+    dataSum += micropython_run( "getRandom", bits=1, offset=0.5, factor=2 )
+    aData.append(dataSum)
+    plt.plot(aData)
+    sleep(0.1)
+```
+Output:
+
+[<img src="https://github.com/a-fuchs/jupyter-micropython-extended-kernel/blob/main/assets/images/RandomValuesPlot.png?raw=true" title="Dynamically updated random values plot" width="500"/>](./assets/images/RandomValuesPlot.png)
+
+---
+
+## Further notes
+* Normally, you have to run `%serialconnect` every time you switch to a different notebook. Sometimes, disconnecting the device from the USB cable, reconnecting it, and then running `%serialconnect` helps.
+* Endless loops can be stopped with "Esc ii", "Ctrl C" (does not work in some cases) or hitting the stop button at the top of the Notebook<br/> [<img src="https://github.com/a-fuchs/jupyter-micropython-extended-kernel/blob/main/assets/images/StopButton.png?raw=true" width="220" align="center" title="Stop button"/>](./assets/images/StopButton.png)
+  Also `Kernel` → `Interrupt` in the menu may help.
+* To find out where your kernelspecs are stored, you can open a terminal with `File`→`New`→`Terminal` an then execute there `jupyter kernelspec list`.
+* Restarting the kernel does not actually reboot the device!  
+* You can list all the magics with: `%lsmagic`
+
