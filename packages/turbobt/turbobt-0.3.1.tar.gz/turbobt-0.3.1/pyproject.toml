@@ -1,0 +1,108 @@
+[project]
+name = "turbobt"
+description = "A next generation Bittensor SDK, for Python 3."
+readme = "README.md"
+authors = [
+    { name = "Reef Technologies", email = "opensource@reef.pl" },
+]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Framework :: AsyncIO",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+requires-python = ">=3.11"
+dependencies = [
+    "bittensor-drand~=1.0.0",
+    "bittensor-wallet~=4.0.0",
+    "eciespy~=0.4.6",
+    "httpx~=0.26.0",
+    "scalecodec~=1.2.11",
+    "websockets~=14.1",
+    "xxhash~=3.5.0",
+]
+license = "BSD-3-Clause"
+license-files = [
+    "LICENSE",
+]
+dynamic = []
+version = "0.3.1"
+
+[project.urls]
+Homepage = "https://github.com/bactensor/turbobt"
+Issues = "https://github.com/bactensor/turbobt/issues"
+
+[dependency-groups]
+dev = [
+    "pytest-asyncio",
+    "pytest-mock",
+    "pytest-xdist",
+    "pytest",
+    "ruff",
+]
+
+[build-system]
+requires = [
+    "pdm-backend~=2.4",
+    "setuptools-scm~=9.0",
+]
+build-backend = "pdm.backend"
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.build]
+includes = [
+    "turbobt",
+]
+
+[tool.pdm.version]
+source = "scm"
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "I",
+    "UP",
+    "S",
+    "TC005",
+]
+ignore = [
+    "D100",
+    "D105",
+    "D107",
+    "D200",
+    "D202",
+    "D203",
+    "D205",
+    "D212",
+    "D400",
+    "D401",
+    "D415",
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "E501",
+    "S101",
+    "S108",
+    "S603",
+    "S607",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = [
+    "F401",
+]
+"**/test*/**.py" = [
+    "D",
+    "F403",
+    "F405",
+    "S106",
+    "S311",
+]
