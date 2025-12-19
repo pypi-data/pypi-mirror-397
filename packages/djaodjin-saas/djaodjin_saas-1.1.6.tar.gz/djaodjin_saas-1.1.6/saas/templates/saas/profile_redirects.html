@@ -1,0 +1,54 @@
+{% extends "saas/base.html" %}
+
+{% block content %}
+<div id="app">{# so tests have something to hang on. #}
+  <section id="redirects">
+    <h1>To continue, please select a profile ...</h1>
+    <role-profile-list inline-template id="accessible-list-container"
+        :request-user="'{{request.user.email}}'"
+        data-items='{{redirects|to_json}}'>
+      <div>
+        <div v-show="!itemsLoaded">
+          <h3>loading ...</h3>
+        </div>
+        <div v-show="itemsLoaded && items.results.length > 0" v-cloak>
+          <div v-for="item in items.results">
+            <div :id="'redirect-' + (item.profile.slug ? item.profile.slug : item)">
+              <div>
+                <div>
+                  <div>
+                    <img style="max-height:64px;" :src="item.profile.picture" >
+                  </div>
+                  <div>
+                    <span>[[item.profile.printable_name ? item.profile.printable_name : '@' + item]]</span>
+                    <p>
+                      <span>[[ item.role_description ? item.role_description.title : "" ]]</span>
+                    </p>
+                  </div>
+                  <div>
+                    <div>
+                      <span v-if="item.request_key">Access requested...</span>
+                      {# We use 'a.btn-primary' in tests to find the button. #}
+                      <a :href="item.home_url" class="btn-primary"
+                         v-if="!item.request_key && !item.accept_grant_api_url">Use this profile</a>
+                      <a :href="item.home_url" class="btn-primary"
+                         v-if="item.accept_grant_api_url">Accept role &amp; Use this profile</a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>{# /.card #}
+          </div>
+          <hr />
+          <p>
+If you need to create a new profile, please do so through the <a href="{{urls.user.accessibles}}">connected profiles</a> page.
+          </p>
+        </div>
+        <div v-show="itemsLoaded && items.results.length == 0" v-cloak>
+          {% include "saas/_profile_new.html" %}
+        </div>
+      </div>
+    </role-profile-list>
+  </section>
+</div>
+{% endblock %}
