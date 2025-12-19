@@ -1,0 +1,139 @@
+Metadata-Version: 2.4
+Name: plsm
+Version: 1.0.1
+Summary: Python Linux Service Manager - 专注于Linux系统服务管理的Python库
+Project-URL: Homepage, https://gitee.com/liumou_site/plsm
+Project-URL: Repository, https://gitee.com/liumou_site/plsm
+Project-URL: Documentation, https://gitee.com/liumou_site/plsm
+Author-email: 坐公交也用券 <liumou.site@qq.com>
+License: MIT
+License-File: LICENSE
+Keywords: init,linux,management,service,systemd
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: System Administrators
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: System :: Systems Administration
+Classifier: Topic :: Utilities
+Requires-Python: >=3.7
+Requires-Dist: dataclasses; python_version < '3.8'
+Description-Content-Type: text/markdown
+
+# Python Linux Service Manager (plsm)
+
+[![PyPI Version](https://img.shields.io/pypi/v/plsm)](https://pypi.org/project/plsm/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/plsm)](https://pypi.org/project/plsm/)
+[![Downloads](https://img.shields.io/pypi/dm/plsm)](https://pypi.org/project/plsm/)
+[![License](https://img.shields.io/pypi/l/plsm)](https://pypi.org/project/plsm/)
+[![Gitee Stars](https://gitee.com/liumou_site/plsm/badge/star.svg?theme=white)](https://gitee.com/liumou_site/plsm)
+
+#### 介绍
+Python Linux Service Manager (plsm)：专注于Linux系统服务管理的Python库，提供完整的服务配置管理、状态监控和操作功能。
+
+#### 项目统计
+- **最新版本**: v0.1.0
+- **PyPI 下载量**: [查看统计](https://pypistats.org/packages/plsm)
+- **支持Python版本**: 3.8+
+- **许可证**: MIT
+
+#### 软件架构
+plsm采用模块化设计，将功能拆分为三个核心模块：
+
+- **配置管理模块** (`ServiceConfigManager`): 负责服务的配置文件读取、解析和管理
+- **状态管理模块** (`ServiceStatusManager`): 负责服务的状态监控、查询和管理  
+- **主服务管理模块** (`ServiceManager`): 整合配置和状态管理，提供完整的服务管理功能
+
+#### 特性
+
+🚀 **分离架构**: 配置管理和状态管理分离，职责清晰  
+🔍 **自动检测**: 自动识别系统服务状态和配置信息  
+💻 **Python 3.8+ 兼容**: 支持现代Python版本  
+📦 **完整功能**: 支持服务的启动、停止、重启、重载等操作  
+🛡️ **错误处理**: 完善的错误处理和异常管理  
+🧪 **完整测试**: 全面的单元测试覆盖  
+
+#### 安装教程
+
+1. **从源码安装**
+```bash
+git clone https://gitee.com/liumou_site/plsm.git
+cd plsm
+pip install .
+```
+
+2. **从PyPI安装** (待发布)
+```bash
+pip install plsm
+```
+
+#### 快速开始
+
+```python
+from plsm import ServiceManager, ServiceConfig
+
+# 创建服务管理器
+manager = ServiceManager(sudo=True)
+
+# 列出所有服务
+services = manager.list_all_services()
+for service in services[:5]:
+    print(f"{service.name}: {service.status.value}")
+
+# 检查特定服务状态
+nginx_info = manager.get_service_info("nginx")
+if nginx_info:
+    print(f"nginx状态: {nginx_info.status.value}")
+
+# 创建自定义服务
+config = ServiceConfig(
+    name="my-service",
+    description="My Custom Service",
+    exec_start="/usr/bin/python3 -m http.server 8080",
+    working_directory="/tmp"
+)
+
+# 创建并启动服务
+manager.create_service(config, start_after_create=True)
+```
+
+#### API 参考
+
+**ServiceConfigManager 类**
+- `list_services()` - 列出所有服务
+- `service_exists(name)` - 检查服务是否存在
+- `read_config(name)` - 读取服务配置
+- `create_config(config)` - 创建服务配置
+- `remove_config(name)` - 删除服务配置
+
+**ServiceStatusManager 类**  
+- `get_status(name)` - 获取服务状态
+- `is_running(name)` - 检查服务是否运行
+- `is_active(name)` - 检查服务是否激活
+- `list_services()` - 列出所有服务状态
+
+**ServiceManager 类**
+- `start_service(name)` - 启动服务
+- `stop_service(name)` - 停止服务  
+- `restart_service(name)` - 重启服务
+- `enable_service(name)` - 启用服务
+- `create_service(config)` - 创建服务
+- `validate_service(name)` - 验证服务状态
+
+#### 参与贡献
+
+1.  Fork 本仓库
+2.  新建 Feat_xxx 分支
+3.  提交代码
+4.  新建 Pull Request
+
+#### 许可证
+
+本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
