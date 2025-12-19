@@ -1,0 +1,53 @@
+[project]
+name = "vaas"
+version = "0.1.1"
+requires-python = ">=3.10,<3.13"
+description = "VAAS"
+readme = "README.md"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Opeyemi Bamigbade" },
+    { name = "Mark Scanlon" },
+    { name = "John Sheppard" },
+]
+
+dependencies = [
+  "transformers>=4.40",
+  "numpy",
+  "pillow",
+  "tqdm",
+  "scipy",
+  "opencv-python-headless"
+]
+
+[project.optional-dependencies]
+cpu = [
+  "torch>=2.2",
+  "torchvision>=0.17"
+]
+
+cuda = [
+  "torch==2.10.0.dev20251203+cu128",
+  "torchvision==0.25.0.dev20251203+cu128"
+]
+
+[dependency-groups]
+cuda-dev = [
+  "torch==2.10.0.dev20251203+cu128",
+  "torchvision==0.25.0.dev20251203+cu128"
+]
+
+dev = [
+  "pre-commit>=4.5.0",
+  "pytest",
+  "pytest-cov"
+]
+
+[tool.setuptools.packages.find]
+include = ["vaas*"]
+exclude = ["tests*"]
+
+[tool.uv]
+index-url = "https://pypi.org/simple"
+extra-index-url = ["https://download.pytorch.org/whl/nightly/cu128"]
+index-strategy = "unsafe-best-match"
