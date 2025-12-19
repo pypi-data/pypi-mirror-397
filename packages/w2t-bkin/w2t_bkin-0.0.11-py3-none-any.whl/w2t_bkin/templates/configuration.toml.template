@@ -1,0 +1,154 @@
+# =============================================================================
+# w2t-bkin Pipeline Configuration Template
+# =============================================================================
+# This template shows ALL available configuration options.
+# Sections marked with ⚠️ are planned but not yet implemented.
+#
+# For a minimal working configuration, run: w2t-bkin data init <path>
+# =============================================================================
+
+# =============================================================================
+# Project Configuration
+# =============================================================================
+
+[project]
+name = "w2t-bkin-pipeline"
+
+# =============================================================================
+# Paths Configuration
+# =============================================================================
+# Paths can be configured here OR via environment variables (recommended for workers).
+# Environment variables override these settings:
+# - W2T_RAW_ROOT
+# - W2T_INTERMEDIATE_ROOT
+# - W2T_OUTPUT_ROOT
+# - W2T_MODELS_ROOT
+# - W2T_ROOT_METADATA
+#
+[paths]
+raw_root = "data/raw"
+intermediate_root = "data/interim"
+output_root = "data/processed"
+models_root = "models"
+root_metadata = "/home/user/configs/metadata.toml" # Optional: global metadata override
+
+# =============================================================================
+# Synchronization Strategy
+# =============================================================================
+
+[synchronization]
+strategy = "hardware_pulse"      # Options: rate_based | hardware_pulse | network_stream
+reference_channel = "ttl_camera" # Master clock TTL channel
+
+[synchronization.alignment]
+method = "nearest"          # Options: nearest | linear
+tolerance_s = 0.002         # Max allowed timing jitter (seconds)
+global_offset_s = 0.0       # Global time offset correction
+
+# =============================================================================
+# Verification & Validation
+# Pipeline verifies data integrity but does NOT compute timestamps (uses hardware sync)
+# Session logs auto-created: {output_root}/{subject}/{session}/pipeline.log
+# =============================================================================
+
+[verification]
+enabled = true                # Master switch (disables all checks when false)
+check_frame_counts = true     # Count frames via ffprobe (slow but accurate)
+check_sync_mismatch = true    # Verify frame/TTL counts match (false = skip TTL checks)
+skip_nwb_requirements = false # Use FPS estimates instead of exact counts (not recommended)
+mismatch_tolerance_frames = 0 # Max allowed frame/pulse difference
+warn_on_mismatch = false      # Warn instead of fail when within tolerance
+
+# =============================================================================
+# Data Acquisition
+# =============================================================================
+
+[acquisition]
+concat_strategy = "ffconcat" # Video concatenation: ffconcat | mkvmerge
+
+# =============================================================================
+# Preprocessing Configuration
+# =============================================================================
+
+[preprocessing]
+force_rerun = false # Force re-run even if outputs exist
+
+[preprocessing.dlc]
+enabled = false
+# model_path = "models/my-dlc-model/config.yaml"  # Path to DLC config
+# gpu = 0                                         # GPU device ID
+# save_csv = false                                # Save CSV outputs
+
+[preprocessing.sleap]
+enabled = false
+# model_path = "models/my-sleap-model"            # Path to SLEAP model
+# gpu = 0                                         # GPU device ID
+
+# =============================================================================
+# Video Processing
+# =============================================================================
+
+[video.analysis]
+frame_count_timeout = 30 # Timeout for frame counting (seconds)
+
+[video.transcode]
+enabled = true
+codec = "h264"    # ffmpeg codec
+crf = 20          # Quality: 0 (best) - 51 (worst)
+preset = "fast"   # Encoding speed preset
+keyint = 15       # GOP size (frames)
+
+# =============================================================================
+# NWB Export Configuration
+# =============================================================================
+
+[nwb]
+link_external_video = true # Use external links for video files
+# file_name_template = "{session.id}.nwb"     # Optional: NWB filename template
+# session_description_template = "..."        # Optional: Session description template
+
+# =============================================================================
+# Quality Control
+# =============================================================================
+
+[qc]
+generate_report = true      # Generate QC HTML reports
+include_verification = true # Include verification results in reports
+# out_template = "qc/{session.id}"  # Optional: Output path template
+
+# =============================================================================
+# Extracellular Electrophysiology (Neuropixels)
+# =============================================================================
+# ⚠️  FEATURE NOT YET IMPLEMENTED - Configuration reserved for future use
+# ⚠️  DO NOT USE - Will cause validation errors if uncommented
+#
+# Planned features:
+# - Neuropixels probe data integration
+# - Kilosort/Phy spike sorting integration
+# - LFP computation and storage
+# - Unit quality filtering
+#
+# Status: Planned for future release
+# Tracking: See roadmap or GitHub issues for implementation timeline
+#
+# [ecephys]
+# enabled = false
+# probes = []
+#
+# [ecephys.storage]
+# raw_data_strategy = "link"
+# compute_lfp = false
+#
+# [ecephys.quality]
+# include_labels = ["good", "mua"]
+# min_spike_count = 100
+# add_waveforms = false
+# add_quality_metrics = false
+
+# =============================================================================
+# Logging Configuration
+# =============================================================================
+
+[logging]
+level = "INFO"     # DEBUG | INFO | WARNING | ERROR | CRITICAL
+structured = false # Use JSON format
