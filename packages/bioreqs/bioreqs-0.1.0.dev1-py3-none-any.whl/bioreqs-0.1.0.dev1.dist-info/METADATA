@@ -1,0 +1,109 @@
+Metadata-Version: 2.3
+Name: bioreqs
+Version: 0.1.0.dev1
+Summary: Bioinformatic requisitions
+Author: Caleb R.
+Author-email: Caleb R. <hyletic@proton.me>
+Requires-Dist: python-dotenv>=1.2.1
+Requires-Dist: requests>=2.32.5
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+
+# BioReqs: Bioinformatic Requisitions
+
+![PyPI](https://img.shields.io/pypi/v/bioreqs)
+![Python Version](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fopera-labs%2Fbioreqs%2Frefs%2Fheads%2Fmain%2Fpyproject.toml)
+![License](https://img.shields.io/github/license/opera-labs/bioreqs)
+
+`bioreqs` is a Python library that defines lightweight client interfaces
+for a number of publicly accessible, scientific web APIs, including those from
+organizations like the National Center for Biotechnology Information (NCBI). In so
+doing, it provides users with programmatic access to essential bioinformatics data
+without also requiring them to have an overt familiarity with their underlying API
+schemata.
+
+## Quick Start
+
+If you're using a dependency manager like `uv` or `poetry` and plan to invoke
+`bioreqs` clients from within a project context, simply add it to your
+`pyproject.toml` dependency list:
+
+  - ***poetry***: `poetry add bioreqs`
+  - ***uv***: `uv add bioreqs`
+
+On the other hand, if you're using vanilla `pip` but still want to work out of a
+virtual environment (as you should!), do:
+
+```bash
+python -m venv rqenv           # Create a new virtual environment named `rqenv`.
+source ./rqenv/bin/activate    # Activate the `rqenv` virtual environment.
+pip install --upgrade pip      # Upgrade to the latest version of `pip`.
+pip install bioreqs       # Install the `bioreqs` package.
+```
+
+Finally, if you only want to use it interactively — or in a script meant to be
+invoked by your system-level Python interpreter — you can simply do:
+
+```bash
+# Assuming the system-level `pip` binary is in your `PATH` environment variable:
+pip install --upgrade pip      # Upgrade to the latest version of `pip`.
+pip install bioreqs       # Install the library system-wide.
+```
+
+Each of the package's modules corresponds to an individual organization and
+implements the relevant API client(s) for that organization. As a convenience,
+all clients are also surfaced at the package level, making them directly
+available in the `bioreqs` namespace. Thus, for example, to initialize a
+client object for the NCBI's popular Entrez E-utilities web API, the following
+code suffices:
+
+```python
+# Import the Entrez E-utilities API client.
+# from bioreqs.ncbi import Entrez
+#
+# Or, equivalently:
+from bioreqs import Entrez
+
+# Initialize the client, providing a valid email address, as required.
+client = Entrez("email@example.com")
+```
+
+## Clients
+
+Presently, `bioreqs` provides only the above introduced client for the Entrez
+E-utilities web API, but it will hopefully tout a much more robust client library
+soon enough.
+
+### Entrez E-utilities (NCBI)
+
+Use _bioreqs.ncbi.**Entrez**_ and its instance methods to interact with the
+E-utilities web API. Since the NCBI requires one to include their email address
+when querying these endpoints, you should call `Entrez` with yours as the first
+argument. Alternatively, you can set your system's `NCBI_EMAIL` environment
+variable to store your email address; `Entrez` automatically detects it.
+
+```python
+from bioreqs import Entrez
+
+# Assuming the `NCBI_EMAIL` environment variable is set to your email address,
+# this is a valid invocation of the `Entrez` constructor.
+client = Entrez()
+
+```
+
+After creating and storing an instance of the API client (`client`, in the example
+above), you call instance methods on that object to query specific endpoints:
+
+```python
+# Get the RefSeq for human COL5A2 as a FASTA-formatted string via its accession.
+COL5A2_ACCESSION = "NM_000393.5"
+COL5A2_REFERENCE = client.get_refseq(COL5A2_ACCESSION)
+print(COL5A2_REFERENCE)  # Print the FASTA output.
+
+# Download the FASTA-formatted RefSeq data for human kallikrein-related
+# peptidase 15 via its accession, and write it to disk, storing the returned
+# output path, if successful.
+KLK15_ACCESSION = "NM_001277081.2"
+ouput_path = client.save_refseq(KLK15_ACCESSION)
+
+```
