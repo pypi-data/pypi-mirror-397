@@ -1,0 +1,131 @@
+# datacore-sdk-python
+
+Python SDK skeleton for Tachyus DataCore API.
+
+This package provides a clean, extensible structure for wrapping DataCore API operations. It uses a thin HTTP client, clear sub-clients for endpoints, typed models, and room for higher-level orchestration methods (e.g., an SDK method that performs multiple API calls under the hood).
+
+## Quick start
+
+Install (editable for local development):
+
+```
+pip install -e .
+```
+
+Basic usage:
+
+```python
+from datacore_sdk import DataCoreClient
+
+client = DataCoreClient(
+    base_url="https://api.datacore.example.com",  # replace with actual base URL
+    api_key="YOUR_API_KEY",
+)
+
+# Low-level: call a specific endpoint via sub-client
+project = client.projects.create(name="My Project", description="Demo")
+print(project)
+
+# High-level orchestration: one call that performs multiple underlying API calls
+# (placeholder implementation; adapt to your business flow)
+result = client.create_dune_project(name="My Dune Project")
+print(result)
+```
+
+### Run the CLI demo program
+
+You can also try the SDK via a small CLI that exercises the DatacoreProjects endpoints.
+
+1) Set your environment variables (or pass flags on the command):
+
+```
+set DATACORE_BASE_URL=https://your-api-base
+set DATACORE_API_KEY=your-token
+```
+
+2) Install and run the demo:
+
+```
+pip install -e .
+
+# Show help
+datacore-demo --help
+
+# List projects (with optional filters and pagination)
+datacore-demo list --page-number 0 --page-size 50 --filter status=active;0
+
+# Create a project (basic inline flags)
+datacore-demo create --name "My DC Project" --description "Demo"
+
+# Create a project with all properties inline (no JSON file needed)
+# Note: boolean flags accept true/false/1/0/yes/no/on/off (case-insensitive)
+datacore-demo create \
+  --name "Field Ops" \
+  --description "Created from CLI" \
+  --status active \
+  --active true \
+  --disabled false \
+  --created-by alice@example.com \
+  --modified-by alice@example.com \
+  --create-date 2025-12-16T15:41:00Z \
+  --modified-date 2025-12-16T15:41:00Z \
+  --geoposition "POINT(0 0)" \
+  --crs "EPSG:4326" \
+  --message "initial import" \
+  --attributes "{\"priority\":\"high\"}"
+
+# Create/update from full DTO JSON file (takes precedence over inline flags)
+datacore-demo create --json path\to\project.json
+datacore-demo update --json path\to\project.json
+
+# Delete in bulk
+datacore-demo delete --ids id-1 id-2
+
+Notes:
+- The create command supports all DatacoreProject DTO fields as flags:
+  --created-by, --create-date, --modified-date, --modified-by, --disabled,
+  --id, --name, --description, --geoposition, --crs, --status, --message,
+  --attributes, --active.
+- When --json is provided, its contents are used and any inline flags are ignored.
+- Dates should be ISO 8601 strings (e.g., 2025-12-16T15:41:00Z).
+```
+
+## Project layout
+
+```
+.
+├─ pyproject.toml
+├─ src/
+│  └─ datacore_sdk/
+│     ├─ __init__.py
+│     ├─ client.py
+│     ├─ http.py
+│     ├─ exceptions.py
+│     ├─ types.py
+│     └─ endpoints/
+│        └─ projects.py
+└─ tests/
+   └─ test_smoke.py
+```
+
+## Development
+
+Run tests:
+
+```
+pytest -q
+```
+
+Format and lint (optional, if you later add tools like ruff/black):
+
+```
+ruff check .
+black .
+```
+
+## Notes
+
+- This is a skeleton. Replace placeholder URLs, models, and endpoint paths with the real DataCore API details.
+- Add authentication schemes beyond API key as needed (OAuth2, etc.).
+- Consider retry/backoff, pagination helpers, and streaming when implementing real endpoints.
+ - The demo uses `DATACORE_BASE_URL` and `DATACORE_API_KEY` (or `--base-url`/`--api-key` flags) and prints JSON responses for quick testing.
