@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling >= 1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "isgri"
+version = "0.6.1"
+authors = [{name = "Dominik Patryk Pacholski"}]
+license = {text = "MIT"}
+description = "Python package for INTEGRAL IBIS/ISGRI lightcurve analysis"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy",
+    "astropy",
+    "click",
+    "platformdirs",
+    "tomli>=2.0.0; python_version<'3.11'",
+    "tomli-w",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+isgri = "isgri.cli.main:main"
