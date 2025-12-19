@@ -1,0 +1,99 @@
+Metadata-Version: 2.4
+Name: pylicup
+Version: 0.2.0
+Summary: Python License Update (PyLicUp). Updates all the python headers of your project with the provided license text.
+Project-URL: hoempage, https://github.com/Carsopre/PythonLicenseUpdater
+Project-URL: repository, https://github.com/Carsopre/PythonLicenseUpdater
+Author-email: "Carles S. Soriano Perez" <carles.sorianoperez@deltares.nl>
+License-Expression: MIT
+Requires-Python: <3.15,>=3.11
+Description-Content-Type: text/markdown
+
+[![Python 3.13](https://img.shields.io/badge/Python-3.13-blue.svg)](https://www.python.org/downloads/release/python-3135/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+
+# PythonLicenseUpdater
+Simple tool that updates your python files license headers for the given directories. By default it will skip __init__.py.
+
+## How to use it?
+
+### As Docker container
+
+1. Checkout or clone our repository.
+
+
+2. Build the container (with podman or docker):
+```bash
+podman build -t pylicup
+```
+
+3. Run the container mounting the license and the directories to update at the given locations:
+```bash
+podman run -v path/to/your/license/file:/mnt/license -v path/to/your/directory/to/update:/mnt/update pylicup
+```
+
+4. If you want to update multiple directories you can do it as:
+```bash
+podman run -v path/to/your/license/file:/mnt/license -v path/to/your/directory/to/update:/mnt/update/dir_1 -v path/to/your/other/directory/to/update:/mnt/update/dir_2  pylicup
+```
+
+> [!IMPORTANT]
+> Our docker container does not support (yet) replacing of an old license.
+
+### As Python package
+
+#### Installation.
+
+1. With pip:
+```bash
+pip install pylicup
+```
+2. With latest version from GitHub:
+```bash
+pip install git+https://github.com/Carsopre/PythonLicenseUpdater.git 
+```
+3. With custom version from GitHub:
+```bash
+pip install git+https://github.com/Deltares/PythonLicenseUpdater.git@v0.0.1
+```
+
+#### Python usage
+The following command should be used.
+```bash
+python pylicup -l <path_to_your_license_file> -d <path_to_directory_with_python_files>
+```
+* <path_to_your_licenses_file> List of licenses, the first one will replace the ones that follow (in case present) or simply added at the top.
+* <path_to_directory_with_python_files> List of arguments representing paths to the directories containing python files.
+
+### Examples
+Given the following directory hierarchy:
+```
+license_manager.py
+|-src\
+    |-__init__.py
+    |-main.py
+    |-utils.py
+|-test\
+    |-__init__.py
+    |-test_main.py
+    |-test_utils.py
+|-setup.py
+|-my_license.txt
+|-my_newer_license.txt
+```
+
+1. The following command will update the license for src\main.py and src\utils.py:
+```bash
+python license_manager.py -l my_license.txt -d src
+```
+
+2. Whereas executing the following command will result in updating the license header for src\main.py, src\utils.py, test\test_main.py and test\test_utils.py:
+```bash
+python license_manager.py -l my_license.txt -d src test
+```
+
+3. Last, if we want to replace an existing license header with a new one, we would do the following command:
+```bash
+python license_manager.py -l {NEW_LICENSE} {OLD_LICENSE} -d src
+```
