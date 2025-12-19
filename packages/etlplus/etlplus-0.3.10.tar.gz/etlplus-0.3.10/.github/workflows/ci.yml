@@ -1,0 +1,135 @@
+# ci.yml
+# ETLPlus
+#
+# Copyright © 2025 Dagitali LLC. All rights reserved.
+#
+# A GitHub Actions workflow configuration file for Continuous Integration (CI).
+
+---
+
+name: CI
+
+on:
+  push:
+    branches:
+      # GitFlow branches
+      - main
+      - develop
+      - '**/feature/**'
+      - '**/bugfix/**'
+      - '**/release/**'
+      - '**/hotfix/**'
+
+      # Extended branches
+      - '**/chore/**'
+      - '**/ci/**'
+      - '**/docs/**'
+    tags: [ 'v*.*.*' ]
+  pull_request:
+    branches: [ main, develop ]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    strategy: &python-matrix
+      matrix:
+        python-version: ['3.13', '3.14']
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/python-bootstrap
+        with:
+          python-version: ${{ matrix.python-version }}
+          python-bootstrap: ".[dev]"
+      - name: Ruff check
+        run: |
+          ruff version
+          ruff check .
+          ruff format --check .
+
+  test:
+    runs-on: ubuntu-latest
+    strategy: *python-matrix
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/python-bootstrap
+        with:
+          python-version: ${{ matrix.python-version }}
+          python-bootstrap: "-e .[dev,yaml]"
+      - name: Run tests
+        run: |
+          pytest -q
+
+  build:
+    name: Build distributions
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/python-bootstrap
+        with:
+          python-version: '3.13'
+          python-bootstrap: build
+      - name: Build distributions
+        run: |
+          python -m build
+      - name: Upload distributions
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-artifacts
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-artifacts
+          path: dist
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+
+  publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    environment:
+      name: pypi
+      url: https://pypi.org/project/etlplus/
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-artifacts
+          path: dist
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          verbose: true
