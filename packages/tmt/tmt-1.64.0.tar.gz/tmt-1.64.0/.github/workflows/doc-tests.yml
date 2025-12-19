@@ -1,0 +1,53 @@
+name: test-docs
+run-name: Documentation tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  doc-test:
+    name: Sphinx Documentation Tests
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.pull_request.labels.*.name, 'ci | skip')"
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: 3.x
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          activate-environment: true
+
+      - name: Install tmt[docs]
+        run: uv sync --frozen --extra docs
+
+      - name: Run sphinx html builder
+        run: sphinx-build -b html docs/ docs/_build -W
+
+      - name: Cache linkcheck results
+        uses: actions/cache@v4
+        with:
+          path: docs/_build/linkcheck_cache.json
+          key: linkcheck
+
+      - name: Run sphinx linkcheck
+        run: sphinx-build -b linkcheck docs/ docs/_build
+
+      # TODO: Move this to its own extra/group
+      - name: Install other test dependencies
+        run: uv pip install sphinx-lint
+
+      # TODO: enable all checks
+      # https://github.com/sphinx-contrib/sphinx-lint/issues/74
+      - name: Run Sphinx ReST linter
+        run: sphinx-lint --ignore=.venv
