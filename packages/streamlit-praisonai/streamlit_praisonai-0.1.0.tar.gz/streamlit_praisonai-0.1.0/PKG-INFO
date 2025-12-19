@@ -1,0 +1,101 @@
+Metadata-Version: 2.4
+Name: streamlit-praisonai
+Version: 0.1.0
+Summary: Streamlit components for PraisonAI multi-agent framework
+Author-email: Mervin Praison <support@praison.ai>
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/MervinPraison/streamlit-praisonai
+Project-URL: Documentation, https://docs.praison.ai
+Project-URL: Repository, https://github.com/MervinPraison/streamlit-praisonai
+Keywords: streamlit,praisonai,ai-agents,multi-agent,llm,ui
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: streamlit>=1.20.0
+Requires-Dist: httpx>=0.24.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: pytest-httpx>=0.21.0; extra == "dev"
+Dynamic: license-file
+
+# streamlit-praisonai
+
+[Streamlit](https://streamlit.io/) components for [PraisonAI](https://github.com/MervinPraison/PraisonAI) multi-agent framework.
+
+## Installation
+
+```bash
+pip install streamlit-praisonai
+```
+
+## Quick Start
+
+```python
+import streamlit as st
+from streamlit_praisonai import praisonai_chat
+
+st.title("My AI App")
+praisonai_chat()
+```
+
+## Components
+
+### praisonai_chat
+
+A full chat interface for PraisonAI:
+
+```python
+from streamlit_praisonai import praisonai_chat
+
+praisonai_chat(
+    api_url="http://localhost:8080",
+    agent="researcher",  # Optional: specific agent
+    title="🤖 AI Assistant",
+    placeholder="Ask me anything...",
+)
+```
+
+### PraisonAIClient
+
+Direct API client:
+
+```python
+from streamlit_praisonai import PraisonAIClient
+
+client = PraisonAIClient(api_url="http://localhost:8080")
+
+# Run full workflow
+result = client.run_workflow("Research AI trends")
+
+# Run specific agent
+result = client.run_agent("Write an article", "writer")
+
+# List agents
+agents = client.list_agents()
+```
+
+## Prerequisites
+
+Start PraisonAI server:
+
+```bash
+pip install praisonai
+praisonai serve agents.yaml --port 8080
+```
+
+## Links
+
+- [PraisonAI Documentation](https://docs.praison.ai)
+- [Streamlit Documentation](https://docs.streamlit.io)
+
+## License
+
+MIT
