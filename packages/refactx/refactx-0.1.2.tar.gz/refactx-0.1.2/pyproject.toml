@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel", "build"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "refactx"
+version = "0.1.2"
+description = "Refactx package"
+readme = "Readme-pip.md"
+license = "Apache-2.0"
+authors = [ { name = "Riccardo Pozzi" } ]
+requires-python = ">=3.8"
+
+dependencies = [
+	"tqdm",
+	"python-dotenv",
+	"click",
+	"psycopg[binary]>=3.0",
+	"cachetools",
+	"requests",
+]
+
+[project.optional-dependencies]
+torch = [
+	"torch",
+	"transformers>=4.0",
+	"accelerate",
+]
+httpindex = [
+	"flask",
+	"gunicorn",
+]
+
+[project.scripts]
+refactx-populate-postgres = "refactx.cli.populate_postgres:main"
+refactx-debug-postgres = "refactx.cli.debug_postgres:main"
+
+[tool.setuptools.packages.find]
+include = ["refactx*"]
+
+[project.urls]
+Homepage = "https://github.com/rpo19/ReFactX"
+Repository = "https://github.com/rpo19/ReFactX"
+"Bug Tracker" = "https://github.com/rpo19/ReFactX/issues"
