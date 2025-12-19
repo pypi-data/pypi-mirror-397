@@ -1,0 +1,125 @@
+Metadata-Version: 2.4
+Name: synaptik-core-beta
+Version: 0.1.4
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Rust
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Summary: Synaptik Core Python bindings (hackathon build)
+Author: Janay Harris
+License: Apache-2.0
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+
+<p align="center"><img src="https://res.cloudinary.com/dindjf2vu/image/upload/v1757209651/synaptik_vt1cpy.png"/></p>
+
+# Synaptik Core (Python)
+
+<p align="center">
+  <a href="https://pypi.org/project/synaptik-core-beta/"><img src="https://img.shields.io/pypi/v/synaptik-core-beta.svg" alt="PyPI version"></a>
+</p>
+
+Python bindings for Synaptik Core — local-first cognitive substrate with durable memory, contract-governed safety controls, and audit trails for AI systems.
+
+## Install
+
+```bash
+pip install synaptik-core-beta
+```
+
+## Quick Start
+
+```python
+import synaptik_core as sc
+
+cmd = sc.PyCommands()
+
+# Memory operations
+mid = cmd.remember("chat", "hello world")
+print(cmd.recall(mid))                  # -> {'id': ..., 'content': 'hello world', 'source': 'hot'}
+print(cmd.recall(mid, prefer="archive")) # Prefer specific tier
+print(cmd.recall_prefer(mid))            # -> 'hello world' (just content)
+
+# Recent memories
+recent_ids = cmd.recent("chat", n=10)    # Last 10 memory IDs
+
+# Stats
+stats = cmd.stats()                      # Workspace-wide stats
+stats = cmd.stats(lobe="chat")          # Per-lobe stats
+
+# Ethics & governance
+report = cmd.precheck_text("message content", purpose="chat_response")
+# -> {'decision': 'allow', 'reason': ..., 'risk': 'low', ...}
+
+result = cmd.govern_text("chat.reply", "hello")
+# -> {'status': 'ok', 'text': 'hello', 'violation_label': None}
+```
+
+## Branching and Consolidation (FF‑only)
+
+High-level helpers move seeding, normalization, and provenance into the core.
+
+```python
+import synaptik_core as sc
+cmd = sc.PyCommands()
+
+# Sprout a dendrite; base resolution:
+# - base=None,lobe=None: start from head('cortex') if present, else seed from 'chat'
+# - base provided: interpreted as an existing path name (if it exists), otherwise as a CID
+base_cid = cmd.sprout_dendrite(path="feature-x", base=None, lobe=None)
+
+# Encode an engram (Ethos-gated) with optional meta
+cid = cmd.encode_engram(path="feature-x", content="...", meta={"file": "lru.rs"})
+
+# Systems consolidation to cortex (FF-only; errors if not FF)
+head = cmd.systems_consolidate(src_path="feature-x", dst_path="cortex")
+
+# Potentiate a synapse (accepts memory IDs, hashes, or node filenames)
+weight = cmd.potentiate_synapse(cid)
+print("synaptic weight:", weight)
+
+# Inspect history and recall
+trace = cmd.trace_path("feature-x", limit=10)
+snap = cmd.recall(head)           # dict or None
+content = cmd.recall_prefer(head) # str or None
+```
+
+Notes:
+- Paths normalize to lowercase; “feature-x” and “feature_x” are equivalent.
+- Consolidation is fast‑forward only; binds are not yet supported.
+- Prefer `sprout_dendrite()/encode_engram()/systems_consolidate()/potentiate_synapse()`; legacy `begin_branch/extend_path` remain for compatibility.
+
+## Object Storage (PonStore)
+
+Content-addressed binary storage with versioning:
+
+```python
+# Create a Pon (object store)
+cmd.pons_create("models")
+
+# Store binary data
+cmd.pons_put_object("models", key="embed-v1", data=model_bytes, 
+                    media_type="application/octet-stream")
+
+# Retrieve latest version
+ref = cmd.pons_get_latest_ref("models", "embed-v1")
+data = cmd.pons_get_latest_bytes("models", "embed-v1")
+
+# List all keys
+keys = cmd.pons_list_latest("models")
+```
+
+## Workspace Configuration
+
+```python
+# Get workspace configuration
+config = cmd.get_config()
+# -> {'cache_path': '.cogniv/cache.db', 'sandbox_mode': True, 'hot_threshold': 86400, ...}
+
+# Get workspace root path
+root = cmd.get_root()  # -> '.cogniv'
+```
+
+## License
+
+All rights reserved.
+
