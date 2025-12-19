@@ -1,0 +1,407 @@
+Metadata-Version: 2.4
+Name: logica-desvios
+Version: 0.2.0
+Summary: Circuit Breaker inteligente com Machine Learning adaptativo
+Home-page: https://github.com/WSS13Framework/curso-automacao-linux-resiliente-limpo
+Author: Marcos Sea
+Author-email: Marcos Sea <socramsea@example.com>
+Maintainer-email: Marcos Sea <socramsea@example.com>
+License: MIT
+Project-URL: Homepage, https://github.com/socramsea/logica-desvios
+Project-URL: Documentation, https://github.com/socramsea/logica-desvios#readme
+Project-URL: Repository, https://github.com/socramsea/logica-desvios
+Project-URL: Issues, https://github.com/socramsea/logica-desvios/issues
+Project-URL: Changelog, https://github.com/socramsea/logica-desvios/blob/main/CHANGELOG.md
+Keywords: circuit-breaker,resilience,machine-learning,adaptive,fault-tolerance,microservices,reliability
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pandas>=1.0.0
+Requires-Dist: numpy>=1.18.0
+Provides-Extra: dev
+Requires-Dist: pytest>=6.0; extra == "dev"
+Requires-Dist: pytest-cov>=2.0; extra == "dev"
+Requires-Dist: black>=21.0; extra == "dev"
+Requires-Dist: flake8>=3.9; extra == "dev"
+Requires-Dist: mypy>=0.900; extra == "dev"
+Requires-Dist: twine>=4.0; extra == "dev"
+Provides-Extra: ml
+Requires-Dist: scikit-learn>=0.24.0; extra == "ml"
+Dynamic: author
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-python
+
+# 🛡️ Lógica dos Desvios
+
+> Circuit Breaker inteligente com Machine Learning adaptativo para Python
+
+[![PyPI version](https://badge.fury.io/py/logica-desvios.svg)](https://pypi.org/project/logica-desvios/)
+[![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+---
+
+## 📋 Índice
+
+- [Sobre](#-sobre)
+- [Características](#-características)
+- [Instalação](#-instalação)
+- [Uso Rápido](#-uso-rápido)
+- [Exemplos](#-exemplos)
+- [Documentação](#-documentação)
+- [Contribuindo](#-contribuindo)
+- [Licença](#-licença)
+
+---
+
+## 🎯 Sobre
+
+**Lógica dos Desvios** é uma biblioteca Python que implementa o padrão Circuit Breaker com capacidades de **Machine Learning** para adaptação automática de parâmetros.
+
+Diferente dos circuit breakers tradicionais com threshold e timeout fixos, este sistema **aprende** com o histórico de operações e **ajusta dinamicamente** seus parâmetros para maximizar a resiliência.
+
+### Por que usar?
+
+- ✅ **Adaptativo**: Ajusta threshold (2-10) e timeout (5-300s) automaticamente
+- ✅ **Inteligente**: Usa ML para predizer falhas e tempos de recuperação
+- ✅ **Resiliente**: Recuperação gradual baseada em sucessos consecutivos
+- ✅ **Observável**: Análise de padrões históricos e tendências
+- ✅ **Alertas**: Sistema de notificações por severidade (CRITICAL/SEVERE/WARNING)
+- ✅ **Persistente**: Estado e histórico salvos em disco
+- ✅ **Bilíngue**: Suporta nomes em inglês e português
+
+---
+
+## ✨ Características
+
+### Circuit Breaker Tradicional
+
+- Estados: `CLOSED`, `OPEN`, `HALF_OPEN`
+- Proteção contra falhas em cascata
+- Timeout configurável
+- Persistência de estado
+
+### + Machine Learning
+
+- Análise de padrões históricos
+- Predição de probabilidade de falha
+- Predição de tempo de recuperação
+- Detecção de tendências (melhorando/degradando/estável)
+- Análise de padrões horários
+
+### + Adaptação Inteligente
+
+- **Threshold dinâmico**: Ajusta entre 2-10 baseado em taxa de falha
+- **Timeout dinâmico**: Ajusta entre 5-300s baseado em predições
+- **Recuperação gradual**: Aumenta threshold após 5 sucessos consecutivos
+- **Limites de segurança**: Nunca permite valores inseguros
+- **Backoff exponencial**: Em situações de instabilidade severa
+
+---
+
+## 📦 Instalação
+
+```bash
+pip install logica-desvios
+```
+
+### Requisitos
+
+- Python >= 3.7
+- pandas >= 1.0.0
+- numpy >= 1.18.0
+
+---
+
+## 🚀 Uso Rápido
+
+### Exemplo Básico
+
+```python
+from logica_desvios import AdaptiveCircuitBreakerAgent
+
+# 1. Cria o agente
+agent = AdaptiveCircuitBreakerAgent(
+    name="meu_servico",
+    initial_failure_threshold=3,
+    initial_reset_timeout=60
+)
+
+# 2. Inicia aprendizado adaptativo (opcional mas recomendado)
+agent.start_adaptive_learning()
+
+# 3. Protege sua função
+@agent.protect
+def chamar_api_externa():
+    # Sua operação que pode falhar
+    response = requests.get("https://api.example.com/data")
+    return response.json()
+
+# 4. Usa normalmente
+try:
+    dados = chamar_api_externa()
+    print(f"Sucesso: {dados}")
+except CircuitBreakerOpenException:
+    print("Serviço temporariamente indisponível")
+except Exception as e:
+    print(f"Erro: {e}")
+
+# 5. Para o aprendizado quando terminar
+agent.stop_adaptive_learning()
+```
+
+### Exemplo em Português
+
+```python
+from logica_desvios import AgenteInteligente, CircuitBreakerAbertoException
+
+agente = AgenteInteligente(name="backup_system")
+agente.start_adaptive_learning()
+
+@agente.protect
+def fazer_backup(arquivo):
+    # Lógica de backup
+    return salvar_arquivo(arquivo)
+
+try:
+    fazer_backup("database.sql")
+except CircuitBreakerAbertoException:
+    print("Sistema de backup temporariamente desabilitado")
+```
+
+---
+
+## 📚 Exemplos
+
+### Caso 1: API Externa Instável
+
+```python
+from logica_desvios import AdaptiveCircuitBreakerAgent
+import requests
+
+agent = AdaptiveCircuitBreakerAgent(name="api_weather")
+agent.start_adaptive_learning()
+
+@agent.protect
+def buscar_previsao(cidade):
+    response = requests.get(f"https://api.weather.com/{cidade}", timeout=5)
+    return response.json()
+
+# Sistema aprende e adapta automaticamente
+for cidade in ["sao-paulo", "rio", "brasilia"]:
+    try:
+        previsao = buscar_previsao(cidade)
+        print(f"{cidade}: {previsao['temp']}°C")
+    except Exception as e:
+        print(f"{cidade}: Falha - {e}")
+```
+
+### Caso 2: Backup Automático Resiliente
+
+```python
+from logica_desvios import AdaptiveCircuitBreakerAgent
+
+backup_agent = AdaptiveCircuitBreakerAgent(
+    name="backup_system",
+    initial_failure_threshold=2,
+    initial_reset_timeout=30
+)
+
+@backup_agent.protect
+def backup_database(db_name):
+    # Comando de backup
+    os.system(f"pg_dump {db_name} > backup_{db_name}.sql")
+    return True
+
+# Executa backups diários
+for db in ["users", "orders", "products"]:
+    try:
+        backup_database(db)
+        print(f"✅ Backup de {db} concluído")
+    except Exception as e:
+        print(f"❌ Backup de {db} falhou: {e}")
+        # Sistema automaticamente ajusta estratégia
+```
+
+### Caso 3: Múltiplos Microserviços
+
+```python
+from logica_desvios import AdaptiveCircuitBreakerAgent
+
+# Um agente para cada serviço
+auth_agent = AdaptiveCircuitBreakerAgent(name="auth_service")
+payment_agent = AdaptiveCircuitBreakerAgent(name="payment_service")
+email_agent = AdaptiveCircuitBreakerAgent(name="email_service")
+
+@auth_agent.protect
+def autenticar(user): ...
+
+@payment_agent.protect
+def processar_pagamento(valor): ...
+
+@email_agent.protect
+def enviar_confirmacao(email): ...
+
+# Cada serviço tem seu próprio comportamento adaptativo
+```
+
+---
+
+## 📖 Documentação
+
+### API Principal
+
+#### `AdaptiveCircuitBreakerAgent`
+
+```python
+agent = AdaptiveCircuitBreakerAgent(
+    name: str,                          # Nome único do agente
+    initial_failure_threshold: int = 3, # Falhas antes de abrir (será adaptado)
+    initial_reset_timeout: int = 60,    # Segundos antes de testar (será adaptado)
+    decision_interval_seconds: int = 15 # Intervalo de decisão ML
+)
+```
+
+**Métodos:**
+
+- `start_adaptive_learning()`: Inicia loop de ML
+- `stop_adaptive_learning()`: Para loop de ML
+- `protect(func)`: Decorador para proteger funções
+- `get_stats()`: Retorna estatísticas completas
+
+### Estados do Circuit Breaker
+
+- **CLOSED** (`FECHADO`): Operação normal, todas as requisições passam
+- **OPEN** (`ABERTO`): Bloqueando requisições (serviço falhou)
+- **HALF_OPEN** (`MEIO_ABERTO`): Testando recuperação
+
+### Exceções
+
+- `CircuitBreakerOpenException`: Levantada quando CB está OPEN
+
+### Aliases em Português
+
+```python
+from logica_desvios import (
+    AgenteInteligente,              # = AdaptiveCircuitBreakerAgent
+    AgenteCircuitBreaker,           # = CircuitBreakerAgent
+    AdaptadorML,                    # = MLAdapter
+    TomadorDecisao,                 # = DecisionMaker
+    CircuitBreakerAbertoException,  # = CircuitBreakerOpenException
+    FECHADO, ABERTO, MEIO_ABERTO    # = CLOSED, OPEN, HALF_OPEN
+)
+```
+
+---
+
+## 🔧 Configuração Avançada
+
+### Ajuste Fino de Parâmetros
+
+```python
+from logica_desvios import AdaptiveCircuitBreakerAgent
+
+agent = AdaptiveCircuitBreakerAgent(
+    name="api_critical",
+    initial_failure_threshold=5,      # Mais tolerante
+    initial_reset_timeout=120,        # Espera mais antes de testar
+    decision_interval_seconds=10      # Decisões mais frequentes
+)
+```
+
+### Acessando Componentes Individuais
+
+```python
+# Acessar o MLAdapter
+ml_insights = agent.ml_adapter.analyze_patterns()
+print(f"Taxa de falha: {ml_insights['failure_rate']}")
+
+# Acessar o Circuit Breaker
+cb_state = agent.circuit_breaker.get_state()
+print(f"Estado: {cb_state}")
+
+# Acessar estatísticas
+stats = agent.get_stats()
+print(f"Threshold atual: {stats['failure_threshold']}")
+```
+
+---
+
+## 📊 Métricas e Monitoramento
+
+```python
+stats = agent.get_stats()
+
+print(f"""
+Estado: {stats['state']}
+Threshold: {stats['failure_threshold']}
+Timeout: {stats['reset_timeout']}s
+Taxa de falha: {stats['failure_rate']*100:.1f}%
+Operações totais: {stats['total_operations']}
+Sucessos: {stats['total_successes']}
+Falhas: {stats['total_failures']}
+""")
+```
+
+---
+
+## 🤝 Contribuindo
+
+Contribuições são bem-vindas! Por favor:
+
+1. Fork o projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+---
+
+## 📝 Licença
+
+Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
+
+---
+
+## 👤 Autor
+
+**Marcos Sea**
+
+- GitHub: [https://github.com/WSS13Framework](https://github.com/WSS13Framework/curso-automacao-linux-resiliente-limpo)
+- PyPI: [logica-desvios](https://pypi.org/project/logica-desvios/)
+
+---
+
+## 🙏 Agradecimentos
+
+- Inspirado pelo padrão Circuit Breaker do livro "Release It!" de Michael T. Nygard
+- Baseado em conceitos de Machine Learning e sistemas adaptativos
+- Comunidade Python por ferramentas incríveis
+
+---
+
+## 📈 Roadmap
+
+- [ ] Suporte a Redis para estado compartilhado
+- [ ] Integração com Prometheus/Grafana
+- [ ] Dashboard web em tempo real
+- [ ] Modelos ML mais sofisticados (Random Forest, LSTM)
+- [ ] Suporte a múltiplos backends de persistência
+- [ ] Integração com sistemas de notificação (Slack, Telegram, Email)
+
+---
+
+**⭐ Se este projeto foi útil, considere dar uma estrela no GitHub!**
