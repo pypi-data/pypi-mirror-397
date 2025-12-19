@@ -1,0 +1,96 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "py-starforge"
+version = "1.0.3"
+description = "A Python library for generating beautiful, accurate astronomical star charts"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Aditya Gaur", email = "adityagaur.home@gmail.com"}
+]
+maintainers = [
+    {name = "Aditya Gaur", email = "adityagaur.home@gmail.com"}
+]
+keywords = [
+    "astronomy",
+    "star chart",
+    "starmap",
+    "constellation",
+    "celestial",
+    "svg",
+    "visualization",
+    "skyfield",
+    "stars",
+    "night sky"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Multimedia :: Graphics",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "skyfield>=1.45",
+    "svgwrite>=1.4",
+    "geonamescache>=1.6",
+    "colorama>=0.4",
+    "pytz>=2023.0",
+    "pandas>=2.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "black>=23.0",
+    "ruff>=0.1",
+]
+export = [
+    "cairosvg>=2.7",
+    "Pillow>=10.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/xdityagr/ProjectStarForge"
+Documentation = "https://github.com/xdityagr/ProjectStarForge#readme"
+Repository = "https://github.com/xdityagr/ProjectStarForge.git"
+Issues = "https://github.com/xdityagr/ProjectStarForge/issues"
+Changelog = "https://github.com/xdityagr/ProjectStarForge/releases"
+
+[project.scripts]
+starforge = "Starforge.cli:main"
+
+[tool.setuptools]
+packages = ["Starforge"]
+package-dir = {"" = "."}
+
+[tool.setuptools.package-data]
+Starforge = ["*.svg", "*.bsp", "*.dat", "*.fab"]
+
+[tool.black]
+line-length = 100
+target-version = ["py38", "py39", "py310", "py311", "py312"]
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "W", "I", "N"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
