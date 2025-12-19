@@ -1,0 +1,58 @@
+Metadata-Version: 2.4
+Name: broccoli-tool-creator
+Version: 0.1.2
+Summary: Automated tool creation for Broccoli Backend from FastAPI endpoints
+Author-email: utkarsh-dailoqa <utkarsh.rastogi@dailoqa.com>
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: fastapi>=0.100.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: requests>=2.25.1
+Requires-Dist: sqlalchemy>=2.0.0
+Requires-Dist: httpx>=0.24.0
+Dynamic: license-file
+
+# Broccoli Tool Creator
+
+Automated tool creation for Broccoli Backend from FastAPI endpoints.
+
+## Installation
+
+```bash
+pip install broccoli-tool-creator
+```
+
+## Features
+
+- **AST-based Extraction**: Automatically extracts metadata from FastAPI endpoints including docstrings, parameters, and response models.
+- **Cognito Integration**: Handles authentication with AWS Cognito SRP.
+- **Broccoli Integration**: Automatically creates and updates tools on the Broccoli platform.
+- **Interactive UI**: Injects "Create Tool" buttons directly into your FastAPI Swagger UI.
+
+## Quick Start
+
+```python
+from fastapi import FastAPI
+from broccoli_tool_creator import setup_tool_creator, ToolCreatorConfig
+
+app = FastAPI()
+
+config = ToolCreatorConfig(
+    broccoli_api_url="https://api.broccoli.com",
+    cognito_client_id="...",
+    cognito_pool_id="...",
+    cognito_username="...",
+    cognito_password="...",
+    owner_id="..."
+)
+
+setup_tool_creator(app, config)
+```
+
+## License
+
+MIT
