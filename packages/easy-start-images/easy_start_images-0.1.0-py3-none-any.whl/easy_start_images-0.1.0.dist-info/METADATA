@@ -1,0 +1,265 @@
+Metadata-Version: 2.4
+Name: easy-start-images
+Version: 0.1.0
+Summary: A Python package for images integration, easy to start
+Home-page: https://gitee.com/guolei19850528/easy_start_images
+Author: guolei
+Author-email: 174000902@qq.com
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: imgkit>=1.2.3
+Requires-Dist: Pillow>=9.5.0
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# easy_start_images
+
+## 项目简介
+
+easy_start_images 是一个用于图像处理的 Python 包，旨在简化常见的图像操作，如在图片上绘制文本、将 HTML 转换为图像等。该包提供了直观的 API，支持 Pillow 和 imgkit 两种图像处理库。
+
+## 功能特点
+
+- 支持在图片上绘制多个文本，可自定义字体、颜色、位置等
+- 提供将 HTML 字符串、URL、文件转换为图像的功能
+- 自动处理目录创建，简化文件保存操作
+- 支持自定义保存参数，满足不同需求
+- 提供完整的测试示例
+
+## 安装方法
+
+### 使用 pip 安装
+
+```bash
+pip install easy-start-images
+```
+
+### 从源代码安装
+
+```bash
+git clone https://gitee.com/guolei19850528/easy_start_images.git
+cd easy_start_images
+pip install -e .
+```
+
+## 依赖项
+
+- imgkit>=1.2.3
+- Pillow>=9.5.0
+
+**注意**：使用 imgkit 功能需要安装 wkhtmltopdf，请根据您的操作系统安装相应版本：
+- Windows: [下载链接](https://wkhtmltopdf.org/downloads.html)
+- macOS: `brew install wkhtmltopdf`
+- Linux: `sudo apt-get install wkhtmltopdf`
+
+## 快速开始
+
+### 在图片上绘制文本
+
+```python
+from easy_start_images import pillow_draw_texts
+from PIL import ImageFont
+
+# 绘制文本示例
+state, output_path = pillow_draw_texts(
+    image_file_path="path/to/input/image.png",
+    image_file_save_kwargs={
+        "fp": "path/to/output/image.png"
+    },
+    texts=[
+        {
+            "xy": (100, 100),
+            "font": ImageFont.truetype(font="path/to/font.ttf", size=35),
+            "text": "Hello World",
+            "fill": (255, 0, 0),  # 红色
+        },
+        {
+            "xy": (100, 150),
+            "font": ImageFont.truetype(font="path/to/font.ttf", size=25),
+            "text": "2023-10-01",
+            "fill": (0, 0, 0),  # 黑色
+        }
+    ]
+)
+
+if state:
+    print(f"文本绘制成功，输出路径：{output_path}")
+else:
+    print("文本绘制失败")
+```
+
+### 将 HTML 字符串转换为图像
+
+```python
+from easy_start_images.imgkit import from_string
+
+# HTML 字符串
+html_string = """
+<html>
+<body>
+    <h1>测试 HTML 转图像</h1>
+    <p>这是一个简单的测试示例。</p>
+    <table border="1">
+        <tr>
+            <th>姓名</th>
+            <th>年龄</th>
+        </tr>
+        <tr>
+            <td>张三</td>
+            <td>25</td>
+        </tr>
+        <tr>
+            <td>李四</td>
+            <td>30</td>
+        </tr>
+    </table>
+</body>
+</html>
+"""
+
+# 转换为图像
+state, output_path = from_string(
+    string=html_string,
+    output_path="path/to/output/html_image.png",
+    options={
+        'width': 800,
+        'height': 600
+    }
+)
+
+if state:
+    print(f"HTML 转图像成功，输出路径：{output_path}")
+else:
+    print("HTML 转图像失败")
+```
+
+### 将 URL 转换为图像
+
+```python
+from easy_start_images.imgkit import from_url
+
+# 将网页转换为图像
+state, output_path = from_url(
+    url="https://www.example.com",
+    output_path="path/to/output/website_image.png",
+    options={
+        'width': 1280,
+        'height': 720
+    }
+)
+
+if state:
+    print(f"URL 转图像成功，输出路径：{output_path}")
+else:
+    print("URL 转图像失败")
+```
+
+### 将 HTML 文件转换为图像
+
+```python
+from easy_start_images.imgkit import from_file
+
+# 将 HTML 文件转换为图像
+state, output_path = from_file(
+    filename="path/to/input/file.html",
+    output_path="path/to/output/file_image.png",
+    options={
+        'width': 1024,
+        'height': 768
+    }
+)
+
+if state:
+    print(f"HTML 文件转图像成功，输出路径：{output_path}")
+else:
+    print("HTML 文件转图像失败")
+```
+
+## API 文档
+
+### pillow_draw_texts(image_file_path="", image_file_save_kwargs=None, texts=[])
+
+在图片上绘制多个文本，并保存结果图片。
+
+**参数**：
+- `image_file_path` (str, optional): 原始图片文件路径。默认值为空字符串。
+- `image_file_save_kwargs` (dict, optional): 图片保存参数，将传递给 `Image.save()` 方法。至少应包含 'fp' 键指定保存路径。默认值为 None，会被转换为空字典。
+- `texts` (list[dict], optional): 要绘制的文本列表，每个元素是一个字典，包含 `ImageDraw.text()` 方法所需的参数，如：
+  - `xy`: 文本位置坐标 (x, y)
+  - `text`: 文本内容
+  - `font`: 字体对象，可通过 `ImageFont.truetype()` 创建
+  - `fill`: 文本颜色，如 (255, 0, 0) 表示红色
+  - 其他 `ImageDraw.text()` 支持的参数
+
+**返回值**：
+- `tuple`: 返回一个元组，包含两个元素：
+  - `bool`: 操作是否成功完成，始终返回 True
+  - `str`: 保存的图片文件路径，如果未指定则为空字符串
+
+### imgkit.from_string(**kwargs)
+
+将 HTML 字符串转换为图像。
+
+**参数**：
+- 接受 imgkit.from_string() 方法的所有参数，主要包括：
+  - `string`: HTML 字符串
+  - `output_path`: 输出图像路径
+  - `options`: 转换选项，如 width, height 等
+  - 其他 imgkit.from_string() 支持的参数
+
+**返回值**：
+- `tuple`: 返回一个元组，包含两个元素：
+  - `bool`: 操作是否成功完成
+  - `str`: 保存的图像文件路径，如果未指定则为 None
+
+### imgkit.from_url(**kwargs)
+
+将 URL 转换为图像。
+
+**参数**：
+- 接受 imgkit.from_url() 方法的所有参数，主要包括：
+  - `url`: 网页 URL
+  - `output_path`: 输出图像路径
+  - `options`: 转换选项，如 width, height 等
+  - 其他 imgkit.from_url() 支持的参数
+
+**返回值**：
+- `tuple`: 返回一个元组，包含两个元素：
+  - `bool`: 操作是否成功完成
+  - `str`: 保存的图像文件路径，如果未指定则为 None
+
+### imgkit.from_file(**kwargs)
+
+将 HTML 文件转换为图像。
+
+**参数**：
+- 接受 imgkit.from_file() 方法的所有参数，主要包括：
+  - `filename`: HTML 文件路径
+  - `output_path`: 输出图像路径
+  - `options`: 转换选项，如 width, height 等
+  - 其他 imgkit.from_file() 支持的参数
+
+**返回值**：
+- `tuple`: 返回一个元组，包含两个元素：
+  - `bool`: 操作是否成功完成
+  - `str`: 保存的图像文件路径，如果未指定则为 None
+
+## 运行测试
+
+```bash
+python -m unittest tests/test_pillow.py
+```
+
+## 项目结构
