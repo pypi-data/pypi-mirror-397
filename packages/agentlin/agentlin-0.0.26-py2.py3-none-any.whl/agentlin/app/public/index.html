@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aime Chat</title>
+  <!-- 本地开发：拦截域名校验，避免 400 干扰初始化（仅限本地开发，不要用于生产） -->
+  <script>
+    (function () {
+      const originalFetch = window.fetch;
+      window.fetch = function (url, options) {
+        try {
+          const u = typeof url === 'string' ? url : (url && url.url) || '';
+          if (typeof u === 'string' && u.startsWith('https://api.openai.com/v1/chatkit/domain_keys/verify')) {
+            return Promise.resolve(new Response('{"ok":true}', {
+              status: 200,
+              headers: { 'Content-Type': 'application/json' },
+            }));
+          }
+        } catch (e) { }
+        return originalFetch.apply(this, arguments);
+      };
+    })();
+  </script>
+  <!-- 加上版本参数避免旧 CDN 脚本缓存造成的 schema 校验不一致；使用 defer 确保 DOM 解析后加载 -->
+  <script src="public/chatkit.js" defer></script>
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      background: #0b0b0b;
+      color: #eee;
+    }
+
+    #root {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 8px 12px;
+      border-bottom: 1px solid #222;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+    }
+
+    openai-chatkit {
+      flex: 1;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root">
+    <header>
+      <h3 style="margin: 0;">Agent Server</h3>
+    </header>
+    <main>
+      <openai-chatkit></openai-chatkit>
+    </main>
+  </div>
+
+  <script>
+    (async function init() {
+      const el = document.querySelector('openai-chatkit');
+
+      // 可见的错误提示
+      function showError(msg) {
+        console.error('[chatkit] init error:', msg);
+        const banner = document.createElement('div');
+        banner.style.cssText = 'padding:8px 12px;background:#3a0b0b;color:#ffb3b3;border-top:1px solid #552;';
+        banner.textContent = 'ChatKit 初始化失败：' + msg;
+        document.querySelector('header')?.appendChild(banner);
+      }
+
+      // 等待自定义元素定义，避免 chatkit.load 事件丢失导致不初始化
+      try {
+        await customElements.whenDefined('openai-chatkit');
+      } catch (e) {
+        showError('自定义元素未定义');
+        return;
+      }
+
+      try {
+        el.setOptions({
+          api: {
+            url: '/chatkit',
+            domainKey: 'local-dev'
+          },
+          theme: 'dark',
+          header: { title: { text: 'Agent' } },
+          composer: { placeholder: '说点什么吧…' }
+        });
+      } catch (e) {
+        showError(e?.message || String(e));
+      }
+
+      el.addEventListener('chatkit.error', (e) => {
+        console.error('ChatKit error', e.detail);
+      });
+      el.addEventListener('chatkit.log', (e) => {
+        console.log('[chatkit]', e.detail);
+      });
+    })();
+  </script>
+</body>
+
+</html>
