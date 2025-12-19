@@ -1,0 +1,94 @@
+Metadata-Version: 2.1
+Name: aemuctrl
+Version: 0.0.1
+Summary: A lightweight Android Emulator Control library using ADB and PyAutoGUI
+Home-page: https://github.com/Solee-in/aemuctrl
+Author: Your Name
+License: MIT
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: MacOS
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENCE
+Requires-Dist: pyautogui
+Requires-Dist: subprocess
+
+aemuctrl - README.md
+
+# aemuctrl (v0.0.1)
+
+A lightweight Python utility for controlling Android emulators and devices via ADB and PyAutoGUI. "aemuctrl" focuses on simplifying automation, screen management, and emulator-specific interactions.
+
+## 📥 ADB Installation Guides
+
+To use this library, you must have ADB (Android Debug Bridge) installed on your system. Please follow the tutorials below based on your operating system:
+
+* **Windows Setup:** [Watch Installation Guide](https://youtu.be/JQrMvecOAeE?si=M1VjuHDDC2-NLDZ9)
+* **macOS Setup:** [Watch Installation Guide](https://youtu.be/k58GSn3pRTY?si=1WiDM0bW9VJ-Sg_L)
+
+---
+
+## 🎮 Emulator Zoom Configuration (CRITICAL)
+
+The zoom functions in **aemuctrl** work by interacting with the emulator's software shortcuts. To prevent system-level conflicts and ensure scripts run correctly, you **must** manually assign the following hotkeys in your emulator settings (BlueStacks, Nox, MeMu, etc.):
+
+* **Zoom IN:** Assign the letter **"B"**
+* **Zoom OUT:** Assign the letter **"S"**
+
+> **Note:** These specific assignments are required for `zoom_in()`, `zoom_out()`, `human_zoom_in()`, and `human_zoom_out()` to function.
+
+---
+
+## 🚀 Key Features
+
+* **Smart Connectivity:** Automatically scans and connects to common emulator ports (5554-5565, 62001, 21503, etc.).
+* **Fast Screen Capture:** Uses `exec-out` for high-speed screenshot transfer without writing to the device's internal storage first.
+* **Safe Text Entry:** Automatically replaces spaces with `%s` to ensure ADB inputs are delivered correctly.
+* **Human-like Motion:** Includes zoom functions with varied delays to mimic human behavior and avoid detection.
+
+---
+
+## 📖 Basic Usage
+
+### 1. Connecting
+```python
+import aemuctrl
+
+# Scans ports and connects to the first available emulator
+device = aemuctrl.smart_connect_fallback()
+
+2. Navigation & Touch
+Python
+
+aemuctrl.home()
+aemuctrl.back()
+aemuctrl.tap(x=500, y=500)
+aemuctrl.swipe(100, 100, 500, 500, duration=300)
+
+3. Screen & Apps
+Python
+
+# Launch an app by package name
+aemuctrl.open_app("com.android.settings")
+
+# Take a high-speed screenshot
+aemuctrl.screenshot("view.png")
+
+4. Zoom Control (Requires B/S Mapping)
+Python
+
+# Standard Zoom
+aemuctrl.zoom_in() 
+
+# Human-like natural zoom out (Uses 'S' key)
+aemuctrl.human_zoom_out()
+
+⚙️ Configuration
+
+If your ADB executable is not in the system environment variables (PATH), update the ADB_PATH at the top of the file: ADB_PATH = "C:/path/to/adb.exe"
+🛡️ License
+
+Open-source utility for personal automation and development.
