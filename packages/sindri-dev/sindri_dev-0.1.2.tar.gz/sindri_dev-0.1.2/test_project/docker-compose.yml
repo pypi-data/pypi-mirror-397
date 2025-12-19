@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    container_name: test-project
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+  test:
+    build: .
+    container_name: test-project-test
+    command: pytest
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+
