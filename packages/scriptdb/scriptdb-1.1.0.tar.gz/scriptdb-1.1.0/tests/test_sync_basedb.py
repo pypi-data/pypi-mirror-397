@@ -1,0 +1,832 @@
+import time
+import sqlite3
+import pytest
+import sys
+import pathlib
+from typing import Dict, Any
+import threading
+
+# Add the src directory to sys.path so we can import the package
+sys.path.append(str(pathlib.Path(__file__).resolve().parents[1] / "src"))
+from scriptdb import Builder, SyncBaseDB, run_every_seconds, run_every_queries
+
+
+class MyTestDB(SyncBaseDB):
+    def migrations(self):
+        return [
+            {
+                "name": "create_table",
+                "sql": "CREATE TABLE t(id INTEGER PRIMARY KEY, x INTEGER)",
+            },
+            {
+                "name": "add_y_and_index",
+                "sqls": [
+                    "ALTER TABLE t ADD COLUMN y INTEGER",
+                    "CREATE INDEX idx_t_y ON t(y)",
+                ],
+            },
+        ]
+
+
+@pytest.fixture
+def db(tmp_path):
+    db_file = tmp_path / "test.db"
+    with MyTestDB.open(db_file) as db:
+        yield db
+
+
+def test_open_applies_migrations(db):
+    row = db.query_one("SELECT name FROM sqlite_master WHERE type='table' AND name='t'")
+    assert row is not None
+    mig = db.query_one("SELECT name FROM applied_migrations WHERE name='create_table'")
+    assert mig is not None
+
+
+def test_sqls_migration_applied(db):
+    cols = db.query_column("SELECT name FROM pragma_table_info('t')")
+    assert "y" in cols
+    idx = db.query_one(
+        "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_t_y'",
+    )
+    assert idx is not None
+
+
+def test_wal_mode_enabled(db):
+    mode = db.query_scalar("PRAGMA journal_mode")
+    assert mode == "wal"
+
+
+def test_wal_mode_can_be_disabled(tmp_path):
+    db_file = tmp_path / "nowal.db"
+    ctx = MyTestDB.open(db_file, use_wal=False)
+    db = ctx._open()
+    try:
+        mode = db.query_scalar("PRAGMA journal_mode")
+        assert mode != "wal"
+    finally:
+        db.close()
+
+
+def test_execute_and_query(db):
+    db.execute("INSERT INTO t(x) VALUES(?)", (1,))
+    row = db.query_one("SELECT x FROM t")
+    assert row["x"] == 1
+
+
+def test_execute_many_and_query_many(db):
+    db.execute_many("INSERT INTO t(x) VALUES(?)", [(1,), (2,), (3,)])
+    rows = db.query_many("SELECT x FROM t ORDER BY x")
+    assert [r["x"] for r in rows] == [1, 2, 3]
+
+
+class _BadSQLsDB(SyncBaseDB):
+    def migrations(self):
+        return [
+            {
+                "name": "bad",
+                "sqls": [
+                    "CREATE TABLE t(id INTEGER)",
+                    "INSERT INTO missing VALUES(1)",
+                ],
+            }
+        ]
+
+
+def test_sqls_migration_rollback(tmp_path):
+    db_file = tmp_path / "bad.db"
+    with pytest.raises(RuntimeError):
+        with _BadSQLsDB.open(db_file):
+            pass
+    conn = sqlite3.connect(db_file)
+    try:
+        cur = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='t'"
+        )
+        row = cur.fetchone()
+        assert row is None
+    finally:
+        conn.close()
+
+
+class _MultiSQLsDB(SyncBaseDB):
+    def migrations(self):
+        return [
+            {
+                "name": "multi_sqls_single_entry",
+                "sqls": [
+                    (
+                        "CREATE TABLE t(id INTEGER PRIMARY KEY, val TEXT);"
+                        "INSERT INTO t(id, val) VALUES (1, 'a');"
+                        "INSERT INTO t(id, val) VALUES (2, 'b');"
+                    )
+                ],
+            }
+        ]
+
+
+def test_sqls_accepts_multiple_statements(tmp_path):
+    db_file = tmp_path / "multisql.db"
+    with _MultiSQLsDB.open(db_file) as db:
+        rows = db.query_many("SELECT id, val FROM t ORDER BY id")
+    assert [(row["id"], row["val"]) for row in rows] == [(1, "a"), (2, "b")]
+
+
+class _AlterBuilderMultiActionDB(SyncBaseDB):
+    def migrations(self):
+        return [
+            {"name": "base_table", "sql": "CREATE TABLE t(id INTEGER PRIMARY KEY)"},
+            {
+                "name": "add_columns_in_one_sqls_entry",
+                "sqls": [
+                    Builder.alter_table("t").add_column("x", int).add_column("y", str)
+                ],
+            },
+        ]
+
+
+def test_sql_builder_with_multiple_alter_actions(tmp_path):
+    db_file = tmp_path / "builder_multi.db"
+    with _AlterBuilderMultiActionDB.open(db_file) as db:
+        cols = db.query_column("SELECT name FROM pragma_table_info('t')")
+    assert {"id", "x", "y"} <= set(cols)
+
+
+class _UserWrappedTransactionDB(SyncBaseDB):
+    def migrations(self):
+        return [
+            {
+                "name": "wrapped_sqls",
+                "sqls": [
+                    """
+                    BEGIN;
+                    CREATE TABLE t(id INTEGER PRIMARY KEY, val TEXT);
+                    INSERT INTO t(val) VALUES ('a');
+                    COMMIT;
+                    """,
+                ],
+            }
+        ]
+
+
+def test_sqls_respects_user_transactions(tmp_path):
+    db_file = tmp_path / "userwrapped.db"
+    with _UserWrappedTransactionDB.open(db_file) as db:
+        rows = db.query_many("SELECT id, val FROM t")
+    assert rows[0]["val"] == "a"
+
+
+class _MissingCommitDB(SyncBaseDB):
+    def migrations(self):
+        return [
+            {
+                "name": "missing_commit",
+                "sqls": [
+                    """
+                    BEGIN;
+                    CREATE TABLE t(id INTEGER PRIMARY KEY, val TEXT);
+                    INSERT INTO t(val) VALUES ('a')
+                    """,
+                ],
+            }
+        ]
+
+
+def test_sqls_requires_closing_transaction(tmp_path):
+    db_file = tmp_path / "missing_commit.db"
+    with pytest.raises(ValueError):
+        with _MissingCommitDB.open(db_file):
+            pass
+
+
+class _NoSemicolonDB(SyncBaseDB):
+    def migrations(self):
+        return [
+            {
+                "name": "no_semicolons",
+                "sqls": [
+                    "CREATE TABLE t(id INTEGER PRIMARY KEY, val TEXT)",
+                    "INSERT INTO t(val) VALUES ('a')",
+                ],
+            }
+        ]
+
+
+def test_sqls_without_semicolons_still_executes(tmp_path):
+    db_file = tmp_path / "nosemi.db"
+    with _NoSemicolonDB.open(db_file) as db:
+        rows = db.query_many("SELECT id, val FROM t")
+    assert rows[0]["val"] == "a"
+
+
+class _LiteralBeginDB(SyncBaseDB):
+    def migrations(self):
+        return [
+            {
+                "name": "literal_begin",
+                "sqls": [
+                    "CREATE TABLE t(id INTEGER PRIMARY KEY, note TEXT DEFAULT 'begin')",
+                    "INSERT INTO t(note) VALUES ('ok')",
+                ],
+            }
+        ]
+
+
+def test_sqls_ignores_literal_begin(tmp_path):
+    db_file = tmp_path / "literalbegin.db"
+    with _LiteralBeginDB.open(db_file) as db:
+        note = db.query_scalar("SELECT note FROM t")
+    assert note == "ok"
+
+
+class _BeginInCommentsDB(SyncBaseDB):
+    def migrations(self):
+        return [
+            {
+                "name": "begin_in_comments",
+                "sqls": [
+                    """
+                    /* hello, its BEGIN, but it's in comment */
+                    -- and this is also BEGIN
+                    /* who knows, is this */ /* BEGIN */ /* or not? */
+                    CREATE TABLE t(id INTEGER PRIMARY KEY);
+                    """,
+                ],
+            }
+        ]
+
+
+def test_sqls_ignores_begin_in_comments(tmp_path):
+    db_file = tmp_path / "commentbegin.db"
+    with _BeginInCommentsDB.open(db_file) as db:
+        exists = db.query_scalar("SELECT name FROM sqlite_master WHERE type='table' AND name='t'")
+    assert exists == "t"
+
+
+def test_insert_one(db):
+    pk = db.insert_one("t", {"x": 5})
+    row = db.query_one("SELECT id, x FROM t WHERE id=?", (pk,))
+    assert row["x"] == 5
+
+
+def test_insert_one_with_pk(db):
+    pk = db.insert_one("t", {"id": 7, "x": 9})
+    assert pk == 7
+    row = db.query_one("SELECT id, x FROM t WHERE id=?", (7,))
+    assert row["x"] == 9
+
+
+def test_insert_many(db):
+    db.insert_many("t", [{"x": 1}, {"x": 2}])
+    rows = db.query_many("SELECT x FROM t ORDER BY x")
+    assert [r["x"] for r in rows] == [1, 2]
+
+
+def test_insert_many_empty(db):
+    db.insert_many("t", [])
+    count = db.query_scalar("SELECT COUNT(*) FROM t")
+    assert count == 0
+
+
+def test_delete_one(db):
+    pk = db.insert_one("t", {"x": 1})
+    deleted = db.delete_one("t", pk)
+    assert deleted == 1
+    row = db.query_one("SELECT 1 FROM t WHERE id=?", (pk,))
+    assert row is None
+
+
+def test_delete_many(db):
+    db.insert_many("t", [{"x": 1}, {"x": 2}, {"x": 3}])
+    deleted = db.delete_many("t", "x >= ?", (2,))
+    assert deleted == 2
+    rows = db.query_many("SELECT x FROM t ORDER BY x")
+    assert [r["x"] for r in rows] == [1]
+
+
+def test_transaction_context_manager_commits(db):
+    with db.transaction():
+        db.execute("INSERT INTO t(x) VALUES(?)", (1,))
+        db.execute("INSERT INTO t(x) VALUES(?)", (2,))
+    values = db.query_column("SELECT x FROM t ORDER BY x")
+    assert values == [1, 2]
+
+
+def test_transaction_context_manager_rolls_back_on_error(db):
+    with pytest.raises(RuntimeError):
+        with db.transaction():
+            db.execute("INSERT INTO t(x) VALUES(?)", (1,))
+            raise RuntimeError("boom")
+    count = db.query_scalar("SELECT COUNT(*) FROM t")
+    assert count == 0
+
+
+def test_transaction_context_manager_rejects_nesting(db):
+    def _attempt_nested():
+        with db.transaction():
+            db.execute("INSERT INTO t(x) VALUES(?)", (1,))
+            with db.transaction():
+                db.execute("INSERT INTO t(x) VALUES(?)", (2,))
+
+    with pytest.raises(RuntimeError):
+        _attempt_nested()
+
+    count = db.query_scalar("SELECT COUNT(*) FROM t")
+    assert count == 0
+
+
+def test_manual_transaction_methods(db):
+    db.begin()
+    db.execute("INSERT INTO t(x) VALUES(?)", (1,))
+    db.commit()
+
+    db.begin()
+    db.execute("INSERT INTO t(x) VALUES(?)", (2,))
+    db.rollback()
+
+    values = db.query_column("SELECT x FROM t ORDER BY x")
+    assert values == [1]
+
+
+def test_manual_transactions_reject_nested_begin(db):
+    db.begin()
+    with pytest.raises(RuntimeError):
+        db.begin()
+    db.rollback()
+
+
+def test_upsert_one(db):
+    pk = db.upsert_one("t", {"id": 1, "x": 1})
+    assert pk == 1
+    pk = db.upsert_one("t", {"id": 1, "x": 2})
+    assert pk == 1
+    row = db.query_one("SELECT x FROM t WHERE id=?", (1,))
+    assert row["x"] == 2
+
+
+def test_upsert_one_without_pk(db):
+    pk = db.upsert_one("t", {"x": 1})
+    assert pk == 1
+    row = db.query_one("SELECT id, x FROM t WHERE id=?", (pk,))
+    assert row["x"] == 1
+
+
+def test_upsert_one_only_pk(db):
+    pk = db.upsert_one("t", {"id": 1})
+    assert pk == 1
+    pk = db.upsert_one("t", {"id": 1})
+    assert pk == 1
+    row = db.query_one("SELECT id, x FROM t WHERE id=?", (1,))
+    assert row["id"] == 1
+    assert row["x"] is None
+
+
+def test_upsert_many(db):
+    db.upsert_many("t", [{"id": 1, "x": 1}, {"id": 2, "x": 2}])
+    db.upsert_many("t", [{"id": 1, "x": 10}, {"id": 3, "x": 3}])
+    rows = db.query_many("SELECT id, x FROM t ORDER BY id")
+    assert [(r["id"], r["x"]) for r in rows] == [(1, 10), (2, 2), (3, 3)]
+
+
+def test_upsert_waits_for_lock(db):
+    db._upsert_lock.acquire()
+    t1 = threading.Thread(target=lambda: db.upsert_one("t", {"id": 1, "x": 1}))
+    t1.start()
+    time.sleep(0.01)
+    count = db.query_scalar("SELECT COUNT(*) FROM t")
+    assert count == 0
+    db._upsert_lock.release()
+    t1.join()
+    row = db.query_one("SELECT x FROM t WHERE id=1")
+    assert row["x"] == 1
+
+
+def test_upsert_many_waits_for_lock(db):
+    db._upsert_lock.acquire()
+    t1 = threading.Thread(target=lambda: db.upsert_many("t", [{"id": 1, "x": 1}, {"id": 2, "x": 2}]))
+    t1.start()
+    time.sleep(0.01)
+    count = db.query_scalar("SELECT COUNT(*) FROM t")
+    assert count == 0
+    db._upsert_lock.release()
+    t1.join()
+    rows = db.query_many("SELECT id, x FROM t ORDER BY id")
+    assert [(r["id"], r["x"]) for r in rows] == [(1, 1), (2, 2)]
+
+
+def test_update_one(db):
+    pk = db.insert_one("t", {"x": 1})
+    updated = db.update_one("t", pk, {"x": 5})
+    assert updated == 1
+    row = db.query_one("SELECT x FROM t WHERE id=?", (pk,))
+    assert row["x"] == 5
+
+
+def test_update_one_empty_dict(db):
+    pk = db.insert_one("t", {"x": 1})
+    updated = db.update_one("t", pk, {})
+    assert updated == 0
+    row = db.query_one("SELECT x FROM t WHERE id=?", (pk,))
+    assert row["x"] == 1
+
+
+def test_update_one_missing_table(db):
+    with pytest.raises(ValueError) as exc:
+        db.update_one("missing", 1, {"x": 2})
+    assert "does not exist" in str(exc.value)
+
+
+def test_query_many_gen(db):
+    db.execute_many("INSERT INTO t(x) VALUES(?)", [(1,), (2,), (3,)])
+    results = []
+    for row in db.query_many_gen("SELECT x FROM t ORDER BY x"):
+        results.append(row["x"])
+    assert results == [1, 2, 3]
+
+
+def test_query_one_none(db):
+    row = db.query_one("SELECT x FROM t WHERE x=?", (999,))
+    assert row is None
+
+
+def test_query_scalar(db):
+    db.execute_many("INSERT INTO t(x) VALUES(?)", [(1,), (2,)])
+    count = db.query_scalar("SELECT COUNT(*) FROM t")
+    assert count == 2
+    missing = db.query_scalar("SELECT x FROM t WHERE id=?", (999,))
+    assert missing is None
+
+
+def test_query_column(db):
+    db.execute_many("INSERT INTO t(x) VALUES(?)", [(1,), (2,), (3,)])
+    values = db.query_column("SELECT x FROM t ORDER BY x")
+    assert values == [1, 2, 3]
+
+
+def test_query_dict(db):
+    db.execute_many("INSERT INTO t(x) VALUES(?)", [(1,), (2,)])
+
+    # Default to table's primary key and store whole rows
+    by_pk = db.query_dict("SELECT id, x FROM t")
+    assert set(by_pk.keys()) == {1, 2}
+    assert by_pk[1]["x"] == 1
+
+    # Explicit column names for key and value
+    mapping = db.query_dict("SELECT id, x FROM t", key="id", value="x")
+    assert mapping == {1: 1, 2: 2}
+
+    # Callables for custom key and value
+    doubled = db.query_dict(
+        "SELECT id, x FROM t",
+        key=lambda r: r["x"],
+        value=lambda r: r["x"] * 2,
+    )
+    assert doubled == {1: 2, 2: 4}
+
+    # Quoted table name still resolves primary key
+    quoted = db.query_dict('SELECT id, x FROM "t"')
+    assert set(quoted.keys()) == {1, 2}
+
+
+def test_query_dict_key_value_callables(db):
+    db.execute_many("INSERT INTO t(x) VALUES(?)", [(1,), (2,)])
+    result = db.query_dict(
+        "SELECT id, x FROM t",
+        key=lambda row: row["id"],
+        value=lambda row: row["x"],
+    )
+    assert result == {1: 1, 2: 2}
+
+
+def test_query_dict_requires_key_when_table_unknown(db):
+    with pytest.raises(ValueError) as exc:
+        db.query_dict("SELECT 1")
+    assert "Cannot determine table name from sql" in str(exc.value)
+
+
+def test_query_dict_select_literal_raises_valueerror(db):
+    """query_dict with a constant select should fail without a key."""
+    with pytest.raises(ValueError):
+        db.query_dict("SELECT 1")
+
+
+def test_context_manager_closes(tmp_path):
+    db_file = tmp_path / "ctx.db"
+    with MyTestDB.open(str(db_file)) as db:
+        db.execute("INSERT INTO t(x) VALUES(?)", (1,))
+    assert db.initialized is False
+
+
+def test_close_sets_initialized_false(tmp_path):
+    db = MyTestDB.open(str(tmp_path / "db.sqlite"))._open()
+    db.close()
+    assert db.initialized is False
+    with pytest.raises(RuntimeError):
+        db.execute("SELECT 1")
+
+
+def test_require_init_decorator():
+    db = MyTestDB("test.db")
+    with pytest.raises(RuntimeError):
+        db.execute("SELECT 1")
+
+
+def test_auto_create_false_missing_file(tmp_path):
+    db_file = tmp_path / "nope.sqlite"
+    with pytest.raises(RuntimeError):
+        MyTestDB.open(str(db_file), auto_create=False)._open()
+
+
+def test_auto_create_false_existing_file(tmp_path):
+    db_file = tmp_path / "exists.sqlite"
+    db_file.touch()
+    ctx = MyTestDB.open(str(db_file), auto_create=False)
+    db = ctx._open()
+    try:
+        assert db.initialized is True
+    finally:
+        db.close()
+
+
+class DuplicateNameDB(SyncBaseDB):
+    def migrations(self):
+        return [
+            {"name": "m1", "sql": "CREATE TABLE t(x INTEGER)"},
+            {"name": "m1", "sql": "CREATE TABLE t2(x INTEGER)"},
+        ]
+
+
+def test_duplicate_migration_names(tmp_path):
+    with pytest.raises(ValueError):
+        DuplicateNameDB.open(str(tmp_path / "dup.sqlite"))._open()
+
+
+class MissingNameDB(SyncBaseDB):
+    def migrations(self):
+        return [{"sql": "CREATE TABLE t(x INTEGER)"}]
+
+
+def test_missing_migration_name(tmp_path):
+    with pytest.raises(ValueError):
+        MissingNameDB.open(str(tmp_path / "miss.sqlite"))._open()
+
+
+class NonCallableFuncDB(SyncBaseDB):
+    def migrations(self):
+        return [{"name": "bad", "function": 123}]
+
+
+def test_non_callable_function(tmp_path):
+    with pytest.raises(TypeError):
+        NonCallableFuncDB.open(str(tmp_path / "bad.sqlite"))._open()
+
+
+class AsyncMigrationDB(SyncBaseDB):
+    def migrations(self):
+        async def async_func(db, migrations, name):
+            pass
+
+        return [{"name": "bad", "function": async_func}]
+
+
+def test_async_function_invalid(tmp_path):
+    with pytest.raises(TypeError):
+        AsyncMigrationDB.open(str(tmp_path / "bad_sync.sqlite"))._open()
+
+
+class FuncDB(SyncBaseDB):
+    recorded: Dict[str, Any] = {}
+
+    def migrations(self):
+        def func(db, migrations, name):
+            FuncDB.recorded = {
+                "db": db,
+                "migrations": migrations,
+                "name": name,
+            }
+            db.conn.execute("CREATE TABLE t(x INTEGER)")
+
+        return [{"name": "good", "function": func}]
+
+
+def test_function_called_with_args(tmp_path):
+    ctx = FuncDB.open(str(tmp_path / "good.sqlite"))
+    db = ctx._open()
+    try:
+        assert FuncDB.recorded["db"] is db
+        assert FuncDB.recorded["migrations"][0]["name"] == "good"
+        assert FuncDB.recorded["name"] == "good"
+    finally:
+        db.close()
+
+
+class SyncBadFunctionSignatureDB(SyncBaseDB):
+    def migrations(self):
+        def func(db, migrations):
+            return None
+
+        return [{"name": "bad", "function": func}]
+
+
+def test_sync_function_requires_three_args(tmp_path):
+    with pytest.raises(TypeError, match=r"parameters \(db, migrations, name\)"):
+        SyncBadFunctionSignatureDB.open(str(tmp_path / "sig.sqlite"))._open()
+
+
+class SyncBoundMethodFuncDB(SyncBaseDB):
+    def migrations(self):
+        return [
+            {"name": "create", "sql": "CREATE TABLE t(id TEXT PRIMARY KEY, data TEXT)"},
+            {"name": "seed", "function": self._seed_data},
+        ]
+
+    def _seed_data(self, migrations, name):
+        self.insert_many("t", [{"id": "a", "data": "alpha"}])
+
+
+def test_sync_function_accepts_bound_method(tmp_path):
+    ctx = SyncBoundMethodFuncDB.open(str(tmp_path / "bound.sqlite"))
+    db = ctx._open()
+    try:
+        cur = db.conn.execute("SELECT data FROM t")
+        assert [row[0] for row in cur.fetchall()] == ["alpha"]
+    finally:
+        db.close()
+
+
+class SyncBadBoundFunctionSignatureDB(SyncBaseDB):
+    def migrations(self):
+        return [
+            {"name": "create", "sql": "CREATE TABLE t(id TEXT PRIMARY KEY)"},
+            {"name": "bad", "function": self._bad_seed},
+        ]
+
+    def _bad_seed(self, migrations):
+        return None
+
+
+def test_sync_bound_function_requires_two_args(tmp_path):
+    with pytest.raises(TypeError, match=r"parameters \(migrations, name\)"):
+        SyncBadBoundFunctionSignatureDB.open(str(tmp_path / "bound_sig.sqlite"))._open()
+
+
+class SyncFunctionNameDB(SyncBaseDB):
+    def migrations(self):
+        return [
+            {"name": "create", "sql": "CREATE TABLE t(id TEXT PRIMARY KEY, data TEXT)"},
+            {"name": "seed", "function": "_seed_from_name"},
+        ]
+
+    def _seed_from_name(self, migrations, name):
+        self.insert_many("t", [{"id": "b", "data": "beta"}])
+
+
+def test_sync_function_resolves_name(tmp_path):
+    ctx = SyncFunctionNameDB.open(str(tmp_path / "named.sqlite"))
+    db = ctx._open()
+    try:
+        cur = db.conn.execute("SELECT data FROM t")
+        assert [row[0] for row in cur.fetchall()] == ["beta"]
+    finally:
+        db.close()
+
+
+class SyncMissingFunctionNameDB(SyncBaseDB):
+    def migrations(self):
+        return [{"name": "missing", "function": "does_not_exist"}]
+
+
+def test_sync_function_name_missing_attribute(tmp_path):
+    with pytest.raises(ValueError):
+        SyncMissingFunctionNameDB.open(str(tmp_path / "missing_fn.sqlite"))._open()
+
+
+class MissingSqlFuncDB(SyncBaseDB):
+    def migrations(self):
+        return [{"name": "bad"}]
+
+
+def test_missing_sql_and_function(tmp_path):
+    with pytest.raises(ValueError):
+        MissingSqlFuncDB.open(str(tmp_path / "bad2.sqlite"))._open()
+
+
+class BadSqlsDB(SyncBaseDB):
+    def migrations(self):
+        return [
+            {"name": "create", "sql": "CREATE TABLE t(id INTEGER PRIMARY KEY)"},
+            {"name": "bad", "sqls": "ALTER TABLE t ADD COLUMN y INTEGER"},
+        ]
+
+
+def test_sqls_must_be_sequence(tmp_path):
+    with pytest.raises(TypeError):
+        BadSqlsDB.open(str(tmp_path / "bad_sqls.sqlite"))._open()
+
+
+class FailingMigrationDB(SyncBaseDB):
+    def migrations(self):
+        return [
+            {"name": "create", "sql": "CREATE TABLE t(id INTEGER PRIMARY KEY)"},
+            {"name": "bad", "sql": "INSERT INTO t(nonexistent) VALUES(1)"},
+        ]
+
+
+def test_migration_error_wrapped(tmp_path):
+    with pytest.raises(RuntimeError) as excinfo:
+        FailingMigrationDB.open(str(tmp_path / "fail.sqlite"))._open()
+    assert "Error while applying migration bad" in str(excinfo.value)
+
+
+def test_unknown_applied_migration(tmp_path):
+    db_file = tmp_path / "ghost.sqlite"
+    ctx = MyTestDB.open(str(db_file))
+    db = ctx._open()
+    db.close()
+
+    import sqlite3
+
+    conn = sqlite3.connect(db_file)
+    conn.execute("INSERT INTO applied_migrations(name) VALUES('ghost')")
+    conn.commit()
+    conn.close()
+
+    with pytest.raises(ValueError) as exc:
+        MyTestDB.open(str(db_file))._open()
+    assert "ghost" in str(exc.value)
+    assert "inconsistent" in str(exc.value)
+
+
+class PeriodicDB(SyncBaseDB):
+    def __init__(self, path: str):
+        super().__init__(path)
+        self.calls = 0
+
+    def migrations(self):
+        return []
+
+    @run_every_seconds(0.05)
+    def tick(self):
+        self.calls += 1
+
+
+def test_run_every_seconds(tmp_path):
+    ctx = PeriodicDB.open(str(tmp_path / "periodic.sqlite"))
+    db = ctx._open()
+    try:
+        time.sleep(0.12)
+        assert db.calls >= 2
+    finally:
+        db.close()
+
+
+class QueryHookDB(SyncBaseDB):
+    def __init__(self, path: str):
+        super().__init__(path)
+        self.calls = 0
+
+    def migrations(self):
+        return []
+
+    @run_every_queries(2)
+    def hook(self):
+        self.calls += 1
+
+
+def test_run_every_queries(tmp_path):
+    ctx = QueryHookDB.open(str(tmp_path / "hook.sqlite"))
+    db = ctx._open()
+    try:
+        db.query_one("SELECT 1")
+        db.query_one("SELECT 1")
+        time.sleep(0)
+        assert db.calls == 1
+    finally:
+        db.close()
+
+
+@pytest.mark.parametrize(
+    "factory, expected_type",
+    [(sqlite3.Row, sqlite3.Row), (dict, dict)],
+)
+def test_row_factory_controls_sync_results(tmp_path, factory, expected_type):
+    db_file = tmp_path / f"sync_row_factory_{factory.__name__}.db"
+    with MyTestDB.open(db_file, row_factory=factory) as db:
+        db.insert_many("t", [{"x": 1}, {"x": 2}])
+
+        row = db.query_one("SELECT * FROM t ORDER BY id LIMIT 1")
+        assert isinstance(row, expected_type)
+
+        rows = db.query_many("SELECT * FROM t ORDER BY id")
+        assert all(isinstance(r, expected_type) for r in rows)
+
+        gen_rows = list(db.query_many_gen("SELECT * FROM t ORDER BY id"))
+        assert all(isinstance(r, expected_type) for r in gen_rows)
+
+        mapping = db.query_dict("SELECT * FROM t ORDER BY id")
+        assert all(isinstance(value, expected_type) for value in mapping.values())
+
+        scalar = db.query_scalar("SELECT x FROM t ORDER BY id LIMIT 1")
+        assert scalar == 1
+
+        column = db.query_column("SELECT x FROM t ORDER BY id")
+        assert column == [1, 2]
