@@ -1,0 +1,56 @@
+[tool.poetry]
+name = "pycmx"
+version = "1.4.0"
+description = "Python CMX 3600 Edit Decision List Parser"
+authors = ["Jamie Hardt <jamiehardt@me.com>"]
+license = "MIT"
+readme = "README.md"
+keywords = [
+  'parser',
+  'film', 
+  'broadcast' 
+]
+classifiers = [
+  'Development Status :: 5 - Production/Stable',
+  'License :: OSI Approved :: MIT License',
+  'Topic :: Multimedia',
+  'Topic :: Multimedia :: Video',
+  'Topic :: Text Processing',
+  'Programming Language :: Python :: 3.8',
+  'Programming Language :: Python :: 3.9',
+  'Programming Language :: Python :: 3.10',
+  'Programming Language :: Python :: 3.11',
+  'Programming Language :: Python :: 3.12',
+  'Programming Language :: Python :: 3.13'
+]
+homepage = "https://github.com/iluvcapra/pycmx"
+documentation = "https://pycmx.readthedocs.io/"
+repository = "https://github.com/iluvcapra/pycmx.git"
+urls.Tracker = "https://github.com/iluvcapra/pycmx/issues" 
+
+[tool.poetry.extras]
+doc = ['sphinx', 'sphinx_rtd_theme']
+
+[tool.poetry.dependencies]
+python = "^3.8"
+sphinx = { version='>= 5.3.0', optional=true}
+sphinx_rtd_theme = {version ='>= 1.1.1', optional=true}
+
+[tool.pyright]
+typeCheckingMode = "basic"
+
+[tool.pylint]
+max-line-length = 88
+disable = [
+    "C0103", # (invalid-name)
+    "C0114", # (missing-module-docstring)
+    "C0115", # (missing-class-docstring)
+    "C0116", # (missing-function-docstring)
+    "R0903", # (too-few-public-methods)
+    "R0913", # (too-many-arguments)
+    "W0105", # (pointless-string-statement)
+]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
