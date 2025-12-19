@@ -1,0 +1,47 @@
+Metadata-Version: 2.4
+Name: hw2-latex-generator
+Version: 0.1.0
+Summary: Простой функциональный генератор LaTeX для таблиц и картинок
+Author-email: Egor Fyodorov <egorfyodorovv@gmail.com>
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+
+# HW 2 — functional LaTeX generator
+
+Minimal, dependency-free helpers to generate LaTeX for tables and images, plus a ready-made example that produces `artifacts/table_and_image.tex` using the committed `artifacts/sample.png`.
+
+## What’s included
+- `latex_gen.py` — pure functions for table/image blocks and full document rendering.
+- `create_example.py` — builds the example `.tex` using the provided `sample.png`.
+- `artifacts/` — generated `.tex` and the sample PNG image.
+- `Makefile` — convenience targets `example` (generate `.tex`) and `pdf` (requires `pdflatex`).
+- `Dockerfile` and `docker-compose.yml` — containerized build of `.tex` and `.pdf`.
+
+## Run locally
+```bash
+cd hw_2
+python3 create_example.py          # writes artifacts/table_and_image.tex and sample.png
+# optional if LaTeX is installed:
+make pdf                           # pdflatex -> artifacts/table_and_image.pdf
+```
+
+## Docker
+Build image once:
+```bash
+cd hw_2
+docker build -t hw2-latex .
+```
+
+Generate pdf using the built image (no rebuild needed):
+```bash
+cd hw_2
+docker run --rm -v "$PWD/artifacts:/app/artifacts" hw2-latex
+# or make docker-run (after make docker-build once)
+```
+
+Or via docker-compose (builds first time, then reuses):
+```bash
+cd hw_2
+docker-compose up --build
+```
+Artifacts land in `artifacts/` on the host.
