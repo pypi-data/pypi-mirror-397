@@ -1,0 +1,100 @@
+{
+  "id": "sales-call-summarizer",
+  "name": "Sales Call Summarizer",
+  "description": "Transform sales call notes or transcripts into structured summaries with action items. Perfect for CRM updates and follow-up planning.",
+  "category": "salesforce",
+  "tags": [
+    "salesforce",
+    "crm",
+    "sales",
+    "meetings",
+    "summaries"
+  ],
+  "difficulty": "intermediate",
+  "use_cases": [
+    "Quickly summarize sales call recordings",
+    "Create consistent CRM update notes",
+    "Extract action items from conversations",
+    "Track opportunity progression"
+  ],
+  "stages": [
+    {
+      "id": "summarize",
+      "component_type": "generator",
+      "name": "Summarize Call",
+      "config": {
+        "prompt": "Summarize this sales call:\n\nCall Date: {{input.call_date}}\nProspect: {{input.prospect_name}} ({{input.company}})\nCall Notes/Transcript:\n{{input.notes}}\n\nCreate a structured summary with:\n1. **Executive Summary** (2-3 sentences)\n2. **Key Discussion Points**\n3. **Prospect Pain Points Identified**\n4. **Product/Solution Fit**\n5. **Objections Raised**\n6. **Buying Signals**\n7. **Action Items** (with owners and deadlines)\n8. **Next Steps**\n9. **Deal Stage Recommendation** (Discovery/Demo/Proposal/Negotiation/Closed)",
+        "system_prompt": "You are an expert sales operations analyst. Create clear, actionable call summaries that help sales reps and managers track deal progression. Focus on extracting insights that drive the deal forward. Be concise but comprehensive."
+      },
+      "depends_on": [],
+      "position": {
+        "x": 150,
+        "y": 150
+      }
+    },
+    {
+      "id": "review",
+      "component_type": "critic",
+      "name": "Review for Completeness",
+      "config": {
+        "content": "{{upstream.summarize.content}}",
+        "criteria": "Review this sales call summary for:\n1. Are all action items specific and assignable?\n2. Is the deal stage recommendation justified?\n3. Are any key sales indicators missing?\n4. Is the summary suitable for CRM entry?"
+      },
+      "depends_on": [
+        "summarize"
+      ],
+      "position": {
+        "x": 400,
+        "y": 150
+      }
+    },
+    {
+      "id": "finalize",
+      "component_type": "improver",
+      "name": "Finalize Summary",
+      "config": {
+        "content": "{{upstream.summarize.content}}",
+        "feedback": "{{upstream.review.feedback}}",
+        "instructions": "Create the final call summary ready for CRM entry. Ensure all sections are complete and action items are specific with clear owners."
+      },
+      "depends_on": [
+        "review"
+      ],
+      "position": {
+        "x": 650,
+        "y": 150
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "call_date": {
+        "type": "string",
+        "description": "Date of the call"
+      },
+      "prospect_name": {
+        "type": "string",
+        "description": "Name of the prospect"
+      },
+      "company": {
+        "type": "string",
+        "description": "Company name"
+      },
+      "notes": {
+        "type": "string",
+        "description": "Call notes or transcript"
+      }
+    },
+    "required": [
+      "notes"
+    ]
+  },
+  "output_stage_id": "finalize",
+  "example_input": {
+    "transcript": "Sales Rep: Hi John, thanks for taking the time to speak with us today. I wanted to follow up on the demo we did last week.\n\nJohn: Yes, the team was impressed with the automation features. We're evaluating a few options.\n\nSales Rep: What specific challenges are you trying to solve?\n\nJohn: Mainly workflow automation and reducing manual data entry. We spend about 20 hours a week on repetitive tasks.\n\nSales Rep: Our solution typically reduces that by 80%. The ROI is usually seen within 3 months.\n\nJohn: That sounds promising. What's the implementation timeline?\n\nSales Rep: Usually 4-6 weeks including training.\n\nJohn: I'll need to discuss with our CFO. Can you send over a formal proposal?",
+    "call_date": "2024-01-15",
+    "prospect_name": "John Smith",
+    "company": "Acme Corp"
+  }
+}

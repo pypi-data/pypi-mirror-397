@@ -1,0 +1,334 @@
+{
+  "id": "document-batch-processor",
+  "name": "Document Batch Processor",
+  "description": "A sophisticated document processing pipeline that handles multiple documents in batches, extracts information, validates against schemas, generates summaries, and produces a comprehensive analysis report. Demonstrates loop operators, batch processing, variable management, and aggregation patterns.",
+  "category": "data",
+  "tags": [
+    "documents",
+    "batch",
+    "loop",
+    "extraction",
+    "nlp",
+    "processing",
+    "advanced"
+  ],
+  "difficulty": "advanced",
+  "use_cases": [
+    "Batch document analysis",
+    "Contract review automation",
+    "Invoice data extraction",
+    "Resume/CV screening",
+    "Legal document processing",
+    "Content audit workflows"
+  ],
+  "stages": [
+    {
+      "id": "prepare-batch",
+      "component_type": "loop",
+      "name": "Prepare Document Batches",
+      "config": {
+        "items": "{{input.documents}}",
+        "batch_size": 3,
+        "max_iterations": 10,
+        "include_metadata": true
+      },
+      "depends_on": [],
+      "position": {
+        "x": 100,
+        "y": 250
+      }
+    },
+    {
+      "id": "set-processing-vars",
+      "component_type": "variable-set",
+      "name": "Initialize Variables",
+      "config": {
+        "variables": {
+          "total_docs": "{{upstream.prepare-batch.total_items}}",
+          "batch_count": "{{upstream.prepare-batch.total_batches}}",
+          "processing_start": "{{now()}}",
+          "extraction_schema": "{{input.extraction_schema or {'title': 'string', 'date': 'date', 'amount': 'number', 'entities': 'array'}}}"
+        }
+      },
+      "depends_on": [
+        "prepare-batch"
+      ],
+      "position": {
+        "x": 350,
+        "y": 150
+      }
+    },
+    {
+      "id": "extract-batch-1",
+      "component_type": "generator",
+      "name": "Extract Batch 1",
+      "config": {
+        "prompt": "Extract structured data from these documents:\n\nDocuments:\n{{upstream.prepare-batch.batches[0]}}\n\nExtraction Schema:\n{{upstream.set-processing-vars.variables.extraction_schema}}\n\nFor each document, extract:\n1. Key entities (people, organizations, dates, amounts)\n2. Document type classification\n3. Summary (2-3 sentences)\n4. Confidence score\n\nReturn as JSON array.",
+        "system_prompt": "You are an expert document analyst. Extract structured data accurately and consistently. Always return valid JSON."
+      },
+      "depends_on": [
+        "set-processing-vars"
+      ],
+      "position": {
+        "x": 600,
+        "y": 50
+      }
+    },
+    {
+      "id": "extract-batch-2",
+      "component_type": "generator",
+      "name": "Extract Batch 2",
+      "config": {
+        "prompt": "Extract structured data from these documents:\n\nDocuments:\n{{upstream.prepare-batch.batches[1] if len(upstream.prepare-batch.batches) > 1 else '[]'}}\n\nExtraction Schema:\n{{upstream.set-processing-vars.variables.extraction_schema}}\n\nFor each document, extract:\n1. Key entities (people, organizations, dates, amounts)\n2. Document type classification\n3. Summary (2-3 sentences)\n4. Confidence score\n\nReturn as JSON array.",
+        "system_prompt": "You are an expert document analyst. Extract structured data accurately and consistently. Always return valid JSON."
+      },
+      "depends_on": [
+        "set-processing-vars"
+      ],
+      "position": {
+        "x": 600,
+        "y": 175
+      }
+    },
+    {
+      "id": "extract-batch-3",
+      "component_type": "generator",
+      "name": "Extract Batch 3",
+      "config": {
+        "prompt": "Extract structured data from these documents:\n\nDocuments:\n{{upstream.prepare-batch.batches[2] if len(upstream.prepare-batch.batches) > 2 else '[]'}}\n\nExtraction Schema:\n{{upstream.set-processing-vars.variables.extraction_schema}}\n\nFor each document, extract:\n1. Key entities (people, organizations, dates, amounts)\n2. Document type classification\n3. Summary (2-3 sentences)\n4. Confidence score\n\nReturn as JSON array.",
+        "system_prompt": "You are an expert document analyst. Extract structured data accurately and consistently. Always return valid JSON."
+      },
+      "depends_on": [
+        "set-processing-vars"
+      ],
+      "position": {
+        "x": 600,
+        "y": 300
+      }
+    },
+    {
+      "id": "extract-batch-4",
+      "component_type": "generator",
+      "name": "Extract Batch 4",
+      "config": {
+        "prompt": "Extract structured data from these documents:\n\nDocuments:\n{{upstream.prepare-batch.batches[3] if len(upstream.prepare-batch.batches) > 3 else '[]'}}\n\nExtraction Schema:\n{{upstream.set-processing-vars.variables.extraction_schema}}\n\nFor each document, extract:\n1. Key entities (people, organizations, dates, amounts)\n2. Document type classification\n3. Summary (2-3 sentences)\n4. Confidence score\n\nReturn as JSON array.",
+        "system_prompt": "You are an expert document analyst. Extract structured data accurately and consistently. Always return valid JSON."
+      },
+      "depends_on": [
+        "set-processing-vars"
+      ],
+      "position": {
+        "x": 600,
+        "y": 425
+      }
+    },
+    {
+      "id": "validate-extractions",
+      "component_type": "schema-validate",
+      "name": "Validate Extractions",
+      "config": {
+        "data": {
+          "batch1": "{{upstream.extract-batch-1.content}}",
+          "batch2": "{{upstream.extract-batch-2.content}}",
+          "batch3": "{{upstream.extract-batch-3.content}}",
+          "batch4": "{{upstream.extract-batch-4.content}}"
+        },
+        "schema": {
+          "type": "object",
+          "properties": {
+            "batch1": {
+              "type": "string"
+            },
+            "batch2": {
+              "type": "string"
+            },
+            "batch3": {
+              "type": "string"
+            },
+            "batch4": {
+              "type": "string"
+            }
+          }
+        },
+        "strict": false
+      },
+      "depends_on": [
+        "extract-batch-1",
+        "extract-batch-2",
+        "extract-batch-3",
+        "extract-batch-4"
+      ],
+      "position": {
+        "x": 850,
+        "y": 200
+      }
+    },
+    {
+      "id": "merge-extractions",
+      "component_type": "json-transform",
+      "name": "Merge All Extractions",
+      "config": {
+        "template": {
+          "all_extractions": [
+            "{{upstream.extract-batch-1.content}}",
+            "{{upstream.extract-batch-2.content}}",
+            "{{upstream.extract-batch-3.content}}",
+            "{{upstream.extract-batch-4.content}}"
+          ],
+          "validation_status": "{{upstream.validate-extractions.valid}}",
+          "processing_metadata": {
+            "total_documents": "{{upstream.set-processing-vars.variables.total_docs}}",
+            "batches_processed": "{{upstream.set-processing-vars.variables.batch_count}}",
+            "started_at": "{{upstream.set-processing-vars.variables.processing_start}}"
+          }
+        }
+      },
+      "depends_on": [
+        "validate-extractions"
+      ],
+      "position": {
+        "x": 850,
+        "y": 350
+      }
+    },
+    {
+      "id": "log-processing",
+      "component_type": "logger",
+      "name": "Log Processing Status",
+      "config": {
+        "message": "Document batch processing complete",
+        "level": "info",
+        "data": {
+          "total_documents": "{{upstream.set-processing-vars.variables.total_docs}}",
+          "batches_processed": "{{upstream.set-processing-vars.variables.batch_count}}",
+          "validation_passed": "{{upstream.validate-extractions.valid}}"
+        }
+      },
+      "depends_on": [
+        "merge-extractions"
+      ],
+      "position": {
+        "x": 850,
+        "y": 475
+      }
+    },
+    {
+      "id": "analyze-patterns",
+      "component_type": "generator",
+      "name": "Analyze Patterns",
+      "config": {
+        "prompt": "Analyze the extracted data for patterns and insights:\n\nExtracted Data:\n{{upstream.merge-extractions.all_extractions}}\n\nProcessing Metadata:\n{{upstream.merge-extractions.processing_metadata}}\n\nProvide:\n1. Document type distribution\n2. Common entities across documents\n3. Date patterns and timeline analysis\n4. Amount/value aggregations\n5. Anomalies or outliers\n6. Data quality assessment",
+        "system_prompt": "You are a data analyst expert at finding patterns in document collections. Provide actionable insights."
+      },
+      "depends_on": [
+        "merge-extractions"
+      ],
+      "position": {
+        "x": 1100,
+        "y": 200
+      }
+    },
+    {
+      "id": "generate-summary",
+      "component_type": "generator",
+      "name": "Generate Executive Summary",
+      "config": {
+        "prompt": "Create an executive summary of the document batch analysis:\n\nPattern Analysis:\n{{upstream.analyze-patterns.content}}\n\nProcessing Stats:\n- Total documents: {{upstream.merge-extractions.processing_metadata.total_documents}}\n- Batches: {{upstream.merge-extractions.processing_metadata.batches_processed}}\n\nProvide:\n1. One-paragraph overview\n2. Key findings (5 bullet points)\n3. Recommendations\n4. Data quality score (1-10)",
+        "system_prompt": "You are an executive communications specialist. Create clear, actionable summaries."
+      },
+      "depends_on": [
+        "analyze-patterns"
+      ],
+      "position": {
+        "x": 1100,
+        "y": 350
+      }
+    },
+    {
+      "id": "quality-review",
+      "component_type": "critic",
+      "name": "Review Analysis Quality",
+      "config": {
+        "content": "ANALYSIS:\n{{upstream.analyze-patterns.content}}\n\nSUMMARY:\n{{upstream.generate-summary.content}}",
+        "criteria": "Evaluate the analysis for:\n1. Accuracy of pattern identification\n2. Completeness of coverage\n3. Actionability of insights\n4. Data-backed conclusions\n5. Clear communication"
+      },
+      "depends_on": [
+        "generate-summary"
+      ],
+      "position": {
+        "x": 1350,
+        "y": 200
+      }
+    },
+    {
+      "id": "final-report",
+      "component_type": "improver",
+      "name": "Create Final Report",
+      "config": {
+        "content": "# Document Batch Analysis Report\n\n## Executive Summary\n{{upstream.generate-summary.content}}\n\n## Detailed Analysis\n{{upstream.analyze-patterns.content}}",
+        "feedback": "{{upstream.quality-review.feedback}}",
+        "instructions": "Refine into a polished, professional document analysis report. Ensure clear structure and actionable insights."
+      },
+      "depends_on": [
+        "quality-review"
+      ],
+      "position": {
+        "x": 1350,
+        "y": 350
+      }
+    },
+    {
+      "id": "format-output",
+      "component_type": "json-transform",
+      "name": "Structure Final Output",
+      "config": {
+        "template": {
+          "report": "{{upstream.final-report.improved}}",
+          "extracted_data": "{{upstream.merge-extractions.all_extractions}}",
+          "pattern_analysis": "{{upstream.analyze-patterns.content}}",
+          "metadata": {
+            "total_documents_processed": "{{upstream.merge-extractions.processing_metadata.total_documents}}",
+            "batches_used": "{{upstream.merge-extractions.processing_metadata.batches_processed}}",
+            "validation_status": "{{upstream.merge-extractions.validation_status}}",
+            "processing_started": "{{upstream.merge-extractions.processing_metadata.started_at}}",
+            "completed_at": "{{now()}}"
+          }
+        }
+      },
+      "depends_on": [
+        "final-report"
+      ],
+      "position": {
+        "x": 1600,
+        "y": 275
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "documents": {
+        "type": "array",
+        "description": "Array of document content strings to process",
+        "items": {
+          "type": "string"
+        }
+      },
+      "extraction_schema": {
+        "type": "object",
+        "description": "Optional custom schema for data extraction"
+      }
+    },
+    "required": [
+      "documents"
+    ]
+  },
+  "output_stage_id": "format-output",
+  "example_input": {
+    "documents": [
+      "Contract #2024-001: Service Agreement between Acme Corp and TechVendor Inc. Effective Date: Jan 1, 2024. Term: 12 months. Monthly fee: $5,000. Auto-renewal unless 30-day notice provided.",
+      "Invoice #INV-2024-042: Billed to Acme Corp. Date: Jan 15, 2024. Amount: $12,500 for consulting services. Due: Feb 15, 2024.",
+      "Meeting Notes - Q1 Planning: Discussed budget allocation, new product launch timeline, and hiring needs. Action items: 1) Finalize Q1 budget by Jan 20, 2) Schedule product demo for Feb 1."
+    ]
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "id": "document-qa",
+  "name": "Document Q&A",
+  "description": "Answer questions based on provided document content. Extracts relevant information and provides cited, accurate answers.",
+  "category": "analysis",
+  "tags": [
+    "analysis",
+    "qa",
+    "documents",
+    "research"
+  ],
+  "difficulty": "beginner",
+  "use_cases": [
+    "Answer questions from documentation",
+    "Extract insights from reports",
+    "Research assistance",
+    "Knowledge base queries"
+  ],
+  "stages": [
+    {
+      "id": "answer",
+      "component_type": "generator",
+      "name": "Answer Question",
+      "config": {
+        "prompt": "Based on the following document, answer the question.\n\nDocument:\n{{input.document}}\n\nQuestion: {{input.question}}\n\nProvide a clear, accurate answer based only on information in the document. If the answer cannot be found in the document, say so. Include relevant quotes or references from the document to support your answer.",
+        "system_prompt": "You are a document analysis expert. Answer questions accurately based solely on the provided document content. Always cite your sources within the document. If information is not available in the document, clearly state that rather than making up an answer."
+      },
+      "depends_on": [],
+      "position": {
+        "x": 150,
+        "y": 150
+      }
+    },
+    {
+      "id": "verify",
+      "component_type": "critic",
+      "name": "Verify Answer",
+      "config": {
+        "content": "Answer: {{upstream.answer.content}}\n\nOriginal Document:\n{{input.document}}",
+        "criteria": "Verify that:\n1. The answer is accurate based on the document\n2. All claims are supported by the document text\n3. No information was fabricated\n4. The answer is complete and addresses the question fully"
+      },
+      "depends_on": [
+        "answer"
+      ],
+      "position": {
+        "x": 400,
+        "y": 150
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "document": {
+        "type": "string",
+        "description": "The document text to query"
+      },
+      "question": {
+        "type": "string",
+        "description": "The question to answer"
+      }
+    },
+    "required": [
+      "document",
+      "question"
+    ]
+  },
+  "output_stage_id": "answer",
+  "example_input": {
+    "document": "FlowMason is a visual pipeline builder for AI workflows. It allows users to create complex multi-stage processing pipelines using a drag-and-drop interface. Key features include: 1) Visual DAG editor for pipeline design, 2) Pre-built nodes for text generation, critique, and synthesis, 3) Operators for data transformation, API calls, and filtering, 4) Real-time execution with stage-by-stage results, 5) Template library for common use cases. FlowMason supports multiple LLM providers including Anthropic, OpenAI, and Google.",
+    "question": "What are the main features of FlowMason and which LLM providers does it support?"
+  }
+}

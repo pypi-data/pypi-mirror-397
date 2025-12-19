@@ -1,0 +1,93 @@
+{
+  "id": "content-review-loop",
+  "name": "Content Review Loop",
+  "description": "A three-stage pipeline that generates content, critiques it, and then improves it based on the feedback. Demonstrates the Generator \u2192 Critic \u2192 Improver pattern.",
+  "category": "content",
+  "tags": [
+    "content",
+    "review",
+    "improvement",
+    "quality"
+  ],
+  "difficulty": "intermediate",
+  "use_cases": [
+    "Create higher quality content through iteration",
+    "Automated content quality assurance",
+    "Self-improving writing workflows"
+  ],
+  "stages": [
+    {
+      "id": "draft",
+      "component_type": "generator",
+      "name": "Generate Draft",
+      "config": {
+        "prompt": "Write a {{input.content_type}} about: {{input.topic}}\n\nRequirements:\n{{input.requirements}}",
+        "system_prompt": "You are a skilled writer. Create engaging, well-structured content that meets the given requirements."
+      },
+      "depends_on": [],
+      "position": {
+        "x": 150,
+        "y": 150
+      }
+    },
+    {
+      "id": "critique",
+      "component_type": "critic",
+      "name": "Review Draft",
+      "config": {
+        "content": "{{upstream.draft.content}}",
+        "criteria": "Evaluate the content for:\n1. Clarity and readability\n2. Structure and flow\n3. Accuracy and completeness\n4. Engagement and tone\n5. Grammar and style\n\nProvide specific, actionable feedback for improvement."
+      },
+      "depends_on": [
+        "draft"
+      ],
+      "position": {
+        "x": 400,
+        "y": 150
+      }
+    },
+    {
+      "id": "improve",
+      "component_type": "improver",
+      "name": "Improve Content",
+      "config": {
+        "content": "{{upstream.draft.content}}",
+        "feedback": "{{upstream.critique.feedback}}",
+        "instructions": "Revise the content based on the critique. Maintain the original intent while addressing all feedback points."
+      },
+      "depends_on": [
+        "critique"
+      ],
+      "position": {
+        "x": 650,
+        "y": 150
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "content_type": {
+        "type": "string",
+        "description": "Type of content (e.g., 'blog post', 'email', 'product description')"
+      },
+      "topic": {
+        "type": "string",
+        "description": "The main topic or subject"
+      },
+      "requirements": {
+        "type": "string",
+        "description": "Specific requirements or constraints"
+      }
+    },
+    "required": [
+      "topic"
+    ]
+  },
+  "output_stage_id": "improve",
+  "example_input": {
+    "content_type": "blog post",
+    "topic": "5 Tips for Better Time Management",
+    "requirements": "Include practical examples, be engaging, target busy professionals"
+  }
+}

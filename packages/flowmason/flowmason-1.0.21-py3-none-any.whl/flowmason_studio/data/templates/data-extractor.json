@@ -1,0 +1,90 @@
+{
+  "id": "data-extractor",
+  "name": "Data Extractor",
+  "description": "Extract structured data from unstructured text. Converts free-form content into a consistent, structured format for downstream processing.",
+  "category": "integration",
+  "tags": [
+    "data",
+    "extraction",
+    "structured",
+    "parsing"
+  ],
+  "difficulty": "intermediate",
+  "use_cases": [
+    "Extract data from documents",
+    "Parse unstructured text into JSON",
+    "Data normalization workflows",
+    "ETL preprocessing"
+  ],
+  "stages": [
+    {
+      "id": "extract",
+      "component_type": "generator",
+      "name": "Extract Data",
+      "config": {
+        "prompt": "Extract structured data from the following text:\n\n{{input.text}}\n\nExtract the following fields:\n{{input.fields_to_extract}}\n\nOutput the extracted data as a valid JSON object. If a field cannot be found, use null. If multiple values exist for a field, use an array.",
+        "system_prompt": "You are a data extraction specialist. Extract structured information from unstructured text accurately. Always output valid JSON. Be precise - only extract information that is explicitly stated, don't infer."
+      },
+      "depends_on": [],
+      "position": {
+        "x": 150,
+        "y": 150
+      }
+    },
+    {
+      "id": "validate",
+      "component_type": "critic",
+      "name": "Validate Extraction",
+      "config": {
+        "content": "{{upstream.extract.content}}",
+        "criteria": "Validate the extracted data:\n1. Is the JSON valid and well-formed?\n2. Are all requested fields present?\n3. Are the values accurate based on the source text?\n4. Are there any obvious extraction errors?\n5. Is the data type appropriate for each field?"
+      },
+      "depends_on": [
+        "extract"
+      ],
+      "position": {
+        "x": 400,
+        "y": 150
+      }
+    },
+    {
+      "id": "refine",
+      "component_type": "improver",
+      "name": "Refine Output",
+      "config": {
+        "content": "{{upstream.extract.content}}",
+        "feedback": "{{upstream.validate.feedback}}",
+        "instructions": "Produce the final, validated JSON output. Fix any issues identified in validation. Ensure the output is clean, valid JSON ready for downstream processing.\n\nOutput ONLY the JSON object, no explanatory text."
+      },
+      "depends_on": [
+        "validate"
+      ],
+      "position": {
+        "x": 650,
+        "y": 150
+      }
+    }
+  ],
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string",
+        "description": "The unstructured text to extract data from"
+      },
+      "fields_to_extract": {
+        "type": "string",
+        "description": "Description of fields to extract (e.g., 'name, email, phone, company, title')"
+      }
+    },
+    "required": [
+      "text",
+      "fields_to_extract"
+    ]
+  },
+  "output_stage_id": "refine",
+  "example_input": {
+    "document": "INVOICE #INV-2024-0042\nDate: January 15, 2024\nBill To: Acme Corporation\n123 Business Ave, Suite 500\nNew York, NY 10001\n\nItems:\n- Professional Services (40 hrs) - $8,000\n- Software License (Annual) - $2,400\n- Support Package - $1,200\n\nSubtotal: $11,600\nTax (8%): $928\nTotal Due: $12,528\n\nPayment Due: February 15, 2024\nPayment Terms: Net 30",
+    "extraction_type": "invoice"
+  }
+}
