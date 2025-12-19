@@ -1,0 +1,95 @@
+## Dataset Splitter
+
+This utility splits an image dataset into train, validation, and test subsets while preserving the class folder structure.
+
+## Description
+
+The split_dataset function takes a list of source folders, where each folder represents a class containing image files. The function randomly splits the images into training, validation, and testing sets and copies them into a new output directory.
+
+The resulting directory structure looks like this:
+
+output_folder/
+  train/
+    class_name/
+  val/
+    class_name/
+  test/
+    class_name/
+
+The split is random but reproducible due to a fixed random seed.
+
+## Supported Image Formats
+
+.jpg
+.jpeg
+.png
+.bmp
+.gif
+.tiff
+.webp
+
+## Usage
+
+from dataset_splitter import split_dataset
+
+source_folders = [
+    "data/class_1",
+    "data/class_2"
+]
+
+output_folder = "dataset_split"
+
+split_dataset(
+    source_folders=source_folders,
+    output_folder=output_folder,
+    train_ratio=0.7,
+    val_ratio=0.15,
+    test_ratio=0.15,
+    seed=42
+)
+
+## Function Signature
+
+split_dataset(
+    source_folders: list[str],
+    output_folder: str,
+    train_ratio: float = 0.7,
+    val_ratio: float = 0.15,
+    test_ratio: float = 0.15,
+    seed: int = 42
+)
+
+## Parameters
+
+source_folders
+List of paths to class directories containing images.
+
+output_folder
+Path to the directory where the split dataset will be saved.
+
+train_ratio
+Fraction of images used for training.
+
+val_ratio
+Fraction of images used for validation.
+
+test_ratio
+Fraction of images used for testing.
+
+seed
+Random seed to ensure reproducible splits.
+
+The sum of train_ratio, val_ratio, and test_ratio must equal 1.0.
+
+## Output
+
+Image files are copied, not moved.
+Original data remains unchanged.
+Class folder names are preserved.
+Progress information is printed to the console.
+
+## Requirements
+
+Python 3.8 or newer.
+Uses only Python standard library modules.
+
