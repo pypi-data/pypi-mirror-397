@@ -1,0 +1,83 @@
+  $ cat << EOF > doc.tex.cd
+  > text 1
+  > text 2
+  > % {{{
+  > % msg = "HI"
+  > % }}}
+  > msg = {{msg}}
+  > EOF
+  $ ls
+  doc.tex.cd
+  $ compudoc split --quiet doc.tex.cd
+  Traceback (most recent call last):
+    File "/home/cclark/Code/sync/projects/compudoc/.venv/bin/compudoc", line 10, in <module>
+      sys.exit(app())
+    File "/home/cclark/Code/sync/projects/compudoc/.venv/lib/python3.10/site-packages/cyclopts/core.py", line 1131, in __call__
+      return command(*bound.args, **bound.kwargs)
+    File "/home/cclark/Code/sync/projects/compudoc/src/compudoc/__main__.py", line 250, in split
+      comment_line_str = supported_filetypes[filetype]["comment line strings"][0]
+  NameError: name 'supported_filetypes' is not defined
+  [1]
+  $ ls | sort
+  doc.tex.cd
+  $ cat doc.tex.cd.text
+  cat: doc.tex.cd.text: No such file or directory
+  [1]
+  $ cat doc.tex.cd.code
+  cat: doc.tex.cd.code: No such file or directory
+  [1]
+  $ compudoc merge --quiet doc.tex.cd
+  Traceback (most recent call last):
+    File "/home/cclark/Code/sync/projects/compudoc/.venv/bin/compudoc", line 10, in <module>
+      sys.exit(app())
+    File "/home/cclark/Code/sync/projects/compudoc/.venv/lib/python3.10/site-packages/cyclopts/core.py", line 1131, in __call__
+      return command(*bound.args, **bound.kwargs)
+    File "/home/cclark/Code/sync/projects/compudoc/src/compudoc/__main__.py", line 379, in merge
+      comment_line_str = supported_filetypes[filetype]["comment line strings"][0]
+  NameError: name 'supported_filetypes' is not defined
+  [1]
+  $ ls | sort
+  doc.tex.cd
+  $ cat doc.tex.cd.merged
+  cat: doc.tex.cd.merged: No such file or directory
+  [1]
+  $ compudoc merge --quiet doc.tex.cd --code-indent 0
+  Traceback (most recent call last):
+    File "/home/cclark/Code/sync/projects/compudoc/.venv/bin/compudoc", line 10, in <module>
+      sys.exit(app())
+    File "/home/cclark/Code/sync/projects/compudoc/.venv/lib/python3.10/site-packages/cyclopts/core.py", line 1131, in __call__
+      return command(*bound.args, **bound.kwargs)
+    File "/home/cclark/Code/sync/projects/compudoc/src/compudoc/__main__.py", line 379, in merge
+      comment_line_str = supported_filetypes[filetype]["comment line strings"][0]
+  NameError: name 'supported_filetypes' is not defined
+  [1]
+  $ compudoc merge --quiet doc.tex.cd --code-indent 0 --overwrite
+  Traceback (most recent call last):
+    File "/home/cclark/Code/sync/projects/compudoc/.venv/bin/compudoc", line 10, in <module>
+      sys.exit(app())
+    File "/home/cclark/Code/sync/projects/compudoc/.venv/lib/python3.10/site-packages/cyclopts/core.py", line 1131, in __call__
+      return command(*bound.args, **bound.kwargs)
+    File "/home/cclark/Code/sync/projects/compudoc/src/compudoc/__main__.py", line 379, in merge
+      comment_line_str = supported_filetypes[filetype]["comment line strings"][0]
+  NameError: name 'supported_filetypes' is not defined
+  [1]
+  $ ls | sort
+  doc.tex.cd
+  $ cat doc.tex.cd.merged
+  cat: doc.tex.cd.merged: No such file or directory
+  [1]
+  $ compudoc merge --quiet doc.tex.cd --code-indent 2 --overwrite
+  Traceback (most recent call last):
+    File "/home/cclark/Code/sync/projects/compudoc/.venv/bin/compudoc", line 10, in <module>
+      sys.exit(app())
+    File "/home/cclark/Code/sync/projects/compudoc/.venv/lib/python3.10/site-packages/cyclopts/core.py", line 1131, in __call__
+      return command(*bound.args, **bound.kwargs)
+    File "/home/cclark/Code/sync/projects/compudoc/src/compudoc/__main__.py", line 379, in merge
+      comment_line_str = supported_filetypes[filetype]["comment line strings"][0]
+  NameError: name 'supported_filetypes' is not defined
+  [1]
+  $ ls | sort
+  doc.tex.cd
+  $ cat doc.tex.cd.merged
+  cat: doc.tex.cd.merged: No such file or directory
+  [1]
