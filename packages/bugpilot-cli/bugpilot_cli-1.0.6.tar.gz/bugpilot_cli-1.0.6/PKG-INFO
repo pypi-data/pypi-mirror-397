@@ -1,0 +1,582 @@
+Metadata-Version: 2.1
+Name: bugpilot-cli
+Version: 1.0.6
+Summary: AI-powered penetration testing and bug hunting CLI tool
+Home-page: https://github.com/letchupkt/bugpilot-cli
+Author: LAKSHMIKANTHAN K
+Author-email: letchupkt@example.com
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Security
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: rich>=13.7.0
+Requires-Dist: click>=8.1.7
+Requires-Dist: google-generativeai>=0.3.0
+Requires-Dist: openai>=1.3.0
+Requires-Dist: anthropic>=0.7.0
+Requires-Dist: groq>=0.4.0
+Requires-Dist: requests>=2.31.0
+Requires-Dist: prompt-toolkit>=3.0.43
+Requires-Dist: pyfiglet>=1.0.2
+Requires-Dist: colorama>=0.4.6
+Requires-Dist: httpx>=0.25.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: tiktoken>=0.5.0
+Requires-Dist: pydantic>=2.5.0
+Requires-Dist: PyYAML>=6.0.1
+Requires-Dist: asyncio>=3.4.3
+
+# BugPilot CLI
+
+**AI-Powered Autonomous Penetration Testing & Security Research Assistant**
+
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://pypi.org/project/bugpilot-cli/)
+[![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
+
+**Developer:** LAKSHMIKANTHAN K (letchupkt)  
+**Portfolio:** [letchupkt.vgrow.tech](https://letchupkt.vgrow.tech)
+
+---
+
+## 🚀 Quick Start
+
+```bash
+# Install
+pip install bugpilot-cli
+
+# Run
+bugpilot
+
+# Configure
+/configure
+```
+
+---
+
+## ✨ Features
+
+### **Core Capabilities**
+- 🤖 **AI-Powered Analysis** - 5 AI providers (Gemini, OpenAI, Groq, Ollama, Anthropic)
+- 🛠️ **50+ Pentesting Tools** - Auto-install & management
+- 📁 **File System Access** - Read, analyze, and work with files
+- 🎨 **5 Modern Themes** - Ocean, Sunset, Neon, Forest, Midnight
+- 🔄 **Auto-Updates** - Stay current with PyPI
+- ⚡ **Intelligent Autocomplete** - `/` commands, `@` files, `#` folders
+
+### **Advanced Features**
+- **Dual Modes:** Normal (guided) & Hacker (autonomous)
+- **Multi-API Keys:** Store all provider keys, switch instantly
+- **Token Optimization:** Agentic methodology reduces AI calls by 90%
+- **Cross-Platform:** Windows, Linux, macOS, Termux
+- **Professional UI:** Pure ASCII, no emojis, responsive design
+
+---
+
+## 📦 Installation
+
+### **Method 1: PyPI (Recommended)**
+```bash
+pip install bugpilot-cli
+```
+
+### **Method 2: From Source**
+```bash
+git clone https://github.com/letchupkt/bugpilot-cli.git
+cd bugpilot-cli
+pip install -e .
+```
+
+### **Requirements**
+- Python 3.8+
+- Internet connection (for AI APIs)
+- API keys for desired AI providers
+
+---
+
+## 🎯 Usage
+
+### **Basic Usage**
+```bash
+bugpilot
+```
+
+### **Commands**
+```
+/help       - Show all commands
+/configure  - Configure AI provider & settings
+/tools      - View 50+ pentesting tools
+/update     - Check for updates
+/portfolio  - Visit developer portfolio
+/mode       - Switch normal/hacker mode
+/settings   - View current configuration
+/clear      - Clear conversation context
+/exit       - Exit BugPilot
+```
+
+### **Autocomplete**
+- Type `/` for command suggestions
+- Type `@` for file suggestions  
+- Type `#` for folder suggestions
+
+---
+
+## ⚙️ Configuration
+
+### **First-Time Setup**
+```bash
+bugpilot
+/configure
+```
+
+### **Configure Multiple API Keys (One-Time)**
+```
+Select AI provider: gemini
+Gemini API Key: AIza...
+
+Select AI provider: openai  
+OpenAI API Key: sk-...
+
+Select AI provider: groq
+Groq API Key: gsk_...
+```
+
+### **Environment Variables (Alternative)**
+```bash
+export GEMINI_API_KEY="your-key"
+export OPENAI_API_KEY="your-key"
+export GROQ_API_KEY="your-key"
+export ANTHROPIC_API_KEY="your-key"
+```
+
+### **Configuration File**
+Located at: `~/.bugpilot/config.json`
+
+```json
+{
+  "model": {
+    "provider": "gemini",
+    "model_name": "gemini-2.0-flash-exp",
+    "api_keys": {
+      "gemini": "AIza...",
+      "openai": "sk-...",
+      "groq": "gsk_...",
+      "anthropic": "sk-ant..."
+    }
+  },
+  "mode": "normal",
+  "terminal_theme": "ocean",
+  "auto_update_check": true
+}
+```
+
+---
+
+## 🛠️ Features Deep Dive
+
+### **1. AI Provider Support**
+
+**Supported Providers:**
+- **Gemini** (Google) - gemini-2.0-flash-exp, gemini-1.5-pro
+- **OpenAI** - gpt-4o, gpt-4-turbo, gpt-3.5-turbo
+- **Groq** - llama-3.3-70b-versatile, mixtral-8x7b
+- **Ollama** (Local) - llama3.2, qwen2.5, mistral
+- **Anthropic** - claude-3.5-sonnet, claude-3-opus
+
+**Easy Switching:**
+```bash
+/mode
+# Select provider: openai
+# Uses saved API key automatically!
+```
+
+---
+
+### **2. Pentesting Tools (50+)**
+
+**Categories:**
+- Network Scanning (nmap, masscan)
+- Web Scanning (nikto, wpscan, nuclei)
+- Fuzzing (ffuf, gobuster)
+- Reconnaissance (subfinder, amass, httpx)
+- Exploitation (sqlmap)
+- And many more...
+
+**Auto-Install in Hacker Mode:**
+```bash
+# Switch to hacker mode
+/mode hacker
+
+# Use a tool - it auto-installs if missing!
+[!] You: scan target.com with nmap
+[>>] Tool 'nmap' not found. Installing...
+[+] Successfully installed nmap
+[>>] Running: nmap -sV target.com
+```
+
+**View All Tools:**
+```bash
+/tools
+```
+
+---
+
+### **3. Intelligent Autocomplete**
+
+**Command Autocomplete (`/`):**
+```
+[+] You: /h
+         /help      ← Press Tab
+         /configure
+```
+
+**File Autocomplete (`@`):**
+```
+[+] You: analyze @con
+              @config.py  ← Press Tab
+              @config.json
+```
+
+**Folder Autocomplete (`#`):**
+```
+[+] You: scan #bug
+           #bugpilot  ← Press Tab
+           #build
+```
+
+---
+
+### **4. File System Access**
+
+**Read Files:**
+```
+[+] You: read setup.py
+[>>] Reading setup.py...
+[AI] The setup.py file contains...
+```
+
+**Analyze Projects:**
+```
+[+] You: analyze the entire bugpilot folder
+[>>] Scanning directory...
+[AI] Found 11 Python modules, analyzing structure...
+```
+
+**Search Files:**
+```
+[+] You: find all files with "config" in the name
+[>>] Searching...
+[+] Found: config.py, config.json
+```
+
+---
+
+### **5. Auto-Update**
+
+**Automatic Check (on startup):**
+```
+[!] Update available: v1.0.0 → v1.1.0
+[*] Run /update to install
+```
+
+**Manual Update:**
+```bash
+/update
+
+[>>] Checking for updates...
+[!] Update Available: v1.1.0
+Install now? [y/n]: y
+[>>] Updating...
+[+] Successfully updated!
+[!] Please restart: bugpilot
+```
+
+**Disable Auto-Check:**
+```bash
+/configure
+# Check for updates on startup? [y/n]: n
+```
+
+---
+
+## 🎨 Themes
+
+**5 Built-in Themes:**
+
+```bash
+/configure
+# Select theme:
+1. ocean    - Blue ocean waves
+2. sunset   - Warm sunset colors
+3. neon     - Vibrant neon lights
+4. forest   - Natural forest greens
+5. midnight - Dark midnight blue
+```
+
+---
+
+## 💡 Use Cases
+
+### **Security Research**
+```
+[+] You: explain CVE-2024-12345
+[AI] BugPilot: CVE-2024-12345 is a critical...
+```
+
+### **Vulnerability Scanning**
+```
+[!] You: full reconnaissance on target.com
+[>>] Executing autonomous workflow...
+[*] Step 1/5: Port scanning with nmap
+[*] Step 2/5: Subdomain enumeration
+[*] Step 3/5: HTTP probing
+[*] Step 4/5: Vulnerability scanning
+[*] Step 5/5: Report generation
+[+] Complete! 3 critical findings.
+```
+
+### **Code Analysis**
+```
+[+] You: analyze this Python code for security issues
+[+] You: @vulnerable.py
+[AI] Analyzing... Found 2 SQL injection risks...
+```
+
+### **Exploit Development**
+```
+[+] You: generate a POC for buffer overflow
+[AI] Here's a proof-of-concept...
+```
+
+---
+
+## 🔧 Advanced Usage
+
+### **Hacker Mode (Autonomous)**
+```bash
+/mode hacker
+
+# Auto-executes commands
+# Auto-installs tools
+# Advanced capabilities
+# Requires authorization!
+```
+
+### **Custom Workflows**
+```
+[!] You: create a penetration testing workflow for web apps
+[AI] I'll create a comprehensive workflow...
+```
+
+### **Token Optimization**
+Uses agentic methodology to reduce AI calls:
+- Predefined pentesting workflows
+- Built-in tool knowledge
+- Automated decision-making
+- **90%+ token savings**
+
+---
+
+## 📊 Technical Details
+
+### **Architecture**
+```
+bugpilot-cli/
+├── bugpilot/
+│   ├── __init__.py       - Package initialization
+│   ├── cli.py            - Main CLI interface
+│   ├── agent.py          - AI agent logic
+│   ├── models.py         - AI model integrations
+│   ├── config.py         - Configuration management
+│   ├── toolmanager.py    - Tool management
+│   ├── filesystem.py     - File system access
+│   ├── autocomplete.py   - Autocomplete engine
+│   ├── terminal_ui.py    - UI & themes
+│   ├── prompts.py        - System prompts
+│   ├── updater.py        - Auto-update system
+│   ├── mcp.py            - MCP protocol
+│   └── utils.py          - Utilities
+├── test.py               - Test suite (19 tests)
+├── setup.py              - Package setup
+└── requirements.txt      - Dependencies
+```
+
+### **Dependencies**
+```
+google-generativeai  # Gemini
+openai               # OpenAI/ChatGPT
+anthropic            # Claude
+groq                 # Groq
+requests             # HTTP
+rich                 # Terminal UI
+pydantic             # Data validation
+prompt_toolkit       # Autocomplete
+packaging            # Version comparison
+```
+
+---
+
+## 🧪 Testing
+
+### **Run Tests**
+```bash
+python test.py
+```
+
+### **Test Coverage**
+- ✅ Configuration management
+- ✅ Multiple API keys
+- ✅ Tool manager
+- ✅ Autocomplete system
+- ✅ AI model integration
+- ✅ File system access
+- ✅ Auto-updater
+- ✅ UI themes (no emojis)
+- ✅ 19 tests, 100% pass rate
+
+---
+
+## 🔒 Security & Ethics
+
+### **Ethical Use Only**
+BugPilot CLI is designed for:
+- ✅ Authorized penetration testing
+- ✅ Security research
+- ✅ Educational purposes
+- ✅ Vulnerability assessment (with permission)
+
+### **NOT for:**
+- ❌ Unauthorized access
+- ❌ Illegal activities
+- ❌ Malicious hacking
+- ❌ Any unlawful purposes
+
+### **Disclaimer**
+Users are responsible for ensuring they have proper authorization before testing any systems. Always follow responsible disclosure practices.
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! Please:
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
+
+---
+
+## 📝 Changelog
+
+### **v1.0.0** (2025-12-17)
+- ✅ Initial release
+- ✅ 5 AI provider support
+- ✅ 50+ pentesting tools
+- ✅ Intelligent autocomplete
+- ✅ Multiple API key storage
+- ✅ Auto-update system
+- ✅ 5 modern themes
+- ✅ File system access
+- ✅ 100% ASCII UI
+- ✅ Cross-platform support
+- ✅ Comprehensive test suite
+
+---
+
+## 🐛 Troubleshooting
+
+### **Issue: "API key required"**
+```bash
+# Solution: Configure API key
+/configure
+# or set environment variable
+export GEMINI_API_KEY="your-key"
+```
+
+### **Issue: "Tool not found"**
+```bash
+# Solution: Use hacker mode for auto-install
+/mode hacker
+# or install manually
+```
+
+### **Issue: "Import error"**
+```bash
+# Solution: Reinstall dependencies
+pip install --upgrade bugpilot-cli
+```
+
+---
+
+## 📚 Resources
+
+- **Documentation:** This README
+- **PyPI:** https://pypi.org/project/bugpilot-cli/
+- **Issues:** https://github.com/letchupkt/bugpilot-cli/issues
+- **Developer:** https://letchupkt.vgrow.tech
+
+---
+
+## 📄 License
+
+MIT License - See LICENSE file for details
+
+---
+
+## 👤 Author
+
+**LAKSHMIKANTHAN K (letchupkt)**
+- Portfolio: [letchupkt.vgrow.tech](https://letchupkt.vgrow.tech)
+- Email: letchupkt@vgrow.tech
+
+---
+
+## 🌟 Support
+
+If you find BugPilot CLI useful:
+- ⭐ Star the repository
+- 🐛 Report bugs
+- 💡 Suggest features
+- 🤝 Contribute code
+
+---
+
+## 🎯 Quick Reference
+
+```bash
+# Install
+pip install bugpilot-cli
+
+# Run
+bugpilot
+
+# Configure
+/configure
+
+# Commands
+/help       # Show all commands
+/tools      # View tools
+/update     # Check updates
+/mode       # Switch mode
+/exit       # Quit
+
+# Autocomplete
+/           # Commands
+@           # Files
+#           # Folders
+```
+
+---
+
+**BugPilot CLI - The Ultimate AI-Powered Pentesting Assistant**
+
+🔴 **Configure Once. Hack Forever.** 🔴
