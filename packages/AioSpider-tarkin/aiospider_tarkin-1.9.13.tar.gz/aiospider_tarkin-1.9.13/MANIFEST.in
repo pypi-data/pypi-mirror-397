@@ -1,0 +1,31 @@
+# 包含根目录的重要文件
+include LICENSE
+include README.md
+include __version__
+include requirements.txt
+
+# 包含所有 JSON 配置文件
+recursive-include . *.json
+
+# 包含模板文件
+recursive-include template *
+
+# 包含资源文件
+recursive-include resource *
+
+# 包含字体文件
+recursive-include notice/font *
+
+# 排除缓存和测试文件
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+recursive-exclude * *.so
+recursive-exclude cache *
+recursive-exclude test_spider *
+
+# 排除 git 和 IDE 文件
+exclude .gitignore
+exclude .gitattributes
+recursive-exclude .git *
+recursive-exclude __pycache__ *
+global-exclude nul
