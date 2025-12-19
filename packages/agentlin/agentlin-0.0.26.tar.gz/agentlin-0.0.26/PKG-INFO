@@ -1,0 +1,248 @@
+Metadata-Version: 2.4
+Name: agentlin
+Version: 0.0.26
+Summary: General Agent Framework by LinXueyuan
+License: MIT
+License-File: LICENSE
+Author: LinXueyuanStdio
+Author-email: 23211526+LinXueyuanStdio@users.noreply.github.com
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 2.7
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Requires-Dist: Pillow
+Requires-Dist: aio-pika
+Requires-Dist: beautifulsoup4
+Requires-Dist: croniter
+Requires-Dist: datasets
+Requires-Dist: fastapi
+Requires-Dist: fastmcp
+Requires-Dist: google-genai
+Requires-Dist: holidays
+Requires-Dist: html2text
+Requires-Dist: kaleido
+Requires-Dist: loguru
+Requires-Dist: omegaconf
+Requires-Dist: openai (==2.3.0)
+Requires-Dist: openai-chatkit
+Requires-Dist: plotly
+Requires-Dist: psutil
+Requires-Dist: pylatexenc
+Requires-Dist: python-dotenv
+Requires-Dist: rich
+Requires-Dist: ripgrep-python
+Requires-Dist: sseclient
+Requires-Dist: stevedore
+Requires-Dist: streamlit (>=1.46.0,<2.0.0)
+Requires-Dist: streamlit-markdown
+Requires-Dist: ta
+Requires-Dist: typer
+Requires-Dist: uvicorn
+Requires-Dist: websockets
+Requires-Dist: xlin
+Description-Content-Type: text/markdown
+
+# AgentLin
+
+通用 Agent 架构，支持多Agent协作和RPC远程调用。
+
+## 主要特性
+
+- 🤖 **多Agent系统**: 基于RabbitMQ的消息队列支持多Agent协作
+- 🔗 **RPC远程调用**: 像本地函数一样调用远程Agent方法
+- ⏰ **时间同步**: 分布式时间协调机制
+- 🛠️ **工具集成**: 丰富的工具生态系统
+- 📊 **数据处理**: 内置数据分析和可视化工具
+- 🔄 **自动重连**: 健壮的连接管理和故障恢复
+
+
+## 开始使用
+
+### 1. 安装
+
+```bash
+pip install agentlin
+```
+
+本地安装
+
+```bash
+apt-get install build-essential libssl-dev libffi-dev python3-dev
+pip install pip --upgrade
+pip install -e .
+# plotly 需要额外下载 chrome 内核用于渲染图表
+plotly_get_chrome
+```
+
+### 2. 创建 `.env` 文件
+
+复制 `.env.example` 文件为 `.env` 并填写所需的环境变量。
+
+环境变量定义了访问 o3 模型的 API 密钥和其他配置。
+
+
+### 3. 创建软链接
+
+将公共数据目录 `/mnt/aime/datasets/agent/agent_data` 软链接到你本地项目的 `data` 目录下
+
+```bash
+ln -s /mnt/aime/datasets/agent/agent_data data
+```
+
+### 4. 运行应用程序
+
+```bash
+streamlit run chart_o3_toolcall.py
+```
+
+注意：如果你不是在交互式建模的容器里运行的，需要挂一个代理服务将本地请求转发到北美：
+
+```bash
+cd tool_server
+bash run_aime_proxy_server.sh
+```
+
+### 5. 运行 MCP 服务器
+
+```bash
+HOME_DIR=<your_home_directory> agentlin mcp-server --name file_system --host localhost --port 9999 --path /mcp --debug
+agentlin mcp-server --name bash --host localhost --port 9999 --path /mcp --debug
+agentlin mcp-server --name memory --host localhost --port 9999 --path /mcp --debug
+agentlin mcp-server --name web --host localhost --port 9999 --path /mcp --debug
+TODO_FILE_PATH=<your_todo_file_path> agentlin mcp-server --name todo --host localhost --port 7780 --path /mcp --debug
+```
+
+## 详细文档
+
+参见 [RPC消息队列使用指南](docs/rpc_message_queue_guide.md)
+
+
+## 目录结构
+
+```sh
+agentlin/
+├── core/                     # 核心架构组件
+│   ├── agent_schema.py       # Agent 模式定义
+│   ├── simulator.py          # 仿真器
+│   ├── multimodal.py         # 多模态支持
+│   └── types.py              # 数据类型定义
+├── route/                    # 路由和代理管理
+│   ├── client.py             # 客户端
+│   ├── mcp_proxy_*.py        # MCP 代理相关
+│   ├── task_agent_manager.py # agent 会话管理
+│   └── task_*_manager.py     # 任务管理器
+├── code_interpreter/         # 代码解释器
+│   ├── client.py             # 解释器客户端
+│   ├── jupyter_*.py          # Jupyter 集成
+│   ├── tool_call_display.py  # 工具调用显示
+│   └── ...                   # 其他组件
+└── tools/                    # 工具集合
+    ├── tool_aime.py          # AIME 工具
+    ├── tool_code_interpreter.py # 代码解释器工具
+    ├── tool_chart.py         # 图表工具
+    └── tool_*.py             # 其他工具
+
+chart_agent/                  # 图表 Agent
+table_agent/                  # 表格 Agent
+tool_server/                  # 工具服务器
+docs/                        # 项目文档
+assets/                      # 配置文件
+data/                        # 数据文件，软链接到 /mnt/aime/datasets/agent/agent_data
+```
+
+
+## Agent 能力扩展
+
+我们通过多个层级对 agent 能力进行扩展：
+
+1. **原子工具（Atomic Tools）**: 最基本的功能单元，足够通用才能成为原子工具，如代码解释器、结构化数据生成器作为工具、子智能体能力作为工具、动态加载技能的能力作为工具、MCP 能力作为工具。
+   1. **代码解释器（Code Interpreter）**: 通过代码解释器执行代码的能力，可以在代码里调用其他工具、函数
+   2. **子智能体（SubAgent）**: 组合多个工具，具有独立上下文，形成特定能力的智能体
+   3. **技能（Skills）**: 按需加载的技能包，包含一些工具、关于使用这些工具的提示词和示例
+   4. **结构化数据生成器（Structured Data Generators）**: 用户要求返回结构化数据时，专门用于生成结构化数据的工具。可以利用 LLM 约束解码能力，确保数据结构正确。
+   5. **MCP 能力（MCP Capabilities）**: 通过 MCP 协议调用远程服务的能力，允许 agent 使用分布式资源和服务
+   6. **智能体作为工具（Agent-as-Tool）**: 将完整的智能体封装为工具
+2. **环境（Environment）**: 预定义的任务环境，集成了多种工具和技能，环境的描述和提示词注入到系统提示词中，环境的工具注册为原子工具
+   1. **通用环境（General Environments）**: 面向广泛任务的环境，如有状态浏览器环境、文件系统环境、沙盒环境
+   2. **专用环境（Specialized Environments）**: 面向特定任务的环境，如量化交易环境、漏洞挖掘环境
+3. **基于 Bash 扩展的工具（Tools-in-Bash）**: 定义在 Bash 环境中运行的工具，agent 需要通过 `ls`、`cat`、`--help` 等命令来探索和使用这些工具
+4. **基于 MCP 扩展的工具（Tools-in-MCP）**: 定义在 MCP 服务器中运行的工具，agent 通过 MCP 协议的 `list_tools`，`call_tool` 等方法来调用这些工具
+5. **基于代码执行的工具（Tools-in-CodeInterpreter）**: 定义在代码执行环境中运行的工具，agent 通过代码调用这些工具
+6. **基于浏览器扩展的工具（Tools-in-Browser）**: 定义在浏览器环境中运行的工具、插件、扩展，agent 通过 browser-use 工具来调用这些浏览器工具
+7. **基于计算机扩展的工具（Tools-in-Computer）**: 定义在计算机环境中运行的工具、APP，agent 通过 computer-use 工具来调用这些计算机工具
+8. **基于手机扩展的工具（Tools-in-Mobile）**: 定义在手机环境中运行的工具、APP，agent 通过 mobile-use 工具来调用这些手机工具
+
+同时，按权限级别对工具进行分类：
+1. **系统级工具（System-level Tools）**: 内建于 agentlin 框架中的原子工具
+2. **开发者级工具（Developer-level Tools）**: 由环境或 MCP 服务器注册的工具
+3. **用户级工具（User-level Tools, Client-Side Tools）**: 由用户自定义并注册的工具
+
+
+## agentlin CLI 工具
+
+使用 `agentlin --help` 查看命令行工具的帮助信息：
+
+| 命令名称                | 描述                          |
+| ----------------------- | ----------------------------- |
+| mcp-server              | 运行指定的 MCP 服务器。       |
+| env-as-mcp-server       | 将环境作为 MCP 服务器运行。   |
+| code-interpreter-server | 运行代码解释器服务器。         |
+| agent-server            | 运行代理服务器。               |
+| task-server             | 运行任务服务器。               |
+| sgl-server              | 运行 sgl 服务器。              |
+| evaluate                | 运行评估。                     |
+| run                     | 运行智能体（Agents）。          |
+| env                     | 管理、提供服务并与环境交互。   |
+| tool                    | 管理和运行工具。               |
+| skill                   | 管理和运行技能。               |
+| code-interpreter        | 运行代码解释器。               |
+
+### agentlin mcp-server
+启动 MCP 服务器，注册工具供 agent 调用
+
+```bash
+agentlin mcp-server --name <tool_name> --host <host> --port <port> --path <path> [--debug]
+```
+
+### agentlin env （agent-env）
+管理和运行环境，提供环境服务
+
+```bash
+agentlin env list
+agentlin env info <env_name>
+agentlin env play --env <env_name> --env-args '{"arg1": "value1", "arg2": "value2"}'
+```
+
+如果环境是带工具的，即继承自 IToolEnvironment，则可以将环境转换为 MCP server，后续可注册环境内的工具供 agent 调用。
+
+```bash
+agentlin env-as-mcp-server --env <env_name> --port <port> --env-args '{"arg1": "value1", "arg2": "value2"}'
+```
+
+### agentlin tool （agent-tool）
+管理和运行工具，提供工具服务
+
+```bash
+agentlin tool list
+agentlin tool --name <tool_name> --tool-args '{"arg1": "value1", "arg2": "value2"}'
+```
+
+### agentlin skill （agent-skill）
+管理和运行技能，提供技能服务
+```bash
+agentlin skill list
+agentlin skill info <skill_name>
+agentlin skill --name <skill_name> --skill-args '{"arg1": "value1", "arg2": "value2"}'
+```
+
