@@ -1,0 +1,83 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "blackboard-core"
+version = "1.2.0"
+description = "A Python SDK implementing the Blackboard Pattern for LLM-powered multi-agent systems"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.9"
+authors = [
+    {name = "Hemant Singh"}
+]
+keywords = ["agents", "multi-agent", "blackboard", "orchestration", "llm", "ai"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "pydantic>=2.0.0",
+    "typing-extensions>=4.0.0",
+    "litellm>=1.40.0",  # Default LLM client - 100+ model support
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-asyncio>=0.23.0",
+]
+redis = [
+    "redis>=5.0.0",
+]
+chroma = [
+    "chromadb>=0.4.0",
+]
+hybrid = [
+    "rank-bm25>=0.2.2",
+]
+tui = [
+    "rich>=13.0.0",
+]
+mcp = [
+    "mcp[cli]>=1.0.0",
+]
+telemetry = [
+    "opentelemetry-api>=1.20.0",
+    "opentelemetry-sdk>=1.20.0",
+    "opentelemetry-exporter-otlp>=1.20.0",
+]
+all = [
+    "redis>=5.0.0",
+    "chromadb>=0.4.0",
+    "rank-bm25>=0.2.2",
+    "rich>=13.0.0",
+    "mcp[cli]>=1.0.0",
+    "opentelemetry-api>=1.20.0",
+    "opentelemetry-sdk>=1.20.0",
+    "opentelemetry-exporter-otlp>=1.20.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/hemantsingh443/blackboard-core"
+Documentation = "https://github.com/hemantsingh443/blackboard-core#readme"
+Repository = "https://github.com/hemantsingh443/blackboard-core"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["blackboard*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
