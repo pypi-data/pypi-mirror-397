@@ -1,0 +1,152 @@
+# tests/test_integrity.py
+
+import pytest
+from unittest.mock import patch, MagicMock
+import os
+import time
+import sys
+import subprocess
+from geminiai_cli import integrity
+from geminiai_cli.config import OLD_CONFIGS_DIR, DEFAULT_GEMINI_HOME
+
+# Note: We rely on pyfakefs (fs fixture) which is autouse in conftest.py
+# So standard os operations work on the fake filesystem.
+
+def test_run():
+    with patch("subprocess.run") as mock_run:
+        integrity.run("ls")
+        mock_run.assert_called_with("ls", shell=True, check=True)
+
+def test_run_capture():
+    with patch("subprocess.run") as mock_run:
+        integrity.run("ls", capture=True)
+        # subprocess.run(..., stdout=PIPE, stderr=PIPE)
+        kwargs = mock_run.call_args[1]
+        assert kwargs.get("stdout") is not None
+        assert kwargs.get("stderr") is not None
+
+def test_parse_timestamp_from_name():
+    ts = integrity.parse_timestamp_from_name("2025-10-22_042211-test@test.gemini")
+    assert ts is not None
+    assert ts.tm_year == 2025
+
+    assert integrity.parse_timestamp_from_name("invalid") is None
+
+def test_find_latest_backup(fs):
+    backup_dir = "/tmp/backups"
+    fs.create_dir(backup_dir)
+    fs.create_dir(os.path.join(backup_dir, "2025-10-23_042211-test.gemini"))
+    fs.create_dir(os.path.join(backup_dir, "2025-10-22_042211-test.gemini"))
+
+    latest = integrity.find_latest_backup(backup_dir)
+    assert "2025-10-23" in latest
+
+def test_find_latest_backup_none(fs):
+    backup_dir = "/tmp/backups"
+    fs.create_dir(backup_dir)
+    assert integrity.find_latest_backup(backup_dir) is None
+
+def test_main_src_not_exists(fs):
+    # DEFAULT_GEMINI_HOME not created
+    with patch("sys.argv", ["integrity.py"]):
+        with pytest.raises(SystemExit) as e:
+            integrity.main()
+        assert e.value.code == 1
+
+def test_main_no_backup(fs):
+    fs.create_dir(DEFAULT_GEMINI_HOME)
+    # OLD_CONFIGS_DIR is created by conftest usually, but it might be empty
+    # integrity uses OLD_CONFIGS_DIR as search_dir
+    # Ensure it's empty
+    # fs.create_dir(OLD_CONFIGS_DIR) # conftest already does
+
+    with patch("sys.argv", ["integrity.py"]):
+        with pytest.raises(SystemExit) as e:
+            integrity.main()
+        assert e.value.code == 1
+
+@patch("geminiai_cli.integrity.run")
+def test_main_diff_ok(mock_run, fs):
+    fs.create_dir(DEFAULT_GEMINI_HOME)
+    fs.create_dir(OLD_CONFIGS_DIR)
+    fs.create_dir(os.path.join(OLD_CONFIGS_DIR, "2025-10-23_042211-test.gemini"))
+
+    with patch("sys.argv", ["integrity.py"]):
+        mock_run.return_value.returncode = 0
+        integrity.main()
+
+@patch("geminiai_cli.integrity.run")
+def test_main_diff_fail(mock_run, fs):
+    fs.create_dir(DEFAULT_GEMINI_HOME)
+    fs.create_dir(OLD_CONFIGS_DIR)
+    fs.create_dir(os.path.join(OLD_CONFIGS_DIR, "2025-10-23_042211-test.gemini"))
+
+    with patch("sys.argv", ["integrity.py"]):
+        mock_run.return_value.returncode = 1
+        mock_run.return_value.stdout = "diff"
+        mock_run.return_value.stderr = "err"
+        integrity.main()
+
+def test_find_latest_backup_not_dir(fs):
+    backup_dir = "/tmp/backups"
+    fs.create_dir(backup_dir)
+    fs.create_file(os.path.join(backup_dir, "2025-10-23_042211-test.gemini")) # File, not dir
+    assert integrity.find_latest_backup(backup_dir) is None
+
+def test_find_latest_backup_bad_name(fs):
+    backup_dir = "/tmp/backups"
+    fs.create_dir(backup_dir)
+    fs.create_dir(os.path.join(backup_dir, "invalid-name"))
+    assert integrity.find_latest_backup(backup_dir) is None
+
+def test_find_latest_backup_not_found(fs):
+    # Directory does not exist
+    assert integrity.find_latest_backup("/nonexistent") is None
+
+@patch("geminiai_cli.integrity.run")
+@patch("builtins.print")
+def test_main_diff_fail_stderr(mock_print, mock_run, fs):
+    fs.create_dir(DEFAULT_GEMINI_HOME)
+    fs.create_dir(OLD_CONFIGS_DIR)
+    fs.create_dir(os.path.join(OLD_CONFIGS_DIR, "2025-10-23_042211-test.gemini"))
+
+    with patch("sys.argv", ["integrity.py"]):
+        mock_run.return_value.returncode = 1
+        mock_run.return_value.stdout = ""
+        mock_run.return_value.stderr = "error"
+        integrity.main()
+        # Check call arguments. We can check if "error" was printed.
+        # call_args_list is list of calls. args[0] is tuple of positional args.
+
+        # We need to flatten the args to search easily
+        all_args = []
+        for call in mock_print.call_args_list:
+            all_args.extend([str(a) for a in call[0]])
+
+        assert "error" in all_args
+
+@patch("time.strptime", side_effect=ValueError)
+def test_parse_timestamp_exception(mock_strptime):
+    # This string must match TIMESTAMPED_DIR_REGEX for us to reach strptime
+    # Assuming regex is like YYYY-MM-DD_HHMMSS-...
+    # The regex is r"^(\d{4}-\d{2}-\d{2}_\d{6})-.+\.gemini(\.tar\.gz)?(\.gpg)?$"
+    assert integrity.parse_timestamp_from_name("2025-10-22_042211-test.gemini") is None
+
+@patch("geminiai_cli.integrity.run")
+@patch("builtins.print")
+def test_main_diff_fail_no_stderr(mock_print, mock_run, fs):
+    fs.create_dir(DEFAULT_GEMINI_HOME)
+    fs.create_dir(OLD_CONFIGS_DIR)
+    fs.create_dir(os.path.join(OLD_CONFIGS_DIR, "2025-10-23_042211-test.gemini"))
+
+    with patch("sys.argv", ["integrity.py"]):
+        mock_run.return_value.returncode = 1
+        mock_run.return_value.stdout = "out"
+        mock_run.return_value.stderr = ""
+        integrity.main()
+
+        all_args = []
+        for call in mock_print.call_args_list:
+            all_args.extend([str(a) for a in call[0]])
+
+        assert "out" in all_args
