@@ -1,0 +1,1453 @@
+"use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+var electron_1 = require("electron");
+var path = require("path");
+var http = require("http");
+var fs_1 = require("fs");
+// Import the Electron backend
+var ElectronBackend = require('./electron-backend.js');
+// Keep a global reference of the window objects
+var splashWindow = null;
+var mainWindow = null;
+var pythonProcess = null;
+var io = null;
+var backend = null;
+var isDev = process.argv.includes('--dev');
+var PYTHON_SERVER_PORT = 3001;
+// Window state management
+var windowStateFile = path.join(electron_1.app.getPath('userData'), 'window-state.json');
+function loadWindowState() {
+    return __awaiter(this, void 0, void 0, function () {
+        var data, state_1, displays, validDisplay, error_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    return [4 /*yield*/, fs_1.promises.readFile(windowStateFile, 'utf8')];
+                case 1:
+                    data = _a.sent();
+                    state_1 = JSON.parse(data);
+                    displays = electron_1.screen.getAllDisplays();
+                    validDisplay = displays.find(function (display) {
+                        var _a = display.bounds, x = _a.x, y = _a.y, width = _a.width, height = _a.height;
+                        return state_1.x >= x && state_1.y >= y &&
+                            state_1.x < x + width && state_1.y < y + height;
+                    });
+                    if (validDisplay && state_1.width > 0 && state_1.height > 0) {
+                        // console.log('🪟 Loaded window state:', state_1);
+                        return [2 /*return*/, state_1];
+                    }
+                    else {
+                        // console.log('🪟 Invalid window state, using defaults');
+                        return [2 /*return*/, null];
+                    }
+                    return [3 /*break*/, 3];
+                case 2:
+                    error_1 = _a.sent();
+                    // console.log('🪟 No previous window state found, using defaults');
+                    return [2 /*return*/, null];
+                case 3: return [2 /*return*/];
+            }
+        });
+    });
+}
+function saveWindowState(window) {
+    return __awaiter(this, void 0, void 0, function () {
+        var bounds, state, error_2;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    bounds = window.getBounds();
+                    state = {
+                        x: bounds.x,
+                        y: bounds.y,
+                        width: bounds.width,
+                        height: bounds.height,
+                        isMaximized: window.isMaximized(),
+                        isMinimized: window.isMinimized(),
+                        lastSaved: new Date().toISOString()
+                    };
+                    return [4 /*yield*/, fs_1.promises.writeFile(windowStateFile, JSON.stringify(state, null, 2))];
+                case 1:
+                    _a.sent();
+                    // console.log('🪟 Saved window state:', state);
+                    return [3 /*break*/, 3];
+                case 2:
+                    error_2 = _a.sent();
+                    console.error('🪟 Failed to save window state:', error_2);
+                    return [3 /*break*/, 3];
+                case 3: return [2 /*return*/];
+            }
+        });
+    });
+}
+// Backend will be initialized in app.whenReady()
+// IPC Handlers for PyWebView API compatibility
+// Project Management
+electron_1.ipcMain.handle('new-project', function (event, projectName, template) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, backend.newProject(projectName, template)];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); });
+electron_1.ipcMain.handle('get-projects', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, backend.getProjects()];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); });
+electron_1.ipcMain.handle('open-project', function (event, projectName) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, backend.openProject(projectName)];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); });
+electron_1.ipcMain.handle('has-project-loaded', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        return [2 /*return*/, backend.hasProjectLoaded()];
+    });
+}); });
+electron_1.ipcMain.handle('get-project-status', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        return [2 /*return*/, backend.getProjectStatus()];
+    });
+}); });
+electron_1.ipcMain.handle('open-projects-folder', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, backend.openProjectsFolder()];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); });
+electron_1.ipcMain.handle('get-project-templates', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        return [2 /*return*/, backend.getProjectTemplates()];
+    });
+}); });
+electron_1.ipcMain.handle('save-project-template', function (event, templateName) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        // Placeholder - not implemented in backend
+        return [2 /*return*/, { success: true }];
+    });
+}); });
+// File Management
+electron_1.ipcMain.handle('get-image-list', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, backend.getImageList()];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); });
+electron_1.ipcMain.handle('add-files', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, backend.addFiles(mainWindow)];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); });
+electron_1.ipcMain.handle('remove-files', function (event, filePaths) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, backend.removeFiles(filePaths)];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); });
+electron_1.ipcMain.handle('select-folder', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, backend.selectFolder(mainWindow)];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); });
+electron_1.ipcMain.handle('sync-checkbox-state', function (event, filename, calibState) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, backend.syncCheckboxState(filename, calibState)];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); });
+// Processing
+electron_1.ipcMain.handle('process-project', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, backend.processProject()];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); });
+electron_1.ipcMain.handle('interrupt-project', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, backend.interruptProject()];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); });
+electron_1.ipcMain.handle('get-processing-progress', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        return [2 /*return*/, backend.getProcessingProgress()];
+    });
+}); });
+electron_1.ipcMain.handle('set-processing-mode', function (event, mode) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, backend.setProcessingMode(mode)];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); });
+electron_1.ipcMain.handle('get-processing-mode', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, backend.getProcessingMode()];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); });
+// User Management
+electron_1.ipcMain.handle('load-user-email', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, backend.loadUserEmail()];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); });
+electron_1.ipcMain.handle('save-user-email', function (event, email) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, backend.saveUserEmail(email)];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); });
+electron_1.ipcMain.handle('remote-user-login', function (event, email, password) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, backend.remoteUserLogin(email, password)];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); });
+electron_1.ipcMain.handle('user-logout', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        // Placeholder for logout functionality
+        return [2 /*return*/, { success: true }];
+    });
+}); });
+// Settings
+electron_1.ipcMain.handle('get-config', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        return [2 /*return*/, backend.getConfig()];
+    });
+}); });
+electron_1.ipcMain.handle('set-config', function (event, key, value) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        return [2 /*return*/, backend.setConfig(key, value)];
+    });
+}); });
+electron_1.ipcMain.handle('get-working-directory', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        return [2 /*return*/, backend.getWorkingDirectory()];
+    });
+}); });
+electron_1.ipcMain.handle('select-working-directory', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4 /*yield*/, backend.selectWorkingDirectory()];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); });
+electron_1.ipcMain.handle('get-minimum-window-size', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        return [2 /*return*/, { width: 800, height: 600 }];
+    });
+}); });
+// Flask API calls (for image viewer and other Python backend operations)
+electron_1.ipcMain.handle('flask-api-call', function (event, endpoint, data) { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        return [2 /*return*/, new Promise(function (resolve, reject) {
+                var postData = JSON.stringify(data);
+                var options = {
+                    hostname: 'localhost',
+                    port: 5000,
+                    path: "/api/".concat(endpoint),
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Content-Length': Buffer.byteLength(postData)
+                    }
+                };
+                var req = http.request(options, function (res) {
+                    var responseData = '';
+                    res.on('data', function (chunk) {
+                        responseData += chunk;
+                    });
+                    res.on('end', function () {
+                        try {
+                            var result = JSON.parse(responseData);
+                            resolve(result);
+                        }
+                        catch (parseError) {
+                            console.error("[IPC] Failed to parse Flask API response for ".concat(endpoint, ":"), parseError);
+                            resolve({ success: false, error: 'Invalid response format' });
+                        }
+                    });
+                });
+                req.on('error', function (error) {
+                    console.error("[IPC] Flask API call to ".concat(endpoint, " failed:"), error);
+                    resolve({ success: false, error: error.message });
+                });
+                req.write(postData);
+                req.end();
+            })];
+    });
+}); });
+// Window controls (both handle and on for compatibility)
+electron_1.ipcMain.handle('minimize-window', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    var window;
+    return __generator(this, function (_a) {
+        window = electron_1.BrowserWindow.fromWebContents(event.sender);
+        if (window)
+            window.minimize();
+        return [2 /*return*/];
+    });
+}); });
+electron_1.ipcMain.handle('maximize-window', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    var window;
+    return __generator(this, function (_a) {
+        window = electron_1.BrowserWindow.fromWebContents(event.sender);
+        if (window) {
+            if (window.isMaximized()) {
+                window.unmaximize();
+            }
+            else {
+                window.maximize();
+            }
+        }
+        return [2 /*return*/];
+    });
+}); });
+electron_1.ipcMain.handle('close-window', function (event) { return __awaiter(void 0, void 0, void 0, function () {
+    var window;
+    return __generator(this, function (_a) {
+        window = electron_1.BrowserWindow.fromWebContents(event.sender);
+        if (window)
+            window.close();
+        return [2 /*return*/];
+    });
+}); });
+// Add send-based handlers for direct IPC calls
+electron_1.ipcMain.on('minimize-window', function (event) {
+    var window = electron_1.BrowserWindow.fromWebContents(event.sender);
+    if (window) {
+        // console.log('🟡 Minimize window via IPC send');
+        window.minimize();
+    }
+});
+electron_1.ipcMain.on('maximize-window', function (event) {
+    var window = electron_1.BrowserWindow.fromWebContents(event.sender);
+    if (window) {
+        // console.log('🔵 Maximize/restore window via IPC send');
+        if (window.isMaximized()) {
+            window.unmaximize();
+        }
+        else {
+            window.maximize();
+        }
+    }
+});
+electron_1.ipcMain.on('close-window', function (event) {
+    var window = electron_1.BrowserWindow.fromWebContents(event.sender);
+    if (window) {
+        // console.log('🔴 Close window via IPC send');
+        window.close();
+    }
+});
+// File dialogs
+electron_1.ipcMain.handle('show-open-dialog', function (event, options) { return __awaiter(void 0, void 0, void 0, function () {
+    var window;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                window = electron_1.BrowserWindow.fromWebContents(event.sender);
+                if (!window)
+                    return [2 /*return*/, { canceled: true, filePaths: [] }];
+                return [4 /*yield*/, electron_1.dialog.showOpenDialog(window, options)];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); });
+electron_1.ipcMain.handle('show-save-dialog', function (event, options) { return __awaiter(void 0, void 0, void 0, function () {
+    var window;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                window = electron_1.BrowserWindow.fromWebContents(event.sender);
+                if (!window)
+                    return [2 /*return*/, { canceled: true, filePath: undefined }];
+                return [4 /*yield*/, electron_1.dialog.showSaveDialog(window, options)];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); });
+electron_1.ipcMain.handle('show-message-box', function (event, options) { return __awaiter(void 0, void 0, void 0, function () {
+    var window;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                window = electron_1.BrowserWindow.fromWebContents(event.sender);
+                if (!window)
+                    return [2 /*return*/, { response: 0 }];
+                return [4 /*yield*/, electron_1.dialog.showMessageBox(window, options)];
+            case 1: return [2 /*return*/, _a.sent()];
+        }
+    });
+}); });
+// IPC handlers for debug console buttons
+electron_1.ipcMain.handle('restart-backend', function () { return __awaiter(void 0, void 0, void 0, function () {
+    var error_3;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 2, , 3]);
+                // console.log('🔄 Manual backend restart requested...');
+                safeDebugSend({
+                    type: 'warning',
+                    message: '🔄 Manual backend restart requested...'
+                });
+                // Kill existing backend
+                if (backendProcess) {
+                    backendProcess.kill();
+                    backendProcess = null;
+                }
+                return [4 /*yield*/, killExistingBackends()];
+            case 1:
+                _a.sent();
+                // Wait a moment then restart
+                setTimeout(function () { return __awaiter(void 0, void 0, void 0, function () {
+                    var error_4;
+                    return __generator(this, function (_a) {
+                        switch (_a.label) {
+                            case 0:
+                                _a.trys.push([0, 2, , 3]);
+                                return [4 /*yield*/, startBackend()];
+                            case 1:
+                                _a.sent();
+                                safeDebugSend({
+                                    type: 'success',
+                                    message: '✅ Backend restart completed'
+                                });
+                                return [3 /*break*/, 3];
+                            case 2:
+                                error_4 = _a.sent();
+                                safeDebugSend({
+                                    type: 'error',
+                                    message: "\u274C Backend restart failed: ".concat(error_4)
+                                });
+                                return [3 /*break*/, 3];
+                            case 3: return [2 /*return*/];
+                        }
+                    });
+                }); }, 2000);
+                return [3 /*break*/, 3];
+            case 2:
+                error_3 = _a.sent();
+                console.error('Restart backend error:', error_3);
+                return [3 /*break*/, 3];
+            case 3: return [2 /*return*/];
+        }
+    });
+}); });
+electron_1.ipcMain.handle('kill-all-processes', function () { return __awaiter(void 0, void 0, void 0, function () {
+    var spawn_1, commands, _loop_1, _i, commands_1, cmd, error_5;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 5, , 6]);
+                // console.log('💀 Kill all processes requested...');
+                safeDebugSend({
+                    type: 'warning',
+                    message: '💀 Killing all Chloros processes...'
+                });
+                spawn_1 = require('child_process').spawn;
+                commands = [
+                    'taskkill /F /IM Chloros.exe /T',
+                    'taskkill /F /IM chloros-backend.exe /T',
+                    'taskkill /F /IM python.exe /T'
+                ];
+                _loop_1 = function (cmd) {
+                    var e_1;
+                    return __generator(this, function (_b) {
+                        switch (_b.label) {
+                            case 0:
+                                _b.trys.push([0, 2, , 3]);
+                                return [4 /*yield*/, new Promise(function (resolve) {
+                                        var proc = spawn_1('cmd', ['/c', cmd], { windowsHide: true });
+                                        proc.on('close', function () { return resolve(); });
+                                        setTimeout(function () { return resolve(); }, 1000);
+                                    })];
+                            case 1:
+                                _b.sent();
+                                return [3 /*break*/, 3];
+                            case 2:
+                                e_1 = _b.sent();
+                                return [3 /*break*/, 3];
+                            case 3: return [2 /*return*/];
+                        }
+                    });
+                };
+                _i = 0, commands_1 = commands;
+                _a.label = 1;
+            case 1:
+                if (!(_i < commands_1.length)) return [3 /*break*/, 4];
+                cmd = commands_1[_i];
+                return [5 /*yield**/, _loop_1(cmd)];
+            case 2:
+                _a.sent();
+                _a.label = 3;
+            case 3:
+                _i++;
+                return [3 /*break*/, 1];
+            case 4:
+                if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                    debugConsoleWindow.webContents.send('backend-debug-output', {
+                        type: 'success',
+                        message: '💀 Process cleanup completed'
+                    });
+                }
+                return [3 /*break*/, 6];
+            case 5:
+                error_5 = _a.sent();
+                console.error('Kill all processes error:', error_5);
+                return [3 /*break*/, 6];
+            case 6: return [2 /*return*/];
+        }
+    });
+}); });
+electron_1.ipcMain.handle('check-backend-status', function () { return __awaiter(void 0, void 0, void 0, function () {
+    var startTime, statusMessage, response, responseTime, error_6, responseTime, error_7;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 5, , 6]);
+                // console.log('🔍 Checking backend status...');
+                if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                    debugConsoleWindow.webContents.send('backend-debug-output', {
+                        type: 'info',
+                        message: '🔍 Checking backend status and performance...'
+                    });
+                }
+                startTime = Date.now();
+                statusMessage = '';
+                _a.label = 1;
+            case 1:
+                _a.trys.push([1, 3, , 4]);
+                return [4 /*yield*/, fetch("".concat(BACKEND_URL, "/api/status"))];
+            case 2:
+                response = _a.sent();
+                responseTime = Date.now() - startTime;
+                if (response.ok) {
+                    statusMessage = "\u2705 Backend Status: OK (".concat(responseTime, "ms response time)");
+                    // Add process info if available
+                    if (backendProcess && backendProcess.pid) {
+                        statusMessage += "\n\uD83D\uDCCA Process ID: ".concat(backendProcess.pid);
+                    }
+                    statusMessage += "\n\uD83C\uDF10 Port: 5000";
+                }
+                else {
+                    statusMessage = "\u274C Backend Status: HTTP ".concat(response.status, " (").concat(responseTime, "ms)");
+                }
+                return [3 /*break*/, 4];
+            case 3:
+                error_6 = _a.sent();
+                responseTime = Date.now() - startTime;
+                statusMessage = "\u274C Backend Status: Connection failed (".concat(responseTime, "ms timeout)");
+                statusMessage += "\n\uD83D\uDD17 Error: ".concat(error_6.message);
+                return [3 /*break*/, 4];
+            case 4:
+                if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                    debugConsoleWindow.webContents.send('backend-debug-output', {
+                        type: 'info',
+                        message: statusMessage
+                    });
+                }
+                return [3 /*break*/, 6];
+            case 5:
+                error_7 = _a.sent();
+                console.error('Check backend status error:', error_7);
+                return [3 /*break*/, 6];
+            case 6: return [2 /*return*/];
+        }
+    });
+}); });
+// Additional IPC handlers that the UI expects
+electron_1.ipcMain.handle('backend-get-processing-mode', function () { return __awaiter(void 0, void 0, void 0, function () {
+    var response, error_8;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 3, , 4]);
+                return [4 /*yield*/, fetch("".concat(BACKEND_URL, "/api/get-processing-mode"))];
+            case 1:
+                response = _a.sent();
+                return [4 /*yield*/, response.json()];
+            case 2: return [2 /*return*/, _a.sent()];
+            case 3:
+                error_8 = _a.sent();
+                return [2 /*return*/, { mode: 'serial' }];
+            case 4: return [2 /*return*/];
+        }
+    });
+}); });
+electron_1.ipcMain.handle('backend-get-camera-models', function () { return __awaiter(void 0, void 0, void 0, function () {
+    var response, error_9;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                _a.trys.push([0, 3, , 4]);
+                return [4 /*yield*/, fetch("".concat(BACKEND_URL, "/api/get-camera-models"))];
+            case 1:
+                response = _a.sent();
+                return [4 /*yield*/, response.json()];
+            case 2: return [2 /*return*/, _a.sent()];
+            case 3:
+                error_9 = _a.sent();
+                return [2 /*return*/, { models: [] }];
+            case 4: return [2 /*return*/];
+        }
+    });
+}); });
+function createSplashWindow() {
+    var _this = this;
+    // console.log('🌟 Creating splash window...');
+    splashWindow = new electron_1.BrowserWindow({
+        width: 200,
+        height: 200,
+        frame: false,
+        alwaysOnTop: true,
+        transparent: true,
+        show: false, // Don't show until ready
+        icon: path.join(__dirname, 'ui', 'corn_logo_single_256.ico'), // Set application icon
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+            webSecurity: true,
+            sandbox: false
+        }
+    });
+    // console.log('🌟 Loading splash.html...');
+    splashWindow.loadFile('renderer/splash.html').then(function () {
+        // console.log('🌟 Splash HTML loaded successfully, showing window');
+        splashWindow.show();
+        splashWindow.center();
+    }).catch(function (error) { return __awaiter(_this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    console.error('❌ Failed to load splash.html:', error);
+                    // Fallback: create main window immediately
+                    return [4 /*yield*/, createMainWindow()];
+                case 1:
+                    // Fallback: create main window immediately
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    }); });
+    splashWindow.on('closed', function () {
+        // console.log('🌟 Splash window closed');
+        splashWindow = null;
+    });
+    // Add error handling
+    splashWindow.webContents.on('did-fail-load', function (event, errorCode, errorDescription) { return __awaiter(_this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    console.error('❌ Splash window failed to load:', errorCode, errorDescription);
+                    return [4 /*yield*/, createMainWindow()];
+                case 1:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    }); });
+    // Show splash for 1 second then create main window
+    setTimeout(function () { return __awaiter(_this, void 0, void 0, function () {
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    // console.log('🎬 Splash timeout reached, creating main window');
+                    return [4 /*yield*/, createMainWindow()];
+                case 1:
+                    _a.sent();
+                    return [2 /*return*/];
+            }
+        });
+    }); }, 1000);
+}
+function createMainWindow() {
+    return __awaiter(this, void 0, void 0, function () {
+        var savedState, defaultWidth, defaultHeight, primaryDisplay, _a, screenWidth, screenHeight, defaultX, defaultY, windowOptions, htmlFile, error_10, saveTimeout, debouncedSave;
+        var _b, _c;
+        return __generator(this, function (_d) {
+            switch (_d.label) {
+                case 0:
+                    _d.trys.push([0, 2, , 3]);
+                    return [4 /*yield*/, loadWindowState()];
+                case 1:
+                    savedState = _d.sent();
+                    defaultWidth = 1200;
+                    defaultHeight = 640;
+                    primaryDisplay = electron_1.screen.getPrimaryDisplay();
+                    _a = primaryDisplay.workAreaSize, screenWidth = _a.width, screenHeight = _a.height;
+                    defaultX = Math.round((screenWidth - defaultWidth) / 2);
+                    defaultY = Math.round((screenHeight - defaultHeight) / 2);
+                    windowOptions = {
+                        width: (savedState === null || savedState === void 0 ? void 0 : savedState.width) || defaultWidth,
+                        height: (savedState === null || savedState === void 0 ? void 0 : savedState.height) || defaultHeight,
+                        x: (_b = savedState === null || savedState === void 0 ? void 0 : savedState.x) !== null && _b !== void 0 ? _b : defaultX,
+                        y: (_c = savedState === null || savedState === void 0 ? void 0 : savedState.y) !== null && _c !== void 0 ? _c : defaultY,
+                        frame: false, // Frameless window
+                        show: true, // Always show window immediately
+                        title: 'Chloros', // Set proper application title
+                        icon: path.join(__dirname, 'ui', 'corn_logo_single_256.ico'), // Set application icon
+                        webPreferences: {
+                            nodeIntegration: false, // Disable for security
+                            contextIsolation: true, // Enable for security - use contextBridge in preload
+                            webSecurity: true, // Enable web security
+                            allowRunningInsecureContent: false, // Disable insecure content
+                            experimentalFeatures: true,
+                            backgroundThrottling: false,
+                            devTools: true,
+                            sandbox: false, // Keep disabled for compatibility with native modules
+                            preload: path.join(__dirname, 'preload.js')
+                        },
+                        backgroundColor: '#000000', // Match your original black background
+                        alwaysOnTop: false // Don't force window always on top
+                    };
+                    mainWindow = new electron_1.BrowserWindow(windowOptions);
+                    // Restore maximized state if it was maximized before
+                    if (savedState === null || savedState === void 0 ? void 0 : savedState.isMaximized) {
+                        mainWindow.maximize();
+                    }
+                    // console.log('🪟 Main window created successfully with dimensions:', {
+                        width: windowOptions.width,
+                        height: windowOptions.height,
+                        x: windowOptions.x,
+                        y: windowOptions.y,
+                        isMaximized: (savedState === null || savedState === void 0 ? void 0 : savedState.isMaximized) || false
+                    });
+                    return [3 /*break*/, 3];
+                case 2:
+                    error_10 = _d.sent();
+                    console.error('Failed to create main window:', error_10);
+                    return [2 /*return*/];
+                case 3:
+                    // Load the Chloros UI directly for now (Flask backend can be added later)
+                    // Use absolute path that works in both dev and packaged modes
+                    htmlFile = path.join(__dirname, 'ui', 'main.html');
+                    // console.log('🌐 Loading UI directly from file:', htmlFile);
+                    mainWindow.loadFile(htmlFile).then(function () {
+                        // console.log('✅ UI loaded successfully from file');
+                    }).catch(function (error) {
+                        console.error('❌ Failed to load UI file:', error);
+                        console.error('❌ Attempted path:', htmlFile);
+                        console.error('❌ __dirname:', __dirname);
+                        // Show window anyway so user can see what's happening
+                        mainWindow.show();
+                        mainWindow.focus();
+                    });
+                    // Show main window when ready and close splash
+                    mainWindow.once('ready-to-show', function () {
+                        // console.log('🪟 Main window ready-to-show event fired');
+                        if (splashWindow) {
+                            // console.log('🌟 Closing splash window');
+                            splashWindow.close();
+                        }
+                        // console.log('🪟 Showing and focusing main window');
+                        mainWindow.show();
+                        mainWindow.focus();
+                    });
+                    // Add additional event handlers for debugging
+                    mainWindow.webContents.once('did-finish-load', function () {
+                        // console.log('🪟 Main window did-finish-load event fired');
+                        // Ensure window is shown even if ready-to-show doesn't fire
+                        if (!mainWindow.isVisible()) {
+                            // console.log('🪟 Window not visible, forcing show');
+                            if (splashWindow) {
+                                splashWindow.close();
+                            }
+                            mainWindow.show();
+                            mainWindow.focus();
+                        }
+                    });
+                    debouncedSave = function () {
+                        if (saveTimeout)
+                            clearTimeout(saveTimeout);
+                        saveTimeout = setTimeout(function () {
+                            if (mainWindow && !mainWindow.isDestroyed()) {
+                                saveWindowState(mainWindow);
+                            }
+                        }, 500); // Debounce saves to avoid too frequent writes
+                    };
+                    // Listen for window state changes
+                    mainWindow.on('resize', debouncedSave);
+                    mainWindow.on('move', debouncedSave);
+                    mainWindow.on('maximize', debouncedSave);
+                    mainWindow.on('unmaximize', debouncedSave);
+                    // Save final state before closing
+                    mainWindow.on('close', function () {
+                        if (saveTimeout)
+                            clearTimeout(saveTimeout);
+                        if (mainWindow && !mainWindow.isDestroyed()) {
+                            // Use synchronous save for close event to ensure it completes
+                            try {
+                                var bounds = mainWindow.getBounds();
+                                var state = {
+                                    x: bounds.x,
+                                    y: bounds.y,
+                                    width: bounds.width,
+                                    height: bounds.height,
+                                    isMaximized: mainWindow.isMaximized(),
+                                    isMinimized: mainWindow.isMinimized(),
+                                    lastSaved: new Date().toISOString()
+                                };
+                                require('fs').writeFileSync(windowStateFile, JSON.stringify(state, null, 2));
+                                // console.log('🪟 Saved final window state on close:', state);
+                            }
+                            catch (error) {
+                                console.error('🪟 Failed to save final window state:', error);
+                            }
+                        }
+                    });
+                    mainWindow.on('closed', function () {
+                        mainWindow = null;
+                    });
+                    // Add error handling
+                    mainWindow.webContents.on('render-process-gone', function (event, details) {
+                        console.error('Main window render process gone:', details);
+                    });
+                    mainWindow.webContents.on('did-fail-load', function (event, errorCode, errorDescription) {
+                        console.error('Main window failed to load:', errorCode, errorDescription);
+                    });
+                    // Open external links in default browser
+                    mainWindow.webContents.setWindowOpenHandler(function (_a) {
+                        var url = _a.url;
+                        electron_1.shell.openExternal(url);
+                        return { action: 'deny' };
+                    });
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+// Backend management variables
+var debugConsoleWindow = null;
+var backendProcess = null;
+var BACKEND_URL = 'http://localhost:5000';
+// Helper function to safely send debug messages to both debug console and main window
+function safeDebugSend(message) {
+    try {
+        // Send to debug console window
+        if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+            debugConsoleWindow.webContents.send('backend-debug-output', message);
+        }
+        // Also send to main window for the log sidebar
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('backend-debug-output', message);
+        }
+    }
+    catch (error) {
+        // Silent fail - debug console is optional
+    }
+}
+function findBackendExecutable() {
+    var spawn = require('child_process').spawn;
+    if (electron_1.app.isPackaged) {
+        // In production, look for bundled backend
+        var bundledBackend = path.join(process.resourcesPath, 'backend', 'chloros-backend.exe');
+        if (require('fs').existsSync(bundledBackend)) {
+            // console.log('Found bundled backend:', bundledBackend);
+            return bundledBackend;
+        }
+        // Fallback to exe folder
+        var exeBackend = path.join(path.dirname(process.execPath), 'chloros-backend.exe');
+        if (require('fs').existsSync(exeBackend)) {
+            // console.log('Found exe folder backend:', exeBackend);
+            return exeBackend;
+        }
+        console.error('❌ No backend executable found in production');
+        return null;
+    }
+    else {
+        // In development, look for backend in current directory
+        var devBackend = path.join(__dirname, 'chloros-backend.exe');
+        if (require('fs').existsSync(devBackend)) {
+            // console.log('Found development backend:', devBackend);
+            return devBackend;
+        }
+        console.error('❌ No backend executable found in development');
+        return null;
+    }
+}
+function checkIfBackendRunning() {
+    return new Promise(function (resolve) {
+        var options = {
+            hostname: 'localhost',
+            port: 5000,
+            path: '/api/status',
+            method: 'GET',
+            timeout: 1000
+        };
+        var req = http.request(options, function (res) {
+            resolve(res.statusCode === 200);
+        });
+        req.on('error', function () { return resolve(false); });
+        req.on('timeout', function () { return resolve(false); });
+        req.setTimeout(1000);
+        req.end();
+    });
+}
+function killExistingBackends() {
+    return __awaiter(this, void 0, void 0, function () {
+        var spawn, commands, _loop_2, _i, commands_2, cmd, stillRunning;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    spawn = require('child_process').spawn;
+                    // console.log('🧹 Forcefully cleaning up all existing backend processes and port 5000...');
+                    if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                        debugConsoleWindow.webContents.send('backend-debug-output', {
+                            type: 'warning',
+                            message: '🧹 Forcefully cleaning up all existing backend processes and port 5000...'
+                        });
+                    }
+                    commands = [
+                        'taskkill /F /IM chloros-backend.exe /T',
+                        'taskkill /F /IM Chloros.exe /T',
+                        'for /f "tokens=5" %a in (\'netstat -ano ^| findstr :5000\') do taskkill /F /PID %a',
+                        'wmic process where "commandline like \'%chloros%\' or commandline like \'%backend%\'" delete'
+                    ];
+                    _loop_2 = function (cmd) {
+                        var e_2;
+                        return __generator(this, function (_b) {
+                            switch (_b.label) {
+                                case 0:
+                                    _b.trys.push([0, 2, , 3]);
+                                    return [4 /*yield*/, new Promise(function (resolve) {
+                                            var proc = spawn('cmd', ['/c', cmd], { windowsHide: true });
+                                            proc.on('close', function () { return resolve(); });
+                                            setTimeout(function () { return resolve(); }, 1000);
+                                        })];
+                                case 1:
+                                    _b.sent();
+                                    return [3 /*break*/, 3];
+                                case 2:
+                                    e_2 = _b.sent();
+                                    return [3 /*break*/, 3];
+                                case 3: return [2 /*return*/];
+                            }
+                        });
+                    };
+                    _i = 0, commands_2 = commands;
+                    _a.label = 1;
+                case 1:
+                    if (!(_i < commands_2.length)) return [3 /*break*/, 4];
+                    cmd = commands_2[_i];
+                    return [5 /*yield**/, _loop_2(cmd)];
+                case 2:
+                    _a.sent();
+                    _a.label = 3;
+                case 3:
+                    _i++;
+                    return [3 /*break*/, 1];
+                case 4: 
+                // Wait for cleanup to complete
+                return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 3000); })];
+                case 5:
+                    // Wait for cleanup to complete
+                    _a.sent();
+                    if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                        debugConsoleWindow.webContents.send('backend-debug-output', {
+                            type: 'success',
+                            message: '🧹 Aggressive cleanup completed - all processes and ports cleared'
+                        });
+                    }
+                    return [4 /*yield*/, checkIfBackendRunning()];
+                case 6:
+                    stillRunning = _a.sent();
+                    if (stillRunning) {
+                        // console.log('⚠️ Backend still running after cleanup - proceeding anyway');
+                        if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                            debugConsoleWindow.webContents.send('backend-debug-output', {
+                                type: 'warning',
+                                message: '⚠️ Backend still running after cleanup - proceeding anyway'
+                            });
+                        }
+                    }
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function startBackend() {
+    return __awaiter(this, void 0, void 0, function () {
+        var spawn, existingBackend, backendPath, workingDir, lastOutputTime, processingKeywords, stdoutBuffer, stderrBuffer, checkProcessingTimeout, maxAttempts, attempts, checkBackend;
+        var _this = this;
+        var _a, _b;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
+                case 0:
+                    spawn = require('child_process').spawn;
+                    // FIRST: Check if backend is already running (like CLI does)
+                    return [4 /*yield*/, checkIfBackendRunning()];
+                case 1:
+                    existingBackend = _c.sent();
+                    if (!existingBackend) return [3 /*break*/, 2];
+                    // console.log('✅ Backend already running - using existing backend');
+                    if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                        debugConsoleWindow.webContents.send('backend-debug-output', {
+                            type: 'success',
+                            message: '✅ Backend already running - using existing backend (like CLI does)'
+                        });
+                    }
+                    // Notify main window that backend is ready
+                    if (mainWindow && !mainWindow.isDestroyed()) {
+                        mainWindow.webContents.send('backend-ready');
+                        // console.log('✅ Sent backend-ready message to main window');
+                    }
+                    // Don't set backendProcess - we're using an external backend
+                    return [2 /*return*/];
+                case 2:
+                    // No backend running - clean up any zombie processes and start fresh
+                    return [4 /*yield*/, killExistingBackends()];
+                case 3:
+                    // No backend running - clean up any zombie processes and start fresh
+                    _c.sent();
+                    backendPath = findBackendExecutable();
+                    if (!backendPath) {
+                        throw new Error('Backend executable not found');
+                    }
+                    // console.log('Using bundled backend:', backendPath);
+                    if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                        debugConsoleWindow.webContents.send('backend-debug-output', {
+                            type: 'info',
+                            message: "Using bundled backend: ".concat(backendPath)
+                        });
+                    }
+                    // console.log('Starting backend:', backendPath);
+                    if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                        debugConsoleWindow.webContents.send('backend-debug-output', {
+                            type: 'info',
+                            message: "Starting backend: ".concat(backendPath)
+                        });
+                    }
+                    workingDir = path.dirname(backendPath);
+                    backendProcess = spawn(backendPath, [], {
+                        cwd: workingDir,
+                        env: __assign(__assign({}, process.env), { PYTHONIOENCODING: 'utf-8', PYTHONUTF8: '1', LC_ALL: 'en_US.UTF-8', CHLOROS_DEBUG: '1', CHLOROS_VERBOSE: '1', CHLOROS_NO_AUTO_PROCESSING: '1', CHLOROS_NO_AUTO_PROJECT: '1', CHLOROS_MANUAL_MODE: '1', RAY_DISABLE_IMPORT_WARNING: '1', RAY_DISABLE_RUNTIME_METRICS: '1', RAY_LOG_TO_STDERR: '1', RAY_OBJECT_STORE_ALLOW_SLOW_STORAGE: '1', RAY_ENABLE_WINDOWS_OR_OSX_CLUSTER: '1', NUMBA_DISABLE_JIT: '0', OMP_NUM_THREADS: '6', OPENBLAS_NUM_THREADS: '6', MKL_NUM_THREADS: '6', PYTHONOPTIMIZE: '1', PYTHONDONTWRITEBYTECODE: '1' }),
+                        windowsHide: false
+                    });
+                    // console.log('🚀 Backend process started with PID:', backendProcess.pid);
+                    if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                        debugConsoleWindow.webContents.send('backend-debug-output', {
+                            type: 'info',
+                            message: "\uD83D\uDE80 Backend process started with PID: ".concat(backendProcess.pid)
+                        });
+                        debugConsoleWindow.webContents.send('backend-debug-output', {
+                            type: 'success',
+                            message: '🚫 Auto-processing disabled - backend will only process when user initiates'
+                        });
+                        debugConsoleWindow.webContents.send('backend-debug-output', {
+                            type: 'success',
+                            message: '⚡ Performance mode: JIT enabled, 6 threads, Python optimized'
+                        });
+                    }
+                    lastOutputTime = Date.now();
+                    processingKeywords = ['PROGRESS', 'Processing', '%', 'STAGE', 'TARGET', 'DETECT', 'SERIAL', 'PARALLEL', 'THREAD', 'loading', 'Loading', 'LOAD', 'analyzing', 'ANALYZING', 'ANALYSIS', 'calibration', 'CALIBRATION', 'CALIB', 'image', 'IMAGE', 'file', 'ERROR', 'WARNING', 'WARN', 'timeout', 'TIMEOUT', 'hang'];
+                    stdoutBuffer = '';
+                    (_a = backendProcess.stdout) === null || _a === void 0 ? void 0 : _a.on('data', function (data) {
+                        var output = data.toString();
+                        lastOutputTime = Date.now();
+                        // Add to buffer
+                        stdoutBuffer += output;
+                        // Process complete lines
+                        var lines = stdoutBuffer.split('\n');
+                        // Keep the last incomplete line in the buffer
+                        stdoutBuffer = lines.pop() || '';
+                        var _loop_3 = function (line) {
+                            var trimmedLine = line.trim();
+                            if (!trimmedLine)
+                                return "continue"; // Skip empty lines
+                            // Check for processing-related keywords
+                            var isProcessingOutput = processingKeywords.some(function (keyword) { return trimmedLine.includes(keyword); });
+                            if (isProcessingOutput) {
+                                // console.log('[BACKEND PROCESSING]', trimmedLine);
+                                if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                                    debugConsoleWindow.webContents.send('backend-debug-output', {
+                                        type: 'processing',
+                                        message: "[PROCESSING] ".concat(trimmedLine)
+                                    });
+                                }
+                                // Forward to main window if it exists
+                                if (mainWindow && !mainWindow.isDestroyed()) {
+                                    mainWindow.webContents.send('processing-progress-update', {
+                                        type: 'stdout',
+                                        data: trimmedLine
+                                    });
+                                }
+                            }
+                            else {
+                                // console.log('[BACKEND]', trimmedLine);
+                                if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                                    debugConsoleWindow.webContents.send('backend-debug-output', {
+                                        type: 'info',
+                                        message: trimmedLine
+                                    });
+                                }
+                            }
+                            // Check for unwanted auto-processing
+                            if (trimmedLine.includes('PROCESSING LOG FILE') || trimmedLine.includes('AUTO PROCESSING')) {
+                                if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                                    debugConsoleWindow.webContents.send('backend-debug-output', {
+                                        type: 'error',
+                                        message: "\u274C UNWANTED AUTO-PROCESSING DETECTED: ".concat(trimmedLine)
+                                    });
+                                }
+                            }
+                        };
+                        // Send each complete line
+                        for (var _i = 0, lines_1 = lines; _i < lines_1.length; _i++) {
+                            var line = lines_1[_i];
+                            _loop_3(line);
+                        }
+                    });
+                    stderrBuffer = '';
+                    (_b = backendProcess.stderr) === null || _b === void 0 ? void 0 : _b.on('data', function (data) {
+                        var output = data.toString();
+                        // Add to buffer
+                        stderrBuffer += output;
+                        // Process complete lines
+                        var lines = stderrBuffer.split('\n');
+                        // Keep the last incomplete line in the buffer
+                        stderrBuffer = lines.pop() || '';
+                        // Send each complete line
+                        for (var _i = 0, lines_2 = lines; _i < lines_2.length; _i++) {
+                            var line = lines_2[_i];
+                            var trimmedLine = line.trim();
+                            if (!trimmedLine)
+                                continue; // Skip empty lines
+                            // console.log('[BACKEND ERROR]', trimmedLine);
+                            if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                                debugConsoleWindow.webContents.send('backend-debug-output', {
+                                    type: 'error',
+                                    message: "[ERROR] ".concat(trimmedLine)
+                                });
+                            }
+                        }
+                    });
+                    backendProcess.on('close', function (code) {
+                        // Flush any remaining buffered data
+                        if (stdoutBuffer.trim() && debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                            debugConsoleWindow.webContents.send('backend-debug-output', {
+                                type: 'info',
+                                message: stdoutBuffer.trim()
+                            });
+                        }
+                        if (stderrBuffer.trim() && debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                            debugConsoleWindow.webContents.send('backend-debug-output', {
+                                type: 'error',
+                                message: "[ERROR] ".concat(stderrBuffer.trim())
+                            });
+                        }
+                        // console.log('Backend process exited with code', code);
+                        if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                            debugConsoleWindow.webContents.send('backend-debug-output', {
+                                type: code === 0 ? 'info' : 'error',
+                                message: "Backend process exited with code ".concat(code)
+                            });
+                        }
+                        backendProcess = null;
+                    });
+                    checkProcessingTimeout = function () {
+                        var timeSinceLastOutput = Date.now() - lastOutputTime;
+                        var timeoutThreshold = 30000; // 30 seconds
+                        if (timeSinceLastOutput > timeoutThreshold) {
+                            // console.log('⏰ WARNING: No processing output for', Math.round(timeSinceLastOutput / 1000) + 's - backend may be hung');
+                            if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                                debugConsoleWindow.webContents.send('backend-debug-output', {
+                                    type: 'warning',
+                                    message: "\u23F0 WARNING: No processing output for ".concat(Math.round(timeSinceLastOutput / 1000), "s - backend may be hung")
+                                });
+                            }
+                        }
+                    };
+                    // Check for processing timeouts every 10 seconds
+                    setInterval(checkProcessingTimeout, 10000);
+                    maxAttempts = 60;
+                    attempts = 0;
+                    checkBackend = function () { return __awaiter(_this, void 0, void 0, function () {
+                        var isRunning, errorMsg, statusMsg;
+                        return __generator(this, function (_a) {
+                            switch (_a.label) {
+                                case 0:
+                                    attempts++;
+                                    return [4 /*yield*/, checkIfBackendRunning()];
+                                case 1:
+                                    isRunning = _a.sent();
+                                    if (isRunning) {
+                                        // console.log('Backend is ready!');
+                                        // Notify main window that backend is ready
+                                        if (mainWindow && !mainWindow.isDestroyed()) {
+                                            mainWindow.webContents.send('backend-ready');
+                                            // console.log('✅ Sent backend-ready message to main window');
+                                        }
+                                        if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                                            debugConsoleWindow.webContents.send('backend-debug-output', {
+                                                type: 'success',
+                                                message: '✅ Backend is ready and responding!'
+                                            });
+                                        }
+                                        return [2 /*return*/];
+                                    }
+                                    if (attempts >= maxAttempts) {
+                                        errorMsg = '❌ Backend failed to start after 60 seconds';
+                                        // console.log(errorMsg);
+                                        if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                                            debugConsoleWindow.webContents.send('backend-debug-output', {
+                                                type: 'error',
+                                                message: errorMsg
+                                            });
+                                        }
+                                        throw new Error(errorMsg);
+                                    }
+                                    // Provide status updates every 5 seconds
+                                    if (attempts % 5 === 0) {
+                                        statusMsg = "\u23F3 Still waiting for backend... (".concat(attempts, "/60s)");
+                                        // console.log(statusMsg);
+                                        if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                                            debugConsoleWindow.webContents.send('backend-debug-output', {
+                                                type: 'info',
+                                                message: statusMsg
+                                            });
+                                        }
+                                    }
+                                    return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 1000); })];
+                                case 2:
+                                    _a.sent();
+                                    return [2 /*return*/, checkBackend()];
+                            }
+                        });
+                    }); };
+                    return [4 /*yield*/, new Promise(function (resolve) { return setTimeout(resolve, 1000); })];
+                case 2:
+                    _c.sent();
+                    return [4 /*yield*/, checkBackend()];
+                case 3:
+                    _c.sent();
+                    return [2 /*return*/];
+            }
+        });
+    });
+}
+function createDebugConsoleWindow() {
+    debugConsoleWindow = new electron_1.BrowserWindow({
+        width: 800,
+        height: 600,
+        x: 100,
+        y: 100,
+        title: "Chloros Debug Console - v".concat(Date.now()),
+        alwaysOnTop: false,
+        webPreferences: {
+            nodeIntegration: true, // Keep enabled for debug console only
+            contextIsolation: false, // Keep disabled for debug console only
+            webSecurity: true, // Enable security
+            sandbox: false
+        }
+    });
+    // Prevent accidental closing
+    debugConsoleWindow.on('close', function (event) {
+        event.preventDefault();
+        debugConsoleWindow === null || debugConsoleWindow === void 0 ? void 0 : debugConsoleWindow.minimize();
+    });
+    var debugHtml = "\n<!DOCTYPE html>\n<html>\n<head>\n    <title>Chloros Debug Console - v".concat(Date.now(), "</title>\n    <style>\n        body { \n            font-family: 'Courier New', monospace; \n            background: #1e1e1e; \n            color: #ffffff; \n            margin: 0; \n            padding: 20px; \n            font-size: 12px;\n        }\n        .header {\n            display: flex;\n            gap: 10px;\n            margin-bottom: 20px;\n            flex-wrap: wrap;\n        }\n        .btn {\n            padding: 8px 16px;\n            background: #007acc;\n            color: white;\n            border: none;\n            border-radius: 4px;\n            cursor: pointer;\n            font-size: 12px;\n            font-weight: bold;\n        }\n        .btn:hover { background: #005a9e; }\n        .btn:active { background: #004578; }\n        #output {\n            background: #2d2d2d;\n            border: 1px solid #555;\n            padding: 15px;\n            height: 400px;\n            overflow-y: auto;\n            white-space: pre-wrap;\n            font-family: 'Courier New', monospace;\n            font-size: 11px;\n            line-height: 1.4;\n        }\n        .log-info { color: #ffffff; }\n        .log-success { color: #4CAF50; font-weight: bold; }\n        .log-warning { color: #FF9800; font-weight: bold; }\n        .log-error { color: #F44336; font-weight: bold; }\n        .log-processing { color: #2196F3; font-weight: bold; background: rgba(33, 150, 243, 0.1); }\n        .timestamp { color: #888; font-size: 10px; }\n    </style>\n</head>\n<body>\n    <div class=\"header\">\n        <button class=\"btn\" onclick=\"copyLog()\">\uD83D\uDCCB Copy</button>\n        <button class=\"btn\" onclick=\"clearOutput()\">\uD83E\uDDF9 Clear</button>\n        <button class=\"btn\" onclick=\"restartBackend()\">\uD83D\uDD04 Restart Backend</button>\n        <button class=\"btn\" onclick=\"killAllProcesses()\">\uD83D\uDC80 Kill All</button>\n        <button class=\"btn\" onclick=\"checkBackendStatus()\">\uD83D\uDD0D Check Status</button>\n    </div>\n    <div id=\"output\"></div>\n\n    <script>\n        const { ipcRenderer } = require('electron');\n        \n        function addLogLine(type, message) {\n            const output = document.getElementById('output');\n            const timestamp = new Date().toLocaleTimeString();\n            const line = document.createElement('div');\n            line.innerHTML = '<span class=\"timestamp\">[' + timestamp + ']</span> ' + escapeHtml(message);\n            line.className = 'log-' + type;\n            output.appendChild(line);\n            output.scrollTop = output.scrollHeight;\n            \n            // Store all messages for copying (unlimited for debugging)\n            allMessages.push('[' + timestamp + '] ' + message);\n        }\n        \n        function escapeHtml(text) {\n            const div = document.createElement('div');\n            div.textContent = text;\n            return div.innerHTML;\n        }\n        \n        let allMessages = [];\n        \n        async function copyLog() {\n            try {\n                const text = allMessages.join('\\n');\n                \n                // Try modern clipboard API first\n                if (navigator.clipboard && navigator.clipboard.writeText) {\n                    await navigator.clipboard.writeText(text);\n                    addLogLine('success', '\u2705 Debug log copied to clipboard! (' + allMessages.length + ' messages)');\n                } else {\n                    // Fallback method\n                    const textarea = document.createElement('textarea');\n                    textarea.value = text;\n                    textarea.style.position = 'fixed';\n                    textarea.style.opacity = '0';\n                    document.body.appendChild(textarea);\n                    textarea.select();\n                    textarea.setSelectionRange(0, 99999);\n                    \n                    const successful = document.execCommand('copy');\n                    document.body.removeChild(textarea);\n                    \n                    if (successful) {\n                        addLogLine('success', '\u2705 Debug log copied to clipboard! (' + allMessages.length + ' messages)');\n                    } else {\n                        addLogLine('error', '\u274C Failed to copy log to clipboard');\n                    }\n                }\n            } catch (error) {\n                addLogLine('error', '\u274C Copy failed: ' + error.message);\n            }\n        }\n        \n        function clearOutput() {\n            document.getElementById('output').innerHTML = '';\n            allMessages = [];\n            addLogLine('info', '\uD83E\uDDF9 Debug console cleared');\n        }\n        \n        async function restartBackend() {\n            addLogLine('warning', '\uD83D\uDD04 Requesting backend restart...');\n            try {\n                await ipcRenderer.invoke('restart-backend');\n            } catch (error) {\n                addLogLine('error', '\u274C Failed to restart backend: ' + error.message);\n            }\n        }\n        \n        async function killAllProcesses() {\n            addLogLine('warning', '\uD83D\uDC80 Requesting process cleanup...');\n            try {\n                await ipcRenderer.invoke('kill-all-processes');\n            } catch (error) {\n                addLogLine('error', '\u274C Failed to kill processes: ' + error.message);\n            }\n        }\n        \n        async function checkBackendStatus() {\n            addLogLine('info', '\uD83D\uDD0D Checking backend status...');\n            try {\n                await ipcRenderer.invoke('check-backend-status');\n            } catch (error) {\n                addLogLine('error', '\u274C Failed to check status: ' + error.message);\n            }\n        }\n        \n        // Listen for backend debug output\n        ipcRenderer.on('backend-debug-output', (event, data) => {\n            addLogLine(data.type, data.message);\n        });\n        \n        // Initial message\n        addLogLine('success', '\uD83D\uDE80 Debug console initialized');\n        \n        // Test copy button availability\n        addLogLine('info', '\uD83D\uDCCB Copy button test: Click \"\uD83D\uDCCB Copy\" to copy all debug text to clipboard');\n        if (document.querySelector('.btn')) {\n            addLogLine('success', '\u2705 Copy button found in DOM');\n        } else {\n            addLogLine('error', '\u274C Copy button not found in DOM');\n        }\n        \n        if (navigator.clipboard && navigator.clipboard.writeText) {\n            addLogLine('success', '\u2705 Clipboard API available');\n        } else {\n            addLogLine('warning', '\u26A0\uFE0F Clipboard API not available - will use fallback');\n        }\n    </script>\n</body>\n</html>");
+    debugConsoleWindow.loadURL("data:text/html;charset=utf-8,".concat(encodeURIComponent(debugHtml)));
+}
+function startPythonServer() {
+    // Skip Python server - use original Chloros backend
+    // console.log('Using original Chloros backend - no separate Python server needed');
+}
+// App event handlers
+electron_1.app.whenReady().then(function () { return __awaiter(void 0, void 0, void 0, function () {
+    return __generator(this, function (_a) {
+        // console.log('🔄 Application starting - ensuring clean backend state...');
+        // Create debug console first
+        createDebugConsoleWindow();
+        // Create splash window IMMEDIATELY (non-blocking)
+        // console.log('🌟 Creating splash window...');
+        if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+            debugConsoleWindow.webContents.send('backend-debug-output', {
+                type: 'info',
+                message: '🎬 UI starting immediately - backend will start in parallel'
+            });
+        }
+        createSplashWindow();
+        // Set app icon globally to prevent default Electron icon from showing
+        if (process.platform === 'win32') {
+            electron_1.app.setAppUserModelId('com.mapirlab.chloros');
+            // console.log('🌽 App User Model ID set for Windows taskbar grouping');
+            // Note: On Windows, taskbar/jump list icons come from the window icon
+            // and the executable's embedded icon, not app.setIcon() (which doesn't exist on Windows)
+        }
+        // Initialize backend
+        backend = new ElectronBackend();
+        // console.log('🔧 Electron backend initialized');
+        // Start backend in parallel (non-blocking)
+        startBackend().then(function () { return __awaiter(void 0, void 0, void 0, function () {
+            var response, data, error_11;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        // console.log('Backend started successfully');
+                        _a.label = 1;
+                    case 1:
+                        _a.trys.push([1, 4, , 5]);
+                        return [4 /*yield*/, fetch("".concat(BACKEND_URL, "/api/set-processing-mode"), {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ mode: 'serial' })
+                            })];
+                    case 2:
+                        response = _a.sent();
+                        return [4 /*yield*/, response.json()];
+                    case 3:
+                        data = _a.sent();
+                        // console.log('Processing mode set to serial:', data.success);
+                        if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                            debugConsoleWindow.webContents.send('backend-debug-output', {
+                                type: 'success',
+                                message: '🚀 Backend startup completed - all features now available'
+                            });
+                        }
+                        return [3 /*break*/, 5];
+                    case 4:
+                        error_11 = _a.sent();
+                        console.error('Failed to set processing mode to serial:', error_11);
+                        return [3 /*break*/, 5];
+                    case 5: return [2 /*return*/];
+                }
+            });
+        }); }).catch(function (error) {
+            console.error('Failed to start backend:', error);
+            if (debugConsoleWindow && !debugConsoleWindow.isDestroyed()) {
+                debugConsoleWindow.webContents.send('backend-debug-output', {
+                    type: 'error',
+                    message: "\u274C Backend startup failed: ".concat(error)
+                });
+            }
+        });
+        electron_1.app.on('activate', function () {
+            if (electron_1.BrowserWindow.getAllWindows().length === 0) {
+                createSplashWindow();
+            }
+        });
+        return [2 /*return*/];
+    });
+}); }).catch(function (error) {
+    console.error('Failed to start application:', error);
+    electron_1.app.quit();
+});
+// Add process error handling
+process.on('uncaughtException', function (error) {
+    console.error('Uncaught Exception:', error);
+});
+process.on('unhandledRejection', function (reason, promise) {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+electron_1.app.on('window-all-closed', function () {
+    // Clean up processes
+    if (pythonProcess) {
+        pythonProcess.kill();
+    }
+    // server variable removed - no longer using Express server
+    if (process.platform !== 'darwin') {
+        electron_1.app.quit();
+    }
+});
+electron_1.app.on('before-quit', function () {
+    // Clean up processes
+    if (pythonProcess) {
+        pythonProcess.kill();
+    }
+    // server variable removed - no longer using Express server
+});
+// Security: Prevent new window creation
+electron_1.app.on('web-contents-created', function (event, contents) {
+    contents.setWindowOpenHandler(function (_a) {
+        var url = _a.url;
+        electron_1.shell.openExternal(url);
+        return { action: 'deny' };
+    });
+});

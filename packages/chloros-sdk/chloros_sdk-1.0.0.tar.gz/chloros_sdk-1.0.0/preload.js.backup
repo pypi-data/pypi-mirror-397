@@ -1,0 +1,214 @@
+const { contextBridge, ipcRenderer } = require('electron');
+
+// Check if contextIsolation is enabled to determine how to expose APIs
+const hasContextIsolation = process.contextIsolated;
+
+if (hasContextIsolation) {
+  // Use contextBridge for secure communication with proper context isolation
+  contextBridge.exposeInMainWorld('electronAPI', {
+  // Generic IPC invoke method
+  invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
+  
+  // Generic IPC event listener
+  on: (channel, callback) => {
+    ipcRenderer.on(channel, (event, ...args) => callback(...args));
+  },
+  
+  // File dialogs
+  showOpenDialog: (options) => ipcRenderer.invoke('show-open-dialog', options),
+  showSaveDialog: (options) => ipcRenderer.invoke('show-save-dialog', options),
+  showMessageBox: (options) => ipcRenderer.invoke('show-message-box', options),
+  
+  // System info
+  platform: process.platform,
+  version: process.versions.electron,
+  
+  // App control
+  minimize: () => ipcRenderer.invoke('minimize-window'),
+  maximize: () => ipcRenderer.invoke('maximize-window'),
+  close: () => ipcRenderer.invoke('close-window'),
+  
+  // Additional utility
+  removeListener: (channel, callback) => {
+    ipcRenderer.removeListener(channel, callback);
+  }
+  });
+
+  // Create PyWebView API compatibility layer using Electron IPC
+  contextBridge.exposeInMainWorld('pywebview', {
+  api: {
+    // Project Management
+    new_project: (projectName, template) => ipcRenderer.invoke('new-project', projectName, template),
+    get_projects: () => ipcRenderer.invoke('get-projects'),
+    open_project: (projectName) => ipcRenderer.invoke('open-project', projectName),
+    has_project_loaded: () => ipcRenderer.invoke('has-project-loaded'),
+    get_project_status: () => ipcRenderer.invoke('get-project-status'),
+    open_projects_folder: () => ipcRenderer.invoke('open-projects-folder'),
+    get_project_templates: () => ipcRenderer.invoke('get-project-templates'),
+    save_project_template: (templateName) => ipcRenderer.invoke('save-project-template', templateName),
+    
+    // File Management
+    get_image_list: () => ipcRenderer.invoke('get-image-list'),
+    add_files: () => ipcRenderer.invoke('add-files'),
+    remove_files: (filePaths) => ipcRenderer.invoke('remove-files', filePaths),
+    select_folder: () => ipcRenderer.invoke('select-folder'),
+    sync_checkbox_state: (filename, calibState) => ipcRenderer.invoke('sync-checkbox-state', filename, calibState),
+    
+    // Processing
+    process_project: () => ipcRenderer.invoke('process-project'),
+    interrupt_project: () => ipcRenderer.invoke('interrupt-project'),
+    get_processing_progress: () => ipcRenderer.invoke('get-processing-progress'),
+    set_processing_mode: (mode) => ipcRenderer.invoke('set-processing-mode', mode),
+    get_processing_mode: () => ipcRenderer.invoke('get-processing-mode'),
+    
+    // Image Viewer API (Flask backend calls)
+    get_image_layers: (imageName) => ipcRenderer.invoke('flask-api-call', 'get-image-layers', { image_name: imageName }),
+    get_calibration_target_polys: (imageName) => ipcRenderer.invoke('flask-api-call', 'get-calibration-target-polys', { image_name: imageName }),
+    create_sandbox_image: (imageName, option, x, y, width, height) => ipcRenderer.invoke('flask-api-call', 'create-sandbox-image', {
+      image_name: imageName,
+      option: option,
+      x: x,
+      y: y,
+      width: width,
+      height: height
+    }),
+    get_viewer_index_value: (imageX, imageY) => ipcRenderer.invoke('flask-api-call', 'get-viewer-index-value', { x: imageX, y: imageY }),
+    get_viewer_index_min_max: () => ipcRenderer.invoke('flask-api-call', 'get-viewer-index-min-max', {}),
+    get_viewer_lut_gradient: (index) => ipcRenderer.invoke('flask-api-call', 'get-viewer-lut-gradient', { index: index }),
+    
+    // User Management
+    load_user_email: () => ipcRenderer.invoke('load-user-email'),
+    save_user_email: (email) => ipcRenderer.invoke('save-user-email', email),
+    remote_user_login: (email, password) => ipcRenderer.invoke('remote-user-login', email, password),
+    user_logout: () => ipcRenderer.invoke('user-logout'),
+    
+    // Settings
+    get_config: () => ipcRenderer.invoke('get-config'),
+    set_config: (key, value) => ipcRenderer.invoke('set-config', key, value),
+    get_working_directory: () => ipcRenderer.invoke('get-working-directory'),
+    select_working_directory: () => ipcRenderer.invoke('select-working-directory'),
+    
+    // Window management (PyWebView compatibility)
+    toggle_maximize: () => ipcRenderer.invoke('toggle-maximize'),
+    get_minimum_window_size: () => ipcRenderer.invoke('get-minimum-window-size')
+  },
+  
+  // Event listeners need to be exposed separately
+  on: (channel, callback) => {
+    ipcRenderer.on(channel, (event, ...args) => callback(...args));
+  },
+  
+  removeListener: (channel, callback) => {
+    ipcRenderer.removeListener(channel, callback);
+  }
+  });
+} else {
+  // Fallback for windows without context isolation (like debug console)
+  // Directly inject into window object (less secure but necessary for compatibility)
+  window.electronAPI = {
+    invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
+    on: (channel, callback) => {
+      ipcRenderer.on(channel, (event, ...args) => callback(...args));
+    },
+    showOpenDialog: (options) => ipcRenderer.invoke('show-open-dialog', options),
+    showSaveDialog: (options) => ipcRenderer.invoke('show-save-dialog', options),
+    showMessageBox: (options) => ipcRenderer.invoke('show-message-box', options),
+    platform: process.platform,
+    version: process.versions.electron,
+    minimize: () => ipcRenderer.invoke('minimize-window'),
+    maximize: () => ipcRenderer.invoke('maximize-window'),
+    close: () => ipcRenderer.invoke('close-window'),
+    removeListener: (channel, callback) => {
+      ipcRenderer.removeListener(channel, callback);
+    }
+  };
+
+  window.pywebview = {
+    api: {
+      new_project: (projectName, template) => ipcRenderer.invoke('new-project', projectName, template),
+      get_projects: () => ipcRenderer.invoke('get-projects'),
+      open_project: (projectName) => ipcRenderer.invoke('open-project', projectName),
+      has_project_loaded: () => ipcRenderer.invoke('has-project-loaded'),
+      get_project_status: () => ipcRenderer.invoke('get-project-status'),
+      open_projects_folder: () => ipcRenderer.invoke('open-projects-folder'),
+      get_project_templates: () => ipcRenderer.invoke('get-project-templates'),
+      save_project_template: (templateName) => ipcRenderer.invoke('save-project-template', templateName),
+      get_image_list: () => ipcRenderer.invoke('get-image-list'),
+      add_files: () => ipcRenderer.invoke('add-files'),
+      remove_files: (filePaths) => ipcRenderer.invoke('remove-files', filePaths),
+      select_folder: () => ipcRenderer.invoke('select-folder'),
+      sync_checkbox_state: (filename, calibState) => ipcRenderer.invoke('sync-checkbox-state', filename, calibState),
+      process_project: () => ipcRenderer.invoke('process-project'),
+      interrupt_project: () => ipcRenderer.invoke('interrupt-project'),
+      get_processing_progress: () => ipcRenderer.invoke('get-processing-progress'),
+      set_processing_mode: (mode) => ipcRenderer.invoke('set-processing-mode', mode),
+      get_processing_mode: () => ipcRenderer.invoke('get-processing-mode'),
+      get_image_layers: (imageName) => ipcRenderer.invoke('flask-api-call', 'get-image-layers', { image_name: imageName }),
+      get_calibration_target_polys: (imageName) => ipcRenderer.invoke('flask-api-call', 'get-calibration-target-polys', { image_name: imageName }),
+      create_sandbox_image: (imageName, option, x, y, width, height) => ipcRenderer.invoke('flask-api-call', 'create-sandbox-image', {
+        image_name: imageName, option: option, x: x, y: y, width: width, height: height
+      }),
+      get_viewer_index_value: (imageX, imageY) => ipcRenderer.invoke('flask-api-call', 'get-viewer-index-value', { x: imageX, y: imageY }),
+      get_viewer_index_min_max: () => ipcRenderer.invoke('flask-api-call', 'get-viewer-index-min-max', {}),
+      get_viewer_lut_gradient: (index) => ipcRenderer.invoke('flask-api-call', 'get-viewer-lut-gradient', { index: index }),
+      load_user_email: () => ipcRenderer.invoke('load-user-email'),
+      save_user_email: (email) => ipcRenderer.invoke('save-user-email', email),
+      remote_user_login: (email, password) => ipcRenderer.invoke('remote-user-login', email, password),
+      user_logout: () => ipcRenderer.invoke('user-logout'),
+      get_config: () => ipcRenderer.invoke('get-config'),
+      set_config: (key, value) => ipcRenderer.invoke('set-config', key, value),
+      get_working_directory: () => ipcRenderer.invoke('get-working-directory'),
+      select_working_directory: () => ipcRenderer.invoke('select-working-directory'),
+      toggle_maximize: () => ipcRenderer.invoke('toggle-maximize'),
+      get_minimum_window_size: () => ipcRenderer.invoke('get-minimum-window-size')
+    },
+    on: (channel, callback) => {
+      ipcRenderer.on(channel, (event, ...args) => callback(...args));
+    },
+    removeListener: (channel, callback) => {
+      ipcRenderer.removeListener(channel, callback);
+    }
+  };
+}
+
+// Set up event forwarding using contextBridge (for custom events)
+// Progress event listener
+ipcRenderer.on('progress-event', (event, eventData) => {
+  // Dispatch custom event for UI components to listen to
+  // eventData has { type, data } structure
+  const eventType = eventData.type;
+  const data = eventData.data;
+  
+  // console.log(`[PRELOAD] Received progress-event: ${eventType}`);
+  
+  // Dispatch the specific event type (e.g., 'processing-progress', 'import-progress', etc.)
+  window.dispatchEvent(new CustomEvent(eventType, { detail: data }));
+});
+
+// Window state change listener for maximize button
+ipcRenderer.on('window-state-changed', (event, data) => {
+  // Update maximize button state
+  const maximizeButton = document.querySelector('maximize-button');
+  if (maximizeButton) {
+    maximizeButton.isMaximized = data.isMaximized;
+    maximizeButton.requestUpdate();
+    // console.log(`[MAX-BTN] 🔄 State updated: ${data.isMaximized ? 'maximized' : 'restored'}`);
+  }
+});
+
+// Update progress listener - forward as window event
+ipcRenderer.on('update-progress', (event, data) => {
+  // console.log('[PRELOAD] 📊 Received update-progress, forwarding to window:', data);
+  window.dispatchEvent(new CustomEvent('update-progress', { detail: data }));
+});
+
+// Update error listener - forward as window event  
+ipcRenderer.on('update-error', (event, data) => {
+  // console.log('[PRELOAD] ❌ Received update-error, forwarding to window:', data);
+  window.dispatchEvent(new CustomEvent('update-error', { detail: data }));
+});
+
+// console.log('[Preload] ✅ Update IPC listeners registered');
+// console.log('[Preload] Electron PyWebView compatibility API loaded');
+// console.log('[Preload] 🔒 Context isolation:', hasContextIsolation ? 'ENABLED (secure)' : 'DISABLED (debug mode)');
+// console.log('[Preload] ✅ Window control APIs exposed: minimize, maximize, close');
