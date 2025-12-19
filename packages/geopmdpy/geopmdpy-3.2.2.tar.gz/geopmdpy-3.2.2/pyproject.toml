@@ -1,0 +1,80 @@
+[build-system]
+requires = ["setuptools>=59.6", "setuptools-scm>=6.4.2", "cffi>=1.13.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["geopmdpy"]
+
+[tool.setuptools.package-data]
+geopmdpy = ["VERSION"]
+
+[tool.setuptools_scm]
+root = ".."
+
+[project]
+name = "geopmdpy"
+dynamic = ["version"]
+description = "GEOPM - Global Extensible Open Power Manager Daemon"
+readme = "README.md"
+requires-python = ">=3.6"
+license = {file = "LICENSE-BSD-3-Clause"}
+keywords = ["service", "hardware", "telemetry", "configuration"]
+authors = [
+    {name = "Christopher Cantalupo", email = "christopher.m.cantalupo@intel.com"},
+    {name = "Brad Geltz", email = "brad.geltz@intel.com"},
+]
+maintainers = [
+    {name = "Christopher Cantalupo", email = "christopher.m.cantalupo@intel.com"},
+    {name = "Brad Geltz", email = "brad.geltz@intel.com"},
+]
+classifiers = ["Development Status :: 5 - Production/Stable",
+               "License :: OSI Approved :: BSD License",
+               "Operating System :: POSIX :: Linux",
+               "Natural Language :: English",
+               "Topic :: Scientific/Engineering",
+               "Topic :: Software Development :: Libraries :: Application Frameworks",
+               "Topic :: System :: Hardware :: Symmetric Multi-processing",
+               "Topic :: System :: Power (UPS)",
+               "Programming Language :: Python :: 3",
+               "Programming Language :: Python :: 3.6",
+               "Programming Language :: Python :: 3.7",
+               "Programming Language :: Python :: 3.8",
+               "Programming Language :: Python :: 3.9",
+               "Programming Language :: Python :: 3.10",
+               "Programming Language :: Python :: 3.11",
+               "Programming Language :: Python :: 3 :: Only",
+]
+dependencies = ["cffi>=1.13.2",
+                "dasbus>=1.6",
+                "jsonschema>=2.6.0",
+                "prometheus_client>=0.7.1",
+                "psutil>=5.4.8",
+]
+
+[project.optional-dependencies]
+stats = [
+    "seaborn>=0.11.2",
+    "pyyaml>=6.0.0",
+]
+
+dbus_xml = [
+    "docstring-parser>0.13",
+]
+
+grpc = [
+    "grpcio>=1.30.2",
+    "protobuf>=3.12.4",
+]
+
+[project.scripts]
+geopmd = "geopmdpy.__main__:main"
+geopmaccess = "geopmdpy.access:main"
+geopmread = "geopmdpy.read:main"
+geopmsession = "geopmdpy.session:main"
+geopmexporter = "geopmdpy.exporter:main"
+geopmwrite = "geopmdpy.write:main"
+
+[project.urls]
+"Homepage" = "https://geopm.github.io"
+"Source" = "https://github.com/geopm/geopm/"
+"Documentation" = "https://geopm.github.io/geopmdpy.7.html"

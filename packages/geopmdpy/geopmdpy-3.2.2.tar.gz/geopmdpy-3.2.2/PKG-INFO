@@ -1,0 +1,158 @@
+Metadata-Version: 2.4
+Name: geopmdpy
+Version: 3.2.2
+Summary: GEOPM - Global Extensible Open Power Manager Daemon
+Author-email: Christopher Cantalupo <christopher.m.cantalupo@intel.com>, Brad Geltz <brad.geltz@intel.com>
+Maintainer-email: Christopher Cantalupo <christopher.m.cantalupo@intel.com>, Brad Geltz <brad.geltz@intel.com>
+License: Copyright (c) 2015 - 2025 Intel Corporation
+        
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are
+        met:
+        
+            1. Redistributions of source code must retain the above copyright
+               notice, this list of conditions and the following disclaimer.
+        
+            2. Redistributions in binary form must reproduce the above
+               copyright notice, this list of conditions and the following
+               disclaimer in the documentation and/or other materials provided
+               with the distribution.
+        
+            3. Neither the name of the copyright holder nor the names of its
+               contributors may be used to endorse or promote products derived
+               from this software without specific prior written permission.
+        
+        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+        "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+        LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+        A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+        HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+        SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+        LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+        DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+        THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+        (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+        OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+        
+Project-URL: Homepage, https://geopm.github.io
+Project-URL: Source, https://github.com/geopm/geopm/
+Project-URL: Documentation, https://geopm.github.io/geopmdpy.7.html
+Keywords: service,hardware,telemetry,configuration
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Natural Language :: English
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Software Development :: Libraries :: Application Frameworks
+Classifier: Topic :: System :: Hardware :: Symmetric Multi-processing
+Classifier: Topic :: System :: Power (UPS)
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3 :: Only
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE-BSD-3-Clause
+License-File: AUTHORS
+Requires-Dist: cffi>=1.13.2
+Requires-Dist: dasbus>=1.6
+Requires-Dist: jsonschema>=2.6.0
+Requires-Dist: prometheus_client>=0.7.1
+Requires-Dist: psutil>=5.4.8
+Provides-Extra: stats
+Requires-Dist: seaborn>=0.11.2; extra == "stats"
+Requires-Dist: pyyaml>=6.0.0; extra == "stats"
+Provides-Extra: dbus-xml
+Requires-Dist: docstring-parser>0.13; extra == "dbus-xml"
+Provides-Extra: grpc
+Requires-Dist: grpcio>=1.30.2; extra == "grpc"
+Requires-Dist: protobuf>=3.12.4; extra == "grpc"
+Dynamic: license-file
+
+# geopmdpy
+
+This directory contains source code for the `geopmdpy` Python package, which
+provides python bindings for `libgeopmd`, as well as the `geopmd` daemon,
+`geopmaccess` tool for administrators, and the `geopmsession` tool for end
+users.
+
+Subdirectories include:
+
+* [debian](debian): Configuration files for debian packaging scripts
+* [geopmdpy](geopmdpy): Source code for modules in this package
+* [test](test): Test code for this package
+
+## Set Up a Development Environment
+
+Run `pip install .` to install this package. Optionally use the `-e`
+installation option to install in editable mode (so you don't need to reinstall
+between updating python source code and re-running tests). The install command
+will also install the python execution-time dependencies of this package.
+
+The `geopmdpy` package wraps `libgeopmd`. Be sure to follow the build
+instructions in the directory for that library as part of setting up a `geopmdpy`
+development environment. Either install `libgeopmd` somewhere on your path, or
+manually add it to your `LD_LIBRARY_PATH` (examples in the next section).
+
+### Building Against Non-System-Installed Libraries
+
+If you want to build `geopmdpy` against non-system-installed headers and ``libgeopmd``
+binaries, you need to set your compiler's environment variables to tell it
+where to search for GEOPM. For example, if you built and installed ``libgeopmd``
+with ``--prefix=$HOME/build/geopm`` and your python extensions are compiled
+with gcc, then run:
+
+```bash
+CC=gcc \
+LIBRARY_PATH=$HOME/build/geopm/lib \
+C_INCLUDE_PATH=$HOME/build/geopm/include \
+python3 -m pip install ./
+
+```
+
+to build and install this package.
+
+### User Build/Install Helper Script for geopmdpy and libgeopmd
+
+A script called `install_user.sh` is provided which builds and installs
+`libgeopmd` and `geopmdpy` for a single user.  This script may be a simple helper for
+running the build of the two directories `geopm/geopmdpy` and `geopm/libgeopmd`, but
+it may also be used as a stand-alone solution in place of:
+
+```bash
+python3 -m pip install "geopmdpy @ git+https://github.com/geopm/geopm.git#subdirectory=geopmdpy"
+
+```
+
+The above command will install the `geopmdpy` package from the dev branch on
+GitHub, but it will not install a development snapshot of `libgeopmd` which may
+also be required.  To combine these two installation steps, run the following
+commands instead:
+
+```bash
+wget https://raw.githubusercontent.com/geopm/geopm/refs/heads/dev/geopmdpy/install_user.sh
+chmod a+x install_user.sh
+export GEOPM_GIT_PATH=$(mktemp -d)/geopm
+./install_user.sh --prefix=$HOME/geopm-build --enable-levelzero
+rm -rf $(dirname $GEOPM_GIT_PATH)
+export LD_LIBRARY_PATH=$HOME/geopm-build/lib${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+
+```
+
+Note that the options provided to `install_user.sh` above are one example.  See
+the output from `./install_user.sh --help` for more information about how to use
+the script.
+
+## Executing Tests
+
+Run `LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$PWD/../libgeopmd/.libs" python3 test`
+from this directory to launch the entire test suite. Some of the tests depend
+on `libgeopmd`, so it should be built before running tests.  Alternatively, run
+`LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$PWD/../libgeopmd/.libs" python3 -m unittest discover -p 'Test*.py'`
+
+Execute a single test case with
+`LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$PWD/../libgeopm/.libs" python3 -m unittest <one.or.more.test.modules.or.classes.or.functions>`.
