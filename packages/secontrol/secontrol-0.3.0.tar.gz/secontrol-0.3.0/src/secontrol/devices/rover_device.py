@@ -1,0 +1,388 @@
+"""Rover device implementation for high-level rover control.
+
+This module provides a high-level interface for controlling rovers by managing
+all wheels on a grid. It automatically discovers wheels and provides simple
+drive commands.
+"""
+
+from __future__ import annotations
+
+import math
+import time
+
+from typing import List, Optional
+
+from ..grids import Grid
+from .ore_detector_device import OreDetectorDevice
+from .wheel_device import WheelDevice
+from .cockpit_device import CockpitDevice
+from .remote_control_device import RemoteControlDevice
+
+
+class PID:
+    """Simple PID controller."""
+
+    def __init__(self, kp: float, ki: float, kd: float, setpoint: float = 0.0):
+        self.kp = kp
+        self.ki = ki
+        self.kd = kd
+        self.setpoint = setpoint
+        self.prev_error = 0.0
+        self.integral = 0.0
+        self.prev_time = time.time()
+
+    def update(self, current_value: float) -> float:
+        error = self.setpoint - current_value
+        current_time = time.time()
+        dt = current_time - self.prev_time
+        if dt <= 0:
+            dt = 0.001
+        self.integral += error * dt
+        derivative = (error - self.prev_error) / dt
+        output = self.kp * error + self.ki * self.integral + self.kd * derivative
+        self.prev_error = error
+        self.prev_time = current_time
+        return output
+
+
+class RoverDevice:
+    """High-level rover controller that manages all wheels on a grid."""
+
+    def __init__(self, grid: Grid):
+        """Initialize rover controller with a grid.
+
+        Args:
+            grid: The Space Engineers grid containing the rover wheels.
+        """
+        self.grid = grid
+        self.wheels: List[WheelDevice] = grid.find_devices_by_type("wheel")
+        detectors = grid.find_devices_by_type("ore_detector")
+        if not detectors:
+            raise ValueError("No ore detector (radar) found on the grid. Cannot determine rover position for pathfinding.")
+        self.detector: OreDetectorDevice = detectors[0]
+
+        # Find device for gravity (cockpit or remote_control)
+        self.gravity_device = None
+        cockpits = grid.find_devices_by_type("cockpit")
+        if cockpits:
+            self.gravity_device = cockpits[0]
+        else:
+            remotes = grid.find_devices_by_type("remote_control")
+            if remotes:
+                self.gravity_device = remotes[0]
+
+        self._current_speed = None
+        self._current_steering = None
+        self._parked = False
+        self._is_moving = False
+        self._target_point = None
+        self._target_callback = None
+        self._min_distance = 20.0
+        self._max_distance = 500.0
+        self._base_speed = 0.005
+        self._speed_factor = 0.05
+        self._max_speed = 0.015
+        self._steering_gain = 2.5
+        self._pid_steering = PID(kp=2, ki=0.0, kd=0.1, setpoint=0.0)
+
+    def drive_forward(self, speed: float) -> None:
+        """Drive the rover forward at the specified speed.
+
+        Args:
+            speed: Propulsion speed (-1.0 to 1.0). Positive values drive forward.
+        """
+        self.drive(speed, 0.0)
+
+    def drive(self, speed: float, steering: float = None) -> None:
+        """Drive the rover with specified speed and steering.
+
+        Args:
+            speed: Propulsion speed (-1.0 to 1.0). Positive values drive forward.
+            steering: Steering angle (-1.0 to 1.0). Negative values turn left, positive turn right.
+        """
+        # if self._current_speed == speed and self._current_steering == steering:
+        #     return  # No change, skip sending commands
+        for wheel in self.wheels:
+            if steering is not None:
+                wheel.steering_angle = steering
+            wheel.set_steering(steering)
+            if 'Left' in wheel.name:
+                wheel.set_propulsion(speed)
+            else:
+                wheel.set_propulsion(-speed)
+        self._current_speed = speed
+        self._current_steering = steering
+
+
+    def stop(self) -> None:
+        """Stop all rover wheels."""
+        if self._current_speed == 0.0 and self._current_steering == 0.0:
+            return  # Already stopped
+        for wheel in self.wheels:
+            wheel.set_propulsion(0.0)
+            wheel.set_steering(0.0)
+        self._current_speed = 0.0
+        self._current_steering = 0.0
+
+    def park_on(self) -> None:
+        """Enable parking mode for the grid."""
+        if not self._parked:
+            self.grid.park_on()
+            self._parked = True
+
+    def park_off(self, force = False) -> None:
+        """Disable parking mode for the grid."""
+        if self._parked or force:
+            self.grid.park_off()
+            self._parked = False
+
+    def update_target(self, new_target: tuple[float, float, float]) -> None:
+        """Update the target point for ongoing movement.
+
+        Args:
+            new_target: New target position (x, y, z).
+        """
+        self._target_point = new_target
+
+    @property
+    def is_parked(self) -> bool:
+        """Check if the rover is in parking mode."""
+        return self._parked
+
+    @staticmethod
+    def _normalize(vec: Optional[tuple[float, float, float] | list[float]]) -> Optional[list[float]]:
+        if vec is None:
+            return None
+
+        length = math.sqrt(sum(v**2 for v in vec))
+        if length == 0:
+            return None
+        return [v / length for v in vec]
+
+    @staticmethod
+    def _project_to_plane(vec: list[float], normal: list[float]) -> list[float]:
+        dot = sum(v * n for v, n in zip(vec, normal))
+        return [v - dot * n for v, n in zip(vec, normal)]
+
+    def _compute_steering_and_speed(
+        self,
+        current_pos: tuple[float, float, float],
+        rover_forward: tuple[float, float, float],
+        target_point: tuple[float, float, float],
+        base_speed: float,
+        speed_factor: float,
+        max_speed: float,
+        steering_gain: float,
+        min_distance: float,
+        max_distance: float = 500.0,
+        rover_speed: float = 0.0,
+        gravity_vector: tuple[float, float, float] | None = None,
+    ) -> tuple[float, float]:
+        """Compute steering and speed to move towards target point.
+
+        Args:
+            current_pos: Current rover position.
+            rover_forward: Rover's forward vector.
+            target_point: Target position.
+            base_speed: Base propulsion speed.
+            speed_factor: Unused in current implementation.
+            max_speed: Maximum propulsion speed.
+            steering_gain: Steering amplification factor.
+            min_distance: Minimum distance to stop.
+            max_distance: Maximum distance for speed scaling.
+
+        Returns:
+            Tuple of (speed, steering).
+        """
+        # Vector from rover to target
+        vector_to_target = [t - c for t, c in zip(target_point, current_pos)]
+        distance = math.sqrt(sum(v**2 for v in vector_to_target))
+
+        if distance < min_distance:
+            return 0.0, 0.0  # Stop
+
+        # Emergency braking if close and fast
+        if distance < 50 and rover_speed > 4:
+            return -0.1, None  # Reverse to brake
+
+        # Speed: closer to target, slower
+        speed = base_speed + (max_speed - base_speed) * min(1.0, distance / max_distance)
+
+        gravity_norm = self._normalize(gravity_vector)
+        up = [-g for g in gravity_norm] if gravity_norm else [0.0, 1.0, 0.0]
+
+        dir_to_target = list(vector_to_target)
+        forward_vector = list(rover_forward)
+
+        if gravity_norm:
+            dir_to_target = self._project_to_plane(dir_to_target, gravity_norm)
+            forward_vector = self._project_to_plane(forward_vector, gravity_norm)
+        else:
+            dir_to_target = self._project_to_plane(dir_to_target, up)
+            forward_vector = self._project_to_plane(forward_vector, up)
+
+        dir_norm = self._normalize(dir_to_target) or [1, 0, 0]
+        forward_norm = self._normalize(forward_vector) or [1, 0, 0]
+
+        # Angle between forward and direction to target
+        dot = max(-1.0, min(1.0, sum(a * b for a, b in zip(dir_norm, forward_norm))))
+
+        # 3D cross product for signed angle (positive for right turn when facing up)
+        cross_vector = [
+            dir_norm[1] * forward_norm[2] - dir_norm[2] * forward_norm[1],
+            dir_norm[2] * forward_norm[0] - dir_norm[0] * forward_norm[2],
+            dir_norm[0] * forward_norm[1] - dir_norm[1] * forward_norm[0],
+        ]
+
+        # Dot with up for signed component
+        cross_sign = sum(cv * u for cv, u in zip(cross_vector, up))
+
+        # Flip sign to correct turn direction (clockwise vs counterclockwise)
+        cross_sign = -cross_sign
+
+        angle = math.atan2(cross_sign, dot)
+
+        # Use PID controller for steering
+        steering = self._pid_steering.update(angle)
+        steering = max(-1.0, min(1.0, steering))
+
+        return speed, steering
+
+    def _on_telemetry(self, dev, telemetry: dict, event: str) -> None:
+        """Handle telemetry update from the radar."""
+        if not self._is_moving or not self._target_point:
+            return
+
+        radar = telemetry.get("radar")
+        if not radar:
+            return
+
+        # Get current position and forward direction
+        contacts = self.detector.contacts()
+        current_pos = None
+        rover_forward = None
+        for contact in contacts:
+            if contact.get("type") == "grid" and contact.get("id") == int(self.grid.grid_id):
+                current_pos = contact.get("position")
+                rover_forward = contact.get("forward")
+                break
+
+        if not current_pos or not rover_forward:
+            print("Warning: Could not find rover position or forward in radar telemetry.")
+            return
+
+        # Get rover speed
+        rover_speed = 0.0
+        for contact in contacts:
+            if contact.get("type") == "grid" and contact.get("id") == int(self.grid.grid_id):
+                rover_speed = contact.get("speed", 0.0)
+                break
+
+        # Update target if callback is set
+        if self._target_callback:
+            self._target_point = self._target_callback()
+
+        # Compute distance to target
+        distance = math.sqrt(sum((t - c)**2 for t, c in zip(self._target_point, current_pos)))
+        print(distance)
+
+        # Get gravity vector
+        gravity_vector = None
+        if self.gravity_device is not None:
+            self.gravity_device.update()
+            tel = self.gravity_device.telemetry or {}
+            grav_vec = tel.get("gravitationalVector")
+            if not grav_vec and isinstance(tel.get("gravity"), dict):
+                grav_vec = tel["gravity"].get("total")
+
+            if grav_vec:
+                # Parse gravitationalVector (assume it's a list or dict with x,y,z)
+                if isinstance(grav_vec, dict):
+                    try:
+                        gravity_vector = (
+                            float(grav_vec.get("x", 0.0)),
+                            float(grav_vec.get("y", 0.0)),
+                            float(grav_vec.get("z", 0.0)),
+                        )
+                    except (ValueError, TypeError):
+                        gravity_vector = None
+                elif isinstance(grav_vec, (list, tuple)) and len(grav_vec) == 3:
+                    try:
+                        gravity_vector = (float(grav_vec[0]), float(grav_vec[1]), float(grav_vec[2]))
+                    except (ValueError, TypeError):
+                        gravity_vector = None
+
+        # Emergency stop if too close and fast
+        if distance < 50 and rover_speed > 10:
+            self.stop()
+            self.park_on()
+            self._is_moving = False
+            print("Emergency stop due to high speed near target")
+            return
+
+        # Compute steering and speed
+        speed, steering = self._compute_steering_and_speed(
+            current_pos, rover_forward, self._target_point,
+            self._base_speed, self._speed_factor, self._max_speed, self._steering_gain, self._min_distance, self._max_distance, rover_speed, gravity_vector
+        )
+
+        if speed == 0.0 and steering == 0.0:
+            # Stop moving
+            self.stop()
+            self.park_on()
+            self._is_moving = False
+            print(f"Reached target point {self._target_point}")
+        else:
+            # self.park_off(True)
+            self.drive(speed, steering)
+            print(f"Moving: pos={current_pos}, target={self._target_point}, distance={distance:.2f}, speed={speed:.3f}, steering={steering:.3f}")
+
+    def move_to_point(
+        self,
+        target_point: tuple[float, float, float] | None = None,
+        target_callback: callable = None,
+        min_distance: float = 20.0,
+        base_speed: float = 0.03,
+        speed_factor: float = 0.5,
+        max_speed: float = 0.05,
+        steering_gain: float = 2.5,
+        max_distance: float = 500.0,
+    ) -> None:
+        """Start moving the rover to the specified target point.
+
+        The movement is asynchronous; call stop() to halt it.
+
+        Args:
+            target_point: The (x, y, z) coordinates to move to.
+            min_distance: Minimum distance to target to consider it reached.
+            base_speed: Base propulsion speed (-1.0 to 1.0).
+            speed_factor: Unused in current implementation.
+            max_speed: Maximum propulsion speed.
+            steering_gain: Steering amplification factor.
+            max_distance: Maximum distance for speed scaling.
+        """
+        if self._is_moving:
+            print("Already moving to a target point.")
+            return
+
+        # Set parameters
+        self._target_callback = target_callback
+        if target_callback:
+            self._target_point = target_callback()
+        else:
+            self._target_point = target_point
+        self._min_distance = min_distance
+        self._max_distance = max_distance
+        self._base_speed = base_speed
+        self._speed_factor = speed_factor
+        self._max_speed = max_speed
+        self._steering_gain = steering_gain
+        self._is_moving = True
+
+        # Subscribe to telemetry
+        self.detector.on("telemetry", self._on_telemetry)
+
+        # Disable parking for movement
+        self.park_off(True)
+
+        print(f"Starting move to target")
