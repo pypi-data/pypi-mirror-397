@@ -1,0 +1,111 @@
+Metadata-Version: 2.4
+Name: apywire
+Version: 0.2.0
+Summary: A package to wire up objects
+Author-email: Alexandre Gomes Gaigalas <alganet@gmail.com>
+Maintainer-email: Alexandre Gomes Gaigalas <alganet@gmail.com>
+License-Expression: ISC
+Project-URL: Homepage, https://github.com/alganet/apywire
+Project-URL: Repository, https://github.com/alganet/apywire
+Project-URL: Issues, https://github.com/alganet/apywire/issues
+Keywords: object,wiring,dependency,injection
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Provides-Extra: dev
+Requires-Dist: auditwheel; extra == "dev"
+Requires-Dist: black; extra == "dev"
+Requires-Dist: build; extra == "dev"
+Requires-Dist: coverage; extra == "dev"
+Requires-Dist: Cython; extra == "dev"
+Requires-Dist: flake8-pyproject; extra == "dev"
+Requires-Dist: flake8; extra == "dev"
+Requires-Dist: isort; extra == "dev"
+Requires-Dist: mike; extra == "dev"
+Requires-Dist: mkdocs-autorefs; extra == "dev"
+Requires-Dist: mkdocs-material; extra == "dev"
+Requires-Dist: mkdocs; extra == "dev"
+Requires-Dist: mkdocstrings[python]; extra == "dev"
+Requires-Dist: mypy; extra == "dev"
+Requires-Dist: pytest-cov; extra == "dev"
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: reuse; extra == "dev"
+Requires-Dist: twine; extra == "dev"
+Requires-Dist: tomli_w; extra == "dev"
+Requires-Dist: types-setuptools; extra == "dev"
+Dynamic: license-file
+Dynamic: requires-python
+
+<!--
+SPDX-FileCopyrightText: 2025 Alexandre Gomes Gaigalas <alganet@gmail.com>
+
+SPDX-License-Identifier: ISC
+-->
+
+# apywire
+
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![License: ISC](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
+
+Lazy object wiring and dependency injection for Python 3.12+
+
+## Features
+
+- 🚀 Lazy Loading
+- ⚡ Async Support
+- 🔒 Thread Safety
+- 📦 Code Generation
+- 📄 Naturally Configurable
+- 🎯 Zero Dependencies
+
+## Installation
+
+```bash
+pip install apywire
+```
+
+## Quick Example
+
+```python
+from apywire import Wiring
+
+spec = {
+    "datetime.datetime now": {"year": 2025, "month": 1, "day": 1},
+    "MyService service": {"start_time": "{now}"},  # Dependency injection
+}
+
+wired = Wiring(spec)
+service = wired.service()  # Lazy instantiation + caching
+```
+
+`spec` is a plain dictionary. It can be written in Python, or come from a
+[config file](docs/user-guide/configuration-files.md), apywire doesn't care.
+
+## Documentation
+
+📚 **[Full Documentation](docs/index.md)** • [Getting Started](docs/getting-started.md) • [API Reference](docs/api-reference.md) • [Examples](docs/examples.md)
+
+Build docs locally:
+```bash
+make docs-serve  # http://127.0.0.1:8000
+```
+
+## Development
+
+```bash
+make .venv && source .venv/bin/activate  # Setup
+make all                                 # Format, lint, test, build
+```
+
+See [docs/development.md](docs/development.md) for guidelines.
+
+## License
+
+ISC License - see [LICENSES/ISC.txt](LICENSES/ISC.txt)
