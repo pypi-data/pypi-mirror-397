@@ -1,0 +1,95 @@
+from __future__ import annotations
+from typing import Type
+from pydantic import BaseModel, Field
+from xai_sdk.chat import tool
+from .db import DB
+from .dirtree import DirTree
+
+_registry: dict[str, Type['Assistant']] = {}
+
+class ReadFileRequest(BaseModel):
+    path: str = Field(description="Path to the file, relative to the working directory.")
+
+class WriteFileRequest(BaseModel):
+    path: str = Field(description="Path to the file, relative to the working directory.")
+    text: str = Field(description="New contents of the file.")
+
+class ListCurrentDirRequest(BaseModel):
+    pass
+
+class ListDirRequest(BaseModel):
+    path: str = Field(description="Relative path to the directory whose contents to list.")
+
+class Assistant:
+    def __init__(self, model, provider, settings, db: DB, dirtree: DirTree):
+        self.model = model
+        self.provider = provider
+        self.db = db
+        self.dirtree = dirtree
+
+    tool_definitions = [
+        tool(
+            name="read_file",
+            description="Returns file contents from given path or an error message.",
+            parameters=ReadFileRequest.model_json_schema(),
+        ),
+        tool(
+            name="write_file",
+            description="Writes new file contents to given path - replaces entire file. Returns OK or an error message.",
+            parameters=WriteFileRequest.model_json_schema(),
+        ),
+        tool(
+            name="list_current_dir",
+            description="Returns json list of direct child entries (files and directories) in the current working directory. Paths are relative to cwd (basenames). Each entry has 'path', 'is_dir' (boolean), 'is_synced' (0 if changed since last list_current_dir or affecting write, 1 otherwise).",
+            parameters=ListCurrentDirRequest.model_json_schema(),
+        ),
+        tool(
+            name="list_dir",
+            description="Returns json list of direct child entries (files and directories) in the given relative directory path. Paths are relative to cwd. Each entry has 'path', 'is_dir' (boolean), 'is_synced' (0 if changed since last list_dir on it or affecting write, 1 otherwise).",
+            parameters=ListDirRequest.model_json_schema(),
+        ),
+    ]
+
+    request_classes = {
+        "read_file": ReadFileRequest,
+        "write_file": WriteFileRequest,
+        "list_current_dir": ListCurrentDirRequest,
+        "list_dir": ListDirRequest,
+    }
+
+    def read_file(self, request: ReadFileRequest):
+        return self.dirtree.read_file(request.path)
+
+    def write_file(self, request: WriteFileRequest):
+        return self.dirtree.write_file(request.path, request.text)
+
+    def list_current_dir(self, request: ListCurrentDirRequest):
+        return self.dirtree.list_current_dir()
+
+    def list_dir(self, request: ListDirRequest):
+        return self.dirtree.list_dir(request.path)
+
+    tools_map = {
+        "read_file": read_file,
+        "write_file": write_file,
+        "list_current_dir": list_current_dir,
+        "list_dir": list_dir,
+    }
+
+    def prompt(self, prompt):
+        pass
+
+    def reset(self):
+        self.db.reset_response_id(self.dirtree.cwd)
+        self.db.del_history(self.dirtree.cwd)
+        self.dirtree.reset()
+
+    @classmethod
+    def create(cls, model, provider, settings, db: DB, dirtree: DirTree) -> 'Assistant':
+        sub_cls: Type['Assistant'] = _registry.get(provider)
+        if sub_cls is None:
+            raise ValueError(f"Provider not implemented: {provider}")
+        return sub_cls(model, provider, settings, db, dirtree)
+
+def register(provider, cls: Type['Assistant']):
+    _registry[provider] = cls
