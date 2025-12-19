@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alphavec"
+version = "0.4.0"
+description = "Fast minimalist vector-based grid search and backtesting for perpetual futures."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [{ name = "breaded-xyz" }]
+dependencies = [
+  "numpy",
+  "pandas",
+  "matplotlib",
+  "seaborn",
+  "tqdm"
+]
+
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+]
+
+[project.urls]
+Homepage = "https://github.com/breaded-xyz/alphavec"
+Repository = "https://github.com/breaded-xyz/alphavec"
+Issues = "https://github.com/breaded-xyz/alphavec/issues"
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "pyarrow",
+  "tqdm",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
