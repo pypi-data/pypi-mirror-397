@@ -1,0 +1,220 @@
+Metadata-Version: 2.4
+Name: hamerspace
+Version: 0.1.0
+Summary: Model compression and optimization engine for non-LLM machine learning models
+Home-page: https://github.com/yourusername/hamerspace
+Author: Hamerspace Contributors
+Author-email: 
+License: Apache-2.0
+Project-URL: Homepage, https://github.com/yourusername/hamerspace
+Project-URL: Documentation, https://hamerspace.readthedocs.io
+Project-URL: Repository, https://github.com/yourusername/hamerspace
+Project-URL: Bug Tracker, https://github.com/yourusername/hamerspace/issues
+Keywords: machine-learning,model-compression,quantization,pruning,optimization,deep-learning,pytorch,tensorflow,onnx
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: torch>=2.0.0
+Requires-Dist: tensorflow>=2.13.0
+Requires-Dist: onnx>=1.14.0
+Requires-Dist: onnxruntime>=1.15.0
+Requires-Dist: transformers>=4.30.0
+Requires-Dist: optimum>=1.12.0
+Requires-Dist: numpy>=1.24.0
+Requires-Dist: pandas>=2.0.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: tqdm>=4.65.0
+Requires-Dist: psutil>=5.9.0
+Provides-Extra: full
+Requires-Dist: openvino>=2023.0.0; extra == "full"
+Requires-Dist: bitsandbytes>=0.41.0; extra == "full"
+Requires-Dist: apache-tvm>=0.12.0; extra == "full"
+Provides-Extra: dev
+Requires-Dist: pytest>=7.3.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.1.0; extra == "dev"
+Requires-Dist: black>=23.3.0; extra == "dev"
+Requires-Dist: isort>=5.12.0; extra == "dev"
+Requires-Dist: flake8>=6.0.0; extra == "dev"
+Requires-Dist: mypy>=1.3.0; extra == "dev"
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-python
+
+# Hamerspace 🔨
+
+**A compiler-style optimization pass for non-LLM machine learning models**
+
+Hamerspace is a model compression and optimization engine that orchestrates existing open-source toolkits to compress and optimize computer vision, audio, time-series, and tabular ML models.
+
+## Features
+
+- 🎯 **Goal-oriented optimization**: Specify what you want (size, latency, accuracy) and let Hamerspace figure out how
+- 🔧 **Multi-backend orchestration**: Automatically selects and composes tools from PyTorch, TensorFlow, ONNX, OpenVINO, TVM, and more
+- 📊 **Comprehensive benchmarking**: Measures size, latency, and accuracy before and after optimization
+- 🎨 **Hardware-aware**: Optimizes for specific target hardware (CPU, ARM, edge devices)
+- 📦 **Deployment-ready**: Produces optimized model artifacts ready for production
+
+## Installation
+
+```bash
+pip install hamerspace
+```
+
+For full backend support (OpenVINO, TVM, bitsandbytes):
+
+```bash
+pip install hamerspace[full]
+```
+
+## Quick Start
+
+```python
+from hamerspace import Optimizer, OptimizationGoal, Constraints
+
+# Load your trained model
+optimizer = Optimizer.from_pytorch("model.pt")
+
+# Define constraints
+constraints = Constraints(
+    target_size_mb=10,          # Must be under 10MB
+    max_latency_ms=50,          # Must inference in <50ms
+    max_accuracy_drop=0.02,     # Max 2% accuracy drop
+    target_hardware="cpu"       # Optimize for CPU
+)
+
+# Optimize
+result = optimizer.optimize(
+    goal=OptimizationGoal.AUTO,
+    constraints=constraints
+)
+
+# Save optimized model
+result.save_model("optimized_model.onnx")
+
+# View report
+print(result.report)
+```
+
+## Optimization Goals
+
+- **`OptimizationGoal.QUANTIZE`**: Apply quantization (INT8, INT4)
+- **`OptimizationGoal.PRUNE`**: Remove unnecessary weights
+- **`OptimizationGoal.DISTILL`**: Knowledge distillation (requires training data)
+- **`OptimizationGoal.AUTO`**: Automatically select best techniques
+
+## Supported Frameworks
+
+### Input Models
+- PyTorch (.pt, .pth)
+- TensorFlow (.h5, SavedModel)
+- ONNX (.onnx)
+
+### Backend Toolkits
+- PyTorch (quantization, pruning)
+- TensorFlow (quantization)
+- ONNX Runtime (quantization, graph optimization)
+- OpenVINO (optimization for Intel hardware)
+- Apache TVM (compilation and optimization)
+- Hugging Face Optimum (hardware-specific optimization)
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│                  Public API Layer                    │
+│         (Optimizer, Constraints, Goals)              │
+└────────────────────┬────────────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────────────┐
+│              Orchestration Layer                     │
+│    (Strategy Selection, Pipeline Composition)        │
+└────────────────────┬────────────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────────────┐
+│               Backend Layer                          │
+│  ┌──────────┬──────────┬──────────┬──────────┐     │
+│  │ PyTorch  │   ONNX   │ OpenVINO │   TVM    │     │
+│  │ Backend  │ Backend  │ Backend  │ Backend  │     │
+│  └──────────┴──────────┴──────────┴──────────┘     │
+└─────────────────────────────────────────────────────┘
+```
+
+## Advanced Usage
+
+### Custom Backend Selection
+
+```python
+from hamerspace import Optimizer, Backend
+
+optimizer = Optimizer.from_pytorch("model.pt")
+result = optimizer.optimize(
+    goal=OptimizationGoal.QUANTIZE,
+    constraints=constraints,
+    preferred_backends=[Backend.ONNX, Backend.OPENVINO]
+)
+```
+
+### Benchmarking Only
+
+```python
+# Benchmark without optimization
+metrics = optimizer.benchmark(
+    hardware="cpu",
+    num_runs=100
+)
+print(f"Latency: {metrics.latency_ms}ms")
+print(f"Size: {metrics.size_mb}MB")
+```
+
+### Export Optimization Config
+
+```python
+# Save configuration for reproducibility
+result.save_config("optimization_config.json")
+
+# Reproduce optimization
+from hamerspace import Optimizer
+optimizer = Optimizer.from_config("optimization_config.json")
+result = optimizer.apply()
+```
+
+## Non-Goals
+
+❌ LLM optimization (use specialized tools like vLLM, TensorRT-LLM)  
+❌ Training models from scratch  
+❌ Research or SOTA benchmarking  
+❌ Custom kernel development  
+
+## Requirements
+
+- Python 3.8+
+- One or more supported backends installed
+
+## Contributing
+
+Contributions welcome! Please see CONTRIBUTING.md for guidelines.
+
+## License
+
+Apache License 2.0
+
+## Citation
+
+```bibtex
+@software{hamerspace2025,
+  title={Hamerspace: Model Compression and Optimization Engine},
+  author={Hamerspace Contributors},
+  year={2025},
+  url={https://github.com/yourusername/hamerspace}
+}
+```
