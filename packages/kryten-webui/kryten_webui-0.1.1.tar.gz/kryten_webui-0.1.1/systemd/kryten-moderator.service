@@ -1,0 +1,28 @@
+[Unit]
+Description=Kryten WebUI Service
+After=network.target nats.service
+Wants=nats.service
+
+[Service]
+Type=simple
+User=kryten
+Group=kryten
+WorkingDirectory=/opt/kryten-webui
+Environment="PATH=/opt/kryten-webui/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/opt/kryten-webui/.venv/bin/kryten-webui --config /etc/kryten/webui/config.json
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=kryten-webui
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log/kryten-webui
+ReadOnlyPaths=/etc/kryten/webui
+
+[Install]
+WantedBy=multi-user.target
