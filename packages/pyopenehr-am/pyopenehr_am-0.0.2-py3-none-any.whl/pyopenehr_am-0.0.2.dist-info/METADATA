@@ -1,0 +1,245 @@
+Metadata-Version: 2.4
+Name: pyopenehr-am
+Version: 0.0.2
+Summary: Pure-Python openEHR AM toolkit (ADL2/AOM2/ODIN/BMM/OPT2).
+Project-URL: Homepage, https://github.com/rubentalstra/pyopenehr-am
+Project-URL: Repository, https://github.com/rubentalstra/pyopenehr-am
+Project-URL: Issues, https://github.com/rubentalstra/pyopenehr-am/issues
+Project-URL: Documentation, https://github.com/rubentalstra/pyopenehr-am/tree/main/docs
+Project-URL: Changelog, https://github.com/rubentalstra/pyopenehr-am/releases
+Author: Ruben Talstra
+License: MIT License
+        
+        Copyright (c) 2025 Ruben Talstra
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+License-File: LICENSE
+Keywords: ADL2,AOM2,BMM,ODIN,OPT2,ehr,health,openEHR
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.14
+Classifier: Topic :: Scientific/Engineering :: Medical Science Apps.
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Typing :: Typed
+Requires-Python: >=3.14
+Requires-Dist: antlr4-python3-runtime==4.13.2
+Requires-Dist: rich>=14.2.0
+Requires-Dist: typer>=0.20.0
+Provides-Extra: dev
+Requires-Dist: antlr4-tools>=0.2.2; extra == 'dev'
+Requires-Dist: pre-commit>=4.5.1; extra == 'dev'
+Requires-Dist: pyright>=1.1.407; extra == 'dev'
+Requires-Dist: pytest-cov>=7.0.0; extra == 'dev'
+Requires-Dist: pytest>=9.0.2; extra == 'dev'
+Requires-Dist: ruff>=0.14.10; extra == 'dev'
+Provides-Extra: release
+Requires-Dist: build==1.3.0; extra == 'release'
+Requires-Dist: twine==6.2.0; extra == 'release'
+Description-Content-Type: text/markdown
+
+# pyopenehr-am
+
+[![CI](https://github.com/rubentalstra/pyopenehr-am/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/rubentalstra/pyopenehr-am/actions/workflows/ci.yml)
+[![PyPI](https://img.shields.io/pypi/v/pyopenehr-am)](https://pypi.org/project/pyopenehr-am/)
+![Python](https://img.shields.io/badge/Python-3.14%2B-blue)
+[![License: MIT](https://img.shields.io/github/license/rubentalstra/pyopenehr-am)](LICENSE)
+![Ruff](https://img.shields.io/badge/code%20style-ruff-261230)
+![Pyright](https://img.shields.io/badge/type%20checker-pyright-4B32C3)
+
+Pure-Python (**Python 3.14+ only**) openEHR **ADL2 / AOM2 / ODIN / BMM / OPT2**
+toolkit. Parse and validate archetypes/templates, and compile templates to
+**OPT2**.
+
+This project is intended as a **developer SDK**: teams can embed it in their own
+codebases to build migration pipelines from legacy formats into openEHR, while
+relying on this library for **standards-based artefact handling**
+(archetypes/templates) and **validation**.
+
+---
+
+## Why this exists
+
+When building migration tooling, you usually want openEHR artefact handling to
+be: predictable, standards-driven, and easy to embed. This repo focuses on that
+core plumbing (parsing, semantic model building, validation, and OPT
+compilation).
+
+## What it provides
+
+Core capabilities:
+
+- **Parse ADL2** archetypes and templates
+- **Parse ODIN** (embedded sections and BMM persistence)
+- Build an in-memory **AOM2** semantic model
+- Validate syntax + semantics, and (optionally) **RM conformance** via **BMM**
+- Compile templates to **OPT2** (Operational Template)
+
+> Internal architecture: **Parse → Build AOM → Validate → Compile OPT →
+> (Optional) Validate Instances**
+
+---
+
+## Non-goals
+
+- Not a “one-click database migrator”
+- Not mapping logic for any specific vendor/hospital schema
+- Not a wrapper around existing non-Python reference implementations (this repo
+  is **pure Python only**)
+
+---
+
+## Project status
+
+**Alpha / under active development.** Expect breaking changes until the first
+stable release.
+
+If you need something to be stable long-term, pin versions and treat the public
+API as the contract.
+
+Documentation entry points:
+
+- [docs/quickstart.md](docs/quickstart.md)
+- [docs/architecture.md](docs/architecture.md)
+- [docs/compatibility.md](docs/compatibility.md)
+
+Planned milestones and tasks live in:
+
+- [openehr_am_toolkit_todo_checklist.md](openehr_am_toolkit_todo_checklist.md)
+- [docs/issue-codes.md](docs/issue-codes.md) and
+  [docs/validation-rule-template.md](docs/validation-rule-template.md)
+
+---
+
+## Install
+
+```bash
+pip install pyopenehr-am
+```
+
+Verify the CLI:
+
+```bash
+openehr-am --help
+```
+
+For local development:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+pytest
+ruff check .
+```
+
+---
+
+## Quickstart
+
+The quickest way to see behavior is via the CLI. The Quickstart includes:
+
+- `openehr-am lint` (syntax parsing, JSON Issue output)
+- `openehr-am validate` (semantic + optional RM checks)
+- `openehr-am compile-opt` (template → OPT2 JSON)
+
+Start here: [docs/quickstart.md](docs/quickstart.md)
+
+---
+
+## Python API (minimal example)
+
+The stable public API is exposed from the top-level package.
+
+```python
+from openehr_am import parse_archetype, validate
+
+archetype, parse_issues = parse_archetype(path="demo.archetype.adl")
+if archetype is None:
+    # parse_issues contains structured diagnostics
+    raise SystemExit(1)
+
+issues = validate(archetype, level="all")
+```
+
+More examples: [docs/quickstart.md](docs/quickstart.md)
+
+---
+
+## Diagnostics and Issue Codes
+
+All recoverable problems are returned as structured **Issue** objects, with:
+
+- stable `code` (e.g., `ADL001`, `AOM200`, `BMM500`, `OPT700`)
+- severity (`INFO|WARN|ERROR`)
+- best-effort file/line/col and optional path/node_id
+
+See:
+
+- `docs/issue-codes.md` — canonical registry
+- `docs/validation-rule-template.md` — how to add rules
+
+---
+
+## Specs and references
+
+This repo is **standards-driven**. Pin the exact spec releases you implement in:
+
+- [`SPEC_BASELINE.md`](SPEC_BASELINE.md)
+
+Curated links live in:
+
+- [`openehr_am_resources.md`](openehr_am_resources.md)
+
+---
+
+## Security
+
+This project parses untrusted artefacts and treats invalid input as data: most
+errors are returned as `Issue` objects (not exceptions).
+
+Security policy / reporting: [SECURITY.md](SECURITY.md)
+
+Engineering notes: [docs/security.md](docs/security.md)
+
+---
+
+## Contributing
+
+Contributions are welcome.
+
+Guidelines:
+
+- Keep diffs small and test-backed
+- Use stable Issue codes (update `docs/issue-codes.md`)
+- Add a short `# Spec:` URL comment for new validation rules
+- Do not edit generated parser code under `openehr_am/_generated/`
+
+---
+
+## License
+
+[MIT](LICENSE)
+
+---
+
+## Acknowledgements
+
+- openEHR specifications and community resources (see `openehr_am_resources.md`)
