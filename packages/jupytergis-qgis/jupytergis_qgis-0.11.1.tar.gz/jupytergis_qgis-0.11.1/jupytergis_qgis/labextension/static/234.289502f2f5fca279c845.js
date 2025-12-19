@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunk_jupytergis_jupytergis_qgis=self.webpackChunk_jupytergis_jupytergis_qgis||[]).push([[234],{234(e,o,r){r.r(o),r.d(o,{ICollaborativeContentProvider:()=>n,IGlobalAwareness:()=>s});var t=r(262);const n=new t.Token("@jupyter/collaboration-extension:ICollaborativeContentProvider"),s=new t.Token("@jupyter/collaboration:IGlobalAwareness")}}]);
