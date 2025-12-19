@@ -1,0 +1,91 @@
+Metadata-Version: 2.4
+Name: monaco-f1-report
+Version: 0.1.0
+Summary: Formula 1 Monaco 2018 Qualification report generator
+Author-email: Oleksii Ovcharuk <ovcharuk19951209@gmail.com>
+License: MIT License
+        
+        Copyright (c) 2025 Oleksii Ovcharuk
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: license-file
+
+# 🏎️ Monaco Report – F1 Monaco 2018 Qualification Report
+
+This package builds a report on the results of the **first qualifying session (Q1)** of the 2018 Formula 1 Monaco Grand Prix.
+
+## 📌 Task
+
+- Input files:
+  - `start.log` – the start time of the best lap for each driver.
+  - `end.log` – the end time of the best lap.
+  - `abbreviations.txt` – mapping of driver abbreviations to full names and teams.
+
+**Example line in `start.log`:**
+
+- `SVF` — driver's abbreviation  
+- `2018-05-24` — date  
+- `12:02:58.917` — time
+
+## ⚙️ Installation
+
+### Install locally (development mode)
+
+```bash```
+pip install -e .
+
+### Install from PyPi
+pip install -i https://test.pypi.org/simple/ monaco-f1-report
+
+
+## 🚀 Usage examples
+
+### Run from source
+python -m monaco_report --files data --asc
+
+### Run after installation
+monaco-report --files data --asc
+
+### Show specific driver
+monaco-report --driver "Sebastian Vettel"
+
+### How to use test:
+pytest -v
+
+
+
+### Output example:
+1. Daniel Ricciardo   | RED BULL RACING TAG HEUER | 1:12.013
+2. Sebastian Vettel   | FERRARI                   | 1:12.415
+3. ...
+
+------------------------------------------------------------------------
+
+14. Brendon Hartley   | SCUDERIA TORO ROSSO HONDA | 1:13.179
+15. Marcus Ericsson   | SAUBER FERRARI            | 1:13.265
+
+## 📖 License
+MIT License
