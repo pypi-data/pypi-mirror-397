@@ -1,0 +1,1240 @@
+# Repo-Fetcher
+
+> **Grab any repository, anywhere, anytime.**
+
+Repo-Fetcher is a production-ready Python library for downloading repositories from various platforms with maximum flexibility and performance. Designed for developers, DevOps engineers, and automation systems that need reliable, configurable repository downloading.
+
+## Features
+
+-   **Multi-platform support**: GitHub, GitLab, Git, npm (placeholder), Bitbucket (placeholder), and generic URLs
+-   **Dual execution modes**: Synchronous and asynchronous APIs
+-   **Batch operations**: Download multiple repositories in parallel
+-   **Flexible configuration**: Extensive configuration options for every use case
+-   **Progress tracking**: Real-time progress bars for downloads
+-   **Error handling**: Comprehensive error handling with retry mechanisms
+-   **Extensible architecture**: Easy to add support for new platforms
+-   **Type hints**: Full type annotations for better IDE support
+-   **Zero dependencies**: Core functionality works without external dependencies
+
+## Table of Contents
+
+-   [Installation](#installation)
+-   [Quick Start](#quick-start)
+-   [Core Concepts](#core-concepts)
+-   [API Reference](#api-reference)
+    -   [RepoFetcher Class](#repofetcher-class)
+    -   [DownloadConfig Model](#downloadconfig-model)
+    -   [DownloadResult Model](#downloadresult-model)
+    -   [Platform Fetchers](#platform-fetchers)
+    -   [Exceptions](#exceptions)
+-   [Usage Examples](#usage-examples)
+    -   [Basic Usage](#basic-usage)
+    -   [Advanced Configuration](#advanced-configuration)
+    -   [Batch Operations](#batch-operations)
+    -   [Async Operations](#async-operations)
+    -   [Custom Fetchers](#custom-fetchers)
+    -   [CLI Usage](#cli-usage)
+-   [Platform-Specific Features](#platform-specific-features)
+    -   [GitHub](#github)
+    -   [GitLab](#gitlab)
+    -   [Git](#git)
+    -   [Generic](#generic)
+-   [Error Handling](#error-handling)
+-   [Performance Tuning](#performance-tuning)
+-   [Extending Repo-Fetcher](#extending-repo-fetcher)
+-   [Testing](#testing)
+-   [Contributing](#contributing)
+-   [License](#license)
+
+## Installation
+
+### Prerequisites
+
+-   Python 3.8 or higher
+-   Git (for Git clone operations)
+
+### Install from PyPI
+
+```bash
+pip install repo-fetcher
+```
+
+### Install from source
+
+```bash
+git clone https://github.com/neuxdotdev/repo-fetcher.git
+cd repo-fetcher
+pip install -e .
+```
+
+### Optional Dependencies
+
+For enhanced functionality, install optional dependencies:
+
+```bash
+# For async operations
+pip install aiohttp
+
+# For progress bars
+pip install tqdm
+
+# For additional archive formats
+pip install python-lzma bz2file
+```
+
+## Quick Start
+
+```python
+from repo_fetcher import RepoFetcher, DownloadConfig
+
+# Create a fetcher instance
+fetcher = RepoFetcher()
+
+# Download a GitHub repository
+config = DownloadConfig(
+    url="https://github.com/python/cpython",
+    dest="./downloads/cpython",
+    branch="3.12"
+)
+
+result = fetcher.download(config)
+
+if result.success:
+    print(f" Downloaded {result.url}")
+    print(f" Location: {result.extracted_path}")
+    print(f" Size: {result.size_bytes:,} bytes")
+    print(f" Duration: {result.duration_seconds:.2f} seconds")
+else:
+    print(f" Failed: {result.error}")
+```
+
+## Core Concepts
+
+### 1. **Platforms**
+
+Repo-Fetcher supports multiple repository platforms. Each platform has its own optimized fetcher implementation.
+
+### 2. **Configuration**
+
+All download behavior is controlled through `DownloadConfig` - a comprehensive dataclass with sensible defaults.
+
+### 3. **Execution Models**
+
+-   **Synchronous**: Blocking operations, simple to use
+-   **Asynchronous**: Non-blocking, better for I/O-bound operations
+-   **Batch**: Parallel downloads for multiple repositories
+
+### 4. **Results**
+
+All operations return `DownloadResult` objects containing success status, metadata, and any errors.
+
+## API Reference
+
+### RepoFetcher Class
+
+The main entry point for all download operations.
+
+```python
+class RepoFetcher:
+    """Main class for downloading repositories from various platforms."""
+
+    def __init__(self, default_config: Optional[Dict[str, Any]] = None):
+        """
+        Initialize RepoFetcher.
+
+        Args:
+            default_config: Default configuration to use for all downloads
+        """
+
+    def download(self, config: Union[Dict[str, Any], DownloadConfig]) -> DownloadResult:
+        """
+        Download repository synchronously.
+
+        Args:
+            config: Download configuration
+
+        Returns:
+            DownloadResult object
+        """
+
+    async def download_async(self, config: Union[Dict[str, Any], DownloadConfig]) -> DownloadResult:
+        """
+        Download repository asynchronously.
+
+        Args:
+            config: Download configuration
+
+        Returns:
+            DownloadResult object
+        """
+
+    def download_batch(self, configs: list, max_workers: int = 5, show_progress: bool = True) -> list:
+        """
+        Download multiple repositories in parallel.
+
+        Args:
+            configs: List of download configurations
+            max_workers: Maximum number of parallel downloads
+            show_progress: Show progress bar for batch
+
+        Returns:
+            List of DownloadResult objects
+        """
+
+    async def download_batch_async(self, configs: list, max_concurrent: int = 5, show_progress: bool = True) -> list:
+        """
+        Download multiple repositories asynchronously.
+
+        Args:
+            configs: List of download configurations
+            max_concurrent: Maximum number of concurrent downloads
+            show_progress: Show progress bar for batch
+
+        Returns:
+            List of DownloadResult objects
+        """
+
+    def register_fetcher(self, platform: Platform, fetcher_class):
+        """
+        Register a custom fetcher for a platform.
+
+        Args:
+            platform: Platform identifier
+            fetcher_class: Fetcher class (must inherit from BaseFetcher)
+        """
+```
+
+### DownloadConfig Model
+
+Complete configuration for repository downloads.
+
+```python
+@dataclass
+class DownloadConfig:
+    """Configuration for repository download."""
+
+    # Platform & Source
+    platform: Platform = Platform.GITHUB
+    url: Optional[str] = None
+    token: Optional[str] = None
+    ssh_key_path: Optional[Union[str, Path]] = None
+
+    # Branch/Tag/Commit
+    branch: Optional[str] = None
+    tag: Optional[str] = None
+    commit: Optional[str] = None
+
+    # Target/Destination
+    dest: Union[str, Path] = "."
+    keep_archive: bool = False
+    overwrite: bool = False
+    mkdirs: bool = True
+
+    # File/Folder selection
+    path: Optional[str] = None
+    files: Optional[List[str]] = None
+    exclude: Optional[List[str]] = None
+    flatten: bool = False
+
+    # Format/Compression
+    archive_format: ArchiveFormat = ArchiveFormat.TAR_GZ
+    compression_level: int = 6
+
+    # Network
+    timeout: int = 30
+    retries: int = 3
+    retry_delay: float = 1.0
+    verify_ssl: bool = True
+    proxy: Optional[Dict[str, str]] = None
+
+    # Performance/Async
+    async_mode: bool = False
+    chunk_size: int = 8192
+    max_connections: int = 10
+
+    # Logging & Progress
+    show_progress: bool = True
+    logger: Optional[logging.Logger] = None
+    log_level: LogLevel = LogLevel.INFO
+
+    # Post-processing/Hooks
+    pre_download_hook: Optional[Callable[[Dict[str, Any]], Any]] = None
+    post_download_hook: Optional[Callable[[Dict[str, Any]], Any]] = None
+    post_extract_hook: Optional[Callable[[Dict[str, Any]], Any]] = None
+    checksum_verify: Optional[str] = None  # 'md5', 'sha1', 'sha256'
+
+    # Error Handling
+    ignore_errors: bool = False
+    raise_on_error: bool = True
+    retry_on_fail: bool = True
+
+    # Extensibility
+    custom_fetcher: Optional[Callable] = None
+    custom_extractor: Optional[Callable] = None
+```
+
+### DownloadResult Model
+
+Result object returned from all download operations.
+
+```python
+@dataclass
+class DownloadResult:
+    """Result of a download operation."""
+
+    success: bool
+    platform: Platform
+    url: str
+    destination: Path
+    archive_path: Optional[Path] = None
+    extracted_path: Optional[Path] = None
+    size_bytes: int = 0
+    duration_seconds: float = 0.0
+    error: Optional[str] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
+```
+
+### Platform Fetchers
+
+#### BaseFetcher (Abstract Class)
+
+```python
+class BaseFetcher(ABC):
+    """Abstract base class for all platform fetchers."""
+
+    @abstractmethod
+    def get_download_url(self) -> str:
+        """Get the download URL for the repository."""
+
+    @abstractmethod
+    async def download_async(self) -> DownloadResult:
+        """Download repository asynchronously."""
+
+    @abstractmethod
+    def download_sync(self) -> DownloadResult:
+        """Download repository synchronously."""
+
+    def get_headers(self) -> Dict[str, str]:
+        """Get HTTP headers for the request."""
+
+    def validate_config(self) -> None:
+        """Validate configuration before download."""
+```
+
+#### GitHubFetcher
+
+```python
+class GitHubFetcher(BaseFetcher):
+    """GitHub repository fetcher."""
+
+    def get_download_url(self) -> str:
+        """Get GitHub archive download URL."""
+        # Returns: https://api.github.com/repos/{owner}/{repo}/tarball/{ref}
+```
+
+#### GitLabFetcher
+
+```python
+class GitLabFetcher(BaseFetcher):
+    """GitLab repository fetcher."""
+
+    def get_download_url(self) -> str:
+        """Get GitLab archive download URL."""
+        # Returns: https://gitlab.com/api/v4/projects/{encoded_project}/repository/archive.tar.gz?sha={ref}
+```
+
+#### GenericFetcher
+
+```python
+class GenericFetcher(BaseFetcher):
+    """Generic Git and HTTP fetcher."""
+
+    def get_download_url(self) -> str:
+        """Get download URL for generic fetcher."""
+```
+
+### Exceptions
+
+```python
+class RepoFetcherError(Exception):
+    """Base exception for all Repo-Fetcher errors."""
+
+class DownloadError(RepoFetcherError):
+    """Raised when download fails."""
+
+class AuthenticationError(RepoFetcherError):
+    """Raised when authentication fails."""
+
+class InvalidConfigError(RepoFetcherError):
+    """Raised when configuration is invalid."""
+
+class PlatformNotSupportedError(RepoFetcherError):
+    """Raised when platform is not supported."""
+
+class ArchiveError(RepoFetcherError):
+    """Raised when archive operations fail."""
+
+class NetworkError(RepoFetcherError):
+    """Raised when network operations fail."""
+
+class HookError(RepoFetcherError):
+    """Raised when hook execution fails."""
+```
+
+## Usage Examples
+
+### Basic Usage
+
+#### Download from GitHub
+
+```python
+from repo_fetcher import RepoFetcher, DownloadConfig
+
+fetcher = RepoFetcher()
+config = DownloadConfig(
+    url="https://github.com/python/cpython",
+    dest="./downloads/cpython",
+    branch="3.12"
+)
+result = fetcher.download(config)
+```
+
+#### Download from GitLab
+
+```python
+config = DownloadConfig(
+    url="https://gitlab.com/gitlab-org/gitlab-docs",
+    dest="./downloads/gitlab-docs",
+    platform=Platform.GITLAB,
+    tag="v16.10.0"
+)
+result = fetcher.download(config)
+```
+
+#### Clone Git Repository
+
+```python
+config = DownloadConfig(
+    url="https://github.com/python/cpython.git",
+    dest="./downloads/cpython-clone",
+    platform=Platform.GIT,
+    branch="3.12"
+)
+result = fetcher.download(config)
+```
+
+### Advanced Configuration
+
+#### Authentication
+
+```python
+# GitHub Personal Access Token
+config = DownloadConfig(
+    url="https://github.com/owner/private-repo",
+    token="ghp_your_token_here"
+)
+
+# GitLab Private Token
+config = DownloadConfig(
+    url="https://gitlab.com/owner/private-repo",
+    platform=Platform.GITLAB,
+    token="glpat_your_token_here"
+)
+
+# SSH Key Authentication
+config = DownloadConfig(
+    url="git@github.com:owner/repo.git",
+    platform=Platform.GIT,
+    ssh_key_path="/path/to/private_key"
+)
+```
+
+#### Custom Archive Format
+
+```python
+from repo_fetcher.constants import ArchiveFormat
+
+config = DownloadConfig(
+    url="https://github.com/owner/repo",
+    archive_format=ArchiveFormat.ZIP,  # Options: TAR_GZ, TAR_BZ2, TAR_XZ, ZIP
+    keep_archive=True  # Keep the archive file after extraction
+)
+```
+
+#### Network Configuration
+
+```python
+config = DownloadConfig(
+    url="https://github.com/owner/repo",
+    timeout=60,  # 60 second timeout
+    retries=5,   # Retry 5 times on failure
+    verify_ssl=False,  # Disable SSL verification (not recommended)
+    proxy={
+        "http": "http://proxy.example.com:8080",
+        "https": "http://proxy.example.com:8080"
+    }
+)
+```
+
+#### File Selection
+
+```python
+config = DownloadConfig(
+    url="https://github.com/owner/repo",
+    files=["src/*.py", "README.md"],  # Only download specific files
+    exclude=["*.tmp", "test/*"],      # Exclude certain patterns
+    flatten=True                      # Flatten directory structure
+)
+```
+
+#### Hooks
+
+```python
+def pre_download_hook(context):
+    print(f"Starting download of {context['config'].url}")
+    # Can modify config if needed
+
+def post_extract_hook(context):
+    result = context['result']
+    print(f"Download completed: {result.size_bytes} bytes")
+    # Can run post-processing scripts
+
+config = DownloadConfig(
+    url="https://github.com/owner/repo",
+    pre_download_hook=pre_download_hook,
+    post_extract_hook=post_extract_hook
+)
+```
+
+### Batch Operations
+
+#### Synchronous Batch
+
+```python
+configs = [
+    DownloadConfig(
+        url="https://github.com/pallets/flask",
+        dest="./downloads/flask"
+    ),
+    DownloadConfig(
+        url="https://github.com/django/django",
+        dest="./downloads/django"
+    ),
+    DownloadConfig(
+        url="https://gitlab.com/gitlab-org/gitlab-docs",
+        dest="./downloads/gitlab-docs",
+        platform=Platform.GITLAB
+    )
+]
+
+results = fetcher.download_batch(
+    configs,
+    max_workers=3,      # Download 3 repositories in parallel
+    show_progress=True  # Show progress bar
+)
+
+for i, result in enumerate(results):
+    status = "" if result.success else ""
+    print(f"{status} {result.url}")
+```
+
+#### Asynchronous Batch
+
+```python
+import asyncio
+
+async def download_multiple():
+    fetcher = RepoFetcher()
+    configs = [...]  # Same as above
+
+    results = await fetcher.download_batch_async(
+        configs,
+        max_concurrent=3,
+        show_progress=True
+    )
+
+    return results
+
+# Run in async context
+results = asyncio.run(download_multiple())
+```
+
+#### Batch from JSON File
+
+```json
+// downloads.json
+[
+	{
+		"url": "https://github.com/pallets/flask",
+		"dest": "./downloads/flask",
+		"tag": "3.0.0"
+	},
+	{
+		"url": "https://github.com/django/django",
+		"dest": "./downloads/django",
+		"branch": "main",
+		"platform": "github"
+	},
+	{
+		"url": "https://gitlab.com/gitlab-org/gitlab-docs",
+		"dest": "./downloads/gitlab-docs",
+		"platform": "gitlab",
+		"overwrite": true
+	}
+]
+```
+
+```python
+import json
+
+with open('downloads.json', 'r') as f:
+    configs_data = json.load(f)
+
+configs = [DownloadConfig(**data) for data in configs_data]
+results = fetcher.download_batch(configs)
+```
+
+### Async Operations
+
+#### Basic Async
+
+```python
+import asyncio
+from repo_fetcher import RepoFetcher, DownloadConfig
+
+async def async_download():
+    fetcher = RepoFetcher()
+    config = DownloadConfig(
+        url="https://github.com/python/cpython",
+        dest="./downloads/cpython"
+    )
+
+    result = await fetcher.download_async(config)
+    return result
+
+# Run the async function
+result = asyncio.run(async_download())
+```
+
+#### Async with Progress
+
+```python
+async def download_with_progress():
+    fetcher = RepoFetcher()
+    config = DownloadConfig(
+        url="https://github.com/python/cpython",
+        dest="./downloads/cpython",
+        show_progress=True
+    )
+
+    result = await fetcher.download_async(config)
+    return result
+```
+
+### Custom Fetchers
+
+#### Creating a Custom Fetcher
+
+```python
+from repo_fetcher.platforms.base import BaseFetcher
+from repo_fetcher.models import DownloadResult, DownloadConfig
+from repo_fetcher.constants import Platform
+import requests
+
+class CustomPlatformFetcher(BaseFetcher):
+    """Custom fetcher for a specific platform."""
+
+    def __init__(self, config: DownloadConfig):
+        super().__init__(config)
+        # Parse URL or setup custom logic
+        self.api_url = self._parse_custom_url()
+
+    def _parse_custom_url(self) -> str:
+        """Parse custom platform URL."""
+        # Implement your parsing logic
+        return f"https://api.custom-platform.com/repo/{self.config.url}"
+
+    def get_download_url(self) -> str:
+        """Get download URL for custom platform."""
+        return self.api_url
+
+    def download_sync(self) -> DownloadResult:
+        """Download repository synchronously."""
+        # Implement custom download logic
+        response = requests.get(self.get_download_url())
+        # Process response
+        result = DownloadResult(
+            success=True,
+            platform=Platform.GENERIC,
+            url=self.config.url or "",
+            destination=self.config.dest
+        )
+        return result
+
+    async def download_async(self) -> DownloadResult:
+        """Download repository asynchronously."""
+        # Implement async logic
+        return await asyncio.to_thread(self.download_sync)
+
+# Register the custom fetcher
+fetcher = RepoFetcher()
+fetcher.register_fetcher(Platform("custom"), CustomPlatformFetcher)
+
+# Use the custom fetcher
+config = DownloadConfig(
+    url="custom://owner/repo",
+    platform="custom"
+)
+result = fetcher.download(config)
+```
+
+### CLI Usage
+
+Repo-Fetcher includes a comprehensive CLI interface.
+
+#### Basic Commands
+
+```bash
+# Download GitHub repository
+python -m repo_fetcher --url https://github.com/owner/repo --dest ./downloads
+
+# Download specific branch
+python -m repo_fetcher --url https://github.com/owner/repo --branch develop
+
+# Download from GitLab
+python -m repo_fetcher --url https://gitlab.com/owner/repo --platform gitlab
+
+# Clone Git repository
+python -m repo_fetcher --url https://github.com/owner/repo.git --platform git
+
+# Batch download from config file
+python -m repo_fetcher --batch downloads.json
+
+# Output in JSON format
+python -m repo_fetcher --url https://github.com/owner/repo --output json
+
+# Show examples
+python -m repo_fetcher --example
+
+# Show version
+python -m repo_fetcher --version
+```
+
+#### CLI Help
+
+```bash
+python -m repo_fetcher --help
+```
+
+## Platform-Specific Features
+
+### GitHub
+
+#### API Rate Limiting
+
+GitHub API has rate limits. Authenticated requests have higher limits.
+
+```python
+# Use token for higher rate limits
+config = DownloadConfig(
+    url="https://github.com/owner/repo",
+    token="your_github_token_here"
+)
+```
+
+#### Repository References
+
+```python
+# By branch
+config = DownloadConfig(url="...", branch="main")
+
+# By tag
+config = DownloadConfig(url="...", tag="v1.0.0")
+
+# By commit hash
+config = DownloadConfig(url="...", commit="a1b2c3d4e5f6")
+```
+
+### GitLab
+
+#### Project Path Encoding
+
+GitLab API requires URL-encoded project paths.
+
+```python
+# URL: https://gitlab.com/group/subgroup/project
+# API: https://gitlab.com/api/v4/projects/group%2Fsubgroup%2Fproject/...
+```
+
+#### Private Repositories
+
+```python
+config = DownloadConfig(
+    url="https://gitlab.com/owner/private-repo",
+    platform=Platform.GITLAB,
+    token="glpat_your_token_here"  # GitLab personal access token
+)
+```
+
+### Git
+
+#### SSH Authentication
+
+```python
+config = DownloadConfig(
+    url="git@github.com:owner/repo.git",
+    platform=Platform.GIT,
+    ssh_key_path="/path/to/ssh/key"
+)
+```
+
+#### Branch/Tag Selection
+
+```python
+# Clone specific branch
+config = DownloadConfig(
+    url="https://github.com/owner/repo.git",
+    platform=Platform.GIT,
+    branch="feature-branch"
+)
+
+# Clone specific tag
+config = DownloadConfig(
+    url="https://github.com/owner/repo.git",
+    platform=Platform.GIT,
+    tag="v1.0.0"
+)
+```
+
+### Generic
+
+#### Direct File Downloads
+
+```python
+# Download any file via HTTP/HTTPS
+config = DownloadConfig(
+    url="https://example.com/file.tar.gz",
+    platform=Platform.GENERIC,
+    dest="./downloads"
+)
+```
+
+#### Archive Detection
+
+Generic fetcher automatically detects Git repositories vs direct files.
+
+## Error Handling
+
+### Try-Catch Pattern
+
+```python
+from repo_fetcher import RepoFetcher, DownloadConfig
+from repo_fetcher.exceptions import DownloadError, PlatformNotSupportedError
+
+fetcher = RepoFetcher()
+config = DownloadConfig(
+    url="https://github.com/owner/repo",
+    dest="./downloads"
+)
+
+try:
+    result = fetcher.download(config)
+except DownloadError as e:
+    print(f"Download failed: {e}")
+except PlatformNotSupportedError as e:
+    print(f"Platform not supported: {e}")
+except Exception as e:
+    print(f"Unexpected error: {e}")
+```
+
+### Configuring Error Behavior
+
+```python
+config = DownloadConfig(
+    url="https://github.com/owner/repo",
+    raise_on_error=False,  # Don't raise exceptions
+    ignore_errors=True,    # Continue even on errors
+    retry_on_fail=True,    # Automatically retry on failure
+    retries=3              # Retry up to 3 times
+)
+
+result = fetcher.download(config)
+if not result.success:
+    print(f"Download failed but exceptions suppressed: {result.error}")
+```
+
+### Custom Error Handling
+
+```python
+def error_handler(context):
+    """Custom error handler."""
+    error = context.get('error')
+    config = context.get('config')
+    print(f"Error downloading {config.url}: {error}")
+    # Can log to file, send notification, etc.
+
+# Use in batch operations
+configs = [...]
+results = fetcher.download_batch(configs)
+
+for result in results:
+    if not result.success:
+        error_handler({'error': result.error, 'config': ...})
+```
+
+## Performance Tuning
+
+### Connection Pooling
+
+```python
+from repo_fetcher import RepoFetcher
+
+# Configure default connection settings
+fetcher = RepoFetcher(default_config={
+    'timeout': 60,
+    'max_connections': 10,
+    'chunk_size': 16384  # 16KB chunks
+})
+```
+
+### Parallel Downloads
+
+```python
+# Adjust based on your network and system
+config = DownloadConfig(
+    url="https://github.com/large/repo",
+    max_connections=5,  # More connections for large files
+    chunk_size=32768    # 32KB chunks for faster downloads
+)
+```
+
+### Memory Management
+
+```python
+config = DownloadConfig(
+    url="https://github.com/large/repo",
+    chunk_size=8192,  # Smaller chunks for memory-constrained environments
+    keep_archive=False  # Delete archive after extraction to save space
+)
+```
+
+## Extending Repo-Fetcher
+
+### Adding New Platforms
+
+1. **Create a new fetcher class**:
+
+```python
+from repo_fetcher.platforms.base import BaseFetcher
+from repo_fetcher.models import DownloadResult
+
+class NewPlatformFetcher(BaseFetcher):
+    def get_download_url(self) -> str:
+        # Implement URL generation
+        pass
+
+    def download_sync(self) -> DownloadResult:
+        # Implement synchronous download
+        pass
+
+    async def download_async(self) -> DownloadResult:
+        # Implement asynchronous download
+        pass
+```
+
+2. **Register the platform**:
+
+```python
+from repo_fetcher.constants import Platform
+
+# Add to Platform enum
+Platform.NEW_PLATFORM = "new_platform"
+
+# Register the fetcher
+fetcher = RepoFetcher()
+fetcher.register_fetcher(Platform.NEW_PLATFORM, NewPlatformFetcher)
+```
+
+### Custom Extractors
+
+```python
+def custom_extractor(archive_path: Path, extract_dir: Path) -> Path:
+    """Custom archive extraction logic."""
+    # Implement custom extraction
+    import custom_archive_lib
+    custom_archive_lib.extract(archive_path, extract_dir)
+    return extract_dir
+
+config = DownloadConfig(
+    url="https://github.com/owner/repo",
+    custom_extractor=custom_extractor
+)
+```
+
+### Hooks System
+
+```python
+def pre_download_hook(context: Dict[str, Any]) -> None:
+    """Called before download starts."""
+    config = context['config']
+    print(f"Starting download of {config.url}")
+
+    # Can modify config
+    if "test" in config.url:
+        context['config'].branch = "test-branch"
+
+def post_extract_hook(context: Dict[str, Any]) -> None:
+    """Called after extraction completes."""
+    result = context['result']
+    config = context['config']
+
+    # Run post-processing
+    if config.platform == Platform.GITHUB:
+        print(f"GitHub repo extracted: {result.extracted_path}")
+
+config = DownloadConfig(
+    url="https://github.com/owner/repo",
+    pre_download_hook=pre_download_hook,
+    post_extract_hook=post_extract_hook
+)
+```
+
+## Testing
+
+### Unit Tests
+
+```python
+import pytest
+from repo_fetcher import RepoFetcher, DownloadConfig
+from repo_fetcher.exceptions import DownloadError
+
+def test_github_download():
+    """Test GitHub repository download."""
+    fetcher = RepoFetcher()
+    config = DownloadConfig(
+        url="https://github.com/python/cpython",
+        dest="./test_downloads"
+    )
+
+    result = fetcher.download(config)
+    assert result.success
+    assert result.platform == Platform.GITHUB
+    assert result.size_bytes > 0
+```
+
+### Integration Tests
+
+```python
+@pytest.mark.integration
+def test_batch_download():
+    """Test batch download functionality."""
+    fetcher = RepoFetcher()
+    configs = [
+        DownloadConfig(url="https://github.com/pallets/flask"),
+        DownloadConfig(url="https://github.com/django/django")
+    ]
+
+    results = fetcher.download_batch(configs, max_workers=2)
+    assert len(results) == 2
+    assert all(r.success for r in results)
+```
+
+### Mock Testing
+
+```python
+from unittest.mock import Mock, patch
+
+def test_with_mocks():
+    """Test with mocked HTTP responses."""
+    with patch('requests.get') as mock_get:
+        mock_response = Mock()
+        mock_response.status_code = 200
+        mock_response.headers = {'content-length': '1024'}
+        mock_response.iter_content.return_value = [b'data']
+        mock_get.return_value = mock_response
+
+        fetcher = RepoFetcher()
+        config = DownloadConfig(url="https://example.com/repo")
+        result = fetcher.download(config)
+
+        assert result.success
+```
+
+## Contributing
+
+We welcome contributions! Here's how to get started:
+
+### Development Setup
+
+```bash
+# Fork and clone the repository
+git clone https://github.com/your-username/repo-fetcher.git
+cd repo-fetcher
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install development dependencies
+pip install -e ".[dev]"
+```
+
+### Code Style
+
+```bash
+# Format code
+black repo_fetcher/ tests/
+
+# Sort imports
+isort repo_fetcher/ tests/
+
+# Check types
+mypy repo_fetcher/
+
+# Lint code
+flake8 repo_fetcher/ tests/
+```
+
+### Pull Request Process
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add/update tests
+5. Update documentation
+6. Run tests and linting
+7. Submit pull request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+-   **Issues**: [GitHub Issues](https://github.com/neuxdotdev/repo-fetcher/issues)
+-   **Discussions**: [GitHub Discussions](https://github.com/neuxdotdev/repo-fetcher/discussions)
+-   **Email**: support@neux.dev
+
+## Acknowledgements
+
+-   Thanks to all contributors who have helped shape Repo-Fetcher
+-   Inspired by various package managers and download utilities
+-   Built with by the Neux team
+
+---
+
+<div align="center">
+
+**Repo-Fetcher** - _Grab any repository, anywhere, anytime._
+
+[![GitHub stars](https://img.shields.io/github/stars/neuxdotdev/repo-fetcher?style=social)](https://github.com/neuxdotdev/repo-fetcher/stargazers)
+[![PyPI version](https://img.shields.io/pypi/v/repo-fetcher)](https://pypi.org/project/repo-fetcher/)
+[![Python versions](https://img.shields.io/pypi/pyversions/repo-fetcher)](https://pypi.org/project/repo-fetcher/)
+[![License](https://img.shields.io/github/license/neuxdotdev/repo-fetcher)](https://github.com/neuxdotdev/repo-fetcher/blob/main/LICENSE)
+[![Code style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+</div>
+
+## Benchmarks
+
+### Download Speed Comparison
+
+```bash
+# Test with different configurations
+python benchmarks/speed_test.py
+```
+
+### Memory Usage
+
+```bash
+# Monitor memory usage during downloads
+python benchmarks/memory_test.py
+```
+
+## Best Practices
+
+### 1. **Use Context Managers**
+
+```python
+from repo_fetcher import RepoFetcher
+
+with RepoFetcher() as fetcher:
+    results = fetcher.download_batch(configs)
+```
+
+### 2. **Configure Logging**
+
+```python
+import logging
+from repo_fetcher import RepoFetcher, DownloadConfig
+from repo_fetcher.constants import LogLevel
+
+logging.basicConfig(level=logging.INFO)
+config = DownloadConfig(
+    url="...",
+    log_level=LogLevel.DEBUG,
+    logger=logging.getLogger("my_app")
+)
+```
+
+### 3. **Handle Large Files**
+
+```python
+config = DownloadConfig(
+    url="...",
+    chunk_size=65536,  # 64KB chunks for large files
+    show_progress=True,
+    retry_on_fail=True,
+    retries=5
+)
+```
+
+### 4. **Use Async for I/O Bound Operations**
+
+```python
+import asyncio
+
+async def download_multiple_repos(urls):
+    fetcher = RepoFetcher()
+    tasks = []
+
+    for url in urls:
+        config = DownloadConfig(url=url)
+        tasks.append(fetcher.download_async(config))
+
+    return await asyncio.gather(*tasks, return_exceptions=True)
+```
+
+## Roadmap
+
+### Planned Features
+
+-   [ ] **npm registry support** - Full npm package downloading
+-   [ ] **Bitbucket support** - Complete Bitbucket integration
+-   [ ] **Docker registry** - Download Docker images and manifests
+-   [ ] **Resumable downloads** - Resume interrupted downloads
+-   [ ] **Checksum verification** - Automatic hash verification
+-   [ ] **Plugin system** - Extensible plugin architecture
+-   [ ] **Web UI** - Graphical interface for downloads
+-   [ ] **REST API** - HTTP API for remote operations
+
+### In Progress
+
+-   [x] **GitHub support** - Complete GitHub integration
+-   [x] **GitLab support** - Complete GitLab integration
+-   [x] **Git support** - Direct Git clone operations
+-   [x] **Generic HTTP** - Download any HTTP/HTTPS resource
+-   [x] **Batch operations** - Parallel downloads
+-   [x] **Async support** - Asynchronous operations
+-   [x] **Comprehensive CLI** - Command-line interface
+
+---
+
+**Happy fetching! **
+
+If you find Repo-Fetcher useful, please consider:
+
+-   Giving it a on GitHub
+-   Reporting any issues you encounter
+-   Contributing to the codebase
+-   Sharing it with your colleagues
