@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "pybind11>=2.13.0", "numpy>=2.3.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fasttext-ng"
+version = "0.9.3"
+description = "fasttext Python bindings"
+readme = "python/README.rst"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "John Ewart", email = "jewart@gmail.com" },
+    {name = "Onur Celebi", email = "celebio@fb.com"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development",
+    "Topic :: Scientific/Engineering",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: MacOS",
+]
+dependencies = [
+    "pybind11>=2.13.0",
+    "numpy>=2.3.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/facebookresearch/fastText"
+Repository = "https://github.com/facebookresearch/fastText"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
+dev = [
+    "setuptools>=45",
+    "wheel",
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["python/fasttext_module"]
+
+[tool.setuptools.package-dir]
+"" = "python/fasttext_module"
