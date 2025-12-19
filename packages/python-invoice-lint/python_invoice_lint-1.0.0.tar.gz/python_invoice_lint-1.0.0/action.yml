@@ -1,0 +1,35 @@
+name: 'Invoice Lint'
+description: 'Validate EN16931 Invoices against official artifacts'
+inputs:
+  artifact:
+    description: 'Validation artifact version (e.g. 1.3.15)'
+    required: true
+  syntax:
+    description: 'Syntax (UBL or CII)'
+    required: false
+    default: 'UBL'
+  path:
+    description: 'Path to file or directory to validate'
+    required: true
+    default: '.'
+  standard:
+    description: 'Standard (EN16931)'
+    required: false
+    default: 'EN16931'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      shell: bash
+        pip install invoice-lint
+
+    - name: Run Validation
+      shell: bash
+      run: |
+        invoice-lint validate --standard ${{ inputs.standard }} --syntax ${{ inputs.syntax }} --artifact ${{ inputs.artifact }} ${{ inputs.path }}

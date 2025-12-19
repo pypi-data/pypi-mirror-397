@@ -1,0 +1,33 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - 'v*' # v1.0.0 などのタグがプッシュされた時のみ実行
+
+jobs:
+  build-n-publish:
+    name: Build and publish to PyPI
+    runs-on: ubuntu-latest
+    permissions:
+      # OIDC（Trusted Publisher）を使うために必須の設定
+      id-token: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install build dependencies
+        run: python -m pip install build
+
+      - name: Build binary wheel and source tarball
+        run: python -m build
+
+      - name: Publish package
+        # PyPI公式のアップロードAction。トークン設定不要！
+        uses: pypa/gh-action-pypi-publish@release/v1
