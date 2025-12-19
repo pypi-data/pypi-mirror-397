@@ -1,0 +1,66 @@
+[project]
+name = "tau-fibrils-yolo"
+dynamic = ["version"]
+description = "YoloV8 model for the detection of Tau fibrils in EM images."
+readme = "README.md"
+requires-python = ">=3.9"
+license = {file = "LICENSE"}
+authors = [{ name = "Mallory Wittwer", email = "mallory.wittwer@epfl.ch" }]
+
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
+
+dependencies = [
+    "napari[all]>=0.4.16",
+    "qtpy",
+    "magicgui",
+    "numpy",
+    "pandas",
+    "tifffile",
+    "matplotlib",
+    "pooch==1.8.0",
+    "scikit-image",
+    "scikit-learn",
+    "ultralytics",
+    "opencv-contrib-python-headless",
+    "imaging-server-kit>=0.1.3",
+    "napari-serverkit>=0.0.9",
+]
+
+[project.entry-points."napari.manifest"]
+tau_fibrils_yolo = "tau_fibrils_yolo:napari.yaml"
+
+[project.scripts]
+tau_fibrils_predict_image = "tau_fibrils_yolo.cli:cli_predict_image"
+tau_fibrils_predict_folder = "tau_fibrils_yolo.cli:cli_predict_folder"
+
+[project.urls]
+homepage = "https://github.com/EPFL-Center-for-Imaging/tau_fibrils_yolo"
+repository = "https://github.com/EPFL-Center-for-Imaging/tau_fibrils_yolo"
+
+[build-system]
+requires = ["setuptools>=42.0.0", "wheel", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"*" = ["*.yaml"]
+
+[tool.setuptools_scm]
+write_to = "src/tau_fibrils_yolo/_version.py"
+version_scheme = "guess-next-dev"
+local_scheme = "no-local-version"
