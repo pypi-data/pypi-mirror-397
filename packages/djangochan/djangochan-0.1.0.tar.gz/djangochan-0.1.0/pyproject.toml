@@ -1,0 +1,43 @@
+[project]
+name = "djangochan"
+version = "0.1.0"
+authors = [
+  { name="konfou", email="mail@konfou.xyz" },
+]
+description = "Django-powered image/textboard engine."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+keywords = ["django", "imageboard", "textboard", "htmx", "rest-framework"]
+dependencies = [
+  "Django",
+  "django-environ",
+  "django-precise-bbcode",
+  "django-simple-math-captcha",
+  "djangorestframework",
+  "passlib",
+  "sorl-thumbnail",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Framework :: Django",
+  "Framework :: Django :: 6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/konfou/djangochan"
+Issues = "https://github.com/konfou/djangochan/issues"
+
+[project.scripts]
+djangochan = "djangochan.cli:main"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["api", "boards", "core", "djangochan", "siteprofile"]

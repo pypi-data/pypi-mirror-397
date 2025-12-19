@@ -1,0 +1,94 @@
+{% extends 'boards/base.html' %}
+{% load cache %}
+{% load post_render %}
+{% load thumbnail %}
+{% block title %}/{{ thread.board.ln }}/{{ thread.pk }}/:{{ thread.subject }}{% endblock title %}
+{% block content %}
+    <div id="board">
+        <h2 id="board-header">/{{ thread.board.ln }}/ - {{ thread.board.name }}</h2>
+    </div>
+    <div id="top"></div>
+    [<a href="{{ thread.board.get_absolute_url }}" hx-boost="true"
+        hx-trigger="click, keyup[altKey&&key=='r'] from:body">Return</a>]
+        [<a href="{% url 'board-catalog' thread.board.ln %}" hx-boost="true"
+            hx-trigger="click, keyup[altKey&&key=='c'] from:body">Catalog</a>]
+    [<a href="#bottom">Bottom</a>]
+    {% if not thread.closed %}
+        {% include 'boards/incl/htmx_hx_update.html' %}
+    {% endif %}
+    [Replies: {{ thread.post_set.all.count }}]
+    <p>
+        {% if thread.closed %}(<em>Closed</em>){% endif %}
+        {% if thread.archived %}(<em>Archived</em>){% endif %}
+        {% if thread.sticky %}(<em>Sticky</em>){% endif %}
+    </p>
+    <div class="thread">
+        <div class="row op" id="p{{ thread.pk }}">
+            <div class="row headline" hx-boost="true">
+                <p>{% if thread.subject %}<span class="subject">{{ thread.subject }}</span>{% endif %}
+                    <span class="author">{{ thread.author }}</span>
+                    {% if thread.tripcode %}<span class='tripcode'>{% if thread.secure %}!{% endif %}!{{ thread.tripcode }}</span>{% endif %}
+                    posted at {{ thread.timestamp }}
+                    {% if not thread.closed %}
+                        <span class="pk"><a href="javascript:quote('{{ thread.pk }}');">#{{ thread.pk }}</a></span>
+                    {% else %}
+                        <span class="pk">#{{ thread.pk }}</span>
+                    {% endif %}
+                    {% if not thread.sticky and not thread.archived %}
+                        <details><summary class="inline">[+]</summary>
+                            [<a href="{{ thread.get_delete_url }}">Delete</a>]
+                            [<a href="{{ thread.get_report_url }}">Report</a>]
+                        </details>
+                    {% endif %}
+                </p>
+            </div>
+            {% if thread.image %}
+                <div class="row info">
+                    <span>(File)</span>
+                    <span>{{ thread.image.size|filesizeformat }}</span> |
+                    <span>{{ thread.image.width }}x{{ thread.image.height }}</span> |
+                    <span class="ellipsis">{{ thread.filename }}</span>
+                </div>
+            {% endif %}
+            {% cache 500 post thread.pk %}
+            <div class="row content">
+                {% if thread.image %}
+                    {% thumbnail thread.image "x300" as im %}
+                    <div class="one-third column">
+                        <span class="image"><a href="{{ thread.image.url}}"><img src="{{ im.url }}"></a></span>
+                    </div>
+                    {% endthumbnail %}
+                    <div class="two-thirds column">
+                        <span class="post-text"><p>{% post_render thread %}</p></span>
+                    </div>
+                {% else %}
+                    <span class="post-text"><p>{% post_render thread %}</p></span>
+                {% endif %}
+            </div>
+            {% endcache %}
+        </div>
+        {% for post in thread.post_set.all %}
+                {% include 'boards/incl/reply.html' %}
+        {% endfor %}
+    </div>
+    <div id="bottom"></div>
+    [<a href="{{ thread.board.get_absolute_url }}" hx-boost="true">Return</a>]
+    [<a href="{% url 'board-catalog' thread.board.ln %}" hx-boost="true">Catalog</a>]
+    [<a href="#top">Top</a>]
+    {% if not thread.closed %}
+        [<a href="#"
+            hx-get="{{ request.get_full_path }}"
+            hx-select=".thread"
+            hx-target=".thread">Update</a>]
+    {% endif %}
+    <br><br>
+    {% if not thread.closed %}
+        <details open>
+            <summary>[New Reply]</summary>
+            <div class="hide" id="scrollback">[<a href="#">Scrollback</a>]</div>
+            <form hx-boost="true" class="newpostform" id="newreplyform" enctype="multipart/form-data" method="post">{% csrf_token %}
+                {{ form }}
+            </form>
+        </details>
+    {% endif %}
+{% endblock content %}
