@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xcat-mesh"
+version = "0.1.1"
+description = "Convert binary NIfTI segmentation masks to surface meshes (OBJ) with optional GPU Laplacian smoothing."
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "Apache-2.0"}
+authors = [{name="Lavsen Dahal", email="lavsen.dahal@gmail.com"}]
+keywords = ["xcat", "nifti", "mesh", "marching-cubes", "medical-imaging"]
+dependencies = [
+  "numpy>=1.22",
+  "nibabel>=5.0",
+  "scikit-image>=0.20",
+  "scipy>=1.9",
+  "tqdm>=4.65",
+]
+
+[project.optional-dependencies]
+gpu = ["torch>=2.0"]
+
+[project.scripts]
+xcat-mesh = "xcat_mesh.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
