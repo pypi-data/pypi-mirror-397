@@ -1,0 +1,60 @@
+# rob-norm 🦭🧬
+
+Python implementation of the [RobNorm](https://github.com/mwgrassgreen/) R package for robust normalization of quantitative omics data. 
+
+## Features
+
+- Identical normalization results to the original R implementation.
+- Fast and efficient implementation using NumPy (57 ms vs 113 ms in R for 5000x200 data on an M1 MacBook Air)
+
+## Installation
+
+Install via pip:
+
+```bash
+pip install rob-norm
+```
+
+## Usage
+
+```python
+import pandas as pd
+from rob_norm import rob_norm
+
+# load your data into a DataFrame (rows = features, columns = samples)
+data = pd.read_csv('./data/simulated_measurements.txt', index_col=0, sep='\t')
+
+# alternatively, simulate data using the provided function
+# sim_dat_fn(row_frac, col_frac, mu_up, mu_down, n, m, nu_fix=True, seed=None):
+
+# perform a normalization operation provided by the package
+results = rob_norm(data, gamma_0=0.5, tol=1e-4, step=200)
+
+normalized_data = results['norm_data']
+
+# verify against reference results
+df_results = pd.read_csv('./data/simulated_measurements_normalized.txt', index_col=0, sep='\t')
+
+assert np.allclose(df_results, normalized_data) # == True
+```
+
+## Development
+
+Clone the repository and use `uv` for development and testing:
+
+```bash
+git clone https://github.com/Tom-Julux/rob_norm
+cd rob_norm
+
+uv run pytest
+uv build
+uv publish
+```
+
+## License
+
+The project is licensed under the GNU Lesser General Public License v3.0.
+
+See the `LICENSE` file for full licensing information.
+
+The file `data/robnorm.r` contains R code used to generate reference results for testing and was copied and adapted from the original R package `RobNorm`.
