@@ -1,0 +1,18 @@
+include ../make.meson.inc
+
+NAME    := pywrapper_no_sign
+MAKEFILE := $(lastword $(MAKEFILE_LIST))
+F2PY        = f2py
+
+test: extension
+	${PYTHON} tests_no_sign.py
+
+extension: ${LIBSRC_WRAP_FILES}
+	${F2PY} -c -m _${NAME} ${LIBSRC_WRAP_FILES}
+
+clean:
+	-rm -f f90wrap_*.f90 *.o *.mod *.fpp *.a
+	-rm -rf src.*/ .f2py_f2cmap .libs/ __pycache__/
+	-rm -rf _${NAME}* ${NAME}*/ ${NAME}.py
+	-rm -rf _build_dir
+	-rm -f meson.build*
