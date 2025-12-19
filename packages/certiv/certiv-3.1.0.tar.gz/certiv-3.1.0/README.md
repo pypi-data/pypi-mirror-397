@@ -1,0 +1,283 @@
+# Certiv Python SDK
+
+[![PyPI version](https://badge.fury.io/py/certiv.svg)](https://badge.fury.io/py/certiv)
+[![Python Version](https://img.shields.io/pypi/pyversions/certiv.svg)](https://pypi.org/project/certiv/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+Zero-instrumentation monitoring and policy enforcement for LLM interactions. Add one line of code to monitor and control tool calls across OpenAI, Anthropic, and Google AI.
+
+## Installation
+
+```bash
+pip install certiv
+```
+
+## Quick Start
+
+```python
+import certiv
+
+# Initialize with your credentials
+certiv.init(
+    agent_id="your-agent-id",
+    agent_secret="your-agent-secret",
+)
+
+# Use any LLM provider normally - automatically monitored!
+from openai import OpenAI
+client = OpenAI()
+response = client.chat.completions.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "What's the weather?"}],
+    tools=[...]
+)
+```
+
+That's it! All LLM interactions are now monitored and policy-enforced through the Certiv dashboard.
+
+## Features
+
+- **Zero Instrumentation** - No code changes to your LLM calls. Just initialize and go.
+- **Policy Enforcement** - Control tool/function execution with allow, block, pause for approval, or graceful blocking
+- **Multi-Provider Support** - Works seamlessly with OpenAI, Anthropic Claude, and Google Gemini
+- **Remote Execution** - Optionally execute sensitive functions in secure remote environments
+- **LangChain Integration** - First-class support for LangChain agents and tools
+- **Real-time Monitoring** - View all LLM interactions in the Certiv dashboard
+- **Transparent Interception** - Patches HTTP transport layers (httpx, requests) without modifying your code
+
+## Supported Providers
+
+| Provider | Status |
+|----------|--------|
+| OpenAI | ✅ Supported |
+| Anthropic | ✅ Supported |
+| Google AI | ✅ Supported |
+
+Works with both direct API clients and LangChain integrations.
+
+## How It Works
+
+Certiv operates at the HTTP transport layer:
+
+1. **Automatic Interception** - Patches `httpx` and `requests` transport layers to intercept LLM API calls
+2. **Policy Evaluation** - Sends tool calls to Certiv backend for real-time policy decisions
+3. **Enforcement** - Modifies responses based on policy (allow, block, pause, gracefully block)
+4. **Transparent** - Your application code remains unchanged
+
+```
+Your Code → LLM Client → [Certiv Intercept] → LLM Provider API
+                              ↓
+                        Policy Check
+                              ↓
+Your Code ← Modified Response ← Original Response
+```
+
+## Policy Actions
+
+### Allow
+Tool calls execute normally. No modifications to the response.
+
+### Block
+Blocked tool calls are silently removed from the LLM response. The model doesn't see them in the execution results.
+
+### Graceful Block
+Blocked tool calls are replaced with a special `certiv_tool` that explains the block reason to the LLM, allowing it to adapt its behavior.
+
+### Pause
+Execution waits for manual approval through the Certiv dashboard (up to 5 minutes). Falls back to block on timeout or denial.
+
+## Full Example
+
+```python
+import os
+import certiv
+from openai import OpenAI
+
+# Initialize Certiv
+certiv.init(
+    agent_id=os.getenv("CERTIV_AGENT_ID"),
+    agent_secret=os.getenv("CERTIV_AGENT_SECRET"),
+    endpoint="https://api.certiv.ai",  # Optional, this is the default
+    debug=False,  # Optional, enable debug logging
+)
+
+# Define your tools
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "Get the current weather in a location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {"type": "string", "description": "City name"},
+                },
+                "required": ["location"],
+            },
+        },
+    },
+]
+
+# Use OpenAI normally
+client = OpenAI()
+response = client.chat.completions.create(
+    model="gpt-4",
+    messages=[
+        {"role": "user", "content": "What's the weather in San Francisco?"}
+    ],
+    tools=tools,
+)
+
+# Certiv automatically monitors and enforces policy
+print(response.choices[0].message)
+```
+
+## LangChain Integration
+
+Certiv works seamlessly with LangChain:
+
+```python
+import certiv
+from langchain_openai import ChatOpenAI
+from langchain.agents import AgentExecutor, create_react_agent
+from langchain.tools import Tool
+
+# Initialize Certiv
+certiv.init(
+    agent_id="your-agent-id",
+    agent_secret="your-agent-secret",
+)
+
+# Define tools
+def search(query: str) -> str:
+    return f"Results for: {query}"
+
+tools = [
+    Tool(
+        name="Search",
+        func=search,
+        description="Useful for searching information",
+    ),
+]
+
+# Create agent
+llm = ChatOpenAI(model="gpt-4")
+agent = create_react_agent(llm, tools, prompt)
+agent_executor = AgentExecutor(agent=agent, tools=tools)
+
+# All interactions automatically monitored
+result = agent_executor.invoke({"input": "Search for Python tutorials"})
+```
+
+## Configuration
+
+### Required Parameters
+
+- `agent_id` (str): Your Certiv agent ID from the dashboard
+- `agent_secret` (str): Your Certiv agent secret
+
+### Optional Parameters
+
+- `endpoint` (str): Certiv API endpoint. Default: `https://api.certiv.ai`
+- `debug` (bool): Enable debug logging. Default: `False`
+
+### Environment Variables
+
+You can also configure via environment variables:
+
+```bash
+export CERTIV_AGENT_ID=your-agent-id
+export CERTIV_AGENT_SECRET=your-agent-secret
+export CERTIV_ENDPOINT=https://api.certiv.ai
+```
+
+```python
+import certiv
+import os
+
+certiv.init(
+    agent_id=os.getenv("CERTIV_AGENT_ID"),
+    agent_secret=os.getenv("CERTIV_AGENT_SECRET"),
+)
+```
+
+## Requirements
+
+- Python 3.9 or higher
+- Works with `httpx` and `requests`-based HTTP clients
+
+## Advanced Features
+
+### Remote Function Execution
+
+Execute sensitive functions in secure remote environments:
+
+```python
+# Define a function
+def execute_database_query(query: str):
+    # This function can be executed remotely
+    return db.execute(query)
+
+# Certiv can intercept and execute this remotely based on policy
+# Configure remote execution in the Certiv dashboard
+```
+
+### Function Hash Freezing
+
+Prevent unauthorized modifications to frozen functions:
+
+```python
+# Functions can be "frozen" with hash validation
+# Attempts to modify frozen functions are rejected
+# Configure in dashboard with override=false
+```
+
+## Shutdown
+
+Certiv automatically cleans up on exit, but you can manually shutdown:
+
+```python
+import certiv
+
+certiv.shutdown()
+```
+
+This restores all patched HTTP transport layers and stops background threads.
+
+## Documentation
+
+- [CLAUDE.md](CLAUDE.md) - Architecture and development guide
+- [TEST_DOCUMENTATION.md](TEST_DOCUMENTATION.md) - Test suite documentation
+- [CHANGELOG.md](CHANGELOG.md) - Version history
+
+## Requirements
+
+Requires Python 3.9+. Core dependencies:
+
+- `pydantic>=2.12.3` - Data validation
+- `httpx>=0.27.0` - HTTP client
+- `requests>=2.32.5` - HTTP client
+- `psutil>=7.1.2` - Process monitoring
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/certiv/certiv-sdk/issues)
+- **Email**: support@certiv.ai
+- **Website**: [certiv.ai](https://certiv.ai)
+
+## Contributing
+
+Contributions welcome! Please ensure:
+
+- Code is formatted with `black` (line length 88)
+- Linting passes with `ruff`
+- Type hints validated with `mypy`
+- Tests pass with `pytest`
+- Copyright header included: `# Copyright (c) 2024 Certiv.ai` / `# SPDX-License-Identifier: MIT`
+
+See [CLAUDE.md](CLAUDE.md) for detailed development instructions.
