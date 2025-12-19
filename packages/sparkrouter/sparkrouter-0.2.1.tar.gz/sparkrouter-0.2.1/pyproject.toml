@@ -1,0 +1,86 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sparkrouter"
+version = "0.2.1"
+description = "Platform-agnostic job routing framework for Spark ETL pipelines"
+readme = "README.md"
+license = "Apache-2.0"
+authors = [
+    { name = "Jamie Clark", email = "j2clark@gmail.com" }
+]
+keywords = [
+    "spark",
+    "etl",
+    "databricks",
+    "glue",
+    "emr",
+    "data-pipeline",
+    "factory-pattern",
+    "dependency-injection",
+    "platform-agnostic"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
+requires-python = ">=3.9"
+dependencies = []
+
+[project.optional-dependencies]
+spark = ["pyspark>=3.0"]
+aws = ["boto3>=1.26"]
+all = ["pyspark>=3.0", "boto3>=1.26"]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0",
+]
+docs = [
+    "mkdocs>=1.5",
+    "mkdocs-material>=9.0",
+    "mkdocstrings[python]>=0.24",
+]
+
+[project.urls]
+Homepage = "https://github.com/j2clark/sparkrouter"
+Documentation = "https://j2clark.github.io/sparkrouter"
+Repository = "https://github.com/j2clark/sparkrouter"
+Issues = "https://github.com/j2clark/sparkrouter/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sparkrouter"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "unit: Unit tests",
+    "functional: Functional tests",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "ruff>=0.14.9",
+]
