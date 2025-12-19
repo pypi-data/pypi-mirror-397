@@ -1,0 +1,232 @@
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
+
+
+[project]
+name = "maite"
+dynamic = []
+description = "Library of common types, protocols (a.k.a. structural subtypes), and utilities to support AI test and evaluation"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "typing-extensions >= 4.5, != 4.6",
+  "numpy >= 1.24.2",
+]
+
+license = { file = "LICENSE.txt" }
+keywords = ["machine learning", "testing", "pytest"]
+
+authors = [{name = "MIT Lincoln Laboratory"}]
+
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering",
+  "Programming Language :: Python :: 3 :: Only",
+]
+version = "0.9.2"
+
+[project.optional-dependencies]
+
+# dependencies required to run maite unit tests
+test = [
+  "pip",
+  "jupytext >= 1.14.0",
+  "numpydoc >= 1.5.0, != 1.10.0", #1.10.0 breaks current CI (see job 1013698)
+  "pyright >= 1.1.280, != 1.1.401",  #1.1.401 breaks current CI
+  "pytest >= 7.0.0",
+  "hypothesis >= 6.61.0, <= 6.113",
+  "pytest-mock >= 3.10.0",
+  "torch >=1.7, != 1.12.0"
+]
+
+# dependencies required to build all documentation with sphinx
+# (This is required because all classes/functions documented with `autodoc`
+# and `autosummary` must be importable)
+builddocs = [
+  "torch>=1.7,!=1.12.0",
+  "pytest >= 7.0.0",
+  "jupyter",
+  "nbconvert",
+  "kornia",
+  "matplotlib",
+  "torchmetrics[detection]",
+  "torchvision",
+  "pycocotools",
+  "datasets>=3",
+  "transformers",
+  "ultralytics",
+  "watermark",
+  "tox (>=4.24.2,<5.0.0)",
+  "ipykernel==6.30.1",
+]
+
+# dependencies required to contribute to maite as a developer
+# (in addition to those listed in 'test' and 'builddocs' extras)
+dev = [
+  "tox",
+  "pre-commit",
+]
+
+# dependencies required to use YOLO model wrappers
+yolo-models = [
+  "boto3 (>=1.35)",
+  "botocore (>=1.35)",
+  "roboflow (>=1.1.30)",
+  "matplotlib (>=3.7.1)",
+  "pandas (>=2.0)",
+  "opencv-python-headless (>=4.6.0)",
+  "torch (>=2.2.0)",
+  "ultralytics (>=8.2.78)",
+  "yolov5 (>=7.0.13)"
+]
+
+# dependencies required to use TorchMetrics metric wrappers
+torchmetrics = ["torchmetrics[detection] (>=1.7.0,<2.0.0)"]
+
+[project.urls]
+"Homepage" = "https://github.com/mit-ll-ai-technology/maite"
+"Bug Reports" = "https://github.com/mit-ll-ai-technology/maite/issues"
+"Source" = "https://github.com/mit-ll-ai-technology/maite"
+
+
+[tool.poetry]
+include = [
+  { path = "tests", format = "sdist" },
+  { path = "maite"}
+]
+
+[tool.poetry.requires-plugins]
+poetry-dynamic-versioning = { version = ">=1.0.0,<2.0.0", extras = ["plugin"] }
+
+[tool.poetry-dynamic-versioning]
+enable = false
+vcs = "git"
+
+[tool.poetry-dynamic-versioning.substitution]
+folders = [
+    { path = "src/maite", files = ["_version.py"] }
+]
+
+
+[tool.isort]
+known_first_party = ["maite", "tests"]
+profile = "black"
+combine_as_imports = true
+
+[tool.ruff]
+exclude = [
+  ".devcontainer",
+  ".github",
+  ".vscode",
+  ".jupyter_cache",
+  "*env*",
+  "output",
+  "_build",
+  ".tox",
+  "prototype",
+]
+
+indent-width = 4
+target-version = "py310"
+extend-include = ["*.ipynb"]
+
+
+
+[tool.ruff.lint]
+# TODO https://gitlab.jatic.net/jatic/cdao/maite/-/issues/815: The suggested lints will
+# cause a large diff. We will investigate the lints individually and add them in smaller pieces.
+#select = ["F", "E", "W", "C90", "I", "N", "D1", "D200", "D201", "D211", "D403", "D419", "UP",
+#          "YTT", "ANN", "S",  "BLE", "B", "A", "COM", "C4", "T10", "ISC", "ICN", "PYI", "PT", "Q",
+#          "RSE", "RET", "SLF", "SIM", "TID252", "ARG", "FIX", "PD", "FLY", "NPY", "RUF027",
+#          "RUF100", "PERF"]
+#ignore = ["ANN101","ANN102","C408","C416"]
+fixable = ["ALL"]
+unfixable = []
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+extend-select = ["I"]
+
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
+
+
+[tool.ruff.lint.isort]
+known-first-party = ["maite"]
+
+[tool.ruff.lint.mccabe]
+# Flag errors (`C901`) whenever the complexity level exceeds 5.
+max-complexity = 5
+
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.codespell]
+skip = '*.svg'
+
+[tool.coverage.report]
+exclude_lines = [
+  'pragma: no cover',
+  'def __repr__',
+  'raise AssertionError',
+  'raise NotImplementedError',
+  'class .*\bProtocol(\[.+\])?\):',
+  '@(abc\.)?abstractmethod',
+  '@(typing\.)?overload',
+  'except ImportError',
+  'except ModuleNotFoundError',
+  'if (typing\.)?TYPE_CHECKING:',
+
+]
+
+[tool.pytest.ini_options]
+xfail_strict = true
+addopts = [
+    "--import-mode=importlib",  # Using an "importlib" import-mode that permits duplicate module names in different tested directories to avoid collisions (between "validation.py" files, for example). See https://docs.pytest.org/en/stable/explanation/pythonpath.html#import-modes
+    "--ignore-glob=tests/dummy_projects/*",
+    "--doctest-modules",
+    "--doctest-report=udiff",
+    "--doctest-continue-on-failure"
+]
+
+[tool.pyright]
+include = ["src"]
+exclude = [
+  "**/node_modules",
+  "**/__pycache__",
+  "src/maite/_version.py",
+  "tests/conftest.py",
+  "tests/test_testing/test_type_checking.py",
+  "tests/test_testing/test_project.py",
+  "tests/test_protocols.py",
+  "tests/dummy_projects",
+]
+reportUnnecessaryTypeIgnoreComment = true
+reportUnnecessaryIsInstance = false
+
+[project.entry-points."maite.tasks"]
+maite_evaluate = "maite.tasks:evaluate"
+maite_predict = "maite.tasks:predict"
+maite_evaluate_from_predictions = "maite.tasks:evaluate_from_predictions"
+maite_augment_dataloader = "maite.tasks:augment_dataloader"
+
+[project.entry-points."maite.protocols.object_detection.Model"]
+maite_YoloObjectDetector = "maite.interop.models.yolo:YoloObjectDetector"
+
+[project.entry-points."maite.protocols.object_detection.Metric"]
+maite_TMDetectionMetric = "maite.interop.metrics.torchmetrics:TMDetectionMetric"
+
+[project.entry-points."maite.protocols.image_classification.Metric"]
+maite_TMClassificationMetric = "maite.interop.metrics.torchmetrics:TMClassificationMetric"
