@@ -1,0 +1,170 @@
+# hhg9 / Hex9
+This is `Hex9` is an **ongoing project** exploring (and developing) a novel
+*hierarchical hexagonal grid* (`HHG`) system for global projections.
+It is well-suited to population mapping, environmental modeling, heat-mapping,
+hex-binning, and other geospatial analyses.
+
+Examples and further documentation may be found on the git repository.
+
+#### Changelog
+```
+0.1.0a3 Rewrite of the hex address and hex polygon code.
+        Hex addresses are not backward compatible, so several files
+        (documentation) will need to be revised.
+        Examples have all been refactored, and tested accordingly.
+0.1.0a2 Improved some documentation; added more licence declr.
+0.1.0a1 Modifying Numpy minimum - bitwise_count dependency.
+        Removed redundant methods in neighbours.
+        hex_layer is still unreliable
+0.1.0a0 Initial Package
+```
+#### Why hexagonal tiling
+* Hexagonal tiling is unique among regular tilings: all neighbors share an edge.
+* Hexagonal tiling corresponds to optimal circle packing.
+* However...
+  * Hexagons cannot be tiled with hexagons.
+  * The sphere cannot be covered by hexagonal tilings
+* So, although ideal HHG have a long history in geospatial modeling...
+  * Most global HHG are either flat or approximate, or not entirely hexagonal.
+  * Existing approaches involve trade-offs, such as
+    * Approximating the sphere with slight distortions.
+    * Limiting the number of hierarchical layers.
+    * Supporting only partial support for transitions between layers.
+    * Deriving the hexagonal grid from spherical geometry
+    * Needing precomputed databases of fixed points.
+    * Requiring additional polygon types (commonly pentagons) for closure
+* **Hex9** presents a *new* approach to the “holy grail” of HHG; It aims to
+  reduce some of these constraints while remaining early-stage and not yet
+  production-ready (Autumn 2025).
+  Where does it fail?
+  The main concern is that the current Hex9 octahedral projection is not amazingly
+  equal-area, especially across a global level.  However, it's hexagons are (for the main part)
+  pretty round, and the area is pretty stable (±7% or so, globally), however local variation is
+  far more stable.  For example, when examining nations,
+  the variation is not so strong  (ok maybe not so much Russia, or Canada).
+  The authalicity example reveals global variation very clearly.
+
+### Why Hex9
+#### Grid-Projection Decoupling
+The Hex9 grid is *fully decoupled from the underlying global projection*.
+The logical hex grid exists independently of any coordinate reference system and
+can be applied within any octahedral global projection.
+While Hex9 comes with a derived projection for this project, the grid itself is
+projection-agnostic, while the derived projection relies on the Hex9 grid
+ for root-finding operations.
+
+This separation ensures:
+ * The grid can be reused across projections without loss of structure.
+ * Analyses and visualizations remain consistent, regardless of map
+distortions in the underlying projection.
+
+#### Accuracy
+Hex9 supports near-lossless forward and inverse mappings between
+grid addresses and geodetic coordinates.
+Accuracy is maintained even at extreme resolution: At layer 30, hexagons are accurate to
+about 1µm. Example round-trip accuracy for several landmarks:
+
+*
+The grid addresses below might be non-canonical (still prone to change).
+Current Grid address semantics are as follows.
+The Great Pyramid at Giza is identified at 29°58'45.817792004858"N, 31°8'3.457294813097"E
+This can be projected to a (reversible) hex-grid address at any given layer.
+Here it is at layer 36.
+`0070143470686461861005464283175018506`
+Broken down..
+`0-0701434706864618610054642831750185-06`
+The first digit is the root hexagon at layer 0.  This is one of 12 hexagons that cover the
+earth's surface, so the range of values are 0...B (where A,B = hexagons 10,11 respectively).
+07...185  These are the sub-hexagons at each respective layer; so as there are 35 of those, along with
+the root hexagon, we know this address is at layer 36.
+`06` - these act as 'metadata tail', and provide the minimum amount of metadata to convert the address back to
+it's longitude/latitude. (The calculations for this are found in h9/addressing.py).
+
+There is also a 'key' version of the address.  This is used for identifying which points are within a specific hexagon
+when hex-binning (a main purpose for this sort of grid). In this case, the 'metadata tail' is reduced.
+In this case, the great pyramid is:
+`0070143470686461861005464283175018500`
+Importantly, and despite best efforts,
+the hexagon key of a higher layer cannot be solely derived by chopping the string.
+The c2 identity is an important aspect for decoding ids 6,7,8
+Likewise the octant face mode is very useful.
+For the first 11 layers, the pyramid address key is as follows.
+0:00
+1:002
+2:0072
+3:00704
+4:007012
+5:0070140
+6:00701430
+7:007014344
+8:0070143474
+9:00701434700
+10:007014347064
+*
+
+**Great Pyramid**
+```
+29°58'45.817792004858"N, 31°8'3.457294813097"E (Reference Coordinates)
+29°58'45.817792004871"N, 31°8'3.457294813071"E (Roundtrip Coordinates)
+0070143470686461861005464283175018506 (L35 Grid Address)
+∂0.984436nm (roundtrip via GCD<->Hex9 Label) in Geodesic distance (nanometres)
+```
+
+**Stonehenge**
+```
+51°10'43.672800075871"N, 1°49'34.283450385600"W (Reference Coordinates)
+51°10'43.672800075845"N, 1°49'34.283450385640"W (Roundtrip via Grid Address)
+4352164061084274326815104253457062812 (L35 Grid Address)
+∂1.314516nm delta (Geodesic.DISTANCE)
+```
+
+**Moai on Rapa Nui**
+```
+27°7'32.827199567155"S, 109°16'36.740870832014"W (Reference Coordinates)
+27°7'32.827199567142"S, 109°16'36.740870832014"W (Roundtrip via Grid Address)
+b501888670665528318830382731266380195 (L35 Grid Address)  
+0.352774nm  delta (Geodesic.DISTANCE)
+```
+
+**North Pole** (edge case)
+```
+90°0'0.000000000000"N, 0°0'0.000000000000"E (Reference Coordinates)
+89°59'59.999999999898"N, 12°16'35.957736079345"E (Roundtrip via Grid Address)
+422222222222222222222222222222224832a (Grid Address)
+∂3.174534nm  delta (Geodesic.DISTANCE)
+```
+#### Intuitive uint64 Addresses
+Hex9 supports various `uint64` addresses in a directly intuitive manner.
+
+For example, one of the Nazca Spirals - at `14.679806S, 75.101925W` has the
+uint64 address `0xb404124850835306` (in hexadecimal).
+'b' here represents hexagon 11
+This is (by default) a 'Layer 13' Address; The hexagons are in bytes 0..13
+The final 2 bytes are the meta, used to convert the address back to another location.
+To convert the address to an identifying hex key, this can be done by masking the final
+byte with 0x70 (or using a far more reliable internal method).
+
+```
+0x40412...
+  ↑↑↑↑↑
+  ||||└─── Layer 4, hexagon 1
+  |||└──── Layer 3, hexagon 4
+  ||└───── Layer 2, hexagon 0
+  |└────── Layer 1, hexagon 4
+  └─────── Hexagon 'B'
+```
+When the uint64 address is depicted in hexadecimal, the global address is
+revealed and may be readily eye-balled with a crib - see the following image
+that traces the first 5 regions 8,2,5,4,A - each one covering 1/9th the area of
+the preceding layer.
+
+#### Performance
+Hex9 efficiently handles large datasets. For example, *25 million sparse
+GCD points can be mapped in far less than 20 minutes* on standard desktop hardware.
+
+#### Summary
+Thanks to its decoupled, fractal-based structure,
+Hex9 allows direct projection of spatial data onto hexagonal grids.
+It has strong roundtrip integrity.
+It is *reasonably* authalic, with a global RSME of about 7%, but smooth authalic change - meaning that at local levels,
+data sampling is representative.
