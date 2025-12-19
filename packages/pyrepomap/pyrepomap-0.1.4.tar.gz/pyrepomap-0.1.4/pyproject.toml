@@ -1,0 +1,48 @@
+[project]
+name = "pyrepomap"
+version = "0.1.4"
+description = "Tree-sitter based repository map generator - extract and visualize code structure"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.10"
+keywords = ["tree-sitter", "code-analysis", "repository-map", "ast", "code-structure"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Code Generators",
+]
+dependencies = [
+    "diskcache>=5.6.3",
+    "grep-ast>=0.9.0",
+    "matplotlib>=3.10.8",
+    "networkx>=3.0",
+    "numpy>=1.26",
+    "pydot>=4.0.1",
+    "pygments>=2.0",
+    "scipy>=1.10",
+    "tqdm>=4.0",
+    "tree-sitter-language-pack>=0.11.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/cdpath/repomap"
+Repository = "https://github.com/cdpath/repomap"
+
+[project.scripts]
+repomap = "repomap.cli:main"
+pyrepomap = "repomap.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["repomap"]

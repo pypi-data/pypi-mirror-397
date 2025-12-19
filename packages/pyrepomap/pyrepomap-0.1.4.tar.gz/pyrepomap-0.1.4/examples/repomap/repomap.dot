@@ -1,0 +1,23 @@
+strict digraph {
+"core.py";
+"ranking.py";
+"cli.py";
+"tags.py";
+"graph.py";
+"cache.py";
+"tree.py";
+"core.py" -> "ranking.py" [weight=1, label="get_ranked_tags"];
+"core.py" -> "cache.py" [weight=2, label="TagsCache, set"];
+"core.py" -> "tree.py" [weight=1, label="to_tree"];
+"ranking.py" -> "tags.py" [weight=1, label="get_tags_raw"];
+"ranking.py" -> "cache.py" [weight=2, label="get, set"];
+"cli.py" -> "cache.py" [weight=1, label=set];
+"cli.py" -> "graph.py" [weight=1, label="generate_call_graph"];
+"cli.py" -> "core.py" [weight=3, label="RepoMap, find_src_files, get_repo_map"];
+"tags.py" -> "cache.py" [weight=1, label=set];
+"tags.py" -> "core.py" [weight=1, label="read_text"];
+"graph.py" -> "tags.py" [weight=1, label="get_tags_raw"];
+"graph.py" -> "cache.py" [weight=2, label="get, set"];
+"graph.py" -> "core.py" [weight=2, label="get_rel_fname, read_text"];
+"tree.py" -> "cache.py" [weight=1, label=set];
+}
