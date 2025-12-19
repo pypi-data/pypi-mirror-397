@@ -1,0 +1,170 @@
+Metadata-Version: 2.4
+Name: ebm2onnx
+Version: 3.3.1
+Summary: EBM model serialization to ONNX
+Author: Romain Picard
+Author-email: romain.picard@softathome.com
+License: MIT License
+        
+        Copyright (c) 2021, SoftAtHome
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+        
+Project-URL: repository, https://github.com/interpretml/ebm2onnx.git
+Keywords: ebm2onnx,interpretml,machine-learning,onnx
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.6
+Description-Content-Type: text/x-rst
+License-File: LICENSE.txt
+Requires-Dist: onnx~=1.8
+Requires-Dist: interpret-core~=0.6
+Provides-Extra: test
+Requires-Dist: pytest; extra == "test"
+Dynamic: license-file
+
+========
+Ebm2onnx
+========
+
+
+.. image:: https://img.shields.io/pypi/v/ebm2onnx.svg
+        :target: https://pypi.python.org/pypi/ebm2onnx
+
+.. image:: https://github.com/interpretml/ebm2onnx/actions/workflows/ci.yml/badge.svg
+    :target: https://github.com/interpretml/ebm2onnx/actions/workflows/ci.yml
+    :alt: CI
+
+.. image:: https://coveralls.io/repos/github/interpretml/ebm2onnx/badge.svg?branch=master
+    :target: https://coveralls.io/github/interpretml/ebm2onnx?branch=master
+    :alt: Code Coverage
+
+.. image:: https://readthedocs.org/projects/ebm2onnx/badge/?version=latest
+    :target: https://ebm2onnx.readthedocs.io/en/latest/?version=latest
+    :alt: Documentation Status
+
+.. image:: https://mybinder.org/badge_logo.svg
+    :target: https://mybinder.org/v2/gh/interpretml/ebm2onnx/master?filepath=examples%2Fconvert.ipynb
+
+
+Ebm2onnx converts `EBM <https://github.com/interpretml/interpret>`_ models to
+ONNX. It allows to run an EBM model on any ONNX compliant runtime.
+
+
+Features
+--------
+
+* Binary classification
+* Regression
+* Continuous, nominal, and ordinal variables
+* N-way interactions
+* Multi-class classification (support is still experimental in EBM)
+* Expose predictions probabilities
+* Expose local explanations
+* Export a model as part of a scikit-learn pipeline (experimental)
+
+The export of the models is tested against `ONNX Runtime <https://github.com/Microsoft/onnxruntime>`_. 
+
+Get Started
+------------
+
+Train an EBM model:
+
+.. code:: python
+
+    # prepare dataset
+    df = pd.read_csv('titanic_train.csv')
+    df = df.dropna()
+
+    feature_columns = ['Age', 'Fare', 'Pclass', 'Embarked']
+    label_column = "Survived"
+    y = df[[label_column]]
+    le = LabelEncoder()
+    y_enc = le.fit_transform(y)
+    x = df[feature_columns]
+    x_train, x_test, y_train, y_test = train_test_split(x, y_enc)
+
+    # train an EBM model
+    model = ExplainableBoostingClassifier(
+        feature_types=['continuous', 'continuous', 'continuous', 'nominal'],
+    )
+    model.fit(x_train, y_train)
+
+
+Then you can convert it to ONNX in a single function call:
+
+.. code:: python
+
+    import onnx
+    import ebm2onnx
+
+    onnx_model = ebm2onnx.to_onnx(
+        model,
+        ebm2onnx.get_dtype_from_pandas(x_train),
+    )
+    onnx.save_model(onnx_model, 'ebm_model.onnx')
+
+
+If your dataset is not a pandas dataframe, you can provide the features' types
+directly:
+
+.. code:: python
+
+    import ebm2onnx
+
+    onnx_model = ebm2onnx.to_onnx(
+        model,
+        dtype={
+            'Age': 'double',
+            'Fare': 'double',
+            'Pclass': 'int',
+            'Embarked': 'str',
+        }
+    )
+    onnx.save_model(onnx_model, 'ebm_model.onnx')
+
+
+Try it live
+-------------
+
+- You can live test the `model conversion <https://mybinder.org/v2/gh/interpretml/ebm2onnx/master?filepath=examples%2Fconvert.ipynb>`_.
+- You can live test `local explanations <https://mybinder.org/v2/gh/interpretml/ebm2onnx/master?filepath=examples%2Fexplain_local.ipynb>`_.
+- You can live test the export of a `scikit-learn pipeline <https://mybinder.org/v2/gh/interpretml/ebm2onnx/master?filepath=examples%2Fsklearn-pipeline.ipynb>`_.
+
+
+Supporting organizations
+-------------------------
+
+The following organizations are supporting Ebm2onnx:
+
+- `SoftAtHome <https://www.softathome.com>`_: Main supporter of Ebm2onnx development.
+- `InterpretML <https://interpret.ml>`_: Ebm2onnx is hosted under the umbrella of the InterpretML organization.
+
+|img_sah| |img_interpret|
+
+.. |img_sah| image:: https://raw.githubusercontent.com/interpretml/ebm2onnx/master/assets/sah_logo.png
+    :target: https://www.softathome.com
+
+.. |img_interpret| image:: https://raw.githubusercontent.com/interpretml/ebm2onnx/master/assets/interpretml-logo.png
+    :target: https://interpret.ml
