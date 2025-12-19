@@ -1,0 +1,40 @@
+[project]
+name = "krewlyzer"
+version = "0.3.2"
+description = "Feature extraction tools for circulating tumor DNA from GRCh37 aligned BAM files"
+authors = [{name = "Ronak Shah", email = "shahr2@mskcc.org"}]
+requires-python = ">=3.8"
+readme = "README.md"
+license = { file = "LICENSE" }
+dependencies = [
+    "typer>=0.15.0",
+    "pysam>=0.22.0",
+    "pandas>=2.2.0",
+    "numpy>=1.20.0",
+    "rich>=13.9.0"
+]
+
+[project.optional-dependencies]
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.5.0"
+]
+test = [
+    "pytest>=7.0.0",
+    "pytest-mock>=3.10.0"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/msk-access/krewlyzer"
+
+[project.scripts]
+krewlyzer = "krewlyzer.cli:app"
+
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[tool.maturin]
+python-source = "src"
+manifest-path = "rust/Cargo.toml"
+module-name = "krewlyzer._core"
