@@ -1,0 +1,128 @@
+Metadata-Version: 2.4
+Name: changelogtxt-parser
+Version: 1.0.0rc2
+Summary: Parses changelog txt files
+Author-email: David Angarita <davidangarita.sistemas@gmail.com>
+Maintainer-email: Andrew Pikul <ajpikul@gmail.com>
+License: MIT License
+        
+        Copyright (c) 2025 geopozo
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Project-URL: Homepage, https://github.com/geopozo/changelogtxt-parser
+Project-URL: Repository, https://github.com/geopozo/changelogtxt-parser
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: logistro>=1.1.0
+Requires-Dist: packaging>=25.0
+Requires-Dist: semver>=3.0.4
+Dynamic: license-file
+
+# Changelogtxt-parser
+
+<h1
+  align="center"
+>
+	  <img
+        height="250"
+        width="250"
+        alt="changelogtxt_small"
+        src="https://raw.githubusercontent.com/geopozo/changelogtxt-parser/main/docs/media/logo.png">
+</h1>
+
+## Overview
+
+Changelogtxt-parser is a python api, CLI, and github action for parsing and
+verifying a changelog.txt like this:
+
+```txt title="CHANGELOG.txt"
+- An unreleased change
+
+v0.2.0
+- A change
+
+v0.1.0
+- A change
+- Another change
+```
+
+## How to Install
+
+```shell title="Console"
+uv add changelogtxt-parser
+# or
+pip install changelogtxt-parser
+```
+
+## Python API
+
+```python title="Python"
+import changelogtxt
+
+x = changelogtxt.load(filename)
+
+# object example
+changelogtxt.dump(object)
+```
+
+## CLI Examples
+
+```shell title="Console"
+# lint
+changelogtxt check-format
+
+# verify version exists
+changelogtxt get-tag v1.0.1
+
+# add new change or version
+changelogtxt update -t "v1.0.2" -m "Change"
+
+# compare two git ref files
+changelogtxt summarize-news <origin> <target>
+```
+
+## Basic action
+
+```yaml title="action.yml"
+- name: Check changelog
+  uses: geopozo/changelogtxt-parser@main
+  with:
+    # Python version to use (default: 3.12)
+    python-version: ""
+
+    # Path to the changelog file (default: searches ./CHANGELOG.txt)
+    file-path: ""
+
+    # Whether to validate the changelog format (default: "true")
+    check-format: "true"
+
+    # Tag to verify. Use "from-push" to get the tag from the latest push
+    get-tag: "v1.0.0"
+
+    # Compare changelog files from the current ref to <target_ref>
+    # (branch, commit hash, or tag)
+    # <file_path> is relative to the `working-directory`
+    summarize-news: '["<file_path>", "<target_ref>"]'
+```
+
+## License
+
+This project is licensed under the terms of the MIT license.
