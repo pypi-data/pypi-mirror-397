@@ -1,0 +1,353 @@
+Metadata-Version: 2.4
+Name: obfus
+Version: 3.7.2
+Summary: A comprehensive Python code obfuscation engine
+Author-email: Farshid Ashouri <farsheed.ashouri@gmail.com>
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/rodmena-limited/obfus
+Project-URL: Documentation, https://github.com/rodmena-limited/obfus#readme
+Project-URL: Repository, https://github.com/rodmena-limited/obfus.git
+Project-URL: Issues, https://github.com/rodmena-limited/obfus/issues
+Project-URL: Changelog, https://github.com/rodmena-limited/obfus/blob/main/CHANGELOG.md
+Keywords: obfuscation,obfuscator,python,protect,encrypt,security,code-protection,ast,minify
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Security
+Classifier: Topic :: Software Development :: Build Tools
+Classifier: Topic :: Software Development :: Code Generators
+Classifier: Topic :: Software Development :: Pre-processors
+Classifier: Topic :: Utilities
+Classifier: Typing :: Typed
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"
+Requires-Dist: mypy>=1.0; extra == "dev"
+Requires-Dist: black>=23.0; extra == "dev"
+Dynamic: license-file
+
+# obfus
+
+A comprehensive Python code obfuscation engine.
+
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+## Features
+
+- **String Obfuscation** - Multiple encoding methods (XOR, Base64, ROT13, multi-layer)
+- **Name Mangling** - Local variables, arguments, code names, attributes
+- **Code Object Obfuscation** - Bytecode encryption and protection
+- **Module Protection** - Prevent modification and inspection
+- **Wrap Mode** - Dynamic deobfuscation at runtime
+- **RFT (Refactoring)** - Complete identifier renaming
+- **Import Obfuscation** - Hide import statements
+- **Control Flow Obfuscation** - Opaque predicates, dead code injection
+- **Zero Dependencies** - Pure Python, no external packages required
+
+## Installation
+
+```bash
+pip install obfus
+```
+
+Or install from source:
+
+```bash
+git clone https://github.com/rodmena-limited/obfus.git
+cd obfus
+pip install -e .
+```
+
+## Quick Start
+
+### Basic Usage
+
+```python
+from obfus import ObfuscationConfig, ObfuscationEngine
+
+# Use preset configurations
+config = ObfuscationConfig.minimal()    # Light obfuscation
+config = ObfuscationConfig.standard()   # Balanced obfuscation
+config = ObfuscationConfig.aggressive() # Heavy obfuscation
+
+# Create engine and obfuscate
+engine = ObfuscationEngine(config)
+obfuscated = engine.obfuscate_source('''
+def hello(name):
+    return f"Hello, {name}!"
+
+print(hello("World"))
+''')
+print(obfuscated)
+```
+
+### Convenience Functions
+
+```python
+from obfus import obfuscate, obfuscate_file, obfuscate_directory
+
+# Obfuscate a string
+result = obfuscate("print('Hello')")
+
+# Obfuscate a file
+obfuscate_file("input.py", "output.py")
+
+# Obfuscate entire directory
+obfuscate_directory("src/", "dist/")
+```
+
+### Command Line
+
+```bash
+# Obfuscate a single file
+obfus input.py -o output.py
+
+# Obfuscate a directory
+obfus src/ -o dist/
+
+# With specific preset
+obfus input.py -o output.py --preset aggressive
+```
+
+## Configuration
+
+### Presets
+
+| Preset | Description | Use Case |
+|--------|-------------|----------|
+| `minimal()` | Light obfuscation, preserves readability | Development, debugging |
+| `standard()` | Balanced protection and performance | General distribution |
+| `aggressive()` | Heavy obfuscation, harder to reverse | Production releases |
+| `maximum()` | Maximum protection, slower execution | High-security applications |
+
+### Custom Configuration
+
+```python
+from obfus import ObfuscationConfig, ObfuscationEngine, WrapMode
+
+config = ObfuscationConfig(
+    # Name obfuscation
+    mix_localnames=True,      # Obfuscate local variable names
+    mix_argnames=False,       # Keep argument names (for keyword args)
+    mix_coname=1,             # Hide code object names (0-2)
+    mix_attr=False,           # Obfuscate attribute names
+
+    # String obfuscation
+    mix_str=True,             # Obfuscate string constants
+    mix_str_threshold=8,      # Min string length to obfuscate
+
+    # Module protection
+    obf_module=True,          # Obfuscate module bytecode
+    obf_code=1,               # Code object obfuscation level (0-2)
+    wrap_mode=WrapMode.SIMPLE, # Dynamic deobfuscation
+
+    # Advanced features
+    enable_rft=False,         # Full identifier renaming
+    enable_control_flow=False, # Control flow obfuscation
+    enable_dead_code=False,   # Dead code injection
+)
+
+engine = ObfuscationEngine(config)
+```
+
+### Configuration Options Reference
+
+#### Name Obfuscation
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `mix_localnames` | bool | True | Obfuscate local variable names |
+| `mix_argnames` | bool | False | Obfuscate function argument names |
+| `mix_coname` | int | 0 | Hide code object names (0=off, 1=partial, 2=full) |
+| `mix_attr` | bool | False | Obfuscate attribute access names |
+
+#### String Obfuscation
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `mix_str` | bool | False | Enable string constant obfuscation |
+| `mix_str_threshold` | int | 8 | Minimum string length to obfuscate |
+
+#### Module Protection
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `obf_module` | bool | True | Obfuscate module-level bytecode |
+| `obf_code` | int | 1 | Code object encryption level (0-2) |
+| `wrap_mode` | WrapMode | SIMPLE | Dynamic deobfuscation mode |
+| `restrict_module` | RestrictionLevel | BASIC | Module access restrictions |
+| `readonly_module` | bool | False | Make module attributes read-only |
+
+#### Advanced Features
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `enable_rft` | bool | False | Enable full refactoring/renaming |
+| `enable_control_flow` | bool | False | Add control flow obfuscation |
+| `enable_dead_code` | bool | False | Inject dead code blocks |
+| `enable_opaque_predicates` | bool | False | Add opaque predicates |
+
+## RFT (Refactoring) Mode
+
+RFT mode performs complete identifier renaming across your codebase:
+
+```python
+config = ObfuscationConfig(
+    enable_rft=True,
+    rft_excludes={'main', 'setup'},  # Names to preserve
+    rft_preserve_exports=True,        # Keep __all__ names
+)
+```
+
+### RFT Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `rft_excludes` | Set[str] | {} | Names to exclude from renaming |
+| `rft_auto_exclude` | int | 1 | Auto-exclude behavior (0-2) |
+| `rft_preserve_exports` | bool | True | Preserve names in `__all__` |
+
+## Limitations and Compatibility
+
+### Works With
+
+- Pure Python code
+- Standard library usage
+- Internal class hierarchies
+- Async/await patterns
+- Generators and iterators
+- Context managers
+- Decorators
+- Metaclasses
+- Dataclasses and enums
+
+### May Break
+
+| Scenario | Risk Level | Mitigation |
+|----------|------------|------------|
+| `exec()`/`eval()` with string names | High | Use `rft_excludes` |
+| `getattr()`/`setattr()` with strings | High | Use `rft_excludes` |
+| Serialization (pickle, JSON) | High | Use `minimal()` preset |
+| Framework magic (Django, Flask) | High | Use `minimal()` or skip |
+| pytest fixtures | Medium | Don't obfuscate test files |
+| CLI tools (Click, argparse) | Medium | Keep argument names |
+| External API contracts | Medium | Use `rft_excludes` |
+| Reflection-based libraries | Medium | Test thoroughly |
+
+### Safe Usage Guidelines
+
+```python
+# For libraries with external interfaces
+config = ObfuscationConfig.minimal()
+
+# For standalone scripts
+config = ObfuscationConfig.aggressive()
+
+# For maximum protection (internal tools only)
+config = ObfuscationConfig.maximum()
+```
+
+## Performance
+
+Obfuscation adds minimal runtime overhead:
+
+| Operation | Overhead |
+|-----------|----------|
+| Import time | ~0-5% |
+| Simple operations | ~0-10% |
+| String-heavy code | ~10-20% |
+| With wrap mode | ~5-15% |
+
+Test suite performance is typically within 5% of original code.
+
+## Examples
+
+### Obfuscate a Package
+
+```python
+from obfus import obfuscate_directory, ObfuscationConfig
+
+config = ObfuscationConfig.standard()
+obfuscate_directory(
+    "mypackage/",
+    "dist/mypackage/",
+    config=config,
+    recursive=True,
+)
+```
+
+### Preserve Specific Names
+
+```python
+config = ObfuscationConfig(
+    enable_rft=True,
+    rft_excludes={
+        'main',
+        'run',
+        'setup',
+        'teardown',
+        '__init__',
+        '__call__',
+    },
+)
+```
+
+### Skip Certain Files
+
+```python
+from pathlib import Path
+from obfus import ObfuscationEngine, ObfuscationConfig
+
+config = ObfuscationConfig.standard()
+engine = ObfuscationEngine(config)
+
+for py_file in Path("src").rglob("*.py"):
+    # Skip test files and configs
+    if "test" in py_file.name or py_file.name == "config.py":
+        continue
+
+    source = py_file.read_text()
+    obfuscated = engine.obfuscate_source(source)
+
+    output = Path("dist") / py_file.relative_to("src")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(obfuscated)
+```
+
+## Testing
+
+```bash
+# Run all tests
+pytest
+
+# Run with coverage
+pytest --cov=obfus --cov-report=html
+
+# Run specific test class
+pytest tests/test_obfuscator.py::TestAllFeatures -v
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
