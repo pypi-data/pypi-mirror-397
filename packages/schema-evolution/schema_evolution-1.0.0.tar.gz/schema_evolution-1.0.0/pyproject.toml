@@ -1,0 +1,46 @@
+[tool.poetry]
+name = "schema-evolution"
+version = "1.0.0"
+description = "A reusable package for handling schema evolution in Spark/Hive tables"
+authors = ["KSMC Data Engineering <data-engineering@ksmc.gov.sa>"]
+readme = "README.md"
+license = "MIT"
+homepage = "https://github.com/ksmc/schema-evolution"
+repository = "https://github.com/ksmc/schema-evolution"
+keywords = ["spark", "hive", "schema", "evolution", "data", "engineering"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+
+[tool.poetry.dependencies]
+python = "^3.6"
+pyspark = "^3.0.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.0.0"
+black = "^23.0.0"
+flake8 = "^6.0.0"
+
+[tool.poetry.scripts]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ['py36', 'py37', 'py38', 'py39', 'py310']
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
