@@ -1,0 +1,89 @@
+Metadata-Version: 2.4
+Name: qec-util
+Version: 0.4.2
+Summary: Useful tools for QEC simulation
+Author-email: Marc Serra Peralta <marcserraperalta@gmail.com>, Boris Varbanov <b.m.varbanov@gmail.com>
+Maintainer-email: Marc Serra Peralta <marcserraperalta@gmail.com>
+License: MIT License
+        
+        Copyright (c) 2023 MarcSerraPeralta
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: numpy
+Requires-Dist: stim
+Requires-Dist: lmfit
+Requires-Dist: xarray
+Provides-Extra: dev
+Requires-Dist: qec_util[all]; extra == "dev"
+Requires-Dist: pip-tools; extra == "dev"
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: scalene; extra == "dev"
+Requires-Dist: black; extra == "dev"
+Requires-Dist: pytest-black; extra == "dev"
+Provides-Extra: all
+Requires-Dist: networkx; extra == "all"
+Requires-Dist: gurobipy; extra == "all"
+Requires-Dist: scipy; extra == "all"
+Requires-Dist: pymatching; extra == "all"
+Requires-Dist: dem_decoders; extra == "all"
+Requires-Dist: pyyaml; extra == "all"
+Requires-Dist: matplotlib; extra == "all"
+Requires-Dist: galois; extra == "all"
+Dynamic: license-file
+
+# qec-util
+
+![example workflow](https://github.com/MarcSerraPeralta/qec-util/actions/workflows/actions.yaml/badge.svg)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+![PyPI](https://img.shields.io/pypi/v/qec_util?label=pypi%20package)
+
+A collection of utility methods and objects to aid with the simulation, decoding and analysis of QEC experiments.
+
+
+## Installation
+
+This package is available in PyPI, thus it can be installed using
+```
+pip install qec-util[all]
+```
+or alternatively, it can be installed from source using
+```
+git clone git@github.com:MarcSerraPeralta/qec-util.git
+cd qec-util
+pip install .[all]
+```
+The flag `[all]` is to install the requirements to be able to run all functionality from `qec_util`.
+If only specific functions are going to be used, it is recommended to run
+```
+pip install qec-util
+pip install ... # requirements specified in the Notes of the specific functions
+```
+
+## Setting up the gurobi license
+
+1. Create a free academic account
+2. Request a license, which will give you a license key
+3. Install the Gurobi Optimizer (or install `gurobipy` through conda) so that we can run the `grbgetkey` command
+4. Run `grbgetkey xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` using your license number
+5. At the end of `~/.bashrc` add `export GRB_LICENSE_FILE=/path/to/license.lic` where the license path is printed when running the previous step
+6. Run `source ~/.bashrc` or open a new terminal and check that the license installation is successful by running the `gurobi.sh` command
