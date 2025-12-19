@@ -1,0 +1,58 @@
+[project]
+name = "flowcard"
+version = "0.1.0"
+description = "Transform your code workflow into comprehensive documentation"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "RemyCocq" }
+]
+keywords = ["card", "html", "markdown"]
+dependencies = [
+    "markdown>=3.8",
+    "jinja2>=3.1.0",
+    "python-magic>=0.4.27",
+    "pillow>=11.2.1",
+    "matplotlib>=3.10.3",
+    "numpy>=2.2.6",
+]
+
+[project.urls]
+Homepage = "https://github.com/RemyCocq/flowcard"
+Repository = "https://github.com/RemyCocq/flowcard"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["flowcard"]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "isort>=5.13.0",
+    "autoflake>=2.2.1",
+    "black>=24.0.0",
+]
+
+[tool.isort]
+profile = "black"
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+import_heading_stdlib = "Standard Library"
+import_heading_firstparty = "Flowcard"
+import_heading_thirdparty = "Third Party"
+
+[tool.autoflake]
+check = true
+ignore-pass-after-docstring = true
+in-place = true
+remove-all-unused-imports = true
+remove-duplicate-keys = true
+remove-unused-variables = true
+
+[tool.pytest.ini_options]
+addopts = "--cov=flowcard --cov-report html"
+pythonpath = [".", "flowcard"]
