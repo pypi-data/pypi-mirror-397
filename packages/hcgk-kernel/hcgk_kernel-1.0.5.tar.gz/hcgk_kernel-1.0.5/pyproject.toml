@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hcgk-kernel"
+version = "1.0.5"
+description = "Hardware Control Gatekeeper Kernel - Authorization system for heavy AI models"
+readme = "README.md"
+authors = [
+    {name = "Matias Nisperuza", email = "mnisperuza1102@gmail.com"}
+]
+license = {text = "MIT"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Hardware",
+]
+keywords = ["hardware", "gatekeeper", "authorization", "ai", "models", "gpu", "vram", "system-check", "kernel"]
+requires-python = ">=3.8"
+dependencies = [
+    "psutil>=5.9.0",
+    "torch>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/mnisperuza/hcgk-kernels"
+Documentation = "https://github.com/mnisperuza/hcgk-kernels#readme"
+Repository = "https://github.com/mnisperuza/hcgk-kernels"
+"Bug Tracker" = "https://github.com/mnisperuza/hcgk-kernels/issues"
+
+[project.scripts]
+hcgk = "hcgk_kernel.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+hcgk_kernel = ["py.typed"]
