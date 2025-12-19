@@ -1,0 +1,55 @@
+# SPDX-License-Identifier: MIT
+
+[tool.ruff]
+target-version = "py39"
+line-length = 110
+exclude = ["venv"]
+
+[project]
+name = "avnie"
+version = "2025.12.18"
+requires-python = ">=3.9"
+description = "Command-line interface to avro.py; transliteration in the terminal."
+authors = [{ name = "Anindya Shiddhartha" }]
+readme = "README.md"
+license = "MIT"
+packages = [{include = "avnie"}]
+keywords = [
+    'python',
+    'phonetics',
+    'avro',
+    'avro phonetic',
+    'bangla',
+    'bengali',
+    'bengali phonetics',
+    'transliteration',
+    'command-line',
+    'cli',
+    'command-line interface',
+    'avnie',
+    'avnie-cli',
+    'avro.py-cli'
+]
+dependencies = [
+    "avro-py>=2025.8.11",
+    "click>=8.1.8",
+    "pyclip>=0.7.0",
+    "rich>=14.2.0",
+]
+
+[project.urls]
+Homepage = "https://pypi.org/project/avnie"
+Repository = "https://github.com/hitblast/avnie"
+
+[project.scripts]
+avnie = "avnie.main:run"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "pytest-mock>=3.15.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
