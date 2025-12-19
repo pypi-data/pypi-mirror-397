@@ -1,0 +1,53 @@
+# aiocoalesce
+
+A best-in-class async request coalescing library for Python (3.9+).
+
+`aiocoalesce` ensures that multiple concurrent async requests for the same key share a single execution (the "SingleFlight" pattern).
+This protects your backend from **Thundering Herds** without the complexity of Redis or caching layers.
+
+**Key Difference:** Unlike other libraries, `aiocoalesce` is **Cancellation Safe**. If the first user disconnects, the shared work continues for other waiting users.
+
+## Installation
+
+```bash
+pip install aiocoalesce
+```
+
+## Usage
+
+```python
+import asyncio
+from aiocoalesce import Coalescer
+
+# Create a global coalescer
+coalescer = Coalescer()
+
+async def get_user_data(user_id: int):
+    # Simulate DB call
+    await asyncio.sleep(1)
+    return {"id": user_id, "name": "Alice"}
+
+# In your API handler:
+async def handler(user_id):
+    # If 10 requests come in at once for user_id=1, 
+    # 'get_user_data' runs ONLY ONCE.
+    return await coalescer.run(user_id, get_user_data(user_id))
+```
+
+## Why aiocoalesce?
+
+| Feature | `aiocoalesce` | Existing `singleflight` | `asyncio.Lock` |
+|---------|----------|----------------|-------------|
+| **Pattern** | True Coalescing | True Coalescing | Sequential Locking |
+| **Cancellation** | ✅ **Shielded** (Safe) | ❌ **Cascading Fails** | ✅ Safe |
+| **Exec Model** | Concurrent | Concurrent | Sequential (Slow) |
+
+### Use Case
+Perfect for:
+- **FastAPI** endpoints with expensive DB queries.
+- **ML Inference** servers (prevent running same model input twice).
+- **Proxy servers** to reduce upstream load.
+
+## License
+
+MIT
