@@ -1,0 +1,91 @@
+Metadata-Version: 2.4
+Name: slack-praisonai-bot
+Version: 0.1.0
+Summary: Slack bot powered by PraisonAI multi-agent framework
+Author-email: Mervin Praison <support@praison.ai>
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/MervinPraison/slack-praisonai-bot
+Project-URL: Documentation, https://docs.praison.ai
+Project-URL: Repository, https://github.com/MervinPraison/slack-praisonai-bot
+Keywords: slack,bot,praisonai,ai-agents,multi-agent,llm
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: slack-bolt>=1.18.0
+Requires-Dist: httpx>=0.24.0
+Requires-Dist: python-dotenv>=1.0.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: pytest-httpx>=0.21.0; extra == "dev"
+Dynamic: license-file
+
+# slack-praisonai-bot
+
+Slack bot powered by [PraisonAI](https://github.com/MervinPraison/PraisonAI) multi-agent framework.
+
+## Installation
+
+```bash
+pip install slack-praisonai-bot
+```
+
+## Quick Start
+
+1. **Create a Slack App**
+   - Go to [api.slack.com/apps](https://api.slack.com/apps)
+   - Create New App → From scratch
+   - Enable Socket Mode and get App Token
+   - Add Bot Token Scopes: `app_mentions:read`, `chat:write`, `commands`
+   - Install to Workspace and get Bot Token
+
+2. **Start PraisonAI Server**
+   ```bash
+   pip install praisonai
+   praisonai serve agents.yaml --port 8080
+   ```
+
+3. **Run the Bot**
+   ```bash
+   export SLACK_BOT_TOKEN=xoxb-your-bot-token
+   export SLACK_APP_TOKEN=xapp-your-app-token
+   export PRAISONAI_API_URL=http://localhost:8080
+   slack-praisonai-bot
+   ```
+
+## Slash Commands
+
+| Command | Description |
+|---------|-------------|
+| `/ask <query>` | Ask PraisonAI agents |
+| `/agent <name> <query>` | Ask a specific agent |
+| `/agents` | List available agents |
+
+## App Mentions
+
+Mention the bot in any channel: `@PraisonAI What are the latest AI trends?`
+
+## Configuration
+
+| Environment Variable | Description |
+|---------------------|-------------|
+| `SLACK_BOT_TOKEN` | Bot token (xoxb-...) |
+| `SLACK_APP_TOKEN` | App token (xapp-...) |
+| `PRAISONAI_API_URL` | PraisonAI server URL |
+| `PRAISONAI_TIMEOUT` | Request timeout (default: 300) |
+
+## Links
+
+- [PraisonAI Documentation](https://docs.praison.ai)
+- [Slack Bolt Documentation](https://slack.dev/bolt-python)
+
+## License
+
+MIT
