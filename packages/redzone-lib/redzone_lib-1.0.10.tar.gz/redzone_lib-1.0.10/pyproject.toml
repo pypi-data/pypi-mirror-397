@@ -1,0 +1,21 @@
+[tool.black]
+line-length = 300
+
+
+[tool.isort]
+line_length = 300
+
+
+[tool.mypy]
+ignore_missing_imports = true
+exclude = '''
+    (?x)
+    ^\.git/
+    | ^\.idea/
+    | ^tinker\.py$
+'''
+
+
+[[tool.mypy.overrides]]
+module = ['objects.*']
+disable_error_code = ['attr-defined']
