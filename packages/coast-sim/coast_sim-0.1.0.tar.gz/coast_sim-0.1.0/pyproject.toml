@@ -1,0 +1,100 @@
+[project]
+authors = [
+    { name = "Jamie A. Kennea", email = "jamie@cosmicfrontier.org" }, # Optional
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    # Indicate who your project is intended for
+    "Intended Audience :: Science/Research",
+    # that you indicate you support cat thon 3. These classifiers are *not*
+    # checked by "pip install". See instead "python_requires" below.
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3 :: Only",
+]
+description = "COASTSim: ConOps Astronomical Space Telescope Simulator" # Optional
+dynamic = ["version"]
+maintainers = [
+    { name = "Jamie A. Kennea", email = "jamie@cosmicfrontier.org" }, # Optional
+]
+name = "coast-sim" # Required
+readme = "README.md" # Optional
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+
+
+dependencies = [
+    "astropy>=6",
+    "matplotlib>=3.10",
+    "numpy>=2",
+    "pydantic>=2.12",
+    "pyproj>=3.7.0",
+    "pytz>=2025.2",
+    "rust-ephem>=0.1.12",
+    "shapely>=2",
+    "tqdm>=4.67",
+]
+
+
+[project.urls]
+Documentation = "https://coastsim.readthedocs.io/en/latest/"
+Homepage = "https://github.com/CosmicFrontierLabs/coast-sim/"
+Source = "https://github.com/CosmicFrontierLabs/coast-sim/"
+
+
+# Packages required only for local developement environments
+[project.optional-dependencies]
+jupyter = [
+    "ipympl>=0.9.7",
+    "jupyter>=1.1.1",
+    "ipywidgets>=8.0",
+]
+dev = [
+    "mypy>=1.15",
+    "pre-commit>=4.2",
+    "ruff>=0.11",
+    "types-pytz>=2025.2.0.20250326",
+    "types-shapely>=2.1.0.20250418",
+    "types-tqdm>=4.67.0.20250809",
+]
+test = ["pytest>=8", "pytest-cov>=7"]
+docs = [
+    "sphinx>=7.0",
+    "sphinx-rtd-theme>=2.0",
+    "myst-parser>=2.0",
+    "sphinx-autodoc-typehints>=1.24",
+]
+
+[build-system]
+requires = ["setuptools", "setuptools_scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+# Specify the Python module or package to include
+packages = ["conops"]
+
+[tool.setuptools_scm]
+# Use Git tags to determine the version
+version_scheme = "guess-next-dev"
+local_scheme = "node-and-date"
+
+# Configuration to write _version.py
+write_to = "conops/_version.py"
+
+
+# pytest configuration
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+#addopts = "-q"
+
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+lint.select = ["E", "W", "F", "N", "C"]
+lint.ignore = ["C901", "N815", "N801", "C408", "E501"]
