@@ -1,0 +1,213 @@
+# tsf-sh
+
+Асинхронная Python библиотека для работы с [tsf.sh](https://tsf.sh) API - сервисом для сокращения ссылок.
+
+## Установка
+
+```bash
+pip install tsf-sh
+```
+
+## Требования
+
+- Python 3.8+
+- httpx 0.24.0+
+
+## Быстрый старт
+
+```python
+import asyncio
+from tsf_sh import Client
+
+async def main():
+    # Инициализация клиента
+    client = Client(api_key="your-api-key")
+    
+    # Создание короткой ссылки
+    link = await client.create_link(
+        url="https://example.com",
+        ttl_hours=24
+    )
+    print(f"Создана ссылка: {link.short_url}")
+    
+    # Получение информации о ссылке
+    link_info = await client.get_link(link.code)
+    print(f"Переходов: {link_info.clicks}")
+    
+    # Закрытие клиента
+    await client.close()
+
+asyncio.run(main())
+```
+
+## Использование с контекстным менеджером
+
+```python
+import asyncio
+from tsf_sh import Client
+
+async def main():
+    async with Client(api_key="your-api-key") as client:
+        # Создание ссылки
+        link = await client.create_link("https://example.com")
+        print(f"Ссылка: {link.short_url}")
+        
+        # Получение списка всех ссылок
+        links = await client.get_links()
+        print(f"Всего ссылок: {len(links)}")
+        
+        # Получение статистики
+        stats = await client.get_stats()
+        print(f"Всего переходов: {stats.total_clicks}")
+
+asyncio.run(main())
+```
+
+## API методы
+
+### Создание ссылки
+
+```python
+link = await client.create_link(
+    url="https://example.com",
+    ttl_hours=24,  # Время жизни в часах (1-24)
+    password="optional_password"  # Опциональный пароль
+)
+```
+
+### Получение списка ссылок
+
+```python
+links = await client.get_links()
+# Список отсортирован по дате создания (новые первые)
+```
+
+### Получение информации о ссылке
+
+```python
+link = await client.get_link("abc123")
+print(f"URL: {link.original_url}")
+print(f"Переходов: {link.clicks}")
+print(f"Истекает: {link.expires_datetime}")
+```
+
+### Удаление ссылки
+
+```python
+await client.delete_link("abc123")
+```
+
+### Продление времени жизни ссылки
+
+```python
+link = await client.extend_link("abc123", ttl_hours=24)
+# TTL устанавливается от текущего момента
+```
+
+### Установка пароля
+
+```python
+await client.set_password("abc123", "my_password")
+```
+
+### Удаление пароля
+
+```python
+await client.remove_password("abc123")
+```
+
+### Перегенерация кода ссылки
+
+```python
+new_code = await client.reroll_code("abc123")
+print(f"Новый код: {new_code}")
+```
+
+### Получение статистики
+
+```python
+stats = await client.get_stats()
+print(f"Активных ссылок: {stats.links_count}")
+print(f"Всего переходов: {stats.total_clicks}")
+```
+
+### Проверка здоровья API
+
+```python
+health = await client.health_check()
+print(f"Статус: {health.status}")
+print(f"Redis: {health.services['redis']}")
+```
+
+## Модели данных
+
+### Link
+
+```python
+link.code              # Код ссылки
+link.short_url         # Короткая ссылка
+link.original_url      # Оригинальный URL
+link.clicks            # Количество переходов
+link.ttl_seconds       # Время жизни в секундах
+link.created_at        # Unix timestamp создания
+link.expires_at        # Unix timestamp истечения
+link.has_password      # Наличие пароля
+link.created_datetime   # datetime объект для created_at
+link.expires_datetime  # datetime объект для expires_at
+link.is_expired        # Проверка истечения
+link.remaining_seconds # Оставшееся время жизни
+```
+
+### LinkStats
+
+```python
+stats.links_count   # Количество активных ссылок
+stats.total_clicks  # Всего переходов
+```
+
+### HealthStatus
+
+```python
+health.status      # "healthy" или "degraded"
+health.services    # Словарь со статусами сервисов
+health.is_healthy  # True если API здоров
+```
+
+## Обработка ошибок
+
+Библиотека выбрасывает специфичные исключения для разных типов ошибок:
+
+```python
+from tsf_sh import (
+    ValidationError,      # 400 - Ошибка валидации
+    UnauthorizedError,     # 401 - Неверный API ключ
+    ForbiddenError,        # 403 - Требуется премиум
+    NotFoundError,         # 404 - Ресурс не найден
+    ConflictError,         # 409 - Конфликт (ссылка уже существует)
+    RateLimitError,        # 429 - Превышен лимит запросов
+    InternalServerError   # 500 - Внутренняя ошибка сервера
+)
+
+try:
+    link = await client.create_link("invalid-url")
+except ValidationError as e:
+    print(f"Ошибка валидации: {e.message}")
+except ConflictError as e:
+    print(f"Ссылка уже существует: {e.existing_code}")
+except RateLimitError as e:
+    print(f"Лимит превышен. Попробуйте через {e.reset_time} секунд")
+```
+
+## Получение API ключа
+
+API ключ можно получить в Telegram боте [@tsf_sh_bot](https://t.me/tsf_sh_bot) в разделе профиля, но только после покупки премиума. Премиум покупается навсегда.
+
+## Лицензия
+
+MIT
+
+## Ссылки
+
+- [Документация API](https://tsf.sh/api/docs)
+- [Telegram бот](https://t.me/tsf_sh_bot)
+
