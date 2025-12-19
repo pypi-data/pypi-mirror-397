@@ -1,0 +1,45 @@
+workflow:
+  rules:
+    - if: $CI_COMMIT_REF_PROTECTED == "true"
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+variables:
+  POSTGRES_DB: postgres
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: ""
+  POSTGRES_HOST_AUTH_METHOD: "trust"
+  UV_NO_BINARY_PACKAGE: "lxml xmlsec"
+  PIP_NO_BINARY: "lxml,xmlsec"
+
+stages:
+  - test
+  - release
+
+services:
+  - postgres:latest@sha256:38d5c9d522037d8bf0864c9068e4df2f8a60127c6489ab06f98fdeda535560f9
+
+cache:
+  key: "$CI_PROJECT_NAME"
+  paths:
+    - $HOME/.cache/pip
+
+include:
+  - component: gitlab.com/thelabnyc/thelab-ci-components/review@0.6.2
+  - component: gitlab.com/thelabnyc/thelab-ci-components/precommit@0.6.2
+  - component: gitlab.com/thelabnyc/thelab-ci-components/publish-gitlab-release@0.6.2
+  - component: gitlab.com/thelabnyc/thelab-ci-components/publish-to-pypi@0.6.2
+
+test:
+  stage: test
+  image: "registry.gitlab.com/thelabnyc/python:${IMAGE}"
+  script:
+    - make system_deps
+    - uv sync
+    - uv run tox
+  coverage: '/^TOTAL.+?(\d+\%)$/'
+  parallel:
+    matrix:
+      - IMAGE: "3.13"
+        TOX_SKIP_ENV: "^(?!py313-)"
+      - IMAGE: "3.14"
+        TOX_SKIP_ENV: "^(?!py314-)"

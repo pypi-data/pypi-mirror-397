@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:latest@sha256:38d5c9d522037d8bf0864c9068e4df2f8a60127c6489ab06f98fdeda535560f9
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: 'trust'
+
+  test:
+    build: .
+    command: env
+    links:
+      - postgres
+    volumes:
+      - .:/code
+    env_file:
+      - .env
+    environment:
+      CYBERSOURCE_MERCHANT_ID:
+      CYBERSOURCE_ORG_ID:
+      CYBERSOURCE_PROFILE:
+      CYBERSOURCE_ACCESS:
+      CYBERSOURCE_SECRET:
+      CYBERSOURCE_PKCS12_DATA:
+      CYBERSOURCE_PKCS12_PASSWORD:
