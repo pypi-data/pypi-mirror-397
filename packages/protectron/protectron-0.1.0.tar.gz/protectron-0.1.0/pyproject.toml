@@ -1,0 +1,78 @@
+[tool.poetry]
+name = "protectron"
+version = "0.1.0"
+description = "EU AI Act compliance SDK for AI agents - Automatic audit logging, HITL approvals, and evidence generation"
+authors = ["Protectron Team <team@protectron.ai>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://protectron.ai"
+repository = "https://github.com/protectron-ai/protectron-sdk"
+keywords = ["ai", "compliance", "eu-ai-act", "audit", "langchain", "crewai", "agents"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+packages = [{include = "protectron"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+requests = "^2.32.0"
+typing-extensions = "^4.12.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.0"
+pytest-cov = "^6.0.0"
+pytest-mock = "^3.14.0"
+responses = "^0.25.0"
+black = "^24.10.0"
+isort = "^5.13.0"
+mypy = "^1.13.0"
+ruff = "^0.8.0"
+types-requests = "^2.32.0"
+pre-commit = "^4.0.0"
+
+[tool.poetry.group.integrations]
+optional = true
+
+[tool.poetry.group.integrations.dependencies]
+langchain-core = {version = "^0.3.0", python = ">=3.9"}
+crewai = {version = "^0.86.0", python = ">=3.10,<=3.13"}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ['py39', 'py310', 'py311', 'py312']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --cov=protectron --cov-report=term-missing"
