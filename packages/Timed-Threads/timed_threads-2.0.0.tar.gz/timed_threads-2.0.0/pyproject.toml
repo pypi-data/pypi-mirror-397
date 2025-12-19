@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Timed-Threads"
+description = "Absolute time deadlines and thread cancelling for Python asynchronous threads"
+requires-python = ">=3.10"
+readme = "README.rst"
+license = "MIT"
+maintainers = [
+    {name = "Mathics3 Group"},
+]
+classifiers = [
+          "Topic :: Utilities",
+          "Programming Language :: Python",
+          "Programming Language :: Python :: Implementation :: CPython",
+          "Programming Language :: Python :: 3.10",
+          "Programming Language :: Python :: 3.11",
+          "Programming Language :: Python :: 3.12",
+          "Programming Language :: Python :: 3.13",
+          "Programming Language :: Python :: 3.14",
+          "Operating System :: OS Independent",
+          "Intended Audience :: Developers",
+          "Development Status :: 5 - Production/Stable"
+]
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://github.com/Mathics3/python-timed-threads/"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
+[tool.setuptools]
+packages = [
+    "timed_threads",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "timed_threads.version.__version__"}
