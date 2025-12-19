@@ -1,0 +1,91 @@
+# =============================================================================
+# QodaBit MVP v2 - pyproject.toml
+# =============================================================================
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "qodabit"
+version = "0.2.0"
+description = "Security Copilot for AI Devs - Chat-based code auditor"
+readme = "README.md"
+license = "MIT"
+authors = [
+    { name = "QodaBit Team" }
+]
+keywords = ["security", "sast", "code-review", "ai", "cli", "devtools"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Software Development :: Quality Assurance",
+]
+requires-python = ">=3.9"
+
+dependencies = [
+    # CLI Framework
+    "click>=8.1.0",
+
+    # Terminal UI
+    "rich>=13.0.0",
+    "prompt-toolkit>=3.0.0",
+
+    # AI APIs
+    "anthropic>=0.18.0",
+    "openai>=1.0.0",
+
+    # Config
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+
+[project.scripts]
+qodabit = "qodabit.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/qodabit/qodabit"
+Documentation = "https://github.com/qodabit/qodabit#readme"
+Repository = "https://github.com/qodabit/qodabit"
+Issues = "https://github.com/qodabit/qodabit/issues"
+
+# =============================================================================
+# Tool Configuration
+# =============================================================================
+
+[tool.ruff]
+target-version = "py39"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "B", "A", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.9"
+strict = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["qodabit"]
