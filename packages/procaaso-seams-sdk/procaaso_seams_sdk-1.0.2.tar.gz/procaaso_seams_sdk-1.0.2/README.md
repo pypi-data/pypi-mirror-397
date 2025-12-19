@@ -1,0 +1,229 @@
+# Procaaso SEAMS SDK
+
+**Version 1.0.2**
+
+A Python SDK for building distributed process control systems using the Procaaso Seam Interface Specification v1.0. Enables event-based communication between containerized services through standardized seam contracts.
+
+## Features
+
+- **5 Standard Contracts**: Actuator, Sensor, Unit, Driver, and APP contracts per ISA-88
+- **Idempotent Commands**: Built-in command deduplication and replay protection
+- **State Management**: Automatic seam state synchronization via sidecar
+- **Type Safety**: Pydantic models for all seam attributes
+- **Async/Await**: Full asyncio support for non-blocking operations
+- **ISA-88 Compliant**: Recipe orchestration with APP → Unit → Equipment hierarchy
+- **Polling & Streaming**: Flexible command routing patterns
+
+## Installation
+
+```bash
+pip install procaaso-seams-sdk
+```
+
+Or with Poetry:
+
+```bash
+poetry add procaaso-seams-sdk
+```
+
+## Quick Start
+
+### Creating an Actuator Service (Pump)
+
+```python
+import asyncio
+from procaaso_seams_sdk import ActuatorService
+from procaaso_seams_sdk.bus.envelopes import CommandRequest
+
+class PumpService(ActuatorService):
+    async def handle_command(self, request: CommandRequest) -> None:
+        cmd = request.command
+
+        if cmd == "Start":
+            await self.update_state(lifecycle_state="Running")
+            await self.update_feedback(pv=50.0, sp=50.0)
+
+        elif cmd == "Stop":
+            await self.update_state(lifecycle_state="Idle")
+            await self.update_feedback(pv=0.0, sp=0.0)
+
+# Initialize and run
+async def main():
+    pump = PumpService(
+        component_id="P01",
+        bus=bus_adapter,
+        store=seam_store,
+        router=bus_router,
+        log=logger
+    )
+    await pump.start()
+
+asyncio.run(main())
+```
+
+### Creating a Sensor Service
+
+```python
+from procaaso_seams_sdk import SensorService
+
+class TemperatureSensor(SensorService):
+    async def handle_command(self, request: CommandRequest) -> None:
+        if request.command == "ResetFault":
+            await self.update_state(lifecycle_state="Online", faulted=False)
+
+    async def read_sensor(self):
+        # Simulate reading
+        temperature = 25.5
+        await self.update_value(pv=temperature, quality="GOOD")
+
+asyncio.run(main())
+```
+
+### ISA-88 Recipe Controller (APP Service)
+
+```python
+from procaaso_seams_sdk import APPService
+
+class RecipeController(APPService):
+    async def handle_command(self, request: CommandRequest) -> None:
+        if request.command == "LoadRecipe":
+            recipe_id = request.args[0]["recipe_id"]
+            await self.update_state(
+                lifecycle_state="RecipeLoaded",
+                loaded_recipe_id=recipe_id
+            )
+
+        elif request.command == "StartRecipe":
+            await self.update_state(lifecycle_state="Running")
+            await self.execute_recipe()
+```
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      MES / HMI / SCADA                      │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    APP (Recipe Controller)                   │
+│              Uses: APPService, UnitClient                   │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  Unit (Batch Controller)                    │
+│       Uses: UnitService, ActuatorClient, SensorClient       │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+              ┌────────────┴────────────┐
+              ▼                         ▼
+┌──────────────────────┐    ┌──────────────────────┐
+│  Actuators (P/V/M)   │    │   Sensors (T/P/F)    │
+│  ActuatorService     │    │   SensorService      │
+└──────────────────────┘    └──────────────────────┘
+```
+
+## Contract Overview
+
+| Contract     | Purpose                                       | Key Attributes                                   |
+| ------------ | --------------------------------------------- | ------------------------------------------------ |
+| **Actuator** | Controllable devices (pumps, valves, motors)  | meta, state, capabilities, feedback, intent, cmd |
+| **Sensor**   | Measurement devices                           | meta, state, value, scaling, capabilities, cmd   |
+| **Unit**     | Process control logic (ISA-88 Unit Procedure) | meta, state, intent, waiting_on, cmd, outcome    |
+| **Driver**   | I/O hardware with multiple channels           | meta, state, capabilities, inventory, cmd        |
+| **APP**      | Recipe orchestration (ISA-88 Master Recipe)   | meta, state, cmd                                 |
+
+## Examples
+
+The SDK includes 15+ working examples demonstrating:
+
+- **Simple Examples**: Basic pump, sensor, and valve services
+- **TFF System**: Complete tangential flow filtration demo with ISA-88 coordination
+- **Advanced Patterns**: Polling routers, control loops, multi-phase recipes
+
+See the [examples/](examples/) directory and [examples/README.md](examples/README.md) for details.
+
+## Documentation
+
+- **[Seam Interface Spec v1.0](specs/Procaaso_Seam_Interface_Spec_v1.0.md)** - Contract definitions
+- **[Seam Models](specs/seams_models_v1.yaml)** - YAML schema for all attributes
+- **[SDK Behavior Spec](specs/SDK_Behavior_Spec.md)** - Implementation requirements
+- **[Examples Guide](examples/README.md)** - Usage patterns and demos
+
+## Key Concepts
+
+### Seams
+
+A **seam** is the integration surface between services. Each seam has:
+
+- `component.instrument.attribute` path (e.g., `P01.actuator.state`)
+- `stateSchemaId` URI defining structure
+- Typed fields (bool, float, int, string, list)
+
+### Idempotency
+
+All commands use `command_id` for replay protection:
+
+- Duplicate commands return cached reply
+- Permanent tracking (requires UUID-based IDs)
+- Prevents double-execution on network retries
+
+### State Machine
+
+Services follow ISA-88 state machines:
+
+- Actuator: `Idle → Starting → Running → Stopping → Stopped`
+- Unit: `Idle → Running → Complete/Stopped/Aborted`
+- APP: `Idle → RecipeLoaded → Running → Complete`
+
+## Development
+
+### Running Tests
+
+```bash
+poetry install
+poetry run pytest
+```
+
+### Building Package
+
+```bash
+poetry build
+```
+
+## Requirements
+
+- Python 3.10+
+- procaaso-client ^0.1.19
+- pydantic ^1.10.0
+- aiohttp ^3.9.0
+
+## License
+
+Copyright © 2025 Alphinity Bespoke Systems
+
+## Contributing
+
+This SDK implements the Procaaso Seam Interface Specification v1.0. Changes must maintain backward compatibility or increment the major version per semantic versioning.
+
+---
+
+## Developer Notes
+
+For AI/Copilot development, see internal build contract:
+
+**Source of truth:**
+
+- specs/Procaaso_Seam_Interface_Spec_v1.0.md
+- specs/seams_models_v1.yaml
+- specs/SDK_Behavior_Spec.md
+
+**Hard rules:**
+
+- Do not invent seam shapes not in seams_models_v1.yaml
+- Bus envelopes must follow interface spec
+- All services: Announce → CommandRequest/Reply → StateEvent
+- Use async/await everywhere
+- Use procaaso-client for bus read/write
