@@ -1,0 +1,52 @@
+Metadata-Version: 2.4
+Name: ovos-solver-rivescript-plugin
+Version: 0.0.2a2
+Summary: A question solver plugin for ovos/neon/mycroft
+Home-page: https://github.com/OpenVoiceOS/ovos-solver-rivescript-plugin
+Author: jarbasai
+Author-email: jarbasai@mailfence.com
+License: MIT
+Keywords: mycroft plugin utterance fallback query
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: rivescript
+Requires-Dist: ovos-plugin-manager<3.0.0,>=0.0.26
+Dynamic: author
+Dynamic: author-email
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: license
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: summary
+
+# <img src='https://raw.githack.com/FortAwesome/Font-Awesome/master/svgs/solid/robot.svg' card_color='#40DBB0' width='50' height='50' style='vertical-align:bottom'/> Rivescript Chatbot
+ 
+Give Mycroft some sass with Rivescript!
+
+Leverages the [Alice chatbot](https://www.chatbots.org/chatbot/a.l.i.c.e/) to create some fun interactions.  Phrases not explicitly handled by other skills will be run by the chatbot, so nearly every interaction will have _some_ response.  But be warned, Mycroft might become a bit obnoxious...
+
+## Examples 
+* "Do you like ice cream"
+* "Do you like dogs"
+* "I have a jump rope"
+
+
+## Usage
+
+Spoken answers api with a Rivescript backend
+
+```python
+from ovos_solver_rivescript_plugin import RivescriptSolver
+
+d = RivescriptSolver()
+sentence = d.spoken_answer("hello")
+print(sentence)
+# Hi there!
+
+sentence = d.spoken_answer("Do you like ice cream", {"lang": "pt-pt"})
+print(sentence)
+# O que queres mesmo saber?
+```
