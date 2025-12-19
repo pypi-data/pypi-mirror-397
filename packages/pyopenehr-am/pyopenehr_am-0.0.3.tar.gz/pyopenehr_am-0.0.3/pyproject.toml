@@ -1,0 +1,95 @@
+[build-system]
+requires = ["hatchling>=1.28.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pyopenehr-am"
+dynamic = ["version"]
+description = "Pure-Python openEHR AM toolkit (ADL2/AOM2/ODIN/BMM/OPT2)."
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.14"
+license = { file = "LICENSE" }
+authors = [{ name = "Ruben Talstra" }]
+
+keywords = ["openEHR", "ADL2", "AOM2", "ODIN", "BMM", "OPT2", "health", "ehr"]
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "Typing :: Typed",
+]
+
+dependencies = [
+    "antlr4-python3-runtime==4.13.2",
+    "rich>=14.2.0",
+    "typer>=0.20.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "antlr4-tools>=0.2.2",
+    "pre-commit>=4.5.1",
+    "pyright>=1.1.407",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.14.10",
+]
+release = ["build==1.3.0", "twine==6.2.0"]
+
+[project.scripts]
+openehr-am = "openehr_am.cli.main:main"
+
+[project.urls]
+Homepage = "https://github.com/rubentalstra/pyopenehr-am"
+Repository = "https://github.com/rubentalstra/pyopenehr-am"
+Source = "https://github.com/rubentalstra/pyopenehr-am.git"
+Issues = "https://github.com/rubentalstra/pyopenehr-am/issues"
+Documentation = "https://github.com/rubentalstra/pyopenehr-am/tree/main/docs"
+Changelog = "https://github.com/rubentalstra/pyopenehr-am/releases"
+Security = "https://github.com/rubentalstra/pyopenehr-am/blob/main/SECURITY.md"
+PyPI = "https://pypi.org/project/pyopenehr-am/"
+
+[tool.hatch.version]
+path = "openehr_am/__about__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["openehr_am"]
+include = ["openehr_am/py.typed"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/openehr_am",
+    "/docs",
+    "/grammars",
+    "/scripts",
+    "README.md",
+    "LICENSE",
+    "pyproject.toml",
+    "PACK_INDEX.md",
+    "SPEC_BASELINE.md",
+]
+
+[tool.pyright]
+include = ["openehr_am/", "tests/"]
+exclude = ["openehr_am/_generated/"]
+typeCheckingMode = "strict"
+pythonVersion = "3.14"
+
+[tool.ruff]
+target-version = "py314"
+line-length = 88
+extend-exclude = ["openehr_am/_generated/"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
