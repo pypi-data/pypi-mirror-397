@@ -1,0 +1,299 @@
+import { CodeBlock } from "@/components/docs/code-block"
+
+# API Reference
+
+Complete technical reference for Kytchen's Python library and MCP server tools.
+
+---
+
+## Overview
+
+Kytchen provides two main interfaces:
+
+### 1. Python Library API
+For embedding Kytchen in your applications:
+
+<CodeBlock language="python">
+{`from kytchen import create_kytchen
+
+kytchen = create_kytchen(
+    provider="anthropic",
+    model="claude-sonnet-4-20250514",
+)
+
+response = kytchen.query("Find all auth bugs", context=codebase)
+print(response.answer)`}
+</CodeBlock>
+
+**Documentation:**
+- Core classes: `Kytchen`, `KytchenConfig`, `KytchenResponse`
+- Providers: `AnthropicProvider`, `OpenAIProvider`
+- REPL: `REPLEnvironment`, `SandboxConfig`
+- Types: `Budget`, `TrajectoryStep`, `ExecutionResult`
+
+### 2. MCP Server Tools
+For use in Claude Desktop, Cursor, Windsurf, etc.:
+
+<CodeBlock language="json">
+{`{
+  "tool": "load_context",
+  "arguments": {
+    "context": "...",
+    "context_id": "default"
+  }
+}`}
+</CodeBlock>
+
+**Documentation:** [MCP Tools Reference](/docs/api/tools)
+
+---
+
+## Quick Links
+
+### MCP Tools
+- **[MCP Tools Reference](/docs/api/tools):** Complete tool documentation with parameters, examples, and return values
+
+### Python Library (Coming Soon)
+- **Core API:** `Kytchen`, `create_kytchen`, `KytchenConfig`
+- **Providers:** Custom provider implementation
+- **REPL Helpers:** `peek`, `lines`, `search`, `chunk`
+- **Budget System:** `Budget`, `BudgetStatus`
+
+---
+
+## Key Concepts
+
+### Context Metadata
+
+When you load context, Kytchen analyzes it and provides metadata to the LLM:
+
+<CodeBlock language="python">
+{`from kytchen.types import ContextMetadata
+
+meta = ContextMetadata(
+    format=ContentFormat.TEXT,        # TEXT, JSON, CODE
+    size_bytes=52341,                 # Raw byte count
+    size_chars=50000,                 # Character count
+    size_lines=892,                   # Line count
+    size_tokens_estimate=12500,       # Rough token estimate (chars / 4)
+    structure_hint=None,              # Optional hint (e.g., "Python module")
+    sample_preview="First 500 chars..." # Preview for LLM
+)`}
+</CodeBlock>
+
+### Budget Control
+
+Set hard limits to prevent runaway costs:
+
+<CodeBlock language="python">
+{`from kytchen.types import Budget
+
+budget = Budget(
+    max_tokens=100_000,           # Total token budget
+    max_cost_usd=1.00,            # Hard dollar cap
+    max_iterations=15,            # Max REPL loops
+    max_depth=3,                  # Max sub-kytchen recursion
+    max_wall_time_seconds=300,    # 5-minute timeout
+    max_sub_queries=10,           # Max sub_query calls
+)`}
+</CodeBlock>
+
+### Trajectory (The Receipt)
+
+Every query returns a trajectory showing exactly what happened:
+
+<CodeBlock language="python">
+{`response = kytchen.query("...", context="...")
+
+for step in response.trajectory:
+    print(f"Iteration {step.iteration}:")
+    print(f"  Code: {step.code}")
+    print(f"  Output: {step.output[:200]}...")
+    print(f"  Tokens: {step.input_tokens} in, {step.output_tokens} out")
+    print(f"  Cost: \u0024{step.cost_usd:.4f}")
+
+print(f"\nTotal cost: \u0024{response.total_cost_usd:.4f}")
+print(f"Total tokens: {response.total_tokens}")`}
+</CodeBlock>
+
+---
+
+## Environment Variables
+
+Configure Kytchen via environment variables (or config files):
+
+### Core Settings
+
+<CodeBlock language="bash">
+{`# LLM Provider
+export ANTHROPIC_API_KEY=sk-ant-...
+export OPENAI_API_KEY=sk-...
+
+# Provider and model
+export KYTCHEN_PROVIDER=anthropic  # or "openai"
+export KYTCHEN_MODEL=claude-sonnet-4-20250514
+export KYTCHEN_SUB_MODEL=claude-haiku-4-20250514  # Cheaper model for sub-queries`}
+</CodeBlock>
+
+### Budget Limits
+
+<CodeBlock language="bash">
+{`# Portion control
+export KYTCHEN_MAX_COST=1.00        # Dollar cap per query
+export KYTCHEN_MAX_ITERATIONS=15    # Max REPL loops
+export KYTCHEN_MAX_DEPTH=3          # Max recursion depth
+export KYTCHEN_MAX_TOKENS=100000    # Total token budget`}
+</CodeBlock>
+
+### Sandbox Settings
+
+<CodeBlock language="bash">
+{`# REPL configuration
+export KYTCHEN_MAX_OUTPUT_CHARS=10000   # Truncate output
+export KYTCHEN_TIMEOUT_SECONDS=30       # Code execution timeout`}
+</CodeBlock>
+
+---
+
+## Error Handling
+
+Kytchen raises specific exceptions for different failure modes:
+
+<CodeBlock language="python">
+{`from kytchen import create_kytchen
+from kytchen.providers.base import ProviderError
+from kytchen.repl.sandbox import SandboxError
+
+try:
+    kytchen = create_kytchen()
+    response = kytchen.query("...", context="...")
+except ProviderError as e:
+    # LLM API failures (rate limit, auth, etc.)
+    print(f"Provider error: {e}")
+except SandboxError as e:
+    # Code execution failures (timeout, forbidden operation)
+    print(f"Sandbox error: {e}")
+except ValueError as e:
+    # Invalid config or parameters
+    print(f"Config error: {e}")`}
+</CodeBlock>
+
+---
+
+## Response Schema
+
+The `KytchenResponse` object contains everything:
+
+<CodeBlock language="python">
+{`@dataclass
+class KytchenResponse:
+    answer: str                        # Final answer from LLM
+    trajectory: list[TrajectoryStep]   # Full execution history
+    total_cost_usd: float              # Sum of all API costs
+    total_tokens: int                  # Sum of all tokens
+    total_iterations: int              # Number of REPL loops
+    final_context_state: str | None    # Context after all mutations
+    budget_status: BudgetStatus        # What limits were hit (if any)
+    error: str | None                  # Error message (if failed)`}
+</CodeBlock>
+
+---
+
+## Configuration Files
+
+Instead of environment variables, use YAML or JSON config:
+
+### YAML Config
+
+<CodeBlock language="yaml" filename="kytchen.yaml">
+{`provider: anthropic
+model: claude-sonnet-4-20250514
+sub_model: claude-haiku-4-20250514
+
+budget:
+  max_cost_usd: 1.00
+  max_iterations: 15
+  max_tokens: 100000
+
+sandbox:
+  max_output_chars: 10000
+  timeout_seconds: 30`}
+</CodeBlock>
+
+Load it:
+
+<CodeBlock language="python">
+{`from kytchen import create_kytchen
+
+kytchen = create_kytchen(config_file="kytchen.yaml")`}
+</CodeBlock>
+
+### JSON Config
+
+<CodeBlock language="json" filename=".kytchenfile.json">
+{`{
+  "provider": "anthropic",
+  "model": "claude-sonnet-4-20250514",
+  "budget": {
+    "max_cost_usd": 1.00,
+    "max_iterations": 15
+  }
+}`}
+</CodeBlock>
+
+Kytchen auto-detects `.kytchenfile.json` in the current directory.
+
+---
+
+## Custom Providers
+
+Implement the `LLMProvider` protocol to add custom models:
+
+<CodeBlock language="python">
+{`from kytchen.providers.base import LLMProvider
+
+class MyCustomProvider(LLMProvider):
+    async def complete(
+        self,
+        messages: list[dict],
+        model: str,
+        max_tokens: int,
+        temperature: float = 0.0,
+        stop_sequences: list[str] | None = None,
+    ) -> tuple[str, int, int, float]:
+        # Call your LLM API here
+        response_text = await my_llm_api(messages, model, max_tokens)
+        input_tokens = count_tokens(messages)
+        output_tokens = count_tokens(response_text)
+        cost_usd = calculate_cost(input_tokens, output_tokens)
+        return response_text, input_tokens, output_tokens, cost_usd
+
+    def count_tokens(self, text: str, model: str) -> int:
+        return len(text) // 4  # Rough estimate
+
+    def get_context_limit(self, model: str) -> int:
+        return 200_000  # Your model's context window
+
+    def get_output_limit(self, model: str) -> int:
+        return 4096  # Your model's max output`}
+</CodeBlock>
+
+Use it:
+
+<CodeBlock language="python">
+{`from kytchen import create_kytchen
+
+kytchen = create_kytchen(provider=MyCustomProvider())`}
+</CodeBlock>
+
+---
+
+## Next Steps
+
+- **[MCP Tools Reference](/docs/api/tools):** Full documentation of all MCP server tools
+- **[Getting Started](/docs/getting-started):** Quick setup guide
+- **[BYOLLM Guide](/docs/concepts/byollm):** Cost optimization
+
+---
+
+**Technical docs for the entire prep station. Heard.**

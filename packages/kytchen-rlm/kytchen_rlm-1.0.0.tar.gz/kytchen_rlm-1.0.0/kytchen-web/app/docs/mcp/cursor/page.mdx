@@ -1,0 +1,406 @@
+import { CodeBlock } from "@/components/docs/code-block"
+
+# Cursor Integration
+
+Add Kytchen to Cursor and supercharge codebase exploration with iterative grep/search instead of naive RAG.
+
+---
+
+## Prerequisites
+
+1. **Cursor installed:** [Download here](https://cursor.sh)
+2. **Kytchen with MCP support:**
+   <CodeBlock language="bash">
+   pip install 'kytchen[mcp]'
+   </CodeBlock>
+3. **LLM API key:** Set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`
+
+---
+
+## Global vs. Project Config
+
+Cursor supports two levels of MCP configuration:
+
+### Global Config
+- **Path:** `~/.cursor/mcp.json`
+- **Scope:** All Cursor windows
+- **Use case:** General document/code analysis
+
+### Project Config
+- **Path:** `<project>/.cursor/mcp.json`
+- **Scope:** Only this project
+- **Use case:** Project-specific tooling, committed to git
+
+We'll set up global config here. For project config, use `kytchen-rlm install cursor-project`.
+
+---
+
+## Auto-Install (Recommended)
+
+<CodeBlock language="bash">
+{`# Global config (all Cursor windows)
+kytchen-rlm install cursor
+
+# Or project-level (current directory)
+kytchen-rlm install cursor-project
+
+# Verify
+kytchen-rlm doctor`}
+</CodeBlock>
+
+**What this does:**
+1. Creates/updates `~/.cursor/mcp.json` (or `.cursor/mcp.json` in project)
+2. Backs up existing config
+3. Adds `kytchen-local` server
+4. Validates JSON
+
+**Next step:** Restart Cursor.
+
+---
+
+## Manual Install
+
+### 1. Create the config file
+
+<CodeBlock language="bash">
+{`# Global
+mkdir -p ~/.cursor
+touch ~/.cursor/mcp.json
+
+# Or project-level
+mkdir -p .cursor
+touch .cursor/mcp.json`}
+</CodeBlock>
+
+### 2. Edit `mcp.json`
+
+<CodeBlock language="json" filename="~/.cursor/mcp.json">
+{`{
+  "mcpServers": {
+    "kytchen-local": {
+      "command": "kytchen-local",
+      "args": []
+    }
+  }
+}`}
+</CodeBlock>
+
+**For cloud mode (when available):**
+
+<CodeBlock language="json" filename="~/.cursor/mcp.json">
+{`{
+  "mcpServers": {
+    "kytchen-local": {
+      "command": "kytchen-local",
+      "args": []
+    },
+    "kytchen": {
+      "command": "kytchen",
+      "args": [],
+      "env": {
+        "KYTCHEN_API_KEY": "kyt_sk_your_api_key_here",
+        "KYTCHEN_API_URL": "https://api.kytchen.dev"
+      }
+    }
+  }
+}`}
+</CodeBlock>
+
+### 3. Restart Cursor
+
+---
+
+## Verification
+
+1. **Open Cursor**
+2. **Open Composer** (Cmd+K or Ctrl+K)
+3. **Type:** `@kytchen-local` (should autocomplete)
+4. **Or check settings:** Cursor → Settings → Features → MCP Servers
+
+If tools don't appear, check Cursor's MCP logs:
+- **macOS/Linux:** `~/.cursor/logs/`
+- **Windows:** `%APPDATA%/Cursor/logs/`
+
+---
+
+## Example: Explore a Codebase
+
+Let's find all authentication logic in a monorepo.
+
+### Step 1: Load the codebase
+
+In Cursor Composer:
+
+```
+@kytchen-local Load all Python files in this repo into context ID "codebase"
+
+[Cursor will cat all .py files and pass to load_context]
+```
+
+**Or be specific:**
+
+```
+@kytchen-local Load the contents of src/auth/ into context "auth_module"
+```
+
+### Step 2: Query
+
+```
+Using kytchen-local on context "codebase":
+1. Search for all functions related to "authentication"
+2. Read the implementations
+3. Summarize the auth flow
+```
+
+**Cursor will:**
+1. Call `search_context(pattern="def.*auth|class.*Auth", max_results=20)`
+2. Call `peek_context()` to read function bodies
+3. Synthesize: "Your auth flow has 3 layers: JWT validation → session middleware → role checking"
+
+---
+
+## Example: Debug a Cryptic Error
+
+You have a 10K-line log file. Instead of pasting it all:
+
+### Step 1: Load the log
+
+In Composer:
+
+```
+@kytchen-local Load this log file:
+
+[paste 10K lines]
+
+Context ID: error_logs
+```
+
+### Step 2: Narrow down
+
+```
+Using kytchen-local on "error_logs":
+1. Search for "Exception|Error|Traceback"
+2. Find the last occurrence
+3. Show me 20 lines around it
+```
+
+**Cursor executes:**
+<CodeBlock language="python">
+{`# search_context
+matches = search("Exception|Error|Traceback", max_results=50)
+last_error_line = matches[-1]['line_num']
+
+# peek_context
+lines(last_error_line - 10, last_error_line + 10)`}
+</CodeBlock>
+
+**Result:**
+```
+Line 9847: ValueError: Invalid token format
+[20 lines of context]
+```
+
+---
+
+## Example: Compare Two Files
+
+```
+@kytchen-local Load these two files:
+
+File 1 (ID: config_prod): [paste production config]
+File 2 (ID: config_staging): [paste staging config]
+
+Now find differences in the "database" section.
+```
+
+**Cursor will:**
+1. `search_context(pattern="database", context_id="config_prod")`
+2. `search_context(pattern="database", context_id="config_staging")`
+3. `peek_context()` on matching line ranges
+4. Diff and explain: "Production uses RDS, staging uses local SQLite"
+
+---
+
+## Advanced: Custom Python Analysis
+
+You can run arbitrary code in the sandbox:
+
+```
+@kytchen-local Using context "codebase":
+
+Execute this Python:
+```python
+import re
+functions = re.findall(r'def (\w+)\(', ctx)
+print(f"Total functions: {len(functions)}")
+print(f"Top 10: {sorted(set(functions))[:10]}")
+```
+```
+
+**Cursor calls `exec_python()`**, runs it in the sandbox, returns output.
+
+---
+
+## Customization
+
+### Set cost limits per project
+
+In `.cursor/mcp.json` (project-level):
+
+<CodeBlock language="json" filename=".cursor/mcp.json">
+{`{
+  "mcpServers": {
+    "kytchen-local": {
+      "command": "kytchen-local",
+      "args": [],
+      "env": {
+        "KYTCHEN_MAX_COST": "0.25",
+        "KYTCHEN_MAX_ITERATIONS": "10"
+      }
+    }
+  }
+}`}
+</CodeBlock>
+
+### Use OpenAI instead of Anthropic
+
+<CodeBlock language="json" filename="~/.cursor/mcp.json">
+{`{
+  "mcpServers": {
+    "kytchen-local": {
+      "command": "kytchen-local",
+      "args": ["--provider", "openai", "--model", "gpt-4o"],
+      "env": {
+        "OPENAI_API_KEY": "sk-..."
+      }
+    }
+  }
+}`}
+</CodeBlock>
+
+---
+
+## Troubleshooting
+
+### "kytchen-local not found"
+
+**Cause:** Python scripts not in PATH.
+
+**Solution 1 - Add to PATH:**
+<CodeBlock language="bash">
+{`# Find install location
+pip show kytchen | grep Location
+
+# Add to ~/.zshrc or ~/.bashrc
+export PATH="$PATH:/path/to/python/bin"`}
+</CodeBlock>
+
+**Solution 2 - Use full path:**
+<CodeBlock language="json">
+{`{
+  "mcpServers": {
+    "kytchen-local": {
+      "command": "/Users/you/.local/bin/kytchen-local"
+    }
+  }
+}`}
+</CodeBlock>
+
+### "Tools not appearing"
+
+**Checklist:**
+1. Restart Cursor completely
+2. Validate JSON: `kytchen-rlm doctor`
+3. Check logs: `~/.cursor/logs/mcp.log`
+4. Try typing `@kytchen` in Composer (should autocomplete)
+
+### "API key not found"
+
+Set it in the config or environment:
+
+<CodeBlock language="json">
+{`{
+  "mcpServers": {
+    "kytchen-local": {
+      "env": {
+        "ANTHROPIC_API_KEY": "sk-ant-..."
+      }
+    }
+  }
+}`}
+</CodeBlock>
+
+### "Context too large"
+
+Cursor has message size limits. If context is huge:
+1. Load in chunks with different IDs
+2. Or save to file and load via Python: `with open('file.txt') as f: ctx = f.read()`
+
+---
+
+## Best Practices
+
+### 1. Use Project-Level Config for Shared Workflows
+
+Commit `.cursor/mcp.json` to git so your team uses the same setup:
+
+<CodeBlock language="bash">
+{`# In your repo
+kytchen-rlm install cursor-project
+
+# Commit
+git add .cursor/mcp.json
+git commit -m "Add Kytchen MCP config"`}
+</CodeBlock>
+
+### 2. Set Cost Guardrails
+
+Prevent runaway queries in CI/shared repos:
+
+<CodeBlock language="json">
+{`{
+  "mcpServers": {
+    "kytchen-local": {
+      "env": {
+        "KYTCHEN_MAX_COST": "0.10",
+        "KYTCHEN_MAX_ITERATIONS": "5"
+      }
+    }
+  }
+}`}
+</CodeBlock>
+
+### 3. Combine with Cursor's Native Tools
+
+Use `@Codebase` for quick lookups, `@kytchen-local` for deep analysis:
+
+```
+@Codebase What does the User model do?
+@kytchen-local Search the entire codebase for all uses of "User.authenticate" and show me the implementations
+```
+
+---
+
+## Uninstalling
+
+<CodeBlock language="bash">
+{`# Global
+kytchen-rlm uninstall cursor
+
+# Project
+kytchen-rlm uninstall cursor-project`}
+</CodeBlock>
+
+Or manually delete the `kytchen-local` entry from `mcp.json`.
+
+---
+
+## Next Steps
+
+- **[Windsurf Integration](/docs/mcp/windsurf):** Add Kytchen to Windsurf
+- **[API Reference](/docs/api/tools):** Full tool documentation
+- **[BYOLLM Guide](/docs/concepts/byollm):** Cost optimization
+
+---
+
+**Cursor + Kytchen = Codebase exploration at the speed of grep. Heard.**

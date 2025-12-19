@@ -1,0 +1,544 @@
+import { ToolCard } from "@/components/docs/tool-card"
+import { CodeBlock } from "@/components/docs/code-block"
+
+# MCP Tools Reference
+
+Complete reference for all Kytchen MCP server tools. These tools are available in Claude Desktop, Cursor, Windsurf, Claude Code, and any MCP-compatible client.
+
+---
+
+## Overview
+
+The Kytchen MCP server exposes 6 core tools:
+
+1. **load_context** - Load documents into the REPL sandbox
+2. **peek_context** - Slice context by character or line range
+3. **search_context** - Regex search with surrounding context
+4. **exec_python** - Execute arbitrary Python in the sandbox
+5. **sub_query** - Run lightweight LLM calls for sub-questions
+6. **get_variable** - Retrieve variables from the REPL namespace
+
+All tools support multiple **context IDs** for parallel document analysis.
+
+---
+
+## load_context
+
+Load a document into an in-memory REPL session.
+
+<ToolCard
+  name="load_context"
+  description="Load text, code, JSON, or other data into a sandboxed Python environment. The context becomes available as the variable 'ctx' in subsequent exec_python calls."
+  parameters={[
+    {
+      name: "context",
+      type: "string",
+      required: true,
+      description: "The text content to load (can be massive - 100K+ chars)"
+    },
+    {
+      name: "context_id",
+      type: "string",
+      required: false,
+      default: "\"default\"",
+      description: "Unique identifier for this context. Use different IDs to load multiple documents."
+    },
+    {
+      name: "format",
+      type: "string",
+      required: false,
+      default: "\"auto\"",
+      description: "Content format: 'auto', 'text', 'json', 'code'. Auto-detects based on content."
+    }
+  ]}
+  returns="String confirming load: 'Loaded context [id]: [chars] chars, [lines] lines, ~[tokens] tokens'"
+  example={`{
+  "tool": "load_context",
+  "arguments": {
+    "context": "Large text document...",
+    "context_id": "research_paper",
+    "format": "text"
+  }
+}
+
+// Returns:
+"Loaded context 'research_paper': 52,341 chars, 892 lines, ~13,085 tokens"`}
+/>
+
+**Use cases:**
+- Load large documents (50K+ lines) that won't fit in a prompt
+- Pre-load multiple documents for comparison
+- Load code files for iterative exploration
+
+**Important:**
+- Context is stored in-memory until the MCP session ends
+- Each context ID is isolated (separate REPL namespace)
+- Format detection is automatic but can be overridden
+
+---
+
+## peek_context
+
+Return a slice of the loaded context by character or line range.
+
+<ToolCard
+  name="peek_context"
+  description="Extract a specific range from the context. Use 'chars' mode for byte-level precision or 'lines' mode for human-readable slicing."
+  parameters={[
+    {
+      name: "start",
+      type: "integer",
+      required: false,
+      default: "0",
+      description: "Starting position (character or line number)"
+    },
+    {
+      name: "end",
+      type: "integer | null",
+      required: false,
+      default: "null",
+      description: "Ending position (null = to the end)"
+    },
+    {
+      name: "context_id",
+      type: "string",
+      required: false,
+      default: "\"default\"",
+      description: "Which context to peek (must be loaded first)"
+    },
+    {
+      name: "unit",
+      type: "string",
+      required: false,
+      default: "\"chars\"",
+      description: "Slice unit: 'chars' or 'lines'"
+    }
+  ]}
+  returns="String containing the requested slice"
+  example={`// Get lines 100-120
+{
+  "tool": "peek_context",
+  "arguments": {
+    "start": 100,
+    "end": 120,
+    "unit": "lines",
+    "context_id": "codebase"
+  }
+}
+
+// Returns: 21 lines of text
+
+// Get first 500 characters
+{
+  "tool": "peek_context",
+  "arguments": {
+    "start": 0,
+    "end": 500,
+    "unit": "chars"
+  }
+}`}
+/>
+
+**Use cases:**
+- Read specific sections after a search
+- Extract function bodies by line number
+- Sample the beginning/end of a document
+
+**Tips:**
+- Use `unit="lines"` for code/logs (human-readable)
+- Use `unit="chars"` for precise byte-level slicing
+- Negative indices work: `start=-100` = last 100 chars
+
+---
+
+## search_context
+
+Regex search the loaded context and return matches with surrounding context.
+
+<ToolCard
+  name="search_context"
+  description="Perform a regex search and return matching lines with surrounding context. This is grep on steroids - faster and more context-aware than raw string search."
+  parameters={[
+    {
+      name: "pattern",
+      type: "string",
+      required: true,
+      description: "Regex pattern to search (supports full Python re syntax)"
+    },
+    {
+      name: "context_id",
+      type: "string",
+      required: false,
+      default: "\"default\"",
+      description: "Which context to search"
+    },
+    {
+      name: "max_results",
+      type: "integer",
+      required: false,
+      default: "10",
+      description: "Maximum number of matches to return"
+    },
+    {
+      name: "context_lines",
+      type: "integer",
+      required: false,
+      default: "2",
+      description: "Number of lines to show before/after each match"
+    }
+  ]}
+  returns="String with formatted matches: 'Line [num]:\\n[context]' separated by '---'"
+  example={`{
+  "tool": "search_context",
+  "arguments": {
+    "pattern": "def\\\\s+\\\\w+\\\\(.*auth",
+    "context_id": "codebase",
+    "max_results": 5,
+    "context_lines": 3
+  }
+}
+
+// Returns:
+"Line 42:
+39: class UserManager:
+40:     ...
+41:
+42:     def authenticate(self, username, password):
+43:         hash = self._hash_password(password)
+44:         return self._verify(username, hash)
+45:
+---
+Line 156:
+..."
+`}
+/>
+
+**Use cases:**
+- Find all functions matching a pattern
+- Search logs for error patterns
+- Locate specific clauses in contracts
+
+**Pattern tips:**
+- Use `\\w+` for word boundaries
+- Use `(?i)` for case-insensitive: `(?i)error`
+- Use `|` for alternatives: `auth|login|signin`
+- Escape special chars: `\\(`, `\\[`, `\\.`
+
+---
+
+## exec_python
+
+Execute arbitrary Python code in the sandbox REPL.
+
+<ToolCard
+  name="exec_python"
+  description="Run Python code in a sandboxed environment. The loaded context is available as 'ctx'. Includes helper functions: peek(), lines(), search(), chunk()."
+  parameters={[
+    {
+      name: "code",
+      type: "string",
+      required: true,
+      description: "Python code to execute (can be multi-line)"
+    },
+    {
+      name: "context_id",
+      type: "string",
+      required: false,
+      default: "\"default\"",
+      description: "Which context to operate on"
+    }
+  ]}
+  returns="String with stdout, stderr, errors, and return value (if any)"
+  example={`{
+  "tool": "exec_python",
+  "arguments": {
+    "code": "import re\\nerrors = re.findall(r'ERROR: (.+)', ctx)\\nprint(f'Found {len(errors)} errors')\\nprint(errors[:5])",
+    "context_id": "logs"
+  }
+}
+
+// Returns:
+"Found 42 errors
+['Database timeout', 'Invalid token', 'Connection refused', ...]
+
+[RETURN_VALUE]: None"`}
+/>
+
+**Available in sandbox:**
+- **Variable:** `ctx` (the loaded context string)
+- **Helpers:** `peek(start, end)`, `lines(start, end)`, `search(pattern)`, `chunk(n, size)`
+- **Imports:** `re`, `json`, `csv`, `math`, `statistics`, `collections`, `itertools`, `datetime`, `textwrap`, `difflib`
+- **Sub-queries:** `sub_query(prompt, context_slice)` (if enabled)
+
+**Forbidden:**
+- File I/O: `open()`, `read()`, `write()`
+- Unsafe eval: `eval()`, `exec()`, `compile()`
+- Imports outside whitelist: `os`, `sys`, `subprocess`, etc.
+
+**Use cases:**
+- Complex text processing (regex, parsing)
+- Statistical analysis of logs
+- Custom filtering/aggregation
+- Multi-step transformations
+
+---
+
+## sub_query
+
+Run a lightweight LLM call for sub-questions.
+
+<ToolCard
+  name="sub_query"
+  description="Send a sub-question to the LLM (optionally with a context slice). Uses a cheaper model by default. Great for 'is this critical?' or 'summarize this section' queries."
+  parameters={[
+    {
+      name: "prompt",
+      type: "string",
+      required: true,
+      description: "The question or instruction for the LLM"
+    },
+    {
+      name: "context_slice",
+      type: "string | null",
+      required: false,
+      default: "null",
+      description: "Optional context snippet to include (keep it small)"
+    },
+    {
+      name: "context_id",
+      type: "string",
+      required: false,
+      default: "\"default\"",
+      description: "For internal tracking only (doesn't affect query)"
+    }
+  ]}
+  returns="String with the LLM's response"
+  example={`{
+  "tool": "sub_query",
+  "arguments": {
+    "prompt": "Is this error critical?",
+    "context_slice": "ERROR: Database connection timeout after 30s\\nRetrying (3/3)..."
+  }
+}
+
+// Returns:
+"Yes, this is critical. After 3 retries, the database is unreachable, which will block all user requests."`}
+/>
+
+**Use cases:**
+- Ask yes/no questions about snippets
+- Get quick summaries of sections
+- Classify/categorize text chunks
+- Semantic analysis without full context
+
+**Cost optimization:**
+- Sub-queries use `sub_model` (cheaper than main model)
+- Keep `context_slice` small (&lt;1K tokens)
+- Avoid chaining many sub-queries (use main loop instead)
+
+---
+
+## get_variable
+
+Retrieve a variable from the sandbox REPL namespace as a string.
+
+<ToolCard
+  name="get_variable"
+  description="Read the value of a variable set in exec_python. Useful for extracting computed results or intermediate values."
+  parameters={[
+    {
+      name: "name",
+      type: "string",
+      required: true,
+      description: "Variable name to retrieve"
+    },
+    {
+      name: "context_id",
+      type: "string",
+      required: false,
+      default: "\"default\"",
+      description: "Which context session to query"
+    }
+  ]}
+  returns="String representation of the variable value, or 'Variable [name] not found'"
+  example={`// First, set a variable
+{
+  "tool": "exec_python",
+  "arguments": {
+    "code": "result = [x for x in ctx.split('\\\\n') if 'ERROR' in x]"
+  }
+}
+
+// Then retrieve it
+{
+  "tool": "get_variable",
+  "arguments": {
+    "name": "result"
+  }
+}
+
+// Returns:
+"['ERROR: timeout', 'ERROR: invalid token', ...]"`}
+/>
+
+**Use cases:**
+- Extract processed data from Python
+- Check intermediate computation results
+- Debug REPL state
+
+**Tips:**
+- Variables persist across `exec_python` calls (same context ID)
+- Use `str()` conversion for complex types
+- Special variables: `ctx` (the loaded context), helper functions
+
+---
+
+## Common Workflows
+
+### Workflow 1: Load → Search → Read
+
+Classic pattern for large document Q&A:
+
+<CodeBlock language="json">
+{`// Step 1: Load
+{
+  "tool": "load_context",
+  "arguments": {
+    "context": "[50K-char document]",
+    "context_id": "doc"
+  }
+}
+
+// Step 2: Search
+{
+  "tool": "search_context",
+  "arguments": {
+    "pattern": "risk factor|hazard",
+    "context_id": "doc",
+    "max_results": 10
+  }
+}
+
+// Step 3: Read matching lines
+{
+  "tool": "peek_context",
+  "arguments": {
+    "start": 42,
+    "end": 58,
+    "unit": "lines",
+    "context_id": "doc"
+  }
+}`}
+</CodeBlock>
+
+### Workflow 2: Multi-Document Comparison
+
+Load multiple docs, search each, compare:
+
+<CodeBlock language="json">
+{`// Load contract A
+{ "tool": "load_context", "arguments": { "context": "...", "context_id": "contract_a" } }
+
+// Load contract B
+{ "tool": "load_context", "arguments": { "context": "...", "context_id": "contract_b" } }
+
+// Search both
+{ "tool": "search_context", "arguments": { "pattern": "indemnification", "context_id": "contract_a" } }
+{ "tool": "search_context", "arguments": { "pattern": "indemnification", "context_id": "contract_b" } }
+
+// Read relevant sections from each
+{ "tool": "peek_context", "arguments": { "start": 100, "end": 150, "unit": "lines", "context_id": "contract_a" } }
+{ "tool": "peek_context", "arguments": { "start": 200, "end": 250, "unit": "lines", "context_id": "contract_b" } }`}
+</CodeBlock>
+
+### Workflow 3: Custom Python Processing
+
+Use `exec_python` for complex analysis:
+
+<CodeBlock language="json">
+{`// Load logs
+{ "tool": "load_context", "arguments": { "context": "[100K-line log]", "context_id": "logs" } }
+
+// Custom analysis
+{
+  "tool": "exec_python",
+  "arguments": {
+    "code": "import re\\nfrom collections import Counter\\nerrors = re.findall(r'ERROR: (.+)', ctx)\\ntop_5 = Counter(errors).most_common(5)\\nfor msg, count in top_5:\\n    print(f'{count}x: {msg}')",
+    "context_id": "logs"
+  }
+}
+
+// Returns:
+"42x: Database timeout
+28x: Invalid API key
+15x: Rate limit exceeded
+..."`}
+</CodeBlock>
+
+---
+
+## Sandbox Limitations
+
+The REPL sandbox is **best-effort security**, not production-grade:
+
+### Allowed
+- String manipulation, regex, JSON parsing
+- Math, statistics, datetime operations
+- Whitelisted imports: `re`, `json`, `csv`, `math`, `collections`, `itertools`, `functools`, `datetime`, `textwrap`, `difflib`
+
+### Blocked
+- File I/O: `open()`, `read()`, `write()`
+- Process execution: `subprocess`, `os.system()`
+- Network: `requests`, `urllib`, `socket`
+- Unsafe eval: `eval()`, `exec()`, `compile()`
+- Dunder access: `__import__`, `__builtins__`
+
+### Output Limits
+- Max 10K chars per `exec_python` call (truncated beyond that)
+- 30-second timeout per execution
+- No infinite loops (will timeout)
+
+---
+
+## Error Messages
+
+### "No context loaded with ID [id]"
+**Cause:** You called a tool before `load_context`.
+
+**Solution:** Load the context first:
+<CodeBlock language="json">
+{`{ "tool": "load_context", "arguments": { "context": "...", "context_id": "doc" } }`}
+</CodeBlock>
+
+### "Variable [name] not found"
+**Cause:** The variable doesn't exist in the REPL namespace.
+
+**Solution:** Set it with `exec_python` first:
+<CodeBlock language="json">
+{`{ "tool": "exec_python", "arguments": { "code": "my_var = 42" } }`}
+</CodeBlock>
+
+### "No matches found"
+**Cause:** Your regex pattern didn't match anything.
+
+**Solution:** Try a broader pattern or check the context:
+<CodeBlock language="json">
+{`{ "tool": "search_context", "arguments": { "pattern": ".*error.*", "max_results": 100 } }`}
+</CodeBlock>
+
+### "[ERROR]: [SandboxError] ..."
+**Cause:** Your Python code violated sandbox rules (e.g., tried to `import os`).
+
+**Solution:** Use only whitelisted imports and operations. Check the Sandbox Limitations section above.
+
+---
+
+## Next Steps
+
+- **[MCP Integration](/docs/mcp):** Install guides for all editors
+- **[API Overview](/docs/api):** Python library reference
+- **[Getting Started](/docs/getting-started):** Quick setup
+
+---
+
+**All tools documented. The prep station is ready. Heard.**

@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+@plugin "tailwindcss-animate";
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  /* The Lab Palette */
+  --color-electric-blue: #3B82F6;
+  --color-carbon-black: #0A0A0A;
+  --color-terminal-red: #EF4444;
+  --color-slate-surface: #1E293B;
+  
+  --color-sidebar: var(--color-slate-surface);
+  
+  --color-accent-primary: var(--color-electric-blue);
+  --color-accent-destructive: var(--color-terminal-red);
+
+  /* Legacy mappings to prevent breaks before full refactor */
+  --color-blue-tape: var(--color-electric-blue);
+  --color-sharpie-black: var(--color-carbon-black);
+  --color-ticket-red: var(--color-terminal-red);
+  --color-apron-navy: var(--color-slate-surface);
+
+
+  --font-heading: var(--font-oswald);
+  --font-body: var(--font-inter);
+  --font-hand: var(--font-caveat);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-serif: var(--font-playfair);
+
+  --shadow-hard: 0px 0px 0px 1px rgba(255,255,255,0.1), 4px 4px 0px 0px #171717;
+  --shadow-hard-sm: 0px 0px 0px 1px rgba(255,255,255,0.1), 2px 2px 0px 0px #171717;
+  --shadow-hard-lg: 0px 0px 0px 1px rgba(255,255,255,0.1), 8px 8px 0px 0px #171717;
+  --shadow-glow: 0px 0px 20px -5px var(--color-electric-blue);
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-pulse-slow: pulse-slow 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  
+  @keyframes accordion-down {
+    from { height: 0 }
+    to { height: var(--radix-accordion-content-height) }
+  }
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height) }
+    to { height: 0 }
+  }
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+}
+
+/* Base Styles */
+:root {
+  --background: #050505;
+  --foreground: #E5E5E5;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-body); /* Switched default to Inter for Tech feel */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Neo-Brutalist / Lab Utilities */
+@utility hard-shadow {
+  box-shadow: 0px 0px 0px 1px rgba(255,255,255,0.1), 4px 4px 0px 0px #171717;
+}
+
+@utility hard-shadow-sm {
+  box-shadow: 0px 0px 0px 1px rgba(255,255,255,0.1), 2px 2px 0px 0px #171717;
+}
+
+@utility hard-shadow-lg {
+  box-shadow: 0px 0px 0px 1px rgba(255,255,255,0.1), 8px 8px 0px 0px #171717;
+}
+
+@utility glow-text {
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+@utility no-transition {
+  transition: none !important;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

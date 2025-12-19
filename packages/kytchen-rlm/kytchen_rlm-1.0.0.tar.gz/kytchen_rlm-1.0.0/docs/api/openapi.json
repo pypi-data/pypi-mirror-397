@@ -1,0 +1,3794 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Kytchen Cloud API",
+    "description": "Kytchen Cloud API - BYOLLM context processing with sandboxed execution.\n\n## Features\n- **Datasets (Pantry)**: Upload and manage datasets for context processing\n- **Query**: Run natural language queries against datasets using your LLM\n- **Tools (Prep)**: Execute sandboxed Python code, search, and peek context\n- **Evidence (Sauce)**: Track and export evidence from analysis runs\n\n## Authentication\nAll endpoints (except /healthz) require Bearer token authentication:\n`Authorization: Bearer kyt_sk_...`\n\nGet your API key at https://kytchen.dev",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/healthz": {
+      "get": {
+        "summary": "Healthz",
+        "operationId": "healthz_healthz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Healthz Healthz Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/datasets": {
+      "get": {
+        "summary": "List Datasets",
+        "operationId": "list_datasets_v1_datasets_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response List Datasets V1 Datasets Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Upload Dataset",
+        "operationId": "upload_dataset_v1_datasets_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_dataset_v1_datasets_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Upload Dataset V1 Datasets Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/datasets/{dataset_id}": {
+      "get": {
+        "summary": "Get Dataset",
+        "description": "Get a single dataset by ID.",
+        "operationId": "get_dataset_v1_datasets__dataset_id__get",
+        "parameters": [
+          {
+            "name": "dataset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dataset Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Dataset V1 Datasets  Dataset Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete Dataset",
+        "operationId": "delete_dataset_v1_datasets__dataset_id__delete",
+        "parameters": [
+          {
+            "name": "dataset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dataset Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Delete Dataset V1 Datasets  Dataset Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/query": {
+      "post": {
+        "summary": "Start Query",
+        "operationId": "start_query_v1_query_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Start Query V1 Query Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/query/stream": {
+      "post": {
+        "summary": "Query Stream",
+        "operationId": "query_stream_v1_query_stream_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/runs/{run_id}/finalize": {
+      "post": {
+        "summary": "Finalize Run",
+        "operationId": "finalize_run_v1_runs__run_id__finalize_post",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Finalize Run V1 Runs  Run Id  Finalize Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tool/{name}": {
+      "post": {
+        "summary": "Tool Call",
+        "operationId": "tool_call_v1_tool__name__post",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/auth/whoami": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Whoami",
+        "description": "Verify authentication and return workspace info.",
+        "operationId": "whoami_v1_auth_whoami_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Whoami V1 Auth Whoami Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/kytchens": {
+      "get": {
+        "tags": [
+          "kytchens"
+        ],
+        "summary": "List Kytchens",
+        "description": "List all Kytchens in the workspace.",
+        "operationId": "list_kytchens_v1_kytchens_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KytchenListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "kytchens"
+        ],
+        "summary": "Create Kytchen",
+        "description": "Create a new Kytchen.",
+        "operationId": "create_kytchen_v1_kytchens_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KytchenCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KytchenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/kytchens/{kytchen_id}": {
+      "get": {
+        "tags": [
+          "kytchens"
+        ],
+        "summary": "Get Kytchen",
+        "description": "Get a Kytchen by ID or slug.",
+        "operationId": "get_kytchen_v1_kytchens__kytchen_id__get",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KytchenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "kytchens"
+        ],
+        "summary": "Update Kytchen",
+        "description": "Update a Kytchen.",
+        "operationId": "update_kytchen_v1_kytchens__kytchen_id__patch",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KytchenUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KytchenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "kytchens"
+        ],
+        "summary": "Delete Kytchen",
+        "description": "Delete (86) a Kytchen.",
+        "operationId": "delete_kytchen_v1_kytchens__kytchen_id__delete",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/kytchens/{kytchen_id}/menu": {
+      "get": {
+        "tags": [
+          "kytchens"
+        ],
+        "summary": "Get Menu",
+        "description": "Get the Menu (OpenAI-compatible tool schema) for a Kytchen.\n\nThis is how agents know what's for dinner. The response includes:\n- Kytchen metadata\n- Pantry status (available datasets)\n- Tools in OpenAI function format\n- API endpoints\n\nAny agent (Cursor, Windsurf, AutoGen, CrewAI) can use this\nto plug into Kytchen without custom code.",
+        "operationId": "get_menu_v1_kytchens__kytchen_id__menu_get",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MenuResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/kytchens/{kytchen_id}/pantry": {
+      "get": {
+        "tags": [
+          "kytchens"
+        ],
+        "summary": "Get Pantry",
+        "description": "Get Pantry status for a Kytchen.",
+        "operationId": "get_pantry_v1_kytchens__kytchen_id__pantry_get",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Pantry V1 Kytchens  Kytchen Id  Pantry Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "kytchens"
+        ],
+        "summary": "Add To Pantry",
+        "description": "Add a dataset to the Kytchen's Pantry.",
+        "operationId": "add_to_pantry_v1_kytchens__kytchen_id__pantry_post",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Add To Pantry V1 Kytchens  Kytchen Id  Pantry Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/kytchens/{kytchen_id}/pantry/{dataset_id}": {
+      "delete": {
+        "tags": [
+          "kytchens"
+        ],
+        "summary": "Remove From Pantry",
+        "description": "Remove a dataset from the Kytchen's Pantry (86 an ingredient).",
+        "operationId": "remove_from_pantry_v1_kytchens__kytchen_id__pantry__dataset_id__delete",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "dataset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Dataset Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Remove From Pantry V1 Kytchens  Kytchen Id  Pantry  Dataset Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/kytchens/{kytchen_id}/tickets": {
+      "post": {
+        "tags": [
+          "kytchens"
+        ],
+        "summary": "Create Ticket",
+        "description": "Fire a query (ticket) into a Kytchen.\n\nUses the Kytchen's Pantry datasets and returns a Receipt with Sauce.\nThis is the synchronous endpoint - for streaming, use /tickets/stream.",
+        "operationId": "create_ticket_v1_kytchens__kytchen_id__tickets_post",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "kytchens"
+        ],
+        "summary": "List Tickets",
+        "description": "List tickets (runs) for a Kytchen.",
+        "operationId": "list_tickets_v1_kytchens__kytchen_id__tickets_get",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/kytchens/{kytchen_id}/tickets/stream": {
+      "post": {
+        "tags": [
+          "kytchens"
+        ],
+        "summary": "Create Ticket Stream",
+        "description": "Fire a query with SSE streaming.\n\nReturns Server-Sent Events with real-time progress:\n- started: Query begun\n- step: Each reasoning step\n- completed: Final answer + evidence\n- error: If something goes wrong",
+        "operationId": "create_ticket_stream_v1_kytchens__kytchen_id__tickets_stream_post",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TicketCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/kytchens/{kytchen_id}/tickets/{ticket_id}": {
+      "get": {
+        "tags": [
+          "kytchens"
+        ],
+        "summary": "Get Ticket",
+        "description": "Get a specific ticket (run) by ID.",
+        "operationId": "get_ticket_v1_kytchens__kytchen_id__tickets__ticket_id__get",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "ticket_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ticket Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TicketResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/kytchens/{kytchen_id}/git/status": {
+      "get": {
+        "tags": [
+          "git"
+        ],
+        "summary": "Git Status",
+        "description": "Show repository status.",
+        "operationId": "git_status_v1_kytchens__kytchen_id__git_status_get",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "short",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Use short format",
+              "default": false,
+              "title": "Short"
+            },
+            "description": "Use short format"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitCommandResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/kytchens/{kytchen_id}/git/diff": {
+      "get": {
+        "tags": [
+          "git"
+        ],
+        "summary": "Git Diff",
+        "description": "Show diff between commits/files.",
+        "operationId": "git_diff_v1_kytchens__kytchen_id__git_diff_get",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "target",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Commit/branch to diff against",
+              "title": "Target"
+            },
+            "description": "Commit/branch to diff against"
+          },
+          {
+            "name": "staged",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Show staged changes",
+              "default": false,
+              "title": "Staged"
+            },
+            "description": "Show staged changes"
+          },
+          {
+            "name": "stat",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Show diffstat",
+              "default": false,
+              "title": "Stat"
+            },
+            "description": "Show diffstat"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitCommandResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/kytchens/{kytchen_id}/git/log": {
+      "get": {
+        "tags": [
+          "git"
+        ],
+        "summary": "Git Log",
+        "description": "Show commit history.",
+        "operationId": "git_log_v1_kytchens__kytchen_id__git_log_get",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "Number of commits to show",
+              "default": 10,
+              "title": "Limit"
+            },
+            "description": "Number of commits to show"
+          },
+          {
+            "name": "oneline",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Use one-line format",
+              "default": false,
+              "title": "Oneline"
+            },
+            "description": "Use one-line format"
+          },
+          {
+            "name": "author",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by author",
+              "title": "Author"
+            },
+            "description": "Filter by author"
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Show commits since date",
+              "title": "Since"
+            },
+            "description": "Show commits since date"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitCommandResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/kytchens/{kytchen_id}/git/blame": {
+      "get": {
+        "tags": [
+          "git"
+        ],
+        "summary": "Git Blame",
+        "description": "Show per-line commit info for a file.",
+        "operationId": "git_blame_v1_kytchens__kytchen_id__git_blame_get",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "File path to blame",
+              "title": "Path"
+            },
+            "description": "File path to blame"
+          },
+          {
+            "name": "line_start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Start line",
+              "title": "Line Start"
+            },
+            "description": "Start line"
+          },
+          {
+            "name": "line_end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "End line",
+              "title": "Line End"
+            },
+            "description": "End line"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitCommandResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/kytchens/{kytchen_id}/git/show": {
+      "get": {
+        "tags": [
+          "git"
+        ],
+        "summary": "Git Show",
+        "description": "Show contents of a specific commit.",
+        "operationId": "git_show_v1_kytchens__kytchen_id__git_show_get",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "ref",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Commit reference to show",
+              "default": "HEAD",
+              "title": "Ref"
+            },
+            "description": "Commit reference to show"
+          },
+          {
+            "name": "stat",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Show diffstat",
+              "default": false,
+              "title": "Stat"
+            },
+            "description": "Show diffstat"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitCommandResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/kytchens/{kytchen_id}/git/branch": {
+      "get": {
+        "tags": [
+          "git"
+        ],
+        "summary": "Git Branch",
+        "description": "List branches.",
+        "operationId": "git_branch_v1_kytchens__kytchen_id__git_branch_get",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "all",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Show all branches",
+              "default": false,
+              "title": "All"
+            },
+            "description": "Show all branches"
+          },
+          {
+            "name": "verbose",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Show last commit",
+              "default": false,
+              "title": "Verbose"
+            },
+            "description": "Show last commit"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitCommandResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/kytchens/{kytchen_id}/lines": {
+      "post": {
+        "tags": [
+          "lines"
+        ],
+        "summary": "Create Line",
+        "description": "Create a new E2B Line (sandbox) for a Kytchen.\n\nLines are persistent E2B sandboxes that can execute code in isolation.\nThey're tier-limited:\n- Starter: 0 lines (upgrade to use E2B)\n- Chef: 1 line\n- Sous Chef: 3 lines\n\nThe line persists for the E2B timeout duration (default 5 minutes).",
+        "operationId": "create_line_v1_kytchens__kytchen_id__lines_post",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LineCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LineResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "lines"
+        ],
+        "summary": "List Lines",
+        "description": "List all active Lines for a Kytchen.\n\nReturns only lines that are still active (not expired or closed).",
+        "operationId": "list_lines_v1_kytchens__kytchen_id__lines_get",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LineListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/kytchens/{kytchen_id}/lines/{line_id}": {
+      "get": {
+        "tags": [
+          "lines"
+        ],
+        "summary": "Get Line",
+        "description": "Get details of a specific Line.",
+        "operationId": "get_line_v1_kytchens__kytchen_id__lines__line_id__get",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "line_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Line Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LineResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "lines"
+        ],
+        "summary": "Delete Line",
+        "description": "Destroy an E2B Line.\n\nThis terminates the E2B sandbox and removes the session record.\nThe sandbox will stop incurring charges immediately.",
+        "operationId": "delete_line_v1_kytchens__kytchen_id__lines__line_id__delete",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "line_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Line Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/kytchens/{kytchen_id}/lines/{line_id}/exec": {
+      "post": {
+        "tags": [
+          "lines"
+        ],
+        "summary": "Execute In Line",
+        "description": "Execute code in an E2B Line.\n\nThe code runs in the isolated E2B sandbox. Helper functions like\n`peek()`, `lines()`, `search()`, `chunk()`, and `cite()` are available.\n\nNote: Context must be loaded first using /v1/tool/load_context or by\nsetting the `ctx` variable directly in code.",
+        "operationId": "execute_in_line_v1_kytchens__kytchen_id__lines__line_id__exec_post",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "line_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Line Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/kytchens/{kytchen_id}/lines/{line_id}/context": {
+      "post": {
+        "tags": [
+          "lines"
+        ],
+        "summary": "Load Context To Line",
+        "description": "Load context into a Line's sandbox.\n\nThis sets the specified variable (default: `ctx`) in the sandbox\nto the provided context string. Helper functions will then operate\non this context.",
+        "operationId": "load_context_to_line_v1_kytchens__kytchen_id__lines__line_id__context_post",
+        "parameters": [
+          {
+            "name": "kytchen_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Kytchen Id"
+            }
+          },
+          {
+            "name": "line_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Line Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoadContextRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoadContextResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/billing/subscription": {
+      "get": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Get Subscription",
+        "description": "Get current subscription status for workspace.\n\nReturns plan info, subscription status, and period dates.",
+        "operationId": "get_subscription_v1_billing_subscription_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Subscription V1 Billing Subscription Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/billing/checkout": {
+      "post": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Create Checkout Session",
+        "description": "Create Stripe checkout session for subscription upgrade.\n\nBody:\n    price_id: Stripe price ID (STRIPE_PRICE_CHEF or STRIPE_PRICE_SOUSCHEF)\n    success_url: URL to redirect after successful payment\n    cancel_url: URL to redirect if user cancels",
+        "operationId": "create_checkout_session_v1_billing_checkout_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Create Checkout Session V1 Billing Checkout Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/billing/portal": {
+      "post": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Create Portal Session",
+        "description": "Create Stripe customer portal session for subscription management.\n\nBody:\n    return_url: URL to redirect after leaving portal",
+        "operationId": "create_portal_session_v1_billing_portal_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Create Portal Session V1 Billing Portal Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/billing/webhook": {
+      "post": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Handle Webhook",
+        "description": "Handle Stripe webhook events.\n\nNo authentication required - validates webhook signature instead.\n\nHandles:\n- checkout.session.completed: Create/update subscription\n- customer.subscription.updated: Update plan/status\n- customer.subscription.deleted: Downgrade to free\n- invoice.payment_failed: Mark as past_due",
+        "operationId": "handle_webhook_v1_billing_webhook_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Handle Webhook V1 Billing Webhook Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_upload_dataset_v1_datasets_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_dataset_v1_datasets_post"
+      },
+      "BudgetDefaults": {
+        "properties": {
+          "max_tokens": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Max Tokens",
+            "description": "Max tokens",
+            "default": 50000
+          },
+          "max_cost_usd": {
+            "type": "number",
+            "minimum": 0.0,
+            "title": "Max Cost Usd",
+            "description": "Max cost in USD",
+            "default": 1.0
+          },
+          "max_iterations": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Max Iterations",
+            "description": "Max iterations",
+            "default": 20
+          },
+          "timeout_seconds": {
+            "type": "number",
+            "minimum": 1.0,
+            "title": "Timeout Seconds",
+            "description": "Timeout in seconds",
+            "default": 120
+          }
+        },
+        "type": "object",
+        "title": "BudgetDefaults",
+        "description": "Default budget constraints for tickets."
+      },
+      "DatasetInfo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Dataset ID"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "text",
+              "code",
+              "json",
+              "csv",
+              "pdf",
+              "docx",
+              "markdown"
+            ],
+            "title": "Format",
+            "description": "Content format",
+            "default": "text"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Size Bytes",
+            "description": "Size in bytes",
+            "default": 0
+          },
+          "size_tokens_estimate": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Size Tokens Estimate",
+            "description": "Estimated token count",
+            "default": 0
+          },
+          "indexed": {
+            "type": "boolean",
+            "title": "Indexed",
+            "description": "Whether indexed for search",
+            "default": false
+          },
+          "content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Hash",
+            "description": "Content hash (sha256:...)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "DatasetInfo",
+        "description": "Dataset info within Pantry status."
+      },
+      "Endpoints": {
+        "properties": {
+          "menu": {
+            "type": "string",
+            "title": "Menu",
+            "description": "This menu endpoint"
+          },
+          "query": {
+            "type": "string",
+            "title": "Query",
+            "description": "Fire a ticket (POST)"
+          },
+          "stream": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stream",
+            "description": "Fire ticket with SSE streaming"
+          },
+          "pantry": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pantry",
+            "description": "Pantry management endpoint"
+          }
+        },
+        "type": "object",
+        "required": [
+          "menu",
+          "query"
+        ],
+        "title": "Endpoints",
+        "description": "API endpoints for this Kytchen."
+      },
+      "ExecRequest": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "timeout_seconds": {
+            "type": "number",
+            "title": "Timeout Seconds",
+            "default": 30.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "ExecRequest",
+        "description": "Code execution request."
+      },
+      "ExecResponse": {
+        "properties": {
+          "stdout": {
+            "type": "string",
+            "title": "Stdout"
+          },
+          "stderr": {
+            "type": "string",
+            "title": "Stderr"
+          },
+          "return_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Return Value"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "execution_time_ms": {
+            "type": "number",
+            "title": "Execution Time Ms"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "stdout",
+          "stderr",
+          "execution_time_ms"
+        ],
+        "title": "ExecResponse",
+        "description": "Code execution response."
+      },
+      "GitCommandResult": {
+        "properties": {
+          "stdout": {
+            "type": "string",
+            "title": "Stdout"
+          },
+          "stderr": {
+            "type": "string",
+            "title": "Stderr"
+          },
+          "exit_code": {
+            "type": "integer",
+            "title": "Exit Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "stdout",
+          "stderr",
+          "exit_code"
+        ],
+        "title": "GitCommandResult",
+        "description": "Result of a git command."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "KytchenCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "description": "Kytchen name"
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1,
+                "pattern": "^[a-z0-9-]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug",
+            "description": "URL-friendly slug (auto-generated if not provided)"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Kytchen description"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private",
+              "unlisted"
+            ],
+            "title": "Visibility",
+            "description": "Kytchen visibility",
+            "default": "private"
+          },
+          "fork_from": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fork From",
+            "description": "Kytchen ID to fork from"
+          },
+          "recipe_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipe Id",
+            "description": "Recipe ID to create from"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "KytchenCreate"
+      },
+      "KytchenListResponse": {
+        "properties": {
+          "kytchens": {
+            "items": {
+              "$ref": "#/components/schemas/KytchenResponse"
+            },
+            "type": "array",
+            "title": "Kytchens",
+            "description": "List of kytchens"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total",
+            "description": "Total count"
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More",
+            "description": "More results available",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "kytchens",
+          "total"
+        ],
+        "title": "KytchenListResponse"
+      },
+      "KytchenMeta": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Kytchen ID (kyt_...)"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Human-readable name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Kytchen description"
+          },
+          "chef": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chef",
+            "description": "Chef handle (@username)"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private",
+              "unlisted"
+            ],
+            "title": "Visibility",
+            "description": "Kytchen visibility",
+            "default": "private"
+          },
+          "forked_from": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forked From",
+            "description": "Kytchen ID this was forked from"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "created_at"
+        ],
+        "title": "KytchenMeta",
+        "description": "Kytchen metadata in Menu response."
+      },
+      "KytchenResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Kytchen ID"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug",
+            "description": "URL-friendly slug"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Kytchen name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Kytchen description"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "private",
+              "unlisted"
+            ],
+            "title": "Visibility",
+            "description": "Visibility"
+          },
+          "forked_from": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forked From",
+            "description": "Kytchen ID this was forked from"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "description": "Last update timestamp"
+          },
+          "dataset_count": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Dataset Count",
+            "description": "Number of datasets in pantry",
+            "default": 0
+          },
+          "total_size_bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total Size Bytes",
+            "description": "Total pantry size",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "visibility",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "KytchenResponse"
+      },
+      "KytchenUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Kytchen name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Kytchen description"
+          },
+          "visibility": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "public",
+                  "private",
+                  "unlisted"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visibility",
+            "description": "Kytchen visibility"
+          }
+        },
+        "type": "object",
+        "title": "KytchenUpdate"
+      },
+      "LineCreate": {
+        "properties": {
+          "config": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Config"
+          },
+          "context_id": {
+            "type": "string",
+            "title": "Context Id",
+            "default": "default"
+          }
+        },
+        "type": "object",
+        "title": "LineCreate",
+        "description": "Request to create a new Line (sandbox)."
+      },
+      "LineListResponse": {
+        "properties": {
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/LineResponse"
+            },
+            "type": "array",
+            "title": "Lines"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "tier_limit": {
+            "type": "integer",
+            "title": "Tier Limit"
+          },
+          "tier_name": {
+            "type": "string",
+            "title": "Tier Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lines",
+          "count",
+          "tier_limit",
+          "tier_name"
+        ],
+        "title": "LineListResponse",
+        "description": "Response for listing Lines."
+      },
+      "LineResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kytchen_id": {
+            "type": "string",
+            "title": "Kytchen Id"
+          },
+          "e2b_sandbox_id": {
+            "type": "string",
+            "title": "E2B Sandbox Id"
+          },
+          "context_id": {
+            "type": "string",
+            "title": "Context Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kytchen_id",
+          "e2b_sandbox_id",
+          "context_id",
+          "status",
+          "created_at",
+          "expires_at"
+        ],
+        "title": "LineResponse",
+        "description": "Response for a Line."
+      },
+      "LoadContextRequest": {
+        "properties": {
+          "context": {
+            "type": "string",
+            "title": "Context"
+          },
+          "var_name": {
+            "type": "string",
+            "title": "Var Name",
+            "default": "ctx"
+          }
+        },
+        "type": "object",
+        "required": [
+          "context"
+        ],
+        "title": "LoadContextRequest",
+        "description": "Request to load context into a Line."
+      },
+      "LoadContextResponse": {
+        "properties": {
+          "loaded": {
+            "type": "boolean",
+            "title": "Loaded"
+          },
+          "size_chars": {
+            "type": "integer",
+            "title": "Size Chars"
+          },
+          "size_lines": {
+            "type": "integer",
+            "title": "Size Lines"
+          },
+          "var_name": {
+            "type": "string",
+            "title": "Var Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loaded",
+          "size_chars",
+          "size_lines",
+          "var_name"
+        ],
+        "title": "LoadContextResponse",
+        "description": "Response after loading context."
+      },
+      "MenuResponse": {
+        "properties": {
+          "$schema": {
+            "type": "string",
+            "title": "$Schema",
+            "description": "JSON Schema URL",
+            "default": "https://kytchen.dev/schemas/menu.v1.json"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "Menu schema version",
+            "default": "1.0.0"
+          },
+          "kytchen": {
+            "$ref": "#/components/schemas/KytchenMeta",
+            "description": "Kytchen metadata"
+          },
+          "pantry": {
+            "$ref": "#/components/schemas/PantryStatus",
+            "description": "Pantry (data) status"
+          },
+          "tools": {
+            "items": {
+              "$ref": "#/components/schemas/ToolDefinition"
+            },
+            "type": "array",
+            "title": "Tools",
+            "description": "Available tools"
+          },
+          "budget_defaults": {
+            "$ref": "#/components/schemas/BudgetDefaults",
+            "description": "Default budget"
+          },
+          "endpoints": {
+            "$ref": "#/components/schemas/Endpoints",
+            "description": "API endpoints"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kytchen",
+          "pantry",
+          "tools",
+          "endpoints"
+        ],
+        "title": "MenuResponse",
+        "description": "Full Menu API response - OpenAI-compatible tool discovery."
+      },
+      "PantryStatus": {
+        "properties": {
+          "datasets": {
+            "items": {
+              "$ref": "#/components/schemas/DatasetInfo"
+            },
+            "type": "array",
+            "title": "Datasets",
+            "description": "Available datasets"
+          },
+          "total_size_bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total Size Bytes",
+            "description": "Total size",
+            "default": 0
+          },
+          "total_tokens_estimate": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Total Tokens Estimate",
+            "description": "Total estimated tokens",
+            "default": 0
+          },
+          "indexed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Indexed At",
+            "description": "Last indexing timestamp"
+          }
+        },
+        "type": "object",
+        "title": "PantryStatus",
+        "description": "Pantry (indexed data) status in Menu response."
+      },
+      "TicketCreate": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query",
+            "description": "The question to ask"
+          },
+          "dataset_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dataset Ids",
+            "description": "Specific datasets to use (default: all in pantry)"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider",
+            "description": "LLM provider (anthropic, openai)"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model",
+            "description": "Model name"
+          },
+          "provider_api_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider Api Key",
+            "description": "BYOLLM API key"
+          },
+          "budget": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budget",
+            "description": "Budget overrides"
+          }
+        },
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "title": "TicketCreate",
+        "description": "Request body for creating a ticket (firing a query)."
+      },
+      "TicketListResponse": {
+        "properties": {
+          "tickets": {
+            "items": {
+              "$ref": "#/components/schemas/TicketResponse"
+            },
+            "type": "array",
+            "title": "Tickets"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total count",
+            "default": 0
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More",
+            "description": "Whether more results exist",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "TicketListResponse",
+        "description": "Response for listing tickets."
+      },
+      "TicketMetrics": {
+        "properties": {
+          "baseline_tokens": {
+            "type": "integer",
+            "title": "Baseline Tokens",
+            "description": "Tokens if context-stuffing",
+            "default": 0
+          },
+          "tokens_served": {
+            "type": "integer",
+            "title": "Tokens Served",
+            "description": "Actual tokens used",
+            "default": 0
+          },
+          "iterations": {
+            "type": "integer",
+            "title": "Iterations",
+            "description": "Number of iterations",
+            "default": 0
+          },
+          "cost_usd": {
+            "type": "number",
+            "title": "Cost Usd",
+            "description": "Total cost in USD",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "title": "TicketMetrics",
+        "description": "Token savings and cost metrics."
+      },
+      "TicketResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Ticket/Run ID"
+          },
+          "kytchen_id": {
+            "type": "string",
+            "title": "Kytchen Id",
+            "description": "Kytchen ID"
+          },
+          "query": {
+            "type": "string",
+            "title": "Query",
+            "description": "Original query"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "running",
+              "completed",
+              "failed"
+            ],
+            "title": "Status",
+            "description": "Ticket status",
+            "default": "pending"
+          },
+          "answer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer",
+            "description": "Final answer"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence",
+            "description": "Sauce (evidence)"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error",
+            "description": "Error message if failed"
+          },
+          "metrics": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TicketMetrics"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Token savings metrics"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "When ticket was created"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At",
+            "description": "When ticket completed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kytchen_id",
+          "query",
+          "created_at"
+        ],
+        "title": "TicketResponse",
+        "description": "Response for a completed ticket (receipt)."
+      },
+      "ToolDefinition": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "function",
+            "title": "Type",
+            "description": "Tool type",
+            "default": "function"
+          },
+          "function": {
+            "$ref": "#/components/schemas/ToolFunction",
+            "description": "Function definition"
+          }
+        },
+        "type": "object",
+        "required": [
+          "function"
+        ],
+        "title": "ToolDefinition",
+        "description": "OpenAI-compatible tool definition."
+      },
+      "ToolFunction": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Function name (snake_case)"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "description": "What this function does"
+          },
+          "parameters": {
+            "$ref": "#/components/schemas/ToolParameter",
+            "description": "JSON Schema for parameters"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "description",
+          "parameters"
+        ],
+        "title": "ToolFunction",
+        "description": "OpenAI-compatible function definition."
+      },
+      "ToolParameter": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "description": "Parameter type",
+            "default": "object"
+          },
+          "properties": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Properties",
+            "description": "Parameter properties"
+          },
+          "required": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Required",
+            "description": "Required parameters"
+          }
+        },
+        "type": "object",
+        "title": "ToolParameter",
+        "description": "JSON Schema for a tool parameter."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "health",
+      "description": "Health check endpoints"
+    },
+    {
+      "name": "datasets",
+      "description": "Dataset (pantry) management"
+    },
+    {
+      "name": "query",
+      "description": "Query execution"
+    },
+    {
+      "name": "tools",
+      "description": "Tool execution endpoints"
+    },
+    {
+      "name": "auth",
+      "description": "Authentication endpoints"
+    },
+    {
+      "name": "keys",
+      "description": "API key management"
+    },
+    {
+      "name": "billing",
+      "description": "Billing and subscription management"
+    }
+  ]
+}

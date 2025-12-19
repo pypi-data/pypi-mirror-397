@@ -1,0 +1,289 @@
+import { CodeBlock } from "@/components/docs/code-block"
+
+# BYOLLM: Your LLM, Your Bill
+
+**Bring Your Own LLM** means Kytchen doesn't host, resell, or mark up models. You pay Anthropic, OpenAI, or your provider directly. This page explains why that matters and how to optimize costs.
+
+---
+
+## Why BYOLLM?
+
+Most AI platforms wrap an LLM and charge you a markup. Kytchen doesn't. Here's why:
+
+### 1. You Control Costs
+Your API key → Your bill. No hidden fees. No surprises.
+
+Example:
+- **Wrapped SaaS:** $0.10/query (you have no idea what they're doing)
+- **Kytchen BYOLLM:** $0.02/query (you see every token in the receipt)
+
+### 2. You Control Data
+In **local mode**, your context never leaves your machine. Kytchen runs the REPL locally and calls your LLM's API with only the code/output—not the full dataset.
+
+In **cloud mode** (coming soon), your data is ephemeral: loaded, queried, purged. No storage.
+
+### 3. You Control the Model
+Want Claude Opus for hard questions and Haiku for sub-queries? Done.
+
+Want to use GPT-4o? Fine-tuned Llama? Your own hosted model? Configure it.
+
+### 4. No Vendor Lock-In
+If Kytchen shuts down tomorrow, you still have:
+- Your API key
+- Your LLM provider account
+- The open-source Kytchen library (self-host forever)
+
+---
+
+## How Billing Works
+
+### Direct Billing
+You get charged by **your LLM provider**, not Kytchen.
+
+**Anthropic:** [console.anthropic.com](https://console.anthropic.com)
+**OpenAI:** [platform.openai.com](https://platform.openai.com)
+
+Your monthly bill shows:
+- Input tokens: What Kytchen sent (metadata + code output)
+- Output tokens: What the model generated (code + final answer)
+- Per-model pricing (Claude Sonnet, GPT-4o, etc.)
+
+### Kytchen Cloud (Optional Add-On)
+If you use our hosted MCP server (`kytchen` instead of `kytchen-local`), you pay us for:
+- **Compute:** Running the REPL sandbox in the cloud
+- **Storage:** Ephemeral context loading (purged after query)
+
+Pricing: ~$0.01/query + your LLM costs.
+
+You still bring your own LLM API key. We never see your model bill.
+
+---
+
+## Cost Optimization Strategies
+
+### 1. Set Hard Budgets
+Kytchen has built-in "portion control":
+
+<CodeBlock language="python">
+{`from kytchen import create_kytchen
+
+kytchen = create_kytchen(
+    provider="anthropic",
+    model="claude-sonnet-4-20250514",
+    max_cost_usd=0.50,        # Hard cap: 50 cents per query
+    max_iterations=10,        # Max 10 REPL loops
+    max_tokens=100_000,       # Total token budget
+)`}
+</CodeBlock>
+
+If it hits any limit, the loop stops. No runaway bills.
+
+### 2. Use Cheaper Models for Sub-Queries
+The main model explores; cheaper models answer sub-questions:
+
+<CodeBlock language="python">
+{`kytchen = create_kytchen(
+    provider="anthropic",
+    model="claude-sonnet-4-20250514",      # Main chef
+    sub_model="claude-haiku-4-20250514",   # Sous chef (10x cheaper)
+)`}
+</CodeBlock>
+
+Example:
+- Main model: "Search for all auth bugs" → Writes complex grep
+- Sub-model: "Is this CVE critical?" → Quick yes/no on a 200-token snippet
+
+### 3. Truncate Aggressively
+Kytchen auto-truncates REPL output to 10K chars. You can go lower:
+
+<CodeBlock language="python">
+{`from kytchen.repl.sandbox import SandboxConfig
+
+config = SandboxConfig(
+    max_output_chars=5000,  # Truncate at 5K (default: 10K)
+)
+
+kytchen = create_kytchen(sandbox_config=config)`}
+</CodeBlock>
+
+**Trade-off:** Tighter truncation = lower cost, but model might miss details.
+
+### 4. Use Local Mode
+Run `kytchen-local` (not `kytchen` cloud):
+- No compute fees to us
+- Data stays local
+- Only cost: Your LLM API calls
+
+---
+
+## Example Cost Breakdown
+
+### Scenario: 100K-token document, find 3 key facts
+
+**Naive Approach (no Kytchen):**
+- Prompt: Full 100K tokens → model
+- Iterations: 1
+- Input tokens: 100,000
+- Output tokens: 500
+- Cost (Claude Sonnet): ~$3.00
+
+**Kytchen Approach:**
+- Iteration 1: Metadata (200 tokens) → search code (100 tokens)
+- Iteration 2: Search results (2,000 tokens) → read code (50 tokens)
+- Iteration 3: Read output (1,000 tokens) → final answer (200 tokens)
+- Total input: ~3,200 tokens
+- Total output: ~350 tokens
+- Cost (Claude Sonnet): ~$0.10
+
+**Savings: 96%**
+
+---
+
+## Rate Limits and Quotas
+
+Your LLM provider sets rate limits. Common ones:
+
+### Anthropic
+- **Claude Sonnet 4:** 1M tokens/min (tier 1), 2M tokens/min (tier 2)
+- **Claude Haiku:** 5M tokens/min
+
+If you hit limits, Kytchen retries with exponential backoff (up to 3 times).
+
+### OpenAI
+- **GPT-4o:** 10K requests/day (free tier), 500K requests/day (paid)
+- **GPT-4o-mini:** Unlimited requests (paid tier)
+
+**Pro tip:** If you're doing bulk queries, spread them over time or upgrade your tier.
+
+---
+
+## Multi-Provider Setup
+
+You can mix providers in one Kytchen config:
+
+<CodeBlock language="python">
+{`from kytchen.providers import AnthropicProvider, OpenAIProvider
+
+# Use Claude for main queries, GPT-4 for sub-queries
+kytchen = create_kytchen(
+    provider=AnthropicProvider(),
+    model="claude-sonnet-4-20250514",
+    sub_provider=OpenAIProvider(),
+    sub_model="gpt-4o-mini",
+)`}
+</CodeBlock>
+
+**Use case:** Claude is better at code, GPT-4o-mini is dirt cheap for yes/no questions.
+
+---
+
+## Self-Hosting (Ultimate Control)
+
+Want zero cloud dependency? Run everything locally:
+
+<CodeBlock language="bash">
+{`# Install local mode
+pip install 'kytchen[mcp]'
+
+# Set env vars
+export ANTHROPIC_API_KEY=sk-ant-...
+export KYTCHEN_PROVIDER=anthropic
+
+# Run queries locally
+python my_script.py`}
+</CodeBlock>
+
+Or use your own hosted LLM:
+
+<CodeBlock language="python">
+{`from kytchen.providers.base import LLMProvider
+
+class MyLocalLLM(LLMProvider):
+    async def complete(self, messages, model, max_tokens):
+        # Call your local Llama, Mistral, etc.
+        response = my_llm_api.generate(messages)
+        return response.text, input_toks, output_toks, 0.0  # Zero cost
+
+kytchen = create_kytchen(provider=MyLocalLLM())`}
+</CodeBlock>
+
+---
+
+## Transparency: What Kytchen Sends to Your LLM
+
+Every API call includes:
+1. **System prompt:** Instructions for the REPL loop (~500 tokens)
+2. **Context metadata:** Size, format, preview (~200 tokens)
+3. **Conversation history:** Previous REPL outputs (truncated)
+4. **Current state:** What's in the sandbox now
+
+**What Kytchen does NOT send:**
+- Your full dataset (only metadata + slices you explicitly read)
+- Your API keys (stored locally)
+- Your query history (ephemeral, not logged by us)
+
+You can inspect every message in the trajectory:
+
+<CodeBlock language="python">
+{`for step in response.trajectory:
+    print(step.messages_sent)  # Full API request`}
+</CodeBlock>
+
+---
+
+## Cost Monitoring Tips
+
+### 1. Use the Built-in Cost Tracker
+Kytchen tracks spend per query:
+
+<CodeBlock language="python">
+{`response = kytchen.query("...", context="...")
+print(f"This query cost: \u0024{response.total_cost_usd:.4f}")`}
+</CodeBlock>
+
+### 2. Set Up Alerts in Your Provider Dashboard
+Both Anthropic and OpenAI let you set spending alerts:
+- Anthropic: Console → Organization → Billing → Alerts
+- OpenAI: Platform → Settings → Billing → Usage limits
+
+Set a daily cap (e.g., $10/day) to avoid surprises.
+
+### 3. Log Costs in Your App
+If you're embedding Kytchen in production:
+
+<CodeBlock language="python">
+{`import logging
+
+response = kytchen.query("...", context="...")
+logging.info(f"Query cost: \u0024{response.total_cost_usd}, iterations: {len(response.trajectory)}")`}
+</CodeBlock>
+
+Aggregate logs to track weekly/monthly spend.
+
+---
+
+## FAQ
+
+**Q: Can I use Kytchen without an LLM API key?**
+A: No. BYOLLM requires you to bring a key. But you can use free tiers (OpenAI gives $5 credit).
+
+**Q: Does Kytchen mark up API calls?**
+A: In local mode (`kytchen-local`), zero markup. In cloud mode (`kytchen`), we charge ~$0.01/query for compute, but your LLM bill is untouched.
+
+**Q: What if I run out of credits mid-query?**
+A: The LLM API will return a 402 error. Kytchen catches it and returns a partial answer + error message.
+
+**Q: Can I switch providers mid-session?**
+A: Not currently. Each `Kytchen` instance is tied to one provider. Create separate instances for multi-provider workflows.
+
+---
+
+## Next Steps
+
+- **[Getting Started](/docs/getting-started):** Install and run your first query
+- **[MCP Integration](/docs/mcp):** Hook Kytchen into your editor
+- **[API Reference](/docs/api):** Full tool documentation
+
+---
+
+**Your LLM. Your bill. Your control. That's BYOLLM.**

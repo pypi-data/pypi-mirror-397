@@ -1,0 +1,358 @@
+import { CodeBlock } from "@/components/docs/code-block"
+
+# Claude Desktop Integration
+
+Hook Kytchen into Claude Desktop and unlock iterative document prep for all your conversations.
+
+---
+
+## Prerequisites
+
+1. **Claude Desktop app installed:** [Download here](https://claude.ai/download)
+2. **Kytchen with MCP support:**
+   <CodeBlock language="bash">
+   pip install 'kytchen[mcp]'
+   </CodeBlock>
+3. **LLM API key:** Set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` in your environment
+
+---
+
+## Auto-Install (Recommended)
+
+The fastest way to configure Claude Desktop:
+
+<CodeBlock language="bash">
+{`# Install and configure in one command
+kytchen-rlm install claude-desktop
+
+# Verify
+kytchen-rlm doctor`}
+</CodeBlock>
+
+**What this does:**
+1. Locates your Claude Desktop config file:
+   - **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+   - **Windows:** `%APPDATA%/Claude/claude_desktop_config.json`
+   - **Linux:** `~/.config/Claude/claude_desktop_config.json`
+2. Backs up the existing file (`.backup_YYYYMMDD.json`)
+3. Adds `kytchen` and `kytchen-local` to `mcpServers`
+4. Validates the JSON
+
+**Next step:** Restart Claude Desktop (Cmd+Q on Mac, close completely on Windows).
+
+---
+
+## Manual Install
+
+If you prefer manual config (or auto-install failed), edit the config file directly.
+
+### 1. Locate the config file
+
+<CodeBlock language="bash">
+{`# macOS
+open ~/Library/Application\\ Support/Claude/
+
+# Windows
+explorer %APPDATA%/Claude/
+
+# Linux
+cd ~/.config/Claude/`}
+</CodeBlock>
+
+### 2. Edit `claude_desktop_config.json`
+
+If the file doesn't exist, create it. Add this:
+
+<CodeBlock language="json" filename="claude_desktop_config.json">
+{`{
+  "mcpServers": {
+    "kytchen-local": {
+      "command": "kytchen-local",
+      "args": []
+    }
+  }
+}`}
+</CodeBlock>
+
+**For cloud mode (when available):**
+
+<CodeBlock language="json" filename="claude_desktop_config.json">
+{`{
+  "mcpServers": {
+    "kytchen-local": {
+      "command": "kytchen-local",
+      "args": []
+    },
+    "kytchen": {
+      "command": "kytchen",
+      "args": [],
+      "env": {
+        "KYTCHEN_API_KEY": "kyt_sk_your_api_key_here",
+        "KYTCHEN_API_URL": "https://api.kytchen.dev"
+      }
+    }
+  }
+}`}
+</CodeBlock>
+
+### 3. Restart Claude Desktop
+
+Quit completely (not just close the window), then reopen.
+
+---
+
+## Verification
+
+1. **Open Claude Desktop**
+2. **Start a new conversation**
+3. **Look for the tools icon** (bottom of the input box)
+4. **You should see:**
+   - `kytchen-local` (6 tools)
+   - `kytchen` (if cloud mode configured)
+
+If not, check the logs:
+
+<CodeBlock language="bash">
+{`# macOS
+tail -f ~/Library/Logs/Claude/mcp.log
+
+# Windows
+type %LOCALAPPDATA%/Claude/logs/mcp.log
+
+# Linux
+tail -f ~/.local/share/Claude/logs/mcp.log`}
+</CodeBlock>
+
+Look for errors like:
+- `command not found: kytchen-local` → Reinstall with `pip install 'kytchen[mcp]'`
+- `JSON parse error` → Validate your config with `kytchen-rlm doctor`
+
+---
+
+## Example: Analyze a Large Document
+
+Let's use Kytchen to analyze a 100-page research paper (converted to text).
+
+### Step 1: Load the document
+
+In Claude Desktop, paste this prompt:
+
+```
+Use the kytchen-local tool to load this document:
+
+[paste 50K+ chars of text here]
+
+Context ID: research_paper
+```
+
+**Claude will call:**
+<CodeBlock language="json">
+{`{
+  "tool": "load_context",
+  "arguments": {
+    "context": "...",
+    "context_id": "research_paper",
+    "format": "auto"
+  }
+}`}
+</CodeBlock>
+
+**Response:**
+```
+Loaded context 'research_paper': 52,341 chars, 892 lines, ~13,085 tokens
+```
+
+### Step 2: Ask questions
+
+Now you can query without re-pasting:
+
+**You:** "What are the three main findings?"
+
+**Claude uses:**
+1. `search_context(pattern="finding|conclusion|result", max_results=10)`
+2. `peek_context(start=42, end=120, unit="lines")`
+3. Synthesizes: "The three main findings are: [detailed answer]"
+
+**You:** "What methodology did they use?"
+
+**Claude uses:**
+1. `search_context(pattern="method|approach|experiment")`
+2. `peek_context(start=200, end=250, unit="lines")`
+3. Synthesizes: "They used a mixed-methods approach..."
+
+---
+
+## Example: Multi-Document Analysis
+
+Load multiple documents with unique IDs:
+
+**You:**
+```
+Load these three documents using kytchen-local:
+
+Document 1 (ID: contract_a): [paste text]
+Document 2 (ID: contract_b): [paste text]
+Document 3 (ID: contract_c): [paste text]
+```
+
+**Then ask:**
+```
+Compare the indemnification clauses across all three contracts.
+Use search_context on each ID to find relevant sections.
+```
+
+**Claude will:**
+1. Search `contract_a`, `contract_b`, `contract_c` for "indemnification"
+2. Read the relevant lines from each
+3. Compare and summarize differences
+
+---
+
+## Advanced: Custom Python Execution
+
+You can run arbitrary Python in the sandbox:
+
+**You:**
+```
+Using kytchen-local on context ID 'logs':
+1. Count how many times "ERROR" appears
+2. Find the top 3 most common error messages
+3. Show the first occurrence of each
+```
+
+**Claude calls:**
+<CodeBlock language="python">
+{`# exec_python
+error_count = ctx.count('ERROR')
+print(f"Total errors: {error_count}")
+
+# More complex analysis
+import re
+errors = re.findall(r'ERROR: (.+)', ctx)
+from collections import Counter
+top_errors = Counter(errors).most_common(3)
+for msg, count in top_errors:
+    print(f"{msg}: {count} times")`}
+</CodeBlock>
+
+---
+
+## Customization
+
+### Use a specific LLM provider
+
+Edit the config to pass provider args:
+
+<CodeBlock language="json" filename="claude_desktop_config.json">
+{`{
+  "mcpServers": {
+    "kytchen-local": {
+      "command": "kytchen-local",
+      "args": ["--provider", "anthropic", "--model", "claude-sonnet-4-20250514"]
+    }
+  }
+}`}
+</CodeBlock>
+
+### Set cost limits
+
+Pass environment variables:
+
+<CodeBlock language="json" filename="claude_desktop_config.json">
+{`{
+  "mcpServers": {
+    "kytchen-local": {
+      "command": "kytchen-local",
+      "args": [],
+      "env": {
+        "KYTCHEN_MAX_COST": "1.00",
+        "KYTCHEN_MAX_ITERATIONS": "15"
+      }
+    }
+  }
+}`}
+</CodeBlock>
+
+---
+
+## Troubleshooting
+
+### "kytchen-local not found"
+
+**Cause:** Python scripts directory isn't in PATH.
+
+**Solution:**
+<CodeBlock language="bash">
+{`# Find where pip installed it
+pip show kytchen
+
+# Add to PATH or use full path in config
+{
+  "command": "/Users/you/.local/bin/kytchen-local",
+  ...
+}`}
+</CodeBlock>
+
+### "No tools showing in Claude Desktop"
+
+**Checklist:**
+1. Did you restart Claude Desktop completely? (Quit, not just close)
+2. Is the JSON valid? Run: `kytchen-rlm doctor`
+3. Check MCP logs: `~/Library/Logs/Claude/mcp.log`
+
+### "Tool call failed: API key not found"
+
+**Solution:** Set your LLM API key:
+
+<CodeBlock language="bash">
+{`# In your shell config (.zshrc, .bashrc, etc.)
+export ANTHROPIC_API_KEY=sk-ant-...
+
+# Or in the MCP config
+{
+  "mcpServers": {
+    "kytchen-local": {
+      "env": {
+        "ANTHROPIC_API_KEY": "sk-ant-..."
+      }
+    }
+  }
+}`}
+</CodeBlock>
+
+### "Context too large"
+
+Claude Desktop has a 100MB message limit. If your context is huge:
+
+1. Load it in chunks: `load_context(context=chunk1, context_id="doc_part1")`
+2. Or save to a file and load via Python:
+   <CodeBlock language="python">
+   {`# In Claude Desktop, ask:
+   "Execute this Python to load a file:
+   with open('/path/to/huge_file.txt', 'r') as f:
+       ctx = f.read()"`}
+   </CodeBlock>
+
+---
+
+## Uninstalling
+
+To remove Kytchen from Claude Desktop:
+
+<CodeBlock language="bash">
+kytchen-rlm uninstall claude-desktop
+</CodeBlock>
+
+Or manually edit `claude_desktop_config.json` and remove the `kytchen` and `kytchen-local` entries.
+
+---
+
+## Next Steps
+
+- **[Cursor Integration](/docs/mcp/cursor):** Add Kytchen to Cursor for code exploration
+- **[API Reference](/docs/api/tools):** Full tool documentation
+- **[BYOLLM Guide](/docs/concepts/byollm):** Cost optimization
+
+---
+
+**Claude Desktop + Kytchen = Infinite context, zero hallucinations. Heard.**

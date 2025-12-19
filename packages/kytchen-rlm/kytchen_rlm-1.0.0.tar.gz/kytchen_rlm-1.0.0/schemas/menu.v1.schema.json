@@ -1,0 +1,217 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://kytchen.dev/schemas/menu.v1.json",
+  "title": "Kytchen Menu Schema",
+  "description": "OpenAI-compatible tool discovery schema for Kytchen Kitchens. This is how agents know what's for dinner.",
+  "type": "object",
+  "required": ["version", "kitchen", "pantry", "tools", "endpoints"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "const": "https://kytchen.dev/schemas/menu.v1.json"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of this menu"
+    },
+    "kitchen": {
+      "type": "object",
+      "description": "Kitchen metadata",
+      "required": ["id", "name"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^kyt_[a-zA-Z0-9]+$",
+          "description": "Unique kitchen identifier"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable kitchen name"
+        },
+        "description": {
+          "type": "string",
+          "description": "What this kitchen is for"
+        },
+        "chef": {
+          "type": "string",
+          "pattern": "^@[a-zA-Z0-9_]+$",
+          "description": "Chef handle who owns this kitchen"
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["public", "private", "unlisted"],
+          "default": "private"
+        },
+        "forked_from": {
+          "type": ["string", "null"],
+          "description": "Kitchen ID this was forked from, if any"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "pantry": {
+      "type": "object",
+      "description": "Indexed data available in this kitchen",
+      "required": ["datasets", "total_size_bytes", "total_tokens_estimate"],
+      "properties": {
+        "datasets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "format"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Dataset identifier"
+              },
+              "name": {
+                "type": "string",
+                "description": "Human-readable name"
+              },
+              "format": {
+                "type": "string",
+                "enum": ["text", "code", "json", "csv", "pdf", "docx", "markdown"],
+                "description": "Content format"
+              },
+              "size_bytes": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "size_tokens_estimate": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Estimated token count (chars / 4)"
+              },
+              "indexed": {
+                "type": "boolean",
+                "default": false,
+                "description": "Whether this dataset is indexed for search"
+              },
+              "content_hash": {
+                "type": "string",
+                "pattern": "^sha256:[a-f0-9]{64}$",
+                "description": "Content hash for verification"
+              }
+            }
+          }
+        },
+        "total_size_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_tokens_estimate": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "indexed_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the pantry was last indexed"
+        }
+      }
+    },
+    "tools": {
+      "type": "array",
+      "description": "Available tools in OpenAI function calling format",
+      "items": {
+        "type": "object",
+        "required": ["type", "function"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "function"
+          },
+          "function": {
+            "type": "object",
+            "required": ["name", "description", "parameters"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "pattern": "^[a-z_][a-z0-9_]*$",
+                "description": "Function name (snake_case)"
+              },
+              "description": {
+                "type": "string",
+                "description": "What this function does"
+              },
+              "parameters": {
+                "type": "object",
+                "description": "JSON Schema for function parameters",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "object"
+                  },
+                  "properties": {
+                    "type": "object"
+                  },
+                  "required": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "budget_defaults": {
+      "type": "object",
+      "description": "Default budget constraints for tickets",
+      "properties": {
+        "max_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 50000
+        },
+        "max_cost_usd": {
+          "type": "number",
+          "minimum": 0,
+          "default": 1.0
+        },
+        "max_iterations": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 20
+        },
+        "timeout_seconds": {
+          "type": "number",
+          "minimum": 1,
+          "default": 120
+        }
+      }
+    },
+    "endpoints": {
+      "type": "object",
+      "description": "API endpoints for this kitchen",
+      "required": ["menu", "query"],
+      "properties": {
+        "menu": {
+          "type": "string",
+          "format": "uri",
+          "description": "This menu endpoint"
+        },
+        "query": {
+          "type": "string",
+          "format": "uri",
+          "description": "Fire a ticket (POST)"
+        },
+        "stream": {
+          "type": "string",
+          "format": "uri",
+          "description": "Fire a ticket with SSE streaming (POST)"
+        },
+        "pantry": {
+          "type": "string",
+          "format": "uri",
+          "description": "Pantry management endpoint"
+        }
+      }
+    }
+  }
+}

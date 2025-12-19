@@ -1,0 +1,241 @@
+import { CodeBlock } from "@/components/docs/code-block"
+
+# MCP Integration: Kytchen in Your Editor
+
+**Model Context Protocol (MCP)** lets your editor, IDE, or AI assistant talk to Kytchen. One install command, and Claude/Cursor/Windsurf gain superpowers: iterative document prep instead of naive prompting.
+
+---
+
+## What is MCP?
+
+MCP is an open protocol (by Anthropic) that lets AI tools use external "servers" as tools. Think of it like plugins for your AI.
+
+**Without MCP:**
+- You: "Claude, analyze this 100K-line log file"
+- Claude: "Sorry, that's too big. Paste a smaller chunk."
+
+**With Kytchen MCP:**
+- You: "Claude, analyze this 100K-line log file"
+- Claude: "Using kytchen-local... searching for errors... reading lines 4582-4590... found 3 critical issues."
+
+Claude now has access to `load_context()`, `search_context()`, `exec_python()`, etc.
+
+---
+
+## Supported Clients
+
+Kytchen works with these MCP clients:
+
+| Client | Installation | Use Case |
+|--------|--------------|----------|
+| **[Claude Desktop](/docs/mcp/claude-desktop)** | `kytchen-rlm install claude-desktop` | Chat with documents |
+| **[Cursor](/docs/mcp/cursor)** | `kytchen-rlm install cursor` | Code exploration |
+| **[Windsurf](/docs/mcp/windsurf)** | `kytchen-rlm install windsurf` | AI-first IDE |
+| **[Claude Code](/docs/mcp/claude-code)** | `claude mcp add kytchen-local kytchen-local` | CLI workflows |
+
+Each guide includes:
+- One-command auto-install
+- Manual JSON config (if you prefer)
+- Verification steps
+- Troubleshooting
+
+---
+
+## Quick Start: Auto-Install
+
+The fastest way to add Kytchen to all your editors:
+
+<CodeBlock language="bash">
+{`# Install Kytchen with MCP support
+pip install 'kytchen[mcp]'
+
+# Auto-configure detected clients (interactive)
+kytchen-rlm install
+
+# Or configure all at once (non-interactive)
+kytchen-rlm install --all`}
+</CodeBlock>
+
+This will:
+1. Detect installed MCP clients (Claude Desktop, Cursor, etc.)
+2. Back up existing configs (`.backup_YYYYMMDD.json`)
+3. Inject two Kytchen servers:
+   - `kytchen`: Cloud-hosted (requires API key from kytchen.dev)
+   - `kytchen-local`: Your local install (BYOLLM mode)
+4. Print restart instructions
+
+**Then restart your editor.** Kytchen appears in the tools menu.
+
+---
+
+## Local vs. Cloud Mode
+
+### kytchen-local (Recommended for Now)
+- Runs on your machine
+- Requires: `pip install 'kytchen[mcp]'`
+- Data never leaves your laptop
+- Cost: Only your LLM API calls (Anthropic/OpenAI)
+
+**Best for:** Privacy-sensitive work, local development, full control.
+
+### kytchen (Cloud, Coming Soon)
+- Runs on our infrastructure
+- Requires: API key from [kytchen.dev](https://kytchen.dev)
+- Data is ephemeral (loaded → queried → purged)
+- Cost: ~$0.01/query + your LLM costs
+
+**Best for:** Teams, CI/CD pipelines, mobile workflows.
+
+For now, use `kytchen-local`. Cloud mode launches Q1 2025.
+
+---
+
+## What Gets Added to Your Config
+
+When you run `kytchen-rlm install`, this JSON gets injected:
+
+<CodeBlock language="json" filename="Example: Claude Desktop config">
+{`{
+  "mcpServers": {
+    "kytchen-local": {
+      "command": "kytchen-local",
+      "args": []
+    },
+    "kytchen": {
+      "command": "kytchen",
+      "args": [],
+      "env": {
+        "KYTCHEN_API_KEY": "kyt_sk_...",
+        "KYTCHEN_API_URL": "https://api.kytchen.dev"
+      }
+    }
+  }
+}`}
+</CodeBlock>
+
+**Customization:**
+- Add `--provider anthropic` to args for a specific provider
+- Add `--model claude-sonnet-4-20250514` to override the default model
+- Remove the `kytchen` entry if you only want local mode
+
+---
+
+## Available Tools
+
+Once installed, your AI has access to these tools:
+
+### load_context
+Load a document into the REPL sandbox.
+
+**Example:**
+```
+Claude: "Load this 50K-char log file into context ID 'logs'"
+Tool call: load_context(context="...", context_id="logs")
+```
+
+### search_context
+Regex search with surrounding context lines.
+
+**Example:**
+```
+Claude: "Search for timeout errors in the logs"
+Tool call: search_context(pattern="timeout.*error", context_id="logs", max_results=10)
+```
+
+### peek_context
+Slice by character or line range.
+
+**Example:**
+```
+Claude: "Show me lines 100-120"
+Tool call: peek_context(start=100, end=120, unit="lines")
+```
+
+### exec_python
+Execute arbitrary Python in the sandbox.
+
+**Example:**
+```
+Claude: "Count how many times 'ERROR' appears"
+Tool call: exec_python(code="ctx.count('ERROR')")
+```
+
+### sub_query
+Ask a sub-question with a cheaper model.
+
+**Example:**
+```
+Claude: "Is this stack trace critical?"
+Tool call: sub_query(prompt="Is this critical?", context_slice="...")
+```
+
+Full API reference: [/docs/api/tools](/docs/api/tools)
+
+---
+
+## How It Works: Behind the Scenes
+
+1. **You ask:** "Claude, find auth bugs in this codebase"
+2. **Claude calls:** `load_context(context="...", format="code")`
+3. **Kytchen responds:** "Loaded 50,000 lines, 2MB, Python format"
+4. **Claude calls:** `search_context(pattern="auth.*bug|CVE", max_results=5)`
+5. **Kytchen responds:** "Found 3 matches: lines 42, 156, 892"
+6. **Claude calls:** `peek_context(start=42, end=60, unit="lines")`
+7. **Kytchen responds:** [18 lines of code]
+8. **Claude synthesizes:** "Found 3 potential auth bugs: [detailed answer]"
+
+**You see:** The final answer + the tool call logs (in the UI sidebar).
+
+---
+
+## Troubleshooting
+
+### "MCP server not found"
+**Solution:** Make sure you installed with `pip install 'kytchen[mcp]'` (not just `kytchen`).
+
+Verify:
+<CodeBlock language="bash">
+which kytchen-local
+# Should print: /path/to/bin/kytchen-local
+</CodeBlock>
+
+### "kytchen-rlm: command not found"
+**Solution:** Your Python scripts aren't in PATH. Use the module directly:
+<CodeBlock language="bash">
+python -m kytchen.cli install
+</CodeBlock>
+
+### "Config file is invalid JSON"
+**Solution:** Run the doctor to diagnose:
+<CodeBlock language="bash">
+kytchen-rlm doctor
+</CodeBlock>
+
+It will show which config files are broken and offer to restore backups.
+
+### "Tools not appearing in Claude Desktop"
+**Solution:** Restart Claude Desktop completely (Cmd+Q on Mac, not just close window).
+
+If still not working:
+1. Check `~/Library/Application Support/Claude/claude_desktop_config.json`
+2. Verify `mcpServers.kytchen-local` exists
+3. Check the Claude Desktop logs: `~/Library/Logs/Claude/mcp.log`
+
+---
+
+## Next Steps
+
+Choose your editor and follow the integration guide:
+
+- **[Claude Desktop](/docs/mcp/claude-desktop):** Best for document Q&A
+- **[Cursor](/docs/mcp/cursor):** Best for code exploration
+- **[Windsurf](/docs/mcp/windsurf):** AI-first IDE
+- **[Claude Code](/docs/mcp/claude-code):** CLI workflows
+
+Or jump straight to:
+- **[API Reference](/docs/api/tools):** Full tool documentation
+- **[Getting Started](/docs/getting-started):** Python library usage
+
+---
+
+**Prep station installed. Let's get cooking.**

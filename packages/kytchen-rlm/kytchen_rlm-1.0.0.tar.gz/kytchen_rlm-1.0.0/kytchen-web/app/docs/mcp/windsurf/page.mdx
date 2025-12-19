@@ -1,0 +1,343 @@
+import { CodeBlock } from "@/components/docs/code-block"
+
+# Windsurf Integration
+
+Add Kytchen to Windsurf (Codeium's AI-first IDE) for iterative codebase exploration.
+
+---
+
+## Prerequisites
+
+1. **Windsurf installed:** [Download here](https://codeium.com/windsurf)
+2. **Kytchen with MCP support:**
+   <CodeBlock language="bash">
+   pip install 'kytchen[mcp]'
+   </CodeBlock>
+3. **LLM API key:** Set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`
+
+---
+
+## Auto-Install (Recommended)
+
+<CodeBlock language="bash">
+{`# Install and configure
+kytchen-rlm install windsurf
+
+# Verify
+kytchen-rlm doctor`}
+</CodeBlock>
+
+**What this does:**
+1. Locates Windsurf config: `~/.codeium/windsurf/mcp_config.json`
+2. Backs up existing config
+3. Adds `kytchen-local` server
+4. Validates JSON
+
+**Next step:** Restart Windsurf.
+
+---
+
+## Manual Install
+
+### 1. Create the config file
+
+<CodeBlock language="bash">
+{`mkdir -p ~/.codeium/windsurf
+touch ~/.codeium/windsurf/mcp_config.json`}
+</CodeBlock>
+
+### 2. Edit `mcp_config.json`
+
+<CodeBlock language="json" filename="~/.codeium/windsurf/mcp_config.json">
+{`{
+  "mcpServers": {
+    "kytchen-local": {
+      "command": "kytchen-local",
+      "args": []
+    }
+  }
+}`}
+</CodeBlock>
+
+**For cloud mode (when available):**
+
+<CodeBlock language="json" filename="~/.codeium/windsurf/mcp_config.json">
+{`{
+  "mcpServers": {
+    "kytchen-local": {
+      "command": "kytchen-local",
+      "args": []
+    },
+    "kytchen": {
+      "command": "kytchen",
+      "args": [],
+      "env": {
+        "KYTCHEN_API_KEY": "kyt_sk_your_api_key_here",
+        "KYTCHEN_API_URL": "https://api.kytchen.dev"
+      }
+    }
+  }
+}`}
+</CodeBlock>
+
+### 3. Restart Windsurf
+
+---
+
+## Verification
+
+1. **Open Windsurf**
+2. **Open the Flow panel** (Windsurf's AI chat)
+3. **Type:** `@kytchen-local` (should autocomplete)
+4. **Or check:** Settings → Extensions → MCP Servers
+
+If tools don't appear, check logs:
+- **macOS/Linux:** `~/.codeium/windsurf/logs/`
+- **Windows:** `%APPDATA%/Codeium/Windsurf/logs/`
+
+---
+
+## Example: Analyze a Large Codebase
+
+Let's explore a monorepo with 500+ files.
+
+### Step 1: Load context
+
+In Windsurf Flow:
+
+```
+@kytchen-local Load all TypeScript files in src/ into context "frontend"
+
+[Windsurf will gather files and pass to load_context]
+```
+
+### Step 2: Ask questions
+
+```
+Using kytchen-local on context "frontend":
+1. Find all React components that use useState
+2. Show me the 3 most complex components (by line count)
+3. Summarize their responsibilities
+```
+
+**Windsurf will:**
+1. Call `search_context(pattern="useState", max_results=50)`
+2. Call `exec_python()` to count lines per component
+3. Call `peek_context()` to read the top 3
+4. Synthesize a summary
+
+---
+
+## Example: Debug Production Logs
+
+You have 100K lines of production logs. Instead of downloading and grepping locally:
+
+### Step 1: Load logs
+
+```
+@kytchen-local Load this log dump into context "prod_logs"
+
+[paste or attach log file]
+```
+
+### Step 2: Investigate
+
+```
+Using kytchen-local on "prod_logs":
+1. Search for all 500-level errors
+2. Group by endpoint
+3. Show the first occurrence of each unique error
+```
+
+**Windsurf executes:**
+<CodeBlock language="python">
+{`import re
+from collections import defaultdict
+
+errors = re.findall(r'(\\d{3}) (\\w+) (.+)', ctx)
+errors_500 = [e for e in errors if e[0].startswith('5')]
+
+by_endpoint = defaultdict(list)
+for status, method, path in errors_500:
+    by_endpoint[path].append((status, method))
+
+for endpoint, errs in list(by_endpoint.items())[:10]:
+    print(f"{endpoint}: {len(errs)} errors")`}
+</CodeBlock>
+
+---
+
+## Example: Compare Branches
+
+Load files from two branches and compare:
+
+```
+@kytchen-local Load main branch version of src/api.ts into context "api_main"
+@kytchen-local Load feature branch version of src/api.ts into context "api_feature"
+
+Now compare the "authenticate" function in both versions.
+```
+
+**Windsurf will:**
+1. `search_context(pattern="function authenticate", context_id="api_main")`
+2. `search_context(pattern="function authenticate", context_id="api_feature")`
+3. `peek_context()` on matching line ranges
+4. Diff and explain changes
+
+---
+
+## Customization
+
+### Set cost limits
+
+<CodeBlock language="json" filename="~/.codeium/windsurf/mcp_config.json">
+{`{
+  "mcpServers": {
+    "kytchen-local": {
+      "command": "kytchen-local",
+      "args": [],
+      "env": {
+        "KYTCHEN_MAX_COST": "0.50",
+        "KYTCHEN_MAX_ITERATIONS": "15"
+      }
+    }
+  }
+}`}
+</CodeBlock>
+
+### Use a specific provider
+
+<CodeBlock language="json" filename="~/.codeium/windsurf/mcp_config.json">
+{`{
+  "mcpServers": {
+    "kytchen-local": {
+      "command": "kytchen-local",
+      "args": ["--provider", "anthropic", "--model", "claude-sonnet-4-20250514"]
+    }
+  }
+}`}
+</CodeBlock>
+
+---
+
+## Troubleshooting
+
+### "kytchen-local not found"
+
+**Solution:** Use full path or add Python scripts to PATH.
+
+<CodeBlock language="bash">
+{`# Find install location
+which kytchen-local
+
+# If not found, add to PATH in ~/.zshrc or ~/.bashrc
+export PATH="$PATH:$(python -m site --user-base)/bin"`}
+</CodeBlock>
+
+Or use full path in config:
+
+<CodeBlock language="json">
+{`{
+  "mcpServers": {
+    "kytchen-local": {
+      "command": "/Users/you/.local/bin/kytchen-local"
+    }
+  }
+}`}
+</CodeBlock>
+
+### "Tools not appearing in Flow"
+
+**Checklist:**
+1. Restart Windsurf completely
+2. Validate JSON: `kytchen-rlm doctor`
+3. Check logs: `~/.codeium/windsurf/logs/mcp.log`
+4. Try typing `@kytchen` (should autocomplete)
+
+### "API key not found"
+
+Set it in the MCP config:
+
+<CodeBlock language="json">
+{`{
+  "mcpServers": {
+    "kytchen-local": {
+      "env": {
+        "ANTHROPIC_API_KEY": "sk-ant-...",
+        "OPENAI_API_KEY": "sk-..."
+      }
+    }
+  }
+}`}
+</CodeBlock>
+
+### "Context too large"
+
+If you hit message size limits:
+1. Load in smaller chunks with unique context IDs
+2. Use file-based loading: `exec_python("with open('huge.txt') as f: ctx = f.read()")`
+
+---
+
+## Best Practices
+
+### 1. Use Context IDs for Multi-File Analysis
+
+Instead of loading everything at once:
+
+```
+@kytchen-local Load backend/ into context "backend"
+@kytchen-local Load frontend/ into context "frontend"
+
+Now analyze the API contract between them.
+```
+
+### 2. Combine with Windsurf's Native Flow
+
+Use Flow for quick questions, Kytchen for deep analysis:
+
+```
+// Quick: What does this function do?
+[Use native Flow]
+
+// Deep: Find all callers of this function across 500 files
+@kytchen-local search_context("callsThisFunction", max_results=50)
+```
+
+### 3. Set Iteration Limits for Exploratory Work
+
+When you're just exploring (not production):
+
+<CodeBlock language="json">
+{`{
+  "mcpServers": {
+    "kytchen-local": {
+      "env": {
+        "KYTCHEN_MAX_ITERATIONS": "20"
+      }
+    }
+  }
+}`}
+</CodeBlock>
+
+---
+
+## Uninstalling
+
+<CodeBlock language="bash">
+kytchen-rlm uninstall windsurf
+</CodeBlock>
+
+Or manually remove the `kytchen-local` entry from `~/.codeium/windsurf/mcp_config.json`.
+
+---
+
+## Next Steps
+
+- **[Claude Code Integration](/docs/mcp/claude-code):** Add Kytchen to Claude Code CLI
+- **[API Reference](/docs/api/tools):** Full tool documentation
+- **[BYOLLM Guide](/docs/concepts/byollm):** Cost optimization
+
+---
+
+**Windsurf + Kytchen = AI-first coding with infinite context. Heard.**

@@ -1,0 +1,62 @@
+services:
+  # Python API (FastAPI)
+  - type: web
+    name: kytchen-api
+    runtime: docker
+    plan: free
+    region: oregon
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kytchen-db
+          property: connectionString
+      - key: KYTCHEN_SELF_HOST
+        value: "1"
+      - key: KYTCHEN_DEV_MODE
+        value: "0"
+      - key: KYTCHEN_BOOTSTRAP_API_KEY
+        generateValue: true
+      - key: KYTCHEN_BOOTSTRAP_WORKSPACE_SLUG
+        value: "default"
+      - key: KYTCHEN_BOOTSTRAP_WORKSPACE_NAME
+        value: "Default Workspace"
+      # Storage - Users should configure these for S3/MinIO
+      - key: STORAGE_BACKEND
+        value: s3
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        sync: false
+      - key: S3_BUCKET_NAME
+        sync: false
+      - key: S3_ENDPOINT_URL
+        sync: false
+
+  # Next.js Frontend
+  - type: web
+    name: kytchen-web
+    runtime: node
+    rootDir: kytchen-web
+    plan: free
+    region: oregon
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: kytchen-api
+          envVarKey: RENDER_EXTERNAL_URL
+      # Supabase config (required for auth in web app)
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+
+databases:
+  - name: kytchen-db
+    plan: free
+    region: oregon
+    ipAllowList: [] # Allow all

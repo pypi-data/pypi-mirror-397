@@ -1,0 +1,84 @@
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kytchen}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kytchen}
+      POSTGRES_DB: ${POSTGRES_DB:-kytchen}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - kytchen
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-kytchen}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-kytchen123}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - kytchen
+
+  kytchen-api:
+    build: .
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://kytchen:kytchen@postgres:5432/kytchen}
+      STORAGE_BACKEND: ${STORAGE_BACKEND:-minio}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-kytchen}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-kytchen123}
+      MINIO_BUCKET: ${MINIO_BUCKET:-pantry}
+      MINIO_SECURE: ${MINIO_SECURE:-false}
+      KYTCHEN_DEV_MODE: ${KYTCHEN_DEV_MODE:-0}
+      KYTCHEN_SELF_HOST: ${KYTCHEN_SELF_HOST:-1}
+      KYTCHEN_BOOTSTRAP_API_KEY: ${KYTCHEN_BOOTSTRAP_API_KEY:-kyt_sk_change_me}
+      KYTCHEN_BOOTSTRAP_WORKSPACE_SLUG: ${KYTCHEN_BOOTSTRAP_WORKSPACE_SLUG:-default}
+      KYTCHEN_BOOTSTRAP_WORKSPACE_NAME: ${KYTCHEN_BOOTSTRAP_WORKSPACE_NAME:-Default Workspace}
+      KYTCHEN_BOOTSTRAP_PLAN: ${KYTCHEN_BOOTSTRAP_PLAN:-free}
+      KYTCHEN_BOOTSTRAP_API_KEY_NAME: ${KYTCHEN_BOOTSTRAP_API_KEY_NAME:-Self-host bootstrap key}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz').read()\"",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+    networks:
+      - kytchen
+
+volumes:
+  postgres_data:
+  minio_data:
+
+networks:
+  kytchen:
+    driver: bridge

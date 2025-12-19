@@ -1,0 +1,192 @@
+import { CodeBlock } from "@/components/docs/code-block"
+
+# Core Concepts
+
+Kytchen isn't just another AI wrapper. It's a fundamentally different approach to working with large contexts. Think of it as **mise en place for AI**—everything in its place, prepped and ready.
+
+---
+
+## The Context Window Problem
+
+Most "long context" LLMs (1M+ tokens) have three fatal flaws:
+
+1. **Lost in the Middle:** They get lazy with huge prompts, missing key info buried in the text
+2. **Hallucination Risk:** More tokens = more chances to make stuff up
+3. **Cost Explosion:** Processing 500K tokens for a simple question burns cash fast
+
+**The naive solution:** Cram everything into the prompt and pray.
+
+**The Kytchen solution:** Don't cram. **Prep.**
+
+---
+
+## How Kytchen Works: The Kitchen Metaphor
+
+### The Pantry (Your Data)
+This is your infinite storage: terabytes of docs, code, databases. The raw ingredients.
+
+### The Prep Cook (Kytchen's REPL)
+Before the chef (LLM) sees anything, a prep cook aggressively filters:
+- `grep "authentication"` → 12 hits
+- `lines(42, 58)` → Read 16 lines
+- `search("error.*timeout")` → Find 3 patterns
+
+The prep cook doesn't think. It just **executes commands** written by the chef.
+
+### The Chef (Your LLM)
+The chef (Claude, GPT-4, etc.) never sees the full pantry. It sees:
+- **Metadata:** "800 lines, 50,000 chars, JSON format"
+- **Tools:** `peek()`, `search()`, `lines()`, `chunk()`
+- **Execution Results:** Truncated to 10K chars max
+
+The chef writes Python code to explore, then "plates" a final answer from what it actually read.
+
+---
+
+## The Core Innovation: Iterative REPL
+
+Kytchen is a **Recursive Language Model (RLM)** loop:
+
+1. **Context → REPL:** Your data loads into a sandboxed Python environment as `ctx`
+2. **Metadata → LLM:** The model sees size, format, preview—not full text
+3. **LLM → Code:** Model writes Python: `search("bug fix", max_results=5)`
+4. **Code → Execution:** Kytchen runs it in the sandbox (safe, fast)
+5. **Output → LLM:** Results get truncated and fed back
+6. **Loop:** Repeat until model calls `FINAL(answer)` or hits budget limits
+
+**This is not RAG.** There's no embedding, no chunking strategy, no vector search. Just good old-fashioned `grep` and `read`.
+
+---
+
+## Key Principles
+
+### 1. Grep First, Generate Second
+The model explores with deterministic tools before generating an answer. No guessing.
+
+### 2. Glass Kitchen (Observability)
+Every `search()`, `read()`, and `chunk()` gets logged. You see the prep work. This is critical for:
+- **Trust:** No black box magic
+- **Debugging:** See exactly where it went wrong
+- **Compliance:** Chain of custody for legal/gov use cases
+
+### 3. Budget Control (Portion Control)
+You set hard limits:
+- `max_iterations`: How many REPL cycles
+- `max_cost_usd`: Dollar cap per query
+- `max_tokens`: Total token budget
+- `max_wall_time_seconds`: Time limit
+
+If it hits a limit, it stops. No surprise bills.
+
+### 4. BYOLLM (Your LLM, Your Bill)
+Kytchen doesn't host models. You bring your own API key. Benefits:
+- **No markup:** Pay OpenAI/Anthropic directly
+- **No data sharing:** Context never leaves your machine (local mode)
+- **Model choice:** Use Claude Opus, GPT-4o, or any compatible provider
+
+---
+
+## What Makes Kytchen Different?
+
+| Approach | Context Strategy | Cost | Hallucination Risk | Observability |
+|----------|------------------|------|-------------------|---------------|
+| **Naive Prompting** | Cram everything in | High | High | None |
+| **RAG** | Embed + search | Medium | Medium | Partial (chunk IDs) |
+| **Long Context LLMs** | Process 1M+ tokens | Very High | Medium | None |
+| **Kytchen** | Iterative REPL prep | Low | Low | Full (code + output) |
+
+---
+
+## The Sandbox: What Can It Do?
+
+The REPL sandbox includes these helpers:
+
+### Reading Tools
+- `peek(start, end)`: Slice by character range
+- `lines(start, end)`: Slice by line numbers
+- `chunk(n, size)`: Get nth chunk of size chars
+
+### Search Tools
+- `search(pattern, max_results=10)`: Regex search with context lines
+- `grep(pattern)`: Quick match (returns line numbers only)
+
+### Advanced Tools
+- `sub_query(prompt, context_slice)`: Ask a sub-question with a cheaper model
+- `sub_kytchen(query, context)`: Recursive Kytchen call (depth + 1)
+
+### Safety Limits
+- **Import whitelist:** Only safe libs (re, json, csv, math, datetime, etc.)
+- **No file I/O:** Can't `open()` or `exec()`
+- **AST validation:** Blocks dunder methods, `eval()`, etc.
+- **Output truncation:** Max 10K chars per step
+
+---
+
+## Example: Needle in a Haystack
+
+Let's see how Kytchen handles a classic benchmark: finding a hidden fact in 100K tokens.
+
+<CodeBlock language="python">
+{`from kytchen import create_kytchen
+
+# 100K token document with one key fact buried deep
+context = "..." # Massive text
+
+kytchen = create_kytchen(
+    provider="anthropic",
+    model="claude-sonnet-4-20250514",
+    max_iterations=10,
+)
+
+response = kytchen.query(
+    "What is the secret passcode mentioned in the document?",
+    context=context,
+)
+
+# The LLM writes:
+# 1. search("passcode|password|secret code", max_results=5)
+# 2. lines(4582, 4590)  # Reads 8 lines where it found "passcode"
+# 3. FINAL("The secret passcode is: KYTCHEN-2025")
+
+print(response.answer)
+# Output: "The secret passcode is: KYTCHEN-2025"
+
+# Check the receipt
+for step in response.trajectory:
+    print(f"Step {step.iteration}: {step.code}")
+    # Shows exactly what it searched and read`}
+</CodeBlock>
+
+**Cost:** ~0.02 USD (vs. 2.00 USD for processing the full 100K tokens every turn)
+
+**Accuracy:** 100% (it either finds it or says "not found")
+
+**Proof:** The trajectory shows line 4585 was read
+
+---
+
+## When to Use Kytchen
+
+### Perfect For
+- Large document Q&A (legal, medical, research)
+- Codebase exploration ("Where is auth handled?")
+- Log file analysis (millions of lines)
+- Contract review (find specific clauses)
+- Compliance audits (chain of custody required)
+
+### Not Ideal For
+- Short prompts (&lt;10K tokens) → Just use the LLM directly
+- Creative writing → No need for iterative search
+- Real-time chat → The REPL loop adds latency
+
+---
+
+## Next Steps
+
+- **[BYOLLM Guide](/docs/concepts/byollm):** Understand costs, rate limits, and model choice
+- **[MCP Integration](/docs/mcp):** Hook Kytchen into your editor
+- **[API Reference](/docs/api):** Full tool documentation
+
+---
+
+**The pantry is infinite. The plate stays clean. That's Kytchen.**

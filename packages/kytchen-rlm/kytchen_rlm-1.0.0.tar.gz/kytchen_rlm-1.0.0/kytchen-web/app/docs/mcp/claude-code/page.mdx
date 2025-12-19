@@ -1,0 +1,372 @@
+import { CodeBlock } from "@/components/docs/code-block"
+
+# Claude Code Integration
+
+Add Kytchen to Claude Code (Anthropic's official CLI) for terminal-based AI workflows with infinite context.
+
+---
+
+## Prerequisites
+
+1. **Claude Code installed:** [Download here](https://claude.ai/code)
+2. **Kytchen with MCP support:**
+   <CodeBlock language="bash">
+   pip install 'kytchen[mcp]'
+   </CodeBlock>
+3. **LLM API key:** Set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY`
+
+---
+
+## Auto-Install (Recommended)
+
+<CodeBlock language="bash">
+{`# Install Kytchen
+pip install 'kytchen[mcp]'
+
+# Add to Claude Code
+kytchen-rlm install claude-code
+
+# Verify
+claude mcp list`}
+</CodeBlock>
+
+**Expected output:**
+```
+MCP Servers:
+  kytchen-local (command: kytchen-local)
+  kytchen (command: kytchen)
+```
+
+---
+
+## Manual Install
+
+Claude Code uses the `claude mcp add` command instead of JSON config files.
+
+<CodeBlock language="bash">
+{`# Add local server
+claude mcp add kytchen-local kytchen-local
+
+# Add cloud server (when available)
+claude mcp add kytchen kytchen`}
+</CodeBlock>
+
+**Verify:**
+<CodeBlock language="bash">
+claude mcp list
+</CodeBlock>
+
+---
+
+## Verification
+
+Start a Claude Code session and check for tools:
+
+<CodeBlock language="bash">
+claude
+</CodeBlock>
+
+In the session:
+```
+You: Use the kytchen-local tool to load this text: [paste text]
+
+Claude: [calls load_context tool]
+```
+
+Or check available tools:
+```
+You: What MCP tools do you have?
+
+Claude: I have access to kytchen-local with tools like load_context, search_context, peek_context...
+```
+
+---
+
+## Example: Analyze a Log File from Terminal
+
+Instead of grepping manually, let Claude do the work:
+
+### Step 1: Start session
+
+<CodeBlock language="bash">
+claude
+</CodeBlock>
+
+### Step 2: Load the log
+
+```
+You: Load /var/log/app.log into kytchen-local context ID "logs"
+
+Claude: [uses exec_python to read file and load_context]
+Loaded context 'logs': 245,892 chars, 3,421 lines
+```
+
+### Step 3: Query
+
+```
+You: Find all ERROR entries in the last 100 lines
+
+Claude: [calls peek_context(start=-100, unit="lines")]
+[calls search_context(pattern="ERROR")]
+Found 12 errors. The most recent is:
+Line 3418: ERROR: Database connection timeout
+```
+
+---
+
+## Example: Explore a Codebase
+
+Let Claude explore your repo iteratively:
+
+<CodeBlock language="bash">
+{`cd /path/to/your/repo
+claude`}
+</CodeBlock>
+
+```
+You: Load all Python files in src/ into context "codebase"
+
+Claude: [uses exec_python to glob files and load_context]
+Loaded context 'codebase': 125,432 chars, 4,567 lines
+
+You: Find all classes that inherit from BaseModel
+
+Claude: [calls search_context(pattern="class \\w+\\(BaseModel\\)")]
+Found 8 classes:
+- User (line 42)
+- Product (line 156)
+- Order (line 289)
+...
+
+You: Show me the User class implementation
+
+Claude: [calls peek_context(start=42, end=80, unit="lines")]
+[displays code]
+```
+
+---
+
+## Example: Multi-File Comparison
+
+Compare two versions of a config file:
+
+<CodeBlock language="bash">
+claude
+</CodeBlock>
+
+```
+You: Load these two files:
+- /etc/app/config.prod.json (ID: config_prod)
+- /etc/app/config.staging.json (ID: config_staging)
+
+Claude: [loads both files]
+
+You: What are the differences in the "database" section?
+
+Claude: [searches both contexts, compares]
+Main differences:
+- Production: host = "db.prod.company.com"
+- Staging: host = "localhost"
+- Production: pool_size = 50
+- Staging: pool_size = 5
+```
+
+---
+
+## Example: Needle in a Haystack Benchmark
+
+Let's run the classic 100K token benchmark:
+
+<CodeBlock language="bash">
+{`# Generate a haystack (100K tokens with one hidden fact)
+python generate_haystack.py > haystack.txt
+
+# Start Claude
+claude`}
+</CodeBlock>
+
+```
+You: Load haystack.txt into context "haystack"
+
+Claude: [loads file]
+Loaded context 'haystack': 412,345 chars, 6,789 lines
+
+You: What is the secret passcode mentioned in the document?
+
+Claude: [calls search_context(pattern="passcode|secret code")]
+[calls peek_context on matching lines]
+The secret passcode is: KYTCHEN-2025 (found on line 4,582)
+```
+
+**Cost:** ~$0.02 (vs. $2.00 for processing full 100K tokens every turn)
+
+---
+
+## Customization
+
+### Set API key in environment
+
+<CodeBlock language="bash">
+{`# In ~/.zshrc or ~/.bashrc
+export ANTHROPIC_API_KEY=sk-ant-...
+export OPENAI_API_KEY=sk-...
+
+# Or per-session
+ANTHROPIC_API_KEY=sk-ant-... claude`}
+</CodeBlock>
+
+### Set cost limits
+
+<CodeBlock language="bash">
+{`# In your shell config
+export KYTCHEN_MAX_COST=0.50
+export KYTCHEN_MAX_ITERATIONS=15
+
+# Or per-session
+KYTCHEN_MAX_COST=0.25 claude`}
+</CodeBlock>
+
+### Use a specific provider
+
+Currently, Claude Code MCP doesn't support per-server args. Set environment variables instead:
+
+<CodeBlock language="bash">
+{`export KYTCHEN_PROVIDER=anthropic
+export KYTCHEN_MODEL=claude-sonnet-4-20250514`}
+</CodeBlock>
+
+---
+
+## Advanced: Scripting with Claude Code
+
+You can pipe input to `claude` for automated workflows:
+
+<CodeBlock language="bash">
+{`# Analyze all log files in a directory
+for log in /var/log/*.log; do
+  echo "Analyze $log for errors" | claude --non-interactive
+done`}
+</CodeBlock>
+
+Or use heredocs:
+
+<CodeBlock language="bash">
+{`claude <<EOF
+Load /var/log/app.log into kytchen-local context "logs"
+Find the top 10 most common error messages
+Save the results to errors.txt
+EOF`}
+</CodeBlock>
+
+---
+
+## Troubleshooting
+
+### "kytchen-local not found"
+
+**Cause:** Python scripts not in PATH.
+
+**Solution:**
+<CodeBlock language="bash">
+{`# Find install location
+pip show kytchen | grep Location
+
+# Add to PATH
+export PATH="$PATH:$(python -m site --user-base)/bin"
+
+# Verify
+which kytchen-local`}
+</CodeBlock>
+
+### "MCP server not listed"
+
+Check if it was added:
+<CodeBlock language="bash">
+claude mcp list
+</CodeBlock>
+
+If missing, add it:
+<CodeBlock language="bash">
+claude mcp add kytchen-local kytchen-local
+</CodeBlock>
+
+### "Tool call failed: API key not found"
+
+Set your API key:
+<CodeBlock language="bash">
+{`export ANTHROPIC_API_KEY=sk-ant-...
+claude`}
+</CodeBlock>
+
+### "Context too large"
+
+Claude Code has message size limits. For huge files:
+
+```
+You: Execute this Python to load a large file:
+with open('/path/to/huge.txt', 'r') as f:
+    ctx = f.read()
+```
+
+Or load in chunks:
+```
+You: Load the first 100K chars of huge.txt into context "part1"
+```
+
+---
+
+## Best Practices
+
+### 1. Use Context IDs for Multi-File Work
+
+```
+You: Load backend.py into "backend"
+Load frontend.py into "frontend"
+Compare how they handle authentication
+```
+
+### 2. Set Iteration Limits for Long Sessions
+
+<CodeBlock language="bash">
+{`export KYTCHEN_MAX_ITERATIONS=20
+claude`}
+</CodeBlock>
+
+### 3. Combine with Shell Tools
+
+Let Claude use Kytchen for analysis, but use native shell tools for manipulation:
+
+```
+You: Search logs for errors [Kytchen]
+Now show me the matching lines [native grep]
+```
+
+---
+
+## Uninstalling
+
+<CodeBlock language="bash">
+{`# Remove from Claude Code
+claude mcp remove kytchen-local
+claude mcp remove kytchen
+
+# Verify
+claude mcp list`}
+</CodeBlock>
+
+Or use the Kytchen CLI:
+<CodeBlock language="bash">
+kytchen-rlm uninstall claude-code
+</CodeBlock>
+
+---
+
+## Next Steps
+
+- **[API Reference](/docs/api/tools):** Full tool documentation
+- **[BYOLLM Guide](/docs/concepts/byollm):** Cost optimization
+- **[Getting Started](/docs/getting-started):** Python library usage
+
+---
+
+**Claude Code + Kytchen = Terminal workflows with infinite context. Heard.**

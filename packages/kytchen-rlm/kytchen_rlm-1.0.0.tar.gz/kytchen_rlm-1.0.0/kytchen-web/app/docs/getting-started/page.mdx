@@ -1,0 +1,209 @@
+import { CodeBlock } from "@/components/docs/code-block"
+
+# Fire Your First Order in 5 Minutes
+
+Welcome to the Kytchen prep station. In just a few minutes, you'll have your LLM iteratively exploring massive datasets without choking on context windows.
+
+## What You're Building
+
+By the end of this guide, you'll have:
+- Kytchen installed locally with MCP support
+- Your first AI agent exploring a large document
+- A thermal receipt showing exactly what it read (evidence trail)
+
+Think of it like this: instead of shoving an entire cookbook into the prompt, your LLM gets to **grep, search, and read** what it needs. The pantry is infinite. The plate stays clean.
+
+---
+
+## Step 1: Install the Prep Station
+
+Kytchen runs locally on your machine. You bring your own LLM API key (Anthropic or OpenAI).
+
+<CodeBlock language="bash">
+pip install 'kytchen[mcp]'
+</CodeBlock>
+
+This installs:
+- The core `kytchen` library (Python REPL engine)
+- MCP server support (for Claude Desktop, Cursor, etc.)
+- All the prep tools your LLM needs
+
+**Verify the install:**
+
+<CodeBlock language="bash">
+kytchen-rlm doctor
+</CodeBlock>
+
+You should see green checkmarks confirming that `kytchen` and `kytchen-local` are ready.
+
+---
+
+## Step 2: Configure Your API Keys
+
+Kytchen is **BYOLLM** (Bring Your Own LLM). You pay your provider directly. No middleman.
+
+Create a `.env` file or export these:
+
+<CodeBlock language="bash" filename=".env">
+{`# For Anthropic (recommended)
+ANTHROPIC_API_KEY=sk-ant-...
+
+# For OpenAI
+OPENAI_API_KEY=sk-...
+
+# Choose your provider
+KYTCHEN_PROVIDER=anthropic
+KYTCHEN_MODEL=claude-sonnet-4-20250514`}
+</CodeBlock>
+
+**Why BYOLLM?**
+You get full control over costs, rate limits, and model choice. Kytchen just orchestrates the prep work.
+
+---
+
+## Step 3: Hook Up an MCP Client (Optional but Recommended)
+
+MCP (Model Context Protocol) lets your editor talk to Kytchen. One command auto-configures Claude Desktop, Cursor, Windsurf, etc.
+
+<CodeBlock language="bash">
+kytchen-rlm install
+</CodeBlock>
+
+This runs in **interactive mode**:
+1. Detects installed MCP clients (Claude Desktop, Cursor, etc.)
+2. Asks which ones you want to configure
+3. Backs up existing configs
+4. Injects Kytchen as an available tool
+
+**What gets added:**
+- `kytchen`: Cloud-hosted prep station (requires API key from kytchen.dev)
+- `kytchen-local`: Your local install (what we're using here)
+
+**Restart your editor** after installation. Kytchen will appear in the tools menu.
+
+---
+
+## Step 4: Fire Your First Order (Python Example)
+
+Let's run a simple query against a large text file. Save this as `first_order.py`:
+
+<CodeBlock language="python" filename="first_order.py">
+{`from kytchen import create_kytchen
+
+# Load a massive document (e.g., 50-page PDF converted to text)
+with open("large_document.txt", "r") as f:
+    context = f.read()
+
+# Create the prep station
+kytchen = create_kytchen(
+    provider="anthropic",
+    model="claude-sonnet-4-20250514",
+    max_iterations=10,
+    max_cost_usd=0.50,
+)
+
+# Fire the order
+response = kytchen.query(
+    "What are the three main risk factors mentioned in this document?",
+    context=context,
+)
+
+# See the final answer
+print(response.answer)
+
+# Inspect the receipt (what did it actually read?)
+for step in response.trajectory:
+    print(f"Step {step.iteration}: {step.action}")
+    print(f"Output: {step.output[:200]}...")  # First 200 chars`}
+</CodeBlock>
+
+**Run it:**
+
+<CodeBlock language="bash">
+python first_order.py
+</CodeBlock>
+
+**What happens:**
+1. The LLM sees metadata: "50,000 chars, 800 lines"
+2. It writes Python: `search("risk factor", max_results=5)`
+3. Kytchen executes the code, returns 5 matches
+4. The LLM reads those specific lines: `lines(42, 58)`
+5. It synthesizes the answer from **only what it read**
+6. You get a thermal receipt showing every `search()` and `read()` call
+
+---
+
+## Step 5: See the Evidence (Thermal Receipt)
+
+Every Kytchen query produces a **trajectory** (the receipt). This is your chain of custody.
+
+<CodeBlock language="python">
+{`# From the previous example
+for step in response.trajectory:
+    print(f"[Iteration {step.iteration}]")
+    print(f"Code: {step.code}")
+    print(f"Output: {step.output}")
+    print("---")`}
+</CodeBlock>
+
+**Why this matters:**
+- **No hallucinations:** The LLM can only cite what it actually read
+- **Auditable:** Legal/compliance teams can verify the sources
+- **Debuggable:** See exactly where it went wrong (or right)
+
+This is the "Glass Kitchen" principle: **you see the prep work.**
+
+---
+
+## Step 6: Try It in Your Editor (MCP Mode)
+
+If you installed the MCP integration (Step 3), you can now use Kytchen directly in Claude Desktop or Cursor.
+
+**In Claude Desktop:**
+1. Open a new chat
+2. Type: "Use the kytchen-local tool to search this document: [paste text]"
+3. Claude will call `load_context()`, `search_context()`, etc.
+4. You get the answer + the tool call logs
+
+**In Cursor:**
+1. Open a file with lots of code
+2. Ask: "What does the `Budget` class do in this codebase?"
+3. Cursor uses Kytchen to grep, read relevant files, and answer
+
+---
+
+## What's Next?
+
+You've fired your first order. Here's what to explore next:
+
+- **[Core Concepts](/docs/concepts):** Understand how Kytchen's REPL sandbox works
+- **[BYOLLM Guide](/docs/concepts/byollm):** Deep dive on cost control and model choice
+- **[MCP Integration](/docs/mcp):** Full setup guides for every editor
+- **[API Reference](/docs/api):** All the tools available in the REPL
+
+---
+
+## Troubleshooting
+
+**"MCP package not installed":**
+<CodeBlock language="bash">
+{`pip install 'kytchen[mcp]'`}
+</CodeBlock>
+
+**"API key not found":**
+Make sure your `.env` file is in the current directory, or export the key:
+<CodeBlock language="bash">
+{`export ANTHROPIC_API_KEY=sk-ant-...`}
+</CodeBlock>
+
+**"kytchen-rlm command not found":**
+Your Python scripts directory isn't in PATH. Try:
+<CodeBlock language="bash">
+{`python -m kytchen.cli install`}
+</CodeBlock>
+
+**Still stuck?** Check the [GitHub Issues](https://github.com/shannonlabs/kytchen) or join the Discord.
+
+---
+
+**Heard.** Your first order is complete. Now let's get cooking.
