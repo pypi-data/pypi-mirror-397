@@ -1,0 +1,226 @@
+Metadata-Version: 2.4
+Name: langid_indian
+Version: 0.1.4
+Summary: A language identifier for Indian languages using a pretrained Random Forest model.
+Home-page: https://github.com/yashingle-ai/TextLangDetect
+Author: Yash Ingle
+Author-email: yash.ingle003@gmail.com
+License: MIT
+Project-URL: Bug Tracker, https://github.com/yashingle-ai/TextLangDetect/issues
+Classifier: Development Status :: 3 - Alpha
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: scikit-learn
+Requires-Dist: numpy
+Requires-Dist: tqdm
+Requires-Dist: requests
+Requires-Dist: joblib
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license
+Dynamic: license-file
+Dynamic: project-url
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# langid_indian
+
+A language identifier for Indian languages using a pretrained Machine Learning model.
+
+[![PyPI version](https://img.shields.io/pypi/v/langid_indian.svg)](https://pypi.org/project/langid-indian/)
+
+---
+
+## 📌 Overview
+
+**langid_indian** is a Python package for **language identification of Indian languages written in native scripts**. It is based on a pretrained Machine Learning model and supports multiple languages listed in the **Eighth Schedule of the Indian Constitution**.
+
+The library is designed to be:
+
+* Lightweight and easy to use
+* Suitable for NLP pipelines, chatbots, multilingual datasets, and research
+* Minimal in preprocessing requirements
+
+> **Recommended citation title (as suggested):**
+> **"Language Identification using langid_indian library."**
+
+---
+
+## 🔗 Project Links
+
+* **GitHub Repository:** [https://github.com/yashingle-ai/Indian-Language-Identification-based-on-ML](https://github.com/yashingle-ai/Indian-Language-Identification-based-on-ML)
+* **PyPI Package:** [https://pypi.org/project/langid-indian/](https://pypi.org/project/langid-indian/)
+
+---
+
+## 📦 Installation
+
+### Using Terminal / Command Prompt
+
+```bash
+pip install langid_indian
+```
+
+### Using Jupyter Notebook / Google Colab / Kaggle
+
+```python
+!pip install langid_indian
+```
+
+---
+
+## 🚀 Quick Start
+
+```python
+import langid_indian
+
+# Initialize the language identifier
+lid = langid_indian.LanguageIdentifier()
+
+# Predict the language of a single sentence
+print(lid.predict("जब मैं छोटा था, मैं हर रोज़ पार्क जाता था।"))
+# Output: hin
+```
+
+---
+
+## 🔍 Predicting Multiple Sentences
+
+```python
+test_texts = [
+    "Hello, how are you?",
+    "जब मैं छोटा था, मैं हर रोज़ पार्क जाता था।",
+    "आनी हो एक गंभीर मूर्खपणा.",
+    "ਮਨੁੱਖੀ ਦਿਮਾਗ਼ ਦੀ ਕਾਢ ਨੇ ਭਾਵੇਂ ਸਭ ਕੁਝ ਸੌਖਾ ਕਰ ਦਿੱਤਾ ਹੈ ਪਰ ਫਿਰ ਵੀ ਸਭ ਕੁਝ ਸਮਝਣਾ ਜਾਂ ਕਰਨਾ ਨਿਯਮਾਂ ਵਿੱਚ ਬੱਝਾ ਪਿਆ ਹੈ।",
+    "માં વરસાદનું પાણી મોટા જથ્થામાં જમીનની નીચે જ ઉતરી જાય છે।",
+    "କିନ୍ତୁ ପୁଅ, ତୁମେ ଛୋଟ।"
+]
+
+for text in test_texts:
+    print(f"Text: {text} | Detected language: {lid.predict(text)}")
+```
+
+### Sample Output
+
+```
+Text: Hello, how are you? | Detected language: eng
+Text: जब मैं छोटा था, मैं हर रोज़ पार्क जाता था। | Detected language: hin
+Text: आनी हो एक गंभीर मूर्खपणा. | Detected language: gom
+Text: ਮਨੁੱਖੀ ਦਿਮਾਗ਼ ਦੀ ਕਾਢ ਨੇ ਭਾਵੇਂ ਸਭ ਕੁਝ ਸੌਖਾ ਕਰ ਦਿੱਤਾ ਹੈ ਪਰ ਫਿਰ ਵੀ ਸਭ ਕੁਝ ਸਮਝਣਾ ਜਾਂ ਕਰਨਾ ਨਿਯਮਾਂ ਵਿੱਚ ਬੱਝਾ ਪਿਆ ਹੈ। | Detected language: pan
+Text: માં વરસાદનું પાણી મોટા જથ્થામાં જમીનની નીચે જ ઉતરી જાય છે। | Detected language: guj
+Text: କିନ୍ତୁ ପୁଅ, ତୁମେ ଛୋଟ। | Detected language: ory
+```
+
+---
+
+## 🧪 Testing the Package
+
+The repository includes a basic test file located at:
+
+```
+tests/test_basic.py
+```
+
+### `test_basic.py`
+
+```python
+from langid_indian import LanguageIdentifier
+
+def test_prediction():
+    identifier = LanguageIdentifier()
+    text = "यह एक परीक्षण है"
+    lang = identifier.predict(text)
+    print(f"Predicted language: {lang}")
+
+if __name__ == "__main__":
+    test_prediction()
+```
+
+### Run the Test
+
+From the project root directory:
+
+```bash
+python -m tests.test_basic
+```
+
+---
+
+## 🌐 Supported Languages
+
+The model supports **22 Indian languages**:
+
+* Assamese (অসমীয়া)
+* Bengali (বাংলা)
+* Bodo
+* Dogri
+* English
+* Gujarati (ગુજરાતી)
+* Hindi (हिन्दी)
+* Kannada (ಕನ್ನಡ)
+* Kashmiri
+* Konkani
+* Maithili
+* Malayalam (മലയാളം)
+* Manipuri
+* Marathi (मराठी)
+* Nepali
+* Odia (ଓଡ଼ିଆ)
+* Punjabi (ਪੰਜਾਬੀ)
+* Santali
+* Sindhi
+* Tamil (தமிழ்)
+* Telugu (తెలుగు)
+* Urdu (اردو)
+
+---
+
+## 📄 Citation
+
+If you use **langid_indian** in academic or research work, please cite the following paper:
+
+### BibTeX
+
+```bibtex
+@misc{ingle2025ilidnativescriptlanguage,
+  title={ILID: Native Script Language Identification for Indian Languages},
+  author={Yash Ingle and Pruthwik Mishra},
+  year={2025},
+  eprint={2507.11832},
+  archivePrefix={arXiv},
+  primaryClass={cs.CL},
+  url={https://arxiv.org/abs/2507.11832}
+}
+```
+
+---
+
+## 👤 Author
+
+**Yash Ingle**
+B.Tech (AI), SVNIT Surat
+
+---
+
+## 📜 License
+
+This project is licensed under the **MIT License**.
+
+---
+
+## ⭐ Acknowledgement
+
+This work is part of ongoing research on **Indian Language Identification using Machine Learning and Native Script Text**, developed under academic guidance.
+
