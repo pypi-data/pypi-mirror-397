@@ -1,0 +1,914 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2021 Tobias Røikjer
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+#ifndef PTDALGORITHMS_PTD_H
+#define PTDALGORITHMS_PTD_H
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct ptd_avl_node {
+    struct ptd_avl_node *left;
+    struct ptd_avl_node *right;
+    struct ptd_avl_node *parent;
+    signed short balance;
+    int *key;
+    void *entry;
+};
+
+struct ptd_avl_tree {
+    struct ptd_avl_node *root;
+    size_t key_length;
+};
+
+struct ptd_graph;
+struct ptd_edge;
+struct ptd_vertex;
+
+struct ptd_scc_graph;
+struct ptd_scc_edge;
+struct ptd_scc_vertex;
+
+extern volatile char ptd_err[4096];
+
+#ifndef PTD_DEBUG_1_INDEX
+#define PTD_DEBUG_1_INDEX 0
+#endif
+
+struct ptd_avl_tree *ptd_avl_tree_create(size_t key_length);
+
+void ptd_avl_tree_destroy(struct ptd_avl_tree *avl_tree);
+
+struct ptd_avl_node *ptd_avl_tree_find_or_insert(struct ptd_avl_tree *avl_tree, const int *key, const void *entry);
+
+struct ptd_avl_node *ptd_avl_tree_find(const struct ptd_avl_tree *avl_tree, const int *key);
+
+struct ptd_vertex *ptd_avl_tree_find_vertex(const struct ptd_avl_tree *avl_tree, const int *key);
+
+size_t ptd_avl_tree_max_depth(void *avl_vec_vertex);
+
+struct ptd_directed_graph;
+struct ptd_directed_edge;
+struct ptd_directed_vertex;
+
+struct ptd_directed_graph {
+    size_t vertices_length;
+    struct ptd_directed_vertex **vertices;
+    struct ptd_directed_vertex *starting_vertex;
+};
+
+struct ptd_directed_edge {
+    struct ptd_directed_vertex *to;
+};
+
+struct ptd_directed_vertex {
+    size_t edges_length;
+    struct ptd_directed_edge **edges;
+    struct ptd_directed_graph *graph;
+    size_t index;
+};
+
+int ptd_directed_graph_add_edge(struct ptd_directed_vertex *vertex, struct ptd_directed_edge *edge);
+
+void ptd_directed_graph_destroy(struct ptd_directed_graph *graph);
+
+int ptd_directed_vertex_add(struct ptd_directed_graph *graph, struct ptd_directed_vertex *vertex);
+
+void ptd_directed_vertex_destroy(struct ptd_directed_vertex *vertex);
+
+/**
+ * Edge mode for graph: determines whether edges are constant or parameterized.
+ * Mode is locked after first non-IPV edge is added to prevent mixing.
+ */
+enum ptd_edge_mode {
+    PTD_EDGE_MODE_UNLOCKED = 0,      // No non-IPV edges added yet
+    PTD_EDGE_MODE_CONSTANT = 1,       // All non-IPV edges are constant (scalar syntax)
+    PTD_EDGE_MODE_PARAMETERIZED = 2   // All non-IPV edges are parameterized (array syntax)
+};
+
+struct ptd_graph {
+    size_t vertices_length;
+    struct ptd_vertex **vertices;
+    struct ptd_vertex *starting_vertex;
+    size_t state_length;
+    size_t param_length;  // Length of parameter/edge state vectors (set by first add_edge)
+    bool parameterized;   // true if param_length > 1
+    bool param_length_locked;  // true after first edge added
+    enum ptd_edge_mode edge_mode;  // Locked after first non-IPV edge added
+    struct ptd_desc_reward_compute *reward_compute_graph;
+    struct ptd_desc_reward_compute_parameterized *parameterized_reward_compute_graph;
+    bool was_dph;
+
+    /* Trace-based elimination (NULL until first parameter update) */
+    struct ptd_elimination_trace *elimination_trace;
+    double *current_params;  // Current parameter values (NULL until first update)
+};
+
+struct ptd_edge {
+    struct ptd_vertex *to;
+    double weight;              // Current evaluated weight
+    double *coefficients;       // ALWAYS non-NULL, length = graph->param_length
+    size_t coefficients_length; // Always = graph->param_length
+    bool should_free_coefficients;
+};
+
+
+struct ptd_vertex {
+    size_t edges_length;
+    struct ptd_edge **edges;
+    struct ptd_graph *graph;
+    size_t index;
+    int *state;
+};
+
+struct ptd_graph *ptd_graph_create(size_t state_length);
+
+void ptd_graph_destroy(struct ptd_graph *graph);
+
+struct ptd_vertex *ptd_vertex_create(struct ptd_graph *graph);
+
+struct ptd_vertex *ptd_vertex_create_state(
+        struct ptd_graph *graph,
+        int *state
+);
+
+struct ptd_vertex *ptd_find_or_create_vertex(
+        struct ptd_graph *graph,
+        struct ptd_avl_tree *avl_tree,
+        const int *child_state
+);
+
+double ptd_vertex_rate(struct ptd_vertex *vertex);
+
+void ptd_vertex_destroy(struct ptd_vertex *vertex);
+
+struct ptd_edge *ptd_graph_add_edge(
+        struct ptd_vertex *from,
+        struct ptd_vertex *to,
+        double *coefficients,
+        size_t coefficients_length
+);
+
+void ptd_edge_update_weight(
+        struct ptd_edge *edge,
+        double weight
+);
+
+void ptd_edge_update_to(
+    struct ptd_edge *edge,
+    struct ptd_vertex *vertex
+);
+
+void ptd_notify_change(
+        struct ptd_graph *graph
+);
+
+void ptd_graph_update_weights(
+        struct ptd_graph *graph,
+        double *params,
+        size_t params_length
+);
+
+double *ptd_normalize_graph(struct ptd_graph *graph);
+
+double *ptd_dph_normalize_graph(struct ptd_graph *graph);
+
+double *ptd_expected_waiting_time(struct ptd_graph *graph, double *rewards);
+
+double *ptd_expected_residence_time(struct ptd_graph *graph, double *rewards);
+
+bool ptd_graph_is_acyclic(struct ptd_graph *graph);
+
+struct ptd_vertex **ptd_graph_topological_sort(struct ptd_graph *graph);
+
+struct ptd_graph *ptd_graph_reward_transform(struct ptd_graph *graph, double *rewards);
+
+// struct ptd_clone_res ptd_graph_expectation_dag(struct ptd_graph *graph, double *rewards);
+
+struct ptd_graph *ptd_graph_dph_reward_transform(struct ptd_graph *graph, int *rewards);
+
+long double ptd_random_sample(struct ptd_graph *graph, double *rewards);
+
+long double *ptd_mph_random_sample(struct ptd_graph *graph, double *rewards, size_t vertex_rewards_length);
+
+long double ptd_dph_random_sample(struct ptd_graph *graph, double *rewards);
+
+long double *ptd_mdph_random_sample(struct ptd_graph *graph, double *rewards, size_t vertex_rewards_length);
+
+struct ptd_vertex *ptd_random_sample_stop_vertex(struct ptd_graph *graph, double time);
+
+struct ptd_vertex *ptd_dph_random_sample_stop_vertex(struct ptd_graph *graph, int jumps);
+
+double ptd_defect(struct ptd_graph *graph);
+
+int ptd_validate_graph(const struct ptd_graph *graph);
+
+struct ptd_clone_res {
+    struct ptd_avl_tree *avl_tree;
+    struct ptd_graph *graph;
+};
+
+struct ptd_clone_res ptd_clone_graph(struct ptd_graph *graph, struct ptd_avl_tree *avl_tree);
+
+struct ptd_desc_reward_compute {
+    size_t length;
+    struct ptd_reward_increase *commands;
+};
+
+
+struct ptd_reward_increase {
+    size_t from;
+    size_t to;
+    double multiplier;
+};
+
+struct ptd_comp_graph_parameterized {
+    size_t from;
+    size_t to;
+    double multiplier;
+    double *multiplierptr;
+    int type;
+    double *fromT;
+    double *toT;
+};
+
+struct ptd_desc_reward_compute_parameterized {
+    size_t length;
+    struct ptd_comp_graph_parameterized *commands;
+    void *mem;
+    void *memr;
+};
+
+struct ptd_desc_reward_compute *ptd_graph_ex_absorbation_time_comp_graph(struct ptd_graph *graph);
+
+struct ptd_desc_reward_compute_parameterized *
+ptd_graph_ex_absorbation_time_comp_graph_parameterized(struct ptd_graph *graph);
+
+struct ptd_desc_reward_compute *
+ptd_graph_build_ex_absorbation_time_comp_graph_parameterized(struct ptd_desc_reward_compute_parameterized *compute);
+
+void ptd_parameterized_reward_compute_graph_destroy(
+        struct ptd_desc_reward_compute_parameterized *compute_graph
+);
+
+// ============================================================================
+// Symbolic Expression System for Efficient Parameter Evaluation
+// ============================================================================
+
+/**
+ * Expression node types for symbolic computation
+ */
+enum ptd_expr_type {
+    PTD_EXPR_CONST = 0,      // Constant value
+    PTD_EXPR_PARAM = 1,      // Parameter reference: theta[idx]
+    PTD_EXPR_DOT = 2,        // Dot product: dot(coeffs, params)
+    PTD_EXPR_ADD = 3,        // Binary: left + right
+    PTD_EXPR_MUL = 4,        // Binary: left * right
+    PTD_EXPR_DIV = 5,        // Binary: left / right
+    PTD_EXPR_INV = 6,        // Unary: 1 / child
+    PTD_EXPR_SUB = 7         // Binary: left - right
+};
+
+/**
+ * Symbolic expression tree node
+ * Represents a computation that can be evaluated with any parameter vector
+ */
+struct ptd_expression {
+    enum ptd_expr_type type;
+
+    // For PTD_EXPR_CONST
+    double const_value;
+
+    // For PTD_EXPR_PARAM
+    size_t param_index;
+
+    // For PTD_EXPR_DOT (optimized linear combination)
+    size_t *param_indices;
+    double *coefficients;
+    size_t n_terms;
+
+    // For binary/unary operations
+    struct ptd_expression *left;
+    struct ptd_expression *right;
+};
+
+/**
+ * Edge with symbolic weight expression
+ */
+struct ptd_edge_symbolic {
+    size_t to_index;                        // Target vertex index
+    struct ptd_expression *weight_expr;     // Symbolic weight expression
+    struct ptd_edge_symbolic *next;         // For linked list
+};
+
+/**
+ * Vertex in symbolic graph
+ */
+struct ptd_vertex_symbolic {
+    size_t edges_length;
+    struct ptd_edge_symbolic **edges;
+    size_t index;
+    int *state;                             // State vector (copied from original)
+    struct ptd_vertex *original_vertex;     // Link to original vertex
+    struct ptd_expression *rate_expr;       // Symbolic expression for 1/rate (scaling factor)
+};
+
+/**
+ * Symbolic graph (acyclic DAG with expression-weighted edges)
+ * This represents the result of graph elimination with symbolic edge weights
+ */
+struct ptd_graph_symbolic {
+    size_t vertices_length;
+    struct ptd_vertex_symbolic **vertices;
+    struct ptd_vertex_symbolic *starting_vertex;
+    size_t state_length;
+    size_t param_length;                    // Number of parameters required
+
+    // Metadata
+    bool is_acyclic;                        // True after elimination
+    bool is_discrete;                       // DPH vs PH
+
+    // Reference to original graph (for metadata only)
+    struct ptd_graph *original_graph;
+};
+
+// Expression creation functions
+struct ptd_expression *ptd_expr_const(double value);
+struct ptd_expression *ptd_expr_param(size_t param_idx);
+struct ptd_expression *ptd_expr_dot(const size_t *indices, const double *coeffs, size_t n);
+struct ptd_expression *ptd_expr_add(struct ptd_expression *left, struct ptd_expression *right);
+struct ptd_expression *ptd_expr_mul(struct ptd_expression *left, struct ptd_expression *right);
+struct ptd_expression *ptd_expr_div(struct ptd_expression *left, struct ptd_expression *right);
+struct ptd_expression *ptd_expr_inv(struct ptd_expression *child);
+struct ptd_expression *ptd_expr_sub(struct ptd_expression *left, struct ptd_expression *right);
+
+// Expression evaluation
+double ptd_expr_evaluate(
+    const struct ptd_expression *expr,
+    const double *params,
+    size_t n_params
+);
+
+void ptd_expr_evaluate_batch(
+    const struct ptd_expression *expr,
+    const double *params_batch,      // shape: (batch_size, n_params)
+    size_t batch_size,
+    size_t n_params,
+    double *output                   // shape: (batch_size,)
+);
+
+// Expression deep copy
+struct ptd_expression *ptd_expr_copy(const struct ptd_expression *expr);
+struct ptd_expression *ptd_expr_copy_iterative(const struct ptd_expression *expr);
+
+// Expression cleanup
+void ptd_expr_destroy(struct ptd_expression *expr);
+void ptd_expr_destroy_iterative(struct ptd_expression *expr);
+
+// Expression hashing and equality (for CSE - Common Subexpression Elimination)
+uint64_t ptd_expr_hash(const struct ptd_expression *expr);
+bool ptd_expr_equal(const struct ptd_expression *a, const struct ptd_expression *b);
+
+// Expression interning for CSE
+struct ptd_expr_intern_table;
+
+struct ptd_expr_intern_table *ptd_expr_intern_table_create(size_t capacity);
+void ptd_expr_intern_table_destroy(struct ptd_expr_intern_table *table);
+struct ptd_expression *ptd_expr_intern(struct ptd_expr_intern_table *table,
+                                        struct ptd_expression *expr);
+void ptd_expr_intern_table_stats(const struct ptd_expr_intern_table *table);
+
+// Interned expression constructors (with CSE)
+struct ptd_expression *ptd_expr_add_interned(struct ptd_expr_intern_table *table,
+                                              struct ptd_expression *left,
+                                              struct ptd_expression *right);
+struct ptd_expression *ptd_expr_mul_interned(struct ptd_expr_intern_table *table,
+                                              struct ptd_expression *left,
+                                              struct ptd_expression *right);
+struct ptd_expression *ptd_expr_div_interned(struct ptd_expr_intern_table *table,
+                                              struct ptd_expression *left,
+                                              struct ptd_expression *right);
+struct ptd_expression *ptd_expr_sub_interned(struct ptd_expr_intern_table *table,
+                                              struct ptd_expression *left,
+                                              struct ptd_expression *right);
+struct ptd_expression *ptd_expr_inv_interned(struct ptd_expr_intern_table *table,
+                                              struct ptd_expression *child);
+
+// Expression evaluation (iterative to avoid stack overflow)
+double ptd_expr_evaluate_iterative(
+    const struct ptd_expression *expr,
+    const double *params,
+    size_t n_params
+);
+
+/**
+ * Symbolically differentiate expression w.r.t. parameter
+ *
+ * Returns a new expression tree representing ∂expr/∂θ[param_idx].
+ * Uses standard calculus rules (sum, product, quotient, chain).
+ *
+ * The returned expression must be freed with ptd_expr_destroy() or
+ * ptd_expr_destroy_iterative() when no longer needed.
+ *
+ * @param expr Expression to differentiate
+ * @param param_idx Parameter index (0-based)
+ * @return New expression tree for derivative, or NULL on error
+ *
+ * @note This performs symbolic differentiation, not numeric.
+ *       The result is an expression that can be evaluated with
+ *       different parameter values.
+ *
+ * @note For efficiency, use ptd_expr_evaluate_with_gradient() to
+ *       compute value and all gradients in a single pass.
+ */
+struct ptd_expression *ptd_expr_derivative(
+    const struct ptd_expression *expr,
+    size_t param_idx
+);
+
+/**
+ * Evaluate expression and all parameter gradients in one pass
+ *
+ * More efficient than calling ptd_expr_derivative() and ptd_expr_evaluate()
+ * separately for each parameter. Uses forward-mode automatic differentiation.
+ *
+ * @param expr Expression to evaluate
+ * @param params Parameter array
+ * @param n_params Number of parameters (length of params and gradient arrays)
+ * @param value Output: f(θ)
+ * @param gradient Output: [∂f/∂θ₀, ∂f/∂θ₁, ..., ∂f/∂θₙ₋₁]
+ *
+ * @note gradient must be pre-allocated with size n_params
+ * @note Uses symbolic differentiation internally
+ */
+void ptd_expr_evaluate_with_gradient(
+    const struct ptd_expression *expr,
+    const double *params,
+    size_t n_params,
+    double *value,
+    double *gradient
+);
+
+// Symbolic graph elimination (main function)
+struct ptd_graph_symbolic *ptd_graph_symbolic_elimination(
+    struct ptd_graph *parameterized_graph
+);
+
+// Instantiate symbolic graph with concrete parameters
+struct ptd_graph *ptd_graph_symbolic_instantiate(
+    const struct ptd_graph_symbolic *symbolic,
+    const double *params,
+    size_t n_params
+);
+
+// Batch instantiation (for vmap)
+void ptd_graph_symbolic_instantiate_batch(
+    const struct ptd_graph_symbolic *symbolic,
+    const double *params_batch,      // shape: (batch_size, n_params)
+    size_t batch_size,
+    size_t n_params,
+    struct ptd_graph **graphs_out    // output: array of batch_size graphs
+);
+
+// Serialization
+char *ptd_graph_symbolic_to_json(const struct ptd_graph_symbolic *symbolic);
+struct ptd_graph_symbolic *ptd_graph_symbolic_from_json(const char *json);
+
+// Cleanup
+void ptd_graph_symbolic_destroy(struct ptd_graph_symbolic *symbolic);
+
+// ============================================================================
+// Trace-Based Elimination for Efficient Parameter Updates
+// ============================================================================
+
+/**
+ * Operation types for trace-based elimination
+ *
+ * These operations form a linear sequence that can be efficiently
+ * replayed with different parameter values.
+ */
+enum ptd_trace_op_type {
+    PTD_OP_CONST = 0,   /* Constant value */
+    PTD_OP_PARAM = 1,   /* Parameter reference θ[i] */
+    PTD_OP_DOT = 2,     /* Dot product: Σ(cᵢ * θᵢ) */
+    PTD_OP_ADD = 3,     /* Addition: a + b */
+    PTD_OP_MUL = 4,     /* Multiplication: a * b */
+    PTD_OP_DIV = 5,     /* Division: a / b */
+    PTD_OP_INV = 6,     /* Inverse: 1 / a */
+    PTD_OP_SUM = 7      /* Sum: sum([a, b, c, ...]) */
+};
+
+/**
+ * Single operation in elimination trace
+ */
+struct ptd_trace_operation {
+    enum ptd_trace_op_type op_type;
+
+    /* For CONST */
+    double const_value;
+
+    /* For PARAM */
+    size_t param_idx;
+
+    /* For DOT (optimized linear combination) */
+    double *coefficients;           /* Coefficient array */
+    size_t coefficients_length;     /* Length of coefficient array */
+
+    /* For binary/unary operations */
+    size_t *operands;               /* Indices of operand operations */
+    size_t operands_length;         /* Number of operands */
+};
+
+/**
+ * Complete elimination trace
+ *
+ * This structure records all operations needed to eliminate a graph,
+ * enabling fast replay with different parameter values.
+ */
+struct ptd_elimination_trace {
+    /* Operation sequence */
+    struct ptd_trace_operation *operations;
+    size_t operations_length;
+
+    /* Vertex rate mappings (vertex_idx → operation_idx) */
+    size_t *vertex_rates;
+
+    /* Edge probability mappings (vertex_idx → [operation_idx]) */
+    size_t **edge_probs;
+    size_t *edge_probs_lengths;
+
+    /* Target vertex mappings (vertex_idx → [target_vertex_idx]) */
+    size_t **vertex_targets;
+    size_t *vertex_targets_lengths;
+
+    /* Vertex states (copied from graph) */
+    int **states;
+    size_t state_length;
+
+    /* Metadata */
+    size_t starting_vertex_idx;
+    size_t n_vertices;
+    size_t param_length;
+    bool is_discrete;
+};
+
+/**
+ * Result of trace evaluation
+ *
+ * Contains evaluated vertex rates and edge probabilities for
+ * specific parameter values.
+ */
+struct ptd_trace_result {
+    double *vertex_rates;              /* Array[n_vertices] */
+    double **edge_probs;               /* Array[n_vertices][n_edges] */
+    size_t *edge_probs_lengths;        /* Array[n_vertices] */
+    size_t **vertex_targets;           /* Array[n_vertices][n_edges] */
+    size_t *vertex_targets_lengths;    /* Array[n_vertices] */
+    size_t n_vertices;
+};
+
+// Trace-based elimination functions
+
+/**
+ * Record elimination trace from parameterized graph
+ *
+ * Performs graph elimination while recording all arithmetic operations
+ * in a linear sequence. The trace can be efficiently replayed with
+ * different parameter values.
+ *
+ * @param graph Parameterized graph
+ * @return Elimination trace, or NULL on error
+ *
+ * Time complexity: O(n³) one-time cost
+ * Space complexity: O(n²) for trace storage
+ */
+struct ptd_elimination_trace *ptd_record_elimination_trace(
+    struct ptd_graph *graph
+);
+
+/**
+ * Evaluate elimination trace with concrete parameter values
+ *
+ * Executes the recorded operation sequence with given parameters
+ * to produce vertex rates and edge probabilities.
+ *
+ * @param trace Elimination trace
+ * @param params Parameter array
+ * @param params_length Length of parameter array
+ * @return Trace evaluation result, or NULL on error
+ *
+ * Time complexity: O(n) where n = number of operations
+ */
+struct ptd_trace_result *ptd_evaluate_trace(
+    const struct ptd_elimination_trace *trace,
+    const double *params,
+    size_t params_length
+);
+
+/**
+ * Build reward compute graph from trace evaluation result
+ *
+ * Converts trace evaluation results into the internal reward_compute_graph
+ * structure used by pdf/moment computations.
+ *
+ * @param result Trace evaluation result
+ * @param graph Graph structure (for vertex references)
+ * @return Reward compute graph, or NULL on error
+ */
+struct ptd_desc_reward_compute *ptd_build_reward_compute_from_trace(
+    const struct ptd_trace_result *result,
+    struct ptd_graph *graph
+);
+
+/**
+ * Instantiate a complete graph from trace evaluation result
+ *
+ * Creates a new graph with all vertices and edges from the evaluated trace.
+ * The graph will have concrete edge weights computed from the trace evaluation.
+ *
+ * @param result Trace evaluation result with concrete rates and probabilities
+ * @param trace Original elimination trace (for vertex states and structure)
+ * @return New graph instance, or NULL on error
+ *
+ * Notes:
+ * - The returned graph is NOT normalized
+ * - Caller must call ptd_graph_destroy() when done
+ * - Vertices are created from trace->states
+ * - Edge weights are computed as: weight = prob / inv_rate
+ *
+ * Time complexity: O(n + m) where n = vertices, m = edges
+ */
+struct ptd_graph *ptd_instantiate_from_trace(
+    const struct ptd_trace_result *result,
+    const struct ptd_elimination_trace *trace
+);
+
+/**
+ * Destroy elimination trace and free all memory
+ */
+void ptd_elimination_trace_destroy(struct ptd_elimination_trace *trace);
+
+/**
+ * Destroy trace evaluation result and free all memory
+ */
+void ptd_trace_result_destroy(struct ptd_trace_result *result);
+
+/**
+ * Load elimination trace from disk cache
+ *
+ * Traces are stored in ~/.phasic_cache/traces/ as JSON files.
+ * The cache can be disabled by setting PHASIC_DISABLE_CACHE=1.
+ *
+ * @param hash_hex Hexadecimal hash string identifying the trace (64 chars)
+ * @return Loaded trace (caller must call ptd_elimination_trace_destroy), or NULL if not found
+ *
+ * Time complexity: O(n) where n = trace size (file I/O + JSON parsing)
+ */
+struct ptd_elimination_trace *ptd_load_trace_from_cache(const char *hash_hex);
+
+/**
+ * Save elimination trace to disk cache
+ *
+ * Traces are stored in ~/.phasic_cache/traces/ as JSON files.
+ * The cache can be disabled by setting PHASIC_DISABLE_CACHE=1.
+ *
+ * @param hash_hex Hexadecimal hash string identifying the trace (64 chars)
+ * @param trace The trace to save
+ * @return true on success, false on error or if cache is disabled
+ *
+ * Time complexity: O(n) where n = trace size (JSON serialization + file I/O)
+ */
+bool ptd_save_trace_to_cache(const char *hash_hex, const struct ptd_elimination_trace *trace);
+
+
+struct ptd_scc_graph {
+    size_t vertices_length;
+    struct ptd_scc_vertex **vertices;
+    struct ptd_scc_vertex *starting_vertex;
+    struct ptd_graph *graph;
+};
+
+struct ptd_scc_edge {
+    struct ptd_scc_vertex *to;
+};
+
+struct ptd_scc_vertex {
+    size_t edges_length;
+    struct ptd_scc_edge **edges;
+    struct ptd_scc_graph *graph;
+    size_t index;
+    size_t internal_vertices_length;
+    struct ptd_vertex **internal_vertices;
+};
+
+int ptd_precompute_reward_compute_graph(struct ptd_graph *graph);
+
+struct ptd_scc_graph *ptd_find_strongly_connected_components(struct ptd_graph *graph);
+
+struct ptd_scc_vertex **ptd_scc_graph_topological_sort(struct ptd_scc_graph *graph);
+
+void ptd_scc_graph_destroy(struct ptd_scc_graph *scc_graph);
+
+struct ptd_phase_type_distribution {
+    size_t length;
+    double *initial_probability_vector;
+    double **sub_intensity_matrix;
+    struct ptd_vertex **vertices;
+    size_t memory_allocated;
+};
+
+struct ptd_phase_type_distribution *ptd_graph_as_phase_type_distribution(struct ptd_graph *graph);
+
+void ptd_phase_type_distribution_destroy(struct ptd_phase_type_distribution *ptd);
+
+int ptd_vertex_to_s(struct ptd_vertex *vertex, char *buffer, size_t buffer_length);
+
+struct ptd_probability_distribution_context {
+    double pdf;
+    double cdf;
+    long double *probability_at;
+    long double *accumulated_visits;
+    struct ptd_graph *graph;
+    void *priv;
+    long double time;
+    int granularity;
+};
+
+struct ptd_probability_distribution_context *ptd_probability_distribution_context_create(
+        struct ptd_graph *graph,
+        int granularity
+);
+
+void ptd_probability_distribution_context_destroy(
+        struct ptd_probability_distribution_context *context
+);
+
+int ptd_probability_distribution_step(
+        struct ptd_probability_distribution_context *context
+);
+
+struct ptd_dph_probability_distribution_context {
+    double pmf;
+    double cdf;
+    long double *probability_at;
+    long double *accumulated_visits;
+    struct ptd_graph *graph;
+    void *priv;
+    size_t priv2;
+    double priv3;
+    int jumps;
+};
+
+struct ptd_dph_probability_distribution_context *ptd_dph_probability_distribution_context_create(
+        struct ptd_graph *graph
+);
+
+void ptd_dph_probability_distribution_context_destroy(
+        struct ptd_dph_probability_distribution_context *context
+);
+
+int ptd_dph_probability_distribution_step(
+        struct ptd_dph_probability_distribution_context *context
+);
+
+/**
+ * Compute PDF and gradient w.r.t. parameters using forward algorithm
+ *
+ * This extends the standard forward algorithm (Algorithm 4) to track
+ * probability gradients through the DP recursion. Gradients are computed
+ * via chain rule through graph traversal - no matrix operations.
+ *
+ * @param graph Parameterized graph with symbolic edge expressions
+ * @param time Time point to evaluate PDF at
+ * @param granularity Discretization granularity (0 = auto-select)
+ * @param params Parameter vector θ
+ * @param n_params Length of params array
+ * @param pdf_value Output: PDF(time|θ)
+ * @param pdf_gradient Output: ∇PDF(time|θ), shape (n_params,)
+ *        Must be pre-allocated with size n_params
+ *
+ * @return 0 on success, non-zero on error
+ *
+ * @note This uses the same graph-based approach as pdf(), just with
+ *       gradient tracking. No matrix exponentiation.
+ *
+ * @note For multiple time points, call this function in a loop.
+ *       Each call is independent.
+ *
+ * @note Complexity: O(k·m·p) where k=max_jumps, m=edges, p=n_params
+ *       This is p× slower than forward-only, but still graph-based.
+ */
+int ptd_graph_pdf_with_gradient(
+    struct ptd_graph *graph,
+    double time,
+    size_t granularity,
+    const double *params,
+    size_t n_params,
+    double *pdf_value,
+    double *pdf_gradient
+);
+
+/**
+ * Compute PDF for parameterized graph using current parameters
+ *
+ * This function uses the parameters set via ptd_graph_update_weight_parameterized()
+ * to compute the PDF value and optionally its gradient. It provides a convenient
+ * interface that doesn't require passing parameters explicitly.
+ *
+ * @param graph Parameterized graph with current_params set via update_weight_parameterized
+ * @param time Time at which to evaluate PDF
+ * @param granularity Uniformization granularity (0 = auto-select)
+ * @param pdf_value Output: PDF value at specified time
+ * @param pdf_gradient Output: gradient array (size = param_length), or NULL if gradients not needed
+ * @return 0 on success, -1 on error
+ *
+ * @note Call ptd_graph_update_weight_parameterized() first to set parameters
+ * @note If pdf_gradient is NULL, only PDF is computed (faster)
+ * @note If pdf_gradient is non-NULL, both PDF and gradient are computed using
+ *       ptd_graph_pdf_with_gradient() for machine-precision accuracy
+ */
+int ptd_graph_pdf_parameterized(
+    struct ptd_graph *graph,
+    double time,
+    size_t granularity,
+    double *pdf_value,
+    double *pdf_gradient
+);
+
+#ifndef PTD_INTEGRATE_EXCEPTIONS
+#define DIE_ERROR(error_code, error, ...) do {     \
+char error_formatted[1024];                        \
+char error_formatted_line[1024];                   \
+                                                   \
+snprintf(error_formatted,                          \
+         sizeof(error_formatted),                  \
+         error, ##__VA_ARGS__);                    \
+snprintf(error_formatted_line,                     \
+         sizeof(error_formatted_line),             \
+         "%s @ %s (%d)", error_formatted,          \
+         __FILE__, __LINE__);                      \
+                                                   \
+fprintf(stderr, "%s\n", error_formatted_line);     \
+exit(error_code);   \
+} while(0)
+#else
+#include <stdexcept>
+#define DIE_ERROR(error_code, error, ...) do {     \
+char error_formatted[1024];                        \
+char error_formatted_line[1024];                   \
+                                                   \
+snprintf(error_formatted,                          \
+         sizeof(error_formatted),                  \
+         error, ##__VA_ARGS__);                    \
+snprintf(error_formatted_line,                     \
+         sizeof(error_formatted_line),             \
+         "%s @ %s (%d)", error_formatted,          \
+         __FILE__, __LINE__);                      \
+                                                   \
+fprintf(stderr, "%s\n", error_formatted_line);     \
+throw std::runtime_error(error_formatted_line); \
+} while(0)
+#endif
+
+#define DEBUG_PRINT(message, ...) do {             \
+char formatted[2048];                              \
+                                                   \
+snprintf(formatted,                                \
+         sizeof(formatted),                        \
+         message, ##__VA_ARGS__);                  \
+                                                   \
+fprintf(stderr, "%s", formatted);                  \
+} while(0)
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif //PTDALGORITHMS_PTD_H
