@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <StartupObject>StructFrameTests.TestRunner</StartupObject>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Test files -->
+    <Compile Include="TestRunner.cs" />
+    <Compile Include="TestCodec.cs" />
+    
+    <!-- Generated struct files -->
+    <Compile Include="..\generated\csharp\*.cs" Link="Generated\%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>
