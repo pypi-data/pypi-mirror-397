@@ -1,0 +1,111 @@
+Metadata-Version: 2.2
+Name: gllm-tools-binary
+Version: 0.1.4
+Summary: A library for managing tools in Gen AI applications.
+Author-email: Raymond Christopher <raymond.christopher@gdplabs.id>
+Requires-Python: <3.14,>=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: e2b-code-interpreter<3.0.0,>=2.2.0
+Requires-Dist: gllm-inference-binary[anthropic,openai]<0.6.0,>=0.5.0
+Requires-Dist: langchain-core<0.4.0,>=0.3.63
+Requires-Dist: mcp<2.0.0,>=1.9.1
+Requires-Dist: pydantic<3.0.0,>=2.9.1
+Requires-Dist: urllib3<3.0.0,>=2.6.0
+Provides-Extra: dev
+Requires-Dist: pytest<9.0.0,>=8.1.1; extra == "dev"
+Requires-Dist: pre-commit<4.0.0,>=3.7.0; extra == "dev"
+Requires-Dist: pytest-cov<6.0.0,>=5.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio<1.0.0,>=0.23.6; extra == "dev"
+Requires-Dist: coverage<8.0.0,>=7.4.4; extra == "dev"
+Requires-Dist: mypy<2.0.0,>=1.11.2; extra == "dev"
+Requires-Dist: ruff<1.0.0,>=0.11.12; extra == "dev"
+
+# GLLM Tools
+
+## Description
+
+A library providing a collection of utility tools and functions for Generative AI applications.
+
+## Installation
+
+### Prerequisites
+1. Python 3.11+ - [Install here](https://www.python.org/downloads/)
+2. Pip (if using Pip) - [Install here](https://pip.pypa.io/en/stable/installation/)
+3. Poetry 2.1.4+ - [Install here](https://python-poetry.org/docs/#installation)
+4. Git (if using Git) - [Install here](https://git-scm.com/downloads)
+5. For artifact registry installation:
+   - Google Cloud CLI - [[installed](https://cloud.google.com/sdk/docs/) and [authenticated](https://cloud.google.com/docs/authentication/gcloud)]
+   - Access to the [GDP Labs SDK artifact registry](https://console.cloud.google.com/artifacts/python/gdp-labs/asia-southeast2/gen-ai?project=gdp-labs)
+6. For git installation, access to the [GDP Labs SDK github repository](https://github.com/GDP-ADMIN/gl-sdk)
+
+### 1. Installation from Artifact Registry
+Choose one of the following methods to install the package:
+
+#### Using pip
+```bash
+pip install keyring keyrings.gl-artifactregistry-auth
+pip install gllm-tools-binary --index-url https://glsdk.gdplabs.id/gen-ai/simple
+```
+
+#### Using Poetry
+```bash
+poetry source add --priority=explicit gen-ai https://glsdk.gdplabs.id/gen-ai/simple
+poetry config http-basic.gen-ai oauth2accesstoken "$(gcloud auth print-access-token)"
+poetry add --source gen-ai gllm-tools-binary
+```
+
+### 2. Development Installation (Git)
+For development purposes, you can install directly from the Git repository:
+```bash
+git clone git@github.com:GDP-ADMIN/gl-sdk.git
+cd gl-sdk/libs/gllm-tools
+```
+
+## Local Development Setup
+
+### Quick Setup (Recommended)
+For local development with editable gllm packages, use the provided Makefile:
+
+```bash
+# Complete setup: installs Poetry, configures auth, installs packages, sets up pre-commit
+make setup
+```
+
+The following are the available Makefile targets:
+
+1. `make setup` - Complete development setup (recommended for new developers)
+2. `make install-poetry` - Install or upgrade Poetry to the latest version
+3. `make auth` - Configure authentication for internal repositories
+4. `make install` - Install all dependencies
+5. `make install-pre-commit` - Set up pre-commit hooks
+6. `make update` - Update dependencies
+
+### Manual Development Setup (Legacy)
+If you prefer to manage dependencies manually:
+
+1. Go to root folder of `gllm-tools` module, e.g. `cd libs/gllm-tools`.
+2. Run `poetry shell` to create a virtual environment.
+3. Run `poetry lock` to create a lock file if you haven't done it yet.
+4. Run `poetry install` to install the `gllm-tools` requirements for the first time.
+5. Run `poetry update` if you update any dependency module version at `pyproject.toml`.
+
+## Contributing
+Please refer to this [Python Style Guide](https://docs.google.com/document/d/1uRggCrHnVfDPBnG641FyQBwUwLoFw0kTzNqRm92vUwM/edit?usp=sharing)
+to get information about code style, documentation standard, and SCA that you need to use when contributing to this project
+
+### Getting Started with Development
+1. Clone the repository and navigate to the gllm-tools directory
+2. Run `make setup` to set up your development environment
+3. Run `which python` to get the path to be referenced at Visual Studio Code interpreter path (`Ctrl`+`Shift`+`P` or `Cmd`+`Shift`+`P`)
+4. Try running the unit test to see if it's working:
+```bash
+poetry run pytest -s tests/unit_tests/
+```
+
+## Components
+
+The main components of the GLLM Tools are listed here alongside their documentations.
+
+### MCP (Model Context Protocol)
+
+The MCP documentation can be found [here](./gllm_tools/mcp/README.md).
