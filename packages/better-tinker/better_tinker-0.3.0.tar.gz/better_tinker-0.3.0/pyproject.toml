@@ -1,0 +1,40 @@
+[project]
+name = "better-tinker"
+version = "0.3.0"
+description = "Tinker CLI wrapper and bridge"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.0.0",
+    "tinker",
+    "tinker_cookbook",
+]
+
+[project.scripts]
+better-tinker = "better_tinker.wrapper:main"
+tinker-bridge = "better_tinker.bridge.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+ignore-vcs = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["better_tinker"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "better_tinker/**/*",
+    "internal/**/*",
+    "main.go",
+    "go.mod",
+    "go.sum",
+    "build_binaries.py",
+    "README.md",
+]
+
+
