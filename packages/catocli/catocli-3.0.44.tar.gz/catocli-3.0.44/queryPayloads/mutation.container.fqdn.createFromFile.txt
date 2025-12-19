@@ -1,0 +1,20 @@
+mutation containerFqdnCreateFromFile ( $accountId:ID! $createFqdnContainerFromFileInput:CreateFqdnContainerFromFileInput!) {
+	container ( accountId:$accountId ) {
+		fqdn {
+			createFromFile ( input:$createFqdnContainerFromFileInput   ) {
+				container {
+					id
+					name
+					description
+					size
+					audit {
+						createdBy
+						lastModifiedBy
+						lastModifiedAt
+						createdAt
+					}
+				}
+			}
+		}
+	}	
+}

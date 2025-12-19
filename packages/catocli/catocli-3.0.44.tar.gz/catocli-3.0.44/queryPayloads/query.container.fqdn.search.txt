@@ -1,0 +1,20 @@
+query containerFqdnSearch ( $accountId:ID! $fqdnContainerSearchInput:FqdnContainerSearchInput!) {
+	container ( accountId:$accountId ) {
+		fqdn {
+			search ( input:$fqdnContainerSearchInput   ) {
+				container {
+					id
+					name
+					description
+					size
+					audit {
+						createdBy
+						lastModifiedBy
+						lastModifiedAt
+						createdAt
+					}
+				}
+			}
+		}
+	}	
+}

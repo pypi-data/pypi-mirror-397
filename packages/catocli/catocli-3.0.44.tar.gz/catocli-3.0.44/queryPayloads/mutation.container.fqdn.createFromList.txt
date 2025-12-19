@@ -1,0 +1,20 @@
+mutation containerFqdnCreateFromList ( $accountId:ID! $createFqdnContainerFromListInput:CreateFqdnContainerFromListInput!) {
+	container ( accountId:$accountId ) {
+		fqdn {
+			createFromList ( input:$createFqdnContainerFromListInput   ) {
+				container {
+					id
+					name
+					description
+					size
+					audit {
+						createdBy
+						lastModifiedBy
+						lastModifiedAt
+						createdAt
+					}
+				}
+			}
+		}
+	}	
+}

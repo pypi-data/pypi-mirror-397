@@ -1,0 +1,20 @@
+mutation containerIpAddressRangeRemoveValues ( $accountId:ID! $ipAddressRangeContainerRemoveValuesInput:IpAddressRangeContainerRemoveValuesInput!) {
+	container ( accountId:$accountId ) {
+		ipAddressRange {
+			removeValues ( input:$ipAddressRangeContainerRemoveValuesInput   ) {
+				container {
+					id
+					name
+					description
+					size
+					audit {
+						createdBy
+						lastModifiedBy
+						lastModifiedAt
+						createdAt
+					}
+				}
+			}
+		}
+	}	
+}

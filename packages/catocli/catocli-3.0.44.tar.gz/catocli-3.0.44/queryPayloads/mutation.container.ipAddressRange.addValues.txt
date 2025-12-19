@@ -1,0 +1,20 @@
+mutation containerIpAddressRangeAddValues ( $accountId:ID! $ipAddressRangeContainerAddValuesInput:IpAddressRangeContainerAddValuesInput!) {
+	container ( accountId:$accountId ) {
+		ipAddressRange {
+			addValues ( input:$ipAddressRangeContainerAddValuesInput   ) {
+				container {
+					id
+					name
+					description
+					size
+					audit {
+						createdBy
+						lastModifiedBy
+						lastModifiedAt
+						createdAt
+					}
+				}
+			}
+		}
+	}	
+}

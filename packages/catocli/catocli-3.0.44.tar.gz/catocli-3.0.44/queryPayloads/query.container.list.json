@@ -1,0 +1,13 @@
+{
+    "operationName": "containerList",
+    "query": "query containerList ( $accountId:ID! $containerSearchInput:ContainerSearchInput!) {\n\tcontainer ( accountId:$accountId ) {\n\t\tlist ( input:$containerSearchInput  )  {\n\t\t\tcontainers {\n\t\t\t\tid\n\t\t\t\tname\n\t\t\t\tdescription\n\t\t\t\tsize\n\t\t\t\taudit {\n\t\t\t\t\tcreatedBy\n\t\t\t\t\tlastModifiedBy\n\t\t\t\t\tlastModifiedAt\n\t\t\t\t\tcreatedAt\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\t\n}",
+    "variables": {
+        "containerSearchInput": {
+            "containerRefInput": {
+                "by": "ID",
+                "input": "string"
+            },
+            "types": "IP_RANGE"
+        }
+    }
+}

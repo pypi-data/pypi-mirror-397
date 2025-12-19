@@ -1,0 +1,20 @@
+mutation containerIpAddressRangeUpdateFromList ( $accountId:ID! $updateIpAddressRangeContainerFromListInput:UpdateIpAddressRangeContainerFromListInput!) {
+	container ( accountId:$accountId ) {
+		ipAddressRange {
+			updateFromList ( input:$updateIpAddressRangeContainerFromListInput   ) {
+				container {
+					id
+					name
+					description
+					size
+					audit {
+						createdBy
+						lastModifiedBy
+						lastModifiedAt
+						createdAt
+					}
+				}
+			}
+		}
+	}	
+}
