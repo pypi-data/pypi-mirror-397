@@ -1,0 +1,112 @@
+import warnings
+from typing import cast
+
+import pandas as pd
+from kumoapi.model_plan import MissingType
+
+from kumoai.experimental.rfm.base import DataBackend, SourceColumn, Table
+from kumoai.experimental.rfm.infer import infer_dtype
+
+
+class LocalTable(Table):
+    r"""A table backed by a :class:`pandas.DataFrame`.
+
+    A :class:`LocalTable` fully specifies the relevant metadata, *i.e.*
+    selected columns, column semantic types, primary keys and time columns.
+    :class:`LocalTable` is used to create a :class:`Graph`.
+
+    .. code-block:: python
+
+        import pandas as pd
+        import kumoai.experimental.rfm as rfm
+
+        # Load data from a CSV file:
+        df = pd.read_csv("data.csv")
+
+        # Create a table from a `pandas.DataFrame` and infer its metadata ...
+        table = rfm.LocalTable(df, name="my_table").infer_metadata()
+
+        # ... or create a table explicitly:
+        table = rfm.LocalTable(
+            df=df,
+            name="my_table",
+            primary_key="id",
+            time_column="time",
+            end_time_column=None,
+        )
+
+        # Verify metadata:
+        table.print_metadata()
+
+        # Change the semantic type of a column:
+        table[column].stype = "text"
+
+    Args:
+        df: The data frame to create this table from.
+        name: The name of this table.
+        primary_key: The name of the primary key of this table, if it exists.
+        time_column: The name of the time column of this table, if it exists.
+        end_time_column: The name of the end time column of this table, if it
+            exists.
+    """
+    def __init__(
+        self,
+        df: pd.DataFrame,
+        name: str,
+        primary_key: MissingType | str | None = MissingType.VALUE,
+        time_column: str | None = None,
+        end_time_column: str | None = None,
+    ) -> None:
+
+        if df.empty:
+            raise ValueError("Data frame is empty")
+        if isinstance(df.columns, pd.MultiIndex):
+            raise ValueError("Data frame must not have a multi-index")
+        if not df.columns.is_unique:
+            raise ValueError("Data frame must have unique column names")
+        if any(col == '' for col in df.columns):
+            raise ValueError("Data frame must have non-empty column names")
+
+        self._data = df.copy(deep=False)
+
+        super().__init__(
+            name=name,
+            columns=list(df.columns),
+            primary_key=primary_key,
+            time_column=time_column,
+            end_time_column=end_time_column,
+        )
+
+    @property
+    def backend(self) -> DataBackend:
+        return cast(DataBackend, DataBackend.LOCAL)
+
+    def _get_source_columns(self) -> list[SourceColumn]:
+        source_columns: list[SourceColumn] = []
+        for column in self._data.columns:
+            ser = self._data[column]
+            try:
+                dtype = infer_dtype(ser)
+            except Exception:
+                warnings.warn(f"Data type inference for column '{column}' in "
+                              f"table '{self.name}' failed. Consider changing "
+                              f"the data type of the column to use it within "
+                              f"this table.")
+                continue
+
+            source_column = SourceColumn(
+                name=column,
+                dtype=dtype,
+                is_primary_key=False,
+                is_unique_key=False,
+                is_nullable=True,
+            )
+            source_columns.append(source_column)
+
+        return source_columns
+
+    def _get_sample_df(self) -> pd.DataFrame:
+        return self._data
+
+    def _get_num_rows(self) -> int | None:
+        return len(self._data)
