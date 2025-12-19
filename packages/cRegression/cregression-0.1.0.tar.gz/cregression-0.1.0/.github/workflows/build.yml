@@ -1,0 +1,23 @@
+name: Build wheels
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build_wheels:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: [3.10, 3.11, 3.12]
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: pypa/cibuildwheel@v3
+        with:
+          output-dir: wheelhouse
