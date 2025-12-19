@@ -1,0 +1,95 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "HOS_SECSUITE"
+version = "0.1.4"
+description = "HOS SecSuite: 模块化网络安全工具包（防御优先）"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [{name = "HOS", email = "security@example.com"}]
+license = {text = "Apache-2.0"}
+keywords = ["security", "network", "defense", "mcp", "cli", "penetration-testing", "vulnerability-scanning", "proxy", "web-security"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: System :: Networking :: Monitoring",
+    "Topic :: Utilities"
+]
+dependencies = [
+    "mitmproxy>=10.0.0",
+    "proxy.py>=2.4.0",
+    "requests>=2.31.0",
+    "httpx>=0.25.0",
+    "scrapy>=2.11.0",
+    "beautifulsoup4>=4.12.0",
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+    "websockets>=11.0.0",
+    "scapy>=2.5.0",
+    "python-dotenv>=1.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0"
+]
+
+[project.urls]
+Homepage = "https://example.com/hos-secsuite"
+Repository = "https://example.com/hos-secsuite"
+Documentation = "https://example.com/hos-secsuite/docs"
+Issues = "https://example.com/hos-secsuite/issues"
+
+[project.scripts]
+hos-console = "hos_secsuite.console.console_app:main"
+hos-mcp-server = "hos_secsuite.mcp.server:main"
+
+[tool.setuptools.package-data]
+"hos_secsuite" = ["**/*.py"]
+
+[tool.setuptools.packages.find]
+include = ["hos_secsuite", "hos_secsuite.*"]
+
+[tool.pytest.ini_options]
+addopts = "-v --strict-markers"
+markers = [
+    "asyncio: mark a test as asyncio",
+    "integration: mark a test as integration test",
+    "slow: mark a test as slow"
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py38']
+include = '\.pyi?$'
+exclude = '''
+/(\.
+    |build
+    |dist
+    |venv
+    |\.venv
+    |tests?/fixtures
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 88
