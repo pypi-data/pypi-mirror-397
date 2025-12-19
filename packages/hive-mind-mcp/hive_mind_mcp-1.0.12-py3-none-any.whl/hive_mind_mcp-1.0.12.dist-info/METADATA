@@ -1,0 +1,312 @@
+Metadata-Version: 2.4
+Name: hive-mind-mcp
+Version: 1.0.12
+Summary: MCP Server for orchestrating LLM interactions
+Author-email: Hive Mind Team <hello@example.com>
+License: Apache-2.0
+Project-URL: Homepage, https://github.com/franciscojunqueira/hive-mind-mcp
+Project-URL: Repository, https://github.com/franciscojunqueira/hive-mind-mcp
+Project-URL: Issues, https://github.com/franciscojunqueira/hive-mind-mcp/issues
+Keywords: mcp,llm,orchestrator,agent,ai
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: mcp[cli]>=1.0.0
+Requires-Dist: openai>=1.0.0
+Requires-Dist: anthropic>=0.3.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: tenacity>=8.0.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: pydantic-settings>=2.0.0
+Requires-Dist: structlog>=24.0.0
+Requires-Dist: google-generativeai>=0.5.0
+Requires-Dist: streamlit>=1.30.0
+Requires-Dist: pandas>=2.0.0
+Requires-Dist: plotly>=5.0.0
+Requires-Dist: PyYAML>=6.0
+Requires-Dist: docker>=7.0.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.0.0; extra == "dev"
+Requires-Dist: pytest-mock>=3.10.0; extra == "dev"
+Requires-Dist: pytest-benchmark>=4.0.0; extra == "dev"
+Requires-Dist: build>=1.0.0; extra == "dev"
+Requires-Dist: twine>=4.0.0; extra == "dev"
+Dynamic: license-file
+
+# 🧠 Hive Mind MCP - LLM Orchestrator
+
+[![Test Coverage](https://img.shields.io/badge/Coverage-90%25-brightgreen)](https://github.com/franciscojunqueira/hive-mind-mcp/actions)
+[![Python Version](https://img.shields.io/badge/python-3.10%2B-blue)](https://pypi.org/project/hive-mind-mcp/)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Build Status](https://img.shields.io/badge/build-passing-success)](https://github.com/franciscojunqueira/hive-mind-mcp/actions)
+
+**A powerful Model Context Protocol (MCP) server that enables advanced Multi-LLM collaboration workflows.**
+
+Transform simple chat interactions into sophisticated "Council of Experts" sessions. This orchestrator connects OpenAI, Anthropic, DeepSeek, Google Gemini, and Local models (Ollama) to debate, refine, and validate code and content autonomously.
+
+## ✨ Key Features
+
+* **🏰 Round Table**: Run a full *Round Table* — Independent generation from 3+ models, cross-critique, and final consensus synthesis.
+* **👥 Collaborative Refine**: A "Drafter" model writes code, while a "Council" of critics (Claude + DeepSeek) reviews it iteratively.
+* **✈️ Auto-Pilot (Adaptive Selection)**: Intelligent analysis of request complexity to automatically route tasks.
+
+    ```mermaid
+    graph LR
+        Req[User Request] --> Analyzer{Complexity Analyzer}
+        Analyzer -->|High Complexity| SOTA["SOTA Tier (GPT-4o)"]
+        Analyzer -->|Medium| ADV["Advanced Tier (GPT-4o-mini)"]
+        Analyzer -->|Low| BASIC["Basic Tier (Llama 3)"]
+        SOTA --> Result
+        ADV --> Result
+        BASIC --> Result
+    ```
+
+* **🧠 Intelligence Tiers**: Abstracted model selection using `SOTA`, `ADVANCED`, and `BASIC` tiers managed via `config.yaml`.
+* **🏗️ Workflow Pipelines**: Define complex sequential tasks.
+
+    ```mermaid
+    graph TD
+        Start((Start)) --> Input[/Input/]
+        Input --> Step1[Process]
+        Step1 --> Decision{Check Condition}
+        Decision -->|True| Step2[Step A]
+        Decision -->|False| Step3[Step B]
+        Step2 --> Final((End))
+        Step3 --> Final
+    ```
+
+* **🛡️ Secure Sandbox**: "Tool Agents" execute code in a controlled environment with strict validation using `ToolAwareProvider`.
+
+    ```mermaid
+    graph TD
+        User[User Query] --> Moderator
+        Moderator -->|Ask| A[Model A]
+        Moderator -->|Ask| B[Model B]
+        Moderator -->|Ask| C[Model C]
+        A -->|Draft| XT[Cross-Critique]
+        B -->|Draft| XT
+        C -->|Draft| XT
+        XT -->|Feedback| Moderator
+        Moderator -->|Synthesize| Final[Consensus Answer]
+    ```
+
+* **📊 Observability Dashboard**: Real-time Streamlit dashboard to track costs, sessions, and artifacts.
+* **🌍 Global Configuration**: Centralized config with easy overrides for models and API keys.
+* **🔌 Dynamic Plugins**: Drop-in `.py` files to add new LLM providers instantly without restarting.
+
+---
+
+## 🛠️ Installation
+
+### Option A: The "Pro" Way (Recommended)
+
+Use `pipx` to install Hive Mind globally in an isolated environment. This keeps your system clean and makes the command available everywhere.
+
+```bash
+# 1. Install
+pipx install hive-mind-mcp
+
+# 2. Auto-Configure your Environment
+hive-mind install
+```
+
+The installer will detect your setup and help you configure:
+*   **Google Antigravity**
+*   **Claude Desktop**
+*   **VS Code**
+
+### Option B: Standard Pip
+
+```bash
+pip install hive-mind-mcp
+```
+
+---
+
+## ⚙️ Configuration
+
+The `hive-mind install` command handles most configuration for you.
+
+### Global API Keys
+The installer will prompt you to set up your API keys in a central location (`~/.hive_mind/.env`). This means you only need to configure them **once**, and they work for all your projects.
+
+### Manual Setup (Reference)
+If you prefer manual configuration, the server details are:
+*   **Command**: `hive-mind` (or path to your venv python)
+*   **Args**: `['run']`
+
+---
+
+## 🤖 Agentic IDE Integration
+
+The Hive Mind MCP server is designed to be the "brain" behind your favorite editor. It is fully compatible with any environment that supports the Model Context Protocol (MCP) or can run terminal commands.
+
+**Supported Environments:**
+
+* **VS Code**: Via standard MCP extensions (e.g., Cline, Roo Code).
+* **Cursor**: Use the "Composer" mode to run `hive-mind` commands directly.
+* **Windsurf**: Integrate via its "Cascade" flows.
+* **Trae**: Compatible with its "Builder" mode.
+* **Claude Desktop**: Native support for MCP servers.
+* **Replit**: Usable via the integrated shell.
+
+### How to Use
+
+You can run these workflows directly inside your AI coding assistant without touching the terminal:
+
+### 1. Slash Commands (if supported)
+
+Simply type the command in the chat:
+
+* `/round_table "Topic"` - Runs a full consensus session.
+* `/debate "Topic"` - Runs a collaborative refinement.
+* `/review "Content"` - Checks code/text for safety and logic errors.
+* `/analyze` - Analyzes the project.
+
+### 2. Natural Language
+
+You can just ask your agent:
+> "Run a round table to decide the best database for this project."
+
+**User Request:**
+> "Run the round table now on the review of the ARCHITECTURE.md document. Send them the source code for context with map-reduce"
+
+**Agent Execution:**
+
+```bash
+hive-mind round_table "Review the attached ARCHITECTURE.md file. Does it accurately reflect the codebase structure in src/? Identify any missing features or inconsistencies." --context src/ ARCHITECTURE.md --map-reduce
+```
+
+---
+
+## 🚀 CLI Usage Guide
+
+The logic is built into the `hive-mind` command (formerly aliased as `mcp`).
+
+### ⚡ Quick Guide: Which Command to Use?
+
+| Command | Goal | Best For | Example |
+| :--- | :--- | :--- | :--- |
+| **`round_table`** | **Consensus** | Big decisions, architecture, ambiguity. | *"What DB should we use?"* |
+| **`debate`** | **Refinement** | Writing complex code, fixing tough bugs. | *"Write a thread-safe Queue"* |
+| **`review`** | **Verification** | Auditing code, security checks, sanity checks. | *"Check this file for bugs"* |
+| **`analyze`** | **Understanding** | Learning large codebases, finding patterns. | *"Explain how auth works"* |
+| **`models`** | **Discovery** | Listing/Searching available models. | *"List all GPT models"* |
+
+---
+
+### 1. Dashboard & Observability
+
+Visualize your costs and session history in real-time.
+
+| Budget & Overview | Analytics & Insights |
+| :---: | :---: |
+| ![Budget](docs/images/dashboard_preview-1.png) | ![Analytics](docs/images/dashboard_preview-2.png) |
+
+**New Features:**
+
+* **🗓️ Date Filtering**: Filter costs and analytics by custom date ranges.
+* **🏷️ Provider & Type Filters**: Drill down into specific providers (OpenAI, Anthropic) or session types (Round Table, Debate).
+* **📉 Clean Visuals**: Interactive charts with dual-axis cost tracking and responsive layouts.
+
+**Session Explorer (Audit Traces)**
+![Explorer](docs/images/dashboard_preview-3.png)
+*> Deep dive into every decision made by the Council.*
+
+**Model Catalog & Discovery**
+![Catalog](docs/images/dashboard_preview-4.png)
+*> Dynamic discovery of every model available across all configured providers.*
+- **Unified List**: See all models from OpenAI, Anthropic, DeepSeek, Google, etc. in one place.
+- **Search & Filter**: Quickly find specific models by name or provider.
+- **Live Status**: Confirms which providers are correctly configured and active.
+
+```bash
+# Launch the dashboard
+hive-mind dashboard
+```
+
+* **💰 Budget**: Track daily spend limit vs actuals with granular provider filtering.
+* **📊 Analytics**: See which models are winning debates and analyze session trends.
+* **🗂️ Explorer**: Browse artifacts and metadata from previous Round Tables.
+
+### 2. Round Table (`hive-mind round_table`)
+
+**Consensus Engine:** Simulates a council of 3 diversity models (e.g., GPT-4, Claude, DeepSeek) debating a problem.
+
+* **Best for:** Architecture decisions, ambiguous questions, strategy.
+* **Workflow:** Independent Generation -> Cross-Critique -> Synthesis.
+
+```bash
+hive-mind round_table "What is the best architecture for this app?" --context README.md
+```
+
+### 3. Debate (`hive-mind debate`)
+
+**Refinement Engine:** An iterative loop where a "Drafter" writes and "Reviewers" critique.
+
+* **Best for:** Writing complex code, refactoring, fixing bugs.
+* **Workflow:** Draft -> Critique -> Refine -> Critique -> Final.
+
+```bash
+hive-mind debate "Write a thread-safe Singleton" --max-turns 5
+```
+
+### 4. Review (`hive-mind review`)
+
+**Evaluation Engine:** Submits existing content/code to the Council for a "Safety & Logic Check".
+
+* **Best for:** Security audits, code review, checking generated content.
+* **Workflow:** Reviewer 1 -> Pass/Fail + Reviewer 2 -> Pass/Fail -> Aggregated Report.
+
+```bash
+hive-mind review src/security.py --reviewers openai:gpt-4o anthropic:claude-3-opus
+```
+
+### 5. Analyze (`hive-mind analyze`)
+
+**Map-Reduce Engine:** Summarizes large codebases file-by-file before answering.
+
+* **Best for:** "How does this project work?", "Find security flaws in src/".
+* **Workflow:** Chunk Files -> Summarize Each -> Aggregate -> Final Answer.
+
+```bash
+hive-mind analyze src "Explain the auth flow"
+```
+
+---
+
+## 🔌 Plugins System
+
+Expand the orchestrator with custom providers without modifying core code.
+
+1. Create a `plugins/` directory in your current folder.
+2. Add a python file (e.g., `plugins/my_custom_llm.py`).
+3. Define a class inheriting from `LLMProvider` with `PROVIDER_NAME`.
+
+The orchestrator will automatically discover and load it!
+
+---
+
+## ❓ Troubleshooting
+
+| Issue | Cause | Fix |
+| :--- | :--- | :--- |
+| `NotFoundError` (Anthropic) | Model ID deprecated or invalid. | Update `ANTHROPIC_MODELS` in `.env` with new IDs (e.g., `claude-sonnet-4-5...`). |
+| `SettingsError` / JSON | Env var has spaces or bad format. | Ensure lists in `.env` are comma-separated without brackets: `MODEL_A,MODEL_B`. |
+| `401 Unauthorized` | Invalid API Key. | check `hive-mind config` and verify keys. |
+| Dashboard Empty | No artifacts found. | Run a `round_table` command first to generate data. |
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please see [ARCHITECTURE.md](ARCHITECTURE.md) for system design details.
