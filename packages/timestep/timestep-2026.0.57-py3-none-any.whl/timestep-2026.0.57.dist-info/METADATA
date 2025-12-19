@@ -1,0 +1,62 @@
+Metadata-Version: 2.4
+Name: timestep
+Version: 2026.0.57
+Summary: Timestep AI - Agent execution framework with cross-language state persistence and multi-model support for OpenAI Agents
+License: MIT
+Requires-Python: >=3.11
+Requires-Dist: asyncpg>=0.29.0
+Requires-Dist: firecrawl-py>=1.0.0
+Requires-Dist: griffe<2,>=1.5.6
+Requires-Dist: jinja2>=3.0.0
+Requires-Dist: mcp<2,>=1.11.0; python_version >= '3.10'
+Requires-Dist: ollama>=0.6.1
+Requires-Dist: openai<3,>=2.9.0
+Requires-Dist: pydantic<3,>=2.12.3
+Requires-Dist: pytest-asyncio>=0.21.0
+Requires-Dist: pytest>=7.0.0
+Requires-Dist: requests<3,>=2.0
+Requires-Dist: types-requests<3,>=2.0
+Requires-Dist: typing-extensions<5,>=4.12.2
+Description-Content-Type: text/markdown
+
+# Timestep (Python)
+
+Python bindings for the Timestep Agents SDK. See the root `README.md` for the full story; this file highlights Python-specific setup.
+
+## Install
+```bash
+pip install timestep
+```
+
+## Prerequisites (Python)
+- `OPENAI_API_KEY`
+- **PostgreSQL**: Set `PG_CONNECTION_URI=postgresql://user:pass@host/db`
+
+## Quick start
+```python
+from timestep import run_agent, RunStateStore
+from agents import Agent, Session
+
+agent = Agent(model="gpt-4.1")
+session = Session()
+state_store = RunStateStore(agent=agent, session_id=await session._get_session_id())
+
+result = await run_agent(agent, input_items, session, stream=False)
+
+if result.interruptions:
+    await state_store.save(result.to_state())
+```
+
+## Cross-language resume
+Save in Python, load in TypeScript with the same `session_id` and `RunStateStore.load()`.
+
+## Model routing
+Use `MultiModelProvider` if you need OpenAI + Ollama routing:
+```python
+from timestep import MultiModelProvider, MultiModelProviderMap, OllamaModelProvider
+
+provider_map = MultiModelProviderMap()
+provider_map.add_provider("ollama", OllamaModelProvider())
+model_provider = MultiModelProvider(provider_map=provider_map)
+```
+
