@@ -1,0 +1,101 @@
+Metadata-Version: 2.4
+Name: pyprojectcheck-rj
+Version: 1.0.0
+Summary: Validate pyproject.toml files
+Project-URL: Homepage, https://github.com/RedJohnx/pypi_warehouse
+Project-URL: Repository, https://github.com/RedJohnx/pypi_warehouse/tree/main/packages/pyprojectcheck
+Author-email: RedJohnx <redjohnx@example.com>
+License-Expression: MIT
+Keywords: linter,packaging,pyproject,toml,validation
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Software Development :: Quality Assurance
+Requires-Python: >=3.8
+Requires-Dist: tomli>=2.0.0; python_version < '3.11'
+Description-Content-Type: text/markdown
+
+# pyprojectcheck ✅
+
+Validate pyproject.toml files for correctness and best practices.
+
+## Installation
+
+```bash
+pip install pyprojectcheck
+```
+
+## Usage
+
+### CLI
+
+```bash
+# Check current directory
+pyprojectcheck
+
+# Check specific file
+pyprojectcheck path/to/pyproject.toml
+```
+
+### Python API
+
+```python
+from pyprojectcheck import check_file, check
+
+# Check a file
+result = check_file("pyproject.toml")
+print(result)
+
+# Check content directly
+content = """
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mypackage"
+version = "1.0.0"
+"""
+
+result = check(content)
+if result.valid:
+    print("✅ Valid!")
+else:
+    for error in result.errors:
+        print(error)
+```
+
+## What It Checks
+
+### Errors
+- Missing `[build-system]` section
+- Missing `requires` or `build-backend`
+- Missing `[project]` section
+- Missing `name` or `version`
+- Invalid field types
+
+### Warnings
+- Missing recommended fields (description, readme, license)
+- Missing `requires-python`
+- Missing `authors`
+- Missing `urls`
+
+## Output Example
+
+```
+⚠️ [project] Missing 'description' field (recommended)
+⚠️ [project] Missing 'readme' field (recommended)
+❌ [project.authors[0]] Author must have 'name' or 'email'
+
+❌ Invalid: 1 error(s), 2 warning(s)
+```
+
+## License
+
+MIT
