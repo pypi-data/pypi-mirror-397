@@ -1,0 +1,608 @@
+Metadata-Version: 2.4
+Name: colordebug
+Version: 1.0.0
+Summary: Colorful debugging utilities for Python with text wrapping, async support, and security features
+Author-email: garantiatsverga <hmurovicdanila@gmail.com>
+License:                                  Apache License
+                                   Version 2.0, January 2004
+                                http://www.apache.org/licenses/
+        
+           TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+        
+           1. Definitions.
+        
+              "License" shall mean the terms and conditions for use, reproduction,
+              and distribution as defined by Sections 1 through 9 of this document.
+        
+              "Licensor" shall mean the copyright owner or entity authorized by
+              the copyright owner that is granting the License.
+        
+              "Legal Entity" shall mean the union of the acting entity and all
+              other entities that control, are controlled by, or are under common
+              control with that entity. For the purposes of this definition,
+              "control" means (i) the power, direct or indirect, to cause the
+              direction or management of such entity, whether by contract or
+              otherwise, or (ii) ownership of fifty percent (50%) or more of the
+              outstanding shares, or (iii) beneficial ownership of such entity.
+        
+              "You" (or "Your") shall mean an individual or Legal Entity
+              exercising permissions granted by this License.
+        
+              "Source" form shall mean the preferred form for making modifications,
+              including but not limited to software source code, documentation
+              source, and configuration files.
+        
+              "Object" form shall mean any form resulting from mechanical
+              transformation or translation of a Source form, including but
+              not limited to compiled object code, generated documentation,
+              and conversions to other media types.
+        
+              "Work" shall mean the work of authorship, whether in Source or
+              Object form, made available under the License, as indicated by a
+              copyright notice that is included in or attached to the work
+              (an example is provided in the Appendix below).
+        
+              "Derivative Works" shall mean any work, whether in Source or Object
+              form, that is based on (or derived from) the Work and for which the
+              editorial revisions, annotations, elaborations, or other modifications
+              represent, as a whole, an original work of authorship. For the purposes
+              of this License, Derivative Works shall not include works that remain
+              separable from, or merely link (or bind by name) to the interfaces of,
+              the Work and Derivative Works thereof.
+        
+              "Contribution" shall mean any work of authorship, including
+              the original version of the Work and any modifications or additions
+              to that Work or Derivative Works thereof, that is intentionally
+              submitted to Licensor for inclusion in the Work by the copyright owner
+              or by an individual or Legal Entity authorized to submit on behalf of
+              the copyright owner. For the purposes of this definition, "submitted"
+              means any form of electronic, verbal, or written communication sent
+              to the Licensor or its representatives, including but not limited to
+              communication on electronic mailing lists, source code control systems,
+              and issue tracking systems that are managed by, or on behalf of, the
+              Licensor for the purpose of discussing and improving the Work, but
+              excluding communication that is conspicuously marked or otherwise
+              designated in writing by the copyright owner as "Not a Contribution."
+        
+              "Contributor" shall mean Licensor and any individual or Legal Entity
+              on behalf of whom a Contribution has been received by Licensor and
+              subsequently incorporated within the Work.
+        
+           2. Grant of Copyright License. Subject to the terms and conditions of
+              this License, each Contributor hereby grants to You a perpetual,
+              worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+              copyright license to reproduce, prepare Derivative Works of,
+              publicly display, publicly perform, sublicense, and distribute the
+              Work and such Derivative Works in Source or Object form.
+        
+           3. Grant of Patent License. Subject to the terms and conditions of
+              this License, each Contributor hereby grants to You a perpetual,
+              worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+              (except as stated in this section) patent license to make, have made,
+              use, offer to sell, sell, import, and otherwise transfer the Work,
+              where such license applies only to those patent claims licensable
+              by such Contributor that are necessarily infringed by their
+              Contribution(s) alone or by combination of their Contribution(s)
+              with the Work to which such Contribution(s) was submitted. If You
+              institute patent litigation against any entity (including a
+              cross-claim or counterclaim in a lawsuit) alleging that the Work
+              or a Contribution incorporated within the Work constitutes direct
+              or contributory patent infringement, then any patent licenses
+              granted to You under this License for that Work shall terminate
+              as of the date such litigation is filed.
+        
+           4. Redistribution. You may reproduce and distribute copies of the
+              Work or Derivative Works thereof in any medium, with or without
+              modifications, and in Source or Object form, provided that You
+              meet the following conditions:
+        
+              (a) You must give any other recipients of the Work or
+                  Derivative Works a copy of this License; and
+        
+              (b) You must cause any modified files to carry prominent notices
+                  stating that You changed the files; and
+        
+              (c) You must retain, in the Source form of any Derivative Works
+                  that You distribute, all copyright, patent, trademark, and
+                  attribution notices from the Source form of the Work,
+                  excluding those notices that do not pertain to any part of
+                  the Derivative Works; and
+        
+              (d) If the Work includes a "NOTICE" text file as part of its
+                  distribution, then any Derivative Works that You distribute must
+                  include a readable copy of the attribution notices contained
+                  within such NOTICE file, excluding those notices that do not
+                  pertain to any part of the Derivative Works, in at least one
+                  of the following places: within a NOTICE text file distributed
+                  as part of the Derivative Works; within the Source form or
+                  documentation, if provided along with the Derivative Works; or,
+                  within a display generated by the Derivative Works, if and
+                  wherever such third-party notices normally appear. The contents
+                  of the NOTICE file are for informational purposes only and
+                  do not modify the License. You may add Your own attribution
+                  notices within Derivative Works that You distribute, alongside
+                  or as an addendum to the NOTICE text from the Work, provided
+                  that such additional attribution notices cannot be construed
+                  as modifying the License.
+        
+              You may add Your own copyright statement to Your modifications and
+              may provide additional or different license terms and conditions
+              for use, reproduction, or distribution of Your modifications, or
+              for any such Derivative Works as a whole, provided Your use,
+              reproduction, and distribution of the Work otherwise complies with
+              the conditions stated in this License.
+        
+           5. Submission of Contributions. Unless You explicitly state otherwise,
+              any Contribution intentionally submitted for inclusion in the Work
+              by You to the Licensor shall be under the terms and conditions of
+              this License, without any additional terms or conditions.
+              Notwithstanding the above, nothing herein shall supersede or modify
+              the terms of any separate license agreement you may have executed
+              with Licensor regarding such Contributions.
+        
+           6. Trademarks. This License does not grant permission to use the trade
+              names, trademarks, service marks, or product names of the Licensor,
+              except as required for reasonable and customary use in describing the
+              origin of the Work and reproducing the content of the NOTICE file.
+        
+           7. Disclaimer of Warranty. Unless required by applicable law or
+              agreed to in writing, Licensor provides the Work (and each
+              Contributor provides its Contributions) on an "AS IS" BASIS,
+              WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+              implied, including, without limitation, any warranties or conditions
+              of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+              PARTICULAR PURPOSE. You are solely responsible for determining the
+              appropriateness of using or redistributing the Work and assume any
+              risks associated with Your exercise of permissions under this License.
+        
+           8. Limitation of Liability. In no event and under no legal theory,
+              whether in tort (including negligence), contract, or otherwise,
+              unless required by applicable law (such as deliberate and grossly
+              negligent acts) or agreed to in writing, shall any Contributor be
+              liable to You for damages, including any direct, indirect, special,
+              incidental, or consequential damages of any character arising as a
+              result of this License or out of the use or inability to use the
+              Work (including but not limited to damages for loss of goodwill,
+              work stoppage, computer failure or malfunction, or any and all
+              other commercial damages or losses), even if such Contributor
+              has been advised of the possibility of such damages.
+        
+           9. Accepting Warranty or Additional Liability. While redistributing
+              the Work or Derivative Works thereof, You may choose to offer,
+              and charge a fee for, acceptance of support, warranty, indemnity,
+              or other liability obligations and/or rights consistent with this
+              License. However, in accepting such obligations, You may act only
+              on Your own behalf and on Your sole responsibility, not on behalf
+              of any other Contributor, and only if You agree to indemnify,
+              defend, and hold each Contributor harmless for any liability
+              incurred by, or claims asserted against, such Contributor by reason
+              of your accepting any such warranty or additional liability.
+        
+           END OF TERMS AND CONDITIONS
+        
+           APPENDIX: How to apply the Apache License to your work.
+        
+              To apply the Apache License to your work, attach the following
+              boilerplate notice, with the fields enclosed by brackets "[]"
+              replaced with your own identifying information. (Don't include
+              the brackets!)  The text should be enclosed in the appropriate
+              comment syntax for the file format. We also recommend that a
+              file or class name and description of purpose be included on the
+              same "printed page" as the copyright notice for easier
+              identification within third-party archives.
+        
+           Copyright [2025] [colordebug Contributors]
+        
+           Licensed under the Apache License, Version 2.0 (the "License");
+           you may not use this file except in compliance with the License.
+           You may obtain a copy of the License at
+        
+               http://www.apache.org/licenses/LICENSE-2.0
+        
+           Unless required by applicable law or agreed to in writing, software
+           distributed under the License is distributed on an "AS IS" BASIS,
+           WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+           See the License for the specific language governing permissions and
+           limitations under the License.
+Project-URL: Homepage, https://github.com/garantiatsverga/colordebug
+Project-URL: Repository, https://github.com/garantiatsverga/colordebug
+Project-URL: Issues, https://github.com/garantiatsverga/colordebug/issues
+Keywords: debugging,logging,color,async,security,text-wrapping
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Debuggers
+Classifier: Topic :: System :: Logging
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Operating System :: OS Independent
+Classifier: Framework :: AsyncIO
+Classifier: Framework :: FastAPI
+Classifier: Framework :: Flask
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE.md
+Dynamic: license-file
+
+# colordebug - Colorful Debugging Utilities for Python
+
+A powerful, production-ready logging and debugging library for Python with colorful console output, smart log rotation, security features, async support, and **text wrapping** capabilities.
+
+## Features
+
+- 🎨 **Colorful console output** with ANSI colors
+- 📝 **Multiple log formats** (Text, JSON)
+- 🔒 **Security-first** - automatic sensitive data sanitization
+- ⚡ **Async support** for modern web applications
+- 🔄 **Smart log rotation** with error preservation
+- 📊 **Performance monitoring** with execution timing
+- 🛠 **Flexible configuration** for different environments
+- 📜 **Text wrapping** for better log readability
+
+## Installation
+
+```bash
+pip install colordebug
+```
+
+Or copy `colordebug.py` directly into your project.
+
+## Quick Start
+
+```python
+from colordebug import *
+
+# Basic usage
+info("Application started")
+success("Data loaded successfully")
+warning("This is a warning")
+error("Something went wrong")
+
+# With file logging
+enable_file_logging("app.log")
+info("This will be logged to file", exp=True)
+
+# With text wrapping (new!)
+long_message = "This is a very long message that will be wrapped to multiple lines for better readability."
+info(long_message, exp=True, textwrapping=True, wrapint=40)
+```
+
+## Core Functions
+
+### Basic Logging
+
+```python
+debug("Debug message")
+info("Information message")
+success("Success message") 
+warning("Warning message")
+error("Error message")
+critical("Critical message")
+
+# With exceptions
+try:
+    risky_operation()
+except Exception as e:
+    error("Operation failed", e, exp=True)
+```
+
+### Advanced Logging
+
+```python
+# Log variable values
+log_value("user_count", 42, exp=True)
+
+# Log collections
+log_list([1, 2, 3, 4, 5], "Sample data", exp=True)
+log_dict({"key": "value"}, "Configuration", exp=True)
+
+# Conditional logging
+log_condition(len(users) > 0, "Users found", "No users found", exp=True)
+```
+
+### Timing and Performance
+
+```python
+# Context manager for timing
+with timer("Database query", exp=True):
+    results = db.query(...)
+
+# Function decorators
+@log_function_call(exp=True)
+@log_execution_time(exp=True)
+def process_data(data):
+    return data * 2
+```
+
+## Async Support
+
+```python
+import asyncio
+from colordebug import *
+
+@alog_function_call(exp=True)
+@alog_execution_time(exp=True)
+async def fetch_data(url):
+    await ainfo(f"Fetching {url}", exp=True)
+    
+    async with atimer("HTTP request", exp=True):
+        await asyncio.sleep(0.1)
+    
+    await asuccess("Data fetched successfully", exp=True)
+    return {"data": "sample"}
+
+# Usage
+async def main():
+    await fetch_data("https://api.example.com/data")
+```
+
+## Text Wrapping (New!)
+
+colordebug now supports automatic text wrapping for better log readability.
+
+### Basic Text Wrapping
+
+```python
+from colordebug import *
+
+# Enable text wrapping for long messages
+long_message = "This is a very long message that should be wrapped to multiple lines based on the specified width."
+
+# Log with text wrapping (width = 40 characters)
+info(long_message, exp=True, textwrapping=True, wrapint=40)
+
+# Log without text wrapping
+debug(long_message, exp=True, textwrapping=False)
+```
+
+### Advanced Usage
+
+```python
+# Set default text wrapping for all logs
+enable_file_logging("app.log", textwrapping=True, wrapint=80)
+
+# Use with different log levels
+warning("This is a warning message that will be wrapped", exp=True, textwrapping=True, wrapint=50)
+error("This is an error message that will be wrapped", exp=True, textwrapping=True, wrapint=50)
+
+# Use with decorators
+@log_function_call(exp=True, textwrapping=True, wrapint=60)
+def process_data(data):
+    # Function logic here
+    pass
+```
+
+### Parameters
+
+- `textwrapping` (bool): Enable or disable text wrapping. Default: `False`
+- `wrapint` (int): Maximum line width in characters. Default: `80`
+
+### Notes
+
+- Text wrapping only applies to text format logs (not JSON format)
+- Wrapping preserves words and breaks at whitespace when possible
+- Very long words that exceed the wrap width will be broken as needed
+
+## Security Features
+
+### Sensitive Data Sanitization
+
+```python
+from colordebug import *
+
+# Add custom sensitive keys
+add_sensitive_keys(['credit_card', 'social_security', 'private_key'])
+
+# Sensitive data is automatically masked
+user_data = {
+    "username": "john_doe",
+    "password": "super_secret",
+    "credit_card": "4111-1111-1111-1111",
+    "normal_data": "this is safe"
+}
+
+log_dict(user_data, "User registration", exp=True)
+# Output: password="***", credit_card="***", normal_data="this is safe"
+```
+
+**Default sensitive keys:** `password`, `token`, `api_key`, `secret`, `auth_key`, `credential`
+
+## Configuration
+
+### Production Setup
+
+```python
+from colordebug import *
+
+setup_production_logging(
+    log_file="production.log",
+    max_lines=5000,
+    preserve_errors=True,
+    console_output=False,  # Disable console in production
+    log_format='json',     # Use JSON for log aggregation
+    sensitive_keys=['jwt_token', 'encryption_key']
+)
+```
+
+### Manual Configuration
+
+```python
+# File logging
+enable_file_logging("app.log")
+set_max_log_lines(1000)           # Rotate after 1000 lines
+enable_error_preservation(True)   # Keep all errors during rotation
+
+# Log format
+set_log_format('json')  # or 'text'
+
+# Console control
+disable_console_output()  # Only file logging
+enable_console_output()   # Restore console output
+
+# Log levels
+set_log_level('info')  # debug, info, warning, error, critical
+```
+
+## Log Rotation
+
+colordebug includes smart log rotation that preserves error messages:
+
+```python
+set_max_log_lines(1000)  # Keep maximum 1000 lines
+
+# Errors and critical messages are never deleted during rotation
+enable_error_preservation(True)  # Default behavior
+```
+
+### Monitoring
+
+```python
+# Get log statistics
+stats = get_log_stats()
+print(f"Total lines: {stats['total_lines']}")
+print(f"Errors: {stats['error_lines']}")
+print(f"Critical: {stats['critical_lines']}")
+
+# Manual rotation
+force_log_rotation()
+
+# View logs
+view_logs(limit=10)  # Show 10 most recent entries
+```
+
+## Log Formats
+
+### Text Format (Default)
+```
+[2024-01-15T10:30:00] [INFO] User logged in successfully
+[2024-01-15T10:30:01] [ERROR] Database connection failed: timeout
+```
+
+### JSON Format
+```json
+{
+  "timestamp": "2024-01-15T10:30:00",
+  "level": "INFO",
+  "message": "User logged in successfully"
+}
+{
+  "timestamp": "2024-01-15T10:30:01", 
+  "level": "ERROR",
+  "message": "Database connection failed: timeout"
+}
+```
+
+## Real-world Examples
+
+### Web Application
+
+```python
+from colordebug import *
+from fastapi import FastAPI
+
+app = FastAPI()
+setup_production_logging("api.log", log_format='json', textwrapping=True, wrapint=100)
+
+@app.get("/users/{user_id}")
+@log_function_call(exp=True, textwrapping=True, wrapint=100)
+async def get_user(user_id: int):
+    await ainfo(f"Fetching user {user_id}", exp=True, textwrapping=True, wrapint=100)
+    
+    async with atimer("Database query", exp=True, textwrapping=True, wrapint=100):
+        user = await db.users.find_one(user_id)
+    
+    if not user:
+        await awarning(f"User {user_id} not found", exp=True, textwrapping=True, wrapint=100)
+        return {"error": "User not found"}
+    
+    await asuccess(f"User {user_id} retrieved successfully", exp=True, textwrapping=True, wrapint=100)
+    return user
+```
+
+### Data Processing
+
+```python
+from colordebug import *
+
+@log_function_call(exp=True, textwrapping=True, wrapint=80)
+@log_execution_time(exp=True, textwrapping=True, wrapint=80)
+def process_dataset(data):
+    log_value("dataset_size", len(data), exp=True, textwrapping=True, wrapint=80)
+    log_value("data_columns", list(data.columns), exp=True, textwrapping=True, wrapint=80)
+    
+    with timer("Data cleaning", exp=True, textwrapping=True, wrapint=80):
+        cleaned_data = clean_data(data)
+    
+    log_condition(
+        len(cleaned_data) > 0,
+        "Data cleaning successful - all data has been processed and validated",
+        "No data after cleaning - the dataset appears to be empty",
+        exp=True,
+        textwrapping=True,
+        wrapint=80
+    )
+    
+    return cleaned_data
+```
+
+## API Reference
+
+### Core Functions
+- `debug(msg, label, label_color, exp, textwrapping, wrapint)`
+- `info(msg, exp, textwrapping, wrapint)`
+- `success(msg, exp, textwrapping, wrapint)`
+- `warning(msg, exp, textwrapping, wrapint)`
+- `error(msg, exception, exp, textwrapping, wrapint)`
+- `critical(msg, exp, textwrapping, wrapint)`
+
+### Async Functions
+- `adebug(msg, label, label_color, exp, textwrapping, wrapint)`
+- `ainfo(msg, exp, textwrapping, wrapint)`
+- `asuccess(msg, exp, textwrapping, wrapint)`
+- `awarning(msg, exp, textwrapping, wrapint)`
+- `aerror(msg, exception, exp, textwrapping, wrapint)`
+- `acritical(msg, exp, textwrapping, wrapint)`
+
+### Decorators
+- `@log_function_call(exp, textwrapping, wrapint)`
+- `@alog_function_call(exp, textwrapping, wrapint)`
+- `@log_execution_time(exp, textwrapping, wrapint)`
+- `@alog_execution_time(exp, textwrapping, wrapint)`
+
+### Context Managers
+- `timer(description, exp, textwrapping, wrapint)`
+- `atimer(description, exp, textwrapping, wrapint)`
+
+### Configuration
+- `enable_file_logging(filename, textwrapping, wrapint)`
+- `set_log_format(format_type, textwrapping, wrapint)`
+- `add_sensitive_keys(keys, textwrapping, wrapint)`
+- `set_max_log_lines(max_lines, textwrapping, wrapint)`
+- `set_log_level(level, textwrapping, wrapint)`
+- `setup_production_logging(log_file, max_lines, preserve_errors, console_output, log_format, sensitive_keys, textwrapping, wrapint)`
+
+## Best Practices
+
+1. **Use JSON format in production** for better log aggregation
+2. **Disable console output in production** to improve performance
+3. **Always enable error preservation** to never lose critical errors
+4. **Sanitize sensitive data** before logging user input
+5. **Use async functions** in web applications for better performance
+6. **Enable text wrapping** for better log readability with `textwrapping=True` and `wrapint=80`
+7. **Use appropriate wrap width** based on your logging system (80-120 characters recommended)
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit pull requests or open issues for bugs and feature requests.
+
+## License
+
+Apache License 2.0 - see [LICENSE](LICENSE) file for details.
+
+---
+
+**Built with ❤️ using Python**
