@@ -1,0 +1,130 @@
+{% extends project_base_template|default:'mitrecore/base.html' %}
+{% load static from static %}
+{% load django_filtering_ui from django_filtering_ui %}
+
+{% load mitreattack_tags %}
+{% load ordered_table_header from mitrecore.ordering %}
+{% load field_value from mitrecore.model %}
+{% load markdown from mitrecore.markdown %}
+
+{% block stylesheets %}
+    {{ block.super }}
+    <link rel="stylesheet" href="{% static 'mitreattack/main.css' %}">
+{% endblock %}
+
+{% block javascripts %}
+    {{ block.super }}
+    <script src="{% static 'mitreattack/main.js' %}"></script>
+    {% with entrypoint='listing' %}
+        {% django_filtering_ui %}
+    {% endwith %}
+{% endblock %}
+
+
+{% block content %}
+
+    <div class="rgt">
+        <ul class="spaced">
+            {% block content_actions %}
+                {% url filter_url_name as filter_url %}
+                {% if is_filtered %}
+                    <li><a class="btn" href="{{ request.path }}">Clear filter</a></li>
+                    <li><a class="btn" href="{{ filter_url }}{% querystring page=None %}">Edit filter</a></li>
+                {% else %}
+                    <li><a class="btn" href="{{ filter_url }}">{% if filter_form %}Advanced filters{% else %}Filter list{% endif %}</a></li>
+                {% endif %}
+            {% endblock %}
+        </ul>
+    </div>
+
+    {% block content_title %}
+        {% if title %}
+            <h2>{{ title }}</h2>
+        {% else %}
+            <h2>Index</h2>
+        {% endif %}
+    {% endblock %}
+
+    {% if object_list or is_filtered or show_empty_results %}
+
+        {% block content_table_actions %}
+            <div id="vue-app"></div>
+        {% endblock %}
+
+        {% block content_table %}
+            <table class="table">
+                <tr>
+                    {% block column_headers %}
+                        {% for field in view.get_model_fields %}
+                            {% if field.name == 'mitre_id' %}
+                                {% ordered_table_header 'Mitre ID' field.name %}
+                            {% elif field.name == 'short_description' %}
+                                {% ordered_table_header 'Description' field.name %}
+                            {% else %}
+                                {% ordered_table_header field.verbose_name|capfirst field.name %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endblock %}
+
+                    {% if not view.table_no_actions %}
+                        <th>Actions</th>
+                    {% endif %}
+                </tr>
+
+                {% block column_filter_headers %}
+                    {% if form.is_enabled %}
+                        <tr class="table-filters">
+                            <form method="post">
+                                {% csrf_token %}
+                                {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+                                {% for field in view.get_filter_form_fields %}
+                                    <th>{{ field | default:"" }}</th>
+                                {% endfor %}
+                                <th>{# Actions #}</th>
+                                <button type="submit" style="display:none" />
+                            </form>
+                        </tr>
+                    {% endif %}
+                {% endblock column_filter_headers %}
+
+                {% for object in object_list %}
+                    <tr>
+                        {% block columns %}
+                            {% for field in view.get_model_fields %}
+                                {% if field.name == 'short_description' %}
+                            {% field_value field.name as description %}
+                                    <td class="truncate">{{ description | markdown | safe }}</td>
+                                {% else %}
+                                    <td class="truncate">{% field_value field.name %}</td>
+                                {% endif %}
+                            {% endfor %}
+                        {% endblock %}
+
+                        {% if not view.table_no_actions %}
+                            <td class="collapse">
+                                <ul class="inline">
+                                    {% block actions %}
+                                        <li><a href="{% model_url object 'detail' %}">View</a></li>
+                                    {% endblock %}
+                                </ul>
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+
+            </table>
+            {% block pagination %}{% include "mitrecore/pagination/pagination.html" %}{% endblock %}
+        {% endblock %}
+
+    {% endif %}
+
+    {% if not object_list %}
+        {% block empty_message %}
+            <p>Run the data ingester to populate the data.</p>
+        {% endblock %}
+    {% endif %}
+
+    {% block after_content_table %}
+    {% endblock %}
+
+{% endblock %}
