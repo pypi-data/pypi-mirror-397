@@ -1,0 +1,311 @@
+Metadata-Version: 2.4
+Name: easy-start-chanjet
+Version: 0.1.0
+Summary: A Python package for Chanjet integration, easy to start
+Home-page: https://gitee.com/guolei19850528/easy_start_chanjet
+Author: guolei
+Author-email: 174000902@qq.com
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: httpx>=0.26.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: diskcache>=5.6.1
+Requires-Dist: redis>=4.5.4
+Requires-Dist: beautifulsoup4>=4.12.2
+Requires-Dist: lxml>=4.9.3
+Requires-Dist: html5lib>=1.1
+Requires-Dist: xmltodict>=0.13.0
+Requires-Dist: pydantic_xml>=2.18.0
+Requires-Dist: arrow>=1.2.3
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# easy_start_chanjet
+
+## 项目简介
+
+easy_start_chanjet 是一个用于畅捷通（Chanjet）系统集成的 Python 包，旨在简化与畅捷通系统的交互。该包提供了 WebService 和 HTTP JSON 两种接口方式，支持同步和异步操作，主要用于查询和处理实际支付项目等功能。
+
+## 功能特点
+
+- 支持 SOAP WebService 和 HTTP JSON 两种接口方式
+- 提供同步和异步两种操作模式
+- 内置请求参数验证和响应解析
+- 支持自定义 HTTP 客户端配置
+- 提供日期范围验证等辅助功能
+
+## 安装方法
+
+### 使用 pip 安装
+
+```bash
+pip install easy-start-chanjet
+```
+
+### 从源代码安装
+
+```bash
+git clone https://gitee.com/guolei19850528/easy_start_chanjet.git
+cd easy_start_chanjet
+pip install -e .
+```
+
+## 依赖项
+
+- httpx>=0.26.0
+- pydantic>=2.0.0
+- diskcache>=5.6.1
+- redis>=4.5.4
+- beautifulsoup4>=4.12.2
+- lxml>=4.9.3
+- html5lib>=1.1
+- xmltodict>=0.13.0
+- pydantic_xml>=2.18.0
+- arrow>=1.2.3
+
+## 快速开始
+
+### WebService 接口示例
+
+```python
+from esay_start_chanjet.zkhb import WebService, SoapEnvelope, SoapBody, SoapGetDataSet
+
+# 创建 WebService 实例
+ws = WebService(base_url="http://your-chanjet-server:port")
+
+# 构建 SOAP 请求
+sql = "SELECT * FROM your_table WHERE condition = 'value'"
+soap_envelope = SoapEnvelope(
+    node=SoapBody(
+        node=SoapGetDataSet(sql=sql)
+    )
+)
+
+# 调用 GetDataSet 接口
+results, xml_doc, raw_results = ws.get_data_set(soap_envelope)
+
+print(f"查询结果数量: {len(results)}")
+for result in results:
+    print(result)
+```
+
+### 查询实际支付项目列表
+
+```python
+from esay_start_chanjet.zkhb import WebService
+
+# 创建 WebService 实例
+ws = WebService(base_url="http://your-chanjet-server:port")
+
+# 查询实际支付项目列表
+# 可以添加条件字符串来过滤结果
+condition_str = " and cml.EstateID=45 and rd.RmNo='YJD00041' and cfi.EDate>='2025-01-01'"
+results, xml_doc, raw_results = ws.get_actual_payment_item_list(condition_str=condition_str)
+
+print(f"实际支付项目数量: {len(results)}")
+for item in results:
+    print(f"项目名称: {item.get('ItemName')}, 实际金额: {item.get('ActualAmount')}")
+```
+
+### HTTP JSON 接口示例
+
+```python
+from esay_start_chanjet.zkhb import Http
+
+# 创建 HTTP 实例
+http = Http(base_url="http://your-chanjet-server:port")
+
+# 查询实际支付项目列表
+success, payment_list, response = http.get_actual_payment_item_list()
+
+if success:
+    print(f"查询成功，返回 {len(payment_list)} 条记录")
+    for payment in payment_list:
+        print(payment)
+else:
+    print("查询失败")
+```
+
+### 异步操作示例
+
+```python
+import asyncio
+from esay_start_chanjet.zkhb import Http
+
+async def main():
+    # 创建 HTTP 实例
+    http = Http(base_url="http://your-chanjet-server:port")
+    
+    # 异步查询实际支付项目列表
+    success, payment_list, response = await http.async_get_actual_payment_item_list()
+    
+    if success:
+        print(f"异步查询成功，返回 {len(payment_list)} 条记录")
+        for payment in payment_list:
+            print(payment)
+    else:
+        print("异步查询失败")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+### 日期范围验证
+
+```python
+from esay_start_chanjet.zkhb import validate_payment_date_range
+
+# 验证支付金额是否覆盖整个日期范围
+is_valid = validate_payment_date_range(
+    daily_fee=100,  # 每日费用
+    total_amount=3000,  # 总金额
+    start_date="2023-01-01",  # 开始日期
+    end_date="2023-01-30"  # 结束日期
+)
+
+print(f"金额验证结果: {'有效' if is_valid else '无效'}")
+```
+
+## API 文档
+
+### 辅助函数
+
+#### validate_payment_date_range(daily_fee=0, total_amount=0, start_date="", end_date="")
+
+验证支付日期范围是否合法，确保总金额不小于每日费用乘以总天数。
+
+- **参数**:
+  - daily_fee (Union[int, float]): 每日费用
+  - total_amount (Union[int, float]): 总金额
+  - start_date (str): 开始日期，格式如 "YYYY-MM-DD"
+  - end_date (str): 结束日期，格式如 "YYYY-MM-DD"
+- **返回值**: bool - 验证是否通过
+
+### WebService 类
+
+#### 初始化参数
+
+| 参数名 | 类型 | 默认值 | 描述 |
+|-------|------|--------|------|
+| base_url | str | "" | 畅捷通系统的基础 URL |
+
+#### 方法
+
+##### client(**kwargs)
+
+创建并返回一个同步 HTTP 客户端。
+
+- **参数**: 传递给 httpx.Client 的额外参数
+- **返回值**: httpx.Client 实例
+
+##### async_client(**kwargs)
+
+创建并返回一个异步 HTTP 客户端。
+
+- **参数**: 传递给 httpx.AsyncClient 的额外参数
+- **返回值**: httpx.AsyncClient 实例
+
+##### get_data_set(soap_envelope, client=None, **kwargs)
+
+调用 GetDataSet SOAP 接口。
+
+- **参数**:
+  - soap_envelope (SoapEnvelope): SOAP 请求体
+  - client (httpx.Client, optional): HTTP 客户端，如果为 None 则自动创建
+  - **kwargs: 传递给 client.request 的额外参数
+- **返回值**: tuple - (results, xml_doc, raw_results)
+  - results: 查询结果列表
+  - xml_doc: BeautifulSoup 对象，解析后的 XML 响应
+  - raw_results: 原始查询结果
+
+##### async_get_data_set(soap_envelope, client=None, **kwargs)
+
+异步调用 GetDataSet SOAP 接口。
+
+- **参数**: 同 get_data_set
+- **返回值**: 同 get_data_set
+
+##### get_actual_payment_item_list(client=None, column_str="", condition_str="", order_by_str="", **kwargs)
+
+查询实际支付项目列表。
+
+- **参数**:
+  - client (httpx.Client, optional): HTTP 客户端，如果为 None 则自动创建
+  - column_str (str, optional): 要查询的额外列
+  - condition_str (str, optional): 查询条件字符串
+  - order_by_str (str, optional): 排序字符串
+  - **kwargs: 传递给 client.request 的额外参数
+- **返回值**: tuple - (results, xml_doc, raw_results)
+  - results: 查询结果列表
+  - xml_doc: BeautifulSoup 对象，解析后的 XML 响应
+  - raw_results: 原始查询结果
+
+##### async_get_actual_payment_item_list(client=None, column_str="", condition_str="", order_by_str="", **kwargs)
+
+异步查询实际支付项目列表。
+
+- **参数**: 同 get_actual_payment_item_list
+- **返回值**: 同 get_actual_payment_item_list
+
+### Http 类
+
+#### 初始化参数
+
+| 参数名 | 类型 | 默认值 | 描述 |
+|-------|------|--------|------|
+| base_url | str | "" | 畅捷通系统的基础 URL |
+
+#### 方法
+
+##### client(**kwargs)
+
+创建并返回一个同步 HTTP 客户端。
+
+- **参数**: 传递给 httpx.Client 的额外参数
+- **返回值**: httpx.Client 实例
+
+##### async_client(**kwargs)
+
+创建并返回一个异步 HTTP 客户端。
+
+- **参数**: 传递给 httpx.AsyncClient 的额外参数
+- **返回值**: httpx.AsyncClient 实例
+
+##### get_actual_payment_item_list(client=None, **kwargs)
+
+通过 HTTP JSON 接口查询实际支付项目列表。
+
+- **参数**:
+  - client (httpx.Client, optional): HTTP 客户端，如果为 None 则自动创建
+  - **kwargs: 传递给 client.request 的额外参数
+- **返回值**: tuple - (success, payment_list, response)
+  - success (bool): 查询是否成功
+  - payment_list (list): 支付项目列表
+  - response (httpx.Response): 原始响应对象
+
+##### async_get_actual_payment_item_list(client=None, **kwargs)
+
+异步通过 HTTP JSON 接口查询实际支付项目列表。
+
+- **参数**: 同 get_actual_payment_item_list
+- **返回值**: 同 get_actual_payment_item_list
+
+## 运行测试
+
+```bash
+python -m unittest tests/test_zkhb.py
+```
+
+## 项目结构
