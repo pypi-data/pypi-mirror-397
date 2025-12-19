@@ -1,0 +1,35 @@
+[project]
+name = "persona-agent"
+version = "0.1.2"
+description = "PersonaAgent: a configurable, persona-based LLM agent wrapper with memory, skills, and adaptive behavior."
+readme = "README.md"
+authors = [
+    { name = "littledumb", email = "littledumb@dumbsmart.org" }
+]
+license = "MIT"
+requires-python = ">=3.9"
+dependencies = [
+    "litellm>=1.80.7",
+]
+
+[project.urls]
+Homepage = "https://github.com/dumbsmart-org/persona-agent"
+Repository = "https://github.com/dumbsmart-org/persona-agent.git"
+Issues = "https://github.com/dumbsmart-org/persona-agent/issues"
+
+[build-system]
+requires = ["uv_build>=0.9.13,<0.10.0"]
+build-backend = "uv_build"
+
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true
+
+[dependency-groups]
+dev = [
+    "httpx[socks]>=0.28.1",
+    "pytest>=8.4.2",
+    "pytest-cov>=7.0.0",
+]
