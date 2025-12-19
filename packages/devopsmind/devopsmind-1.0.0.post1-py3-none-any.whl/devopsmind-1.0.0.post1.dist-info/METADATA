@@ -1,0 +1,395 @@
+Metadata-Version: 2.4
+Name: devopsmind
+Version: 1.0.0.post1
+Summary: Gamified DevOps learning platform — practice Linux, Bash, Git, Ansible, Docker, K8s, Terraform & Observability challenges.
+Author-email: InfraForge Labs <devopsmind@infraforgelabs.com>
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: python-hcl2
+Requires-Dist: pyyaml
+Requires-Dist: rich
+Requires-Dist: click
+Requires-Dist: colorama
+Requires-Dist: requests
+Dynamic: license-file
+
+# 🧠 DevOpsMind — Gamified DevOps Learning Simulator
+
+[![Latest Tag](https://img.shields.io/github/v/tag/InfraForgeLabs/DevOpsMind?sort=semver&style=for-the-badge&color=8A2BE2)](https://github.com/InfraForgeLabs/DevOpsMind/tags)
+> 🏷️ **Latest Release:** Continuously evolving — Free · Local · Open · Forever
+
+![Banner](docs/banner.png)
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
+![Platforms](https://img.shields.io/badge/Platforms-Linux%20%7C%20macOS%20%7C%20WSL-purple)
+[![InfraForgeLabs](https://img.shields.io/badge/Org-InfraForgeLabs-black.svg)](https://github.com/InfraForgeLabs)
+
+DevOpsMind is an **offline-first, CLI-based, gamified DevOps simulator**.
+Solve real DevOps tasks, validate your solutions, earn **XP**, unlock **ranks**, and build muscle memory with hands-on DevOps workflows.
+
+_Part of the **InfraForgeLabs** open DevOps innovation ecosystem._
+
+---
+
+## 🔐 Official Ownership & Identity
+
+InfraForge is an open-source infrastructure automation and DevSecOps platform developed and maintained by InfraForge Labs.
+
+🌐 **Official Website:** [https://devopsmind.infraforgelabs.in](https://devopsmind.infraforgelabs.in)
+
+🏢 **Organization:** [https://infraforgelabs.in](https://infraforgelabs.in)
+
+---
+
+# 🎥 Gameplay Demo
+
+
+![Gameplay Demo](docs/demo.png)
+
+---
+# 📘 Table of Contents
+
+* [About This Project](#-devopsmind--gamified-devops-learning-simulator)
+* [Repository Overview](#-project-architecture)
+* [Quick Start](#-quickstart)
+* [Features](#-features)
+* [Deployment Options](#-installation-methods)
+* [Integrations](#-stacks-covered)
+* [Contribution](#-contributing)
+* [Roadmap](#-roadmap)
+* [Support](#-support--sponsorship)
+
+---
+
+# ✨ Features
+
+* 🎮 50 curated DevOps challenges (10 stacks × 5 difficulty levels)
+* 🧩 Fully offline gameplay
+* 🔐 Local profiles, XP, ranks & badges
+* 📦 Beautiful terminal UI using **rich**
+* 🔧 YAML metadata, Markdown descriptions & Python validators
+* 🔄 GitHub sync for updated challenge packs
+* 🧱 Works on **Debian**, **Ubuntu**, **CentOS/RHEL**, **macOS**, **Windows (via WSL)**
+
+---
+
+# 🚀 Installation Matrix
+
+| OS                | Recommended Method       | Notes                             |
+| ----------------- | ------------------------ | --------------------------------- |
+| **Ubuntu/Debian** | pipx                     | Best experience (isolated Python) |
+| **Fedora/RHEL**   | pip                     | Works natively                    |
+| **macOS**         | pipx via Homebrew Python | Perfect cross-platform setup      |
+| **Windows**       | pipx (or WSL preferred)  | Use WSL for best compatibility    |
+| **WSL**           | pipx                     | Recommended Linux experience      |
+
+---
+
+# 🧩 Installation Method — pipx (Official for v1.0.0)
+
+
+## **1️⃣ Prerequisites**
+
+### **Install Python 3.9+ and pipx**
+
+#### Ubuntu / Debian
+
+```bash
+sudo apt update && sudo apt install -y python3 python3-venv python3-pip pipx
+pip install --user pipx
+pipx ensurepath
+```
+
+#### Fedora / RHEL / CentOS
+
+```bash
+sudo dnf install -y python3 python3-pip git
+```
+```bash
+sudo ln -s "$HOME"/.local/bin/devopsmind /usr/local/bin/devopsmind
+```
+
+#### macOS (with Homebrew)
+
+```bash
+brew install python3 pipx
+pipx ensurepath
+```
+
+#### Windows (PowerShell)
+
+```powershell
+py -m pip install --user pipx
+py -m pipx ensurepath
+```
+
+---
+
+## **2️⃣ Install DevOpsMind via pipx**
+
+```bash
+pipx install devopsmind
+```
+* (remove the pip install fallback to avoid confusion — pipx is your locked official method.)
+
+---
+
+## **3️⃣ Verify Installation**
+
+```bash
+devopsmind version
+devopsmind list
+```
+
+✅ Expected output:
+
+```
+🧠 DevOpsMind v1.0.0
+Total: 50 | Profile: default
+```
+
+---
+
+## **4️⃣ Update to the Latest Version**
+
+```bash
+pipx upgrade devopsmind
+```
+* (remove the pip upgrade fallback to avoid confusion — pipx is your locked official method.)
+
+---
+
+## **5️⃣ Uninstall (if needed)**
+
+```bash
+pipx uninstall devopsmind
+```
+* (remove the pip uninstall fallback to avoid confusion — pipx is your locked official method.)
+
+---
+
+# 🧠 Notes
+
+* `pipx` ensures your DevOpsMind installation stays isolated from system Python.
+* Works perfectly across Linux, macOS, and WSL.
+
+---
+
+## 📦 Progress Portability via Snapshots
+
+DevOpsMind stores progress as local snapshots that are fully owned by the user.
+These snapshots can be copied to another machine and restored manually,
+allowing users to continue their journey without accounts or cloud sync.
+
+Progress publishing to the public leaderboard is optional and does not affect
+local snapshots or recovery.
+
+**Note:** The public leaderboard only contains aggregated, non-authoritative data
+(XP, rank, and counts). It cannot be used to restore or sync full progress.
+Authoritative progress always remains local via snapshots.
+
+---
+
+# 🧭 Quickstart
+
+1. Create your profile
+
+```bash
+devopsmind
+```
+
+2. View all available stacks
+
+```bash
+devopsmind list
+```
+
+3. List only one stack
+
+```bash
+devopsmind --stack docker
+```
+4. View challenges by stack
+```bash
+devopsmind search docker
+```
+
+5. Play a challenge
+
+```bash
+devopsmind play basic_dockerfile
+```
+
+6.  Need help? View description or hint
+
+```bash
+devopsmind describe basic_dockerfile
+devopsmind hint basic_dockerfile
+```
+7. Validate your work
+```bash
+devopsmind validate basic_dockerfile
+```
+
+8. Check your progress and XP
+```bash
+devopsmind stats
+```
+9. Push Score on Global Leaderboard
+```bash
+devopsmind submit
+```
+
+10. Achievements
+```bash
+devopsmind badges
+```
+
+11. Global Leaderboard
+```bash
+devopsmind leaderboard
+```
+12. Manage Profile
+```bash
+devopsmind profile create
+devopsmind profile login
+```
+## 🌐 Live Leaderboard
+* You can view the real-time global leaderboard for **DevOpsMind** here:
+
+> 🌍 **Live Site:** [https://devopsmind.infraforgelabs.in](https://devopsmind.infraforgelabs.in/leaderboard)
+> 🧱 **Backup (GitHub Pages):** [https://infraforgelabs.github.io/DevOpsMind/](https://infraforgelabs.github.io/DevOpsMind/)
+
+* This leaderboard is automatically updated whenever players complete challenges and submit progress via the DevOpsMind CLI.
+
+
+---
+
+# 📚 Stacks Covered
+
+* 🐧 Linux
+* 💻 Bash
+* 🌱 Git
+* 🐍 Python
+* ⚙️ Ansible
+* 🐳 Docker
+* ☸️ Kubernetes
+* 🛳 Helm
+* 🌍 Terraform
+* 📈 Networking
+
+---
+
+# 🏗 Project Architecture
+
+```
+DevOpsMind/
+├── src/devopsmind/              # Core CLI engine
+│   ├── cli.py                   # CLI entry
+│   ├── engine.py                # Challenge execution engine
+│   ├── play.py                  # Run challenges
+│   ├── progress.py              # XP, ranks, completion state
+│   ├── snapshot.py              # Snapshot-based recovery & portability
+│   ├── leaderboard.py           # Optional public leaderboard publishing
+│   ├── update_check.py          # Version update detection
+│   ├── validator.py             # Challenge validation framework
+│   └── achievements/            # Ranks, difficulty, stacks metadata
+│
+├── src/devopsmind/challenges/   # Challenge packs
+│   ├── Linux/
+│   ├── Bash/
+│   ├── Git/
+│   ├── Python/
+│   ├── Ansible/
+│   ├── Docker/
+│   ├── K8s/
+│   ├── Helm/
+│   ├── Terraform/
+│   └── Networking/
+│       └── Easy | Medium | Hard | Expert | Master
+│
+├── devopsmind-relay/            # Optional leaderboard relay (publish-only)
+│   └── index.js
+│
+├── docs/                        # Images & diagrams
+│   ├── roadmap.png
+│   ├── banner.png
+│   └── ArchitectureDiagram.png
+│
+├── vision/                      # Long-term project docs
+│   ├── CHANGELOG.md
+│   ├── PHILOSOPHY.md
+│   ├── STRATEGY.md
+│   └── BUSINESS_MODEL.md
+│
+├── scripts/
+│   └── bootstrap.sh             # Local setup helpers
+│
+├── README.md
+├── LICENSE
+└── pyproject.toml
+```
+
+---
+
+# 🛣 Roadmap
+
+![Roadmap](docs/roadmap.png)
+
+---
+
+## 📘 Vision & Governance
+
+These documents define the learning philosophy, strategy, and long-term roadmap of **DevOpsMind**, guiding its evolution from CLI simulator to offline Studio suite.
+
+| File | Description |
+|------|--------------|
+| [`PHILOSOPHY`](vision/PHILOSOPHY.md) | Educational vision, core learning values, and open philosophy |
+| [`STRATEGY`](vision/STRATEGY.md) | Development roadmap from CLI → Sandbox → Studio → AI |
+| [`BUSINESS_MODEL`](vision/BUSINESS_MODEL.md) | Open education model and community-driven sustainability |
+| [`CHANGELOG`](vision/CHANGELOG.md) | Full version roadmap (2026–2032) with release milestones |
+
+---
+
+# 🤝 Contributing
+
+Pull requests welcome! Ensure validators remain deterministic.
+
+---
+
+# 📜 License
+
+MIT License © 2025 **InfraForgeLabs**
+
+---
+
+# 💖 Support & Sponsorship
+
+**DevOpsMind** is proudly built and maintained by **InfraForge Labs** as an open-source gamified DevOps learning platform.  
+
+If you find this project valuable — whether you’re learning, teaching, or building with it — consider supporting its development.  
+Your contribution helps keep **DevOpsMind** updated, free, and community-driven.
+
+### ☕ Ways to Support
+
+* 💎 GitHub Sponsors: [https://github.com/sponsors/gauravchile](https://github.com/sponsors/gauravchile)
+* ☕ Buy Me a Coffee: [https://buymeacoffee.com/gauravchile](https://buymeacoffee.com/gauravchile)
+
+> Every contribution — a coffee ☕, a star ⭐, or a pull request 🧩 — helps keep **DevOpsMind** alive, growing, and improving for everyone.
+
+---
+
+## ⭐ Support & Credits
+
+Developed & maintained by [Gaurav Chile](https://github.com/gauravchile)
+
+Founder, **InfraForgeLabs**
+
+> 💡 DevOpsMind is fully modular — challenge packs, validators, and installers auto-update via GitHub.
+>Ideal for DevOps learners, professionals, teams, and training environments.
+
+[![Built with 💖 by InfraForgeLabs](https://img.shields.io/badge/Built_with_💖-InfraForgeLabs-blue)]()
+
+---
