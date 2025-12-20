@@ -1,0 +1,54 @@
+[project]
+name = "bridgic"
+version = "0.2.1"
+license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+description = "Bridgic is an agentic programming framework built around a novel dynamic topology orchestration model and a component-oriented paradigm."
+keywords = ["LLM", "devtools", "workflow", "agent"]
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    { name = "Tielei Zhang", email = "zhangtl04@gmail.com" },
+]
+dependencies = [
+    "bridgic-core>=0.2.1,<0.3.0",
+    "bridgic-asl>=0.1.1,<0.2.0",
+    "bridgic-llms-openai-like>=0.1.1,<0.2.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.0",
+    "pytest-asyncio>=1.0.0",
+    "pytest-cov>=4.0.0",
+]
+publish = [
+    "tomli>=2.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build]
+include = ["/meta/bridgic/"]
+
+[tool.hatch.build.targets.wheel.sources]
+"/meta/bridgic" = "bridgic"
+
+[tool.uv.workspace]
+members = [
+    "packages/bridgic-core",
+    "packages/bridgic-asl",
+    "packages/bridgic-integration/llms/*",
+    "packages/bridgic-integration/protocols/*",
+    "packages/bridgic-integration/traces/*",
+    "tests",
+]
+
+[tool.uv.sources]
+bridgic-core = { workspace = true }
+bridgic-asl = { workspace = true }
+bridgic-llms-openai-like = { workspace = true }
