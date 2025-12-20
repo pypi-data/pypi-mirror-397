@@ -1,0 +1,74 @@
+[project]
+name = "mystace"
+dynamic = ["version"]
+description = "Rendering mustache templates in Python fast."
+authors = [{ name = "Eliot Robson", email = "eliot.robson24@gmail.com" }]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = ["more-itertools>=8", "typing-extensions>=4.15.0"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Text Processing :: Markup",
+]
+
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/mystace/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mystace"]
+
+[dependency-groups]
+dev = [
+  "chevron>=0.14.0",
+  "combustache>=3.0.1",
+  "faker>=39.0.0",
+  "flameprof>=0.4",
+  "icecream>=2.1.8",
+  "moosetash>=1.0.1",
+  "mypy>=1.19.1",
+  "pystache>=0.6.8",
+  "pytest>=9.0.2",
+  "pytest-benchmark>=5.2.3",
+  "pytest-cov>=7.0.0",
+  "pytest-datadir>=1.8.0",
+  "ruff>=0.14.9",
+  "types-chevron>=0.14.2.20250103",
+  "ustache>=0.1.6",
+]
+
+[tool.pytest.ini_options]
+testpaths = "tests"
+required_plugins = ["pytest-benchmark", "pytest-datadir"]
+
+[tool.coverage.run]
+# Add in all library files.
+include = ["src/mystace/*"]
+# Omit init files
+omit = ["*/__init__.py"]
+
+[tool.coverage.report]
+# Print coverage report to the command line
+show_missing = true
+skip_covered = false
+precision = 2
+
+[tool.mypy]
+python_version = "3.10"
+
+[[tool.mypy.overrides]]
+module = ["yaml", "combustache.*", "pystache.*", "ustache.*"]
+ignore_missing_imports = true
