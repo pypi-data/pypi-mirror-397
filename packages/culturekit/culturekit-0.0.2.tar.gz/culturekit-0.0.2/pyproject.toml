@@ -1,0 +1,84 @@
+[project]
+name = "culturekit"
+version = "0.0.2"
+description = "A toolkit for evaluating the culture of MLX large language models (LLMs) on the CD Eval benchmark."
+authors = [
+    {name = "devanshg03", email = "devansh@decisionslab.io"}
+]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.11"
+keywords = ["mlx", "llm", "evaluation", "cultural-bias", "machine-learning"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "mlx>=0.22.0",
+    "mlx-lm>=0.21.5",
+    "torch>=2.5.1",
+    "tensorflow>=2.18.0",
+    "numpy<2.0.0",
+    "seaborn>=0.13.2",
+    "datasets>=3.2.0",
+    "jupyter>=1.1.1",
+    "ipywidgets>=8.1.5",
+    "matplotlib>=3.10.0",
+    "azure-ai-ml>=1.24.0",
+    "azure-identity>=1.19.0",
+    "tqdm>=4.67.1",
+    "azure-ai-inference>=1.0.0b8",
+    "python-dotenv>=1.0.1",
+    "typer>=0.15.2",
+    "pytest>=8.3.5",
+    "langchain-openai>=0.3.13",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ipykernel>=6.29.5",
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "black>=24.2.0",
+    "isort>=5.13.2",
+    "flake8>=7.0.0",
+    "mypy>=1.8.0",
+]
+
+[project.scripts]
+culturekit = "culturekit.cli:app"
+
+[project.urls]
+repository = "https://github.com/decisions-lab/culturekit"
+homepage = "https://github.com/decisions-lab/culturekit"
+documentation = "https://github.com/decisions-lab/culturekit"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/culturekit"]
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
