@@ -1,0 +1,27 @@
+# templates/sdk_stm32_keil/metadata.toml
+
+[template]
+name = "STM32F4 (Keil ARM SDK)"
+version = "1.0.0"
+description = "STM32F4 development using Keil ARM SDK"
+
+[sdk]
+id = "stm32f4"
+type = "keil_arm_sdk"
+supported_families = ["stm32f4"]
+required_bsp_files = ["CMSIS", "Device"]
+default_path = "C:\\Keil_v5\\ARM"
+
+[toolchain]
+# Toolchain 資訊僅供參考，實際設定在 Makefile 中
+primary = "keil"
+alternatives = ["gcc-arm"]
+required_tools = ["uv4.exe", "ST-LINK_CLI.exe"]
+
+[files]
+build = ["Makefile", "build.ps1"]
+flash = ["Makefile", "flash.ps1"]
+
+[compatibility]
+os = ["windows"]
+notes = "Makefile 內含 Keil uVision 編譯設定"

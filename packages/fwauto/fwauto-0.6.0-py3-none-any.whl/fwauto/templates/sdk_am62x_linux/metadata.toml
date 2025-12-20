@@ -1,0 +1,27 @@
+# templates/sdk_am62x_linux/metadata.toml
+
+[template]
+name = "AM62x (ATK SDK)"
+version = "1.0.0"
+description = "TI AM62x development using ATK SDK"
+
+[sdk]
+id = "am62x"
+type = "ti_am62x_sdk"
+supported_families = ["am62x"]
+required_bsp_files = ["kernel", "u-boot", "filesystem"]
+default_path = "/home/alientek/ATK-AM62x-SDK"
+
+[toolchain]
+# Toolchain 資訊僅供參考，實際設定在 Makefile 中
+primary = "gcc"
+alternatives = []
+required_tools = ["arm-linux-gnueabihf-gcc"]
+
+[files]
+build = ["Makefile"]
+flash = ["flash.py"]
+
+[compatibility]
+os = ["linux", "wsl"]
+notes = "ATK 提供的 AM62x 開發環境 (Ubuntu 22.04 VM)。Flash 透過 SSH 部署並執行。"
