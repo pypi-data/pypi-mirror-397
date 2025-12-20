@@ -1,0 +1,54 @@
+[project]
+name = "termlit"
+version = "0.3.1"
+description = "Termlit is a small Python tool that provides an SSH server interface. It makes it easy to expose interactive applications over SSH — for example, to host AI-powered conversational services that users can connect to with an SSH client."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name="stoday", email="stoday@gmail.com" }]
+license = { text = "MIT" }
+classifiers = [
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+]
+dependencies = [
+    "paramiko>=4.0.0",
+    "requests>=2.32.5",
+    "rich>=14.2.0",
+]
+
+[project.scripts]
+termlit = "termlit.cli:main"
+
+[project.urls]
+Homepage = "https://stoday.github.io/termlit"    # 專案首頁
+source = "https://github.com/stoday/termlit"     # GitHub 
+Documentation = "https://github.com/stoday/termlit#readme"
+BugTracker = "https://github.com/stoday/termlit/issues"
+
+[tool.uv.workspace]
+members = [
+    ".",
+    ".",
+]
+
+[tool.uv.sources]
+termlit = { workspace = true, editable = true }
+
+[dependency-groups]
+dev = [
+    "termlit",
+]
+
+[tool.uv]
+package = true
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+# setuptools find:
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["termlit*"]
