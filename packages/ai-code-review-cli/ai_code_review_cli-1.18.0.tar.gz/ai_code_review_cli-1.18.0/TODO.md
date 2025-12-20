@@ -1,0 +1,12 @@
+- [x] Add comments and open revisions for the MR/PR to the context, so the review have them into account.
+- [ ] Use .diff instead of the diffs from the API (changes)
+- [ ] Update dependencies
+- [ ] fix: the local review behave differently than the MR one
+- [ ] fix: ai-generate-contex doesn't get the context7 api key from the .env file, just from the actual ENV
+- [ ] option: remove old review from the same MR/PR
+- [x] option: support multiple context files
+- [x] option: support remote context file
+- [x] Review previous comments
+- [ ] improve tone and focus for the reviews. Less praise and more critic
+- [ ] build container for aarch64
+- [ ] use structured output for the LLM review output plus templates instead of free text.

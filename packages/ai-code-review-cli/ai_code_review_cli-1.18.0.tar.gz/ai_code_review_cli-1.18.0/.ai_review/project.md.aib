@@ -1,0 +1,97 @@
+# Automotive Image Builder (aib) project
+
+Automotive Image Builder (aib) is a command-line tool developed within the CentOS Automotive SIG to simplify and standardize the creation of OS images for automotive systems, primarily based on CentOS Stream and derived distributions. It operates as a higher-level abstraction over osbuild, a powerful, generic OS image build service. Users define their desired image configuration using a declarative YAML manifest (.aib.yml). AIB processes this manifest, along with extensive internal definitions and configurations, to generate a detailed, deterministic osbuild JSON manifest. It then leverages osbuild to perform the actual image construction. AIB supports both traditional package-based and immutable (OSTree) image types, offers flexibility across distributions and targets, and includes specific features and configurations tailored for automotive use cases, including functional safety considerations. Building within a container is a recommended practice, facilitated by helper scripts.
+
+## Commands
+
+### Building and Testing
+- `make test` - Run all tests (compose, unit, integration, yamllint)
+- `make test-unit` - Run Python unit tests with pytest
+- `make test-compose` - Run compose tests
+- `make test-integration` - Run integration tests with tmt
+- `tox` - Run all tox environments (test, lint, yamllint, coverage)
+- `tox -e test` - Run unit tests with coverage
+- `tox -e lint` - Run all linters (pylint + shellcheck)
+- `tox -e pylint` - Run Python linters (flake8, black)
+- `tox -e yamllint` - Run YAML linting
+- `make yamllint` - Run yamllint on configuration files
+
+### Code Quality
+- `black --check aib aib/tests/ tests/test-compose` - Check Python formatting
+- `black aib aib/tests/ tests/test-compose` - Format Python code
+- `flake8 aib aib/tests/ tests/test-compose automotive-image-runner` - Python linting
+
+### Building
+- `./automotive-image-builder compose --distro autosd9 --mode package --target qemu manifest.aib.yml osbuild.json` - Compose manifest to osbuild JSON
+- `./automotive-image-builder build --distro autosd9 --mode package --target qemu --export qcow2 manifest.aib.yml output` - Build and export image
+- `./automotive-image-runner output/qcow2/disk.qcow2` - Run built image in VM
+
+### Package Management
+- `make rpm` - Build release RPM
+- `make rpm_dev` - Build development RPM
+- `make srpm` - Build source RPM
+
+## Architecture
+
+### Core Components
+
+**Main Python Package (`aib/`)**:
+- `main.py` - Primary CLI entry point and command handling
+- `simple.py` - High-level manifest processing and composition logic
+- `exports.py` - Image export format handling (qcow2, container, etc.)
+- `runner.py` - VM runner functionality
+- `vm.py` / `vmhelper.py` - Virtual machine management and helper utilities
+- `podman.py` - Container integration and management
+- `ostree.py` - OSTree repository handling for image-based builds
+- `utils.py` - Common utility functions
+- `exceptions.py` - Custom exception classes
+
+**Configuration Structure**:
+- `distro/` - Distribution definitions (autosd9, autosd10, etc.) defining package repositories
+- `targets/` - Hardware target definitions (qemu, acrn, various embedded platforms)
+- `include/` - Reusable manifest includes and components
+- `files/` - Static files and schema definitions
+- `examples/` - Example manifest files
+
+**Build System**:
+- `mpp/` - Low-level manifest preprocessing pipeline (MPP format)
+- `automotive-image-builder` - Main CLI wrapper script
+- `automotive-image-runner` - VM execution script
+- `auto-image-builder.sh` - Automated build script
+
+### Key Concepts
+
+**Manifest Types**:
+- `.aib.yml` - High-level declarative YAML manifests (recommended)
+- `.mpp.yml` - Low-level imperative manifests (advanced users)
+
+**Build Modes**:
+- `package` - Traditional package-based mutable filesystem
+- `image` - Immutable OSTree-based system for production
+
+**Architecture Flow**:
+1. Manifest composition: `.aib.yml` → resolved osbuild JSON
+2. Image building: osbuild JSON → various export formats
+3. Runtime: Built images can be run via `automotive-image-runner`
+
+**Target Integration**:
+- Each target in `targets/` defines hardware-specific configurations
+- Targets support different boot methods (UEFI, legacy BIOS, Android boot)
+- QM (Quality Management) partition support for safety-critical workloads
+
+### Development Notes
+
+**Testing**:
+- Unit tests in `aib/tests/` use pytest
+- Integration tests use tmt framework
+- Coverage requirement: 70% minimum
+
+**Code Style**:
+- Black formatting for Python code
+- Flake8 linting with E501/W503 ignored
+- YAML linting with custom `.yamllint` config
+
+**Dependencies**:
+- Requires osbuild and automotive-specific osbuild extensions
+- Can run from source checkout or installed via RPM/container
+- Python dependencies managed via tox for testing environments

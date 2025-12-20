@@ -1,0 +1,94 @@
+# Test Console project
+
+The Test Console project is a Red Hat web application designed to streamline access and enhance the capabilities of various testing services. It functions as a central hub for orchestrating and provisioning test services and is built using the Flask Python framework.
+
+## What it Does
+*   Automates the end-to-end testing lifecycle for software packages.
+*   Standardizes and automates complex test scenarios.
+*   Provides a user-friendly web interface and an HTTP API for programmatic interaction.
+*   Manages and executes various test flows, including:
+    *   **RHIVOS Testing**: Executes TMT plans on RHIVOS test environments, which can be physical hardware or virtual machines.
+    *   **tmt Testing with Testing Farm**: Offers a general interface for running TMT plans on Testing Farm.
+    *   **Board Reservation**: Facilitates the reservation of physical automotive hardware boards.
+    *   **Virtual Machine Provisioning**: Allows on-demand requests for virtual machines from Testing Farm.
+*   Offers detailed status updates and links to artifacts throughout the testing process.
+
+## How it Works (Main Components)
+*   **Flask Web Application (`src/test_console/app.py`)**: The core web interface that handles HTTP requests, renders the user interface, and interacts with the database.
+*   **Database (`src/test_console/db/db_orm.py` and models)**: Uses SQLAlchemy ORM with an SQLite backend to store historical data for all requests, utilizing models like `TestTriggerModel` and `BoardReservationModel` to define data schema.
+*   **Daemon (`src/test_console/daemon.py`)**: A background process that continuously monitors the database for new or pending requests, initiates test flows, and manages their lifecycle.
+*   **Package Test Flow (`src/package_test_flow/`)**: A modular framework for defining and executing complex automated testing workflows.
+    *   **Jobs**: Individual tasks within a workflow, such as running a Testing Farm job (`job_tf.py`) or uploading artifacts to S3 (`job_upload_to_s3.py`).
+    *   **Modules**: Reusable logic for specific functionalities like interacting with Testing Farm (`testing_farm.py`) or Polarion (`upload_to_polarion.py`).
+    *   **Runner**: The central orchestration engine that executes jobs within defined stages, based on an Observer design pattern.
+    *   **Exporters**: Classes that persist the state and results from the Runner into the database, such as `ExportTestingFarmStatusAndResultToDB`.
+
+## What Services it Interacts With
+*   **Testing Farm**: Executes TMT plans on various hardware and virtual machines, communicating via the `testing-farm-cli` tool.
+*   **Flasher**: Used for reserving and managing physical automotive hardware boards.
+*   **Report Portal**: For reporting test results with rich metadata, integrating via the `data-router` client.
+*   **Polarion**: Uploads test results and syncs them with Report Portal, either through direct API calls or the `data-router` client.
+*   **S3 Bucket**: Stores test artifacts, HTML reports, and run information using the AWS CLI.
+*   **GitLab**: Used for fetching TMT plans, tracking pipeline status for RHIVOS Testing, and managing repositories.
+*   **Data Router**: A client used for integrating with Report Portal and Polarion.
+*   **JIRA**: For reporting issues.
+
+## Architecture Overview
+
+**Test Console** is a Flask-based web application that provides a user interface for Red Hat's automotive testing infrastructure, integrating RHIVOS testing, Testing Farm, and tmt (Test Management Tool).
+
+### Core Components
+
+- **Flask Application** (`src/test_console/app.py`): Main web server with REST API endpoints
+- **Background Daemon** (`src/test_console/daemon.py`): Processes long-running test executions
+- **Package Test Flow** (`src/package_test_flow/`): Business logic for test workflow orchestration
+- **Database Layer** (`src/test_console/db/models/`): SQLAlchemy ORM models for test triggers, reservations, and provisioning
+
+### Key Services
+
+1. **RHIVOS Testing**: Integration with Testing Farm for automotive hardware testing
+2. **tmt Testing**: Direct tmt plan execution on Testing Farm infrastructure
+3. **Board Reservation**: Physical automotive hardware reservation system
+4. **VM Provisioning**: Virtual machine provisioning through Testing Farm
+5. **HTTP API**: RESTful endpoints for CTC, Package Gating, and test request management
+
+### Configuration
+
+- **Global Variables**: `src/global_vars.py` contains environment configuration
+- **Line Length**: 119 characters (configured in `.flake8`, `.isort.cfg`)
+- **Code Style**: Black formatter with isort for imports, Prettier for JavaScript
+
+### Database Models
+
+Located in `src/test_console/db/models/`:
+- `TestTrigger`: Main test execution requests
+- `BoardReservation`: Hardware reservation tracking
+- `CTC`: Continuous Testing Configuration
+- `GenericTestTrigger`: Generic test request handling
+- `Provisioning`: VM provisioning requests
+
+### Required Environment Variables
+
+```bash
+TESTING_FARM_API_TOKEN    # Testing Farm API access
+SSO_CLIENT_SECRET         # OIDC authentication secret
+SSO_CLIENT_ID            # OIDC client identifier
+TC_DB                    # Database directory path
+TC_KEYS                  # SSH keys directory path
+TC_LOGS                  # Logs directory path
+```
+
+### Integration Points
+
+- **Testing Farm**: Primary test execution platform using `tft-cli`
+- **tmt**: Test management tool integration for test plan execution
+- **GitLab**: Source code and CI/CD pipeline integration
+- **OIDC/SSO**: Red Hat authentication system integration
+- **AWS S3**: Artifact storage via `boto3`
+
+### Production Deployment
+
+The application runs in containers on Red Hat OpenShift with:
+- Production: https://test-console.corp.redhat.com/
+- Pre-production: https://test-console.corp.stage.redhat.com/
+- Container registry: quay.io/automotive-toolchain/test-console

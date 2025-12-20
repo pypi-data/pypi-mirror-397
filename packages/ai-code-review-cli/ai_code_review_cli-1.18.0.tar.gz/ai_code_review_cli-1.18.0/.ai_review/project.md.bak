@@ -1,0 +1,141 @@
+# Project Context for AI Code Review
+
+## Project Overview
+
+**Purpose:** An AI-powered code review tool that analyzes local Git changes and remote pull/merge requests.
+**Type:** CLI tool
+**Domain:** Developer Tools / CI/CD
+**Key Dependencies:** `click` (CLI framework), `langchain` (LLM orchestration), `python-gitlab`/`pygithub` (VCS APIs)
+
+## Technology Stack
+
+### Core Technologies
+
+- **Primary Language:** Python (>=3.12 inferred from venv path)
+- **Framework/Runtime:** Asynchronous Command-Line Application (using aiohttp and click)
+- **Architecture Pattern:** Asynchronous, src-layout
+
+### Key Dependencies (for Context & API Understanding)
+
+- **langchain>=0.2.0** - Core framework for building applications with Large Language Models (LLMs). Reviewers should check for correct use of chains, agents, and model integrations.
+- **aiohttp>=3.9.0** - Asynchronous HTTP client/server. Code will use `async/await` for network operations. Reviewers should focus on proper session management and handling of async I/O.
+- **pydantic>=2.5.0** - Data validation and settings management. Reviewers must ensure data structures are defined as Pydantic models and that validation is correctly handled.
+- **python-gitlab>=4.0.0** & **pygithub>=2.1.0** - API clients for GitLab and GitHub. Indicates the application interacts with code repositories. Reviewers should check for correct API usage and authentication.
+- **click>=8.1.0** - Library for creating command-line interfaces. Reviewers should understand how CLI commands, options, and arguments are defined and parsed.
+- **structlog>=23.2.0** - Structured logging library. Reviewers should enforce structured logging practices over simple print statements or standard logging.
+
+### Development Tools & CI/CD
+
+- **Testing:** `pytest>=7.4.0` with `pytest-asyncio` for async code, `pytest-mock` for mocking, and `pytest-cov` for coverage tracking.
+- **Code Quality:** `ruff>=0.1.0` for linting and formatting, and `mypy>=1.7.0` for static type checking.
+- **Build/Package:** Modern Python packaging using `pyproject.toml`.
+- **CI/CD:** GitLab CI/CD, configured via `.gitlab-ci.yml`.
+
+## Architecture & Code Organization
+
+### Project Organization
+
+```
+.
+├── docs/
+│   ├── developer-guide.md
+│   └── user-guide.md
+├── src/
+│   ├── ai_code_review/
+│   │   ├── core/
+│   │   ├── models/
+│   │   ├── providers/
+│   │   ├── utils/
+│   │   ├── __init__.py
+│   │   └── cli.py
+│   └── context_generator/
+│       ├── core/
+│       ├── sections/
+│       ├── templates/
+│       ├── __init__.py
+│       ├── cli.py
+│       └── models.py
+├── tests/
+│   ├── fixtures/
+│   ├── integration/
+│   │   ├── __init__.py
+│   │   └── test_context_generator_simple.py
+│   ├── unit/
+│   │   ├── test_anthropic_provider.py
+│   │   ├── test_base_provider.py
+│   │   ├── test_cli.py
+│   │   ├── test_cli_ci.py
+│   │   ├── test_config.py
+│   │   ├── test_config_file_loading.py
+│   │   ├── test_context_generator_cli.py
+│   │   ├── test_context_generator_code_extractor.py
+│   │   ├── test_context_generator_context_builder.py
+│   │   ├── test_context_generator_facts_extractor.py
+│   │   ├── test_context_generator_llm_analyzer.py
+│   │   └── test_context_generator_models.py
+│   ├── __init__.py
+│   └── conftest.py
+├── pyproject.toml
+├── README.md
+└── .gitignore
+```
+
+### Architecture Patterns
+
+**Code Organization:** Layered Architecture. The application is divided into distinct layers: a `cli` for user interaction, a `core` layer (`ReviewEngine`) containing business logic, `providers` for external service integrations (AI models, Git platforms), and `models` for data structures and configuration.
+**Key Components:**
+- **`ReviewEngine` (`src/ai_code_review/core/review_engine.py`):** The central orchestrator that coordinates platform clients (e.g., GitLab, GitHub) and AI providers to execute the code review process.
+- **`Config` Models (`src/ai_code_review/models/config.py`):** Pydantic-based models that define and validate all application settings, loaded from environment variables or configuration files.
+- **Provider Abstractions:** The system uses interfaces (`PlatformClientInterface`, `BaseAIProvider`) and factory methods (`_create_platform_client`, `_create_ai_provider`) to implement a Strategy Pattern, allowing for interchangeable platform and AI backends.
+- **`context_generator`:** A distinct, self-contained application within the `src` directory, responsible for generating project context, with its own CLI, models, and logic.
+**Entry Points:** The application has two primary command-line entry points: `src/ai_code_review/cli.py` for the main code review functionality and `src/context_generator/cli.py` for the context generation tool. Both use the `click` library.
+
+### Important Files for Review Context
+
+- **`src/ai_code_review/core/review_engine.py`** - Contains the core business logic. Understanding this file is essential for reviewing any changes to the review workflow, AI prompting, or interaction between platform clients and AI providers.
+- **`src/ai_code_review/models/config.py`** - Defines the entire application's configuration schema using Pydantic. Reviewers must be familiar with this file to understand how new features are enabled and configured, and to assess the impact of configuration changes.
+- **`src/ai_code_review/cli.py`** - The main entry point that parses user input and initializes the `ReviewEngine`. Changes here affect the user-facing interface and how configuration parameters are passed to the core logic.
+
+### Development Conventions
+
+- **Naming:** Follows standard Python PEP 8 conventions: `PascalCase` for classes (e.g., `ReviewEngine`, `Config`), `snake_case` for functions and variables (e.g., `_resolve_project_params`), and `UPPER_SNAKE_CASE` for constants. Internal helper functions are prefixed with a single underscore.
+- **Module Structure:** Code is organized into feature-specific packages (`ai_code_review`, `context_generator`). Within `ai_code_review`, modules are grouped by responsibility (`core`, `models`, `providers`, `utils`), promoting separation of concerns.
+- **Configuration:** Configuration is centralized and strongly typed using `pydantic_settings.BaseSettings`. This provides robust validation and allows settings to be loaded from environment variables.
+- **Testing:** The `tests/` directory is structured to mirror the `src/` directory, with a clear separation between `unit/` and `integration/` tests. Test files are prefixed with `test_`, indicating the use of a test runner like `pytest`.
+
+## Code Review Focus Areas
+
+- **[Asynchronous Operations and API Interactions]** - Verify that all I/O-bound operations (API calls to GitLab/GitHub/AI providers using `aiohttp` or `httpx`) are correctly implemented with `async`/`await`. Check for proper lifecycle management of HTTP client sessions and ensure that custom exceptions like `PlatformAPIError` and `AIProviderError` are raised and handled correctly at the call sites.
+
+- **[Provider Abstraction and Factory Pattern]** - Examine the factory methods (`_create_platform_client`, `_create_ai_provider`) in `ReviewEngine`. Ensure that any new provider implementation correctly adheres to its respective interface (`PlatformClientInterface`, `BaseAIProvider`). Changes should not require modification of the core `ReviewEngine` logic, only the factory method.
+
+- **[LangChain and Pydantic Integration]** - Review the construction of LangChain chains (e.g., `create_review_chain`). Scrutinize the prompts for clarity and security, ensuring they correctly incorporate data from Pydantic models. For Pydantic models (`config.py`, `models.py`), check the robustness of custom validators (`@field_validator`, `@model_validator`) and ensure they handle configuration edge cases correctly.
+
+- **[Structured Logging and Exception Handling]** - Enforce the use of `structlog` for all logging. Ensure log messages include relevant context (e.g., repository, merge request ID, AI provider) to be useful for debugging. Verify that custom exceptions are used consistently to differentiate between configuration errors, platform API failures, and AI provider issues.
+
+- **[Configuration Management]** - Given the use of `pydantic-settings`, review how configuration is loaded and validated. Check that environment variables and YAML file settings are correctly prioritized. Pay close attention to the validation logic in `config.py` to ensure that incompatible settings (e.g., a specific model with an unsupported provider) are caught early.
+
+---
+<!-- MANUAL SECTIONS - DO NOT MODIFY THIS LINE -->
+
+### Business Logic & Implementation Decisions
+
+- Long-running LLM calls are acceptable and expected in this domain - response times of 30+ seconds are normal
+- Retry logic in `review_engine.py` handles API provider failures and rate limiting
+- The `dry_run` mode throughout the codebase is intentional for cost-free testing during development
+- Multiple AI provider support allows fallback when one service is unavailable
+
+### Domain-Specific Context
+
+- **GitLab Integration**: Supports both GitLab.com and self-hosted GitLab instances via custom base URLs
+- **AI Provider APIs**: Each provider (Anthropic, Gemini, Ollama) has different authentication and rate limiting patterns
+- **Token Management**: Cost optimization through adaptive context windows - longer contexts are acceptable for better review quality
+- **Review Formats**: Output must be markdown-compatible for GitLab/GitHub display
+
+### Special Cases & Edge Handling
+
+- SSL verification can be disabled for self-hosted GitLab instances (`--disable-ssl-verify`)
+- `GITLAB_TOKEN` and other API keys should never appear in logs (use `mask_sensitive_data()`)
+- Empty commits and draft MRs are intentionally skipped without error
+- The `.ai_review/` directory structure must be preserved for context file functionality
+- Configuration layering: CLI args > Environment variables > Config files > Defaults

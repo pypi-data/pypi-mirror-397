@@ -1,0 +1,1984 @@
+diff --git a/.ai_review/config.yml.example b/.ai_review/config.yml.example
+index b3817c34ccb7dc18484bfb22ea5e011f75a02250..433ca739923aab51f9d172a0d022041ce5075e01 100644
+--- a/.ai_review/config.yml.example
++++ b/.ai_review/config.yml.example
+@@ -11,17 +11,19 @@
+ # Platform Configuration
+ #==============================================================================
+ 
+-# Platform provider: gitlab, github, or local
++# Platform provider: gitlab, github, forgejo, or local
+ # Auto-detected in CI/CD environments, set manually for local use
+ platform_provider: gitlab
+ 
+ # Platform URLs (for self-hosted instances)
+ gitlab_url: https://gitlab.com
+ github_url: https://api.github.com
++forgejo_url: https://codeberg.org/api/v1
+ 
+ # Platform tokens (⚠️ NOT RECOMMENDED: use environment variables instead for security)
+ # gitlab_token: glpat_xxxxxxxxxxxxxxxxxxxx
+ # github_token: ghp_xxxxxxxxxxxxxxxxxxxx
++# forgejo_token: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+ 
+ #==============================================================================
+ # AI Provider Configuration
+diff --git a/README.md b/README.md
+index ebdc2b3cba507696363e9af1a6ab1f8e766dcbca..b60077cfd103f0b8b865d72f9ad1d3f8765098d6 100644
+--- a/README.md
++++ b/README.md
+@@ -67,6 +67,30 @@ jobs:
+         run: ai-code-review --pr-number ${{ github.event.pull_request.number }} --post
+ ```
+ 
++### Forgejo Actions
++
++Add to `.forgejo/workflows/ai-review.yml`:
++```yaml
++name: AI Code Review
++on:
++  pull_request:
++    types: [opened, synchronize]
++
++jobs:
++  ai-review:
++    runs-on: codeberg-tiny  # adjust for non-codeberg instances
++    permissions:
++      contents: read
++      pull-requests: write
++    container:
++      image: registry.gitlab.com/redhat/edge/ci-cd/ai-code-review:latest
++    steps:
++      - name: Run AI Review
++        env:
++          AI_API_KEY: ${{ secrets.GEMINI_API_KEY }}  # set in Forgejo Actions secrets
++        run: ai-code-review --pr-number ${{ github.event.pull_request.number }} --post
++```
++
+ ## ⚙️ Secondary Use Cases
+ 
+ ### Local Usage (Container)
+@@ -138,6 +162,9 @@ export GITLAB_TOKEN=glpat_xxxxxxxxxxxxxxxxxxxx
+ # For GitHub remote reviews
+ export GITHUB_TOKEN=ghp_xxxxxxxxxxxxxxxxxxxx
+ 
++# For Forgejo remote reviews
++export FORGEJO_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
++
+ # Local reviews don't need platform tokens! 🎉
+ ```
+ 
+@@ -355,6 +382,9 @@ ai-code-review --local --provider ollama
+ - 💬 Iterative feedback and solution refinement
+ - ✅ Final validation of concepts and approaches
+ 
++**Crotchety old human (Adam Williamson)**:
++- 👴🏻 Adapted GitHub client and tests for Forgejo using 100% artisanal human brainpower
++
+ **Collaboration philosophy**: AI tools served as a highly capable technical assistant, while all design decisions, educational objectives, and project directions were defined and validated by the human.
+ </details>
+ 
+diff --git a/docs/developer-guide.md b/docs/developer-guide.md
+index ac0706434a589fdfd631110a2978620923a89e89..b59374237d7d2c8bb9067ecf7e30b5ee3e472f53 100644
+--- a/docs/developer-guide.md
++++ b/docs/developer-guide.md
+@@ -112,7 +112,7 @@ src/ai_code_review/
+ - Defines common interface: `get_pull_request_data()`, `post_review()`
+ - File filtering and content limit logic
+ - Platform-agnostic data model conversion
+-- **Implementations:** `GitLabClient`, `GitHubClient`, `LocalGitClient`
++- **Implementations:** `GitLabClient`, `GitHubClient`, `ForgejoClient`, `LocalGitClient`
+ 
+ #### 📡 `core/gitlab_client.py` - GitLab Remote Client
+ 
+@@ -130,6 +130,14 @@ src/ai_code_review/
+ - Handles GitHub API authentication with tokens
+ - **Modify when:** Adding GitHub-specific features or API fixes
+ 
++#### `core/forgejo_client.py` - Forgejo Remote Client
++
++- Implements remote Forgejo PR analysis via API
++- Fetches PR diffs, metadata, and commit information
++- Posts review comments to Forgejo
++- Handles Forgejo API authentication with tokens
++- **Modify when:** Adding Forgejo-specific features or API fixes
++
+ #### 🔍 `core/local_git_client.py` - Local Git Client
+ 
+ - Implements **local Git review functionality**
+@@ -170,6 +178,8 @@ aiohttp>=3.9.0         # Async HTTP client
+ httpx>=0.28.1          # Sync HTTP client (for Ollama)
+ python-gitlab>=4.0.0   # GitLab API client
+ pygithub>=2.1.0        # GitHub API client
++pyforgejo>=2.0.0       # Forgejo API client
++unidiff>=0.7.0         # Generates per-file diffs for Forgejo
+ 
+ # AI and LangChain
+ langchain>=0.2.0                # LLM framework
+@@ -200,6 +210,7 @@ pytest>=8.4.1           # Testing framework
+ pytest-asyncio>=1.1.0   # Async test support
+ pytest-mock>=3.14.1     # Mocking utilities
+ pytest-cov>=6.2.1       # Coverage reporting
++pytest-httpx>0.33.0     # Async httpx mocking
+ 
+ # Development Workflow
+ pre-commit>=4.3.0  # Git hooks
+diff --git a/docs/user-guide.md b/docs/user-guide.md
+index 5d9a43cb2939f90ddb2b6a50b5dc3885b03dd93c..2d7dce1ff51edb26ae733055dc58ee0d737200a7 100644
+--- a/docs/user-guide.md
++++ b/docs/user-guide.md
+@@ -107,9 +107,9 @@ Analyze existing MRs/PRs from your terminal.
+ 
+ Before running remotely, ensure you have:
+ 
+-1. **Platform Access Token**: GitLab Personal Access Token or GitHub Token
++1. **Platform Access Token**: GitLab Personal Access Token, GitHub Token or Forgejo Token
+ 2. **AI API Key**: API key for your chosen AI provider (Gemini, Anthropic, or local Ollama)
+-3. **Project Access**: Read access to the GitLab project or GitHub repository
++3. **Project Access**: Read access to the GitLab project, GitHub repository or Forgejo repository
+ 
+ ### Remote Usage Examples
+ 
+@@ -122,6 +122,12 @@ AI_API_KEY=your_key ai-code-review group/project 123
+ # GitHub PR analysis
+ AI_API_KEY=your_key ai-code-review --platform github owner/repo 456
+ 
++# Forgejo PR analysis (Fedora forge)
++AI_API_KEY=your_key ai-code-review --platform forgejo owner/repo 456
++
++# Forgejo PR analysis (other instance)
++AI_API_KEY=your_key ai-code-review --platform forgejo --forgejo-url https://codeberg.org/api/v1 owner/repo 456
++
+ # With custom settings
+ ai-code-review group/project 123 \
+   --language-hint python \
+@@ -136,10 +142,13 @@ ai-code-review group/project 123 --no-mr-summary
+ 
+ ```bash
+ # GitLab MR - post review
+-AI_API_KEY=your_key ai-code-review group/project 123 --post-review
++AI_API_KEY=your_key ai-code-review group/project 123 --post
+ 
+ # GitHub PR - post review
+-AI_API_KEY=your_key ai-code-review --platform github owner/repo 456 --post-review
++AI_API_KEY=your_key ai-code-review --platform github owner/repo 456 --post
++
++# Forgejo PR - post review
++AI_API_KEY=your_key ai-code-review --platform forgejo owner/repo 456 --post
+ ```
+ 
+ ## 🤖 CI Integration
+@@ -193,9 +202,36 @@ jobs:
+           ai-code-review --pr-number ${{ github.event.pull_request.number }} --post
+ ```
+ 
++### Forgejo Actions (Using GitLab Container)
++
++Add this workflow to `.forgejo/workflows/ai-review.yml`:
++
++```yaml
++name: AI Code Review
++on:
++  pull_request:
++    types: [opened, synchronize]
++
++jobs:
++  ai-review:
++    runs-on: codeberg-tiny  # adjust for non-codeberg instances
++    # ⚠️ IMPORTANT: Add write permissions for PR comments
++    permissions:
++      contents: read
++      pull-requests: write
++    container:
++      image: registry.gitlab.com/redhat/edge/ci-cd/ai-code-review:latest
++    steps:
++      - name: Run AI Review
++        env:
++          AI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
++        run: |
++          ai-code-review --pr-number ${{ github.event.pull_request.number }} --post
++```
++
+ **Setup Requirements:**
+ 
+-**Note:** The platform (GitLab/GitHub) is **automatically detected** from CI/CD environment variables. No need to specify `--platform` in workflows!
++**Note:** The platform (GitLab/GitHub/Forgejo) is **automatically detected** from CI/CD environment variables. No need to specify `--platform` in workflows!
+ 
+ 1. **Create Platform Access Token:**
+ 
+@@ -209,6 +245,9 @@ jobs:
+ - Create token with scopes: `repo`, `read:org`
+ - Copy the generated token (starts with `ghp_`)
+ 
++**For Forgejo:**
++- There is no need to create a token manually - Forgejo Actions takes care of it
++
+ 1. **Configure CI/CD Variables:**
+ 
+ **For GitLab CI/CD:**
+@@ -223,6 +262,11 @@ jobs:
+ - Add `GEMINI_API_KEY` as **Repository Secret**
+ - Get your Gemini key from: <https://makersuite.google.com/app/apikey>
+ 
++**For Forgejo Actions:**
++- In your repository: **Settings → Actions → Secrets**
++- Add `GEMINI_API_KEY`
++- Get your Gemini key from: <https://makersuite.google.com/app/apikey>
++
+ ### Build Your Own Container
+ 
+ Create your own container and publish to your registry:
+@@ -465,7 +509,7 @@ export AI_API_KEY=your_gemini_api_key
+ 
+ See the [complete example file](../.ai_review/config.yml.example) for all available options including:
+ 
+-- Platform settings (GitLab/GitHub/Local URLs and options)
++- Platform settings (GitLab/GitHub/Forgejo/Local URLs and options)
+ - AI provider settings (models, parameters, timeouts)
+ - Processing limits (max files, max characters, big diff handling)
+ - File filtering (exclude patterns for noise reduction)
+diff --git a/env.example b/env.example
+index b33f61158eb0e155dc1b3d2bafc5ddbb58023dd0..ab647a17a6cd5b62c4a583def4bf584d4e2e106e 100644
+--- a/env.example
++++ b/env.example
+@@ -86,6 +86,36 @@ GITHUB_REPOSITORY=
+ # Takes precedence over GITHUB_URL when available
+ GITHUB_SERVER_URL=
+ 
++#==============================================================================
++# Forgejo Configuration
++#==============================================================================
++
++# Forgejo Personal Access Token (required for Forgejo platform)
++# Create one at: https://forge.fedoraproject.org/user/settings/applications (for e.g.)
++# Required scopes: repository, read:organization
++FORGEJO_TOKEN=xxxxxxxxxxxxxxxxxxxx
++
++# Forgejo API URL
++# Default: https://forge.fedoraproject.org/api/v1
++# For other instances: https://your-instance.com/api/v1
++FORGEJO_URL=https://forge.fedoraproject.org/api/v1
++
++#==============================================================================
++# Forgejo Actions Automatic Variables
++#==============================================================================
++# These variables are automatically set by Forgejo Actions and take precedence
++# over manual configuration. Do not set these manually unless testing.
++
++# Forgejo repository path (format: "owner/repository")
++# Automatically set by Forgejo Actions as FORGEJO_REPOSITORY
++# Only set manually for local testing of CI mode
++FORGEJO_REPOSITORY=
++
++# Forgejo Actions server URL
++# Automatically set by Forgejo Actions as FORGEJO_SERVER_URL
++# Takes precedence over FORGEJO_URL when available
++FORGEJO_SERVER_URL=
++
+ #==============================================================================
+ # AI Provider Configuration
+ #==============================================================================
+diff --git a/pyproject.toml b/pyproject.toml
+index e9dae5ed53705fce36ab1db177b708ade273845b..01d3e906c1bd89d7fb422f6e01391ae2023a26af 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -8,7 +8,7 @@ packages = ["src/ai_code_review", "src/context_generator"]
+ [project]
+ name = "ai-code-review-cli"
+ version = "1.17.0"
+-description = "AI-powered code review tool with local Git, remote MR/PR analysis, and CI integration (GitLab or GitHub)"
++description = "AI-powered code review tool with local Git, remote MR/PR analysis, and CI integration (GitLab, GitHub or Forgejo)"
+ readme = "README.md"
+ requires-python = ">=3.12"
+ license = "MIT"
+@@ -63,6 +63,8 @@ dependencies = [
+     "GitPython>=3.1.40",
+     "aiofiles>=23.2.0",
+     "defusedxml>=0.7.1",
++    "unidiff>=0.7.0",
++    "pyforgejo>=2.0.0",
+ ]
+ 
+ [project.scripts]
+@@ -174,6 +176,7 @@ dev = [
+     "pytest>=8.4.1",
+     "pytest-asyncio>=1.1.0",
+     "pytest-cov>=6.2.1",
++    "pytest-httpx>=0.33.0",
+     "pytest-mock>=3.14.1",
+     "ruff>=0.12.11",
+     "twine>=6.2.0",
+@@ -181,6 +184,7 @@ dev = [
+     "types-defusedxml>=0.7.0.20250822",
+     "types-pyyaml>=6.0.12.20250822",
+     "types-requests>=2.32.4.20250809",
++    "types-unidiff>=0.7.0.20240505",
+ ]
+ 
+ # PyMarkdown configuration
+diff --git a/src/ai_code_review/cli.py b/src/ai_code_review/cli.py
+index 182717195d70a3936e2914c3960a70e5b65de854..e21932797f92112f38a19973f24aa3a9d34de3e5 100644
+--- a/src/ai_code_review/cli.py
++++ b/src/ai_code_review/cli.py
+@@ -93,6 +93,13 @@ def _resolve_project_params(params: dict[str, Any], config: Config) -> tuple[str
+                     "In GitLab CI/CD, set CI_PROJECT_PATH and CI_MERGE_REQUEST_IID environment variables.",
+                     err=True,
+                 )
++            elif platform_name == "forgejo":
++                click.echo(
++                    "❌ Error: PROJECT_ID and PR_NUMBER are required for Forgejo.\n"
++                    "Provide them as arguments or use --project-id and --pr-number options.\n"
++                    "In Forgejo Actions, set FORGEJO_REPOSITORY and derive PR number from event.",
++                    err=True,
++                )
+             else:
+                 click.echo(
+                     "❌ Error: PROJECT_ID and PR_NUMBER are required for GitHub.\n"
+@@ -216,18 +223,23 @@ def _setup_logging(config: Config) -> None:
+     default=None,
+     help="GitHub API URL (default: https://api.github.com)",
+ )
++@click.option(
++    "--forgejo-url",
++    default=None,
++    help="Forgejo API URL (default: https://codeberg.org/api/v1)",
++)
+ @click.option(
+     "--project-id",
+     "project_id_option",
+     default=None,
+-    help="Project identifier (GitLab: group/project, GitHub: owner/repo)",
++    help="Project identifier (GitLab: group/project, GitHub/Forgejo: owner/repo)",
+ )
+ @click.option(
+     "--pr-number",
+     "pr_number_option",
+     type=int,
+     default=None,
+-    help="Pull/merge request number (GitLab: MR IID, GitHub: PR number)",
++    help="Pull/merge request number (GitLab: MR IID, GitHub/Forgejo: PR number)",
+ )
+ # Legacy options for backward compatibility
+ @click.option(
+@@ -285,7 +297,7 @@ def _setup_logging(config: Config) -> None:
+ @click.option(
+     "--post",
+     is_flag=True,
+-    help="Post review as MR comment to GitLab/GitHub",
++    help="Post review as MR comment to GitLab/GitHub/Forgejo",
+ )
+ @click.option(
+     "--dry-run",
+@@ -387,7 +399,7 @@ def _setup_logging(config: Config) -> None:
+ @click.version_option(version="0.1.0", prog_name="ai-code-review")
+ def main(**kwargs: Any) -> None:
+     """
+-    AI-powered code review tool for GitLab Merge Requests and GitHub Pull Requests.
++    AI-powered code review tool for GitLab Merge Requests and GitHub/Forgejo Pull Requests.
+ 
+     Analyzes PR/MR diffs using AI models and generates structured feedback.
+ 
+@@ -401,13 +413,20 @@ def main(**kwargs: Any) -> None:
+         # GitLab (default platform)
+         ai-code-review group/project 123
+         ai-code-review --project-id group/project --pr-number 123 --post
++        # CI/CD mode (uses CI environment variables)
++        ai-code-review --post
+         \b
+         # GitHub
+         ai-code-review --platform github owner/repo 456 --post
+         ai-code-review --platform github --project-id owner/repo --pr-number 456
++        # CI/CD mode (PR number from environment)
++        ai-code-review --platform github --pr-number ${{ github.event.pull_request.number }} --post
+         \b
+-        # CI/CD mode (uses CI environment variables)
+-        ai-code-review --post
++        # Forgejo
++        ai-code-review --platform forgejo owner/repo 456 --post
++        ai-code-review --platform forgejo --project-id owner/repo --pr-number 456
++        # CI/CD mode (PR number from environment)
++        ai-code-review --platform forgejo --pr-number ${{ forgejo.event.pull_request.number }} --post
+         \b
+         # Local review (analyze local changes)
+         ai-code-review --local
+@@ -607,7 +626,11 @@ async def _run_review(
+     click.echo(f"  Model: {config.get_ai_model()}")
+ 
+     if config.is_ci_mode():
+-        ci_system = "GitLab CI" if platform_name == "gitlab" else "GitHub Actions"
++        ci_system = {
++            "gitlab": "GitLab CI",
++            "github": "GitHub Actions",
++            "forgejo": "Forgejo Actions",
++        }.get(platform_name, "[unknown system]")
+         click.echo(f"  🔄 CI/CD MODE - Using {ci_system} environment variables")
+ 
+     if config.dry_run:
+diff --git a/src/ai_code_review/core/forgejo_client.py b/src/ai_code_review/core/forgejo_client.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..f41d82cf0cf02b720ebd7ac77d838c4b5ebddcfb
+--- /dev/null
++++ b/src/ai_code_review/core/forgejo_client.py
+@@ -0,0 +1,571 @@
++"""Forgejo API client for fetching pull request data."""
++
++from __future__ import annotations
++
++import httpx
++import structlog
++from pyforgejo import AsyncPyforgejoApi, Comment, Commit, PullRequest, PullReview, User
++from pyforgejo.core import ApiError
++from unidiff import PatchSet
++
++from ai_code_review.core.base_platform_client import BasePlatformClient
++from ai_code_review.models.config import Config
++from ai_code_review.models.platform import (
++    PostReviewResponse,
++    PullRequestCommit,
++    PullRequestData,
++    PullRequestDiff,
++    PullRequestInfo,
++    Review,
++    ReviewComment,
++)
++from ai_code_review.utils.platform_exceptions import ForgejoAPIError
++
++logger = structlog.get_logger(__name__)
++
++
++class ForgejoClient(BasePlatformClient):
++    """Client for Forgejo API operations."""
++
++    def __init__(self, config: Config) -> None:
++        """Initialize Forgejo client."""
++        super().__init__(config)
++        self._forgejo_client: AsyncPyforgejoApi | None = None
++
++    @property
++    def forgejo_client(self) -> AsyncPyforgejoApi:
++        """Get or create Forgejo client instance."""
++        baseurl = self.config.get_effective_server_url().rstrip("/")
++        if not baseurl.endswith("/api/v1"):
++            baseurl = f"{baseurl}/api/v1"
++        if self._forgejo_client is None:
++            self._forgejo_client = AsyncPyforgejoApi(
++                api_key=self.config.get_platform_token(),
++                base_url=baseurl,
++            )
++        return self._forgejo_client
++
++    async def get_authenticated_username(self) -> str:
++        """Get Forgejo username with caching.
++
++        Returns:
++            Forgejo username (login) of the authenticated user
++
++        Raises:
++            ForgejoAPIError: If getting user fails
++        """
++        if self._authenticated_username is not None:
++            return self._authenticated_username
++
++        if self.config.dry_run:
++            self._authenticated_username = "ai-code-review-bot-dry-run"
++            return self._authenticated_username
++
++        try:
++            user: User = await self.forgejo_client.user.get_current()
++            if user.login_name:
++                # just to make type checks happy
++                self._authenticated_username = user.login_name or ""
++                logger.info(
++                    "Authenticated as Forgejo user",
++                    username=self._authenticated_username,
++                )
++                return self._authenticated_username
++            else:
++                raise ForgejoAPIError(
++                    "Failed to get authenticated user: API value was empty"
++                )
++        except ApiError as e:
++            raise ForgejoAPIError(f"Failed to get authenticated user: {e}") from e
++
++    async def get_pull_request_data(
++        self, project_id: str, pr_number: int
++    ) -> PullRequestData:
++        """Fetch complete pull request data including diffs.
++
++        Args:
++            project_id: Forgejo repository path (e.g., 'owner/repo')
++            pr_number: Pull request number
++
++        Returns:
++            Complete pull request data with diffs
++
++        Raises:
++            ForgejoAPIError: If API call fails
++        """
++        if self.config.dry_run:
++            # Return mock data for dry run
++            return self._create_mock_pr_data(project_id, pr_number)
++
++        try:
++            owner, repo = project_id.split("/")
++        except ValueError as e:
++            raise ForgejoAPIError(
++                f"Malformed project ID: {project_id} - must contain one /"
++            ) from e
++        try:
++            pull_request: PullRequest = (
++                await self.forgejo_client.repository.repo_get_pull_request(
++                    owner,
++                    repo,
++                    pr_number,
++                )
++            )
++
++            # Create PR info (mapping Forgejo PR to platform-agnostic model)
++            # The extreme defensive coding here is to make type checks happy.
++            # This all relates to limitations in the forgejo API definition:
++            # https://codeberg.org/forgejo/forgejo/issues/9428#issuecomment-8868930
++            # which mean everything in pyforgejo is typing.Optional
++            prhead = pull_request.head
++            prbase = pull_request.base
++            pruser = pull_request.user
++            prdurl = pull_request.diff_url
++            prnum = pull_request.number
++            if not (prhead and prbase and pruser and prdurl and prnum):
++                raise ForgejoAPIError(
++                    "head, base, user, diff_url or number missing in API response!"
++                )
++            pr_info = PullRequestInfo(
++                id=pull_request.id or 0,
++                number=pull_request.number or 0,
++                title=pull_request.title or "",
++                description=pull_request.body or "",
++                source_branch=prhead.ref or "",
++                target_branch=prbase.ref or "",
++                author=pruser.login or "",
++                state=pull_request.state or "",
++                web_url=pull_request.html_url or "",
++                draft=pull_request.draft or False,
++            )
++
++            # Get diffs, commits, and reviews
++            diffs = await self._fetch_pull_request_diffs(prdurl)
++            commits = await self._fetch_pull_request_commits(owner, repo, prnum)
++            reviews, comments = await self._fetch_pull_request_reviews_and_comments(
++                owner, repo, prnum
++            )
++
++            return PullRequestData(
++                info=pr_info,
++                diffs=diffs,
++                commits=commits,
++                reviews=reviews,
++                comments=comments,
++            )
++
++        except ApiError as e:
++            # Forgejo library specific exceptions
++            raise ForgejoAPIError(f"Failed to fetch PR data: {e}") from e
++        except Exception as e:
++            # Catch any other unexpected errors (should be rare)
++            raise ForgejoAPIError(f"Unexpected error fetching PR data: {e}") from e
++
++    async def _fetch_pull_request_diffs(self, diff_url: str) -> list[PullRequestDiff]:
++        """Fetch diffs for a pull request."""
++        diffs: list[PullRequestDiff] = []
++        excluded_files: list[str] = []
++        excluded_chars = 0
++
++        try:
++            # forgejo does not provide file-by-file diffs:
++            # https://codeberg.org/forgejo/forgejo/issues/10383
++            # so we will download the full PR diff and parse it
++            # with unidiff
++            async with httpx.AsyncClient() as client:
++                response = await client.get(diff_url)
++                if response.status_code != 200:
++                    raise ForgejoAPIError(
++                        f"Failed to download PR diff from {diff_url}: HTTP {response.status_code}"
++                    )
++                diff_text = response.text
++            files = PatchSet(diff_text)
++
++            # Track files skipped due to missing patch content...
++            skipped_no_diff = []
++            # ...or for being binaries
++            skipped_binary = []
++
++            for file in files:
++                file_path = file.path
++                # Skip binary files
++                if file.is_binary_file:
++                    skipped_binary.append(file_path)
++                    continue
++                patch_content = "\n".join(str(block) for block in file) or ""
++
++                # Skip files without patches
++                if not patch_content:
++                    skipped_no_diff.append(file_path)
++                    continue
++
++                # Check if file should be excluded from AI review
++                if self._should_exclude_file(file_path):
++                    excluded_files.append(file_path)
++                    excluded_chars += len(patch_content)
++                    continue  # Skip excluded files
++
++                # Create diff object
++                diff = PullRequestDiff(
++                    file_path=file_path,
++                    new_file=file.is_added_file,
++                    renamed_file=file.is_rename,
++                    deleted_file=file.is_removed_file,
++                    diff=patch_content,
++                )
++
++                diffs.append(diff)
++
++                # Check limits
++                if len(diffs) >= self.config.max_files:
++                    break
++
++            # Log filtering and skipping statistics
++            if excluded_files:
++                logger.info(
++                    "Files excluded from AI review",
++                    excluded_files=len(excluded_files),
++                    excluded_chars=excluded_chars,
++                    included_files=len(diffs),
++                    examples=excluded_files[:3],  # Show first 3 examples
++                )
++
++            if skipped_no_diff:
++                logger.info(
++                    "Files skipped - no diff content from Forgejo API",
++                    skipped_files=len(skipped_no_diff),
++                    reason="Forgejo API returned no diff content for these files",
++                    examples=skipped_no_diff[:3],  # Show first 3 examples
++                )
++            if skipped_binary:
++                logger.info(
++                    "Binary files skipped",
++                    skipped_files=len(skipped_binary),
++                    reason="We cannot currently sensibly review changes to binary files",
++                    examples=skipped_binary[:3],  # Show first 3 examples
++                )
++
++            return self._apply_content_limits(diffs)
++
++        except ApiError as e:
++            raise ForgejoAPIError(f"Failed to fetch diffs: {e}") from e
++        except Exception as e:
++            # Catch any other unexpected errors (should be rare)
++            raise ForgejoAPIError(f"Unexpected error fetching diffs: {e}") from e
++
++    async def _fetch_pull_request_commits(
++        self, owner: str, repo: str, pr_number: int
++    ) -> list[PullRequestCommit]:
++        """Fetch commits for a pull request."""
++        commits: list[PullRequestCommit] = []
++
++        try:
++            pr_commits: list[
++                Commit
++            ] = await self.forgejo_client.repository.repo_get_pull_request_commits(
++                owner,
++                repo,
++                pr_number,
++            )
++
++            for commit_data in pr_commits:
++                if not (
++                    commit_data.commit
++                    and commit_data.commit.message
++                    and commit_data.commit.author
++                    and commit_data.sha
++                ):
++                    logger.warning(
++                        "commit or sha missing in get_pull_request_commits API response "
++                        f"for {owner}/{repo} {str(pr_number)}"
++                    )
++                    continue
++                commit = PullRequestCommit(
++                    id=commit_data.sha,
++                    title=commit_data.commit.message.split("\n")[
++                        0
++                    ],  # First line as title
++                    message=commit_data.commit.message,
++                    author_name=commit_data.commit.author.name or "Unknown",
++                    author_email=commit_data.commit.author.email
++                    or "unknown@example.com",
++                    committed_date=commit_data.commit.author.date or "",
++                    short_id=commit_data.sha[:7],
++                )
++                commits.append(commit)
++
++            return commits
++
++        except ApiError as e:
++            raise ForgejoAPIError(f"Failed to fetch commits: {e}") from e
++        except Exception as e:
++            # Catch any other unexpected errors (should be rare)
++            raise ForgejoAPIError(f"Unexpected error fetching commits: {e}") from e
++
++    async def _fetch_pull_request_reviews_and_comments(
++        self, owner: str, repo: str, pr_number: int
++    ) -> tuple[list[Review], list[ReviewComment]]:
++        """Fetch ALL reviews and comments (resolved and unresolved).
++
++        Important: Fetches all comments, not just open/unresolved ones,
++        to detect previously invalidated suggestions.
++
++        Args:
++            owner: Repository owner
++            repo: Repository name
++            pr_number: Pull request number
++
++        Returns:
++            Tuple of (reviews_list, all_comments)
++        """
++
++        try:
++            from itertools import islice
++
++            reviews_list = []
++            all_comments = []
++            max_to_fetch = self.config.max_comments_to_fetch
++            comments_fetched = 0
++
++            # Get recent reviews - iteration happens in thread
++            reviews: list[
++                PullReview
++            ] = await self.forgejo_client.repository.repo_list_pull_reviews(
++                owner=owner, repo=repo, index=pr_number
++            )
++            for review in islice(reviews, max_to_fetch):
++                if not (review.id and review.user and review.submitted_at):
++                    logger.warning(
++                        "id or user or submitted_at missing in list_pull_reviews API response "
++                        f"for {owner}/{repo} {str(pr_number)}"
++                    )
++                    continue
++                reviews_list.append(
++                    Review(
++                        id=review.id,
++                        author=review.user.login or "unknown",
++                        state=review.state or "",
++                        body=review.body or "",
++                        submitted_at=review.submitted_at.isoformat(),
++                    )
++                )
++                if comments_fetched >= max_to_fetch:
++                    continue
++                review_comments = await (
++                    self.forgejo_client.repository.repo_get_pull_review_comments(
++                        owner=owner, repo=repo, index=pr_number, id=review.id
++                    )
++                )
++                for comment in islice(review_comments, max_to_fetch - comments_fetched):
++                    if not (comment.id and comment.user and comment.created_at):
++                        logger.warning(
++                            "id or user or created_at missing in get_pull_review_comments API "
++                            f"response for {owner}/{repo} {str(pr_number)} {str(review.id)}"
++                        )
++                        continue
++                    # Skip comments from known bot accounts
++                    # FIXME Forgejo API does not flag bot accounts generically:
++                    # https://codeberg.org/forgejo/forgejo/issues/1867#issuecomment-8852412
++                    if (comment.user.login or "") == "forgejo-actions":
++                        continue
++
++                    all_comments.append(
++                        ReviewComment(
++                            id=comment.id,
++                            author=comment.user.login or "unknown",
++                            body=comment.body or "",
++                            created_at=comment.created_at.isoformat(),
++                            updated_at=comment.updated_at.isoformat()
++                            if comment.updated_at
++                            else None,
++                            path=comment.path or "",
++                            line=comment.position or 0,
++                            # FIXME: Forgejo API doesn't appear to provide this
++                            is_system=False,
++                            resolved=comment.resolver is not None,
++                        )
++                    )
++                    comments_fetched += 1
++                    if comments_fetched >= max_to_fetch:
++                        break
++
++            # Get recent issue comments (general PR comments) - iteration in thread
++            if comments_fetched < max_to_fetch:
++                issue_comments: list[
++                    Comment
++                ] = await self.forgejo_client.issue.get_comments(
++                    owner=owner, repo=repo, index=pr_number
++                )
++                for issue_comment in islice(
++                    issue_comments, max_to_fetch - comments_fetched
++                ):
++                    if not (
++                        issue_comment.id
++                        and issue_comment.user
++                        and issue_comment.created_at
++                    ):
++                        logger.warning(
++                            "id or user or created_at missing in get_comments API "
++                            f"response for {owner}/{repo} {str(pr_number)}"
++                        )
++                        continue
++                    # Skip comments from known bot accounts
++                    if issue_comment.user.login == "forgejo-actions":
++                        continue
++
++                    all_comments.append(
++                        ReviewComment(
++                            id=issue_comment.id,
++                            author=issue_comment.user.login or "unknown",
++                            body=issue_comment.body or "",
++                            created_at=issue_comment.created_at.isoformat(),
++                            updated_at=issue_comment.updated_at.isoformat()
++                            if issue_comment.updated_at
++                            else None,
++                            is_system=False,
++                        )
++                    )
++                    comments_fetched += 1
++                    if comments_fetched >= max_to_fetch:
++                        break
++
++            logger.info(
++                "Fetched PR reviews and comments",
++                reviews=len(reviews_list),
++                comments=len(all_comments),
++                max_fetched=self.config.max_comments_to_fetch,
++            )
++
++            return reviews_list, all_comments
++
++        except ApiError as e:
++            logger.warning("Failed to fetch reviews/comments", error=str(e))
++            return [], []
++
++    def _create_mock_pr_data(self, project_id: str, pr_number: int) -> PullRequestData:
++        """Create mock pull request data for dry run mode."""
++        mock_info = PullRequestInfo(
++            id=12345,
++            number=pr_number,
++            title=f"Mock PR {pr_number} for project {project_id}",
++            description="Mock pull request for testing",
++            source_branch="feature/mock-branch",
++            target_branch="main",
++            author="mock_user",
++            state="open",
++            web_url=f"https://codeberg.org/{project_id}/pull/{pr_number}",
++        )
++
++        mock_diffs = [
++            PullRequestDiff(
++                file_path="src/mock_file.py",
++                new_file=False,
++                diff="@@ -1,3 +1,3 @@\n def mock_function():\n-    return 'old'\n+    return 'new'",
++            )
++        ]
++
++        mock_commits = [
++            PullRequestCommit(
++                id="abc123456789",
++                title="Add world greeting feature",
++                message="Add world greeting feature\n\nImplements the requested greeting functionality to improve user experience.",
++                author_name="Mock Author",
++                author_email="author@example.com",
++                committed_date="2024-01-01T12:00:00Z",
++                short_id="abc1234",
++            )
++        ]
++
++        mock_reviews = [
++            Review(
++                id=1,
++                author="ai-code-review-bot-dry-run",
++                state="COMMENTED",
++                body="Previous AI review (mock)",
++                submitted_at="2024-01-01T10:00:00Z",
++            )
++        ]
++
++        mock_comments = [
++            ReviewComment(
++                id=1,
++                author="mock_user",
++                body="Thanks for the review! I've addressed the concerns about error handling.",
++                created_at="2024-01-01T11:00:00Z",
++                in_reply_to_id=1,
++            )
++        ]
++
++        return PullRequestData(
++            info=mock_info,
++            diffs=mock_diffs,
++            commits=mock_commits,
++            reviews=mock_reviews,
++            comments=mock_comments,
++        )
++
++    async def post_review(
++        self, project_id: str, pr_number: int, review_content: str
++    ) -> PostReviewResponse:
++        """Post review as a comment on the pull request.
++
++        Args:
++            project_id: Forgejo repository path (e.g., 'owner/repo')
++            pr_number: Pull request number
++            review_content: The markdown content of the review to post
++
++        Returns:
++            Response containing comment information
++
++        Raises:
++            ForgejoAPIError: If posting fails
++        """
++        if self.config.dry_run:
++            # Return mock data for dry run
++            return self._create_mock_note_data(project_id, pr_number, review_content)
++
++        owner, repo = project_id.split("/")
++        try:
++            # Create the comment on the PR
++            comment: Comment = await self.forgejo_client.issue.create_comment(
++                owner=owner,
++                repo=repo,
++                index=pr_number,
++                body=review_content,
++            )
++
++            # Return comment information
++            return PostReviewResponse(
++                id=str(comment.id),
++                url=comment.html_url or "",
++                created_at=comment.created_at.isoformat() if comment.created_at else "",
++                author=comment.user.login or "" if comment.user else "unknown",
++            )
++
++        except ApiError as e:
++            raise ForgejoAPIError(f"Failed to post review to Forgejo: {e}") from e
++        except Exception as e:
++            # Catch any other unexpected errors (should be rare)
++            raise ForgejoAPIError(f"Unexpected error posting review: {e}") from e
++
++    def _create_mock_note_data(
++        self, project_id: str, pr_number: int, review_content: str
++    ) -> PostReviewResponse:
++        """Create mock note data for dry run mode."""
++        return PostReviewResponse(
++            id="mock_comment_123",
++            url=f"https://codeberg.org/{project_id}/pull/{pr_number}#issuecomment-mock_123",
++            created_at="2024-01-01T12:00:00Z",
++            author="AI Code Review (DRY RUN)",
++            content_preview=review_content[:100] + "..."
++            if len(review_content) > 100
++            else review_content,
++        )
++
++    def get_platform_name(self) -> str:
++        """Get the name of the platform."""
++        return "forgejo"
++
++    def format_project_url(self, project_id: str) -> str:
++        """Format the project URL for Forgejo."""
++        return f"{self.config.forgejo_url}/repos/{project_id}"
+diff --git a/src/ai_code_review/core/review_engine.py b/src/ai_code_review/core/review_engine.py
+index 4cab4b2ccfb6e5025104cfad2fc06a576396fad5..6b57e1d1d115c6c6368c42367c543708c7d36e70 100644
+--- a/src/ai_code_review/core/review_engine.py
++++ b/src/ai_code_review/core/review_engine.py
+@@ -62,6 +62,10 @@ class ReviewEngine:
+             from ai_code_review.core.github_client import GitHubClient
+ 
+             return GitHubClient(config)
++        elif config.platform_provider == PlatformProvider.FORGEJO:
++            from ai_code_review.core.forgejo_client import ForgejoClient
++
++            return ForgejoClient(config)
+         elif config.platform_provider == PlatformProvider.LOCAL:
+             from ai_code_review.core.local_git_client import LocalGitClient
+ 
+diff --git a/src/ai_code_review/models/config.py b/src/ai_code_review/models/config.py
+index 301ce46fa26a713d9ce940389eb2bbcad9f68566..09796c54e8269acb438024e7e9dbfd21b026641d 100644
+--- a/src/ai_code_review/models/config.py
++++ b/src/ai_code_review/models/config.py
+@@ -4,6 +4,7 @@ from __future__ import annotations
+ 
+ import os
+ import re
++import string
+ from enum import Enum
+ from typing import Any
+ 
+@@ -46,6 +47,7 @@ _DEFAULT_EXCLUDE_PATTERNS = [
+ class PlatformProvider(str, Enum):
+     """Supported code hosting platforms."""
+ 
++    FORGEJO = "forgejo"
+     GITLAB = "gitlab"
+     GITHUB = "github"
+     LOCAL = "local"
+@@ -117,6 +119,7 @@ class SkipReviewConfig(BaseModel):
+             "greenkeeper[bot]",
+             "snyk-bot",
+             "auto-gitlab-bot",
++            "forgejo-actions",
+         ],
+         description="Known bot author patterns for automatic skipping",
+     )
+@@ -234,6 +237,14 @@ class Config(BaseSettings):
+         default=PlatformProvider.GITLAB, description="Code hosting platform to use"
+     )
+ 
++    # Forgejo configuration
++    forgejo_token: str | None = Field(
++        default=None, description="Forgejo Personal Access Token"
++    )
++    forgejo_url: str = Field(
++        default="https://codeberg.org/api/v1", description="Forgejo API URL"
++    )
++
+     # GitLab configuration
+     gitlab_token: str | None = Field(
+         default=None, description="GitLab Personal Access Token"
+@@ -351,18 +362,22 @@ class Config(BaseSettings):
+     # CI/CD automatic variables (platform-agnostic)
+     repository_path: str | None = Field(
+         default=None,
+-        validation_alias=AliasChoices("GITHUB_REPOSITORY", "CI_PROJECT_PATH"),
+-        description="Repository path (CI_PROJECT_PATH for GitLab, GITHUB_REPOSITORY for GitHub)",
++        validation_alias=AliasChoices(
++            "GITHUB_REPOSITORY", "FORGEJO_REPOSITORY", "CI_PROJECT_PATH"
++        ),
++        description="Repository path (CI_PROJECT_PATH for GitLab, GITHUB_REPOSITORY for GitHub, FORGEJO_REPOSITORY for Forgejo)",
+     )
+     pull_request_number: int | None = Field(
+         default=None,
+         validation_alias=AliasChoices("CI_MERGE_REQUEST_IID"),
+-        description="Pull/merge request number (CI_MERGE_REQUEST_IID for GitLab, derived from GitHub event)",
++        description="Pull/merge request number (CI_MERGE_REQUEST_IID for GitLab, derived from GitHub or Forgejo event)",
+     )
+     server_url: str | None = Field(
+         default=None,
+-        validation_alias=AliasChoices("GITHUB_SERVER_URL", "CI_SERVER_URL"),
+-        description="Platform server URL (CI_SERVER_URL for GitLab, GITHUB_SERVER_URL for GitHub)",
++        validation_alias=AliasChoices(
++            "GITHUB_SERVER_URL", "FORGEJO_SERVER_URL", "CI_SERVER_URL"
++        ),
++        description="Platform server URL (CI_SERVER_URL for GitLab, GITHUB_SERVER_URL for GitHub, FORGEJO_SERVER_URL for Forgejo)",
+     )
+ 
+     # Legacy GitLab CI/CD variables (for backward compatibility)
+@@ -409,7 +424,7 @@ class Config(BaseSettings):
+         default=False, description="Perform health check on all components and exit"
+     )
+     post: bool = Field(
+-        default=False, description="Post review as MR comment to GitLab/GitHub"
++        default=False, description="Post review as MR comment to GitLab/GitHub/Forgejo"
+     )
+ 
+     # Output options
+@@ -450,7 +465,7 @@ class Config(BaseSettings):
+         description="Configuration for automatic review skipping",
+     )
+ 
+-    @field_validator("gitlab_url", "github_url", "ollama_base_url")
++    @field_validator("gitlab_url", "github_url", "forgejo_url", "ollama_base_url")
+     @classmethod
+     def validate_url(cls, v: str) -> str:
+         """Validate URL format."""
+@@ -619,13 +634,49 @@ class Config(BaseSettings):
+             if not v.startswith(
+                 ("ghp_", "github_pat_", "gho_", "ghu_", "ghs_", "ghr_")
+             ):
+-                raise ValueError(
+-                    f"GitHub token format appears invalid: '{v[:12]}...'. "
+-                    "GitHub tokens typically start with: ghp_ (personal), "
+-                    "github_pat_ (fine-grained), gho_ (OAuth), ghu_ (user), "
+-                    "ghs_ (server), or ghr_ (refresh). "
+-                    "Get a valid token at: https://github.com/settings/tokens"
+-                )
++                # accept Forgejo token format too, as Forgejo sets
++                # GITHUB_TOKEN and this will choke on it otherwise
++                if len(v) != 40 or any(char not in string.hexdigits for char in v):
++                    raise ValueError(
++                        f"GitHub token format appears invalid: '{v[:12]}...'. "
++                        "GitHub tokens typically start with: ghp_ (personal), "
++                        "github_pat_ (fine-grained), gho_ (OAuth), ghu_ (user), "
++                        "ghs_ (server), or ghr_ (refresh). "
++                        "Get a valid token at: https://github.com/settings/tokens"
++                    )
++
++        return v
++
++    @field_validator("forgejo_token")
++    @classmethod
++    def validate_forgejo_token(cls, v: str | None) -> str | None:
++        """Validate Forgejo token format and provide helpful error message."""
++        if v is None:
++            return None
++
++        if not v.strip():
++            raise ValueError(
++                "Forgejo Personal Access Token cannot be empty. "
++                "Get one at: https://codeberg.org/user/settings/applications "
++                "with scopes: issue, read:repository, read:organization. "
++                "Set it as FORGEJO_TOKEN environment variable or in .env file."
++            )
++
++        v = v.strip()
++
++        # Allow test tokens (common patterns used in testing)
++        test_patterns = ("test", "mock", "fake", "dummy", "example")
++        if any(pattern in v.lower() for pattern in test_patterns):
++            return v
++
++        # Validate format for real Forgejo tokens
++        # They are 40-character long hex strings
++        if len(v) != 40 or any(char not in string.hexdigits for char in v):
++            raise ValueError(
++                f"Forgejo token format appears invalid: '{v[:12]}...'. "
++                "Forgejo API tokens are 40-character hexadecimal strings."
++                "Get a valid token at: https://codeberg.org/user/settings/applications"
++            )
+ 
+         return v
+ 
+@@ -704,6 +755,17 @@ class Config(BaseSettings):
+                         "with scopes: repo, read:org. "
+                         "Set it as GITHUB_TOKEN environment variable or in .env file."
+                     )
++            elif platform_provider == PlatformProvider.FORGEJO:
++                forgejo_token = data.get("forgejo_token")
++                if not forgejo_token or (
++                    isinstance(forgejo_token, str) and not forgejo_token.strip()
++                ):
++                    raise ValueError(
++                        "Forgejo Personal Access Token is required for Forgejo platform. "
++                        "Get one at: https://codeberg.org/user/settings/applications "
++                        "with scopes: issue, read:repository, read:organization. "
++                        "Set it as FORGEJO_TOKEN environment variable or in .env file."
++                    )
+ 
+             # Validate AI provider API key requirements (skip in dry run mode)
+             ai_provider_value = data.get("ai_provider")
+@@ -749,6 +811,7 @@ class Config(BaseSettings):
+ 
+         Detection logic:
+         - GitLab CI: GITLAB_CI=true AND CI_PROJECT_PATH exists (primary)
++        - Forgejo Actions: FORGEJO_ACTIONS=true AND FORGEJO_REPOSITORY exists (primary)
+         - GitHub Actions: GITHUB_ACTIONS=true AND GITHUB_REPOSITORY exists (primary)
+         - Fallback: GITHUB_REPOSITORY exists (GitHub) or CI_PROJECT_PATH exists (GitLab)
+         - Default: GitLab (backward compatibility)
+@@ -758,11 +821,19 @@ class Config(BaseSettings):
+         if os.getenv("GITLAB_CI") == "true" and os.getenv("CI_PROJECT_PATH"):
+             return PlatformProvider.GITLAB
+ 
++        # Forgejo Actions detection (require both FORGEJO_ACTIONS and data availability)
++        # must come before GitHub because Forgejo also sets GitHub variables for
++        # compatibility
++        if os.getenv("FORGEJO_ACTIONS") == "true" and os.getenv("FORGEJO_REPOSITORY"):
++            return PlatformProvider.FORGEJO
++
+         # GitHub Actions detection (require both GITHUB_ACTIONS and data availability)
+         if os.getenv("GITHUB_ACTIONS") == "true" and os.getenv("GITHUB_REPOSITORY"):
+             return PlatformProvider.GITHUB
+ 
+         # Fallback: detect by data availability only (safer for edge cases)
++        if os.getenv("FORGEJO_REPOSITORY"):
++            return PlatformProvider.FORGEJO
+         if os.getenv("GITHUB_REPOSITORY"):
+             return PlatformProvider.GITHUB
+         if os.getenv("CI_PROJECT_PATH"):
+@@ -883,6 +954,8 @@ class Config(BaseSettings):
+         # Return platform-specific default
+         if self.platform_provider == PlatformProvider.GITHUB:
+             return self.github_url
++        elif self.platform_provider == PlatformProvider.FORGEJO:
++            return self.forgejo_url
+         else:
+             return self.gitlab_url
+ 
+@@ -896,6 +969,10 @@ class Config(BaseSettings):
+             if not self.github_token:
+                 raise ValueError("GitHub token is required for GitHub platform")
+             return self.github_token
++        elif self.platform_provider == PlatformProvider.FORGEJO:
++            if not self.forgejo_token:
++                raise ValueError("Forgejo token is required for Forgejo platform")
++            return self.forgejo_token
+         else:
+             raise ValueError(f"Unsupported platform: {self.platform_provider}")
+ 
+@@ -1109,6 +1186,7 @@ class Config(BaseSettings):
+             # URL mappings
+             "gitlab_url": "gitlab_url",
+             "github_url": "github_url",
++            "forgejo_url": "forgejo_url",
+             # Processing limits
+             "max_tokens": "max_tokens",
+             "max_chars": "max_chars",
+@@ -1149,6 +1227,7 @@ class Config(BaseSettings):
+             "health_check",
+             "gitlab_token",
+             "github_token",
++            "forgejo_token",
+             "dry_run",
+             "ai_provider",
+             "ai_model",
+diff --git a/src/ai_code_review/utils/platform_exceptions.py b/src/ai_code_review/utils/platform_exceptions.py
+index afc5e7ee558fd880d9a8ff35af914877964e98b0..0a7f471a2d1e7b0ea46a242cba6790ee8be724ce 100644
+--- a/src/ai_code_review/utils/platform_exceptions.py
++++ b/src/ai_code_review/utils/platform_exceptions.py
+@@ -44,6 +44,18 @@ class GitHubAPIError(PlatformAPIError):
+         super().__init__(message, platform="github", response_code=response_code)
+ 
+ 
++class ForgejoAPIError(PlatformAPIError):
++    """Forgejo API error."""
++
++    def __init__(
++        self,
++        message: str,
++        response_code: int | None = None,
++    ) -> None:
++        """Initialize Forgejo API error."""
++        super().__init__(message, platform="forgejo", response_code=response_code)
++
++
+ class GitLocalError(PlatformAPIError):
+     """Local git operations error."""
+ 
+diff --git a/tests/unit/test_ai_code_review_forgejo_client.py b/tests/unit/test_ai_code_review_forgejo_client.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..3b0c4580ee9f71d3ddf7b225f4a13f3bb4e0c039
+--- /dev/null
++++ b/tests/unit/test_ai_code_review_forgejo_client.py
+@@ -0,0 +1,581 @@
++"""Tests for Forgejo client."""
++
++from __future__ import annotations
++
++import datetime
++from unittest.mock import AsyncMock, MagicMock, patch
++
++import pytest
++from pyforgejo.core import ApiError
++from pytest_httpx import HTTPXMock
++
++from ai_code_review.core.forgejo_client import ForgejoClient
++from ai_code_review.models.config import AIProvider, Config, PlatformProvider
++from ai_code_review.models.platform import PullRequestData
++from ai_code_review.utils.platform_exceptions import ForgejoAPIError
++
++
++@pytest.fixture
++def test_config() -> Config:
++    """Test configuration for Forgejo."""
++    return Config(
++        platform_provider=PlatformProvider.FORGEJO,
++        forgejo_token="0123456789abcdef0123456789abcdef01234567",
++        ai_provider=AIProvider.OLLAMA,  # Use Ollama to avoid API key requirement
++        ai_model="qwen2.5-coder:7b",
++        dry_run=False,
++    )
++
++
++@pytest.fixture
++def dry_run_config() -> Config:
++    """Dry run configuration for Forgejo."""
++    return Config(
++        platform_provider=PlatformProvider.FORGEJO,
++        forgejo_token="0123456789abcdef0123456789abcdef01234567",
++        ai_provider=AIProvider.OLLAMA,
++        ai_model="qwen2.5-coder:7b",
++        dry_run=True,
++    )
++
++
++class TestForgejoClient:
++    """Test Forgejo client functionality."""
++
++    def test_client_initialization(self, test_config: Config) -> None:
++        """Test Forgejo client initialization."""
++        client = ForgejoClient(test_config)
++
++        assert client.config == test_config
++        assert client._forgejo_client is None
++
++    def test_forgejo_client_property(self, test_config: Config) -> None:
++        """Test Forgejo client property creates instance."""
++        client = ForgejoClient(test_config)
++        # handle a CI quirk: when running in Gitlab CI,
++        # test_config.get_effective_server_url() is https://gitlab.com
++        # because CI_SERVER_URL is set, and we add /api/v1 to the
++        # end of that, so we need to expect that
++        expburl = test_config.get_effective_server_url()
++        if not expburl.endswith("/api/v1"):
++            expburl = f"{expburl}/api/v1"
++
++        with patch(
++            "ai_code_review.core.forgejo_client.AsyncPyforgejoApi"
++        ) as mock_forgejo:
++            _ = client.forgejo_client
++
++            mock_forgejo.assert_called_once_with(
++                api_key="0123456789abcdef0123456789abcdef01234567",
++                base_url=expburl,
++            )
++
++    def test_get_platform_name(self, test_config: Config) -> None:
++        """Test get platform name."""
++        client = ForgejoClient(test_config)
++        assert client.get_platform_name() == "forgejo"
++
++    @pytest.mark.asyncio
++    async def test_get_username(self, test_config: Config) -> None:
++        """Test get_authenticated_username."""
++        client = ForgejoClient(test_config)
++        mock_user = MagicMock()
++        mock_user.login_name = "test_author"
++        with patch.object(
++            client, "_forgejo_client", AsyncMock()
++        ) as mock_forgejo_client:
++            mock_forgejo_client.user.get_current.return_value = mock_user
++            username = await client.get_authenticated_username()
++            assert username == "test_author"
++            # test caching
++            username2 = await client.get_authenticated_username()
++            assert username2 == "test_author"
++            assert mock_forgejo_client.user.get_current.call_count == 1
++
++    @pytest.mark.asyncio
++    async def test_get_username_dry_run(self, dry_run_config: Config) -> None:
++        """Test get_authenticated_username (dry run mode)."""
++        client = ForgejoClient(dry_run_config)
++        username = await client.get_authenticated_username()
++        assert username == "ai-code-review-bot-dry-run"
++
++    def test_format_project_url(self, test_config: Config) -> None:
++        """Test format project URL."""
++        client = ForgejoClient(test_config)
++        url = client.format_project_url("owner/repo")
++        assert url == "https://codeberg.org/api/v1/repos/owner/repo"
++
++    @pytest.mark.asyncio
++    async def test_get_pull_request_data_dry_run(self, dry_run_config: Config) -> None:
++        """Test get pull request data in dry run mode."""
++        client = ForgejoClient(dry_run_config)
++
++        result = await client.get_pull_request_data("owner/repo", 123)
++
++        assert isinstance(result, PullRequestData)
++        assert result.info.number == 123
++        assert result.info.title == "Mock PR 123 for project owner/repo"
++        assert result.info.state == "open"
++        assert "owner/repo" in result.info.web_url
++        assert len(result.diffs) > 0
++        assert len(result.commits) > 0
++
++    @pytest.mark.asyncio
++    async def test_post_review_dry_run(self, dry_run_config: Config) -> None:
++        """Test post review in dry run mode."""
++        client = ForgejoClient(dry_run_config)
++
++        response = await client.post_review("owner/repo", 123, "Test review content")
++
++        assert response.id == "mock_comment_123"
++        assert "owner/repo" in response.url
++        assert "pull/123" in response.url
++        assert response.author == "AI Code Review (DRY RUN)"
++        assert response.content_preview == "Test review content"
++
++    @pytest.mark.asyncio
++    async def test_get_pull_request_data_api_call(
++        self, test_config: Config, httpx_mock: HTTPXMock
++    ) -> None:
++        """Test get pull request data with mocked API call."""
++        client = ForgejoClient(test_config)
++
++        # Mock Forgejo API objects
++        mock_user = MagicMock()
++        mock_user.login = "test_author"
++
++        mock_head = MagicMock()
++        mock_head.ref = "feature/test"
++
++        mock_base = MagicMock()
++        mock_base.ref = "main"
++
++        mock_pr = MagicMock()
++        mock_pr.id = 12345
++        mock_pr.number = 123
++        mock_pr.title = "Test PR"
++        mock_pr.body = "Test description"
++        mock_pr.head = mock_head
++        mock_pr.base = mock_base
++        mock_pr.user = mock_user
++        mock_pr.state = "open"
++        mock_pr.diff_url = "https://codeberg.org/owner/repo/pull/123.diff"
++        mock_pr.html_url = "https://codeberg.org/owner/repo/pull/123"
++        mock_pr.draft = True
++
++        # Mock file objects
++        mock_file = MagicMock()
++        mock_file.path = "test.py"
++        mock_file.is_added_file = False
++        mock_file.is_removed_file = False
++        mock_file.is_rename = False
++
++        # mock pull request diff
++        mock_diff = """
++diff --git a/test.py b/test.py
++index e7c65f2..f4c04f9 100644
++--- a/test.py
+++++ b/test.py
++@@ -1,2 +1,2 @@
++ def test():
++-    return 'old'
+++    return 'new'
++"""
++
++        # Mock commit objects
++        mock_commit_data = MagicMock()
++        mock_commit_data.sha = "abc123456789"
++        mock_commit_data.commit.message = "Test commit\n\nTest commit description"
++        mock_commit_data.commit.author.name = "Test Author"
++        mock_commit_data.commit.author.email = "test@example.com"
++        mock_commit_data.commit.author.date = "2024-01-01T12:00:00Z"
++
++        # Broken mock commit (for coverage, not realistically likely)
++        mock_commit_bad = MagicMock()
++        mock_commit_bad.commit.message = None
++
++        # Mock comment
++        mock_comment = MagicMock()
++        mock_comment.id = 15
++        mock_comment.user = mock_user
++        mock_comment.body = "test comment"
++        mock_comment.created_at = datetime.datetime.fromisoformat(
++            "2025-12-11T00:08:16+01:00"
++        )
++        mock_comment.updated_at = None
++
++        # Broken mock comment (unlikely)
++        mock_comment_bad = MagicMock()
++        mock_comment_bad.created_at = None
++
++        # Mock review
++        mock_review = MagicMock()
++        mock_review.id = 30
++        mock_review.user = mock_user
++        mock_review.state = "COMMENT"
++        mock_review.body = "test review"
++        mock_review.submitted_at = datetime.datetime.fromisoformat(
++            "2025-12-11T00:08:16+01:00"
++        )
++
++        # Broken mock review (unlikely)
++        mock_review_bad = MagicMock()
++        mock_review_bad.id = None
++
++        # Mock review comment
++        mock_rc = MagicMock()
++        mock_rc.id = 45
++        mock_rc.user = mock_user
++        mock_rc.body = "test review comment"
++        mock_rc.created_at = datetime.datetime.fromisoformat(
++            "2025-12-11T00:08:16+01:00"
++        )
++        mock_rc.updated_at = None
++        mock_rc.path = "test/path.py"
++        mock_rc.position = 10
++        mock_rc.resolver = None
++
++        # Broken mock review comment (unlikely)
++        mock_rc_bad = MagicMock()
++        mock_rc_bad.user = None
++
++        # Mock Forgejo client and repository
++        with patch.object(
++            client, "_forgejo_client", AsyncMock()
++        ) as mock_forgejo_client:
++            mock_forgejo_client.repository.repo_get_pull_request.return_value = mock_pr
++            mock_forgejo_client.repository.repo_get_pull_request_commits.return_value = [
++                mock_commit_data,
++                mock_commit_bad,
++            ]
++            mock_forgejo_client.issue.get_comments.return_value = [
++                mock_comment,
++                mock_comment_bad,
++            ]
++            mock_forgejo_client.repository.repo_list_pull_reviews.return_value = [
++                mock_review,
++                mock_review_bad,
++            ]
++            mock_forgejo_client.repository.repo_get_pull_review_comments.return_value = [
++                mock_rc,
++                mock_rc_bad,
++            ]
++
++            httpx_mock.add_response(text=mock_diff)
++            result = await client.get_pull_request_data("owner/repo", 123)
++
++            mock_forgejo_client.repository.repo_get_pull_request.assert_called_with(
++                "owner", "repo", 123
++            )
++            mock_forgejo_client.repository.repo_get_pull_request_commits.assert_called_with(
++                "owner", "repo", 123
++            )
++            mock_forgejo_client.issue.get_comments.assert_called_with(
++                owner="owner", repo="repo", index=123
++            )
++            mock_forgejo_client.repository.repo_list_pull_reviews.assert_called_with(
++                owner="owner", repo="repo", index=123
++            )
++            mock_forgejo_client.repository.repo_get_pull_review_comments.assert_called_with(
++                owner="owner", repo="repo", index=123, id=30
++            )
++
++            assert isinstance(result, PullRequestData)
++            assert result.info.number == 123
++            assert result.info.title == "Test PR"
++            assert result.info.description == "Test description"
++            assert result.info.source_branch == "feature/test"
++            assert result.info.target_branch == "main"
++            assert result.info.author == "test_author"
++            assert result.info.state == "open"
++            assert len(result.diffs) == 1
++            assert result.diffs[0].file_path == "test.py"
++            assert len(result.commits) == 1
++            assert result.commits[0].title == "Test commit"
++            assert len(result.reviews) == 1
++            assert result.reviews[0].body == "test review"
++            assert len(result.comments) == 2
++            assert result.comments[0].body == "test review comment"
++            assert result.comments[1].body == "test comment"
++
++    @pytest.mark.asyncio
++    async def test_post_review_api_call(self, test_config: Config) -> None:
++        """Test post review with mocked API call."""
++        client = ForgejoClient(test_config)
++        review_content = "## AI Code Review\n\nThis is a test review."
++
++        # Mock Forgejo API objects
++        mock_comment = MagicMock()
++        mock_comment.id = 789
++        mock_comment.html_url = (
++            "https://codeberg.org/owner/repo/pull/123#issuecomment-789"
++        )
++        mock_comment.created_at.isoformat.return_value = "2024-01-01T12:00:00Z"
++        mock_comment.user.login = "forgejo-actions"
++
++        with patch.object(
++            client, "_forgejo_client", AsyncMock()
++        ) as mock_forgejo_client:
++            mock_forgejo_client.issue.create_comment.return_value = mock_comment
++
++            result = await client.post_review("owner/repo", 123, review_content)
++
++            # Verify API calls
++            mock_forgejo_client.issue.create_comment.assert_called_once_with(
++                owner="owner", repo="repo", index=123, body=review_content
++            )
++
++            # Verify return data
++            assert result.id == "789"
++            assert (
++                result.url
++                == "https://codeberg.org/owner/repo/pull/123#issuecomment-789"
++            )
++            assert result.created_at == "2024-01-01T12:00:00Z"
++            assert result.author == "forgejo-actions"
++
++    @pytest.mark.asyncio
++    async def test_post_review_forgejo_error(self, test_config: Config) -> None:
++        """Test review posting with Forgejo API error."""
++        client = ForgejoClient(test_config)
++        review_content = "## AI Code Review\n\nThis is a test review."
++
++        with patch.object(
++            client, "_forgejo_client", AsyncMock()
++        ) as mock_forgejo_client:
++            mock_forgejo_client.issue.create_comment.side_effect = ApiError(
++                status_code=500, body="Forgejo API Error"
++            )
++
++            with pytest.raises(ForgejoAPIError) as exc_info:
++                await client.post_review("owner/repo", 123, review_content)
++
++            assert "Failed to post review to Forgejo" in str(exc_info.value)
++
++    @pytest.mark.asyncio
++    async def test_fetch_pull_request_diffs_success(
++        self, test_config: Config, httpx_mock: HTTPXMock
++    ) -> None:
++        """Test fetching PR diffs successfully."""
++        client = ForgejoClient(test_config)
++
++        mock_diff = """
++diff --git a/src/test.py b/src/test.py
++index e7c65f2..f4c04f9 100644
++--- a/src/test.py
+++++ b/src/test.py
++@@ -1,2 +1,2 @@
++ def test():
++-    return 'old'
+++    return 'new'
++diff --git a/src/new_file.py b/src/new_file.py
++new file mode 100644
++index 0000000..ffb3277
++--- /dev/null
+++++ b/src/new_file.py
++@@ -0,0 +1,2 @@
+++def new_function():
+++    return 'new'
++"""
++
++        httpx_mock.add_response(text=mock_diff)
++        mock_url = "https://codeberg.org/owner/repo/pull/123.diff"
++        diffs = await client._fetch_pull_request_diffs(mock_url)
++
++        assert len(diffs) == 2
++        assert diffs[0].file_path == "src/test.py"
++        assert diffs[0].new_file is False
++        assert diffs[1].file_path == "src/new_file.py"
++        assert diffs[1].new_file is True
++
++    @pytest.mark.asyncio
++    async def test_fetch_pull_request_commits_success(
++        self, test_config: Config
++    ) -> None:
++        """Test fetching PR commits successfully."""
++        client = ForgejoClient(test_config)
++
++        # Mock commit objects
++        mock_commit = MagicMock()
++        mock_commit.sha = "abc123456789"
++        mock_commit.commit.message = "Test commit\n\nTest description"
++        mock_commit.commit.author.name = "Test Author"
++        mock_commit.commit.author.email = "test@example.com"
++        mock_commit.commit.author.date = "2024-01-01T12:00:00Z"
++
++        with patch.object(
++            client, "_forgejo_client", AsyncMock()
++        ) as mock_forgejo_client:
++            mock_forgejo_client.repository.repo_get_pull_request_commits.return_value = [
++                mock_commit
++            ]
++            commits = await client._fetch_pull_request_commits("owner", "repo", "123")
++
++        assert len(commits) == 1
++        assert commits[0].id == "abc123456789"
++        assert commits[0].message == "Test commit\n\nTest description"
++        assert commits[0].author_name == "Test Author"
++        assert commits[0].author_email == "test@example.com"
++        assert commits[0].committed_date == "2024-01-01T12:00:00Z"
++
++    @pytest.mark.asyncio
++    async def test_get_pull_request_data_forgejo_error(
++        self, test_config: Config
++    ) -> None:
++        """Test Forgejo API error handling in get_pull_request_data."""
++        client = ForgejoClient(test_config)
++
++        with patch.object(
++            client, "_forgejo_client", AsyncMock()
++        ) as mock_forgejo_client:
++            mock_forgejo_client.repository.repo_get_pull_request.side_effect = ApiError(
++                status_code=429, body="Forgejo rate limit exceeded"
++            )
++
++            with pytest.raises(ForgejoAPIError) as exc_info:
++                await client.get_pull_request_data("owner/repo", 123)
++
++            assert "Failed to fetch PR data" in str(exc_info.value)
++            assert "Forgejo rate limit exceeded" in str(exc_info.value)
++
++    @pytest.mark.asyncio
++    async def test_fetch_commits_forgejo_error(self, test_config: Config) -> None:
++        """Test Forgejo API error handling in fetch commits."""
++        client = ForgejoClient(test_config)
++
++        with patch.object(
++            client, "_forgejo_client", AsyncMock()
++        ) as mock_forgejo_client:
++            mock_forgejo_client.repository.repo_get_pull_request_commits.side_effect = (
++                ApiError(status_code=500, body="Internal server error")
++            )
++
++            with pytest.raises(ForgejoAPIError) as exc_info:
++                await client._fetch_pull_request_commits("owner", "repo", 123)
++
++        assert "Failed to fetch commits" in str(exc_info.value)
++
++    @pytest.mark.asyncio
++    async def test_fetch_diffs_with_binary_files(
++        self, test_config: Config, httpx_mock: HTTPXMock
++    ) -> None:
++        """Test handling of binary files (no patch content)."""
++        client = ForgejoClient(test_config)
++
++        mock_diff = """
++diff --git a/src/test.py b/src/test.py
++index e7c65f2..f4c04f9 100644
++--- a/src/test.py
+++++ b/src/test.py
++@@ -1,2 +1,2 @@
++ def test():
++-    return 'old'
+++    return 'new'
++diff --git a/image.png b/image.png
++new file mode 100644
++index 0000000..d8d9881
++Binary files /dev/null and b/image.png differ
++"""
++
++        httpx_mock.add_response(text=mock_diff)
++        mock_url = "https://codeberg.org/owner/repo/pull/123.diff"
++        diffs = await client._fetch_pull_request_diffs(mock_url)
++
++        # Should only include file with patch content
++        assert len(diffs) == 1
++        assert diffs[0].file_path == "src/test.py"
++
++    @pytest.mark.asyncio
++    async def test_fetch_diffs_with_excluded_files(
++        self, test_config: Config, httpx_mock: HTTPXMock
++    ) -> None:
++        """Test file exclusion logic."""
++        # Add exclude patterns to config
++        test_config.exclude_patterns = ["*.log", "package-lock.json"]
++        client = ForgejoClient(test_config)
++
++        mock_diff = """
++diff --git a/src/test.py b/src/test.py
++index e7c65f2..f4c04f9 100644
++--- a/src/test.py
+++++ b/src/test.py
++@@ -1,2 +1,2 @@
++ def test():
++-    return 'old'
+++    return 'new'
++diff --git a/debug.log b/debug.log
++index e7c65f2..f4c04f9 100644
++--- a/debug.log
+++++ b/debug.log
++@@ -1,2 +1,2 @@
++ def test():
++-old log
+++new log
++"""
++
++        httpx_mock.add_response(text=mock_diff)
++        mock_url = "https://codeberg.org/owner/repo/pull/123.diff"
++        diffs = await client._fetch_pull_request_diffs(mock_url)
++
++        # Should only include non-excluded file
++        assert len(diffs) == 1
++        assert diffs[0].file_path == "src/test.py"
++
++    @pytest.mark.asyncio
++    async def test_fetch_diffs_max_files_limit(
++        self, test_config: Config, httpx_mock: HTTPXMock
++    ) -> None:
++        """Test max files limit enforcement."""
++        # Set low limit for testing
++        test_config.max_files = 2
++        client = ForgejoClient(test_config)
++
++        mock_diff = """
++diff --git a/src/test.py b/src/test.py
++index e7c65f2..f4c04f9 100644
++--- a/src/test.py
+++++ b/src/test.py
++@@ -1,2 +1,2 @@
++ def test():
++-    return 'old'
+++    return 'new'
++diff --git a/debug.log b/debug.log
++index e7c65f2..f4c04f9 100644
++--- a/debug.log
+++++ b/debug.log
++@@ -1,2 +1,2 @@
++ def test():
++-old log
+++new log
++diff --git a/src/new_file.py b/src/new_file.py
++new file mode 100644
++index 0000000..ffb3277
++--- /dev/null
+++++ b/src/new_file.py
++@@ -0,0 +1,2 @@
+++def new_function():
+++    return 'new'
++"""
++
++        httpx_mock.add_response(text=mock_diff)
++        mock_url = "https://codeberg.org/owner/repo/pull/123.diff"
++        diffs = await client._fetch_pull_request_diffs(mock_url)
++
++        # Should stop at max_files limit
++        assert len(diffs) == 2
++        assert diffs[0].file_path == "src/test.py"
++        assert diffs[1].file_path == "debug.log"
++
++    @pytest.mark.asyncio
++    async def test_fetch_diffs_forgejo_error(
++        self, test_config: Config, httpx_mock: HTTPXMock
++    ) -> None:
++        """Test Forgejo API error handling in fetch diffs."""
++        client = ForgejoClient(test_config)
++
++        httpx_mock.add_response(status_code=403, text="Forbidden access")
++        mock_url = "https://codeberg.org/owner/repo/pull/123.diff"
++        with pytest.raises(ForgejoAPIError) as exc_info:
++            await client._fetch_pull_request_diffs(mock_url)
++
++        assert "Failed to download PR diff" in str(exc_info.value)
+diff --git a/uv.lock b/uv.lock
+index 249167a3066f17a9412209dd342457e91904def1..1735d69d4efa0e9e121cdc84e4b1a020beceda7d 100644
+--- a/uv.lock
++++ b/uv.lock
+@@ -28,10 +28,12 @@ dependencies = [
+     { name = "pydantic" },
+     { name = "pydantic-core" },
+     { name = "pydantic-settings" },
++    { name = "pyforgejo" },
+     { name = "pygithub" },
+     { name = "python-gitlab" },
+     { name = "pyyaml" },
+     { name = "structlog" },
++    { name = "unidiff" },
+ ]
+ 
+ [package.optional-dependencies]
+@@ -56,6 +58,7 @@ dev = [
+     { name = "pytest" },
+     { name = "pytest-asyncio" },
+     { name = "pytest-cov" },
++    { name = "pytest-httpx" },
+     { name = "pytest-mock" },
+     { name = "ruff" },
+     { name = "twine" },
+@@ -63,6 +66,7 @@ dev = [
+     { name = "types-defusedxml" },
+     { name = "types-pyyaml" },
+     { name = "types-requests" },
++    { name = "types-unidiff" },
+ ]
+ 
+ [package.metadata]
+@@ -85,6 +89,7 @@ requires-dist = [
+     { name = "pydantic", specifier = ">=2.11.0,<3.0.0" },
+     { name = "pydantic-core", specifier = ">=2.33.0,<3.0.0" },
+     { name = "pydantic-settings", specifier = ">=2.10.1" },
++    { name = "pyforgejo", specifier = ">=2.0.0" },
+     { name = "pygithub", specifier = ">=2.1.0" },
+     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.4.0" },
+     { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.21.0" },
+@@ -96,6 +101,7 @@ requires-dist = [
+     { name = "structlog", specifier = ">=23.2.0" },
+     { name = "types-pyyaml", marker = "extra == 'dev'" },
+     { name = "types-requests", marker = "extra == 'dev'" },
++    { name = "unidiff", specifier = ">=0.7.0" },
+ ]
+ provides-extras = ["dev"]
+ 
+@@ -109,6 +115,7 @@ dev = [
+     { name = "pytest", specifier = ">=8.4.1" },
+     { name = "pytest-asyncio", specifier = ">=1.1.0" },
+     { name = "pytest-cov", specifier = ">=6.2.1" },
++    { name = "pytest-httpx", specifier = ">=0.33.0" },
+     { name = "pytest-mock", specifier = ">=3.14.1" },
+     { name = "ruff", specifier = ">=0.12.11" },
+     { name = "twine", specifier = ">=6.2.0" },
+@@ -116,6 +123,7 @@ dev = [
+     { name = "types-defusedxml", specifier = ">=0.7.0.20250822" },
+     { name = "types-pyyaml", specifier = ">=6.0.12.20250822" },
+     { name = "types-requests", specifier = ">=2.32.4.20250809" },
++    { name = "types-unidiff", specifier = ">=0.7.0.20240505" },
+ ]
+ 
+ [[package]]
+@@ -1791,6 +1799,20 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/58/f0/427018098906416f580e3cf1366d3b1abfb408a0652e9f31600c24a1903c/pydantic_settings-2.10.1-py3-none-any.whl", hash = "sha256:a60952460b99cf661dc25c29c0ef171721f98bfcb52ef8d9ea4c943d7c8cc796", size = 45235, upload-time = "2025-06-24T13:26:45.485Z" },
+ ]
+ 
++[[package]]
++name = "pyforgejo"
++version = "2.0.5"
++source = { registry = "https://pypi.org/simple" }
++dependencies = [
++    { name = "httpx" },
++    { name = "pydantic" },
++    { name = "python-dotenv" },
++]
++sdist = { url = "https://files.pythonhosted.org/packages/07/35/129cc77a677a5e30abd232a5bc135a6c2a64c9cb6d7ec552c19f88200f1f/pyforgejo-2.0.5.tar.gz", hash = "sha256:c590a0a5b00363397ca04e3921475f4ed978f875d15bde24e0e52209bba0b431", size = 245818, upload-time = "2025-09-29T16:12:37.76Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/12/d3/5df5d6fb02e4481fadc8fd6c2d687bf304d5e5868bc19a76291ec45608ad/pyforgejo-2.0.5-py3-none-any.whl", hash = "sha256:e8a3e7213068ae49c8341bd213baac4b8838b18d7c540c055bfeaf7dd4131ff4", size = 384052, upload-time = "2025-09-29T16:12:35.576Z" },
++]
++
+ [[package]]
+ name = "pygithub"
+ version = "2.7.0"
+@@ -1950,6 +1972,19 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/bc/16/4ea354101abb1287856baa4af2732be351c7bee728065aed451b678153fd/pytest_cov-6.2.1-py3-none-any.whl", hash = "sha256:f5bc4c23f42f1cdd23c70b1dab1bbaef4fc505ba950d53e0081d0730dd7e86d5", size = 24644, upload-time = "2025-06-12T10:47:45.932Z" },
+ ]
+ 
++[[package]]
++name = "pytest-httpx"
++version = "0.35.0"
++source = { registry = "https://pypi.org/simple" }
++dependencies = [
++    { name = "httpx" },
++    { name = "pytest" },
++]
++sdist = { url = "https://files.pythonhosted.org/packages/1f/89/5b12b7b29e3d0af3a4b9c071ee92fa25a9017453731a38f08ba01c280f4c/pytest_httpx-0.35.0.tar.gz", hash = "sha256:d619ad5d2e67734abfbb224c3d9025d64795d4b8711116b1a13f72a251ae511f", size = 54146, upload-time = "2024-11-28T19:16:54.237Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/b0/ed/026d467c1853dd83102411a78126b4842618e86c895f93528b0528c7a620/pytest_httpx-0.35.0-py3-none-any.whl", hash = "sha256:ee11a00ffcea94a5cbff47af2114d34c5b231c326902458deed73f9c459fd744", size = 19442, upload-time = "2024-11-28T19:16:52.787Z" },
++]
++
+ [[package]]
+ name = "pytest-mock"
+ version = "3.14.1"
+@@ -2340,6 +2375,15 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/2b/6f/ec0012be842b1d888d46884ac5558fd62aeae1f0ec4f7a581433d890d4b5/types_requests-2.32.4.20250809-py3-none-any.whl", hash = "sha256:f73d1832fb519ece02c85b1f09d5f0dd3108938e7d47e7f94bbfa18a6782b163", size = 20644, upload-time = "2025-08-09T03:17:09.716Z" },
+ ]
+ 
++[[package]]
++name = "types-unidiff"
++version = "0.7.0.20240505"
++source = { registry = "https://pypi.org/simple" }
++sdist = { url = "https://files.pythonhosted.org/packages/eb/d1/4b37a70258d01b40c0cca6f8e4df602d42e507846483defb90ef38b7e41e/types-unidiff-0.7.0.20240505.tar.gz", hash = "sha256:cf15201c7af233f8380f1a289d169e1f740a67369ff60ab7bd0a131402b33194", size = 3348, upload-time = "2024-05-05T02:21:10.193Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/7b/7b/6696a3f4cce6c9deadf7018cf5c21fa5c2b2a5f92e74ae10147eda80572d/types_unidiff-0.7.0.20240505-py3-none-any.whl", hash = "sha256:f01ac7bf7fe4094b3c97c8f08125278ea71455c18d984a980569aef2ab6a768b", size = 4459, upload-time = "2024-05-05T02:21:08.597Z" },
++]
++
+ [[package]]
+ name = "typing-extensions"
+ version = "4.15.0"
+@@ -2374,6 +2418,15 @@ wheels = [
+     { url = "https://files.pythonhosted.org/packages/17/69/cd203477f944c353c31bade965f880aa1061fd6bf05ded0726ca845b6ff7/typing_inspection-0.4.1-py3-none-any.whl", hash = "sha256:389055682238f53b04f7badcb49b989835495a96700ced5dab2d8feae4b26f51", size = 14552, upload-time = "2025-05-21T18:55:22.152Z" },
+ ]
+ 
++[[package]]
++name = "unidiff"
++version = "0.7.5"
++source = { registry = "https://pypi.org/simple" }
++sdist = { url = "https://files.pythonhosted.org/packages/a3/48/81be0ac96e423a877754153699731ef439fd7b80b4c8b5425c94ed079ebd/unidiff-0.7.5.tar.gz", hash = "sha256:2e5f0162052248946b9f0970a40e9e124236bf86c82b70821143a6fc1dea2574", size = 20931, upload-time = "2023-03-10T01:05:39.185Z" }
++wheels = [
++    { url = "https://files.pythonhosted.org/packages/8a/54/57c411a6e8f7bd7848c8b66e4dcaffa586bf4c02e63f2280db0327a4e6eb/unidiff-0.7.5-py2.py3-none-any.whl", hash = "sha256:c93bf2265cc1ba2a520e415ab05da587370bc2a3ae9e0414329f54f0c2fc09e8", size = 14386, upload-time = "2023-03-10T01:05:36.594Z" },
++]
++
+ [[package]]
+ name = "urllib3"
+ version = "2.5.0"
