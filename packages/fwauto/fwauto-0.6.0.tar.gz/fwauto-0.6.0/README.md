@@ -1,0 +1,220 @@
+## Installation
+
+### Install as Global Tool (Recommended)
+
+使用 `uv tool install` 安裝，讓 fwauto 在任意目錄都可執行：
+
+```bash
+cd /path/to/fwauto
+uv tool install --force --prerelease=allow --editable .
+```
+
+> [!NOTE] 安裝前記得先 `git pull` 確保程式是最新版的
+
+安裝後，可在任意目錄執行：
+
+```bash
+cd /path/to/your/stm32-project/examples/實例 xxx
+fwauto build        # 從當前目錄 .fwauto/
+fwauto run          # Build + Deploy
+fwauto init         # 初始化專案
+```
+
+解除安裝：
+
+```bash
+uv tool uninstall fwauto
+```
+
+### Development Mode
+
+如果不想全域安裝，在開發目錄使用 `uv run`：
+
+```bash
+cd /path/to/fwauto
+uv run fwauto build
+uv run fwauto deploy
+uv run fwauto run
+uv run fwauto log "有任何 error 嗎?"
+```
+
+## Run
+
+### 使用全域安裝後
+
+```bash
+fwauto build        # 從當前目錄向上搜尋 .fwauto/
+fwauto deploy        # 部署韌體
+fwauto run          # Build + Deploy
+fwauto init         # 初始化新專案
+```
+
+### Development Mode
+
+```bash
+uv run fwauto build
+uv run fwauto deploy
+uv run fwauto run
+uv run fwauto log "有任何 error 嗎?"
+```
+
+### AI Test
+
+AI Brain Regression Test 用於驗證 AI 自動修復編譯錯誤的能力。測試會自動注入各種常見錯誤，並驗證 AI 是否能成功修復。
+
+#### 環境需求
+
+測試執行前需要完整的開發環境：
+
+1. **作業系統**: Windows 11
+2. **編譯器**: Keil uVision 5 (安裝於 `C:\Keil_v5\UV4\uv4.exe`)
+3. **Claude Code SDK**: 已正確設定 API key 和環境變數
+4. **Python 環境**: 已安裝 uv 並執行 `uv sync`
+5. **STM32 測試專案**: 必須存在於 `C:\STM32F407\examples\實例1 跑馬燈實例`
+   - 包含完整專案結構（USER/, HARDWARE/, OBJ/ 等）
+   - 專案檔案 `USER/LED.uvprojx` 可正常編譯
+
+#### 測試覆蓋範圍
+
+測試會自動注入 10 種常見錯誤類型：
+
+- `function_name_typo`: 函數名稱拼寫錯誤（大小寫）
+- `missing_include`: 缺少標頭檔案引入
+- `missing_semicolon`: 缺少分號
+- `undefined_variable`: 使用未定義的變數
+- `type_mismatch`: 型別不匹配
+- `wrong_parameter_count`: 函數參數數量錯誤
+- `bracket_mismatch`: 括號不匹配
+- `comment_syntax_error`: 註解語法錯誤
+- `duplicate_definition`: 重複定義變數
+- `case_sensitive_error`: 大小寫敏感錯誤
+
+#### 執行方式
+
+**方式一：使用 Script（推薦）**
+
+```bash
+# 小型測試套件（3 種錯誤 × 2 次 = 6 測試，約 3-5 分鐘）
+scripts\run_regression_tests.bat small
+
+# 完整測試套件（10 種錯誤 × 10 次 = 100 測試，約 50-60 分鐘）
+scripts\run_regression_tests.bat full
+
+# 生成成功率報告（基於已執行的測試結果）
+scripts\run_regression_tests.bat report
+```
+
+**方式二：直接使用 pytest**
+
+```bash
+# 執行小型測試套件
+uv run pytest tests\integration\test_ai_regression.py::test_ai_fixes_error_small -v -s -m slow --tb=short
+
+# 執行完整測試套件
+uv run pytest tests\integration\test_ai_regression.py::test_ai_fixes_error_full -v -s -m slow --tb=short
+
+# 生成成功率報告
+uv run pytest tests\integration\test_ai_regression.py::test_overall_success_rate -v --tb=short
+```
+
+#### 執行流程
+
+每個測試案例會執行以下步驟：
+
+1. **複製專案**: 從模板專案建立獨立的測試環境
+2. **注入錯誤**: 自動修改 `USER/main.c`，注入特定錯誤
+3. **首次編譯**: 驗證錯誤確實存在（預期失敗）
+4. **AI 修復**: 呼叫 Claude Code SDK 分析並修復錯誤
+5. **再次編譯**: 驗證修復結果（預期成功）
+6. **記錄結果**: 儲存測試結果到 JSON 檔案
+7. **清理環境**: 恢復原始檔案
+
+#### 執行輸出
+
+**即時輸出範例**：
+
+```
+=====================================
+AI Brain Regression Tests
+=====================================
+
+Checking environment
+Environment OK
+
+Running SMALL regression tests (3 error types x 2 runs = 6 tests)
+This will take approximately 3-5 minutes
+
+test_ai_regression.py::test_ai_fixes_error_small[function_name_typo-0]
+✅ SUCCESS: function_name_typo (run 1) - 28.3s
+
+test_ai_regression.py::test_ai_fixes_error_small[function_name_typo-1]
+✅ SUCCESS: function_name_typo (run 2) - 25.7s
+
+test_ai_regression.py::test_ai_fixes_error_small[missing_semicolon-0]
+❌ FAILED: missing_semicolon (run 1) - 32.1s
+```
+
+**測試結果檔案位置**：
+
+```
+C:\Users\kentc\AppData\Local\Temp\pytest-of-kentc\regression_results\
+├── function_name_typo_run0.json
+├── function_name_typo_run1.json
+├── missing_semicolon_run0.json
+└── ...
+```
+
+每個 JSON 檔案包含詳細的測試資訊：
+
+- 錯誤類型和執行編號
+- 成功/失敗狀態
+- 執行時間
+- AI 的回應內容
+- 編譯錯誤訊息
+- 最終編譯日誌
+
+#### 成功率報告
+
+執行 `report` 命令會生成統計報告：
+
+```bash
+scripts\run_regression_tests.bat report
+```
+
+**報告範例**：
+
+```
+============================================================
+AI Brain Regression Test Report
+============================================================
+Total Tests: 100
+Successful: 78
+Failed: 22
+Overall Success Rate: 78.0%
+
+Per Error Type:
+------------------------------------------------------------
+  function_name_typo             10/10 (100.0%)
+  missing_include                 8/10 (80.0%)
+  missing_semicolon               9/10 (90.0%)
+  undefined_variable              7/10 (70.0%)
+  type_mismatch                   6/10 (60.0%)
+  wrong_parameter_count           8/10 (80.0%)
+  bracket_mismatch                7/10 (70.0%)
+  comment_syntax_error            9/10 (90.0%)
+  duplicate_definition            8/10 (80.0%)
+  case_sensitive_error            6/10 (60.0%)
+============================================================
+```
+
+**基準線要求**：整體成功率須 ≥ 70%
+
+如果低於此基準線，表示 AI Brain 的 prompt 需要改進。
+
+#### 注意事項
+
+1. **執行時間**: 完整測試套件需要約 1 小時，建議在不使用電腦時執行
+2. **環境隔離**: 每個測試使用獨立的臨時目錄，不會影響原始專案
+3. **錯誤追蹤**: 測試失敗時，`regression_test_output.log` 會記錄詳細資訊
+4. **重複執行**: 可多次執行以收集更多統計資料
+5. **真實 SDK**: 測試使用真實的 Claude Code SDK，會消耗 API quota
