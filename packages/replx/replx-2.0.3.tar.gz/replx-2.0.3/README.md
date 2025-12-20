@@ -1,0 +1,538 @@
+# replx - Modern MicroPython CLI with Agent Architecture
+
+[![PyPI version](https://badge.fury.io/py/replx.svg)](https://badge.fury.io/py/replx)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+**replx** is a fast, modern command-line tool for MicroPython development. Version 2.0 introduces a **multi-agent architecture** that maintains persistent connections to your device, eliminating connection overhead and enabling instant command execution.
+
+## What's New in v2.0
+
+- **Agent Architecture** - Background agent maintains persistent device connections
+- **Zero Connection Overhead** - Agent handles all serial communication
+- **Instant Commands** - No more waiting for REPL initialization
+- **TiCLE Board Support** - Optimized for Hanback Electronics TiCLE (RP2350)
+
+## Key Features
+
+- **Persistent Connection** - Agent server maintains device connection in background
+- **Smart File Sync** - Upload files & directories with automatic `.mpy` compilation  
+- **VS Code Integration** - One command to set up your entire dev environment
+- **Device Discovery** - Auto-detect connected MicroPython boards
+- **Library Management** - Install packages from GitHub with versioning
+- **Beautiful UI** - Rich terminal output with progress bars and panels
+- **Interactive Shell** - Built-in shell for quick device management
+
+---
+
+## Quick Start
+
+### Installation
+```bash
+pip install replx
+```
+
+**Requirements:**
+- Python 3.10 or newer
+- MicroPython device (TiCLE, ESP32, Pico, etc.)
+- Supported OS: Windows, Linux, macOS
+
+### First Steps
+
+**1. Find your device:**
+```bash
+replx scan
+```
+
+**2. Setup workspace and connect:**
+```bash
+replx --port COM10 setup
+```
+This command:
+- Starts the background agent
+- Connects to your device
+- Creates VS Code configuration files
+- Downloads type stubs for your device
+
+**3. Run commands instantly:**
+```bash
+replx run hello.py      # Execute script
+replx ls                # List files
+replx repl              # Interactive REPL
+```
+
+**4. Release the port when done:**
+```bash
+replx free
+```
+
+---
+
+## Agent Architecture
+
+The v2.0 agent architecture provides significant performance improvements:
+
+```
++-------------+    UDP/IPC    +---------------+      Serial      +----------+
+|  replx CLI  |<------------>| Agent Server  |<---------------->|  Device  |
++-------------+               +---------------+                  +----------+
+                              (Background Process)
+```
+
+### How It Works
+
+1. **`replx setup`** starts a background agent that connects to your device
+2. The agent maintains a persistent serial connection
+3. All CLI commands communicate with the agent via UDP
+4. Commands execute instantly without connection overhead
+
+### Agent Management
+
+#### `free` - Release the port
+```bash
+replx free
+```
+Stops the agent and releases the serial port for other applications.
+The next replx command will automatically reconnect.
+
+---
+
+## Common Workflows
+
+### Upload & Run a Script
+```bash
+# Upload and execute in one command
+replx run my_script.py
+
+# Or use the shortcut (auto-detects .py files)
+replx my_script.py
+
+# Run with echo enabled for interactive scripts
+replx my_script.py -e
+```
+
+### Sync Your Project
+```bash
+# Upload entire directory with automatic compilation
+replx put ./src /lib
+
+# Install all libraries
+replx install
+
+# Update library cache from GitHub
+replx update
+```
+
+### Interactive Development
+```bash
+# Open interactive REPL
+replx repl
+
+# Or use the built-in shell
+replx shell
+```
+
+---
+
+## Command Reference
+
+### Global Options
+
+| Option | Description |
+|--------|-------------|
+| `-p, --port` | Serial port name (or set via `.vscode/.replx`) |
+| `-c, --command` | Execute raw command on device |
+| `-v, --version` | Show version and exit |
+| `--help` | Display help message |
+
+**Tip:** After running `replx --port COM10 setup`, the port is saved and you don't need to specify it again.
+
+---
+
+### Setup & Connection
+
+#### `setup` - Initialize workspace and connect
+```bash
+replx --port COM10 setup
+replx -p /dev/ttyACM0 setup
+```
+
+Creates `.vscode/` with:
+- `.env` - Connection configuration
+- `tasks.json` - Build task with `replx` runner (press `Ctrl+Shift+B`)
+- `settings.json` - Python path & linting config
+- Type stubs for device-specific APIs
+
+#### `free` - Release the serial port
+```bash
+replx free
+```
+Stops the agent and releases the port. The next command will auto-reconnect.
+
+---
+
+### Device Discovery
+
+#### `scan` - Detect connected boards
+```bash
+replx scan
+```
+
+**Example output:**
+```
+PORT     VER     DATE        DEVICE
+COM10    v1.27   2025-01-15  TiCLE
+COM9     v1.26   2024-12-20  esp32
+```
+
+---
+
+### File Operations
+
+#### `ls` - List files
+```bash
+replx ls                # List root directory
+replx ls /lib           # List specific directory
+replx ls -r /           # List recursively
+```
+
+#### `cat` - Display file content
+```bash
+replx cat /main.py              # Show file contents
+replx cat -n /main.py           # Show with line numbers
+replx cat -L 10:20 /main.py     # Show lines 10 to 20
+```
+
+#### `get` - Download from device
+```bash
+replx get /main.py ./           # Download to current directory
+replx get /lib/*.py ./backup/   # Download multiple files
+```
+
+#### `put` - Upload to device
+```bash
+replx put main.py /             # Upload to device root
+replx put ./src /lib            # Upload directory
+replx put *.py /lib             # Upload multiple files
+```
+
+**Tip:** Python files are automatically compiled to `.mpy` for faster execution.
+
+#### `rm` - Remove files/directories
+```bash
+replx rm /test.py               # Remove single file
+replx rm -r /lib/backup         # Remove directory recursively
+replx rm /*.pyc                 # Remove with wildcard
+```
+
+#### `mkdir` - Create directory
+```bash
+replx mkdir /data
+replx mkdir /lib/sensors
+```
+
+#### `cp` - Copy files on device
+```bash
+replx cp /main.py /backup.py        # Copy file
+replx cp -r /lib /lib_backup        # Copy directory
+```
+
+#### `mv` - Move/rename files
+```bash
+replx mv /old.py /new.py            # Rename file
+replx mv /test.py /backup/          # Move to directory
+```
+
+#### `touch` - Create empty file
+```bash
+replx touch /config.json
+```
+
+---
+
+### Execute & Debug
+
+#### `run` - Execute script on device
+```bash
+replx run test.py              # Run local script
+replx run -d main.py           # Run from device storage
+replx run -e sensor.py         # Run with echo enabled
+replx run -n app.py            # Non-interactive (detach)
+```
+
+**Options:**
+- `-d, --device` - Run script from device storage (not local)
+- `-e, --echo` - Show typed characters (for interactive scripts)
+- `-n, --non-interactive` - Run without interaction (detach)
+
+**Shortcut:** Files ending in `.py` auto-invoke `run`:
+```bash
+replx test.py           # Same as: replx run test.py
+replx -e test.py        # Same as: replx run -e test.py
+```
+
+#### `repl` - Interactive REPL
+```bash
+replx repl
+```
+Type `exit` and press Enter to exit.
+
+#### `exec` - Execute single command
+```bash
+replx exec "print('hello')"
+replx -c "import machine; print(machine.freq())"
+```
+
+---
+
+### Device Management
+
+#### `info` - Show device information
+```bash
+replx info
+```
+
+**Example output:**
+```
+TiCLE (RP2350)
+   Serial:  COM10
+   Version: 1.27.0
+
+Memory
+   [==================          ] 62%
+   Used: 128 KB / 206 KB
+
+Filesystem
+   [========                    ] 25%
+   Used: 512 KB / 2048 KB
+```
+
+#### `reset` - Soft reset device
+```bash
+replx reset
+```
+
+#### `format` - Format filesystem
+```bash
+replx format
+```
+**Warning:** This erases all files on the device!
+
+---
+
+### Library Management
+
+#### `update` - Sync library cache
+```bash
+replx update                    # Update for connected device
+replx update RP2350             # Update for specific core
+replx update --owner PlanXLab --repo replx_libs --ref main
+```
+
+Updates local cache (`~/.replx/`) from GitHub registry.
+
+#### `install` - Install libraries
+```bash
+replx install                   # Install all (core + device libs)
+replx install core/             # Install only core libraries
+replx install device/           # Install only device-specific libs
+replx install ./mylib.py        # Install single local file
+replx install https://raw.../sensor.py  # Install from URL
+```
+
+**Install targets:**
+
+| SPEC | What gets installed |
+|------|---------------------|
+| *(empty)* | All core + device libraries |
+| `core/` | Core libraries only |
+| `device/` | Device-specific libraries |
+| `./foo.py` | Single file to `/lib/foo.mpy` |
+| `https://...` | File from URL to `/lib/*.mpy` |
+
+#### `search` - Find libraries
+```bash
+replx search                    # List all available
+replx search bme680             # Search specific library
+```
+
+**Example output:**
+```
+SCOPE   TARGET  VER   FILE
+core    RP2350  1.5   machine.py
+device  ticle   2.1   sensors/bme680.py
+```
+
+---
+
+### Interactive Shell
+
+#### `shell` - Enter interactive shell mode
+```bash
+replx shell
+```
+
+**Built-in commands:**
+```
+clear, ls, cd, cat, get, put, rm, cp, mv, mkdir, touch, info, exec, repl, pwd, exit
+```
+
+**Example session:**
+```
+TiCLE:/ > ls
+  512  main.py
+ 1024  lib/
+  
+TiCLE:/ > cd lib
+
+TiCLE:/lib > cat config.json
+{"version": "1.0"}
+
+TiCLE:/lib > exit
+```
+
+---
+
+## Error Messages
+
+replx automatically reformats MicroPython tracebacks with local file paths:
+
+```
+-------------------------- Traceback --------------------------
+  File "C:\projects\myapp\sensor.py", line 22
+    sensor.read()
+ValueError: I2C bus error
+```
+
+---
+
+## Configuration
+
+### Auto-loaded `.vscode/.replx`
+
+replx automatically loads `.vscode/.replx` if present in current or parent directories.
+This file is created by `replx setup`:
+
+```ini
+[COM10]
+CORE=RP2350
+DEVICE=ticle
+AGENT_PORT=49152
+
+[DEFAULT]
+CONNECTION=COM10
+```
+
+---
+
+## Supported Devices
+
+replx works with any MicroPython device that supports raw REPL mode:
+
+### Primary Support
+- **TiCLE** (RP2350) - Hanback Electronics educational board
+- **TiCLE-Lite** - Compact version
+- **TiCLE-Sensor** - Sensor-focused variant
+
+### Also Compatible
+- Raspberry Pi Pico / Pico W / Pico 2
+- ESP32 / ESP32-S3 / ESP32-C6
+- RP2040/RP2350-based boards
+- Custom MicroPython boards
+
+---
+
+## Troubleshooting
+
+| Problem | Cause | Solution |
+|---------|-------|----------|
+| `No device connected` | Wrong port or device unplugged | Run `replx scan` to find port |
+| `Could not enter raw REPL` | Device busy or in error state | Reset device and retry |
+| `Permission denied` | Port access restricted | Linux/Mac: Add user to `dialout` group. Windows: Check driver |
+| `Timeout during upload` | Serial buffer overflow | Reduce file size or check USB cable |
+
+---
+
+## Advanced Usage
+
+### Direct Command Execution
+```bash
+# Execute Python code directly
+replx -c "import machine; print(machine.unique_id())"
+
+# One-liner device info
+replx -c "import sys; print(sys.implementation)"
+```
+
+### Custom GitHub Repository
+```bash
+# Use your own library repo
+replx update --owner myorg --repo my_micropython_libs --ref develop
+replx install core/
+```
+
+### Batch Operations
+```bash
+# Upload multiple directories
+replx put ./lib /lib
+replx put ./config /config
+
+# Run tests
+replx run tests/test_sensor.py -n
+replx run tests/test_display.py -n
+```
+
+---
+
+## Auto-Update Check
+
+replx checks PyPI for new versions on startup (max once per day):
+
+```
+New version available: 2.1.0
+Run: pip install --upgrade replx
+```
+
+Suppressed for: `search`, `update`, `scan` commands.
+
+---
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+**Development setup:**
+```bash
+git clone https://github.com/PlanXLab/replx.git
+cd replx
+pip install -e .
+```
+
+---
+
+## Support
+
+- **Issues:** [GitHub Issues](https://github.com/PlanXLab/replx/issues)
+- **Documentation:** This README
+- **Discussions:** [GitHub Discussions](https://github.com/PlanXLab/replx/discussions)
+
+---
+
+## Acknowledgments
+
+Built with:
+- [Typer](https://typer.tiangolo.com/) - CLI framework
+- [Rich](https://rich.readthedocs.io/) - Terminal formatting
+- [pySerial](https://pyserial.readthedocs.io/) - Serial communication
+- [mpy-cross](https://github.com/micropython/micropython) - MicroPython cross-compiler
+
+---
+
+**Made with love by PlanX Lab**
+
