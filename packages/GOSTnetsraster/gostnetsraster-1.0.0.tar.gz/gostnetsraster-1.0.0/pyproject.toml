@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=64.0", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "GOSTnetsraster"
+dynamic = ["version", "dependencies"]
+description = 'Generate travel time rasters from friction surfaces'
+readme = { file = "README.md", content-type = "text/markdown" }
+license = { file = "LICENSE" }
+authors = [{ name = "World Bank", email = "github@worldbank.org" }]
+maintainers = [
+	{ name = "Benjamin P. Stewart", email = "bstewart@worldbankgroup.org" }
+]
+classifiers = [
+	"Programming Language :: Python :: 3 :: Only",
+	"Development Status :: 3 - Alpha",
+	"Intended Audience :: Developers",
+	"Operating System :: OS Independent",
+]
+requires-python = ">=3.9"
+
+[project.urls]
+"Homepage" = "https://github.com/worldbank/GOSTNets_Raster"
+"Bug Reports" = "https://github.com/worldbank/GOSTNets_Raster/issues"
+"Source" = "https://github.com/worldbank/GOSTNets_Raster"
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.dynamic.optional-dependencies]
+dev = { file = ["requirements-dev.txt"] }
+
+[tool.setuptools_scm]
+
+[tool.ruff]
+exclude = ["__init__.py"]
+
+[tool.coverage.run]
+omit = [
+	"tests/*",
+	"docs/*",
+	"Tutorials/*",
+	"src/GOSTnets/__init__.py",
+]

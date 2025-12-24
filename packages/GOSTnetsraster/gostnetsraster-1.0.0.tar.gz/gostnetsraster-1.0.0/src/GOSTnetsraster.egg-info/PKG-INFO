@@ -1,0 +1,60 @@
+Metadata-Version: 2.4
+Name: GOSTnetsraster
+Version: 1.0.0
+Summary: Generate travel time rasters from friction surfaces
+Author-email: World Bank <github@worldbank.org>
+Maintainer-email: "Benjamin P. Stewart" <bstewart@worldbankgroup.org>
+License: 
+        The MIT License (MIT)
+        Copyright (c) 2020, Data Partnership
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+        
+Project-URL: Homepage, https://github.com/worldbank/GOSTNets_Raster
+Project-URL: Bug Reports, https://github.com/worldbank/GOSTNets_Raster/issues
+Project-URL: Source, https://github.com/worldbank/GOSTNets_Raster
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: rasterio
+Requires-Dist: geopandas
+Requires-Dist: pandas
+Requires-Dist: numpy
+Requires-Dist: osmnx
+Requires-Dist: scikit-image
+Requires-Dist: pyproj
+Requires-Dist: scipy
+Requires-Dist: pandana
+Requires-Dist: GOSTNets
+Dynamic: license-file
+
+# GOSTNets Raster Tools
+
+This repository includes tools and tutorials for generating travel time/market access data from raster-based measures of travel friction. Foundationally, this builds upon the [global friction surface](https://developers.google.com/earth-engine/datasets/catalog/Oxford_MAP_friction_surface_2019) generated as part of the [Malaria Atlas Project](https://malariaatlas.org/), but includes functions for generating custom travel time surfaces based on landcover and road networks (notably OSM).
+
+Instructions on use are best found in the Notebooks folder, where jupyter notebooks explore the basic functions.
+![Example of mapping access to health facilities](https://github.com/worldbank/GOSTNets_Raster/blob/master/images/TT_any_facility.png)
+
+## Installation tips
+
+The following instructions have been helpful for installing in a conda environment on a windows machine, so your results may very. These are also specific to our organizational security environment.
+
+```powershell
+C:\> conda create --name gnr python=3.12
+
+C:\> conda activate gnr
+
+[gnr] pip install geopandas ipykernel
+
+[gnr] C:\Path_to_GOSTnetsraster code\> pip install . -e
+
+[gnr] C:\Path_to_GOSTnetsraster code\> jupyter-notebook
+```
