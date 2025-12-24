@@ -1,0 +1,59 @@
+version: "1.0"
+mode: strict
+
+allowed_packages:
+  - fastapi
+  - flask
+  - django
+  - starlette
+  - requests
+  - httpx
+  - aiohttp
+  - pydantic
+  - sqlalchemy
+  - alembic
+  - click
+  - rich
+  - pyyaml
+
+blocked_patterns:
+  - pattern: "os.system"
+    severity: Critical
+    reason: "Command injection vulnerability"
+    alternatives:
+      - "subprocess.run with shell=False"
+
+  - pattern: "eval"
+    severity: Critical
+    reason: "Code injection vulnerability"
+    alternatives:
+      - "ast.literal_eval for safe parsing"
+
+  - pattern: "exec"
+    severity: High
+    reason: "Dynamic code execution"
+
+  - pattern: "pickle.loads"
+    severity: High
+    reason: "Deserialization vulnerability"
+    alternatives:
+      - "json.loads for untrusted data"
+
+  - pattern: "__import__"
+    severity: Medium
+    reason: "Dynamic imports - prefer static"
+
+typo_detection:
+  enabled: true
+  max_edit_distance: 2
+
+atlas:
+  enabled: true
+  db_path: "atlas.sqlite"
+  cache_ttl: 300
+
+internal_prefixes:
+  - "app."
+  - "services."
+  - "models."
+  - "utils."
