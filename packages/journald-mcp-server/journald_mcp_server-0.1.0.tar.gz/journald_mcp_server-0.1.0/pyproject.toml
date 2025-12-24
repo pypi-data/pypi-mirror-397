@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "journald-mcp-server"
+version = "0.1.0"
+description = "MCP server for journald"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = [
+    "mcp[cli]>=1.23.1",
+    "systemd-python>=235",
+    "click>=8.2.0",
+    "dateparser>=1.2.0"
+]
+
+[project.scripts]
+journald-mcp-server = "journald_mcp_server.server:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
