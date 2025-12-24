@@ -1,0 +1,124 @@
+{% extends "admin/change_list.html" %}
+{% load i18n static admin_list %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+.translation-container {
+    display: flex;
+    flex-flow: column;
+    margin: 10px 0px;
+}
+.translation-container > *:not(:last-child) {
+    margin-bottom: 10px;
+}
+
+span.ddt-subheader {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 2px !important;
+    margin-top: 10px;
+}
+
+span.ddt-comment {
+    text-indent: 15px;
+    font-style: italic;
+}
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:dbtranslate_list' %}">{% translate 'Translations' %}</a>
+&rsaquo; {{ locale.fullname }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <ul class="object-tools">
+        <li>
+            <a href="{% url 'admin:refresh_registry' locale=locale.locale %}">Show Only Untranslated</a>
+            {% if perms.dbtranslate.administrate_translations %}
+            <a href="{% url 'admin:refresh_registry' locale=locale.locale %}">Refresh registry</a>
+            {% endif %}
+        </li>
+    </ul>
+    {% if formset and formset.errors %}
+    <p class="errornote">
+    {% blocktranslate count counter=formset.total_error_count %}Please correct the error below.{% plural %}Please correct the errors below.{% endblocktranslate %}
+    </p>
+    {{ formset.non_form_errors }}
+    {% endif %}
+    <div class="module" id="changelist">
+        <div class="changelist-form-container">
+            <div>
+                <form id="changelist-form" method="post" novalidate>{% csrf_token %}
+                    {% if formset %}
+                    <div>{{ formset.management_form }}</div>
+                    {% endif %}
+
+                    <div class="changelist-footer">
+                        {% if formset %}<input type="submit" name="_save" class="default" value="Save">{% endif %}
+                    </div>
+                    {% block result_list %}
+                    <div class="results">
+                        <table id="result_list">
+                            <thead>
+                                <tr>
+                                    <td>English</td>
+                                    <td>{{ locale.fullname }}</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for form in formset %}
+                                {% if form and form.non_field_errors %}
+                                <tr><td colspan="2">{{ form.non_field_errors }}</td></tr>
+                                {% endif %}
+                                <tr class="real">
+                                    {{ form.id }}
+                                    <td>
+                                        <div class="translation-container">
+                                            {{ form.msgid }}
+                                            <span>{{ form.msgid.value }}</span>
+                                            {{ form.msgctxt }}
+                                            {% if form.msgctxt.value %}
+                                            <span class="ddt-subheader">Context:</span>
+                                            <span class="ddt-comment">{{ form.msgctxt.value }}</span>
+                                            {% endif %}
+                                            {{ form.comment }}
+                                            {% if form.comment.value %}
+                                            <span class="ddt-subheader">Comment:</span>
+                                            <span class="ddt-comment">{{ form.comment.value }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="translation-container">
+                                            {{ form.msgstr }}
+                                            {{ form.tcomment }}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endblock %}
+                    <div class="changelist-footer">
+                        {% if formset %}<input type="submit" name="_save" class="default" value="Save">{% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extrabody %}
+<script type="application/javascript">
+
+
+</script>
+{% endblock %}
