@@ -1,0 +1,1 @@
+from poopmap_api.poopmap_api import PoopmapAPI
