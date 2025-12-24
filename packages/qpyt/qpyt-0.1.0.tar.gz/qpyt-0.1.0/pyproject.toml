@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "qpyt"
+version = "0.1.0"
+description = "CLI tool for QuecPython rapid development"
+authors = [
+    { name = "Günter Prossliner", email = "6724584+gprossliner@users.noreply.github.com" }
+]
+readme = "readme.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pyserial>=3.5",
+    "pyyaml>=6.0",
+    "mpy-cross==1.12", # this is the same version as used in QuecPython SDK
+    "watchfiles>=0.18.0"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+license = "MIT"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/qphy"]
+
+[project.urls]
+Homepage = "https://github.com/world-direct/qpyt"
+Issues = "https://github.com/world-direct/qpyt/issues"
