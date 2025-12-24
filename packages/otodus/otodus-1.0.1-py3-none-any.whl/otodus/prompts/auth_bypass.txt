@@ -1,0 +1,284 @@
+VULNERABILITY TYPE: Authentication Bypass / Broken Authentication
+
+DESCRIPTION:
+Authentication bypass vulnerabilities allow attackers to circumvent authentication mechanisms and gain unauthorized access to protected resources, accounts, or functionalities without providing valid credentials.
+
+DETECTION INDICATORS:
+- Login forms and authentication endpoints
+- Session management mechanisms
+- Token-based authentication
+- OAuth/SSO implementations
+- Multi-factor authentication (MFA) flows
+- Password reset functionality
+- Remember me functionality
+- API authentication headers
+- Cookie-based authentication
+
+PAYLOAD GENERATION IDEAS:
+1. SQL injection in auth:
+   - Username: admin' OR '1'='1' --
+   - Username: admin' --
+   - Password: anything
+
+2. NoSQL injection:
+   - Username: {"$ne": null}
+   - Username: {"$gt": ""}
+   - Password: {"$ne": null}
+
+3. Boolean-based bypass:
+   - username=admin&password[$ne]=xyz
+   - username[$ne]=admin&password[$ne]=xyz
+
+4. Type juggling (PHP):
+   - password=0 (when comparing with == instead of ===)
+   - password[]=anything
+
+5. Logic flaws:
+   - Remove or empty password parameter
+   - Set admin=true or role=admin
+   - Duplicate username parameter
+   - Case sensitivity bypass (Admin vs admin)
+
+6. Session manipulation:
+   - Fixation: Set your own session ID
+   - Prediction: Guess sequential session IDs
+   - Reuse: Use old session tokens
+
+7. JWT manipulation:
+   - alg:none attack
+   - Change user_id in payload
+   - Weak secret brute force
+   - Algorithm confusion (RS256 to HS256)
+
+TESTING STRATEGY:
+1. Authentication flow analysis:
+   - Map entire authentication process
+   - Identify session creation points
+   - Check token generation patterns
+   - Review password reset flow
+
+2. SQL injection testing:
+   - Test username and password fields
+   - Try classic SQLi payloads
+   - Look for timing differences
+   - Check error messages
+
+3. Parameter manipulation:
+   - Remove required parameters
+   - Add unexpected parameters (admin=1, role=admin)
+   - Modify boolean values
+   - Test parameter pollution
+
+4. Session testing:
+   - Check session token entropy
+   - Test for session fixation
+   - Try old/expired tokens
+   - Test concurrent sessions
+
+5. OAuth/SSO testing:
+   - Manipulate state parameter
+   - Test redirect_uri validation
+   - Check token validation
+   - Test authorization code reuse
+
+6. MFA bypass:
+   - Skip MFA step entirely
+   - Reuse old MFA codes
+   - Race conditions
+   - Response manipulation
+
+7. Password reset abuse:
+   - Token predictability
+   - Token reuse
+   - Host header injection
+   - Account takeover via reset
+
+VERIFICATION LOGIC:
+TRUE POSITIVE indicators:
+- Successfully logged in without valid credentials
+- Gained access to authenticated resources
+- Bypassed login form entirely
+- Session created without authentication
+- Access to admin panel without admin credentials
+- JWT accepted with tampered payload
+- MFA skipped or bypassed
+- Response indicates successful authentication
+- Received authentication token/cookie
+
+FALSE POSITIVE indicators:
+- Still blocked at authentication
+- Error messages indicating failed login
+- No session or token generated
+- Access denied to protected resources
+- WAF blocking attempts
+- Account lockout triggered
+- MFA still required and enforced
+- JWT signature validation fails
+
+SEVERITY ASSESSMENT:
+- Critical: Complete authentication bypass, access to any account, admin access
+- High: Bypass for specific accounts or limited scope, MFA bypass
+- Medium: Authentication weakness that aids brute force or account enumeration
+- Low: Information disclosure about authentication mechanism
+- Info: Authentication behavior observation without bypass
+
+BUG BOUNTY SAFETY:
+- Use test accounts when provided
+- Do NOT access real user accounts
+- Do NOT exfiltrate user data
+- Stop at proof-of-concept (showing successful authentication)
+- Do NOT change passwords or account details
+- Do NOT lock out legitimate users
+- Avoid brute force that could trigger rate limiting
+- Report immediately if admin access obtained
+
+COMMON VULNERABLE PATTERNS:
+SQL Injection:
+- SELECT * FROM users WHERE username='$user' AND password='$pass'
+
+Logic Flaws:
+- if (isset($_POST['password'])) { /* auth success */ }
+- if (user.role == 'admin' || $_GET['admin'] == 'true')
+
+Type Confusion:
+- if (hash == user_hash) // using == instead of ===
+
+Session Issues:
+- Predictable session IDs
+- No session timeout
+- Session fixation
+
+JWT Issues:
+- No signature verification
+- Weak secret
+- Algorithm confusion
+
+JWT EXPLOITATION:
+1. None algorithm:
+   - Change alg to "none"
+   - Remove signature
+   - Server accepts unsigned tokens
+
+2. Weak secret:
+   - Brute force HS256 secret
+   - Use common secrets (secret, test, 123)
+
+3. Algorithm confusion:
+   - Change RS256 to HS256
+   - Use public key as secret
+
+4. Payload manipulation:
+   - Change user_id, role, email
+   - Modify expiration time
+   - Add admin claims
+
+SESSION ATTACKS:
+1. Session Fixation:
+   - Set session ID before login
+   - Victim logs in with your session
+   - You have access to victim's session
+
+2. Session Prediction:
+   - Analyze session ID patterns
+   - Predict other users' session IDs
+   - Generate valid session tokens
+
+3. Session Hijacking:
+   - XSS to steal cookies
+   - Network sniffing (if no HTTPS)
+   - Session ID in URL
+
+OAUTH/SSO BYPASS:
+1. State parameter:
+   - Remove or manipulate state
+   - CSRF in OAuth flow
+
+2. Redirect URI:
+   - Open redirect in redirect_uri
+   - Token interception
+
+3. Code reuse:
+   - Reuse authorization code
+   - Race condition in token exchange
+
+4. Implicit flow:
+   - Token in URL fragment
+   - Token leakage
+
+MFA BYPASS TECHNIQUES:
+1. Direct request:
+   - Skip MFA step, go directly to dashboard
+   - Manipulate flow state
+
+2. Rate limiting:
+   - Brute force MFA codes
+   - No rate limit on verification
+
+3. Response manipulation:
+   - Change response from server
+   - Modify status code
+
+4. Backup codes:
+   - Predictable backup codes
+   - No expiration
+
+5. Race conditions:
+   - Concurrent requests
+   - Token reuse window
+
+PASSWORD RESET VULNERABILITIES:
+1. Token issues:
+   - Predictable reset tokens
+   - No expiration
+   - Token reuse
+
+2. Host header injection:
+   - Manipulate host header
+   - Intercept reset link
+
+3. Parameter pollution:
+   - email=victim@mail.com&email=attacker@mail.com
+   - Multiple tokens generated
+
+4. Email verification bypass:
+   - Skip verification step
+   - Manipulate verified flag
+
+LOGIC FLAW PATTERNS:
+1. Client-side checks:
+   - JavaScript validation only
+   - Disabled inputs
+
+2. Missing server-side validation:
+   - Trust client-sent data
+   - No verification of identity
+
+3. Race conditions:
+   - Concurrent login attempts
+   - TOCTOU vulnerabilities
+
+4. Default credentials:
+   - admin/admin
+   - test/test
+   - root/root
+
+5. Password comparison:
+   - Weak comparison (== vs ===)
+   - Type confusion
+   - Null byte injection
+
+TESTING CHECKLIST:
+- [ ] SQL injection in username/password
+- [ ] NoSQL injection
+- [ ] Parameter manipulation (remove, add, modify)
+- [ ] Session token analysis
+- [ ] JWT manipulation (if applicable)
+- [ ] OAuth flow testing (if applicable)
+- [ ] MFA bypass attempts (if applicable)
+- [ ] Password reset vulnerabilities
+- [ ] Logic flaws in auth flow
+- [ ] Default/weak credentials
+- [ ] Race conditions
+- [ ] Type confusion attacks
+- [ ] Client-side bypass
+- [ ] Session fixation/prediction

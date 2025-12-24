@@ -1,0 +1,71 @@
+VULNERABILITY TYPE: SQL Injection
+
+DESCRIPTION:
+SQL Injection occurs when user-supplied input is inserted into SQL queries without proper sanitization or parameterization. Attackers can manipulate SQL queries to access, modify, or delete database data, bypass authentication, or execute administrative operations.
+
+DETECTION INDICATORS:
+- Parameters that appear to be used in database queries (id, user_id, product_id, search, filter, etc.)
+- Numeric parameters that might be directly inserted into SQL
+- Error messages revealing database information
+- Different responses for valid vs invalid SQL syntax
+- Time-based differences in response times
+- Sorting or filtering parameters (order_by, sort, filter_by)
+
+PAYLOAD GENERATION IDEAS:
+1. Classic SQL injection attempts:
+   - Single quote test: '
+   - Comment injection: ' OR '1'='1' --
+   - UNION-based: ' UNION SELECT NULL--
+   - Boolean-based: ' OR 1=1--
+   - Error-based: ' AND 1=CONVERT(int,@@version)--
+
+2. Time-based blind SQL injection:
+   - MySQL: ' AND SLEEP(5)--
+   - PostgreSQL: ' AND pg_sleep(5)--
+   - MSSQL: '; WAITFOR DELAY '0:0:5'--
+
+3. Numeric injection (when parameter is numeric):
+   - 1 OR 1=1
+   - 1 UNION SELECT NULL
+   - 1 AND SLEEP(5)
+
+4. String-based with encoding:
+   - %27 OR %271%27=%271
+   - ' OR 'x'='x
+
+TESTING STRATEGY:
+1. First, test with single quote (') to see if it causes an error
+2. Try simple boolean logic: ' OR '1'='1
+3. Test for time-based blind injection
+4. If UNION injection possible, enumerate columns
+5. Try different comment styles: --, #, /* */
+6. Test both GET and POST parameters
+7. Test numeric parameters without quotes
+
+VERIFICATION LOGIC:
+TRUE POSITIVE indicators:
+- SQL error messages in response (syntax error, unclosed quote, etc.)
+- Noticeable time delay with SLEEP/WAITFOR commands (>4 seconds)
+- Different content when using true vs false conditions
+- Database version info leaked in errors
+- Successful UNION SELECT returning data
+
+FALSE POSITIVE indicators:
+- Application-level error messages (not database errors)
+- WAF blocking messages
+- Generic 500 errors without SQL context
+- Time delays that exist without payload too
+- Identical responses for all payloads
+
+SEVERITY ASSESSMENT:
+- Critical: If you can extract data, modify data, or bypass authentication
+- High: If blind injection is confirmed and data extraction is possible
+- Medium: If SQL errors are visible but exploitation is limited
+- Low: If only information disclosure without data access
+
+BUG BOUNTY SAFETY:
+- Do NOT use DROP, DELETE, UPDATE, or INSERT statements
+- Do NOT extract large amounts of data
+- Use SLEEP/WAITFOR with reasonable timeouts (5 seconds max)
+- Stop testing if database errors appear (don't DoS the database)
+- Prefer proof-of-concept over full exploitation

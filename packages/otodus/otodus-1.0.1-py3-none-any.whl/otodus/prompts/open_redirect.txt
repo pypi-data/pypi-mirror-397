@@ -1,0 +1,203 @@
+VULNERABILITY TYPE: Open Redirect / Unvalidated Redirect
+
+DESCRIPTION:
+Open redirect vulnerabilities occur when an application redirects users to URLs specified in unvalidated user input. Attackers can craft malicious links that appear legitimate but redirect victims to phishing sites, malware, or attacker-controlled domains.
+
+DETECTION INDICATORS:
+- Parameters containing URLs or domains (url, redirect, return, next, continue, goto, target, destination, redir)
+- OAuth/SSO redirect_uri parameters
+- Post-login redirect parameters
+- Logout redirect parameters
+- 3xx HTTP status codes (301, 302, 303, 307, 308)
+- Meta refresh tags in response
+- JavaScript redirects (window.location, location.href)
+- Headers: Location, Refresh
+
+PAYLOAD GENERATION IDEAS:
+1. Basic redirects:
+   - https://evil.com
+   - //evil.com (protocol-relative)
+   - http://evil.com
+   - https://evil.com/phishing
+
+2. Domain variations:
+   - https://example.com@evil.com
+   - https://example.com.evil.com
+   - https://example.com%2F@evil.com
+   - https://example.com%00evil.com
+
+3. Bypass filters:
+   - https://evil.com%2F@example.com
+   - https://evil.com%252f@example.com (double encoding)
+   - https://evil.com%23example.com (hash)
+   - https://evil.com%3Fexample.com (question mark)
+   - https://evil.com%09example.com (tab)
+
+4. Whitelisting bypasses:
+   - https://example.com.evil.com (subdomain)
+   - https://evilexample.com (typo)
+   - https://example.com-evil.com
+   - https://example.com_.evil.com
+
+5. Protocol handlers:
+   - javascript:alert(1)
+   - data:text/html,<script>alert(1)</script>
+   - vbscript:msgbox(1)
+   - file:///etc/passwd
+
+6. Encoding tricks:
+   - https://evil.com (various encodings)
+   - https%3A%2F%2Fevil%2Ecom
+   - https://0x7f.0x0.0x0.0x1 (hex IP)
+   - https://2130706433 (decimal IP)
+
+7. Path traversal:
+   - https://example.com/../../evil.com
+   - https://example.com/..//evil.com
+
+TESTING STRATEGY:
+1. Identify redirect parameters:
+   - Look for redirect-related parameter names
+   - Check post-authentication flows
+   - Test logout functionality
+   - Review OAuth implementations
+
+2. Test basic redirect:
+   - Set parameter to external domain
+   - Check if browser is redirected
+   - Verify Location header or meta refresh
+
+3. Test filter bypasses:
+   - If blocked, try encoding
+   - Try protocol-relative URLs (//)
+   - Use @ symbol tricks
+   - Try subdomain variations
+
+4. Check redirect mechanism:
+   - Server-side (3xx status)
+   - Meta refresh
+   - JavaScript redirect
+   - HTML5 history API
+
+5. Verify actual navigation:
+   - Use browser or curl with -L
+   - Check final destination
+   - Confirm user would be redirected
+
+6. Test in different contexts:
+   - Login flows
+   - Logout flows
+   - OAuth callback
+   - Error handlers
+   - Language/locale redirects
+
+VERIFICATION LOGIC:
+TRUE POSITIVE indicators:
+- HTTP 3xx redirect to your controlled domain
+- Location header points to external site
+- Meta refresh redirects to attacker domain
+- JavaScript actually changes window.location
+- User would be redirected in a real scenario
+- Bypass successful whitelist validation
+- Works in actual browser (not just in response)
+
+FALSE POSITIVE indicators:
+- Redirect blocked or validated
+- Only redirects to same domain
+- Whitelist prevents external redirects
+- Error message: "Invalid redirect URL"
+- Parameter ignored (no redirect occurs)
+- Redirect only works for localhost
+- JavaScript redirect sanitized or encoded
+- CSP prevents redirect
+
+SEVERITY ASSESSMENT:
+- High: Open redirect on authentication flow (OAuth, SSO, login/logout)
+- Medium: Open redirect on other flows, could be used for phishing
+- Low: Open redirect requires complex user interaction or has limited scope
+- Info: Redirect parameter exists but is properly validated
+
+BUG BOUNTY SAFETY:
+- Use your own controlled domain for testing
+- Do NOT craft phishing pages
+- Do NOT send malicious links to real users
+- Use obvious test domains (test.example.com, attacker.com)
+- Stop at proof-of-concept
+- Document the vulnerability without exploitation
+- Respect scope and rules of engagement
+
+COMMON VULNERABLE PATTERNS:
+- header("Location: " . $_GET['redirect']);
+- res.redirect(req.query.url);
+- return redirect(request.GET.get('next'))
+- <meta http-equiv="refresh" content="0;url={{user_input}}">
+- window.location = userInput;
+
+FILTER BYPASS TECHNIQUES:
+1. Case variation:
+   - HtTpS://evil.com
+   - HTTPS://EVIL.COM
+
+2. Slash variations:
+   - https:/\/evil.com
+   - https:\\evil.com
+   - https:///evil.com
+
+3. Dot variations:
+   - https://evil。com (Unicode)
+   - https://evil%E3%80%82com
+
+4. Domain confusion:
+   - https://example.com@evil.com (user@domain)
+   - https://example.com%00evil.com (null byte)
+   - https://example.com%09evil.com (tab)
+
+5. Parser confusion:
+   - https://example.com%2F@evil.com
+   - https://example.com%252F@evil.com
+
+6. Whitespace:
+   - https://evil.com%20
+   - https://evil.com%0a
+   - https://evil.com%0d
+
+CONTEXT-SPECIFIC EXPLOITATION:
+OAuth redirect_uri:
+- Test various bypass techniques
+- Look for partial URL matching
+- Try adding paths: https://example.com/callback/../evil.com
+
+Post-login:
+- ?next=https://evil.com
+- ?return_url=//evil.com
+
+Meta refresh:
+- Check if URL is properly encoded
+- Test JavaScript-based redirects
+
+IMPACT SCENARIOS:
+1. Phishing:
+   - Craft legitimate-looking URLs
+   - Redirect to fake login pages
+   - Steal credentials
+
+2. OAuth token theft:
+   - Manipulate redirect_uri
+   - Capture authorization codes
+   - Steal access tokens
+
+3. XSS escalation:
+   - javascript: protocol
+   - data: URI with HTML/JS
+
+4. Reputation damage:
+   - Abuse trusted domain for malicious redirects
+   - Spam campaigns using open redirect
+
+VALIDATION TESTING:
+Test whitelist validation:
+- Is it prefix matching? Try evil.com/expected-domain.com
+- Is it suffix matching? Try expected-domain.com.evil.com
+- Is it substring matching? Try evilexpected-domain.com
+- Does it check protocol?
+- Does it validate domain properly?
