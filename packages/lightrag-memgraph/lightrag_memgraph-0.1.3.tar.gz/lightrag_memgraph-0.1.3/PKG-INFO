@@ -1,0 +1,49 @@
+Metadata-Version: 2.4
+Name: lightrag-memgraph
+Version: 0.1.3
+Summary: LightRAG integration with Memgraph
+Project-URL: Homepage, https://github.com/memgraph/ai-toolkit
+Project-URL: Source, https://github.com/memgraph/ai-toolkit/tree/main/integrations/lightrag-memgraph
+Project-URL: Issues, https://github.com/memgraph/ai-toolkit/issues
+Author-email: Memgraph Tech Team <tech@memgraph.com>
+License: MIT
+License-File: LICENSE
+Keywords: graph,integration,lightrag,memgraph,toolkit
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Requires-Python: >=3.10
+Requires-Dist: lightrag-hku[api]==1.4.8.2
+Requires-Dist: memgraph-toolbox>=0.1.8
+Requires-Dist: numpy>=1.21.0
+Provides-Extra: dev
+Requires-Dist: black>=22.0.0; extra == 'dev'
+Requires-Dist: isort>=5.0.0; extra == 'dev'
+Requires-Dist: mypy>=1.0.0; extra == 'dev'
+Requires-Dist: pytest-asyncio>=0.21.0; extra == 'dev'
+Requires-Dist: pytest>=7.0.0; extra == 'dev'
+Description-Content-Type: text/markdown
+
+# 🔗 lightrag-memgraph
+
+lightrag-memgraph is an integration that connects
+[lightrag](https://github.com/HKUDS/LightRAG) and
+[memgraph](https://github.com/memgraph/memgraph). The library began as a small
+wrapper designed to specifically configure Memgraph within a pipeline that
+processes unstructured data (various texts) and transforms it into an
+ontology/entity schema graph. In other words, it enables you to extract and
+enhance entities from unstructured documents, storing them in a graph for
+powerful querying and analysis. Ideal for building knowledge graphs, improving
+data discovery, and leveraging advanced AI techniques on top of your domain
+data.
+
+## Notes
+
+- Entity/relationship extraction is high-quality, but also high-cost and
+relatively slow.
+- The goal over time is to expose time and cost metrics (e.g., $ per your
+specific document page or chunk).
