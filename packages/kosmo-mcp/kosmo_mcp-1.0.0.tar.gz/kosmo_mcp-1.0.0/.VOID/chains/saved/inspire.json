@@ -1,0 +1,60 @@
+{
+    "chain_name": "inspire",
+    "version": 1,
+    "created": "2025-12-19_03-50-00",
+    "description": "Activates N8N deep research pipeline, returns INSPIRATION_<timestamp>.md at CWD. ZOO Criteria: Successful return of structured no-op instructions.",
+    "comment": "Initial version - triggers external n8n workflow for deep research and restructuring. ZOO certified based on outcome.",
+    "zoo_compliant": true,
+    "parameters": [
+        "user_query"
+    ],
+    "chain_template": "VOID execute HTTP POST to n8n_deep_research_webhook with {user_query} THEN VOID write response.content to CWD/INSPIRATION_{response.timestamp}.md",
+    "step_definitions": [
+        {
+            "step_number": 1,
+            "command": "VOID HTTP POST",
+            "operation": "Send user query to n8n deep research pipeline webhook",
+            "pre_state": {
+                "main_invariant": "VOID",
+                "active_level": "VOID"
+            },
+            "post_state": {
+                "main_invariant": "VOID",
+                "active_level": "VOID"
+            },
+            "void_warning": "External HTTP call introduces indeterminacy - response depends on Gemini API state",
+            "expected_response": {
+                "status": "success",
+                "timestamp": "YYYY-MM-DD_HH-MM-SS",
+                "filename": "INSPIRATION_<timestamp>.md",
+                "content": "<restructured_research_output>",
+                "original_query": "<user_query>"
+            }
+        },
+        {
+            "step_number": 2,
+            "command": "VOID write file",
+            "operation": "Write timestamped inspiration file to CWD",
+            "pre_state": {
+                "main_invariant": "VOID",
+                "active_level": "VOID"
+            },
+            "post_state": {
+                "main_invariant": "VOID",
+                "active_level": "VOID"
+            },
+            "void_warning": "File timestamp is non-deterministic",
+            "files_written": [
+                "CWD/INSPIRATION_{timestamp}.md"
+            ]
+        }
+    ],
+    "n8n_webhook_config": {
+        "endpoint": "/deep-research",
+        "method": "POST",
+        "body_schema": {
+            "query": "{user_query}"
+        },
+        "default_base_url": "http://localhost:5678/webhook"
+    }
+}

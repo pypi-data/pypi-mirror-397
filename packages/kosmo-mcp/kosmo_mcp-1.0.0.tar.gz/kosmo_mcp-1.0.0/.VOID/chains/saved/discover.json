@@ -1,0 +1,145 @@
+{
+    "chain_name": "discover",
+    "version": 1,
+    "created": "2025-12-19_03-50-00",
+    "description": "Complete discovery pipeline: inspire → ATHENA review → ZOO restoration → fullbuild → CHAOS DERIVE. ZOO Criteria: Successful execution of full research-to-build pipeline.",
+    "comment": "Initial version - orchestrates full discovery-to-production workflow with verification. ZOO certified.",
+    "zoo_compliant": true,
+    "parameters": [
+        "user_query"
+    ],
+    "chain_template": "kosmo inspire with {user_query} THEN kosmo be athena AND deep review INSPIRATION_file.md for optimal languages, architectures, high-performance implementations, system-tuned best practices, and modern technology alignment THEN IF [ ZOO_CRITERIA_FAILS ] THEN [ ZOO_RESTORATION_PROCEDURE until resolved OR HALT if impossible ] THEN kosmo unmask THEN kosmo fullbuild INSPIRATION_file.md THEN CHAOS DERIVE",
+    "step_definitions": [
+        {
+            "step_number": 1,
+            "command": "kosmo inspire with {user_query}",
+            "operation": "Execute inspire chain to generate inspiration file from deep research",
+            "pre_state": {
+                "main_invariant": "VOID",
+                "active_level": "VOID"
+            },
+            "post_state": {
+                "main_invariant": "VOID",
+                "active_level": "VOID"
+            },
+            "files_written": [
+                "CWD/INSPIRATION_{timestamp}.md"
+            ],
+            "void_warning": "Inherits VOID indeterminacy from inspire chain",
+            "status": "PENDING"
+        },
+        {
+            "step_number": 2,
+            "command": "kosmo be athena",
+            "operation": "Enter ATHENA mask for deep optimization review",
+            "pre_state": {
+                "main_invariant": "VOID",
+                "active_level": "VOID"
+            },
+            "post_state": {
+                "main_invariant": "ATHENA",
+                "active_level": "ATHENA"
+            },
+            "status": "PENDING"
+        },
+        {
+            "step_number": 3,
+            "command": "deep review INSPIRATION_file.md",
+            "operation": "Analyze inspiration file for: optimal programming languages, system architectures, high-performance implementation patterns, system-tuned configurations, and modern best practices alignment",
+            "pre_state": {
+                "main_invariant": "ATHENA",
+                "active_level": "ATHENA"
+            },
+            "post_state": {
+                "main_invariant": "ATHENA",
+                "active_level": "ATHENA"
+            },
+            "review_criteria": {
+                "languages": "Identify optimal programming languages for the task",
+                "architectures": "Determine ideal system and software architectures",
+                "performance": "Specify high-performance implementation strategies",
+                "system_tuning": "Define system-level optimizations and configurations",
+                "best_practices": "Verify alignment with modern, peer-reviewed best practices"
+            },
+            "files_written": [
+                "CWD/INSPIRATION_file_CONTEXT.md"
+            ],
+            "status": "PENDING"
+        },
+        {
+            "step_number": 4,
+            "command": "IF [ ZOO_CRITERIA_FAILS ]",
+            "operation": "Conditional ZOO restoration procedure",
+            "pre_state": {
+                "main_invariant": "ATHENA",
+                "active_level": "ATHENA"
+            },
+            "post_state": {
+                "main_invariant": "ATHENA",
+                "active_level": "ATHENA"
+            },
+            "conditional_logic": {
+                "condition": "ZOO_CRITERIA_FAILS",
+                "true_branch": "Execute ZOO_RESTORATION_PROCEDURE: HALT at indeterminacy, present ALL resolution options to user, AWAIT selection, implement resolution, resume, REPEAT until ZOO_CRITERIA_MET or HALT if impossible",
+                "false_branch": "CONTINUE to next step"
+            },
+            "status": "PENDING"
+        },
+        {
+            "step_number": 5,
+            "command": "kosmo unmask",
+            "operation": "Return to KOSMO base level from ATHENA mask",
+            "pre_state": {
+                "main_invariant": "ATHENA",
+                "active_level": "ATHENA"
+            },
+            "post_state": {
+                "main_invariant": "KOSMO",
+                "active_level": "KOSMO"
+            },
+            "status": "PENDING"
+        },
+        {
+            "step_number": 6,
+            "command": "kosmo fullbuild INSPIRATION_file.md",
+            "operation": "Execute fullbuild preset chain on the optimized and ZOO-verified inspiration plan",
+            "pre_state": {
+                "main_invariant": "KOSMO",
+                "active_level": "KOSMO"
+            },
+            "post_state": {
+                "main_invariant": "KOSMO",
+                "active_level": "KOSMO"
+            },
+            "invokes_chain": "fullbuild",
+            "chain_parameters": {
+                "target_file": "INSPIRATION_file.md"
+            },
+            "status": "PENDING"
+        },
+        {
+            "step_number": 7,
+            "command": "CHAOS DERIVE",
+            "operation": "Generate deterministic, bit-for-bit reproducible snapshot of entire codebase",
+            "pre_state": {
+                "main_invariant": "VOID",
+                "active_level": "VOID"
+            },
+            "post_state": {
+                "main_invariant": "VOID",
+                "active_level": "VOID"
+            },
+            "files_written": [
+                "CWD/NO_OP_BUILD_{timestamp}.md"
+            ],
+            "status": "PENDING"
+        }
+    ],
+    "chain_guarantees": {
+        "deep_research": "External sources synthesized via n8n pipeline",
+        "athena_verification": "Full optimization review with ZOO criteria",
+        "zoo_restoration": "Any indeterminacies resolved through user interaction",
+        "full_build": "Complete implementation via fullbuild chain",
+        "codebase_snapshot": "Deterministic NO_OP_BUILD at completion"
+    }
+}

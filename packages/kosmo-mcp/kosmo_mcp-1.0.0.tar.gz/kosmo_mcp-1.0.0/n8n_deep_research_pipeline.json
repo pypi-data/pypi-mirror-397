@@ -1,0 +1,215 @@
+{
+    "name": "KOSMO Inspire",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "deep-research",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "id": "707dea53-c414-41e6-ae1c-277f7d91fc34",
+            "name": "Webhook Trigger",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2,
+            "position": [
+                -352,
+                -320
+            ],
+            "webhookId": "deep-research-webhook"
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ $json }}",
+                "options": {
+                    "responseHeaders": {
+                        "entries": [
+                            {
+                                "name": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ]
+                    }
+                }
+            },
+            "id": "d4d5b13e-6ce3-4c0b-91fb-42dc45a758cf",
+            "name": "Respond to Webhook",
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.1,
+            "position": [
+                672,
+                -368
+            ]
+        },
+        {
+            "parameters": {
+                "mode": "raw",
+                "jsonOutput": "={\n  \"status\": \"success\",\n  \"timestamp\": \"{{ $now.format('yyyy-MM-dd_HH-mm-ss') }}\",\n  \"filename\": \"INSPIRATION_{{ $now.format('yyyy-MM-dd_HH-mm-ss') }}.md\",\n  \"content\": {{ JSON.stringify($('Restructure Prompt').item.json.text) }},\n  \"original_query\": {{ JSON.stringify($('Webhook Trigger').item.json.body.query) }}\n}",
+                "options": {}
+            },
+            "id": "f42b7df2-2a0e-406e-9dd4-79eabb43efe5",
+            "name": "Format Output",
+            "type": "n8n-nodes-base.set",
+            "typeVersion": 3.4,
+            "position": [
+                448,
+                -448
+            ]
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $('Deep Research Prompt').item.json.text }}"
+            },
+            "id": "b4f65207-3ea4-4019-8afe-05dc74fa3077",
+            "name": "Restructure Prompt",
+            "type": "@n8n/n8n-nodes-langchain.chainLlm",
+            "typeVersion": 1.4,
+            "position": [
+                144,
+                -576
+            ]
+        },
+        {
+            "parameters": {
+                "options": {
+                    "maxOutputTokens": 8192,
+                    "temperature": 0.3
+                }
+            },
+            "id": "c693f145-dd62-424b-bd6f-84db26d39fec",
+            "name": "Gemini Flash Restructure",
+            "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                192,
+                -224
+            ],
+            "notesInFlow": false,
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "r9oNZWUXde8scFfE",
+                    "name": "Google Gemini(PaLM) Api account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $('Webhook Trigger').item.json.body.query }}"
+            },
+            "id": "51bddb60-2b34-4bdd-bbe5-7c0fbe801068",
+            "name": "Deep Research Prompt",
+            "type": "@n8n/n8n-nodes-langchain.chainLlm",
+            "typeVersion": 1.4,
+            "position": [
+                -160,
+                -528
+            ]
+        },
+        {
+            "parameters": {
+                "modelName": "models/gemini-2.5-pro",
+                "options": {
+                    "maxOutputTokens": 8192,
+                    "temperature": 0.7
+                }
+            },
+            "id": "540b898e-2e8b-4712-947e-6a77291dd296",
+            "name": "Gemini Deep Research",
+            "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+            "typeVersion": 1,
+            "position": [
+                -80,
+                -160
+            ],
+            "credentials": {
+                "googlePalmApi": {
+                    "id": "r9oNZWUXde8scFfE",
+                    "name": "Google Gemini(PaLM) Api account"
+                }
+            }
+        }
+    ],
+    "pinData": {},
+    "connections": {
+        "Webhook Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "Deep Research Prompt",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Format Output": {
+            "main": [
+                [
+                    {
+                        "node": "Respond to Webhook",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Restructure Prompt": {
+            "main": [
+                [
+                    {
+                        "node": "Format Output",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gemini Flash Restructure": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Restructure Prompt",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Deep Research Prompt": {
+            "main": [
+                [
+                    {
+                        "node": "Restructure Prompt",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Gemini Deep Research": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "Deep Research Prompt",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "active": true,
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "versionId": "8a7098be-4449-481e-b968-d93d6da7f65b",
+    "meta": {
+        "templateCredsSetupCompleted": true,
+        "instanceId": "dcfb6068b4ccb6a4e9f51583b389b43f103432e300fe0f8743285b12fbb24e3e"
+    },
+    "id": "IgZfuITGNciHdi1F",
+    "tags": []
+}

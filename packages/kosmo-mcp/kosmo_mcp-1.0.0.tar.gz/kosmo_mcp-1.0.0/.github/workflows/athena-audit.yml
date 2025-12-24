@@ -1,0 +1,32 @@
+name: Athena ZOO Audit
+on: [push, pull_request]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run Athena Logic Closure Test
+        run: |
+          echo "🦉 Athena: Verifying Invariants..."
+          # Verify SYSTEM_LOCK is present
+          grep -q "SYSTEM_LOCK =" KOSMO.md
+          
+          # Verify Pincer Logic (Fail if DEV is pushed to main/prod)
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            if grep -q "SYSTEM_LOCK = DEV" KOSMO.md; then
+              echo "❌ FAILURE: Attempting to push DEV mode to Production."
+              exit 1
+            fi
+          fi
+          echo "✅ Invariants Verified."
+
+      - name: Verify Environment Integrity
+        run: |
+          # Ensure no production keys are leaked in code
+          if grep -r "sbp_" .; then
+            echo "❌ FAILURE: Supabase Access Token found in codebase!"
+            exit 1
+          fi
+          echo "✅ No Secrets Leaked."

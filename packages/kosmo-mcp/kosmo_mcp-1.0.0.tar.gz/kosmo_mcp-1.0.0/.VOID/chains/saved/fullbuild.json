@@ -1,0 +1,11 @@
+{
+    "chain_name": "fullbuild",
+    "version": 1,
+    "created": "2025-12-17_00-00-00",
+    "description": "Complete end-to-end development cycle from planning through verified implementation",
+    "zoo_compliant": true,
+    "parameters": [
+        "target_file"
+    ],
+    "chain_template": "kosmo be athena AND review {target_file} requirements THEN kosmo unmask THEN kosmo be hermes AND build {target_file} THEN kosmo unmask THEN kosmo be chiron AND verify {target_file} THEN IF [ verify_passed ] THEN [ kosmo unmask AND kosmo be athena AND sign_off ] ELSE IF [ verify_failed ] THEN [ kosmo unmask AND kosmo be hermes AND fix {target_file} AND kosmo unmask AND kosmo be chiron AND verify {target_file} ]"
+}

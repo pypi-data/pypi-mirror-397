@@ -1,0 +1,40 @@
+[project]
+name = "kosmo-mcp"
+version = "1.0.0"
+description = "KOSMO - ZOO-Certified Agentic Protocol MCP Server for Builders"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Hermios", email = "info@hermios.us"}
+]
+requires-python = ">=3.10"
+keywords = ["mcp", "kosmo", "ai", "agentic", "protocol", "zoo"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "mcp>=1.0.0",
+    "httpx>=0.27.0",
+]
+
+[project.scripts]
+kosmo-mcp = "kosmo_mcp.server:main"
+
+[project.urls]
+Homepage = "https://hermios.us"
+Repository = "https://github.com/hermios/kosmo-mcp"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/kosmo_mcp"]

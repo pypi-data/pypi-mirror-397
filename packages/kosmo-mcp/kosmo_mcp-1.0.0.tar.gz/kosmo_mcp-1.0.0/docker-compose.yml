@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: hermios
+      POSTGRES_PASSWORD: dev_password_only
+      POSTGRES_DB: hermios_core
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    ports:
+      - "5432:5432"
+
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://hermios:dev_password_only@db:5432/hermios_core
+      JWT_SECRET: dev_secret_key_change_in_prod
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
