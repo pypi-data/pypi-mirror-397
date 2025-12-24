@@ -1,0 +1,218 @@
+# 🃏 Blackjack Game
+
+A Python implementation of Blackjack (21) featuring **ASCII card art**, a **chip betting system**, and Object-Oriented Programming principles.
+
+## Features
+
+- Complete Blackjack game logic
+- **Beautiful ASCII card visualization**
+- **Chip-based betting system** (start with 200 chips)
+- **Automatic screen clearing** for better user experience
+- **Input filtering** to prevent paste attempts and ensure clean gameplay
+- Blackjack Basic Strategy implemented for Dealer
+- Player vs Dealer gameplay
+- Clean, modular OOP design
+- Fully installable package via pip
+- Command-line interface
+
+## Installation
+
+### Using a virtual environment (recommended)
+
+```bash
+# Create a virtual environment
+python -m venv venv
+
+# Activate the environment
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
+
+# Install the game from PyPI
+pip install gabrielchaves-blackjack
+```
+
+### Updating the game
+
+```bash
+# Upgrade to the latest version
+pip install --upgrade gabrielchaves-blackjack
+```
+
+### From source (optional)
+
+```bash
+# Clone or download the repository
+cd blackjack
+
+# Install in development mode
+pip install -e .
+
+# Or install normally
+pip install .
+```
+
+### After installation
+
+```bash
+# Run the game
+blackjack
+```
+
+---
+
+## How to Play
+
+1. Run the `blackjack` command after installation
+2. **Place your bet** - Choose from 1, 5, 10, 25, or 50 chips
+3. You'll receive 2 cards, the dealer receives 2 (one hidden)
+4. Choose **Hit** (take a card) or **Stand** (keep your current hand)
+5. Try to get as close to 21 as possible without going over
+6. The dealer plays automatically (follows Basic Strategy)
+7. The highest hand wins!
+8. **Win**: Get your bet back doubled
+9. **Lose**: Lose your bet
+10. **Push**: Bet is returned on a tie
+11. Game continues until you run out of chips or choose to quit
+
+## Betting System
+
+- Start with **200 chips**
+- Betting options: **1, 5, 10, 25, or 50 chips**
+- Win your bet amount on a win
+- Lose your bet amount on a loss
+- Bet returned on a push (tie)
+- Game ends when you run out of chips
+- Option to start a new game with 200 chips
+
+## ASCII Visualization
+
+Cards are displayed in beautiful ASCII art:
+
+```
+┌─────────┐  ┌─────────┐  ┌─────────┐
+│A        │  │K        │  │Q        │
+│         │  │         │  │         │
+│    ♠    │  │    ♥    │  │    ♦    │
+│         │  │         │  │         │
+│        A│  │        K│  │        Q│
+└─────────┘  └─────────┘  └─────────┘
+```
+
+The dealer's hidden card appears as:
+```
+┌─────────┐
+│░░░░░░░░░│
+│░░░░░░░░░│
+│░░░░░░░░░│
+│░░░░░░░░░│
+│░░░░░░░░░│
+└─────────┘
+```
+
+## Usage as Module
+```python
+from blackjack import BlackJackGame
+
+# Create and play a game
+game = BlackJackGame()
+game.play_round()
+```
+
+## Card Art Demo
+
+To see cards in ASCII art:
+```bash
+python demo_ascii_cards.py
+```
+
+## Architecture
+
+### Design Principles
+
+This implementation follows solid OOP principles:
+
+- **Encapsulation**: Each class manages its own data and behavior
+- **Single Responsibility**: Each class has a clear, focused purpose
+- **Composition**: Game uses Deck, Players use Hands
+- **Inheritance**: Dealer extends Player with specific rules
+- **Separation of Concerns**: Input handling, game logic, and display are separated
+
+### Class Structure
+
+- **Card**: Represents a single playing card (with ASCII art)
+- **Deck**: Manages a 52-card deck (creation, shuffling, dealing)
+- **Hand**: Manages a collection of cards and calculates values
+- **Player**: Represents a player with a hand and chips
+- **Dealer**: Extends Player with specific dealer rules and Basic Strategy
+- **BlackJackGame**: Orchestrates game flow and logic
+- **CLI**: Command-line interface with betting flow
+- **InputHandler**: Filtered input system to prevent paste attempts
+
+### Key Implementation Details
+
+#### Card Values
+- Number cards (2-10): Face value
+- Face cards (J, Q, K): 10 points
+- Aces: 11 points (no soft/hard handling in current version)
+
+#### Dealer Strategy
+The dealer follows Blackjack Basic Strategy:
+- **Hard hands**: 
+  - Hits on 16 or less
+  - Stands on 17 or more
+- **Soft hands** (with Ace):
+  - Complex strategy based on up card
+  - Optimized for realistic gameplay
+
+#### Input Security
+- **Paste prevention**: All paste attempts (Ctrl+V, Cmd+V, right-click) are blocked
+- **Character filtering**: Only valid single-character inputs accepted
+- **Clean experience**: Invalid inputs are silently ignored
+
+### Improvements Implemented
+
+✅ **ASCII card art**: Beautiful, immersive visualization
+✅ **Chip betting system**: Realistic casino-style betting
+✅ **Screen clearing**: Clean, professional interface
+✅ **Smooth animations**: Strategic pauses for better experience
+✅ **Emojis**: Fun visual feedback
+✅ **Input filtering**: Prevents cheating and ensures fair play
+✅ **Cross-platform compatibility**: Works on Windows, Linux, and macOS
+✅ **UTF-8 encoding handling**: Proper character display across systems
+
+## Testing
+```bash
+# Run tests
+python -m pytest tests/
+```
+
+## 📋 Requirements
+
+- Python 3.8+
+- `prompt-toolkit` for enhanced input handling
+
+## Game Rules
+
+1. Get as close to 21 as possible without going over
+2. Face cards (J, Q, K) are worth 10 points
+3. Aces are worth 11 points
+4. Number cards are worth their face value
+5. Going over 21 is a "bust" - you lose automatically
+6. Dealer must hit on 16 or less
+7. If both player and dealer have the same value, it's a "push" (tie)
+
+## License
+
+MIT License
+
+## Author
+
+Gabriel Chaves
+
+---
+
+**Version**: 0.0.5
+
+Enjoy the game! 🃏
