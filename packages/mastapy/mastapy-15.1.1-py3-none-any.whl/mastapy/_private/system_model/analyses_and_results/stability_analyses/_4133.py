@@ -1,0 +1,407 @@
+"""GearSetStabilityAnalysis"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, ClassVar
+
+from mastapy._private._internal.dataclasses import extended_dataclass
+from mastapy._private._internal.exception_bridge import exception_bridge
+from mastapy._private._internal.exceptions import CastException
+from mastapy._private._internal.python_net import (
+    python_net_import,
+    pythonnet_property_get,
+)
+
+from mastapy._private._internal import constructor, conversion, utility
+from mastapy._private.system_model.analyses_and_results.stability_analyses import _4174
+
+_GEAR_SET_STABILITY_ANALYSIS = python_net_import(
+    "SMT.MastaAPI.SystemModel.AnalysesAndResults.StabilityAnalyses",
+    "GearSetStabilityAnalysis",
+)
+
+if TYPE_CHECKING:
+    from typing import Any, List, Type, TypeVar
+
+    from mastapy._private.system_model.analyses_and_results import _2943, _2945, _2949
+    from mastapy._private.system_model.analyses_and_results.analysis_cases import (
+        _7941,
+        _7944,
+    )
+    from mastapy._private.system_model.analyses_and_results.stability_analyses import (
+        _4072,
+        _4077,
+        _4084,
+        _4089,
+        _4102,
+        _4105,
+        _4121,
+        _4128,
+        _4132,
+        _4134,
+        _4137,
+        _4141,
+        _4144,
+        _4147,
+        _4155,
+        _4160,
+        _4176,
+        _4185,
+        _4188,
+        _4203,
+        _4206,
+    )
+    from mastapy._private.system_model.part_model.gears import _2813
+
+    Self = TypeVar("Self", bound="GearSetStabilityAnalysis")
+    CastSelf = TypeVar(
+        "CastSelf", bound="GearSetStabilityAnalysis._Cast_GearSetStabilityAnalysis"
+    )
+
+
+__docformat__ = "restructuredtext en"
+__all__ = ("GearSetStabilityAnalysis",)
+
+
+@extended_dataclass(frozen=True, slots=True, weakref_slot=True)
+class _Cast_GearSetStabilityAnalysis:
+    """Special nested class for casting GearSetStabilityAnalysis to subclasses."""
+
+    __parent__: "GearSetStabilityAnalysis"
+
+    @property
+    def specialised_assembly_stability_analysis(
+        self: "CastSelf",
+    ) -> "_4174.SpecialisedAssemblyStabilityAnalysis":
+        return self.__parent__._cast(_4174.SpecialisedAssemblyStabilityAnalysis)
+
+    @property
+    def abstract_assembly_stability_analysis(
+        self: "CastSelf",
+    ) -> "_4072.AbstractAssemblyStabilityAnalysis":
+        from mastapy._private.system_model.analyses_and_results.stability_analyses import (
+            _4072,
+        )
+
+        return self.__parent__._cast(_4072.AbstractAssemblyStabilityAnalysis)
+
+    @property
+    def part_stability_analysis(self: "CastSelf") -> "_4155.PartStabilityAnalysis":
+        from mastapy._private.system_model.analyses_and_results.stability_analyses import (
+            _4155,
+        )
+
+        return self.__parent__._cast(_4155.PartStabilityAnalysis)
+
+    @property
+    def part_static_load_analysis_case(
+        self: "CastSelf",
+    ) -> "_7944.PartStaticLoadAnalysisCase":
+        from mastapy._private.system_model.analyses_and_results.analysis_cases import (
+            _7944,
+        )
+
+        return self.__parent__._cast(_7944.PartStaticLoadAnalysisCase)
+
+    @property
+    def part_analysis_case(self: "CastSelf") -> "_7941.PartAnalysisCase":
+        from mastapy._private.system_model.analyses_and_results.analysis_cases import (
+            _7941,
+        )
+
+        return self.__parent__._cast(_7941.PartAnalysisCase)
+
+    @property
+    def part_analysis(self: "CastSelf") -> "_2949.PartAnalysis":
+        from mastapy._private.system_model.analyses_and_results import _2949
+
+        return self.__parent__._cast(_2949.PartAnalysis)
+
+    @property
+    def design_entity_single_context_analysis(
+        self: "CastSelf",
+    ) -> "_2945.DesignEntitySingleContextAnalysis":
+        from mastapy._private.system_model.analyses_and_results import _2945
+
+        return self.__parent__._cast(_2945.DesignEntitySingleContextAnalysis)
+
+    @property
+    def design_entity_analysis(self: "CastSelf") -> "_2943.DesignEntityAnalysis":
+        from mastapy._private.system_model.analyses_and_results import _2943
+
+        return self.__parent__._cast(_2943.DesignEntityAnalysis)
+
+    @property
+    def agma_gleason_conical_gear_set_stability_analysis(
+        self: "CastSelf",
+    ) -> "_4077.AGMAGleasonConicalGearSetStabilityAnalysis":
+        from mastapy._private.system_model.analyses_and_results.stability_analyses import (
+            _4077,
+        )
+
+        return self.__parent__._cast(_4077.AGMAGleasonConicalGearSetStabilityAnalysis)
+
+    @property
+    def bevel_differential_gear_set_stability_analysis(
+        self: "CastSelf",
+    ) -> "_4084.BevelDifferentialGearSetStabilityAnalysis":
+        from mastapy._private.system_model.analyses_and_results.stability_analyses import (
+            _4084,
+        )
+
+        return self.__parent__._cast(_4084.BevelDifferentialGearSetStabilityAnalysis)
+
+    @property
+    def bevel_gear_set_stability_analysis(
+        self: "CastSelf",
+    ) -> "_4089.BevelGearSetStabilityAnalysis":
+        from mastapy._private.system_model.analyses_and_results.stability_analyses import (
+            _4089,
+        )
+
+        return self.__parent__._cast(_4089.BevelGearSetStabilityAnalysis)
+
+    @property
+    def concept_gear_set_stability_analysis(
+        self: "CastSelf",
+    ) -> "_4102.ConceptGearSetStabilityAnalysis":
+        from mastapy._private.system_model.analyses_and_results.stability_analyses import (
+            _4102,
+        )
+
+        return self.__parent__._cast(_4102.ConceptGearSetStabilityAnalysis)
+
+    @property
+    def conical_gear_set_stability_analysis(
+        self: "CastSelf",
+    ) -> "_4105.ConicalGearSetStabilityAnalysis":
+        from mastapy._private.system_model.analyses_and_results.stability_analyses import (
+            _4105,
+        )
+
+        return self.__parent__._cast(_4105.ConicalGearSetStabilityAnalysis)
+
+    @property
+    def cylindrical_gear_set_stability_analysis(
+        self: "CastSelf",
+    ) -> "_4121.CylindricalGearSetStabilityAnalysis":
+        from mastapy._private.system_model.analyses_and_results.stability_analyses import (
+            _4121,
+        )
+
+        return self.__parent__._cast(_4121.CylindricalGearSetStabilityAnalysis)
+
+    @property
+    def face_gear_set_stability_analysis(
+        self: "CastSelf",
+    ) -> "_4128.FaceGearSetStabilityAnalysis":
+        from mastapy._private.system_model.analyses_and_results.stability_analyses import (
+            _4128,
+        )
+
+        return self.__parent__._cast(_4128.FaceGearSetStabilityAnalysis)
+
+    @property
+    def hypoid_gear_set_stability_analysis(
+        self: "CastSelf",
+    ) -> "_4137.HypoidGearSetStabilityAnalysis":
+        from mastapy._private.system_model.analyses_and_results.stability_analyses import (
+            _4137,
+        )
+
+        return self.__parent__._cast(_4137.HypoidGearSetStabilityAnalysis)
+
+    @property
+    def klingelnberg_cyclo_palloid_conical_gear_set_stability_analysis(
+        self: "CastSelf",
+    ) -> "_4141.KlingelnbergCycloPalloidConicalGearSetStabilityAnalysis":
+        from mastapy._private.system_model.analyses_and_results.stability_analyses import (
+            _4141,
+        )
+
+        return self.__parent__._cast(
+            _4141.KlingelnbergCycloPalloidConicalGearSetStabilityAnalysis
+        )
+
+    @property
+    def klingelnberg_cyclo_palloid_hypoid_gear_set_stability_analysis(
+        self: "CastSelf",
+    ) -> "_4144.KlingelnbergCycloPalloidHypoidGearSetStabilityAnalysis":
+        from mastapy._private.system_model.analyses_and_results.stability_analyses import (
+            _4144,
+        )
+
+        return self.__parent__._cast(
+            _4144.KlingelnbergCycloPalloidHypoidGearSetStabilityAnalysis
+        )
+
+    @property
+    def klingelnberg_cyclo_palloid_spiral_bevel_gear_set_stability_analysis(
+        self: "CastSelf",
+    ) -> "_4147.KlingelnbergCycloPalloidSpiralBevelGearSetStabilityAnalysis":
+        from mastapy._private.system_model.analyses_and_results.stability_analyses import (
+            _4147,
+        )
+
+        return self.__parent__._cast(
+            _4147.KlingelnbergCycloPalloidSpiralBevelGearSetStabilityAnalysis
+        )
+
+    @property
+    def planetary_gear_set_stability_analysis(
+        self: "CastSelf",
+    ) -> "_4160.PlanetaryGearSetStabilityAnalysis":
+        from mastapy._private.system_model.analyses_and_results.stability_analyses import (
+            _4160,
+        )
+
+        return self.__parent__._cast(_4160.PlanetaryGearSetStabilityAnalysis)
+
+    @property
+    def spiral_bevel_gear_set_stability_analysis(
+        self: "CastSelf",
+    ) -> "_4176.SpiralBevelGearSetStabilityAnalysis":
+        from mastapy._private.system_model.analyses_and_results.stability_analyses import (
+            _4176,
+        )
+
+        return self.__parent__._cast(_4176.SpiralBevelGearSetStabilityAnalysis)
+
+    @property
+    def straight_bevel_diff_gear_set_stability_analysis(
+        self: "CastSelf",
+    ) -> "_4185.StraightBevelDiffGearSetStabilityAnalysis":
+        from mastapy._private.system_model.analyses_and_results.stability_analyses import (
+            _4185,
+        )
+
+        return self.__parent__._cast(_4185.StraightBevelDiffGearSetStabilityAnalysis)
+
+    @property
+    def straight_bevel_gear_set_stability_analysis(
+        self: "CastSelf",
+    ) -> "_4188.StraightBevelGearSetStabilityAnalysis":
+        from mastapy._private.system_model.analyses_and_results.stability_analyses import (
+            _4188,
+        )
+
+        return self.__parent__._cast(_4188.StraightBevelGearSetStabilityAnalysis)
+
+    @property
+    def worm_gear_set_stability_analysis(
+        self: "CastSelf",
+    ) -> "_4203.WormGearSetStabilityAnalysis":
+        from mastapy._private.system_model.analyses_and_results.stability_analyses import (
+            _4203,
+        )
+
+        return self.__parent__._cast(_4203.WormGearSetStabilityAnalysis)
+
+    @property
+    def zerol_bevel_gear_set_stability_analysis(
+        self: "CastSelf",
+    ) -> "_4206.ZerolBevelGearSetStabilityAnalysis":
+        from mastapy._private.system_model.analyses_and_results.stability_analyses import (
+            _4206,
+        )
+
+        return self.__parent__._cast(_4206.ZerolBevelGearSetStabilityAnalysis)
+
+    @property
+    def gear_set_stability_analysis(self: "CastSelf") -> "GearSetStabilityAnalysis":
+        return self.__parent__
+
+    def __getattr__(self: "CastSelf", name: str) -> "Any":
+        try:
+            return self.__getattribute__(name)
+        except AttributeError:
+            class_name = utility.camel(name)
+            raise CastException(
+                f'Detected an invalid cast. Cannot cast to type "{class_name}"'
+            ) from None
+
+
+@extended_dataclass(frozen=True, slots=True, weakref_slot=True, eq=False)
+class GearSetStabilityAnalysis(_4174.SpecialisedAssemblyStabilityAnalysis):
+    """GearSetStabilityAnalysis
+
+    This is a mastapy class.
+    """
+
+    TYPE: ClassVar["Type"] = _GEAR_SET_STABILITY_ANALYSIS
+
+    wrapped: "Any"
+
+    def __post_init__(self: "Self") -> None:
+        """Override of the post initialisation magic method."""
+        if not hasattr(self.wrapped, "reference_count"):
+            self.wrapped.reference_count = 0
+
+        self.wrapped.reference_count += 1
+
+    @property
+    @exception_bridge
+    def assembly_design(self: "Self") -> "_2813.GearSet":
+        """mastapy.system_model.part_model.gears.GearSet
+
+        Note:
+            This property is readonly.
+        """
+        temp = pythonnet_property_get(self.wrapped, "AssemblyDesign")
+
+        if temp is None:
+            return None
+
+        type_ = temp.GetType()
+        return constructor.new(type_.Namespace, type_.Name)(temp)
+
+    @property
+    @exception_bridge
+    def gears_stability_analysis(self: "Self") -> "List[_4134.GearStabilityAnalysis]":
+        """List[mastapy.system_model.analyses_and_results.stability_analyses.GearStabilityAnalysis]
+
+        Note:
+            This property is readonly.
+        """
+        temp = pythonnet_property_get(self.wrapped, "GearsStabilityAnalysis")
+
+        if temp is None:
+            return None
+
+        value = conversion.pn_to_mp_objects_in_list(temp)
+
+        if value is None:
+            return None
+
+        return value
+
+    @property
+    @exception_bridge
+    def meshes_stability_analysis(
+        self: "Self",
+    ) -> "List[_4132.GearMeshStabilityAnalysis]":
+        """List[mastapy.system_model.analyses_and_results.stability_analyses.GearMeshStabilityAnalysis]
+
+        Note:
+            This property is readonly.
+        """
+        temp = pythonnet_property_get(self.wrapped, "MeshesStabilityAnalysis")
+
+        if temp is None:
+            return None
+
+        value = conversion.pn_to_mp_objects_in_list(temp)
+
+        if value is None:
+            return None
+
+        return value
+
+    @property
+    def cast_to(self: "Self") -> "_Cast_GearSetStabilityAnalysis":
+        """Cast to another type.
+
+        Returns:
+            _Cast_GearSetStabilityAnalysis
+        """
+        return _Cast_GearSetStabilityAnalysis(self)
