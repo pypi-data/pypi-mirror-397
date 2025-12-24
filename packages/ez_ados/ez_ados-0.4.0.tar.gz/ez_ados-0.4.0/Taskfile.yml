@@ -1,0 +1,66 @@
+# https://taskfile.dev
+
+version: "3"
+
+tasks:
+  venv:
+    desc: "Init virtual environment"
+    aliases:
+      - sync
+    cmds:
+      - uv sync --frozen
+
+  lock-fast:
+    cmds:
+      - uv lock
+
+  lock:
+    desc: "Lock all dependencies with upgrades"
+    cmds:
+      - uv lock --upgrade
+
+  tests:
+    desc: "Run unit tests"
+    cmds:
+      - uv run pytest -- {{.PYTEST_OPTS}}
+
+  lint:
+    desc: "Run code linting"
+    deps:
+      - lint-code
+      - lint-types
+
+  lint-code:
+    cmds:
+      - uv run ruff check src/ tests/ -- {{.RUFF_OPTS}}
+
+  lint-types:
+    cmds:
+      - uv run mypy {{.MYPY_OPTS}} src/ tests/
+
+  format:
+    desc: "Format code"
+    cmds:
+      - uv run ruff format tests/ src/ -- {{.RUFF_OPTS}}
+
+  clean:
+    desc: "Clean generated files"
+    cmds:
+      - git clean -fdx -e .venv/
+
+  preview-changelog:
+    desc: "Preview next changelog"
+    cmds:
+      - git cliff -v --bump --unreleased
+
+  bump:
+    desc: "Bump versions and update the changelog"
+    cmds:
+      - scripts/bump.sh
+
+  tag:
+    desc: "Create a new tag for this release"
+    prompt: "You are about to create a new release. Continue ?"
+    cmds:
+      - scripts/tag.sh
+      - echo "Now, push commit with tags (git push origin --tags) to create the release."
