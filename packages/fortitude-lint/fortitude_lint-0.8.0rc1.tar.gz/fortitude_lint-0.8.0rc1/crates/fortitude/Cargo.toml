@@ -1,0 +1,55 @@
+[package]
+name = "fortitude"
+version = "0.8.0-rc.1"
+publish = true
+description = "A Fortran linter, written in Rust and installable with Python"
+edition = { workspace = true }
+readme = "README.md"
+authors = { workspace = true }
+repository = { workspace = true}
+license = { workspace = true }
+keywords = ["Fortran", "linter"]
+categories = ["command-line-utilities", "development-tools"]
+exclude = [".*"]
+build = "build.rs"
+
+[dependencies]
+fortitude_linter = { workspace = true }
+fortitude_server = { workspace = true }
+fortitude_workspace = { workspace = true }
+
+anyhow = { workspace = true }
+bitflags = { workspace = true }
+clap = { workspace = true }
+clap_complete_command = { workspace = true }
+colored = { workspace = true }
+ignore = { workspace = true }
+indicatif = { workspace = true, features = ["rayon", "improved_unicode"] }
+itertools = { workspace = true }
+log = { workspace = true }
+path-absolutize = { workspace = true, features = [
+    "once_cell_cache",
+    "use_unix_paths_on_wasm",
+]}
+rayon = { workspace = true }
+ruff_diagnostics = { workspace = true, features = ["serde"] }
+ruff_source_file = { workspace = true, features = ["serde"] }
+ruff_text_size = { workspace = true }
+rustc-hash = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+strum = { workspace = true }
+termimad = { workspace = true }
+terminal-light = { workspace = true }
+textwrap = { workspace = true }
+
+[dev-dependencies]
+assert_cmd = { workspace = true }
+# Disable colored output in tests
+colored = { workspace = true, features = ["no-color"] }
+insta = { workspace = true }
+insta-cmd = { workspace = true }
+predicates = { workspace = true }
+tempfile = { workspace = true }
+# Include test rules when we run the tests
+fortitude_linter = { workspace = true, features = ["test-rules"] }
