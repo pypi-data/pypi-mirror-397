@@ -1,0 +1,130 @@
+VULNERABILITY TYPE: Insecure Direct Object Reference (IDOR)
+
+DESCRIPTION:
+IDOR vulnerabilities occur when an application exposes a reference to an internal object (database key, filename, user ID) without proper authorization checks. Attackers can manipulate these references to access unauthorized data or functionality.
+
+DETECTION INDICATORS:
+- Predictable numeric IDs in URLs (id=123, user_id=456, order_id=789)
+- Sequential identifiers
+- UUIDs or GUIDs that can be enumerated
+- File paths or names in parameters
+- Account numbers, invoice numbers, document IDs
+- API endpoints with resource identifiers
+- Profile URLs with user IDs
+- Download/view endpoints with file references
+
+PAYLOAD GENERATION IDEAS:
+1. Numeric ID manipulation:
+   - Increment: id=123 → id=124
+   - Decrement: id=123 → id=122
+   - Zero: id=0
+   - Negative: id=-1
+   - Large numbers: id=999999
+
+2. Sequential testing:
+   - Test adjacent IDs (id=100, 101, 102, etc.)
+   - Test common IDs (id=1, 2, 3)
+   - Test your own ID vs others
+
+3. UUID/GUID manipulation:
+   - Try random UUIDs
+   - Try sequential UUIDs if pattern detected
+   - Try null/empty UUIDs
+
+4. Username/email substitution:
+   - Replace your username with common names (admin, test, user)
+   - Replace your email with other formats
+   - Try known usernames from the platform
+
+5. File path manipulation:
+   - Replace file IDs with others
+   - Try common filenames (report.pdf, invoice.pdf)
+   - Test sequential document numbers
+
+TESTING STRATEGY:
+1. Identify parameters that reference objects:
+   - User profiles, documents, orders, messages, etc.
+   
+2. Create a baseline:
+   - Access your own resources first
+   - Note the response structure and data
+   - Identify what data should be private
+   
+3. Test authorization:
+   - Modify the ID to reference another user's resource
+   - Try accessing resources from an unauthenticated session
+   - Try accessing resources with lower privileges
+   
+4. Compare responses:
+   - Check if different data is returned
+   - Verify if access should have been denied
+   - Check for error messages vs successful access
+   
+5. Test different HTTP methods:
+   - GET for viewing
+   - POST/PUT for modification
+   - DELETE for removal
+   - PATCH for updates
+   
+6. Test in different contexts:
+   - API endpoints
+   - Web interface
+   - Mobile app endpoints
+
+VERIFICATION LOGIC:
+TRUE POSITIVE indicators:
+- Successfully accessed another user's data
+- Response contains information that should be private
+- Able to view/modify/delete resources belonging to others
+- Different user data is returned when ID is changed
+- No authorization error (200 OK instead of 401/403)
+- Private data like emails, addresses, or financial info exposed
+- Able to access admin or privileged resources with normal user account
+
+FALSE POSITIVE indicators:
+- 403 Forbidden or 401 Unauthorized response
+- Error message: "Access denied" or "Not authorized"
+- Empty response or null data
+- Redirect to login or error page
+- Same data regardless of ID (cached or default response)
+- Only public information is accessible
+- Generic error page without data leakage
+
+SEVERITY ASSESSMENT:
+- Critical: Access to highly sensitive data (passwords, payment info, PII of many users)
+- High: Access to other users' private information, messages, documents
+- Medium: Access to less sensitive information or limited scope
+- Low: Access to mostly public info or minimal impact
+- Info: IDOR exists but only to public or own data
+
+BUG BOUNTY SAFETY:
+- Do NOT access large amounts of data
+- Do NOT modify or delete other users' data unless proving write access
+- Do NOT download sensitive documents en masse
+- Stop at proof-of-concept (1-2 records)
+- Do NOT attempt to access highly sensitive accounts (executives, admins)
+- Use test accounts when available
+- Document only the vulnerability, not the exposed data
+
+COMMON VULNERABLE ENDPOINTS:
+- /api/users/{id}
+- /profile/{user_id}
+- /documents/view/{doc_id}
+- /orders/{order_id}
+- /messages/{message_id}
+- /download/{file_id}
+- /invoices/{invoice_id}
+- /api/v1/accounts/{account_id}
+
+AUTHORIZATION CHECK VERIFICATION:
+1. Test as User A accessing User A's resource → Should work
+2. Test as User A accessing User B's resource → Should fail (IDOR if succeeds)
+3. Test as anonymous accessing User B's resource → Should fail
+4. Test with different privilege levels
+
+IMPACT SCENARIOS:
+- Viewing: Read other users' private data
+- Modification: Edit other users' profiles, settings, data
+- Deletion: Delete other users' resources
+- Financial: Access invoices, payment methods, transactions
+- Privacy: Access PII, addresses, phone numbers, emails

@@ -1,0 +1,88 @@
+VULNERABILITY TYPE: Reflected Cross-Site Scripting (XSS)
+
+DESCRIPTION:
+Reflected XSS occurs when user-supplied input is immediately returned in the HTTP response without proper encoding. Attackers can inject malicious JavaScript that executes in victims' browsers, leading to session hijacking, phishing, or malware distribution.
+
+DETECTION INDICATORS:
+- Parameters reflected in HTML response (search, q, query, message, error, etc.)
+- User input displayed on the page
+- URL parameters or POST data shown in error messages
+- Input echoed in page titles, headers, or body content
+- JSON or XML responses that include user input
+- Form inputs that redisplay submitted values
+
+PAYLOAD GENERATION IDEAS:
+1. Basic script injection:
+   - <script>alert(1)</script>
+   - <img src=x onerror=alert(1)>
+   - <svg/onload=alert(1)>
+   - <body onload=alert(1)>
+
+2. Bypassing filters:
+   - <ScRiPt>alert(1)</sCrIpT>
+   - <script>alert(String.fromCharCode(88,83,83))</script>
+   - <img src=x onerror="alert(1)">
+   - <svg><script>alert(1)</script></svg>
+
+3. Event handlers:
+   - <input onfocus=alert(1) autofocus>
+   - <select onfocus=alert(1) autofocus>
+   - <textarea onfocus=alert(1) autofocus>
+   - <a href="javascript:alert(1)">click</a>
+
+4. Polyglot payloads:
+   - jaVasCript:/*-/*`/*\`/*'/*"/**/(/* */oNcliCk=alert() )//%0D%0A%0d%0a//</stYle/</titLe/</teXtarEa/</scRipt/--!>\x3csVg/<sVg/oNloAd=alert()//>\x3e
+
+5. Context-specific:
+   - In HTML attributes: " onmouseover=alert(1) x="
+   - In JavaScript: ';alert(1);//
+   - In URLs: javascript:alert(1)
+
+TESTING STRATEGY:
+1. Identify reflection points by injecting unique strings (e.g., "XSS_TEST_12345")
+2. Check if input is reflected and in what context (HTML, attribute, JavaScript, etc.)
+3. Test basic payload: <script>alert(1)</script>
+4. If blocked, try bypasses: capitalization, encoding, alternative tags
+5. Match payload to context (different for HTML vs attribute vs JS)
+6. Verify that JavaScript actually executes
+7. Test both GET and POST parameters
+8. Check HTTP headers if they're reflected (User-Agent, Referer, etc.)
+
+VERIFICATION LOGIC:
+TRUE POSITIVE indicators:
+- Your payload appears in the response unencoded
+- Script tags or event handlers are present in HTML
+- JavaScript execution context is created
+- Payload breaks out of existing HTML context correctly
+- No encoding or sanitization applied to dangerous characters
+- Response Content-Type is text/html (not text/plain)
+
+FALSE POSITIVE indicators:
+- Payload is HTML-encoded (&lt;script&gt; instead of <script>)
+- WAF or XSS filter blocks the request
+- Content-Security-Policy prevents execution
+- Response is JSON with proper Content-Type
+- Input is reflected but in a safe context (inside textarea, HTML comment, etc.)
+- Payload is escaped with backslashes
+- Framework's XSS protection prevents execution
+
+SEVERITY ASSESSMENT:
+- High: If arbitrary JavaScript execution is possible on sensitive pages (login, account, payment)
+- Medium: If XSS works but on less sensitive pages, or requires user interaction
+- Low: If Self-XSS (requires victim to paste payload themselves)
+- Info: If reflection exists but strong CSP prevents exploitation
+
+BUG BOUNTY SAFETY:
+- Use alert(1) or alert(document.domain) for proof-of-concept
+- Do NOT steal actual session tokens or cookies
+- Do NOT deface pages or interfere with other users
+- Do NOT use external resources (avoid exfiltration payloads)
+- Demonstrate impact without causing harm
+- Respect test accounts only if specified
+
+CONTEXT-SPECIFIC VERIFICATION:
+- HTML context: Check if < > are unencoded
+- Attribute context: Check if " ' are unencoded
+- JavaScript context: Check if '; are unencoded
+- URL context: Check if javascript: protocol works
+- CSS context: Check if expressions are possible

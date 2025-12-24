@@ -1,0 +1,228 @@
+Metadata-Version: 2.4
+Name: otodus
+Version: 1.0.2
+Summary: Otodus - The Megalodon of Automated Pentesting with AI Agents
+Home-page: https://github.com/IMApurbo/otodus
+Author: AKM Korishee Apurbo
+Author-email: bandinvisible8@gmail.com
+License: MIT
+Project-URL: Bug Tracker, https://github.com/IMApurbo/otodus/issues
+Project-URL: Source Code, https://github.com/IMApurbo/otodus
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Security
+Classifier: Intended Audience :: Information Technology
+Classifier: Development Status :: 4 - Beta
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: Flask>=2.0.0
+Requires-Dist: requests>=2.28.0
+Requires-Dist: crawlerx==1.1.1
+Requires-Dist: platformdirs>=4.0.0
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license
+Dynamic: license-file
+Dynamic: project-url
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# Otodus – The Megalodon of Automated Pentesting
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/)
+[![Framework](https://img.shields.io/badge/Framework-Flask-green.svg)](https://flask.palletsprojects.com/)
+
+**Author:** AKM Korishee Apurbo (IMApurbo)  
+**Version:** 1.0.1  
+**Release Date:** December 2025
+
+---
+
+## Overview
+
+**Otodus** is a fully automated, AI-driven web application security testing platform designed for bug bounty hunters, security researchers, and red-team professionals.
+
+It orchestrates intelligent AI agents to perform:
+- Reconnaissance
+- Deep endpoint crawling
+- Vulnerability classification
+- Payload generation & testing
+- True-positive verification
+
+All delivered through a modern, real-time web dashboard.
+
+**Powered by GPT-4o-mini** via Puter AI API – safe, accurate, and ethical by design.
+
+---
+
+## Key Features
+
+### Automated Reconnaissance
+- Subdomain enumeration with `subfinder` + `gobuster`
+- Live host filtering with `httpx`
+- DNS & HTTP/HTTPS reachability validation
+
+### Intelligent Crawling
+- Deep endpoint discovery using **CrawlerX**
+- Automatic deduplication & normalization
+
+### AI-Driven Analysis
+Four specialized agents:
+- **Planner Agent** – Creates targeted testing strategy
+- **Classification Agent** – Maps endpoints to vulnerability types
+- **Exploit Agent** – Generates safe, context-aware payloads
+- **Verification Agent** – Confirms findings with evidence
+
+### Web Dashboard
+- Real-time logs (AI reasoning, system, vulnerabilities)
+- Live vulnerability panel with severity badges
+- Scan progress bar & stage tracking
+- One-click Markdown report download
+
+### Safety & Control
+- Non-destructive payloads only
+- Manual scan stop at any time
+- Designed for authorized testing only
+
+---
+
+## Installation
+
+### Requirements
+- Linux, macOS (or Windows)
+- Python 3.8+
+- Internet access (for AI API)
+
+### Step 1: Install External Recon Tools (optional but recommended)
+```bash
+# Subfinder & httpx (Go tools)
+go install github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
+go install github.com/projectdiscovery/httpx/cmd/httpx@latest
+
+# Gobuster
+# Debian/Ubuntu
+sudo apt install gobuster
+# macOS
+brew install gobuster
+# Or use Docker images if preferred
+```
+
+### Step 2: Install Otodus
+```bash
+pip install otodus
+```
+
+**CrawlerX is automatically installed** as a dependency.
+
+---
+
+## Running Otodus
+
+```bash
+# Start the dashboard
+otodus
+```
+
+Open your browser:
+```
+http://localhost:5000
+```
+
+---
+
+## Authentication
+
+The tool uses **Puter AI API** (GPT-4o-mini).
+
+> The token is stored securely in your user config directory:  
+> - Linux/macOS: `~/.config/otodus/auth_token.txt`  
+> - Windows: `C:\Users\<username>\AppData\Roaming\otodus\auth_token.txt`
+
+---
+
+## Usage
+
+1. Enter target domain (e.g., `testphp.vulnweb.com`)
+2. Click **Start Auto Scan**
+3. Watch real-time progress, AI reasoning, and findings
+4. Download the final Markdown report when finished
+
+---
+
+## Directory Structure (after install)
+
+```
+site-packages/otodus/
+├── otodus/
+│   ├── __init__.py
+│   ├── otodus.py
+│   └── prompts/              # Built-in prompt templates
+│       ├── sql_injection.txt
+│       ├── xss_reflected.txt
+│       ├── idor.txt
+│       └── ...
+└── bounty_workspace/         # Created at runtime (current dir)
+    ├── recon/
+    ├── scans/
+    ├── endpoints/
+    ├── vulnerabilities/
+    └── reports/
+```
+
+---
+
+## Customization
+
+- Add new vulnerability types by creating `.txt` files in your local `prompts/` folder (overrides built-in prompts)
+- Modify scan limits in `AgentOrchestrator.run()`
+- Extend AI agents with custom logic
+
+---
+
+## Dependencies
+
+### Python
+- Flask
+- requests
+- crawlerx
+- platformdirs (for secure config storage)
+
+### External (optional)
+- subfinder
+- gobuster
+- httpx
+
+---
+
+## Legal & Ethical Notice
+
+**Authorized Use Only**
+
+This tool is intended strictly for:
+- Systems you own
+- Systems you have explicit written permission to test
+
+Unauthorized testing is illegal and unethical.
+
+---
+
+## ⭐ Credits
+
+**Created by:** [IMApurbo](https://github.com/imapurbo)
+
+---
+## 📃 License
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

