@@ -1,0 +1,97 @@
+[build-system]
+requires = ["setuptools>=77.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tubetracks"
+version = "1.5.1"
+description = "TubeTracks: Enhanced YouTube to MP3 Downloader with multi-platform support"
+readme = "README.md"
+authors = [
+    {name = "TubeTracks", email = "hayk.jomardyan@outlook.com"}
+]
+maintainers = [
+    {name = "jomardyan"}
+]
+keywords = [
+    "youtube",
+    "mp3",
+    "download",
+    "audio",
+    "yt-dlp",
+    "tiktok",
+    "instagram",
+    "soundcloud",
+    "spotify",
+    "twitch",
+    "media-downloader",
+    "audio-converter",
+    "tubetracks"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Desktop Environment",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Internet",
+    "Topic :: Utilities",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "yt-dlp>=2024.0.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "isort>=5.0.0",
+    "ruff>=0.1.0",
+    "bandit>=1.7.5",
+    "build>=0.10.0",
+    "twine>=4.0.0",
+]
+
+[project.scripts]
+tubetracks = "downloader:main"
+ytdl = "downloader:main"
+tubetracks-gui = "tubetracks_gui:main"
+audiodownload = "downloader:main"
+
+[project.urls]
+Homepage = "https://github.com/jomardyan/TubeTracks"
+Repository = "https://github.com/jomardyan/TubeTracks.git"
+"Bug Tracker" = "https://github.com/jomardyan/TubeTracks/issues"
+Documentation = "https://github.com/jomardyan/TubeTracks/blob/main/README.md"
+Changelog = "https://github.com/jomardyan/TubeTracks/blob/main/CHANGELOG.md"
+
+[tool.setuptools]
+py-modules = ["downloader", "tubetracks_gui"]
+packages = ["plugins"]
+package-dir = {"" = "."}
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --tb=short"
+
+[tool.isort]
+profile = "black"
+line_length = 88
