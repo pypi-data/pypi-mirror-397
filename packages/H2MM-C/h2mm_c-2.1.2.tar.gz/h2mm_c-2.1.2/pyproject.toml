@@ -1,0 +1,66 @@
+[build-system]
+requires = [
+    "setuptools>=64",
+    "setuptools_scm>=6.0",
+    "wheel",
+    "cython",
+    "IPython",
+    "numpy"
+]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "H2MM_C"
+dynamic = ["version", ]
+authors = [{name="Paul David Harris", email="harripd@gmail.com"}, ]
+description = "C level implementation of H2MM algorithm by Pirchi. 2016"
+readme = "README.md"
+license = {text = "MIT"}
+keywords = ["single-molecule FRET", "smFRET", "hidden markov model"]
+classifiers = [
+    "Intended Audience :: Science/Research",
+     "Operating System :: OS Independent",
+     "Programming Language :: Python :: 3.7",
+     "Programming Language :: Python :: 3.8",
+     "Programming Language :: Python :: 3.9",
+     "Programming Language :: Python :: 3.10",
+     "Programming Language :: Python :: 3.11",
+     "Programming Language :: Python :: 3.12",
+     "Programming Language :: Python :: 3.13",
+     "Programming Language :: Python :: 3.14",
+     "Programming Language :: Cython",
+     "Programming Language :: C",
+     "Topic :: Scientific/Engineering",
+    ]
+requires-python = ">= 3.7"
+dependencies = [
+    "numpy",
+    "IPython",
+    'importlib_metadata;python_version<"3.8"'
+    ]
+
+
+[project.urls]
+Homepage = "https://github.com/harripd/H2MMpythonlib"
+Documentation = "https://h2mmpythonlib.readthedocs.io/en/latest/"
+Repositories = "https://github.com/harripd/H2MMpythonlib/"
+Issues = "https://github.com/harripd/H2MMpythonlib/issues"
+
+
+[tool.pytest.ini_options]
+
+
+[tool.setuptools.packages.find]
+include = ['H2MM_C']
+
+
+[tool.setuptools_scm]
+version_scheme = "post-release"
+
+
+[tool.cibuildwheel]
+build = "*"
+skip = ["-win32", "*-manylinux_i686", "*musllinux*", "cp39-win_arm64", " cp310-win_arm64"]
+before-test = "pip install pytest"
+test-command = "pytest {package}/tests"
