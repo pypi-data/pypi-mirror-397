@@ -1,0 +1,197 @@
+{% extends 'evictionsplit/base.html' %}
+{% load i18n %}
+{% load smooth_timedelta %}
+{% block details %}
+    {% if unknown_change %}
+        <div class="alert alert-dismissible alert-warning">
+            <h4 class="alert-heading">Error!</h4>
+            <p>
+                {% blocktranslate trimmed %}
+                    Unknown argument received: {{ unknown_change }}
+                {% endblocktranslate %}
+            </p>
+        </div>
+    {% endif %}
+    <h2 class="page-header text-center">{{ eviction.name | capfirst }}</h2>
+    <div class="panel panel-success">
+        <div class="panel-heading" style="display: flex;">
+            <h3 class="panel-title">Your status</h3>
+        </div>
+        <div class="panel-body text-center">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-6">
+                        {% if eviction.active %}
+                            <form method="post"
+                                  action="{% url 'evictionsplit:change_clocking' eviction.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="clocking_type" value="SP">
+                                <input type="hidden" name="origin" value="eviction">
+                                {% if is_standby %}
+                                    <input type="hidden" name="change" value="stop">
+                                    <input type="submit"
+                                           class="btn btn-lg btn-success"
+                                           value="{% translate "Currently on standby for pings" %}">
+                                {% else %}
+                                    <input type="hidden" name="change" value="start">
+                                    <input type="submit"
+                                           class="btn btn-lg btn-danger"
+                                           value="{% translate "Currently not on standby for ping" %}">
+                                {% endif %}
+                            </form>
+                        {% else %}
+                            <button class="btn btn-lg btn-danger disabled">{% translate "Eviction is over" %}</button>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        {% if eviction.active %}
+                            <form method="post"
+                                  action="{% url 'evictionsplit:change_clocking' eviction.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="clocking_type" value="DS">
+                                <input type="hidden" name="origin" value="eviction">
+                                {% if is_doorstop %}
+                                    <input type="hidden" name="change" value="stop">
+                                    <input type="submit"
+                                           class="btn btn-lg btn-success"
+                                           value="{% translate "Currently on doorstop" %}">
+                                {% else %}
+                                    <input type="hidden" name="change" value="start">
+                                    <input type="submit"
+                                           class="btn btn-lg btn-danger"
+                                           value="{% translate "Currently not on doorstop" %}">
+                                {% endif %}
+                            </form>
+                        {% else %}
+                            <button class="btn btn-lg btn-danger disabled">{% translate "Eviction is over" %}</button>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p>{{ time_standby | smooth_timedelta }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p>{{ time_doorstop | smooth_timedelta }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% if applicants %}
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title">{% translate "Eviction applicants:" %}</h3>
+            </div>
+            <div class="panel-body">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>{% translate "Applicant" %}</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for applicant in applicants %}
+                            <td>
+                                <img src="{{ applicant.portrait_url }}" class="ra-avatar img-circle">
+                                &nbsp;
+                                {{ applicant.name }}
+                            </td>
+                            <td>
+                                <a href="{% url "evictionsplit:accept_application" eviction.id applicant.id %}"
+                                   class="btn btn-success"><i class="fa fa-check"></i></a>
+                            </td>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
+    <div class="panel panel-primary">
+        <div class="panel-heading">
+            <h3 class="panel-title">{% translate "Eviction status:" %}</h3>
+        </div>
+        <div class="panel-body">
+            {% if user_has_manager_permission %}
+                <span data-bs-toggle="modal" data-bs-target="#exportActivity">
+                    <button class='btn btn-xs btn-success'
+                            id="exportActivityButton"
+                            style="margin-top: -2px"
+                            data-toggle="tooltip"
+                            data-placement="top"
+                            title="Export activity">{% translate "Export activity logs" %}</button>
+                </span>
+            {% endif %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>{% translate "Name" %}</th>
+                        <th>{% translate "On standby" %}</th>
+                        <th>{% translate "On doorstop" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for participant in participants %}
+                        <tr>
+                            <td>
+                                <img src="{{ participant.portrait_url }}" class="ra-avatar img-circle">
+                                &nbsp;
+                                {{ participant.name }}
+                            </td>
+                            <td>
+                                {% if participant.is_standby %}
+                                    <button class="btn btn-success disabled">
+                                        <i class="fa fa-check"></i>
+                                    </button>
+                                {% else %}
+                                    <button class="btn btn-danger disabled">
+                                        <i class="fa fa-times"></i>
+                                    </button>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if participant.is_doorstop %}
+                                    <button class="btn btn-success disabled">
+                                        <i class="fa fa-check"></i>
+                                    </button>
+                                {% else %}
+                                    <button class="btn btn-danger disabled">
+                                        <i class="fa fa-times"></i>
+                                    </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% if user_has_manager_permission %}
+        <div class="modal fade"
+             id="exportActivity"
+             role="dialog"
+             tabindex="-1"
+             aria-labelledby="modalTitle"
+             aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-center" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h1 class="modal-title fs-5" id="modalTitle">{% translate "Export clocking data" %}</h1>
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <textarea style="width: 100%;
+                                         height: 100%"
+                                  rows="25"
+                                  onclick="this.select()"
+                                  readonly>{{ eviction.spreadsheet_export }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% endblock %}

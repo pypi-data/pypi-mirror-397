@@ -1,0 +1,78 @@
+{% extends 'evictionsplit/base.html' %}
+{% load i18n %}
+{% load smooth_timedelta %}
+{% block details %}
+    <h2 class="panel-title">{% translate "Eviction board" %}</h2>
+    {% for eviction in user_active_evictions %}
+        <div class="card text-center mx-3">
+            <div class="card-body">
+                <h4 class="card-title">
+                    {{ eviction.name }}
+                    <a class="btn btn-primary"
+                       href="{% url 'evictionsplit:eviction' eviction.id %}"
+                       role="button">
+                        <i class="fas fa-long-arrow-alt-right"></i>
+                    </a>
+                </h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <form method="post"
+                              action="{% url 'evictionsplit:change_clocking' eviction.id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="clocking_type" value="SP">
+                            <input type="hidden" name="origin" value="index">
+                            {% if eviction.is_standby %}
+                                <input type="hidden" name="change" value="stop">
+                                <input type="submit"
+                                       class="btn btn-lg btn-success"
+                                       value="{% translate "Currently on standby for pings" %}">
+                            {% else %}
+                                <input type="hidden" name="change" value="start">
+                                <input type="submit"
+                                       class="btn btn-lg btn-danger"
+                                       value="{% translate "Currently not on standby for ping" %}">
+                            {% endif %}
+                        </form>
+                    </div>
+                    <div class="col-md-6">
+                        <form method="post"
+                              action="{% url 'evictionsplit:change_clocking' eviction.id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="clocking_type" value="DS">
+                            <input type="hidden" name="origin" value="index">
+                            {% if eviction.is_doorstop %}
+                                <input type="hidden" name="change" value="stop">
+                                <input type="submit"
+                                       class="btn btn-lg btn-success"
+                                       value="{% translate "Currently on doorstop" %}">
+                            {% else %}
+                                <input type="hidden" name="change" value="start">
+                                <input type="submit"
+                                       class="btn btn-lg btn-danger"
+                                       value="{% translate "Currently not on doorstop" %}">
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p>{{ eviction.time_standby | smooth_timedelta }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p>{{ eviction.time_doorstop | smooth_timedelta }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <br>
+    {% empty %}
+        {% url 'evictionsplit:list' as url %}
+        {# Translators: Be careful to preserve the <a> tag structure #}
+        {% blocktranslate trimmed %}
+            <p>You are in no active eviction at the moment</p>
+            <p>
+                Go to <a href="{{ url }}">here</a> to join evictions
+            </p>
+        {% endblocktranslate %}
+    {% endfor %}
+{% endblock %}
