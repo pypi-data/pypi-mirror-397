@@ -1,0 +1,60 @@
+[tool.poetry]
+name = "telegram-bot-core"
+version = "0.1.4"
+description = "Core utilities for Telegram bots (aiogram v3): menu manager, backend sync, clients."
+authors = ["Your Name <remanam@mail.ru>"]
+readme = "README.md"
+license = "MIT"
+packages = [{ include = "bot_core", from = "src" }]
+
+[tool.poetry.dependencies]
+python = ">=3.12,<4.0"
+
+# Base (always)
+aiogram = ">=3.0,<4.0"
+httpx = ">=0.27,<1.0"
+
+# Useful for launchers (optional but common)
+python-dotenv = ">=1.0,<2.0"
+
+# Optional feature deps (installed via extras)
+fastapi = { version = ">=0.115,<1.0", optional = true }
+uvicorn = { version = ">=0.30,<1.0", optional = true }
+SQLAlchemy = { version = ">=2.0,<3.0", optional = true }
+fastcrud = { version = ">=0.19,<1.0", optional = true }
+alembic = { version = ">=1.13,<2.0", optional = true }
+asyncpg = { version = ">=0.29,<1.0", optional = true }
+
+pandas = { version = ">=2.2,<3.0", optional = true }
+openpyxl = { version = ">=3.1,<4.0", optional = true }
+gspread = { version = ">=6.0,<7.0", optional = true }
+oauth2client = { version = ">=4.1.3,<5.0", optional = true }
+
+aiobotocore = { version = "==2.16.1", optional = true }
+
+[tool.poetry.extras]
+backend = ["fastapi", "uvicorn", "SQLAlchemy", "fastcrud", "alembic", "asyncpg"]
+sheets = ["pandas", "openpyxl", "gspread", "oauth2client"]
+s3 = ["aiobotocore"]
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.8.0"
+black = "^24.10.0"
+mypy = "^1.13.0"
+pytest = "^8.3.0"
+
+[tool.black]
+line-length = 100
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.mypy]
+python_version = "3.13"
+ignore_missing_imports = true
+strict = true
+
+[build-system]
+requires = ["poetry-core>=2.0.0"]
+build-backend = "poetry.core.masonry.api"
