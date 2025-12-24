@@ -1,0 +1,722 @@
+config:
+  title: PyHDX app
+
+main_controller:
+  type: pyhdx
+  #kwargs: ...
+
+sources:
+  main:
+    type: pyhdx
+  pdb:
+    type: pdb
+  metadata:
+    type: dict
+
+transforms:
+  peptide_src:
+    type: table_source
+    source: main
+    table: peptides
+  rfu_src:
+    type: table_source
+    source: main
+    table: rfu
+  d_uptake_src:
+    type: table_source
+    source: main
+    table: d_uptake
+  rates_src:
+    type: table_source
+    source: main
+    table: rates
+  dG_src:
+    type: table_source
+    source: main
+    table: dG
+  loss_src:
+    type: table_source
+    source: main
+    table: loss
+  d_calc_src:
+    type: table_source
+    source: main
+    table: d_calc
+  peptide_mse_src:
+    type: table_source
+    source: main
+    table: peptide_mse
+  ddG_src:
+    type: table_source
+    source: main
+    table: ddG
+  drfu_src:
+    type: table_source
+    source: main
+    table: drfu
+  dd_uptake_src:
+    type: table_source
+    source: main
+    table: dd_uptake
+
+opts:
+  base:
+    type: generic
+    responsive: True
+    framewise: True
+    show_grid: True
+    # shared_axes: True  # doesnt seem to do anything
+  errorbars:
+    type: generic
+    line_alpha: 0.5
+    line_color: '#b3b3b3'
+    apply_ranges: False  # Do not rescale axis based on the error bars
+    hooks:
+      - handle: glyph
+        attr: upper_head.line_color
+        value: '#b3b3b3'
+      - handle: glyph
+        attr: lower_head.line_color
+        value: '#b3b3b3'
+  scatter:
+    type: generic
+    size: 8
+  rfu_cmap:
+    type: cmap
+    field: rfu
+  drfu_cmap:
+    type: cmap
+    field: drfu
+  d_uptake_cmap:
+    type: cmap
+    field: d_uptake
+  dd_uptake_cmap:
+    type: cmap
+    field: dd_uptake
+  dG_cmap:
+    type: cmap
+    field: dG
+    sclf: 1.0e-3
+  ddG_cmap:
+    type: cmap
+    field: ddG
+    sclf: 1.0e-3
+  info_log:
+    type: generic
+    title: Log Window
+  debug_log:
+    type: generic
+    title: Debug Log
+
+tools:
+  coverage_hover:
+    type: hover
+    tooltips:
+      - ['peptide_id', '$index']
+      - ['start, end', '@start, @end']
+      - ['RFU', '@rfu']
+      - ['D (corrected)', '@uptake_corrected']
+      - ['sequence', '@sequence']
+  peptide_mse_hover:
+    type: hover
+    tooltips:
+      - ['peptide_id', '$index']
+      - [ 'start, end', '@start, @end' ]
+      - ['MSE', '@peptide_mse']
+      - ['sequence', '@sequence']
+  rfu_hover:
+    type: hover
+    tooltips:
+      - ['Residue', '@r_number']
+      - ['RFU', '@rfu']
+    # mode: vline
+    #only show closest hit:
+    #https://stackoverflow.com/questions/36434562/displaying-only-one-tooltip-when-using-the-hovertool-tool
+    #https://github.com/bokeh/bokeh/issues/9087
+  d_uptake_hover:
+    type: hover
+    tooltips:
+      - [ 'Residue', '@r_number' ]
+      - [ 'D-uptake', '@d_uptake' ]
+
+  rates_hover:
+    type: hover
+    tooltips:
+      - ['Residue', '@r_number']
+      - ['Rate', '@rate s⁻¹']
+    #mode: vline
+  dG_hover:
+    type: hover
+    tooltips:
+      - [ 'Residue', '@r_number' ]
+      - [ 'ΔG', '@dG kJ/mol' ]
+    #mode: vline
+  ddG_hover:
+    type: hover
+    tooltips:
+      - [ 'Residue', '@r_number' ]
+      - [ 'ΔΔG', '@ddG kJ/mol' ]
+  drfu_hover:
+    type: hover
+    tooltips:
+      - [ 'Residue', '@r_number' ]
+      - [ 'ΔRFU', '@drfu' ]
+  dd_uptake_hover:
+    type: hover
+    tooltips:
+      - [ 'Residue', '@r_number' ]
+      - [ 'ΔD-Uptake', '@dd_uptake' ]
+
+views:
+  logging_info:
+    type: logging
+    logger: pyhdx
+    level: 20
+    opts:
+      - info_log
+  logging_debug:
+    type: logging
+    logger: pyhdx
+    level: 10
+    opts:
+      - debug_log
+
+modules:
+  coverage_view:
+    transforms:
+      coverage_select:
+        type: cross_section
+        source: peptide_src
+        n_levels: 2
+      coverage_rectangles:
+        type: rectangle_layout
+        source: coverage_select
+        left: start
+        right: end
+        passthrough:
+          - rfu
+          - uptake_corrected
+          - sequence
+          - start
+          - end
+    opts:
+      coverage:
+        type: generic
+        color: rfu
+        colorbar: True
+        xlabel: Residue Number
+        ylabel : ''
+        yticks: 0
+        title: Peptide coverage
+        tools:
+          - coverage_hover
+    views:
+      coverage:
+        type: rectangles
+        source: coverage_rectangles
+        opts:
+          - base
+          - coverage
+          - rfu_cmap
+        vdims:
+          - rfu
+          - uptake_corrected
+          - sequence
+          - start
+          - end
+
+  rfu:
+    transforms:
+      rfu_select:
+        type: cross_section
+        source: rfu_src
+        n_levels: -1
+    opts:
+      rfu_scatter:
+        type: generic
+        xlabel: Residue Number
+        ylabel: RFU
+        title: RFU Scatter
+        color: rfu
+        colorbar: True
+        ylim: [0, null]
+        tools:
+          - rfu_hover
+    views:
+      rfu_scatter:
+        type: scatter
+        source: rfu_select
+        x: r_number
+        y: rfu
+        opts:
+          - base
+          - scatter
+          - rfu_scatter
+          - rfu_cmap
+      rfu_errorbars:
+        type: errorbars
+        source: rfu_select
+        opts:
+          - base
+          - errorbars
+        x: r_number
+        y: rfu
+        err: rfu_sd
+      rfu_overlay:
+        type: overlay
+        views:
+          - rfu_scatter
+          - rfu_errorbars
+
+  d_uptake:
+    transforms:
+      d_uptake_select:
+        type: cross_section
+        source: d_uptake_src
+        n_levels: -1
+    opts:
+      d_uptake_scatter:
+        type: generic
+        xlabel: Residue Number
+        ylabel: D-Uptake
+        title: D-Uptake Scatter
+        color: d_uptake
+        colorbar: True
+        ylim: [0, null]
+        tools:
+          - d_uptake_hover
+    views:
+      d_uptake_scatter:
+        type: scatter
+        source: d_uptake_select
+        x: r_number
+        y: d_uptake
+        opts:
+          - base
+          - scatter
+          - d_uptake_scatter
+          - d_uptake_cmap
+      d_uptake_errorbars:
+        type: errorbars
+        source: d_uptake_select
+        x: r_number
+        y: d_uptake
+        err_pos: percentile_75
+        err_neg: percentile_25
+        err_type: positions
+        opts:
+          - base
+      d_uptake_errorbars_05:
+        type: errorbars
+        source: d_uptake_select
+        x: r_number
+        y: d_uptake
+        err_pos: percentile_95
+        err_neg: percentile_05
+        err_type: positions
+        opts:
+          - base
+          - errorbars
+      d_uptake_overlay:
+        type: overlay
+        views:
+          - d_uptake_scatter
+          - d_uptake_errorbars
+          - d_uptake_errorbars_05
+
+  rates:
+    transforms:
+      rates_select:
+        type: cross_section
+        source: rates_src
+        n_levels: 2
+    opts:
+      rates:
+        type: generic
+        xlabel: Residue Number
+        ylabel: Rate (s⁻¹)  # todo superscript
+        title: Approximate H/D rates
+        logy: True
+        tools:
+          - rates_hover
+    views:
+      rates:
+        type: scatter
+        source: rates_select
+        opts:
+          - base
+          - scatter
+          - rates
+        x: r_number
+        y: rate
+
+  peptides:  # peptide tab with d_exp and d_calc
+    transforms:
+      peptide_pipe:
+        type: pipe
+        source: peptide_src
+        pipe:
+          - function: xs
+            args:
+              - uptake_corrected
+            kwargs:
+              axis: 1
+              level: -1
+              drop_level: False
+          - function: stack
+            kwargs:
+              level: 1
+          - function: unstack
+            kwargs:
+              level: 0
+          - function: swaplevel
+            kwargs:
+              axis: 1
+          - function: dropna
+            kwargs:
+              axis: 0
+              how: all
+          - function: dropna
+            kwargs:
+              axis: 1
+              how: all
+      peptide_select:
+        type: cross_section
+        source: peptide_pipe
+        n_levels: -1
+      d_calc_select:
+        type: cross_section
+        source: d_calc_src
+        n_levels: -1
+    opts:
+      peptide_scatter:
+        type: generic
+        logx: True
+        ylim: [0, null]
+        xlabel: Exposure time (s)
+        ylabel: D-uptake (corrected)
+      d_calc_line:
+        type: generic
+        color: black
+    views:
+      peptide_scatter:
+        type: scatter
+        source: peptide_select
+        x: exposure
+        y: uptake_corrected
+        opts:
+          - base
+          - scatter
+          - peptide_scatter
+      d_calc_line:
+        type: curve
+        source: d_calc_select
+        opts:
+          - d_calc_line
+        x: exposure
+        y: d_calc
+      peptide_overlay:
+        type: overlay
+        views:
+          - peptide_scatter
+          - d_calc_line
+
+  peptide_mse:
+    transforms:
+      peptide_mse_select:
+        type: cross_section
+        source: peptide_mse_src
+        n_levels: -1
+      peptide_mse_rectangles:
+        type: rectangle_layout
+        source: peptide_mse_select
+        left: start
+        right: end
+        passthrough:
+          - peptide_mse
+          - start
+          - end
+          - sequence
+    views:
+      peptide_mse:
+        type: rectangles
+        source: peptide_mse_rectangles
+        opts:
+          - base
+          - labels:
+              type: generic
+              xlabel: Residue Number
+              ylabel: ''
+              yticks: 0
+              color: peptide_mse
+              colorbar: True
+              cmap: cividis
+              title: Peptides mean squared error
+              tools:
+                - peptide_mse_hover
+        vdims:
+          - peptide_mse
+          - start
+          - end
+          - sequence
+
+  loss:
+    transforms:
+      loss_sample:
+        type: sample
+        source: loss_src
+        axis: 0
+        n: 1000
+      loss_select:
+        type: cross_section
+        source: loss_sample
+        n_levels: -1
+    views:
+      loss_lines:
+        type: hvplot
+        source: loss_select
+        kind: line
+        responsive: True
+        #framewise: True
+        opts:
+          - base
+          - labels:
+              type: generic
+              xlabel: Number of Epochs
+              ylabel: Loss
+              xlim: [0, null]
+
+  dG:
+    transforms:
+      dG_fit_select:
+        type: cross_section
+        source: dG_src
+        n_levels: 2
+      dG_rescale:
+        type: rescale
+        source: dG_fit_select
+        scale_factor: 1.0e-3
+        columns:
+        - dG
+        - covariance
+    opts:
+      dG_axes:
+        type: generic
+        xlabel: Residue Number
+        ylabel: ΔG (kJ/mol)
+        title: ΔG Scatterplot
+        invert_yaxis: True
+        color: dG
+        colorbar: True
+        tools:
+          - dG_hover
+    views:
+      gibbs: # todo rename dG??
+        type: scatter
+        source: dG_rescale
+        opts:
+          - base
+          - scatter
+          - dG_axes
+          - dG_cmap
+        x: r_number
+        y: dG
+      gibbs_errors:
+        type: errorbars
+        source: dG_rescale
+        opts:
+          - base
+          - errorbars
+        x: r_number
+        y: dG
+        err: covariance
+      gibbs_overlay:
+        type: overlay
+        views:
+          - gibbs
+          - gibbs_errors
+
+  ddG_view:
+    transforms:
+      ddG_comparison_select:
+        type: cross_section
+        source: ddG_src
+        n_levels: 2
+      ddG_rescale:
+        type: rescale
+        source: ddG_comparison_select
+        scale_factor: 1.0e-3   # TODO sclf vs scale_factor
+        columns:
+        - ddG  # todo expand columns to include qty
+        - covariance
+    opts:
+      ddG_axes:
+        type: generic
+        xlabel: Residue Number
+        ylabel: ΔΔG (kJ/mol)
+        title: ΔΔG Scatterplot
+        invert_yaxis: True # todo find out of symmetric around zero constraint is possible
+        color: ddG
+        symmetric: True
+        colorbar: True
+        tools:
+          - ddG_hover
+    views:
+      ddG:
+        type: scatter
+        source: ddG_rescale
+        opts:
+          - base
+          - scatter
+          - ddG_axes
+          - ddG_cmap
+        x: r_number
+        y: ddG
+      ddG_errors:
+        type: errorbars
+        source: ddG_rescale
+        opts:
+          - base
+          - errorbars
+        x: r_number
+        y: ddG
+        err: covariance
+      ddG_overlay:
+        type: overlay
+        views:
+          - ddG
+          - ddG_errors
+
+  drfu_view:
+    transforms:
+      drfu_comparison_select:
+        type: cross_section
+        source: drfu_src
+        n_levels: -1
+    opts:
+      drfu_axes:
+        type: generic
+        xlabel: Residue Number
+        ylabel: ΔRFU
+        title: ΔRFU Scatterplot
+        color: drfu
+        colorbar: True
+        tools:
+          - drfu_hover
+    views:
+      drfu_scatter:
+        type: scatter
+        source: drfu_comparison_select
+        x: r_number
+        y: drfu
+        opts:
+          - base
+          - scatter
+          - drfu_axes
+          - drfu_cmap
+      drfu_errorbars:
+        type: errorbars
+        source: drfu_comparison_select
+        opts:
+          - base
+          - errorbars
+        x: r_number
+        y: drfu
+        err: drfu_sd
+      drfu_overlay:
+        type: overlay
+        views:
+          - drfu_scatter
+          - drfu_errorbars
+
+  dd_uptake_view:
+    transforms:
+      dd_uptake_comparison_select:
+        type: cross_section
+        source: dd_uptake_src
+        n_levels: -1
+    opts:
+      dd_uptake_axes:
+        type: generic
+        xlabel: Residue Number
+        ylabel: ΔD-Uptake
+        title: ΔD-Uptake Scatterplot
+        color: dd_uptake
+        colorbar: True
+        tools:
+          - dd_uptake_hover
+    views:
+      dd_uptake_scatter:
+        type: scatter
+        source: dd_uptake_comparison_select
+        x: r_number
+        y: dd_uptake
+        opts:
+          - base
+          - scatter
+          - dd_uptake_axes
+          - dd_uptake_cmap
+
+  protein_view:
+    transforms:
+      protein_src:
+        type: select
+        sources:
+          rfu: rfu_select
+          drfu: drfu_comparison_select
+          d_uptake: d_uptake_select
+          dd_uptake: dd_uptake_comparison_select
+          dG: dG_fit_select  # or do we need dG_rescale here?
+          ddG: ddG_comparison_select
+    views:
+      protein:  #NGL?
+        type: pdbemolstar_colors
+        sources:
+          pdb: pdb
+          color: protein_src
+        hide_water: True
+        hide_non_standard: True
+        hide_heteroatoms: True
+        hide_carbs: True
+        hide_expand_icon: True
+        opts:  # opts are not applied directly but matched to color dataframe and then applied
+          - rfu_cmap
+          - drfu_cmap
+          - d_uptake_cmap
+          - dd_uptake_cmap
+          - dG_cmap
+          - ddG_cmap
+        dependencies:
+          opts:
+            - rfu_cmap
+            - drfu_cmap
+            - d_uptake_cmap
+            - dG_cmap
+            - ddG_cmap
+
+  differential_hdx_control:
+    transforms:
+      ddG_fit_select:
+        type: cross_section
+        source: dG_src
+        n_levels: 1
+      dduptake_fit_select:
+        type: cross_section
+        source: d_uptake_src
+        n_levels: 1
+
+controllers:
+  # - dev
+  global_settings:
+  peptide_file_input:
+      nd_control: False
+  d_uptake_fit:
+  initial_guess:
+  fit:
+  diff:
+  color_transform:
+  protein:
+  graph:
+  file_export:
+  figure_export:
+  session_manager:

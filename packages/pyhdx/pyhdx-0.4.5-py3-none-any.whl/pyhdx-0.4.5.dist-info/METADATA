@@ -1,0 +1,196 @@
+Metadata-Version: 2.4
+Name: pyhdx
+Version: 0.4.5
+Summary: Derive ΔG for single residues from HDX-MS data
+Project-URL: Source, https://github.com/Jhsmit/PyHDX/
+Project-URL: Documentation, https://pyhdx.readthedocs.io/en/stable/
+Author-email: Jochem Smit <jhsmit@gmail.com>
+License-Expression: MIT
+License-File: LICENSE.txt
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Science/Research
+Classifier: Natural Language :: English
+Classifier: Programming Language :: Python :: 3.11
+Requires-Python: <3.12,>=3.11
+Requires-Dist: colorcet
+Requires-Dist: dask
+Requires-Dist: distributed
+Requires-Dist: hdxms-datasets>=0.3.3
+Requires-Dist: hdxrate
+Requires-Dist: matplotlib
+Requires-Dist: narwhals
+Requires-Dist: numpy==1.25.2
+Requires-Dist: omegaconf
+Requires-Dist: packaging
+Requires-Dist: pandas
+Requires-Dist: param<2
+Requires-Dist: pyyaml
+Requires-Dist: scikit-image
+Requires-Dist: scipy
+Requires-Dist: symfit
+Requires-Dist: torch
+Requires-Dist: tqdm
+Requires-Dist: typer
+Requires-Dist: ultraplot
+Provides-Extra: dev
+Requires-Dist: black[jupyter]; extra == 'dev'
+Provides-Extra: docs
+Requires-Dist: mkdocs; extra == 'docs'
+Requires-Dist: mkdocs-gen-files; extra == 'docs'
+Requires-Dist: mkdocs-jupyter; extra == 'docs'
+Requires-Dist: mkdocs-literate-nav; extra == 'docs'
+Requires-Dist: mkdocs-material; extra == 'docs'
+Requires-Dist: mkdocstrings[python]; extra == 'docs'
+Requires-Dist: pygments; extra == 'docs'
+Provides-Extra: pdf
+Requires-Dist: pylatex; extra == 'pdf'
+Requires-Dist: ultraplot; extra == 'pdf'
+Provides-Extra: test
+Requires-Dist: pytest>=7.2.0; extra == 'test'
+Provides-Extra: web
+Requires-Dist: bokeh==2.4.3; extra == 'web'
+Requires-Dist: colorcet; extra == 'web'
+Requires-Dist: holoviews==1.17.1; extra == 'web'
+Requires-Dist: hvplot==0.8.4; extra == 'web'
+Requires-Dist: panel==0.14.4; extra == 'web'
+Requires-Dist: param<2; extra == 'web'
+Description-Content-Type: text/markdown
+
+# PyHDX
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10491270.svg)](https://doi.org/10.5281/zenodo.10491270)
+[![biorxiv](https://img.shields.io/badge/bioRxiv-v2-%23be2635)](https://www.biorxiv.org/content/10.1101/2020.09.30.320887v2)
+[![license](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![docs](https://readthedocs.org/projects/pyhdx/badge/?version=latest)](https://pyhdx.readthedocs.io/en/latest/?badge=latest)
+
+
+
+PyHDX is python project which can be used to derive Gibbs free energy from HDX-MS data.
+
+[PyHDX web](http://pyhdx.jhsmit.org)
+
+[PyHDX latest documentation](https://pyhdx.readthedocs.io/en/latest/)
+
+[PyHDX on YouTube](https://www.youtube.com/channel/UCTro6Iv1BhvjUPYZNu5TJWg)
+
+[![screenshot](images/screenshot_pyhdx043.png)](http://pyhdx.jhsmit.org/)
+
+## Installation
+
+Installation of PyHDX with [uv](https://docs.astral.sh/uv/getting-started/installation/):
+
+Create a uv virtual environment, specifying python version 3.11:
+
+```bash
+$ uv venv -p "3.11"
+```
+
+Then activate environment as instructed by uv, e.g.:
+
+Windows:
+```bash
+$ .venv/Script/activate
+```
+
+Linux/Mac:
+```bash
+$ source .venv/bin/activate
+```
+
+To install PyHDX:
+```bash
+$ uv pip install pyhdx
+```
+
+With web interface extra:
+```bash
+$ uv pip install pyhdx[web]
+```
+
+(Not recommended - outdated version)
+Conda install (includes web interface extra):
+
+```bash
+$ conda install pyhdx
+```
+
+# Run PyHDX
+
+Most up-to-date code examples are in the directory `pyhdx/templates`
+
+To run the web server:
+
+```bash
+$ pyhdx serve
+```
+
+To add datasets to directly load into PyHDX, configure the `database_dir` parameter in the config file (default: `~/.hdxms_datasets/datasets`), and place `hdxms-datasets` v0.1.5 (legacy) compatible datasets there. 
+
+Please refer to the [docs](https://pyhdx.readthedocs.io/en/stable/) for more details on how to run PyHDX.
+
+
+
+## Web Application
+
+The PyHDX web application is currently hosted at:
+http://pyhdx.jhsmit.org
+
+A test file can be downloaded from [here](https://raw.githubusercontent.com/Jhsmit/PyHDX/master/tests/test_data/input/ecSecB_apo.csv) and [here](https://raw.githubusercontent.com/Jhsmit/PyHDX/master/tests/test_data/input/ecSecB_dimer.csv>) (right click, save as).
+
+A beta version might be available at:
+http://pyhdx-beta.jhsmit.org
+
+
+## Publication
+
+Our Analytical Chemistry Publication describing PyHDX can be found [here](https://doi.org/10.1021/acs.analchem.1c02155)
+
+The latest version (v2) of our biorxiv paper: https://doi.org/10.1101/2020.09.30.320887 
+
+Python code for analysis and generation the figures in the paper are here: https://github.com/Jhsmit/PyHDX-paper
+
+## Other
+
+HDX MS datasets repository and format:
+https://github.com/Jhsmit/HDX-MS-datasets
+
+HDXMS datasets python bindings:
+https://github.com/Jhsmit/hdxms-datasets
+
+## Development
+
+Building PyHDX from source:
+
+```bash
+$ hatch build
+```
+
+Create a new release and distribute to PyPI:
+
+ - Create new release on GitHub
+ - GitHub workflow builds and publishes to PyPI
+
+
+### Panel web interface development
+
+Working on a controller only:
+```bash
+panel serve pyhdx\web\controller_only.py --dev
+```
+
+Working on the main app:
+```bash
+panel serve pyhdx\web\apps\_main.py --dev
+```
+
+Make sure to also run a dask cluster if needed:
+```bash
+python pyhdx\local_cluster.py
+```
+
+
+
+#### Other
+
+Installing a specific commit of the HDX-MS-datasets package:
+# uv pip install "git+https://github.com/jhsmit/hdxms-datasets@5fa2458e6115329ae921a319e3e87b6cb21814ff"
