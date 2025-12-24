@@ -1,0 +1,111 @@
+project: scprint_ablation
+seed_everything: 50
+set_float32_matmul_precision: True
+wandblog: all
+ckpt_path: null
+trainer:
+  precision: 16-mixed
+  gradient_clip_val: 40
+  log_every_n_steps: 100
+  limit_train_batches: 20000
+  limit_val_batches: 10000
+  gradient_clip_algorithm: norm
+  limit_test_batches: 1 # we don't perform tests this way
+  reload_dataloaders_every_n_epochs: 20
+  max_epochs: 21
+  accumulate_grad_batches: 1
+  logger:
+    - class_path: lightning.pytorch.loggers.WandbLogger
+      init_args:
+        project: ${project}
+        offline: False
+        save_dir: /pasteur/zeus/projets/p02/ml4ig_hot/Users/jkalfon/ #/lustre/fswork/projects/rech/xeg/uat95fg/ #/pasteur/zeus/projets/p02/ml4ig_hot/Users/jkalfon/ #/data/log/
+  callbacks:
+    #- class_path: lightning.pytorch.callbacks.StochasticWeightAveraging
+    #  init_args:
+    #    swa_lrs: 0.03
+    - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+      init_args:
+        monitor: val_loss
+        save_top_k: 15
+        save_last: True
+scprint_training:
+  run_full_forward: False
+  # noise: [0.6]
+  ecs_scale: 0
+  noise: []
+  class_embd_diss_scale: 0.1
+  do_generate: True
+  test_every: 5
+  cce_scale: 0
+  mask_ratio: [0.3] #["TF"]
+model:
+  dropout: 0.1
+  num_heads_kv: 4
+  attention: normal
+  residual_in_fp32: True
+  checkpointing: False
+  layers_cls: []
+  cell_specific_blocks: False
+  fused_dropout_add_ln: False
+  fused_mlp: False
+  fused_bias_fc: False
+  drop_path_rate: 0
+  freeze_embeddings: True
+  finetune_gene_emb: False
+  normalization: log
+  gene_pos_file: ./data/main/biomart_pos.parquet
+  precpt_gene_emb: ./data/main/gene_embs/ #./data/main/gene_embeddings.parquet # /lustre/fswork/projects/rech/xeg/uat95fg/gene_embeddings.parquet
+  pred_embedding:
+    - cell_type_ontology_term_id
+  #compress_class_dim:
+  #  default: 16
+  #  cell_type_ontology_term_id: 64
+  #  tissue_ontology_term_id: 32
+  #  disease_ontology_term_id: 16
+  #  age_group: 8
+  #  assay_ontology_term_id: 8
+  #  self_reported_ethnicity_ontology_term_id: 8
+  #  sex_ontology_term_id: 2
+  #  organism_ontology_term_id: 8
+  # cell_culture: 2
+  # total: 164
+data:
+  collection_name: scPRINT-V2 (good quality) filtered #scPRINT-V2 (full)
+  how: random expr
+  max_len: 2200
+  pin_memory: True
+  prefetch_factor: 3
+  #  metacell_mode: 0.2
+  weight_scaler: 200
+  validation_split: 0.05
+  n_samples_per_epoch: 1_400_000
+  test_split: 0.02
+  batch_size: 64
+  num_workers: 10
+  hierarchical_clss: #['cell_type_ontology_term_id','tissue_ontology_term_id','disease_ontology_term_id','assay_ontology_term_id','self_reported_ethnicity_ontology_term_id']
+    - cell_type_ontology_term_id
+    - tissue_ontology_term_id
+    - disease_ontology_term_id
+    - assay_ontology_term_id
+    - self_reported_ethnicity_ontology_term_id
+  clss_to_weight:
+    - clust_cell_type
+    # - cell_type_ontology_term_id
+    # - tissue_ontology_term_id
+    - disease_ontology_term_id
+    - assay_ontology_term_id
+    # - self_reported_ethnicity_ontology_term_id
+    - sex_ontology_term_id
+    - organism_ontology_term_id
+    # - cell_culture
+    # - nnz
+  clss_to_predict: #['cell_type_ontology_term_id','tissue_ontology_term_id','disease_ontology_term_id','assay_ontology_term_id','self_reported_ethnicity_ontology_term_id','sex_ontology_term_id','organism_ontology_term_id']
+    - cell_type_ontology_term_id
+    - tissue_ontology_term_id
+    - disease_ontology_term_id
+    - assay_ontology_term_id
+    - self_reported_ethnicity_ontology_term_id
+    - sex_ontology_term_id
+    - organism_ontology_term_id
+    # - cell_culture
