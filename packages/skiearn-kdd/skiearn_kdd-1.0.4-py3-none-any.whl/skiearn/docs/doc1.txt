@@ -1,0 +1,912 @@
+# ==========================================================================================
+# Knowledge Discovery in Databases (KDD) — Complete Python Documentation
+#
+# This codebase documents, using official Python APIs, EVERY concept, formalism, and test
+# typically required for a university-level Knowledge Discovery / Data Mining exam.
+#
+# Libraries covered: numpy, pandas, scipy.stats, statsmodels, scikit-learn,
+# imbalanced-learn, shap, lime
+# NO external or invented abstractions are used.
+# Each function and concept comes with mathematical and Python-specific explanation.
+#
+# STRUCTURE:
+#   1. Data Preparation & Formalism
+#   2. Descriptive Statistics & Distributions
+#   3. Statistical Hypothesis Testing
+#   4. Causality & Formalism
+#   5. Feature Selection & Dependence
+#   6. Outliers & Robust Statistics
+#   7. Supervised Learning (Formal View)
+#   8. Model Evaluation & Metrics
+#   9. Statistical Model Comparison
+#  10. Imbalanced Data
+#  11. Missing Data Theory
+#  12. Explainability
+#  13. Common Exam Traps
+# ==========================================================================================
+#*******pip install numpy pandas scipy scikit-learn matplotlib seaborn statsmodels shap lime imbalanced-learn pingouin scikit-posthocs missingno*********
+
+import numpy as np
+import pandas as pd
+from scipy import stats
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
+from sklearn.model_selection import train_test_split, cross_val_score, StratifiedKFold, KFold, cross_validate
+from sklearn.linear_model import LinearRegression, LogisticRegression, Ridge, Lasso
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import SVC, SVR
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor, GradientBoostingClassifier, GradientBoostingRegressor
+from sklearn.metrics import (mean_squared_error, mean_absolute_error, r2_score,
+                             accuracy_score, precision_score, recall_score, f1_score, confusion_matrix,
+                             roc_auc_score, average_precision_score, matthews_corrcoef, balanced_accuracy_score)
+from sklearn.feature_selection import (f_classif, chi2, mutual_info_classif, RFE, SelectKBest)
+from sklearn.preprocessing import StandardScaler, RobustScaler
+from sklearn.ensemble import IsolationForest
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.utils import resample
+from imblearn.over_sampling import SMOTE, ADASYN
+from imblearn.under_sampling import RandomUnderSampler
+from imblearn.pipeline import Pipeline as ImbPipeline
+try:
+    import shap
+    import lime
+    import lime.lime_tabular
+except ImportError:
+    pass  # SHAP and LIME are only necessary for their respective explanations
+
+# ==========================================================================================
+# 1. DATA PREPARATION & FORMALISM
+# ==========================================================================================
+
+# ------------------------------------------------------------------------------------------
+# Types of Variables
+# ------------------------------------------------------------------------------------------
+# Nominal: Categorical, no inherent order (e.g., color: red, blue, green)
+# Ordinal: Categorical, ordered (e.g., T-shirt size: S < M < L)
+# Interval: Continuous, order, equal spacing, but no true zero (e.g., temperature in °C)
+# Ratio: Continuous, order, equal spacing, true zero (e.g., weight, height)
+
+# Variable type determines allowed statistical tests and encoding methods (e.g., one-hot for nominal).
+
+# ------------------------------------------------------------------------------------------
+# IID Assumption
+# ------------------------------------------------------------------------------------------
+# INDEPENDENT AND IDENTICALLY DISTRIBUTED: Most models and statistical tests assume each sample
+# is drawn independently from the same underlying distribution.
+# Violation leads to overconfident or invalid inference.
+
+# ------------------------------------------------------------------------------------------
+# Train / Validation / Test Split
+# ------------------------------------------------------------------------------------------
+
+# Common splits: train (60–80%), validation (10–20%), test (10–20%)
+X = np.random.randn(100, 5)
+y = np.random.randint(0, 2, size=100)
+X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.4, random_state=42)
+X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
+# train_test_split randomly splits data; random_state ensures reproducibility.
+
+# INTERPRETATION:
+# Train: Fit model.
+# Validation: Tune hyperparameters; NEVER used for model fitting.
+# Test: Final unbiased performance estimate.
+
+# TYPICAL EXAM TRAP: Tuning model on test set leads to overly optimistic estimates (data leakage).
+
+# ------------------------------------------------------------------------------------------
+# Data Leakage
+# ------------------------------------------------------------------------------------------
+# DEFINITION: Using information in training that would not be available at prediction time
+# (e.g., using test data for feature selection or scaling).
+# CONSEQUENCE: Inflated and unrealistic performance.
+
+# ------------------------------------------------------------------------------------------
+# Curse of Dimensionality
+# ------------------------------------------------------------------------------------------
+# As dimensionality increases:
+# - Sparsity increases
+# - Distance metrics lose meaning
+# - Overfitting likelihood increases
+# Requires feature selection, regularization, or dimensionality reduction.
+
+# ------------------------------------------------------------------------------------------
+# Bias–Variance Tradeoff
+# ------------------------------------------------------------------------------------------
+# Bias: Error from wrong assumptions (underfitting).
+# Variance: Error from sensitivity to small fluctuations (overfitting).
+# Goal: Balance bias and variance; minimize total error (irreducible noise remains).
+
+# ==========================================================================================
+# 2. DESCRIPTIVE STATISTICS & DISTRIBUTIONS
+# ==========================================================================================
+
+# ------------------------------------------------------------------------------------------
+# Mean, Median, Variance, Std
+# ------------------------------------------------------------------------------------------
+data = np.random.randn(100)
+mean = np.mean(data)            # np.mean: Arithmetic mean, sensitive to outliers.
+median = np.median(data)        # np.median: Robust to outliers.
+variance = np.var(data, ddof=1) # np.var: By default (ddof=0) is population var. ddof=1 for sample var.
+stddev = np.std(data, ddof=1)   # np.std: Standard deviation, same ddof.
+
+# INTERPRET:
+# Mean > Median: Right-skewed
+# Mean < Median: Left-skewed
+
+# ------------------------------------------------------------------------------------------
+# Skewness and Kurtosis
+# ------------------------------------------------------------------------------------------
+skew = stats.skew(data)          # stats.skew: Skewness > 0: right tail; < 0: left tail
+kurtosis = stats.kurtosis(data)  # stats.kurtosis: Excess kurtosis (0 = normal)
+# Peakedness/fat tails. High kurtosis: more outliers.
+
+# ------------------------------------------------------------------------------------------
+# Gaussian vs. Non-Gaussian
+# ------------------------------------------------------------------------------------------
+# Many inferential stats and ML models assume Gaussianity (normality).
+
+# ------------------------------------------------------------------------------------------
+# Central Limit Theorem (CLT) — Conceptual
+# ------------------------------------------------------------------------------------------
+# Sum or mean of a large number of IID random variables
+# will be approximately normally distributed, regardless of original distribution.
+
+# Exam point: Permits using normal-theory tests on sums/means.
+
+# ------------------------------------------------------------------------------------------
+# Normality Tests
+# ------------------------------------------------------------------------------------------
+
+# Shapiro–Wilk Test
+stat, p = stats.shapiro(data)
+# stats.shapiro: Null hypothesis = data is normal.
+# p < 0.05: Reject normality. Sensitive to small sample.
+
+# Kolmogorov–Smirnov Test (1-sample)
+stat, p = stats.kstest(data, 'norm', args=(np.mean(data), np.std(data)))
+# stats.kstest: Null hypothesis = data comes from normal.
+# Sensitive to all deviations—location, shape.
+
+# Anderson–Darling Test
+result = stats.anderson(data, dist='norm')
+# stats.anderson: Null = normality.
+# result.statistic > critical value for alpha (listed in result.critical_values): Reject normality.
+
+# TYPICAL EXAM TRAP: Multiple tests may disagree, and all lose power for small n or heavy tails.
+
+# ==========================================================================================
+# 3. STATISTICAL HYPOTHESIS TESTING
+# ==========================================================================================
+
+# ------------------------------------------------------------------------------------------
+# Z-test (Large n, known variance; rarely used in practice)
+# ------------------------------------------------------------------------------------------
+# Null: means are equal.
+# When: Large n, known std, comparisons of means (use t-test otherwise).
+# Not directly in scipy; use one-sample test as example:
+
+def z_test(sample, mu0, sigma0):
+    """Z-test for observed mean vs population mean with known variance"""
+    n = len(sample)
+    z = (np.mean(sample) - mu0) / (sigma0 / np.sqrt(n))
+    p = 2 * (1 - stats.norm.cdf(abs(z)))
+    # Interpret: Small p (<0.05): Reject mu0 as true mean.
+    return z, p
+
+# EXAM TRAP: Don't use Z-test with unknown variance or small samples.
+
+# ------------------------------------------------------------------------------------------
+# Student t-test (1-sample, independent, paired)
+# ------------------------------------------------------------------------------------------
+# 1-sample t-test: compare sample mean to population mean
+sample = np.random.normal(0, 1, size=20)
+tstat, pval = stats.ttest_1samp(sample, popmean=0)
+# stats.ttest_1samp: Null = mean == 0
+# Example: p < 0.05: sample mean differs from 0.
+
+# Independent samples t-test (equal variances)
+a = np.random.normal(0, 1, 30)
+b = np.random.normal(0, 1, 30)
+tstat, pval = stats.ttest_ind(a, b, equal_var=True)
+# stats.ttest_ind: Null = means equal.
+# equal_var=True: assumes equal variance.
+
+# Paired t-test
+before = np.random.normal(loc=1, scale=1, size=30)
+after = before + np.random.normal(loc=0, scale=0.2, size=30)
+tstat, pval = stats.ttest_rel(before, after)
+# stats.ttest_rel: Null = means of paired samples equal (repeated measures).
+
+# ------------------------------------------------------------------------------------------
+# Welch t-test (unequal variances)
+# ------------------------------------------------------------------------------------------
+tstat, pval = stats.ttest_ind(a, b, equal_var=False)
+# stats.ttest_ind with equal_var=False: Adjusts for unequal sample variances.
+# Null = means equal.
+# TYPICAL EXAM TRAP: Don't use Student t-test with unequal variances.
+
+# ------------------------------------------------------------------------------------------
+# Mann–Whitney U (Wilcoxon rank-sum)
+# ------------------------------------------------------------------------------------------
+stat, pval = stats.mannwhitneyu(a, b, alternative='two-sided')
+# Nonparametric; compares medians of independent samples
+# Null = distributions are equal.
+# Use for ordinal or non-normal scale.
+# TYPICAL EXAM TRAP: Requires samples have similar shape.
+
+# ------------------------------------------------------------------------------------------
+# Wilcoxon signed-rank
+# ------------------------------------------------------------------------------------------
+stat, pval = stats.wilcoxon(before, after)
+# Nonparametric paired comparison.
+# Null = distributions equal.
+# Use for paired non-normal data.
+# Not for independent samples!
+
+# ------------------------------------------------------------------------------------------
+# ANOVA (One-way)
+# ------------------------------------------------------------------------------------------
+group1 = np.random.normal(0, 1, 30)
+group2 = np.random.normal(0.1, 1, 30)
+group3 = np.random.normal(-0.1, 1, 30)
+fstat, pval = stats.f_oneway(group1, group2, group3)
+# stats.f_oneway: Null = all means equal.
+# Use for k>2 independent groups.
+# If p < 0.05: At least one mean is different.
+
+# ------------------------------------------------------------------------------------------
+# Kruskal–Wallis (Nonparametric ANOVA)
+# ------------------------------------------------------------------------------------------
+hstat, pval = stats.kruskal(group1, group2, group3)
+# stats.kruskal: Null = distributions equal.
+# Use for k>2 independent, non-normal groups.
+
+# ------------------------------------------------------------------------------------------
+# Chi-square test of independence
+# ------------------------------------------------------------------------------------------
+table = np.array([[10, 20], [20, 20]])
+chi2_val, p, dof, expected = stats.chi2_contingency(table)
+# stats.chi2_contingency: Null = variables are independent.
+# Use on categorical data in contingency tables.
+
+# ------------------------------------------------------------------------------------------
+# Fisher exact test (2x2 tables, small counts)
+# ------------------------------------------------------------------------------------------
+oddsratio, p = stats.fisher_exact(table)
+# stats.fisher_exact: Null = independence.
+# Use for small N; precise calculation.
+# Only for 2x2 tables.
+
+# ------------------------------------------------------------------------------------------
+# Kolmogorov–Smirnov two-sample
+# ------------------------------------------------------------------------------------------
+dstat, pval = stats.ks_2samp(a, b)
+# stats.ks_2samp: Null = samples from same distribution.
+# Nonparametric. Sensitive to shape/location.
+
+# ------------------------------------------------------------------------------------------
+# Permutation Tests
+# ------------------------------------------------------------------------------------------
+def permutation_t_test(a, b, n_permutations=10000):
+    """Permutation test for difference of means between a, b."""
+    observed = np.mean(a) - np.mean(b)
+    combined = np.concatenate([a, b])
+    count = 0
+    for _ in range(n_permutations):
+        np.random.shuffle(combined)
+        new_a = combined[:len(a)]
+        new_b = combined[len(a):]
+        diff = np.mean(new_a) - np.mean(new_b)
+        if abs(diff) >= abs(observed):
+            count += 1
+    pvalue = count / n_permutations
+    # INTERPRET: If p < 0.05, difference unlikely under null.
+    return pvalue
+# Nonparametric; makes minimal assumptions.
+
+# ------------------------------------------------------------------------------------------
+# Bootstrap Confidence Intervals
+# ------------------------------------------------------------------------------------------
+def bootstrap_ci(data, n_bootstrap=10000, ci=0.95):
+    """Bootstrap confidence interval for mean."""
+    means = [np.mean(resample(data)) for _ in range(n_bootstrap)]
+    lower = np.percentile(means, (1 - ci) / 2 * 100)
+    upper = np.percentile(means, (1 + ci) / 2 * 100)
+    # INTERPRET: With 95% confidence, population mean is in [lower, upper].
+    return lower, upper
+# TYPICAL EXAM TRAP: Bootstrap assumes IID data.
+
+# ==========================================================================================
+# 4. CAUSALITY & FORMALISM
+# ==========================================================================================
+
+# ------------------------------------------------------------------------------------------
+# Correlation ≠ Causation
+# ------------------------------------------------------------------------------------------
+# Correlation quantifies statistical association, not causal effect.
+# Confounders can make unrelated variables appear related.
+
+# ------------------------------------------------------------------------------------------
+# Confounders — Variable influencing both treatment and outcome.
+# ------------------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------------------
+# Simpson's Paradox
+# ------------------------------------------------------------------------------------------
+# Aggregated data shows one trend; stratified by variable shows reverse.
+# Exam: stratification may reveal hidden confounding.
+
+# ------------------------------------------------------------------------------------------
+# Causal Graphs (DAGs — Conceptual Only)
+# ------------------------------------------------------------------------------------------
+# Directed acyclic graphs model causal assumptions.
+# Key: Causal effect estimation depends on blocking backdoor paths via adjustment.
+
+# ------------------------------------------------------------------------------------------
+# Backdoor Criterion (Theory)
+# ------------------------------------------------------------------------------------------
+# A set S satisfies backdoor criterion for X→Y if S blocks all backdoor (non-causal) paths and contains no descendant of X.
+# Adjustment guarantees unbiased estimation of causal effect.
+
+# ------------------------------------------------------------------------------------------
+# Conditional Independence Tests
+# ------------------------------------------------------------------------------------------
+
+# Partial Correlation: correlation between X and Y after removing effect of Z.
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+def partial_corr(x, y, z):
+    """Partial correlation between x and y, controlling for z."""
+    df = pd.DataFrame({'x': x, 'y': y, 'z': z})
+    res_x = sm.OLS(df['x'], sm.add_constant(df[['z']])).fit().resid
+    res_y = sm.OLS(df['y'], sm.add_constant(df[['z']])).fit().resid
+    corr = np.corrcoef(res_x, res_y)[0,1]
+    # INTERPRET: corr ≈ 0: x,y independent given z.
+    return corr
+
+# Conditional mutual information (same as mutual information, but conditioned on Z) — not in standard lib.
+# See sklearn.feature_selection.mutual_info_classif for MI, but conditional MI not in sklearn.
+
+# Granger Causality Test (time series)
+import statsmodels.tsa.stattools as tsa
+# Null: Series X does NOT Granger-cause Y
+X = np.random.randn(100)
+Y = np.random.randn(100)
+data = np.column_stack([Y, X])
+result = tsa.grangercausalitytests(data, maxlag=2, verbose=False)
+# Key output: p-values for each lag
+# p < 0.05: Reject null, X Granger-causes Y.
+
+# ------------------------------------------------------------------------------------------
+# Instrumental Variables (IV) (2-stage least squares, for endogeneity correction)
+# ------------------------------------------------------------------------------------------
+# statsmodels example:
+# Endogenous regressor: X, Instrument: Z, Outcome: Y
+# 1: regress X on Z; 2: regress Y on predicted X.
+# Example — only in statsmodels >= 0.14 (use smf.IV2SLS or sm.IV2SLS)
+# smf.IV2SLS.from_formula('Y ~ 1 + [X ~ Z]', data=df).fit()
+# INTERPRET: IV corrects for unobserved confounder.
+
+# ------------------------------------------------------------------------------------------
+# Propensity Score Matching (Concept + code sketch)
+# ------------------------------------------------------------------------------------------
+# Typically: Logistic regression predicts propensities, pairs with closest scores.
+# Steps:
+# 1. Estimate propensity score
+ps_model = LogisticRegression().fit(X, y)
+pscore = ps_model.predict_proba(X)[:,1]
+# 2. Matching usually done via nearest neighbor on pscore vector.
+# INTERPRET: Balances covariates between treated/control.
+
+# ==========================================================================================
+# 5. FEATURE SELECTION & DEPENDENCE
+# ==========================================================================================
+
+# ------------------------------------------------------------------------------------------
+# Pearson Correlation (Linear)
+# ------------------------------------------------------------------------------------------
+corr, p = stats.pearsonr(data, np.random.randn(100))
+# stats.pearsonr: Linear correlation coef. Null: Correlation=0.
+# p < 0.05 means significant association.
+
+# ------------------------------------------------------------------------------------------
+# Spearman Correlation (Rank-based)
+# ------------------------------------------------------------------------------------------
+corr, p = stats.spearmanr(data, np.random.randn(100))
+# stats.spearmanr: Rank correlation. Use for monotonic but not linear associations.
+
+# ------------------------------------------------------------------------------------------
+# Mutual Information (General dependence)
+# ------------------------------------------------------------------------------------------
+mi = mutual_info_classif(X, y)
+# sklearn.feature_selection.mutual_info_classif: Measures mutual dependence between features and labels.
+# Higher = more informative.
+
+# ------------------------------------------------------------------------------------------
+# ANOVA F-test (continuous X, categorical y)
+# ------------------------------------------------------------------------------------------
+f_stat, p = f_classif(X, y)
+# sklearn.feature_selection.f_classif: Null = no variance in X explained by y.
+
+# ------------------------------------------------------------------------------------------
+# Chi-square Feature Selection (categorical)
+# ------------------------------------------------------------------------------------------
+chi2_stat, p = chi2(abs(X), y)
+# Input must be non-negative. Measures dependence between feature and class.
+
+# ------------------------------------------------------------------------------------------
+# VIF (Variance Inflation Factor — multicollinearity)
+# ------------------------------------------------------------------------------------------
+# statsmodels example:
+X_pd = pd.DataFrame(X, columns=[f"x{i}" for i in range(X.shape[1])])
+vif_data = pd.DataFrame()
+vif_data["feature"] = X_pd.columns
+vif_data["VIF"] = [variance_inflation_factor(X_pd.values, i) for i in range(X_pd.shape[1])]
+# VIF > 5 or 10 indicates problematic multicollinearity.
+
+# ------------------------------------------------------------------------------------------
+# RFE (Recursive Feature Elimination)
+# ------------------------------------------------------------------------------------------
+selector = RFE(LinearRegression(), n_features_to_select=2)
+selector = selector.fit(X, y)
+rfe_support = selector.support_
+rfe_ranking = selector.ranking_
+# support_: True for selected features; ranking_: 1 for selected, higher for dropped.
+
+# ------------------------------------------------------------------------------------------
+# Lasso (L1-based selection)
+# ------------------------------------------------------------------------------------------
+lasso = Lasso(alpha=0.1).fit(X, y)
+lasso_coeffs = lasso.coef_
+# Nonzero coefficients indicate selected features.
+
+# ------------------------------------------------------------------------------------------
+# Tree-based Importance
+# ------------------------------------------------------------------------------------------
+rf = RandomForestClassifier().fit(X, y)
+importances = rf.feature_importances_
+# Gives relative importance of each feature for prediction.
+
+# ==========================================================================================
+# 6. OUTLIERS & ROBUST STATISTICS
+# ==========================================================================================
+
+# ------------------------------------------------------------------------------------------
+# Z-score Outlier Detection (Assumes normality)
+# ------------------------------------------------------------------------------------------
+z_scores = np.abs(stats.zscore(data))
+outliers_z = np.where(z_scores > 3)[0]
+# Points where z > 3 are considered outliers (empirical rule).
+
+# ------------------------------------------------------------------------------------------
+# IQR (Interquartile Range)
+# ------------------------------------------------------------------------------------------
+q1 = np.percentile(data, 25)
+q3 = np.percentile(data, 75)
+iqr = q3 - q1
+lower = q1 - 1.5 * iqr
+upper = q3 + 1.5 * iqr
+outliers_iqr = np.where((data < lower) | (data > upper))[0]
+# IQR: robust to non-Gaussian data.
+
+# ------------------------------------------------------------------------------------------
+# MAD (Median Absolute Deviation)
+# ------------------------------------------------------------------------------------------
+mad = stats.median_abs_deviation(data)
+mad_z = np.abs(data - np.median(data)) / mad
+outliers_mad = np.where(mad_z > 3)[0]
+# For non-Gaussian outlier detection.
+
+# ------------------------------------------------------------------------------------------
+# Local Outlier Factor (LOF)
+# ------------------------------------------------------------------------------------------
+lof = LocalOutlierFactor(n_neighbors=20)
+labels_lof = lof.fit_predict(X)
+# -1 is outlier; 1 is inlier.
+# Sensitive to scale, local structure.
+
+# ------------------------------------------------------------------------------------------
+# Isolation Forest
+# ------------------------------------------------------------------------------------------
+iso = IsolationForest(contamination=0.1).fit(X)
+outlier_pred = iso.predict(X)
+# -1 is outlier.
+
+# ------------------------------------------------------------------------------------------
+# Robust Scaling
+# ------------------------------------------------------------------------------------------
+scaler = RobustScaler().fit(X)
+X_rs = scaler.transform(X)
+# Scales using IQR, robust to outliers.
+
+# ------------------------------------------------------------------------------------------
+# Influence on Estimators
+# ------------------------------------------------------------------------------------------
+# Mean, OLS very sensitive to outliers; median, robust regression not.
+
+# ==========================================================================================
+# 7. SUPERVISED LEARNING (FORMAL VIEW)
+# ==========================================================================================
+
+# Each model section: objective, loss function, assumptions, bias/variance, Python usage.
+
+# ------------------------------------------------------------------------------------------
+# Linear Regression
+# ------------------------------------------------------------------------------------------
+# Objective: Minimize squared error.
+# Loss: MSE (Mean Squared Error) = sum((y - Xw)^2)
+linreg = LinearRegression().fit(X, y)
+y_pred = linreg.predict(X)
+# Assumptions: Linearity, IID errors, homoscedasticity, normal errors.
+# Bias: Low if assumptions met; Variance can be high in high-dims.
+# TYPICAL EXAM TRAP: Using on non-linear data or with correlated features.
+
+# ------------------------------------------------------------------------------------------
+# Logistic Regression
+# ------------------------------------------------------------------------------------------
+# Objective: Maximize log-likelihood (classification).
+# Loss: Cross-entropy or negative log-likelihood.
+logreg = LogisticRegression().fit(X, y)
+y_prob = logreg.predict_proba(X)
+# Assumptions: Linearity in logit, independence.
+# Sensitive to outliers.
+
+# ------------------------------------------------------------------------------------------
+# Ridge Regression (L2)
+# ------------------------------------------------------------------------------------------
+ridge = Ridge(alpha=1.0).fit(X, y)
+# Objective: minimize squared error + penalty on sum of coefficients squared.
+# Reduces variance, increases bias, mitigates multicollinearity.
+
+# ------------------------------------------------------------------------------------------
+# Lasso Regression (L1)
+# ------------------------------------------------------------------------------------------
+lasso = Lasso(alpha=0.1).fit(X, y)
+# Objective: minimize squared error + penalty on sum of absolute coefficients.
+# Promotes sparsity (= feature selection).
+
+# ------------------------------------------------------------------------------------------
+# K-Nearest Neighbors
+# ------------------------------------------------------------------------------------------
+knn = KNeighborsClassifier(n_neighbors=5).fit(X, y)
+# Nonparametric, no global model.
+# Bias: low (captures local details); Variance: high, sensitive to noise.
+# Assumes meaningful distance metric; sensitive to scaling and curse of dimensionality.
+
+# ------------------------------------------------------------------------------------------
+# Naive Bayes
+# ------------------------------------------------------------------------------------------
+nb = GaussianNB().fit(X, y)
+# Assumption: Features conditionally independent given class.
+# High bias, low variance. Fast, works with small data, but violated if features correlated.
+
+# ------------------------------------------------------------------------------------------
+# Support Vector Machine (SVM)
+# ------------------------------------------------------------------------------------------
+svm = SVC(kernel='linear', probability=True).fit(X, y)
+# Objective: Maximize margin
+# Loss: Hinge loss
+# High capacity, can overfit if C very large; less interpretable.
+
+# ------------------------------------------------------------------------------------------
+# Decision Tree
+# ------------------------------------------------------------------------------------------
+dtree = DecisionTreeClassifier().fit(X, y)
+# Objective: Recursively split data to maximize class separation (e.g., Gini impurity or entropy)
+# High variance, low bias unless regularized.
+# Interpretable, but sensitive to small changes (overfitting risk).
+
+# ------------------------------------------------------------------------------------------
+# Random Forest
+# ------------------------------------------------------------------------------------------
+rf = RandomForestClassifier(n_estimators=100).fit(X, y)
+# Ensemble of decision trees, trained on bootstrapped samples, random feature subset.
+# Reduced variance vs. single trees. Still high variance with severe imbalance.
+
+# ------------------------------------------------------------------------------------------
+# Gradient Boosting
+# ------------------------------------------------------------------------------------------
+gbm = GradientBoostingClassifier(n_estimators=100).fit(X, y)
+# Builds strong learners by sequentially correcting residuals of weak models.
+# High capacity, low bias, careful tuning to avoid overfitting.
+
+# ==========================================================================================
+# 8. MODEL EVALUATION & METRICS
+# ==========================================================================================
+
+# ------------------------- REGRESSION METRICS --------------------------
+
+# RMSE (Root Mean Squared Error)
+rmse = np.sqrt(mean_squared_error(y, y_pred))
+# sqrt(mean squared error). Sensitive to outliers.
+
+# MAE (Mean Absolute Error)
+mae = mean_absolute_error(y, y_pred)
+# Mean absolute difference. Robust to outliers.
+
+# R2 (Coefficient of Determination)
+r2 = r2_score(y, y_pred)
+# 1 = perfect, 0 = mean prediction. Can be negative.
+
+# MAPE (Mean Absolute Percentage Error)
+def mape(y_true, y_pred):
+    return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
+# Not defined if y_true contains zero.
+
+# ------------------------- CLASSIFICATION METRICS ----------------------
+
+# Accuracy
+acc = accuracy_score(y, np.round(y_pred))
+# Proportion of correct labels.
+
+# Precision
+prec = precision_score(y, np.round(y_pred))
+# TP/(TP+FP): Positive predictive value.
+
+# Recall (Sensitivity)
+rec = recall_score(y, np.round(y_pred))
+# TP/(TP+FN): True positive rate.
+
+# F1 Score
+f1 = f1_score(y, np.round(y_pred))
+# Harmonic mean of precision and recall.
+
+# Balanced accuracy
+bal_acc = balanced_accuracy_score(y, np.round(y_pred))
+# Average of recall per class, corrects for imbalance.
+
+# ROC-AUC
+roc_auc = roc_auc_score(y, y_prob[:,1])
+# Area under ROC curve; measures ability to rank positive > negative.
+
+# PR-AUC
+pr_auc = average_precision_score(y, y_prob[:,1])
+# Area under Precision-Recall curve. Preferred for high imbalance.
+
+# MCC (Matthews Correlation Coefficient)
+mcc = matthews_corrcoef(y, np.round(y_pred))
+# Correlation between predicted and observed. -1 (inverse), 0 (random), +1 (perfect).
+
+# Sensitivity, Specificity
+cm = confusion_matrix(y, np.round(y_pred))
+tn, fp, fn, tp = cm.ravel()
+sensitivity = tp / (tp + fn)
+specificity = tn / (tn + fp)
+# Sensitivity: recall for positive class. Specificity: recall for negative.
+
+# ------------------------- METRIC PITFALLS ----------------------------
+
+# Accuracy misleading with imbalance.
+# ROC-AUC can be overoptimistic on imbalance.
+# F1 ignores TNs.
+# MAPE explodes at y=0.
+
+# ==========================================================================================
+# 9. STATISTICAL MODEL COMPARISON
+# ==========================================================================================
+
+# ------------------------------------------------------------------------------------------
+# Cross-validation (theory)
+# ------------------------------------------------------------------------------------------
+# Purpose: Estimate generalization error; mitigate overfitting to specific data splits.
+
+# ------------------------------------------------------------------------------------------
+# Paired t-test on CV Scores
+# ------------------------------------------------------------------------------------------
+# WRONG: Comparing means without considering paired nature!
+# CORRECT: For each fold, difference in scores across models; one-sample t-test on those differences.
+
+def paired_t_test_cv(scores_model1, scores_model2):
+    """Paired t-test for cross-validation model comparison."""
+    diffs = np.array(scores_model1) - np.array(scores_model2)
+    tstat, pval = stats.ttest_1samp(diffs, 0)
+    return tstat, pval
+# p < 0.05: Significant difference.
+
+# ------------------------------------------------------------------------------------------
+# 5x2cv paired t-test (Corrects for variance estimation bias. Dietterich, 1998)
+# Not implemented in standard packages, formula:
+# - Two models trained/tested 5 times on random 50/50 splits.
+# - t statistic pools variance across all runs.
+
+# ------------------------------------------------------------------------------------------
+# Diebold–Mariano Test (time series forecast comparison)
+# ------------------------------------------------------------------------------------------
+# statsmodels example (not in sklearn)
+from statsmodels.tsa.stattools import acf
+def diebold_mariano_test(e1, e2, h=1, alternative='two-sided'):
+    """
+    e1, e2: Prediction errors for two models on same test set
+    h: forecast horizon (usually 1)
+    """
+    d = e1 - e2
+    d_mean = np.mean(d)
+    d_var = np.var(d, ddof=1)
+    n = len(d)
+    dm_stat = d_mean / np.sqrt((d_var + 2 * np.sum([acf(d, nlags=k)[-1] for k in range(1, h)])) / n)
+    pval = 2 * (1 - stats.norm.cdf(np.abs(dm_stat)))
+    return dm_stat, pval
+
+# ------------------------------------------------------------------------------------------
+# Friedman test (for >2 models over multiple datasets or CV splits)
+# ------------------------------------------------------------------------------------------
+# Ranks models per split; tests if at least one model performs differently.
+from scipy.stats import friedmanchisquare
+# Example: scores1, scores2, scores3 = arrays of scores per fold
+# friedmanchisquare(scores1, scores2, scores3)
+
+# ------------------------------------------------------------------------------------------
+# Nemenyi post-hoc test (pairwise model differences after Friedman)
+# Not implemented in standard Python; exam: compute avg rank per model, compare with critical difference.
+
+# ------------------------------------------------------------------------------------------
+# Why naive comparison is invalid
+# ------------------------------------------------------------------------------------------
+# Naive: Compare averages, ignore dependence = inflated Type I error.
+# Need to account for variance and fold-wise dependency ("variance dependency").
+
+# ==========================================================================================
+# 10. IMBALANCED DATA
+# ==========================================================================================
+
+# ------------------------------------------------------------------------------------------
+# Prior probability shift
+# ------------------------------------------------------------------------------------------
+# Imbalance = class distribution in train ≠ target application
+
+# ------------------------------------------------------------------------------------------
+# class_weight (in estimators)
+# ------------------------------------------------------------------------------------------
+logreg_bal = LogisticRegression(class_weight='balanced').fit(X, y)
+# Penalizes errors on minority class higher in loss function.
+
+# ------------------------------------------------------------------------------------------
+# Oversampling (Random)
+# ------------------------------------------------------------------------------------------
+from imblearn.over_sampling import RandomOverSampler
+ros = RandomOverSampler().fit_resample(X, y)
+# Duplicates minority cases to balance classes.
+
+# ------------------------------------------------------------------------------------------
+# Undersampling (Random)
+# ------------------------------------------------------------------------------------------
+from imblearn.under_sampling import RandomUnderSampler
+rus = RandomUnderSampler().fit_resample(X, y)
+# Drops majority class samples.
+
+# ------------------------------------------------------------------------------------------
+# SMOTE (Synthetic Minority Oversampling Technique)
+# ------------------------------------------------------------------------------------------
+sm = SMOTE().fit_resample(X, y)
+# Synthesizes new samples for minority class via interpolation between neighbors.
+
+# ------------------------------------------------------------------------------------------
+# Metric Choice Under Imbalance
+# ------------------------------------------------------------------------------------------
+# Prefer F1, balanced accuracy, PR-AUC, MCC over accuracy.
+
+# ==========================================================================================
+# 11. MISSING DATA THEORY
+# ==========================================================================================
+
+# ------------------------------------------------------------------------------------------
+# MCAR (Missing Completely at Random): No pattern; safe to ignore/missingness unrelated.
+# MAR (Missing At Random): Missingness explained by observed data.
+# MNAR (Missing Not At Random): Missingness depends on unobserved values.
+# TEST: Little's MCAR test (not in standard lib; conceptual)
+
+# ------------------------------------------------------------------------------------------
+# Mean / median imputation
+# ------------------------------------------------------------------------------------------
+from sklearn.impute import SimpleImputer
+imp_mean = SimpleImputer(strategy='mean').fit_transform(X)
+imp_median = SimpleImputer(strategy='median').fit_transform(X)
+# Quick, but reduces variance (underestimates spread) and distorts relationships.
+
+# ------------------------------------------------------------------------------------------
+# KNN Imputation
+# ------------------------------------------------------------------------------------------
+from sklearn.impute import KNNImputer
+knn_imp = KNNImputer(n_neighbors=5).fit_transform(X)
+# Imputes missing as average of neighbors.
+# Sensitive to scaling and outliers.
+
+# ------------------------------------------------------------------------------------------
+# MICE (Multivariate Imputation by Chained Equations)
+# ------------------------------------------------------------------------------------------
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
+mice_imp = IterativeImputer().fit_transform(X)
+# Multivariate regression used to impute each variable in turn.
+
+# ------------------------------------------------------------------------------------------
+# Bias introduction
+# ------------------------------------------------------------------------------------------
+# Imputation can distort means, variances, associations (especially if data is MNAR).
+
+# ==========================================================================================
+# 12. EXPLAINABILITY
+# ==========================================================================================
+
+# ------------------------------------------------------------------------------------------
+# Feature importance ≠ causality
+# ------------------------------------------------------------------------------------------
+# In most models, importance = association with prediction. Does NOT imply causal effect.
+
+# ------------------------------------------------------------------------------------------
+# SHAP (SHapley Additive ExPlanations)
+# ------------------------------------------------------------------------------------------
+# Theory: Allocates model prediction difference fairly among all features, respecting feature interactions.
+# Code:
+# Requires: pip install shap
+# Example for Tree-based:
+# shap_explainer = shap.TreeExplainer(rf)
+# shap_values = shap_explainer.shap_values(X)
+# shap.summary_plot(shap_values, X)
+# INTERPRET: Bar plots show global importance; waterfall plots show local explanations.
+
+# ------------------------------------------------------------------------------------------
+# LIME (Local Interpretable Model-agnostic Explanations)
+# ------------------------------------------------------------------------------------------
+# Theory: Locally approximates model prediction via simple surrogate (e.g., linear) model.
+# Requires: pip install lime
+# Code:
+# lime_explainer = lime.lime_tabular.LimeTabularExplainer(X, mode='classification')
+# exp = lime_explainer.explain_instance(X[0], rf.predict_proba)
+# exp.show_in_notebook() # or exp.as_list()
+# INTERPRET: Lists features with biggest impact on prediction for given instance.
+
+# ------------------------------------------------------------------------------------------
+# Global vs Local explanations
+# ------------------------------------------------------------------------------------------
+# Global: Overall, which features drive model? (feature_importances_, mean SHAP values)
+# Local: Why *this* prediction? (instance-specific SHAP/LIME).
+
+# ==========================================================================================
+# 13. COMMON EXAM TRAPS (MANDATORY SECTION)
+# ==========================================================================================
+
+# ------------------------------------------------------------------------------------------
+# Data leakage examples
+# ------------------------------------------------------------------------------------------
+# - Scaling using the mean/std from the full data (including test)
+# - Selecting features using target in test set
+# - Cross-validation folds not stratified (labels leaking between train/test)
+# - Including post-outcome variables when predicting
+
+# ------------------------------------------------------------------------------------------
+# Invalid statistical tests
+# ------------------------------------------------------------------------------------------
+# - Using parametric tests (t-test) on non-normal data
+# - Ignoring repeated measures (independence violation)
+# - Using a test for proportions on continuous data
+
+# ------------------------------------------------------------------------------------------
+# Misinterpreting p-values
+# ------------------------------------------------------------------------------------------
+# - p-value is not the probability that H0 is true
+# - p>0.05 does not prove equality
+
+# ------------------------------------------------------------------------------------------
+# Multiple testing problem
+# ------------------------------------------------------------------------------------------
+# - Conducting many tests inflates chance of Type I error
+# - Correction: Bonferroni (divide alpha by #tests), less strict: FDR
+
+# ------------------------------------------------------------------------------------------
+# Overfitting via preprocessing
+# ------------------------------------------------------------------------------------------
+# Wrong: Select features or scale on whole data before CV
+# Correct: All preprocessing must fit only on train split (or within CV fold), applied to test.
+
+# ------------------------------------------------------------------------------------------
+# Using accuracy on imbalanced data
+# ------------------------------------------------------------------------------------------
+# Accuracy can be misleading (e.g., 99% accuracy when positive class is only 1%)
+# Proper metrics: balanced accuracy, MCC, PR-AUC
+
+# ==========================================================================================
+# END OF KDD DOCUMENTATION CODEBASE
+# ==========================================================================================
