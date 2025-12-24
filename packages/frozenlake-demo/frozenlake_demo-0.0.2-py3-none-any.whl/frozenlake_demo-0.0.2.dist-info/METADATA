@@ -1,0 +1,49 @@
+Metadata-Version: 2.4
+Name: frozenlake-demo
+Version: 0.0.2
+Summary: A minimal FrozenLake environment with custom BaseEnv
+Author-email: User <user@example.com>
+License: MIT
+Project-URL: Homepage, https://github.com/example/frozenlake-demo
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: numpy>=1.21.0
+
+# FrozenLake Demo
+
+A minimal, clean implementation of the FrozenLake environment, inspired by Gymnasium.
+
+## Installation
+
+You can install this package locally using pip:
+
+```bash
+pip install -e .
+```
+
+## Usage
+
+```python
+import gymnasium as gym
+from frozenlake_demo import FrozenLakeEnv
+
+# Initialize environment
+env = FrozenLakeEnv(render_mode="human")
+obs, info = env.reset(seed=42)
+
+# Run a simple loop
+for _ in range(10):
+    action = env.action_space.sample()  # Random action
+    obs, reward, terminated, truncated, info = env.step(action)
+    
+    if terminated or truncated:
+        obs, info = env.reset()
+
+env.close()
+```
+
+## Environment Details
+
+- **Action Space**: Discrete(4) (Left=0, Down=1, Right=2, Up=3)
+- **Observation Space**: Discrete(16) (Grid index 0-15)
+- **Map**: 4x4 Grid with Start(S), Frozen(F), Hole(H), and Goal(G).
