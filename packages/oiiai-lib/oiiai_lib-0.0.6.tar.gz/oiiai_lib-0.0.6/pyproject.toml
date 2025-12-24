@@ -1,0 +1,88 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "oiiai-lib"
+version = "0.0.6"
+description = "A minimalist Python package scaffolded with uv"
+readme = "README.md"
+authors = [
+    {name = "Chen Xuanyi", email = "cxyvsir04@qq.com"},
+]
+maintainers = [
+    {name = "Chen Xuanyi", email = "cxyvsir04@qq.com"},
+]
+license = {text = "MIT"}
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "beautifulsoup4>=4.12.0",
+    "brotli>=1.2.0",
+    "lxml>=5.0.0",
+    "requests>=2.25.0",
+    "sniffio>=1.3.1",
+    "zhipuai>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/weisiren000/oiiai"
+Repository = "https://github.com/weisiren000/oiiai"
+Documentation = "https://github.com/weisiren000/oiiai"
+Issues = "https://github.com/weisiren000/oiiai/issues"
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+    "pytest>=7.0.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=7.0.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/oiiai"]
+
+# [tool.ruff]
+# line-length = 88
+# target-version = "py38"
+# select = ["E", "F", "W", "C90", "I", "N", "UP", "YTT", "S", "BLE", "FBT", "B", "A", "COM", "C4", "DTZ", "T10", "DJ", "EM", "EXE", "FA", "ISC", "ICN", "G", "INP", "PIE", "T20", "PYI", "PT", "Q", "RSE", "RET", "SLF", "SLOT", "SIM", "TID", "TCH", "INT", "ARG", "PTH", "ERA", "PD", "PGH", "PL", "TRY", "FLY", "NPY", "AIR", "PERF", "FURB", "LOG", "RUF"]
+# ignore = ["S101"]
+
+# [tool.ruff.lint.isort]
+# known-first-party = ["oiiai"]
+
+# [tool.pytest.ini_options]
+# minversion = "6.0"
+# addopts = "-ra -q"
+# testpaths = ["tests"]
+
+# [tool.mypy]
+# python_version = "3.8"
+# warn_return_any = true
+# warn_unused_configs = true
+# disallow_untyped_defs = true
+# disallow_incomplete_defs = true
+# check_untyped_defs = true
+# disallow_untyped_decorators = true
+# no_implicit_optional = true
+# warn_redundant_casts = true
+# warn_unused_ignores = true
+# warn_no_return = true
+# warn_unreachable = true
+# strict_equality = true
+# ignore_missing_imports = true
