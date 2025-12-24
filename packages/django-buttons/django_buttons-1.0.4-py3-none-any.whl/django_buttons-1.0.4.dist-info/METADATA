@@ -1,0 +1,81 @@
+Metadata-Version: 2.4
+Name: django-buttons
+Version: 1.0.4
+Summary: An application providing some template-tags to add buttons on pages
+Project-URL: Homepage, https://gitlab.ville.tg/fguerin/django-buttons
+Project-URL: Source, https://gitlab.ville.tg/fguerin/django-buttons
+Project-URL: Documentation, http://fguerin.docs.tourcoing.fr/django-buttons
+Author-email: FrançoiS GUÉRIN <fguerin@ville-tourcoing.fr>
+License: MIT
+License-File: LICENSE
+Keywords: Bootstrap,Django,FontAwesome
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Web Environment
+Classifier: Framework :: Django :: 3.2
+Classifier: Framework :: Django :: 4.0
+Classifier: Framework :: Django :: 4.1
+Classifier: Framework :: Django :: 4.2
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Natural Language :: English
+Classifier: Natural Language :: French
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Topic :: Internet
+Classifier: Topic :: Internet :: WWW/HTTP :: WSGI :: Application
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.9
+Requires-Dist: django-appconf
+Provides-Extra: fa5
+Requires-Dist: django-fontawesome-5; extra == 'fa5'
+Provides-Extra: fa6
+Requires-Dist: django-fontawesome-6; extra == 'fa6'
+Description-Content-Type: text/markdown
+
+# django-buttons
+
+This application provides some simple template tags to insert buttons into templates.
+
+## Installation
+
+Install application with pypi:
+
+```sh
+$ pip install django-buttons[fa5]  # Installs django-fontawesome5
+$ pip install django-buttons[fa6]  # Installs django-fontawesome6
+```
+
+Add application to your INSTALLED_APPS:
+
+```python
+INSTALLED_APPS = [
+    ...
+    'buttons',
+    ...
+]
+
+BUTTONS_FONTAWESOME_VERSION = 4  # Use 5 to use fontawesome-5 as icon library
+```
+
+## Use buttons in your templates
+
+```html
+ {% load buttons_tags %}
+...
+{% btn_home %}
+```
+
+Buttons can have some parameters :
+
++ **url**: target url
++ **title**: displayed text
++ **icon**: fa aware name, ie. 'home' for
+  [fa-home](http://fontawesome.io/icon/home/)
++ **icon_position**: Position of the icon, 'right', 'left' or 'none'
+  (no icon displayed) ...
+
+**Enjoy !**
