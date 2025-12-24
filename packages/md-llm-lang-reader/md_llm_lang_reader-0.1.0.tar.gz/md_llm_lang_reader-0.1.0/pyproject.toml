@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "md-llm-lang-reader"
+version = "0.1.0"
+description = "Generate language-learning HTML readers (with sentence-level LLM translations and TTS) from Markdown."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Katsutoshi Seki" }]
+
+dependencies = [
+  "multiai",
+]
+
+[project.urls]
+Homepage = "https://github.com/sekika/langreader"
+Documentation = "https://github.com/sekika/langreader"
+Source = "https://github.com/sekika/langreader"
+
+[project.scripts]
+langreader = "md_llm_lang_reader.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
