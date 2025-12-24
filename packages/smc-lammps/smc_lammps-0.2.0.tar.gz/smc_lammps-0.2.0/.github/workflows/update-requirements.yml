@@ -1,0 +1,54 @@
+name: Update requirements.txt on uv change
+
+on:
+  push:
+    paths:
+      - pyproject.toml
+      - uv.lock
+
+permissions:
+  contents: write
+
+jobs:
+  update-requirements:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ssh-key: ${{secrets.DEPLOY_KEY}}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Update lockfile
+        run: uv lock
+
+      - name: Export requirements.txt
+        run: uv export > requirements.txt
+
+      - name: Check for changes and commit
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Check if there are any changes to track
+          if ! git diff --quiet uv.lock requirements.txt; then
+            echo "Changes detected, committing..."
+            git add uv.lock requirements.txt
+
+            # Create a single commit message based on what changed
+            if git diff --staged --name-only | grep -q "uv.lock" && git diff --staged --name-only | grep -q "requirements.txt"; then
+              git commit -m "update uv.lock and requirements.txt"
+            elif git diff --staged --name-only | grep -q "uv.lock"; then
+              git commit -m "update uv.lock"
+            elif git diff --staged --name-only | grep -q "requirements.txt"; then
+              git commit -m "update requirements.txt"
+            fi
+
+            git push
+            echo "Changes pushed successfully"
+          else
+            echo "No changes to commit"
+          fi

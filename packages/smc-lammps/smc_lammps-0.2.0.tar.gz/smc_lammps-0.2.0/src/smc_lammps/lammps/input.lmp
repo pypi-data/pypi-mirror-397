@@ -1,0 +1,218 @@
+####################################################################################################
+################################## SMC with DNA (Worm Like Chain) ##################################
+####################################################################################################
+
+# units:
+#  nanoseconds, nanometers, attograms, Kelvin, ...
+units nano
+
+# fixed boundaries in all dimensions
+boundary f f f
+
+#--------------------------------------Initial Parameters------------------------------------------#
+
+
+include lammps/parameterfile
+
+# if not provided, assume this is not a restart run
+if $(!is_defined(variable,is_restart)) then &
+    "variable is_restart equal 0"
+
+# the lammps root dir contains the necessary lammps scripts,
+# it must be provided since it could be located anywhere depending
+# on the user's environment
+if $(!is_defined(variable,lammps_root_dir)) then &
+    """print "variable 'lammps_root_dir' is not defined, exiting!" screen yes""" &
+    "quit 1"
+
+if $(!is_defined(variable,output_path)) then &
+    "variable output_path string output"
+
+# make sure the necessary directories exist
+# WARNING: output_path must not contain spaces (surrounding with quotes breaks LAMMPS variable substitution)
+shell mkdir ${output_path}/snapshots
+
+
+#-----------------------------------------Define Styles--------------------------------------------#
+
+
+include lammps/styles
+
+# Give weighting coef to LJ potentials (0 = turn off) between atoms that are bonded, seperated by 2 and 3 bonds
+special_bonds lj/coul 0. 0. 0.
+
+# Only compute interactions between nearby atoms
+neighbor $(4*3.5) bin
+
+# Only when multiple processors are used
+#comm_modify cutoff/multi 2*7 70
+
+
+#-------------------------------------------Read Data----------------------------------------------#
+
+if $(!v_is_restart) then &
+    "read_data lammps/datafile_positions" &
+else &
+    "read_restart lammps/restartfile"
+
+read_data lammps/datafile_coeffs add merge
+
+#---------------------------------------------Fixes------------------------------------------------#
+
+
+# Set groups for DNA and SMC based on molecule ids
+group DNA molecule ${DNA_mols}
+group SMC molecule ${SMC_mols}
+
+# DNA Langevin integration (nve + langevin = Brownian dynamics)
+fix 1a DNA nve
+fix 1b DNA langevin $T $T ${gamma} ${seed}
+
+# SMC is set of rigid bodies, each type of SMC-atom is a rigid body ('rigid molecule'), with Langevin integration
+fix 2 SMC rigid molecule langevin $T $T ${gamma} ${seed}
+
+# Hold end points of DNA in place
+group end_points ${dna_end_points}
+fix end_points_frz end_points setforce 0 0 0
+
+# Stretching forces
+
+# test values:
+# variable stretching_forces_len equal 2
+# variable stretching_forces_groups universe "id 1 2" "id 3 4"
+# variable stretching_forces universe "1 0 0" "0 0 1"
+
+if $(!is_defined(variable,stretching_forces_len)) then &
+	"jump SELF sf_exit"
+
+label sf_enter
+variable sfi loop ${stretching_forces_len}
+
+group sf_grp_${sfi} ${stretching_forces_groups}
+fix sf_fix_${sfi} sf_grp_${sfi} addforce ${stretching_forces}
+
+next sfi
+next stretching_forces_groups stretching_forces
+jump SELF sf_enter
+label sf_exit
+
+# Prevents the system from diffusing away (spring with K=10.0 tethers all atoms to origin)
+#fix 4 all spring tether 10.0 0 0 0 0
+
+# ---OBSTACLE---
+# use infinite wall to represent very large particle
+if $(is_defined(variable,excluded)) then &
+	"group exl_grp ${excluded}" &
+	"group repelled_by_wall subtract all exl_grp" &
+	"fix obstacle repelled_by_wall wall/lj126 ylo ${wall_y} ${epsilon3} ${sigma} ${sigma}"
+
+#----------------------------------------------Equilibration-------------------------------------------------#
+
+# Set integration timestep
+timestep ${timestep}
+
+if $(!v_is_restart) then &
+    "include ${lammps_root_dir}/equilibrate.lmp" &
+    "reset_timestep 0"
+
+#----------------------------------------------Data Collection-------------------------------------------------#
+
+if $(!is_defined(variable,output_file_name)) then &
+    "variable output_file_name string output.lammpstrj"
+
+# For VMD visualisation
+dump movie all custom ${output_steps} ${output_path}/${output_file_name} id type x y z
+dump_modify movie sort id pbc yes
+
+# Computes SMC potential energy due to angles and impropers
+#compute en all pe angle improper
+#variable en equal c_en
+#fix 5 all print 1000 "${en}" append "energy.dat"
+#compute enDNA DNA pe/atom bond angle
+#compute enSMC SMC pe/atom angle improper
+
+#compute enDNAtot DNA reduce sum c_enDNA
+#compute enSMCtot SMC reduce sum c_enSMC
+
+#variable enDNA equal c_enDNAtot
+#variable enSMC equal c_enSMCtot
+
+#fix 5 all print 1000 "${enDNA} ${enSMC}" append "energy.dat"
+
+#----------------------------------------------Run-------------------------------------------------#
+
+# loop until (cumulative) runtimes value exceeds current time step
+variable current_step equal step
+label step_loop
+if $(v_current_step >= v_runtimes) then &
+    "variable current_step equal $(v_current_step - v_runtimes)" &
+    "print ${current_step} screen yes" &
+    "next runtimes" &
+    "jump SELF step_loop"
+
+# collect msd for obstacle
+if $(is_defined(variable,obstacle_id)) then &
+	"group obst_group id ${obstacle_id}" &
+	"dump obst_dump obst_group custom ${output_steps} ${output_path}/obstacle.lammpstrj id type x y z" &
+	"dump_modify obst_dump pbc yes append yes"
+
+# apply force to smc
+if $(is_defined(variable,smc_force)) then &
+	"fix smc_force SMC addforce $(-v_smc_force) $(v_smc_force) 0"
+
+variable site_cycle equal ${site_cycle_period} # 0 means disabled
+variable site_on_delay equal -1 # -1 means disabled
+
+# --- start of SMC cycle loop --- #
+label main_loop
+
+# APO state
+print "----------- STARTING APO STATE -----------" screen yes
+include lammps/states/apo
+
+if "${site_cycle_when} == apo" then &
+    "include ${lammps_root_dir}/cycle_apo.lmp" &
+else &
+    "run ${runtimes}"
+
+next runtimes
+
+# take snapshot
+write_dump all custom ${output_path}/snapshots/apo.end.lammpstrj id type x y z modify append yes sort id pbc yes
+
+# ATP-bound state
+print "----------- STARTING ATP STATE -----------" screen yes
+include lammps/states/atp_bound_1
+run ${runtimes}
+next runtimes
+
+include lammps/states/atp_bound_2
+run ${runtimes}
+next runtimes
+
+# take snapshot
+write_dump all custom ${output_path}/snapshots/atp.end.lammpstrj id type x y z modify append yes sort id pbc yes
+
+include ${lammps_root_dir}/cycle_disable.lmp
+
+# ADP-bound state
+print "----------- STARTING ADP STATE -----------" screen yes
+include lammps/states/adp_bound
+run ${runtimes}
+next runtimes
+
+# take snapshot
+write_dump all custom ${output_path}/snapshots/adp.end.lammpstrj id type x y z modify append yes sort id pbc yes
+
+if "${site_cycle_when} == adp" then &
+    "include ${lammps_root_dir}/cycle_apo.lmp"
+
+write_restart lammps/restartfile
+
+# Re-enter loop
+# LAMMPS will auto skip this when the runtimes variable is exhausted
+jump SELF main_loop
+
+# The End
+
+############################################################################################################
