@@ -1,0 +1,90 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "onecite"
+version = "0.0.12"
+description = "Universal citation management and academic reference toolkit"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "He Zhiang", email = "ang@hezhiang.com"}
+]
+keywords = ["citation", "bibliography", "bibtex", "academic", "reference", "doi", "arxiv"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Markup",
+]
+
+dependencies = [
+    "requests>=2.25.0",
+    "beautifulsoup4>=4.9.0",
+    "bibtexparser>=1.2.0",
+    "thefuzz>=0.19.0",
+    "scholarly>=1.5.0",
+    "pyyaml>=5.4.0",
+    "feedparser>=6.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0",
+    "pytest-cov>=2.10",
+    "flake8>=3.8",
+    "black>=20.8b1",
+]
+
+[project.urls]
+Homepage = "https://github.com/HzaCode/OneCite"
+Documentation = "https://onecite.readthedocs.io"
+Repository = "https://github.com/HzaCode/OneCite"
+Issues = "https://github.com/HzaCode/OneCite/issues"
+Changelog = "https://github.com/HzaCode/OneCite/blob/main/docs/changelog.rst"
+"Bug Tracker" = "https://github.com/HzaCode/OneCite/issues"
+
+[project.scripts]
+onecite = "onecite.cli:main"
+
+[tool.setuptools]
+packages = ["onecite"]
+
+[tool.setuptools.package-data]
+onecite = ["templates/*.yaml"]
+
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
+check_untyped_defs = true
+
+[tool.black]
+line-length = 100
+target-version = ['py310', 'py311']
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+
+
+
