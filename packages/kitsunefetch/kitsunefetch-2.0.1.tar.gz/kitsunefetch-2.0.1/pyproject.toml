@@ -1,0 +1,84 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kitsunefetch"
+version = "2.0.1"
+description = "🦊 KitsuneFetch : Multi-Database Protein Query Tool using GraphQL API"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Elisa Rioual", email = "elisa.rioual@riken.jp"}
+]
+maintainers = [
+    {name = "Elisa Rioual", email = "elisa.rioual@riken.jp"}
+]
+keywords = [
+    "PDB",
+    "AlphaFold Protein Structure Database",
+    "ModelArchive",
+    "protein",
+    "structure",
+    "bioinformatics",
+    "RCSB",
+    "GraphQL",
+    "structural biology",
+    "crystallography",
+    "cryo-EM",
+    "NMR"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Healthcare Industry",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Scientific/Engineering :: Medical Science Apps.",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "requests>=2.25.0",
+    "matplotlib>=3.3.0",
+    "numpy>=1.19.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/ElisaRioual/KitsuneFetch"
+Repository = "https://github.com/ElisaRioual/KitsuneFetch"
+
+[project.scripts]
+kitsunefetch = "kitsunefetch.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["kitsunefetch*"]
+
+[tool.setuptools.package-data]
+kitsunefetch = ["DATA/*.txt"]
+
+[tool.black]
+line-length = 120
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
