@@ -1,0 +1,87 @@
+boss.worker
+===========
+
+.. py:module:: boss.worker
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   boss.worker.Worker
+   boss.worker.WorkerRemote
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   boss.worker.get_max_workers
+   boss.worker.start_hero_in_worker
+   boss.worker.launch_worker
+
+
+Module Contents
+---------------
+
+.. py:function:: get_max_workers() -> int
+
+   Get the maximum number of worker processes to use.
+
+   For Windows systems, caps the worker count at 32.
+   For other platforms, returns the total CPU count.
+
+   :returns: The maximum number of worker processes to use
+
+
+.. py:function:: start_hero_in_worker(config, realm, boss_name, boss_loop)
+
+   This launcher to start a new worker in it's own process
+
+
+.. py:function:: launch_worker(config, realm, boss_name, pipe)
+
+   This is the entry point in the worker.
+
+
+.. py:class:: Worker(config, realm, boss_name, pipe)
+
+   Bases: :py:obj:`boss.multiprocess.MultiprocessRPC`
+
+
+   Use the communication between two processes via a pipe to implement RPC.
+
+   In BOSS this is used to communicate between the BOSS object in the main process and the BOSSRemote
+   running in a separate process. This becomes necessary since zenoh/rust/pyO3 does not allow to run
+   in the main process and in dynamically generated processes.
+
+
+   .. py:attribute:: _loop
+
+
+   .. py:attribute:: _obj
+
+
+   .. py:method:: run()
+
+
+   .. py:method:: stop()
+
+
+.. py:class:: WorkerRemote(loop, pipe)
+
+   Bases: :py:obj:`boss.multiprocess.MultiprocessRPC`
+
+
+   Use the communication between two processes via a pipe to implement RPC.
+
+   In BOSS this is used to communicate between the BOSS object in the main process and the BOSSRemote
+   running in a separate process. This becomes necessary since zenoh/rust/pyO3 does not allow to run
+   in the main process and in dynamically generated processes.
+
+
+   .. py:method:: stop()
+
+
