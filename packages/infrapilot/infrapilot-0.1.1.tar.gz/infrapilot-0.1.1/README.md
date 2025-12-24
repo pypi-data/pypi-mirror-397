@@ -1,0 +1,103 @@
+# InfraPilot CLI
+
+InfraPilot’s CLI is an interactive, tab-completing REPL that talks to the InfraPilot backend for auth, GitHub/AWS integrations, infra discovery, and chat/agent workflows. It keeps local history, caches workspaces/threads for offline browsing, and stores credentials in the OS keyring.
+
+---
+
+## 1) Install (prod + local)
+- **Prod (PyPI):** `pip install infrapilot` **or** `pipx install infrapilot`
+- **uv-managed env:** `uv add infrapilot`
+- **Upgrade:** `pip install --upgrade infrapilot` or `pipx upgrade infrapilot`
+- **Local dev (editable):**
+  ```bash
+  cd cli
+  uv sync --group dev      # install deps from uv.lock
+  uv run infrapilot --help # smoke test
+  ```
+
+Prereqs: Python 3.13, `uv`, and an InfraPilot backend (default `https://infrapilot.dev`; override with `INFRAPILOT_API_URL`).
+
+---
+
+## 2) Configuration & security
+- **Auth tokens:** Stored via OS keyring (`TokenStore`). No plain-text access/refresh tokens on disk.
+- **GitHub installation token:** Stored in keyring too; metadata only in `~/.infrapilot/github.json`.
+- **Config/cache:** `~/.infrapilot/` (override with `INFRAPILOT_HOME`). Contains `config.json`, `repl_history`, and `infrapilot.db` (SQLite cache for users/workspaces/threads/messages).
+- **Env vars:**
+  | Var | Purpose | Default |
+  | --- | --- | --- |
+  | `INFRAPILOT_API_URL` | Backend base URL | `https://infrapilot.dev` |
+  | `INFRAPILOT_API_PREFIX` | API prefix | `/infrapilot/api/v1` |
+  | `INFRAPILOT_HOME` | Root for config/db/logs | `~/.infrapilot` |
+  | `INFRAPILOT_DB_PATH` | Override SQLite path | `~/.infrapilot/infrapilot.db` |
+  | `INFRAPILOT_LOG_FILE` / `INFRAPILOT_HTTP_LOG_FILE` | Explicit log file paths | – |
+  | `INFRAPILOT_LOG_DIR` / `INFRAPILOT_HTTP_LOG_DIR` | Override log directories | `~/.infrapilot/logs` |
+
+---
+
+## 3) Running
+- Normal: `infrapilot`
+- Auth is required for all runs; the CLI will prompt for login if no valid session is found.
+- Prompt: `[infrapilot:<mode>]>` with Tab completion for `/commands` (leading slash optional).
+
+---
+
+## 4) Command reference
+**Auth & session**
+- `/login`, `/logout`, `/refresh`, `/whoami`
+- `/mode <chat|agent|agent_full>` — change agent behavior (guide-only → confirm → full apply)
+- `/config` — show current config and integration state
+- `/theme` — toggle light/dark; `/clear`, `/exit`, `/quit`, `/help`
+
+**Work management**
+- `/workspaces [list|create <name> [region] [aws_profile]|delete <id|name>]`
+- `/threads [list|create <title>|delete <id|title>]`
+- `/chat [title]` — start/continue a thread (uses backend when available; falls back to cached history)
+
+**Integrations**
+- `/devops [login|configure|refresh]` — GitHub App install flow, repo detection, token issued by backend
+- `/infra [list|refresh|auto-discover on|off]` — AWS metadata snapshot; auto-discovery toggle; browse cached resources (VPC/EC2/ECR/ECS/Lambda/S3/RDS/IAM, etc.)
+- Auto AWS discovery can run on startup if enabled; prompts once after GitHub/App connect.
+
+**Artifacts & jobs**
+- `/files` — list runs for active workspace; view/download artifacts
+- `/files all` — list runs across all workspaces
+- `/jobs <thread_id|thread_name>` or `/run …` — pull/execute queued job for a thread
+
+**Other**
+- `/mode`, `/config`, `/theme`, `/clear`, `/exit`, `/quit`
+
+Tab completion works for all top-level commands (with or without the leading `/`).
+
+---
+
+## 5) Logging & storage
+- Logs: JSONL, rotated by default under `~/.infrapilot/logs/`:
+  - `cli.jsonl` (general CLI events)
+  - `http.jsonl` (backend requests/responses)
+- Override locations with `INFRAPILOT_LOG_FILE`, `INFRAPILOT_HTTP_LOG_FILE`, or the `*_LOG_DIR` vars.
+- PII is redacted for common token/email fields in logs.
+
+---
+
+## 6) AWS + GitHub workflows
+- **GitHub**: `/devops login` opens the App install page, detects repos, and saves the installation token to keyring. Auto-detects current repo owner/name for quicker installs.
+- **AWS**: `/infra refresh` runs discovery with your local AWS creds/profile; results cached per workspace and optionally uploaded to the backend. Toggle background discovery with `/infra auto-discover on|off`.
+
+---
+
+## 7) Development quick-start
+- From `cli/`:
+  - Install deps: `uv sync --group dev`
+  - Run: `uv run infrapilot`
+  - Format/lint/tests: `uv run black . && uv run isort .`, `uv run flake8 .`, `uv run pytest`
+  - Install hooks: `uv run --group dev python -m pre_commit install`
+- Command handlers live in `infrapilot_cli/ui/repl.py`; backend calls in `infrapilot_cli/backend/client.py`; local cache in `infrapilot_cli/database/store.py`.
+
+---
+
+## 8) Troubleshooting
+- **Auth errors**: rerun `/login` or `/refresh`; tokens live in keyring.
+- **Tab completion missing**: ensure you’re at the top-level prompt (not mid-chat).
+- **SQLite hiccups**: delete `~/.infrapilot/infrapilot.db` (tokens/config remain).
+- **Backend down**: CLI falls back to cached workspaces/threads; chat becomes read-only until the backend is reachable again.
