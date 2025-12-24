@@ -1,0 +1,109 @@
+Metadata-Version: 2.4
+Name: holmes-hydro
+Version: 3.2.5
+Summary: HOLMES (HydrOLogical Modeling Educationnal Software) is a software developped to teach operational hydrology. It is developed at the university Laval, Québec, Canada.
+Project-URL: Homepage, https://gitlab.com/antoinelb/holmes
+Project-URL: Repository, https://gitlab.com/antoinelb/holmes
+Author-email: Antoine Lefebvre-Brossard <antoinelb@protonmail.com>
+License: MIT
+License-File: LICENSE
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Education
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Scientific/Engineering :: Hydrology
+Requires-Python: >=3.13
+Requires-Dist: jaxtyping>=0.3.3
+Requires-Dist: kaleido>=1.2.0
+Requires-Dist: numba>=0.62.1
+Requires-Dist: numpy>=2.3.3
+Requires-Dist: pandas>=2.3.3
+Requires-Dist: plotly>=6.3.0
+Requires-Dist: polars>=1.33.1
+Requires-Dist: python-dotenv>=1.1.1
+Requires-Dist: scipy>=1.16.2
+Requires-Dist: starlette>=0.48.0
+Requires-Dist: tqdm>=4.67.1
+Requires-Dist: uvicorn>=0.36.0
+Requires-Dist: websockets>=15.0.1
+Description-Content-Type: text/markdown
+
+# HOLMES
+
+HOLMES (HydrOLogical Modeling Educational Software) is a software developed to teach operational hydrology. It is developed at Université Laval, Québec, Canada.
+
+## Usage
+
+### Installation
+
+```bash
+pip install holmes-hydro
+```
+
+### Running HOLMES
+
+After installation, start the server with:
+
+```bash
+holmes
+```
+
+The web interface will be available at http://127.0.0.1:8000.
+
+### Configuration
+
+Customize the server by creating a `.env` file:
+
+```env
+DEBUG=True          # Enable debug mode (default: False)
+RELOAD=True         # Enable auto-reload on code changes (default: False)
+HOST=127.0.0.1      # Server host (default: 127.0.0.1)
+PORT=8000           # Server port (default: 8000)
+```
+
+## Development
+
+### Setup
+
+1. Install [uv](https://docs.astral.sh/uv/):
+   ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   ```
+
+2. Clone and install in development mode:
+   ```bash
+   git clone https://gitlab.com/antoinelb/holmes.git
+   cd holmes
+   uv sync
+   ```
+
+### Running
+
+```bash
+uv run holmes
+```
+
+Or activate the virtual environment and run directly:
+
+```bash
+source .venv/bin/activate
+holmes
+```
+
+### Testing
+
+```bash
+uv run pytest
+```
+
+### Code Quality
+
+```bash
+uv run black src/ tests/
+uv run ruff check src/ tests/
+uv run ty check src/
+```
+
+## References
+
+- [Bucket Model](https://github.com/ulaval-rs/HOOPLApy/tree/main/hoopla/models/hydro)
