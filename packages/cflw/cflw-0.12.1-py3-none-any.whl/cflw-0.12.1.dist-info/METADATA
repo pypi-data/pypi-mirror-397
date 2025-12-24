@@ -1,0 +1,47 @@
+Metadata-Version: 2.1
+Name: cflw
+Version: 0.12.1
+Summary: Control flow framework for running of state graphs
+Author-email: "Th. P." <none@example.org>
+Project-URL: Homepage, https://codeberg.org/thpit/cflw/
+Project-URL: Bug Tracker, https://codeberg.org/thpit/cflw/
+Classifier: Development Status :: 4 - Beta
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Classifier: Intended Audience :: Financial and Insurance Industry
+Classifier: Intended Audience :: Healthcare Industry
+Classifier: Intended Audience :: Information Technology
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Utilities
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
+## cflw
+
+A library for synchronously running nodes in a state graph.
+
+Advantages: (envisaged)
+
+* lean implementation
+* customization towards production possible
+* multi-developer scenario kept in mind
+
+Code sketch:
+
+    graph = Graph()
+    graph.add_node(AllNodes.node1)
+    graph.add_node(AllNodes.node2)
+    graph.add_edge(AllNodes.node1, AllNodes.node2, entry_point=AllNodes.node1)
+    state = CfState()
+    ctx = CfCtx()
+    rr = GraphRunner().run(graph, state, ctx)
+
+
+This is a stub.
+
+
+### Copyright, Disclaimer and License
+
+See the LICENSE file contained in the package.
+
