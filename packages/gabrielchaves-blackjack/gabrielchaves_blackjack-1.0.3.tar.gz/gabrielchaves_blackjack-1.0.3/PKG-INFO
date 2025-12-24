@@ -1,0 +1,154 @@
+Metadata-Version: 2.4
+Name: gabrielchaves-blackjack
+Version: 1.0.3
+Summary: A text-based Blackjack game with ASCII art and smart betting system
+Author-email: Gabriel Chaves <gabrielchavesmarques@hotmail.com>
+License: MIT
+Project-URL: Homepage, https://github.com/GabrielChavesM/blackjack
+Project-URL: Issues, https://github.com/GabrielChavesM/blackjack/issues
+Keywords: blackjack,game,casino,card-game,ascii,terminal
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: End Users/Desktop
+Classifier: Topic :: Games/Entertainment
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+
+# 🃏 Blackjack Game
+
+Uma implementação de Blackjack (21) em Python com **arte ASCII das cartas**, e princípios de Programação Orientada a Objetos.
+
+## 🎯 Características
+
+- Lógica completa do jogo Blackjack
+- **Visualização das cartas em arte ASCII**
+- **Limpeza automática da tela para melhor experiência**
+- Blackjack Basic Strategy implementado para Dealer
+- Jogador vs Dealer
+- Design OOP limpo e modular
+- Pacote totalmente instalável via pip
+- Interface de linha de comando
+
+## 📦 Instalação
+
+### A partir do código-fonte:
+```bash
+# Clone ou baixe o repositório
+cd blackjack
+
+# Instale em modo de desenvolvimento
+pip install -e .
+
+# Ou instale normalmente
+pip install .
+```
+
+### Após a instalação:
+```bash
+# Execute o jogo
+blackjack
+```
+
+## 🎮 Como Jogar
+
+1. Execute o comando `blackjack` após a instalação
+2. Você receberá 2 cartas, o dealer recebe 2 (uma oculta)
+3. Escolha **Hit** (pegar uma carta) ou **Stand** (manter a mão atual)
+4. Tente chegar o mais próximo possível de 21 sem ultrapassar
+5. O dealer joga automaticamente (pega carta com 16 ou menos)
+6. A mão mais alta ganha!
+
+## 🎨 Visualização ASCII
+
+As cartas agora são exibidas em bela arte ASCII:
+
+```
+┌─────────┐  ┌─────────┐  ┌─────────┐
+│A        │  │K        │  │Q        │
+│         │  │         │  │         │
+│    ♠    │  │    ♥    │  │    ♦    │
+│         │  │         │  │         │
+│        A│  │        K│  │        Q│
+└─────────┘  └─────────┘  └─────────┘
+```
+
+A carta oculta do dealer aparece como:
+```
+┌─────────┐
+│░░░░░░░░░│
+│░░░░░░░░░│
+│░░░░░░░░░│
+│░░░░░░░░░│
+│░░░░░░░░░│
+└─────────┘
+```
+
+## 💻 Uso como Módulo
+```python
+from blackjack import BlackJackGame
+
+# Criar e jogar um jogo
+game = BlackJackGame()
+game.play_round()
+```
+
+## 🎬 Demonstração das Cartas
+
+Para ver todas as cartas em ASCII:
+```bash
+python demo_ascii_cards.py
+```
+
+## 🏗️ Arquitetura
+
+### Princípios de Design
+
+Esta implementação segue princípios sólidos de OOP:
+
+- **Encapsulamento**: Cada classe gerencia seus próprios dados e comportamento
+- **Responsabilidade Única**: Cada classe tem um propósito claro
+- **Composição**: Game usa Deck, Players usam Hands
+- **Herança**: Dealer estende Player com regras específicas
+
+### Estrutura de Classes
+
+- **Card**: Representa uma única carta de baralho (com arte ASCII)
+- **Deck**: Gerencia baralho de 52 cartas (criação, embaralhamento, distribuição)
+- **Hand**: Gerencia uma coleção de cartas e calcula valores
+- **Player**: Representa um jogador com uma mão
+- **Dealer**: Estende Player com regras específicas do dealer
+- **BlackjackGame**: Orquestra o fluxo e lógica do jogo
+
+### Melhorias Implementadas
+
+✅ **Arte ASCII para cartas**: Visualização bonita e imersiva
+✅ **Limpeza de tela**: Interface limpa e profissional
+✅ **Animações suaves**: Pausas estratégicas para melhor experiência
+✅ **Emojis**: Feedback visual divertido
+✅ **Compatibilidade cross-platform**: Funciona em Windows, Linux e macOS
+
+## 🧪 Testes
+```bash
+# Execute os testes
+python -m pytest tests/
+```
+
+## 📋 Requisitos
+
+- Python 3.8+
+- Nenhuma dependência externa
+
+## 📝 Licença
+
+MIT License
+
+## 👤 Autor
+
+Gabriel Chaves
