@@ -1,0 +1,36 @@
+## competitors: List[CompetitorType]
+
+
+<input id="comp.filter" oninput="filter_table('comp.table', 'tr', this.value)" placeholder="Search ..."/>
+<p/>
+
+<table class="dte" id="comp.table" onclick="comp_highlight(event)" ondblclick="comp_highlight(event)" onmousedown="table_mousedown(event)">
+    <thead>
+        <tr id="comp.theader" class="dth">
+            <th class="dth">First name</th>
+            <th class="dth">Last name</th>
+            <th class="dth">Gender</th>
+            <th class="dth">Year</th>
+            <th class="dth">Chip</th>
+            <th class="dth">Club</th>
+        </tr>
+    </thead>
+    <tbody id="competitors_tbody">
+        % if competitors:
+            <tr class="dte h1">
+                <th class="dte h1" colspan="99">Competitors&nbsp;&nbsp;(${len(competitors)})</th>
+            </tr>
+            % for competitor in competitors:
+                <tr class="dte" data-id="${competitor.id}">
+                    <td class="dte">${competitor.first_name}</td>
+                    <td class="dte">${competitor.last_name}</td>
+                    <td class="dte">${competitor.gender}</td>
+                    <td class="dte">${competitor.year if competitor.year is not None else ""}</td>
+                    <td class="dte" style="text-align:right">${competitor.chip if competitor.chip else ""}</td>
+                    <td class="dte">${competitor.club_name if competitor.club_name else ""}</td>
+                </tr>
+            % endfor
+        % endif
+    </tbody>
+</table>
+
