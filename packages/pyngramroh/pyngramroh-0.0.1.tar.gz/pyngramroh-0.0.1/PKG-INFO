@@ -1,0 +1,144 @@
+Metadata-Version: 2.4
+Name: pyngramroh
+Version: 0.0.1
+Summary: A python package to create ngrams.
+Author: IT-Administrators
+Maintainer: IT-Administrators
+License: MIT License
+        
+        Copyright (c) 2024 IT-Administrators
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Project-URL: Homepage, https://github.com/IT-Administrators/pyngramroh
+Keywords: text,string,ngram,split
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: license-file
+
+<!-- toc:insertAfterHeading=pyngramroh -->
+<!-- toc:insertAfterHeadingOffset=4 -->
+
+![PyPI - Version](https://img.shields.io/pypi/v/pyngramroh)
+![GitHub License](https://img.shields.io/github/license/IT-Administrators/pyngramroh)
+![PyPI - Downloads](https://img.shields.io/pypi/dm/pyngramroh)
+[![Publish PyPi](https://github.com/IT-Administrators/pyngramroh/actions/workflows/release.yaml/badge.svg?branch=main)](https://github.com/IT-Administrators/pyngramroh/actions/workflows/release.yaml)
+[![CI](https://github.com/IT-Administrators/pyngramroh/actions/workflows/ci.yaml/badge.svg)](https://github.com/IT-Administrators/pyngramroh/actions/workflows/ci.yaml)
+
+# pyngramroh
+
+_The pyngramroh package contains a python module to create ngrams._
+
+
+## Table of Contents
+
+1. [Introduction](#introduction)
+
+## Introduction
+
+This package contains a module to create ngrams, it does not create statistics about the created ngrams. An explanation what a ngram is can be found here: [ngram](https://en.wikipedia.org/wiki/N-gram)
+
+## Getting started
+
+### Prerequisites
+
+- Python installed
+- Operatingsystem: Linux or Windows, not tested on mac
+- IDE like VS Code, if you want to contribute or change the code
+
+### Installation
+
+There are two ways to install this module depending on the way you work and the preinstalled modules:
+
+1. ```pip install pyngramroh```
+2. ```python -m pip install pyngramroh```
+
+## How to use
+
+### How to import
+
+You can import the module in two ways:
+
+```python
+import pyngramroh
+```
+
+This will import all functions. Even the ones that are not supposed to be used (helper functions).
+
+```python
+from pyngramroh import *
+```
+
+This will import only the significant functions, meant for using.
+
+### Using the module
+
+Example 1:
+
+```python
+# Import all modules from package.
+
+from pyngramroh import *
+
+ng = NGram("Demo",2,True)
+
+print(ng.generate_ngram())
+
+# Output:
+# 
+# ['_D', 'De', 'em', 'mo', 'o_']
+```
+
+```python
+# Import all modules from package.
+from pyngramroh import *
+
+ng = NGram("This is a demo string",2)
+
+print(ng.create_ngram())
+
+# Output:
+#
+# ["This_is","is_a","a_demo","demo_string"]
+```
+
+## Releasing
+
+Releases are published automatically when a tag is pushed to GitHub.
+
+```Powershell
+# Create release variable.
+$Release = "x.x.x"
+# Create commit.
+git commit --allow-empty -m "Release $Release"
+# Create tag.
+git tag -a $Release -m "Version $Release"
+# Push from original.
+git push origin --tags
+# Push from fork.
+git push upstream --tags
+```
+
+## License
+
+[MIT](./LICENSE)
