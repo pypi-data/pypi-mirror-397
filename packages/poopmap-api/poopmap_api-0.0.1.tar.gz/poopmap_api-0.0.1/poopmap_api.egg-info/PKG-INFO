@@ -1,0 +1,133 @@
+Metadata-Version: 2.4
+Name: poopmap-api
+Version: 0.0.1
+Summary: A unofficial Python API client for Poopmap
+Author-email: Lucas van der Horst <Lucas@vdrHorst.nl>
+License: MIT
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE.txt
+Requires-Dist: requests>=2.28.1
+Dynamic: license-file
+
+# Poop Map Python API Client (Unofficial)
+
+An unofficial, unaffiliated Python client for the Poop Map API. This library allows you to interact with Poop Map's backend, log in, fetch feeds, leagues, posts, comments, likes, and more.
+
+## Features
+- Authenticate with username and password
+- Fetch your feed and poops
+- Get and join leagues
+- Retrieve notifications
+- Get poop posts, comments, and likes
+- Create, update, and delete poops
+- Like and unlike poops
+- Create, update, delete, join, and leave leagues
+- Get joinable leagues and join by code
+- Get followers and followings
+- Create and delete followings
+- Create device
+- Create and update user
+- Get all users, get user by id
+- Get user stats and badges
+- Get world poops
+
+## Installation
+
+```bash
+pip install .
+```
+
+## Usage
+
+```python
+from poopmap_api import PoopmapAPI
+
+# Login
+api = PoopmapAPI.login_with_password('your_username', 'your_password')
+
+# Get your feed
+feed = api.get_feed()
+print(feed)
+
+# Get leagues
+leagues = api.get_leagues()
+
+# Join a league
+api.post_join_league(league_id=123)
+
+# Get a poop post
+poop = api.get_poop_post(poop_id=456)
+
+# Get comments and likes
+comments = api.get_poop_comments(poop_id=456)
+likes = api.get_poop_likes(poop_id=456)
+```
+
+## API Reference
+
+### Authentication
+- `PoopmapAPI.login_with_password(username, password)`
+- `PoopmapAPI(authentication_token)`
+
+### Feed & Leagues
+- `get_feed()`
+- `get_leagues()`
+- `get_leagues_joinable()`
+- `post_join_league(league_id)`
+- `post_join_league_by_code(join_code)`
+- `post_join_league_json(league_id)`
+- `delete_leave_league(league_id)`
+- `post_create_league(name, is_public, join_code)`
+- `put_update_league(league_id, is_public)`
+- `delete_league(league_id)`
+
+### Notifications
+- `get_notifications()`
+
+### Poop Posts
+- `get_poops()`
+- `get_me_poops()`
+- `get_poop_post(poop_id)`
+- `post_create_poop(latitude, longitude, note, place, rating)`
+- `put_update_poop(poop_id, note, rating, place)`
+- `delete_poop(poop_id)`
+- `post_like_poop(poop_id)`
+- `post_unlike_poop(poop_id)`
+
+### Comments
+- `post_create_comment(poop_id, comment)`
+- `get_poop_comments(poop_id)`
+- `delete_comment(poop_id, comment_id)`
+
+### Followers & Followings
+- `get_followers(user_id)`
+- `get_followings(user_id)`
+- `post_create_following(user_id)`
+- `delete_following(user_id)`
+
+### Devices
+- `post_create_device()`
+
+### Users
+- `post_create_user(username, email, password, password_confirmation)`
+- `put_update_user(user_id, **kwargs)`
+- `get_users()`
+- `get_user(user_id)`
+- `get_user_stats(user_id)`
+- `get_user_badges(user_id)`
+
+### World
+- `get_world_poops()`
+
+## Contributing
+
+Contributions, bug reports, and suggestions are welcome! Please open an issue or submit a pull request.
+
+## License
+
+This project is released under the MIT License.
+
+## Disclaimer
+
+This project is not affiliated with or endorsed by Poop Map or its creators. Use at your own risk. Respect Poop Map's terms of service and privacy policy.
