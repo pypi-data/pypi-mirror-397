@@ -1,0 +1,145 @@
+Metadata-Version: 2.4
+Name: ckx-jokes
+Version: 0.4
+Summary: A Flask-based REST API for retrieving jokes with support for multiple categories and languages.
+Home-page: https://pyjok-es.onrender.com/
+Author: CryptoKingXavier
+Author-email: cryptokingxavier001@gmail.com
+License: MIT
+Project-URL: Documentation, https://pypi.org/project/ckx-jokes/
+Project-URL: Source, https://github.com/CryptoKingXavier/PyJok.Es/
+Project-URL: Tracker, https://github.com/CryptoKingXavier/PyJok.Es/issues/
+Keywords: python packaging cli utilities jokes
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Software Development :: Libraries
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: flask
+Requires-Dist: wheel
+Requires-Dist: pyjokes
+Requires-Dist: ascii-magic
+Requires-Dist: python-dotenv
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: mypy; extra == "dev"
+Requires-Dist: twine; extra == "dev"
+Requires-Dist: snoop; extra == "dev"
+Requires-Dist: gunicorn; extra == "dev"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: license
+Dynamic: license-file
+Dynamic: project-url
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# CKX-Jokes API
+
+A Flask-based REST API for retrieving jokes with support for multiple categories and languages.
+
+## Features
+
+- **Multiple Categories**: Support for various joke categories
+- **Multi-language Support**: Retrieve jokes in different languages
+- **Configurable Defaults**: Set default category and language preferences
+- **Single & Multiple Jokes**: Get one joke or a collection of jokes
+- **Infinite Joke Generator**: Stream jokes indefinitely with the "forever" endpoints
+- **Flexible Filtering**: Combine category and language parameters for targeted results
+
+## API Endpoints
+
+### Home & Configuration
+
+- `GET /` - Homepage with available categories and languages
+- `GET /defaults` - Get current default category and language
+- `GET /categories` - List all available categories
+- `GET /languages` - List all available languages
+
+### Default Settings
+
+- `GET /get-default/category` - Get default category
+- `GET /get-default/language` - Get default language
+- `GET /set-default/category/<category>` - Set default category
+- `GET /set-default/language/<language>` - Set default language
+
+### Single Joke Endpoints
+
+- `GET /joke` - Get a random joke using defaults
+- `GET /joke/<category>` - Get joke by category
+- `GET /joke/<language>` - Get joke by language
+- `GET /joke/<category>/<language>` - Get joke by category and language
+
+### Multiple Jokes Endpoints
+
+- `GET /jokes` - Get all jokes using defaults
+- `GET /jokes/<category>` - Get jokes by category
+- `GET /jokes/<language>` - Get jokes by language
+- `GET /jokes/<category>/<language>` - Get jokes by category and language
+
+### Infinite Joke Stream Endpoints
+
+- `GET /jokes/forever` - Stream jokes indefinitely
+- `GET /jokes/forever/<category>` - Stream jokes by category
+- `GET /jokes/forever/<language>` - Stream jokes by language
+- `GET /jokes/forever/<category>/<language>` - Stream jokes by category and language
+
+## Installation
+
+1. Install package from `pypi.org`:
+
+    ```bash
+    pip install ckx-jokes
+    ```
+
+2. Once installed, anyone can interact with the package using:
+
+    ```python
+    # save the file as "main.py"
+    from ckx-jokes install jokes_server
+
+    # Configure HOST, PORT & DEBUG modes
+    HOST, PORT, DEBUG = (
+      "127.0.0.1", 8080, True
+    )
+
+    # Initialize server object
+    server = jokes_server()
+
+    if __name__ == "__main__":
+      server.run(
+        host=HOST, port=PORT, debug=DEBUG
+      )
+    ```
+
+3. Start the application service in the terminal:
+
+    ```bash
+    python main.py
+    ```
+
+## License
+
+See [LICENSE](LICENSE) for license information.
+
+## Useful Links
+
+- [Python Packaging User Guide](https://packaging.python.org/)
+- [setuptools documentation](https://setuptools.readthedocs.io/)
+- [wheel documentation](https://wheel.readthedocs.io/)
+- [twine documentation](https://twine.readthedocs.io/)
+- [PyPI](https://pypi.org/)
