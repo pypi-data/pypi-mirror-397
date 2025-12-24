@@ -1,0 +1,64 @@
+Metadata-Version: 2.4
+Name: diffai-python
+Version: 0.4.1
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Rust
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Utilities
+Requires-Dist: pytest>=6.0 ; extra == 'dev'
+Requires-Dist: pytest-cov ; extra == 'dev'
+Requires-Dist: black ; extra == 'dev'
+Requires-Dist: isort ; extra == 'dev'
+Requires-Dist: mypy ; extra == 'dev'
+Requires-Dist: ruff ; extra == 'dev'
+Provides-Extra: dev
+Summary: Python bindings for diffai - AI/ML model diff tool for PyTorch, Safetensors, NumPy, MATLAB tensor comparison. Powered by Rust for blazing fast performance.
+Keywords: diff,ai,ml,pytorch,safetensors,numpy,matlab,tensor,machine-learning,deep-learning,model-comparison,pyo3,rust
+Author: kako-jun
+License-Expression: MIT
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown; charset=UTF-8; variant=GFM
+Project-URL: Homepage, https://github.com/kako-jun/diffai-python
+Project-URL: Repository, https://github.com/kako-jun/diffai-python
+Project-URL: Issues, https://github.com/kako-jun/diffai-python/issues
+Project-URL: Documentation, https://github.com/kako-jun/diffai-python#readme
+
+# diffai-python
+
+Python bindings for diffai - AI/ML model diff tool for PyTorch, Safetensors, NumPy, and MATLAB tensor comparison.
+
+## Installation
+
+```bash
+pip install diffai-python
+```
+
+## Usage
+
+```python
+import diffai_python
+
+# Compare two model configurations
+old = {"layers": [{"weight": [1.0, 2.0, 3.0]}]}
+new = {"layers": [{"weight": [1.0, 2.0, 4.0]}]}
+results = diffai_python.diff(old, new)
+
+# Compare files
+results = diffai_python.diff_paths("model_v1.pt", "model_v2.pt")
+```
+
+## License
+
+MIT
+
