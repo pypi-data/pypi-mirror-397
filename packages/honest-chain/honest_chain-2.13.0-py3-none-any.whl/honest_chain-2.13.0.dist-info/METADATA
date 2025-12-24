@@ -1,0 +1,449 @@
+Metadata-Version: 2.4
+Name: honest-chain
+Version: 2.13.0
+Summary: Quantum-Ready AI Decision Audit Trail - Tamper-evident logging for AI systems
+Project-URL: Homepage, https://github.com/Stellanium/honest-chain
+Project-URL: Documentation, https://github.com/Stellanium/honest-chain#readme
+Project-URL: Repository, https://github.com/Stellanium/honest-chain.git
+Project-URL: Issues, https://github.com/Stellanium/honest-chain/issues
+Project-URL: Changelog, https://github.com/Stellanium/honest-chain/releases
+Author-email: Stellanium Ltd <admin@stellanium.io>
+Maintainer-email: Stellanium Ltd <admin@stellanium.io>
+License: MIT
+License-File: LICENSE
+Keywords: ai,audit,blockchain,cryptography,decision-logging,ethics,honesty,quantum-safe,sha3,transparency,trust
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Security :: Cryptography
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Typing :: Typed
+Requires-Python: >=3.8
+Provides-Extra: bitcoin
+Requires-Dist: bitcoinlib>=0.6.0; extra == 'bitcoin'
+Provides-Extra: dev
+Requires-Dist: black>=23.0; extra == 'dev'
+Requires-Dist: cryptography>=41.0.0; extra == 'dev'
+Requires-Dist: mypy>=1.0; extra == 'dev'
+Requires-Dist: pytest-cov>=4.0; extra == 'dev'
+Requires-Dist: pytest>=7.0; extra == 'dev'
+Provides-Extra: ed25519
+Requires-Dist: cryptography>=41.0.0; extra == 'ed25519'
+Provides-Extra: full
+Requires-Dist: bitcoinlib>=0.6.0; extra == 'full'
+Requires-Dist: cryptography>=41.0.0; extra == 'full'
+Description-Content-Type: text/markdown
+
+# HONEST CHAIN SDK v2.12
+
+**Quantum-Ready AI Decision Audit Trail**
+
+```bash
+pip install honest-chain
+
+# With Ed25519 third-party verification:
+pip install honest-chain[ed25519]
+
+# With all features:
+pip install honest-chain[full]
+```
+
+## Quick Start
+
+```python
+from honest_chain import HonestChain, RiskLevel
+
+# Initialize
+hc = HonestChain(agent_id="my-ai-agent", agent_model="claude-opus-4-5")
+
+# Log decisions
+hc.decide(
+    action="Approved loan application",
+    reasoning="Credit score 750+, income verified, DTI < 30%",
+    alternatives=["Reject", "Request more documents"],
+    confidence=0.92,
+    risk_level=RiskLevel.MEDIUM
+)
+
+# Verify integrity
+assert hc.verify()
+
+# Export for auditors
+hc.export_audit("audit_report.json")
+```
+
+---
+
+## Ed25519 Signatures (v2.12+)
+
+**Third-party verifiable signatures** - auditors can verify without the agent's private key.
+
+### Setup
+
+```python
+from honest_chain.identity import AgentIdentity, is_ed25519_available
+
+# Check if Ed25519 is available
+if is_ed25519_available():
+    print("Ed25519 ready!")
+else:
+    print("Install: pip install honest-chain[ed25519]")
+```
+
+### Creating an Ed25519 Identity
+
+```python
+from honest_chain.identity import AgentIdentity
+
+# Create identity with Ed25519 (third-party verifiable)
+identity = AgentIdentity.create(
+    agent_id="my-agent",
+    use_ed25519=True  # Enable Ed25519 instead of HMAC
+)
+
+print(f"DID: {identity.did}")
+print(f"Algorithm: {identity.keys.algorithm.value}")  # "ed25519"
+print(f"Public Key: {identity.keys.public_key.hex()}")
+```
+
+### Signing and Self-Verification
+
+```python
+# Sign data
+data = b"This decision was made by AI"
+signature = identity.sign(data)
+
+# Self-verification (requires identity)
+assert identity.verify(data, signature)
+```
+
+### Third-Party Verification (Auditors)
+
+```python
+from honest_chain.identity import verify_signature_standalone
+
+# Auditor receives: data + signature (with embedded public key)
+# NO IDENTITY NEEDED!
+
+# Method 1: Using signature method
+is_valid = signature.verify_standalone(data)
+
+# Method 2: Using convenience function
+is_valid = verify_signature_standalone(data, signature)
+
+print(f"Signature valid: {is_valid}")
+```
+
+### HonestChain with Ed25519
+
+```python
+from honest_chain import HonestChain
+from honest_chain.identity import AgentIdentity
+
+# Create Ed25519 identity first
+identity = AgentIdentity.create("audit-agent", use_ed25519=True)
+
+# HonestChain will use this identity for signing
+# (Currently requires manual identity management)
+```
+
+### Signature Comparison
+
+| Algorithm | Self-Verify | Third-Party Verify | Quantum-Safe |
+|-----------|-------------|-------------------|--------------|
+| HMAC-SHA3-256 | Yes | No (needs secret) | Yes |
+| Ed25519 | Yes | Yes (public key) | No* |
+
+*Ed25519 is not quantum-safe. For quantum resistance with third-party verification, Dilithium/SPHINCS+ support is planned.
+
+---
+
+## Anchor Verification (v2.12+)
+
+Verify external anchors (Bitcoin, OpenTimestamps, P2P).
+
+```python
+# Get all anchors for this chain
+anchors = hc.get_anchors()
+
+# Verify a single anchor
+result = hc.verify_anchor(anchors[0])
+print(f"Valid: {result['valid']}")
+print(f"Type: {result['anchor_type']}")  # bitcoin, opentimestamps, p2p
+print(f"Strength: {result['strength']}")  # none, weak, medium, strong
+
+# Verify all anchors at once
+summary = hc.verify_all_anchors()
+print(f"Total anchors: {summary['total_anchors']}")
+print(f"Verified: {summary['verified']}")
+print(f"Strongest: {summary['strongest_anchor']}")
+```
+
+### Anchor Strength Levels
+
+| Strength | Description |
+|----------|-------------|
+| **strong** | Bitcoin confirmed, OTS with Bitcoin attestation, 5+ P2P peers |
+| **medium** | 3-4 P2P peers |
+| **weak** | Local anchor, 1-2 P2P peers |
+| **none** | Invalid or unverifiable |
+
+---
+
+## Guarantees vs Non-Guarantees
+
+### What HONEST CHAIN GUARANTEES
+
+| Guarantee | How | Strength |
+|-----------|-----|----------|
+| **Tamper Evidence** | SHA3-256 hash chain covers ALL fields (v2.1+) | Cryptographic |
+| **Append-Only** | Each record links to previous hash | Cryptographic |
+| **Non-Repudiation** | HMAC-SHA3-256 or Ed25519 signatures | Cryptographic |
+| **Third-Party Verification** | Ed25519 public key signatures (v2.12+) | Cryptographic |
+| **Deterministic Hashing** | Canonical JSON encoding | Implementation |
+| **Thread Safety** | All operations are locked | Implementation |
+| **Backwards Compatibility** | Versioned hashing (v1.x/v2.0/v2.1+) | Implementation |
+
+**If tampered:**
+- Hash mismatch detected by `verify()`
+- Signature mismatch detected by `verify(verify_signatures=True)`
+- Chain link broken (previous_hash doesn't match)
+
+### What HONEST CHAIN DOES NOT GUARANTEE
+
+| Non-Guarantee | Why | Mitigation |
+|---------------|-----|------------|
+| **Preventing lies** | Protocol logs what AI *claims*, not truth | External validation |
+| **Preventing chain deletion** | Local storage can be deleted | External anchoring (Bitcoin/OTS) |
+| **Preventing chain rewrite** | Without anchor, entire chain can be replaced | Use `external_anchor` callback |
+| **Real-time monitoring** | SDK only logs, doesn't alert | Build monitoring layer |
+| **Data accuracy** | AI can log false reasoning | Human oversight |
+
+### Security Model
+
+```
+WHAT WE PROTECT:
+┌─────────────────────────────────────────────────────┐
+│  After a decision is logged, it CANNOT be:          │
+│  - Modified without detection                       │
+│  - Reordered without detection                      │
+│  - Removed without detection (if anchored)          │
+│  - Forged by third party (Ed25519)                  │
+└─────────────────────────────────────────────────────┘
+
+WHAT WE DON'T PROTECT:
+┌─────────────────────────────────────────────────────┐
+│  The protocol CANNOT guarantee that:                │
+│  - The AI told the truth when logging               │
+│  - The reasoning matches actual computation         │
+│  - All decisions were logged (completeness)         │
+└─────────────────────────────────────────────────────┘
+```
+
+### Attack Vectors & Mitigations
+
+| Attack | Possible? | Mitigation |
+|--------|-----------|------------|
+| Modify logged decision | NO | Hash chain detects |
+| Forge signature (HMAC) | NO | Secret key required |
+| Forge signature (Ed25519) | NO | Private key required |
+| Delete entire chain | YES (local) | External anchoring |
+| Rewrite entire chain | YES (local) | External anchoring |
+| Log false information | YES | External validation, oversight |
+| Skip logging decision | YES | Completeness auditing |
+| Replay old signatures | NO | Timestamp in signed data |
+
+### Anchoring Levels
+
+| Level | Trust | Example |
+|-------|-------|---------|
+| **L0: Local** | Self only | `~/.honest_chain/` |
+| **L1: Timestamped** | Third-party witness | OpenTimestamps, RFC 3161 |
+| **L2: Blockchain** | Decentralized consensus | Bitcoin, Ethereum |
+| **L3: Physical** | Permanent archive | Internet Archive, Arweave |
+
+```python
+# Enable external anchoring
+def anchor_to_bitcoin(hash: str) -> str:
+    # Your Bitcoin/OTS implementation
+    return f"btc:{txid}:{block_height}"
+
+hc = HonestChain(
+    agent_id="my-agent",
+    external_anchor=anchor_to_bitcoin  # Called for HIGH/CRITICAL decisions
+)
+```
+
+---
+
+## P2P Network (v2.12+)
+
+Decentralized chain propagation with security features.
+
+```python
+from honest_chain.p2p import AOAINode, create_anchor_callback
+
+# Start a P2P node
+node = AOAINode(
+    node_id="my-node",
+    port=7777,
+    bootstrap_peers=["peer1.example.com:7777"]
+)
+node.start()
+
+# Use P2P for anchoring
+hc = HonestChain(
+    agent_id="my-agent",
+    external_anchor=create_anchor_callback(node)
+)
+```
+
+### P2P Security Features (v1.1)
+
+| Feature | Protection |
+|---------|------------|
+| Message size limits | Max 10MB (DoS protection) |
+| Rate limiting | 100 req/60s per IP |
+| Message signatures | HMAC-SHA3-256 on all messages |
+
+---
+
+## Version History
+
+| Version | Hash Fields | Algorithm | Features |
+|---------|-------------|-----------|----------|
+| v1.x | 6 fields | SHA-256 | Legacy |
+| v2.0 | 6 fields | SHA3-256 | Quantum-safe hash |
+| v2.1 | 11 fields | SHA3-256 | Full field coverage |
+| v2.11 | 11 fields | SHA3-256 | P0 security fixes |
+| v2.12 | 11 fields | SHA3-256 | Ed25519, anchor verification, P2P security |
+
+### v2.12 Features
+
+- **Ed25519 signatures** - Third-party verifiable
+- **Anchor verification** - Bitcoin, OTS, P2P
+- **P2P security** - Rate limiting, message size limits, signatures
+
+### v2.1 Hash Coverage
+
+All fields are tamper-evident:
+```
+decision_id, timestamp, actor_id, actor_type, actor_model,
+action, reasoning, alternatives, confidence, risk_level,
+previous_hash
+```
+
+### Backwards Compatibility
+
+Old chains (v1.x, v2.0) remain verifiable:
+```python
+# SDK auto-detects version and uses correct hash algorithm
+hc.verify()  # Works for all versions
+```
+
+---
+
+## API Reference
+
+### HonestChain
+
+```python
+HonestChain(
+    agent_id: str,              # Unique agent identifier
+    agent_model: str = "unknown",
+    storage_path: Path = None,  # Default: ~/.honest_chain/{agent_id}/
+    external_anchor: Callable = None,  # Called for HIGH/CRITICAL
+    enable_signatures: bool = True
+)
+```
+
+### decide()
+
+```python
+hc.decide(
+    action: str,                # What was decided
+    reasoning: str,             # Why (KEY for transparency)
+    alternatives: List[str] = [],
+    confidence: float = 0.8,    # 0.0-1.0
+    risk_level: RiskLevel = LOW,
+    anchor_externally: bool = False
+) -> DecisionRecord
+```
+
+### verify()
+
+```python
+hc.verify(
+    warn_no_anchor: bool = True,    # Warn if no external anchor
+    verify_signatures: bool = True  # Also verify signatures
+) -> bool
+```
+
+### verify_all_anchors()
+
+```python
+hc.verify_all_anchors() -> dict
+# Returns: {
+#     "total_anchors": int,
+#     "verified": int,
+#     "strongest_anchor": str,  # "none", "weak", "medium", "strong"
+#     "results": [...]
+# }
+```
+
+### AgentIdentity
+
+```python
+from honest_chain.identity import AgentIdentity
+
+AgentIdentity.create(
+    agent_id: str,
+    storage_path: Path = None,
+    use_ed25519: bool = False  # Enable Ed25519 signatures
+) -> AgentIdentity
+```
+
+### RiskLevel
+
+```python
+from honest_chain import RiskLevel
+
+RiskLevel.LOW       # Routine decisions
+RiskLevel.MEDIUM    # Notable decisions
+RiskLevel.HIGH      # Auto-anchored externally
+RiskLevel.CRITICAL  # Auto-anchored externally
+```
+
+---
+
+## Foundation
+
+Based on **AOAI Genesis** axiom:
+
+```
+L0: LOGIC    - "inner == outer" is the DEFINITION of honesty
+L1: MATH     - Formally verified (proofs/honesty.v)
+L2: CRYPTO   - SHA3-256 + HMAC-SHA3/Ed25519
+L3: PHYSICAL - Archives ensure permanence
+```
+
+**The axiom is DEFINITIONAL** - an AI that violates it is simply not honest by definition. This cannot be "broken", only violated.
+
+---
+
+## License
+
+Copyright (c) 2025 Stellanium Ltd. All rights reserved.
+
+Licensed under Business Source License 1.1 (BSL).
+
+HONEST CHAIN and AOAI are trademarks of Stellanium Ltd.
