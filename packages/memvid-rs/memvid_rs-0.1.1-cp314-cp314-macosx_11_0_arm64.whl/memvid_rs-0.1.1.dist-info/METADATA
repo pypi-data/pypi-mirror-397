@@ -1,0 +1,100 @@
+Metadata-Version: 2.4
+Name: memvid-rs
+Version: 0.1.1
+Classifier: Programming Language :: Rust
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+License-File: LICENSE
+Summary: High-performance video memory encoding library (Rust bindings)
+Author-email: DrivenByCode <jaykey1004@gmail.com>
+License: MIT
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown; charset=UTF-8; variant=GFM
+Project-URL: Homepage, https://github.com/drivenbycode/memvid-rs
+Project-URL: Repository, https://github.com/drivenbycode/memvid-rs
+
+# memvid-rs (Python Bindings)
+
+[![🇰🇷 한국어 (Korean)](https://img.shields.io/badge/lang-Korean-blue.svg)](README_ko.md)
+
+
+**Memvid-rs** combines the performance of Rust with the ease of use of Python. It encodes text data into QR codes and then into video frames, allowing for efficient storage and retrieval of large datasets.
+
+This project exposes the core logic written in Rust (`MemvidEncoder`) as a Python module via PyO3.
+
+> **Attribution**: This project is a port reimplemented in Rust based on the ideas and design of [Olow304/memvid](https://github.com/Olow304/memvid). We deeply appreciate the innovative approach of the original project.
+
+## 🚀 Key Features
+
+-   **High Performance**: Leverages Rust's parallel processing and efficient memory management for fast text-to-video conversion.
+-   **Pythonic**: Easy to install via `pip` and use naturally as a Python object.
+-   **Strong Compression**: Significantly reduces storage space via Text -> QR -> Video (H.264/H.265) conversion.
+
+## 📦 Installation
+
+### From Source (Development)
+
+Requires Rust and Python development environments.
+
+```bash
+# 1. Install Rust & FFmpeg
+brew install rust ffmpeg
+
+# 2. Create and activate virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 3. Install Maturin
+pip install maturin
+
+# 4. Build and install
+maturin develop --release
+```
+
+### From PyPI (Recommended)
+
+```bash
+pip install memvid-rs
+```
+
+### From GitHub
+
+```bash
+pip install git+https://github.com/drivenbycode/memvid-rs.git
+```
+
+## 💻 Usage
+
+```python
+import memvid_rs
+
+# 1. Initialize Encoder
+encoder = memvid_rs.MemvidEncoder()
+
+# 2. Add Text
+# add_text(text, chunk_size, overlap)
+text_data = "Memvid-rs is fast and efficient. " * 100
+encoder.add_text(text_data, chunk_size=200, overlap=20)
+
+# 3. Build Video
+try:
+    encoder.build("output.mp4", "index.json")
+    print("Video created: output.mp4")
+except Exception as e:
+    print(f"Error: {e}")
+```
+
+## ⚠️ Requirements
+
+-   **System**: macOS (Tested), Linux, Windows
+-   **Runtime**: `ffmpeg` (Required for video encoding)
+    -   macOS: `brew install ffmpeg`
+
+## 📄 License
+
+MIT License
+
+
+
