@@ -1,0 +1,96 @@
+# ==========================================================================================
+# 7. SUPERVISED LEARNING (FORMAL VIEW)
+# ==========================================================================================
+
+import numpy as np
+from sklearn.linear_model import LinearRegression, LogisticRegression, Ridge, Lasso
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import SVC, SVR
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor, GradientBoostingClassifier, GradientBoostingRegressor
+
+# Each model section: objective, loss function, assumptions, bias/variance, Python usage.
+
+X = np.random.randn(100, 5)
+y = np.random.randint(0, 2, size=100)
+
+# ------------------------------------------------------------------------------------------
+# Linear Regression
+# ------------------------------------------------------------------------------------------
+# Objective: Minimize squared error.
+# Loss: MSE (Mean Squared Error) = sum((y - Xw)^2)
+linreg = LinearRegression().fit(X, y)
+y_pred = linreg.predict(X)
+# Assumptions: Linearity, IID errors, homoscedasticity, normal errors.
+# Bias: Low if assumptions met; Variance can be high in high-dims.
+# TYPICAL EXAM TRAP: Using on non-linear data or with correlated features.
+
+# ------------------------------------------------------------------------------------------
+# Logistic Regression
+# ------------------------------------------------------------------------------------------
+# Objective: Maximize log-likelihood (classification).
+# Loss: Cross-entropy or negative log-likelihood.
+logreg = LogisticRegression().fit(X, y)
+y_prob = logreg.predict_proba(X)
+# Assumptions: Linearity in logit, independence.
+# Sensitive to outliers.
+
+# ------------------------------------------------------------------------------------------
+# Ridge Regression (L2)
+# ------------------------------------------------------------------------------------------
+ridge = Ridge(alpha=1.0).fit(X, y)
+# Objective: minimize squared error + penalty on sum of coefficients squared.
+# Reduces variance, increases bias, mitigates multicollinearity.
+
+# ------------------------------------------------------------------------------------------
+# Lasso Regression (L1)
+# ------------------------------------------------------------------------------------------
+lasso = Lasso(alpha=0.1).fit(X, y)
+# Objective: minimize squared error + penalty on sum of absolute coefficients.
+# Promotes sparsity (= feature selection).
+
+# ------------------------------------------------------------------------------------------
+# K-Nearest Neighbors
+# ------------------------------------------------------------------------------------------
+knn = KNeighborsClassifier(n_neighbors=5).fit(X, y)
+# Nonparametric, no global model.
+# Bias: low (captures local details); Variance: high, sensitive to noise.
+# Assumes meaningful distance metric; sensitive to scaling and curse of dimensionality.
+
+# ------------------------------------------------------------------------------------------
+# Naive Bayes
+# ------------------------------------------------------------------------------------------
+nb = GaussianNB().fit(X, y)
+# Assumption: Features conditionally independent given class.
+# High bias, low variance. Fast, works with small data, but violated if features correlated.
+
+# ------------------------------------------------------------------------------------------
+# Support Vector Machine (SVM)
+# ------------------------------------------------------------------------------------------
+svm = SVC(kernel='linear', probability=True).fit(X, y)
+# Objective: Maximize margin
+# Loss: Hinge loss
+# High capacity, can overfit if C very large; less interpretable.
+
+# ------------------------------------------------------------------------------------------
+# Decision Tree
+# ------------------------------------------------------------------------------------------
+dtree = DecisionTreeClassifier().fit(X, y)
+# Objective: Recursively split data to maximize class separation (e.g., Gini impurity or entropy)
+# High variance, low bias unless regularized.
+# Interpretable, but sensitive to small changes (overfitting risk).
+
+# ------------------------------------------------------------------------------------------
+# Random Forest
+# ------------------------------------------------------------------------------------------
+rf = RandomForestClassifier(n_estimators=100).fit(X, y)
+# Ensemble of decision trees, trained on bootstrapped samples, random feature subset.
+# Reduced variance vs. single trees. Still high variance with severe imbalance.
+
+# ------------------------------------------------------------------------------------------
+# Gradient Boosting
+# ------------------------------------------------------------------------------------------
+gbm = GradientBoostingClassifier(n_estimators=100).fit(X, y)
+# Builds strong learners by sequentially correcting residuals of weak models.
+# High capacity, low bias, careful tuning to avoid overfitting.

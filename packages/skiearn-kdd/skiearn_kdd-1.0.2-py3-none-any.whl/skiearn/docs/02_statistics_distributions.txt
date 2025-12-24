@@ -1,0 +1,60 @@
+# ==========================================================================================
+# 2. DESCRIPTIVE STATISTICS & DISTRIBUTIONS
+# ==========================================================================================
+
+import numpy as np
+from scipy import stats
+
+# ------------------------------------------------------------------------------------------
+# Mean, Median, Variance, Std
+# ------------------------------------------------------------------------------------------
+data = np.random.randn(100)
+mean = np.mean(data)            # np.mean: Arithmetic mean, sensitive to outliers.
+median = np.median(data)        # np.median: Robust to outliers.
+variance = np.var(data, ddof=1) # np.var: By default (ddof=0) is population var. ddof=1 for sample var.
+stddev = np.std(data, ddof=1)   # np.std: Standard deviation, same ddof.
+
+# INTERPRET:
+# Mean > Median: Right-skewed
+# Mean < Median: Left-skewed
+
+# ------------------------------------------------------------------------------------------
+# Skewness and Kurtosis
+# ------------------------------------------------------------------------------------------
+skew = stats.skew(data)          # stats.skew: Skewness > 0: right tail; < 0: left tail
+kurtosis = stats.kurtosis(data)  # stats.kurtosis: Excess kurtosis (0 = normal)
+# Peakedness/fat tails. High kurtosis: more outliers.
+
+# ------------------------------------------------------------------------------------------
+# Gaussian vs. Non-Gaussian
+# ------------------------------------------------------------------------------------------
+# Many inferential stats and ML models assume Gaussianity (normality).
+
+# ------------------------------------------------------------------------------------------
+# Central Limit Theorem (CLT) — Conceptual
+# ------------------------------------------------------------------------------------------
+# Sum or mean of a large number of IID random variables
+# will be approximately normally distributed, regardless of original distribution.
+
+# Exam point: Permits using normal-theory tests on sums/means.
+
+# ------------------------------------------------------------------------------------------
+# Normality Tests
+# ------------------------------------------------------------------------------------------
+
+# Shapiro–Wilk Test
+stat, p = stats.shapiro(data)
+# stats.shapiro: Null hypothesis = data is normal.
+# p < 0.05: Reject normality. Sensitive to small sample.
+
+# Kolmogorov–Smirnov Test (1-sample)
+stat, p = stats.kstest(data, 'norm', args=(np.mean(data), np.std(data)))
+# stats.kstest: Null hypothesis = data comes from normal.
+# Sensitive to all deviations—location, shape.
+
+# Anderson–Darling Test
+result = stats.anderson(data, dist='norm')
+# stats.anderson: Null = normality.
+# result.statistic > critical value for alpha (listed in result.critical_values): Reject normality.
+
+# TYPICAL EXAM TRAP: Multiple tests may disagree, and all lose power for small n or heavy tails.
