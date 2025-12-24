@@ -1,0 +1,579 @@
+Metadata-Version: 2.4
+Name: jps-ado-pr-utils
+Version: 2.1.0
+Summary: Python utils for retrieving and creating pull-requests.
+Author-email: Jaideep Sundaram <jai.python3@gmail.com>
+License: MIT
+Project-URL: Homepage, https://github.com/jai-python3/jps-ado-pr-utils
+Project-URL: Repository, https://github.com/jai-python3/jps-ado-pr-utils
+Project-URL: Issues, https://github.com/jai-python3/jps-ado-pr-utils/issues
+Keywords: Azure DevOps,Azure,pull-request,automation
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: typer>=0.12.3
+Requires-Dist: requests>=2.31.0
+Requires-Dist: PyYAML>=6.0
+Requires-Dist: python-dotenv>=1.0.1
+Requires-Dist: rich>=13.7.0
+Provides-Extra: dev
+Requires-Dist: flake8>=7.0.0; extra == "dev"
+Requires-Dist: black>=24.0.0; extra == "dev"
+Requires-Dist: build>=1.2.1; extra == "dev"
+Requires-Dist: twine>=5.0.0; extra == "dev"
+Requires-Dist: pytest>=8.0.0; extra == "dev"
+Requires-Dist: pytest-cov>=5.0.0; extra == "dev"
+Requires-Dist: isort>=5.13.0; extra == "dev"
+Requires-Dist: codecov>=2.1.13; extra == "dev"
+Requires-Dist: autoflake>=2.3.1; extra == "dev"
+Requires-Dist: pre-commit>=3.8.0; extra == "dev"
+Requires-Dist: bandit>=1.7.9; extra == "dev"
+Requires-Dist: vulture>=2.11; extra == "dev"
+Requires-Dist: flynt>=1.0.1; extra == "dev"
+Requires-Dist: pydocstyle>=6.3.0; extra == "dev"
+Requires-Dist: darglint>=1.8.1; extra == "dev"
+Requires-Dist: mypy>=1.12.1; extra == "dev"
+Requires-Dist: bump-my-version>=1.0.1; extra == "dev"
+Requires-Dist: git-changelog>=2.7.0; extra == "dev"
+Dynamic: license-file
+
+# jps-ado-pr-utils
+
+![Build](https://github.com/jai-python3/jps-ado-pr-utils/actions/workflows/test.yml/badge.svg)
+![Publish to PyPI](https://github.com/jai-python3/jps-ado-pr-utils/actions/workflows/publish-to-pypi.yml/badge.svg)
+[![codecov](https://codecov.io/gh/jai-python3/jps-ado-pr-utils/branch/main/graph/badge.svg)](https://codecov.io/gh/jai-python3/jps-ado-pr-utils)
+
+Python utilities for managing Azure DevOps pull requests: list existing PRs and create new ones with rich CLI output.
+
+## 🚀 Overview
+
+`jps-ado-pr-utils` is a command-line tool that helps you manage pull requests in Azure DevOps. It provides two main commands:
+
+1. **list**: Track and review pull requests across multiple Azure DevOps projects
+2. **create**: Create new pull requests with automated commit message extraction and interactive prompts
+
+Both commands provide clean, color-coded interfaces to streamline your Azure DevOps workflow.
+
+**Azure DevOps Terminology:**
+- **Organization**: Your Azure DevOps organization (e.g., `mycompany`)
+- **Project**: Top-level container within the organization (e.g., `Engineering Team`)
+- **Repository**: Git repository within a project (e.g., `backend-api`)
+
+### Features
+
+#### List Command
+- 📋 **Multi-Project Support**: Query PRs across multiple Azure DevOps projects simultaneously
+- 🎯 **Smart Filtering**: Filter PRs by your reviewer status (required vs. optional) and PR status (active, completed, abandoned, or all)
+- 📊 **Rich CLI Output**: Beautiful, color-coded tables with clear PR metadata
+- 🗓️ **Age Sorting**: PRs sorted by creation date (oldest first) to identify review debt
+- ✅ **Vote Tracking**: See approval status at a glance (APPROVED, REJECTED, WAITING)
+- 🔍 **Status Filtering**: View active, completed (merged), abandoned, or all pull requests
+
+#### Create Command
+- 🆕 **PR Creation**: Create pull requests directly from the command line
+- 📝 **YAML Configuration**: Define PR details in a reusable YAML file
+- 🤖 **Auto-extract Commits**: Automatically extract commit messages from your feature branch
+- 💬 **Interactive Prompts**: Missing fields are requested interactively
+- 👥 **Reviewer Management**: Specify both optional reviewers and required approvers
+- 🔗 **Jira Integration**: Link PRs to Jira issues
+- 🧪 **Dry Run Mode**: Preview PRs before creation
+- 🎨 **Rich Preview**: See a formatted table of PR details before submitting
+
+### Configuration
+
+Both commands require authentication. Create a configuration file at `~/.config/jps-ado-pr-utils/.env`:
+
+```bash
+AZDO_PAT=your_personal_access_token_here
+AZDO_USER=your.email@example.com
+AZDO_PROJECT=YourDefaultProject  # Optional: default project for create command
+```
+
+**Environment Variables:**
+- `AZDO_PAT` (required): Your Azure DevOps Personal Access Token
+- `AZDO_USER` (required): Your email address
+- `AZDO_PROJECT` (optional): Default project name for the `create` command. Can be overridden with `--project`
+
+## 📖 Usage Examples
+
+### Listing Pull Requests
+
+#### Basic Usage
+
+List all active (open) PRs where you're a reviewer:
+
+```bash
+# Using a config file
+jps-ado-pr-utils list --config-file projects.yaml
+
+# Using command-line with Azure DevOps project name
+jps-ado-pr-utils list --project "Engineering Team"
+
+# Filter by specific repositories within a project
+jps-ado-pr-utils list --project "Engineering Team" --repos "backend-api,frontend-app"
+```
+
+#### Status Filtering
+
+```bash
+# List all completed/merged PRs
+jps-ado-pr-utils list --config-file projects.yaml --status completed
+
+# List all abandoned PRs
+jps-ado-pr-utils list --config-file projects.yaml --status abandoned
+
+# List all PRs regardless of status (active, completed, abandoned)
+jps-ado-pr-utils list --config-file projects.yaml --status all
+
+# Default behavior (active PRs only)
+jps-ado-pr-utils list --config-file projects.yaml --status active
+```
+
+#### Filtering Options
+
+```bash
+# Show only PRs where you're a REQUIRED reviewer
+jps-ado-pr-utils list --config-file projects.yaml --required-only
+
+# Show only PRs where you're assigned as a reviewer (required or optional)
+jps-ado-pr-utils list --config-file projects.yaml --mine-only
+
+# Filter by specific repositories
+jps-ado-pr-utils list --project "Engineering Team" --repos "backend-api,frontend-app"
+
+# Combine filters
+jps-ado-pr-utils list --config-file projects.yaml --status completed --mine-only --repos "backend-api"
+```
+
+### Creating Pull Requests
+
+#### Quick Create (Interactive)
+
+Create a PR with minimal arguments - the tool will detect the repository from your current directory and prompt for missing information:
+
+```bash
+# Run from within your git repository
+# Uses AZDO_PROJECT from .env file
+jps-ado-pr-utils create
+
+# Or specify project explicitly
+jps-ado-pr-utils create --project "Engineering Team"
+```
+
+The tool will:
+- Use project from `--project` argument, or fall back to `AZDO_PROJECT` environment variable
+- Auto-detect the repository from your git remote URL
+- Auto-detect the current branch as the source branch
+- Interactively prompt for missing information (summary, target branch, reviewers, etc.)
+
+#### Create with All CLI Arguments
+
+```bash
+jps-ado-pr-utils create \
+  --project "Engineering Team" \
+  --repository "backend-api" \
+  --summary "Add user authentication feature" \
+  --source-branch "feature/auth" \
+  --target-branch "develop" \
+  --reviewers "john.doe@example.com,jane.smith@example.com" \
+  --approvers "tech.lead@example.com" \
+  --jira-id "PROJ-123"
+```
+
+#### Create with YAML Configuration
+
+Create a YAML file (e.g., `pr-details.yaml`):
+
+```yaml
+summary: "Add user authentication feature"
+source-branch: "feature/auth"
+target-branch: "develop"
+reviewers:
+  - "john.doe@example.com"
+  - "jane.smith@example.com"
+approvers:
+  - "tech.lead@example.com"
+jira-id: "PROJ-123"
+body: |
+  This PR implements user authentication with the following features:
+  - JWT token-based authentication
+  - Login/logout endpoints
+  - Password hashing with bcrypt
+changes:
+  - "Add JWT authentication middleware"
+  - "Implement login endpoint"
+  - "Implement logout endpoint"
+  - "Add password hashing utility"
+  - "Update user model with auth fields"
+```
+
+Then create the PR:
+
+```bash
+jps-ado-pr-utils create \
+  --project "Engineering Team" \
+  --repository "backend-api" \
+  --body-file pr-details.yaml
+```
+
+#### CLI Precedence
+
+CLI arguments always take precedence over YAML file values:
+
+```bash
+# Override YAML summary with CLI value
+jps-ado-pr-utils create \
+  --project "Engineering Team" \
+  --repository "backend-api" \
+  --body-file pr-details.yaml \
+  --summary "Updated: Add user authentication"
+```
+
+#### Dry Run Mode
+
+Preview what will be created without actually submitting:
+
+```bash
+jps-ado-pr-utils create \
+  --project "Engineering Team" \
+  --repository "backend-api" \
+  --summary "Test PR" \
+  --target-branch "main" \
+  --dryrun
+```
+
+#### Automatic Commit Message Extraction
+
+If you don't specify `changes` in the YAML file, the tool will automatically extract commit messages from your feature branch:
+
+```bash
+# Automatically extracts commits between feature/auth and develop
+jps-ado-pr-utils create \
+  --project "Engineering Team" \
+  --repository "backend-api" \
+  --summary "Add authentication" \
+  --source-branch "feature/auth" \
+  --target-branch "develop"
+```
+
+The tool uses `git log develop..feature/auth` to find all commits unique to your feature branch.
+
+## 📁 Configuration Files
+
+### Project List Configuration (for `list` command)
+
+Create a YAML file (e.g., `projects.yaml`) for the list command:
+
+```yaml
+# Specify the Azure DevOps project (required, single value)
+project: "Engineering Team"
+
+# Optional: Filter by specific repositories within the project
+repositories:
+  - "backend-api"
+  - "frontend-app"
+  - "mobile-app"
+```
+
+**Note:** 
+- The `--repos` CLI parameter takes precedence over the `repositories` list in the config file
+- You can combine config and CLI: config file specifies the project, `--repos` filters repositories
+
+### PR Details Configuration (for `create` command)
+
+Create a YAML file for PR creation (e.g., `pr-config.yaml`):
+
+```yaml
+summary: "Your PR title"
+source-branch: "feature/your-branch"
+target-branch: "main"
+reviewers:
+  - "reviewer1@example.com"
+  - "reviewer2@example.com"
+approvers:
+  - "required.approver@example.com"
+jira-id: "PROJ-123"
+body: |
+  Detailed description of your changes.
+  Can span multiple lines.
+changes:
+  - "First change"
+  - "Second change"
+  - "Third change"
+```
+
+**YAML Field Descriptions:**
+- `summary`: PR title (required if not provided via CLI)
+- `source-branch`: Branch with your changes (defaults to current branch)
+- `target-branch`: Branch to merge into (required if not provided via CLI)
+- `reviewers`: List of optional reviewer emails/names
+- `approvers`: List of required reviewer emails/names (must approve before merge)
+- `jira-id`: Optional Jira issue identifier
+- `body`: Optional detailed description
+- `changes`: List of changes (if omitted, extracted from git commits)
+
+#### Sample Output
+
+The `list` command displays PRs organized by project with the following information:
+
+- PR number
+- Creation date (to identify old PRs)
+- Author name
+- Repository name
+- Your reviewer role (REQUIRED/OPTIONAL)
+- Current vote status (APPROVED/REJECTED/WAITING)
+- PR title
+- Direct link to PR
+
+## 📦 Installation
+
+### From PyPI
+
+```bash
+pip install jps-ado-pr-utils
+```
+
+### From Source
+
+```bash
+git clone https://github.com/jai-python3/jps-ado-pr-utils
+cd jps-ado-pr-utils
+make install
+```
+
+## 🛠️ CLI Reference
+
+### Global Commands
+
+```bash
+jps-ado-pr-utils --help
+```
+
+### List Command
+
+List and filter pull requests:
+
+```
+Usage: jps-ado-pr-utils list [OPTIONS]
+
+Options:
+  --config-file PATH    Path to YAML config file with project and repositories
+  --project TEXT        Azure DevOps project name (e.g., 'Engineering Team')
+  --repos TEXT          Comma-separated list of repository names to filter
+  --status TEXT         Filter by PR status: active, completed, abandoned, or all
+                        (default: active)
+  --required-only       Show only PRs where you're a required reviewer
+  --mine-only           Show only PRs where you're assigned as a reviewer
+  --outdir PATH         Output directory for logs
+                        (default: /tmp/[user]/jps-ado-pr-utils/[timestamp])
+  --logfile PATH        Log file path (default: [outdir]/list_prs.log)
+  --help                Show this message and exit
+```
+
+**Status Parameter Values:**
+- `active` (default): Open/active pull requests
+- `completed`: Merged/completed pull requests
+- `abandoned`: Abandoned pull requests
+- `all`: All pull requests regardless of status
+
+### Create Command
+
+Create a new pull request:
+
+```
+Usage: jps-ado-pr-utils create [OPTIONS]
+
+Options:
+  --project TEXT        Azure DevOps project name (defaults to AZDO_PROJECT from .env)
+  --repository TEXT     Repository name (auto-detected from current git repo if not specified)
+  --body-file PATH      YAML file with PR details
+  --summary TEXT        PR title/summary
+  --source-branch TEXT  Source branch (defaults to current branch)
+  --target-branch TEXT  Target branch (e.g., main, develop)
+  --reviewers TEXT      Comma-separated list of reviewer emails or names
+  --approvers TEXT      Comma-separated list of required approver emails or names
+  --jira-id TEXT        Jira issue identifier
+  --dryrun              Show what would be created without actually creating the PR
+  --outdir PATH         Output directory for logs
+  --logfile PATH        Log file path (default: [outdir]/create_pr.log)
+  --help                Show this message and exit
+```
+
+**Parameter Priority:**
+1. CLI arguments (highest priority)
+2. YAML file values
+3. Environment variables (AZDO_PROJECT for project)
+4. Auto-detection (repository from git, source branch from current branch)
+5. Interactive prompts
+6. Defaults (lowest priority)
+
+**Interactive Prompts:**
+If required fields are not provided via CLI or YAML, the tool will prompt you interactively.
+
+## � Logging and Troubleshooting
+
+The tool includes comprehensive logging to help diagnose issues. By default, logs are written to `/tmp/[user]/jps-ado-pr-utils/[timestamp]/list_prs.log`.
+
+### Viewing Logs
+
+```bash
+# Run with default logging
+jps-ado-pr-utils --project "MyProject"
+
+# The log file location will be displayed in the output
+# View the log file
+tail -f /tmp/$USER/jps-ado-pr-utils/*/list_prs.log
+```
+
+### Custom Log Location
+
+```bash
+# Specify custom output directory
+jps-ado-pr-utils --project "MyProject" --outdir /path/to/logs
+
+# Specify custom log file
+jps-ado-pr-utils --project "MyProject" --logfile /path/to/my.log
+```
+
+### Common Issues
+
+**404 Error - Project not found:**
+- You must specify the **Azure DevOps project name**, not the repository name
+- Project names are case-sensitive
+- Example: Use `--project "Engineering Team"` not `--project "backend-api"`
+- To filter by repository, use: `--project "Engineering Team" --repos "backend-api"`
+
+**No PRs showing up:**
+- Check the log file for API errors
+- Verify your project name is correct (case-sensitive)
+- Ensure your PAT has Code (Read) permissions
+- Try different status filters (--status completed, --status all)
+- If filtering by --repos, verify the repository names are correct
+
+**Authentication errors:**
+- Verify AZDO_PAT is set correctly in ~/.config/jps-ado-pr-utils/.env
+- Check that your PAT hasn't expired
+- Ensure AZDO_USER matches your Azure DevOps email
+
+## �🔧 Requirements
+
+- Python >= 3.10
+- Azure DevOps Personal Access Token with Code (Read) permissions
+- Internet connection to access Azure DevOps REST API
+
+## 🧪 Testing
+
+### Running Tests
+
+```bash
+# Run all tests
+pytest
+
+# Run with verbose output
+pytest -v
+
+# Run with coverage report
+pytest --cov=src --cov-report=html --cov-report=term
+
+# Run specific test file
+pytest tests/test_list_open_prs.py
+
+# Run specific test class
+pytest tests/test_list_open_prs.py::TestGetPrsForProject
+```
+
+### Test Structure
+
+- `tests/test_constants.py` - Tests for module constants
+- `tests/test_list_open_prs.py` - Unit tests for the main module functions
+- `tests/test_integration.py` - Integration tests for the CLI application
+- `tests/conftest.py` - Pytest configuration and shared fixtures
+
+### Test Coverage
+
+The test suite includes 50+ test cases covering:
+
+#### Unit Tests
+- Authentication header generation
+- Environment variable loading
+- PR retrieval with different status filters (active, completed, abandoned, all)
+- Project loading from CLI and config files
+- Reviewer role identification (required/optional)
+- Reviewer vote tracking
+- PR record construction
+- Vote text rendering
+- CLI argument parsing
+- Filter operations (mine-only, required-only)
+
+#### Integration Tests
+- Full workflow for active PRs
+- Full workflow for completed PRs
+- Full workflow for abandoned PRs
+- Full workflow for all PRs
+- Mine-only and required-only filter integration
+- Multiple project handling
+- Error handling (authentication failures, missing credentials)
+- Output formatting verification
+- Empty results handling
+
+## 🧑‍💻 Development
+
+### Setup Development Environment
+
+```bash
+# Install with development dependencies
+make install
+
+# Run code quality checks
+make fix && make format && make lint
+
+# Run tests
+make test
+```
+
+### Development Commands
+
+```bash
+make format    # Format code with black and isort
+make lint      # Run flake8, mypy, and other linters
+make test      # Run pytest with coverage
+make build     # Build distribution packages
+```
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📝 Configuration Details
+
+### Environment Variables
+
+The tool reads configuration from `~/.config/jps-ado-pr-utils/.env`:
+
+- `AZDO_PAT`: Your Azure DevOps Personal Access Token
+- `AZDO_USER`: Your Azure DevOps username/email
+
+### Generating a Personal Access Token
+
+1. Go to Azure DevOps → User Settings → Personal Access Tokens
+2. Create a new token with **Code (Read)** permissions
+3. Copy the token and add it to your `.env` file
+
+## 📜 License
+
+MIT License © Jaideep Sundaram
+
+## 🔗 Links
+
+- [GitHub Repository](https://github.com/jai-python3/jps-ado-pr-utils)
+- [Issue Tracker](https://github.com/jai-python3/jps-ado-pr-utils/issues)
+- [PyPI Package](https://pypi.org/project/jps-ado-pr-utils/)
