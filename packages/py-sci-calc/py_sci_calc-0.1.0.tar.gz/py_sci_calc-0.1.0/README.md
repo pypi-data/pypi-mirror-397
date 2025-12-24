@@ -1,0 +1,2 @@
+`py-sci-calc` is a simple python app that just runs a [`ptpython`](https://github.com/prompt-toolkit/ptpython) REPL with some modules/utils that are useful
+for scientific calculations pre-configured. Currently the pre-configured setup is pretty simple, it just loads the `math` module and the [`pint`](https://pint.readthedocs.io/en/stable/) module and setup a quantity types named `Q_` for calculations involving units.
