@@ -1,0 +1,64 @@
+{% extends "evictionsplit/base.html" %}
+{% load i18n %}
+{% load humanize %}
+{% block details %}
+    <div class="panel panel-default">
+        <div class="panel-heading" style="display:flex;">
+            <h3>{% translate 'Active evictions' %}</h3>
+        </div>
+        <div class="panel-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>{% translate "Eviction name" %}</th>
+                        <th>{% translate "Creator" %}</th>
+                        <th>{% translate "Apply to join" %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for eviction in active_evictions %}
+                        <tr>
+                            <td>
+                                <b>{{ eviction.name | capfirst }}</b>
+                                &nbsp;
+                                {% if eviction in user_active_evictions or user_has_manager_permission %}
+                                    <a class="btn btn-primary"
+                                       href="{% url 'evictionsplit:eviction' eviction.id %}"
+                                       role="button">
+                                        <i class="fas fa-long-arrow-alt-right"></i>
+                                    </a>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <img src="{{ eviction.creator.profile.main_character.portrait_url }}"
+                                     class="ra-avatar img-circle"
+                                     alt="{{ eviction.creator.profile.main_character.character_name }} portrait">
+                                &nbsp;
+                                {{ eviction.creator.profile.main_character.character_name }}
+                            </td>
+                            <td>
+                                {% if request.user in eviction.participants.all %}
+                                    <a class="btn btn-success disabled" href="">
+                                        <i class="fa fa-check"></i>{% translate 'Joined' %}
+                                    </a>
+                                {% else %}
+                                    <a class="btn btn-primary {% if request.user in eviction.applicants.all %}disabled{% endif %}"
+                                       href="{% url 'evictionsplit:apply' eviction.pk %}"
+                                       role="button">
+                                        <i class="far fa-envelope"></i>
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td>{% translate "No eviction taking applications for now" %}</td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

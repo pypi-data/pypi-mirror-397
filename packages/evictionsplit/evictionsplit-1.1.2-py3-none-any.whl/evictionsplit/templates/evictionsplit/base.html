@@ -1,0 +1,22 @@
+{% extends 'allianceauth/base-bs5.html' %}
+{% load i18n %}
+{% load static %}
+{% block page_title %}
+    {% translate "Eviction split" %}
+{% endblock %}
+{% block header_nav_collapse_left %}
+    {% include 'evictionsplit/partial/menu.html' %}
+{% endblock %}
+{% block header_nav_collapse_right %}
+    {% if user_has_manager_permission %}
+        <a href="{% url 'evictionsplit:manage' %}" class="nav-link me-2">{% translate "Management" %}</a>
+    {% endif %}
+{% endblock %}
+{% block content %}
+    {% block details %}{% endblock %}
+{% endblock %}
+{% block extra_css %}
+    <link href="{% static 'evictionsplit/base.css' %}"
+          type="text/css"
+          rel="stylesheet">
+{% endblock %}
