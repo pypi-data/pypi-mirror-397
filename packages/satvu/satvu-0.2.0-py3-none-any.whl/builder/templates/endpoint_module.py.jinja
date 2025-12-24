@@ -1,0 +1,325 @@
+{% from "helpers.jinja" import safe_docstring %}
+{% from "macros/return_annotation.jinja" import return_annotation %}
+
+{# Generate arguments for function #}
+{%- macro arguments(endpoint) %}
+{# Any allowed bodies #}
+{%- if endpoint.bodies | length -%}
+{%- if endpoint.bodies | length == 1 and endpoint.bodies[0].prop.get_type_string().startswith("list[") -%}
+items: {{ endpoint.bodies[0].prop.get_type_string() }},
+{%- else -%}
+body: {% for body in endpoint.bodies %}{{ body.prop.get_type_string() }}{% if not loop.last %}|{% endif %}{% endfor %},
+{% endif %}
+{% endif %}
+{# path parameters #}
+{% for parameter in endpoint.path_parameters %}
+{{ parameter.to_string() }},
+{%- endfor -%}
+{# query parameters #}
+{%- for parameter in endpoint.query_parameters -%}
+{{ parameter.to_string() }},
+{%- endfor -%}
+timeout: int | None = None,
+{% endmacro %}
+
+{# Build url #}
+{%- macro url(endpoint) %}
+{% if endpoint.path_parameters | length == 0 %}
+"{{ endpoint.path }}"
+{% else %}
+"{{ endpoint.path }}".format(
+    {%- for parameter in endpoint.path_parameters -%}
+    {{parameter.python_name}}={{parameter.python_name}}
+    {%- if not loop.last -%}
+    ,
+    {%- endif -%}
+    {%- endfor -%}
+    )
+{% endif %}
+{%- endmacro %}
+
+{# Prepare query params #}
+{%- macro query_params(endpoint) %}
+{% if endpoint.query_parameters %}
+params = {
+{% for property in endpoint.query_parameters %}
+	"{{ property.name }}": {{ property.python_name }},
+{% endfor %}
+}
+
+{% endif %}
+{% endmacro %}
+
+{%- macro build_json(endpoint) %}
+{%- if endpoint.bodies | length == 1 and endpoint.bodies[0].prop.get_type_string().startswith("list[") %}
+json_body = [item.model_dump(mode="json") for item in items]
+{%- elif endpoint.bodies | length %}
+{%- if not endpoint.bodies[0].prop.required %}
+json_body = body.model_dump(by_alias=True, mode="json") if body else None
+{%- else %}
+json_body = body.model_dump(by_alias=True, mode="json")
+{%- endif %}
+{% endif %}
+{%- endmacro %}
+
+{# Prepare request #}
+{%- macro make_request(endpoint, follow_redirects=False) %}
+{%- if endpoint.query_parameters -%}
+{{ query_params(endpoint) }}
+{%- endif -%}
+result = self.make_request(method="{{ endpoint.method }}", url={{ url(endpoint) }},
+{%- if endpoint.bodies | length -%}
+json=json_body,
+{%- endif -%}
+{%- if endpoint.query_parameters -%}
+params=params,
+{%- endif -%}
+{%- if follow_redirects -%}
+follow_redirects=redirect if redirect is not None else True,
+{%- endif -%}
+timeout=timeout,
+)
+
+# Raise HttpError for failed requests (network errors, 4xx, 5xx, etc.)
+if result.is_err():
+    raise result.error()
+
+response = result.unwrap()
+{% endmacro %}
+
+{%- macro docstring_content(endpoint, return_string) %}
+{% if endpoint.summary %}{{ endpoint.summary | wordwrap(100)}}
+
+{% endif -%}
+{%- if endpoint.description %}
+{{ endpoint.description | wordwrap(100) }}
+
+{% endif %}
+{% if not endpoint.summary and not endpoint.description %}
+{# Leave extra space so that Args or Returns isn't at the top #}
+
+{% endif %}
+Args:
+    {% for param in endpoint.path_parameters %}
+    {{ param.to_docstring() | wordwrap(90) | indent(8) }}
+    {% endfor %}{% for param in endpoint.query_parameters %}
+    {{ param.to_docstring() | wordwrap(90) | indent(8) }}
+    {% endfor %}
+    {% for string in endpoint.body_docstrings %}
+    {{ string | wordwrap(90) | indent(8) }}
+    {% endfor %}
+    timeout: Optional request timeout in seconds. Overrides the instance timeout if
+        provided.
+
+Returns:
+    {{ return_string }}
+{% endmacro %}
+
+{%- macro docstring(endpoint, return_string, is_detailed) %}
+{{ safe_docstring('\n' ~ docstring_content(endpoint, return_string)) | indent(8) }}
+{% endmacro %}
+
+{% set ns = namespace(types=[]) %}
+
+{% macro get_union_types(union_str) %}
+{# Extract types from a Union[...] string #}
+{% if union_str.startswith("Union[") %}
+    {% set inner = union_str | replace("Union[", "") | replace("]", "") %}
+    {% set raw_types = inner | split(",") %}
+    {% set types = [] %}
+    {% for t in raw_types %}
+      {% set clean = t | replace("'", "") | trim %}
+      {% set _ = types.append(clean) %}
+    {% endfor %}
+    {% set ns.types = types %}
+{% else %}
+    [type_string]
+{% endif %}
+{% endmacro %}
+import io
+
+from collections.abc import Callable, Generator
+from typing import Any, Union, List, Dict
+from uuid import UUID
+
+from satvu.core import SDKClient
+from satvu.http import HttpClient
+from satvu.shared.parsing import normalize_keys, parse_response
+
+{% for endpoint in endpoints %}
+{% for relative in endpoint.relative_imports | sort %}
+{{ relative.replace('from ' + api_id + '.models', 'from satvu.services.' + api_id + '.models') }}
+{% endfor %}
+{# Also include imports for response models #}
+{% for response in endpoint.responses %}
+{% if response.prop %}
+{% for relative in response.prop.get_imports(prefix=api_id + '.') | sort %}
+{{ relative.replace('from ' + api_id + '.models', 'from satvu.services.' + api_id + '.models') }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endfor %}
+
+
+class {{ api_id | title }}Service(SDKClient):
+    base_path = "{{ base_path }}"
+
+    def __init__(self, env: str | None, get_token: Callable[[], str], http_client: HttpClient | None = None, timeout: int = 30, max_retry_attempts: int = 5, max_retry_after_seconds: float = 300.0):
+        super().__init__(env=env, get_token=get_token, http_client=http_client, timeout=timeout, max_retry_attempts=max_retry_attempts, max_retry_after_seconds=max_retry_after_seconds)
+
+    {% for endpoint in endpoints %}
+    {# Filter for 2xx success responses by checking the pattern string #}
+    {% set success_responses = [] %}
+    {% for resp in endpoint.responses %}
+        {% if resp.status_code.pattern|string|first == '2' %}
+            {% set _ = success_responses.append(resp) %}
+        {% endif %}
+    {% endfor %}
+    {# Filter for 3xx redirect responses #}
+    {% set redirect_response = [] %}
+    {% for resp in endpoint.responses %}
+        {% if resp.status_code.pattern|string|first == '3' %}
+            {% set _ = redirect_response.append(resp) %}
+        {% endif %}
+    {% endfor %}
+
+    def {{ endpoint.name }}(self, {{ arguments(endpoint) }}) -> {{ return_annotation(success_responses, redirect_response) }}:
+        {{ docstring(endpoint, return_annotation(success_responses, redirect_response), is_detailed=true) }}
+
+        {% if endpoint.bodies | length %}
+        {{ build_json(endpoint) }}
+        {% endif %}
+
+        {% if redirect_response | length > 0 %}
+        {{ make_request(endpoint, follow_redirects=True) | indent(8) }}
+        {% else %}
+        {{ make_request(endpoint) | indent(8) }}
+        {% endif %}
+
+        {% if redirect_response %}
+        if response.headers.get("Content-Type") == 'application/zip':
+            zip_bytes = io.BytesIO(response.body)
+            return zip_bytes
+        {% endif %}
+
+        {% for response in success_responses %}
+        if response.status_code == {{ response.status_code.pattern }}:
+            {% if response.status_code.pattern == '204' %}
+            return None
+            {% else %}
+            {% set response_type = response.prop.get_type_string(quoted=False) %}
+            {% if response_type == 'Any' %}
+            return response.json().unwrap()
+            {% else %}
+            return parse_response(response.json().unwrap(), {{ response_type }})
+            {% endif %}
+            {% endif %}
+        {% endfor %}
+        return response.json().unwrap()
+
+    {% if endpoint.pagination %}
+    def {{ endpoint.name }}_iter(
+        self,
+        {% if endpoint.bodies %}
+        {# POST endpoint with body - accept body parameter #}
+        {% if endpoint.bodies | length == 1 and endpoint.bodies[0].prop.get_type_string().startswith("list[") %}
+        items: {{ endpoint.bodies[0].prop.get_type_string() }},
+        {% else %}
+        body: {% for body in endpoint.bodies %}{{ body.prop.get_type_string() }}{% if not loop.last %}|{% endif %}{% endfor %},
+        {% endif %}
+        {% endif %}
+        {% for param in endpoint.path_parameters %}
+        {{ param.to_string() }},
+        {% endfor %}
+        {% for param in endpoint.query_parameters %}
+        {% if param.python_name != 'token' %}
+        {{ param.to_string() }},
+        {% endif %}
+        {% endfor %}
+        max_pages: int | None = None,
+    ) -> Generator[{{ success_responses[0].prop.get_type_string(quoted=False) }}, None, None]:
+        """
+        {{ endpoint.summary }} (Paginated Iterator)
+
+        Automatically handles pagination by following STAC links.
+
+        Args:
+            {% if endpoint.bodies %}
+            {% for string in endpoint.body_docstrings %}
+            {{ string | wordwrap(90) | indent(12) }}
+            {% endfor %}
+            {% endif %}
+            {% for param in endpoint.path_parameters %}
+            {{ param.to_docstring() | wordwrap(90) | indent(12) }}
+            {% endfor %}
+            {% for param in endpoint.query_parameters %}
+            {% if param.python_name != 'token' %}
+            {{ param.to_docstring() | wordwrap(90) | indent(12) }}
+            {% endif %}
+            {% endfor %}
+            max_pages: Stop after fetching this many pages (default: unlimited)
+
+        Yields:
+            Response pages from paginated results
+
+        Example:
+            ```python
+            for page in sdk.{{ api_id }}.{{ endpoint.name }}_iter(
+                {% if endpoint.bodies %}
+                body=...,
+                {% endif %}
+                {% for param in endpoint.path_parameters %}
+                {{ param.python_name }}=...,
+                {% endfor %}
+                max_pages=10
+            ):
+                for item in page.{{ endpoint.pagination.items_field }}:
+                    print(item)
+            ```
+        """
+        token = None
+        page_count = 0
+
+        while True:
+            if max_pages and page_count >= max_pages:
+                break
+
+            {% if endpoint.bodies %}
+            {# POST endpoint - update body with current token #}
+            {% if endpoint.bodies | length == 1 and endpoint.bodies[0].prop.get_type_string().startswith("list[") %}
+            response = self.{{ endpoint.name }}(
+                items=items,
+            {% else %}
+            {% if not endpoint.bodies[0].prop.required %}
+            body_with_token = body.model_copy(update={"token": token}) if body else None
+            {% else %}
+            body_with_token = body.model_copy(update={"token": token})
+            {% endif %}
+            response = self.{{ endpoint.name }}(
+                body=body_with_token,
+            {% endif %}
+            {% else %}
+            {# GET endpoint - pass token as query param #}
+            response = self.{{ endpoint.name }}(
+            {% endif %}
+                {% for param in endpoint.path_parameters %}
+                {{ param.python_name }}={{ param.python_name }},
+                {% endfor %}
+                {% for param in endpoint.query_parameters %}
+                {% if param.python_name != 'token' %}
+                {{ param.python_name }}={{ param.python_name }},
+                {% endif %}
+                {% endfor %}
+                {% if not endpoint.bodies %}
+                token=token,
+                {% endif %}
+            )
+            page_count += 1
+
+            yield response
+
+            token = self.extract_next_token(response)
+            if not token:
+                break
+    {% endif %}
+    {% endfor %}
