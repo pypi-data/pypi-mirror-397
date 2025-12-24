@@ -1,0 +1,100 @@
+INFO     : msf: L 531 : MacSyFinder 20251024.dev 1c7b9ec8
+using:
+- Python 3.13.5 (main, Aug  8 2025, 00:08:27) [GCC 14.3.0]
+- MacSyLib 20251024.dev 16375ec
+- NetworkX 3.5
+- Pandas 2.3.1
+
+MacSyFinder is distributed under the terms of the GNU General Public License (GPLv3).
+See the COPYING file for details.
+
+If you use this software please cite:
+Néron, Bertrand; Denise, Rémi; Coluzzi, Charles; Touchon, Marie; Rocha, Eduardo P.C.; Abby, Sophie S.
+MacSyFinder v2: Improved modelling and search engine to identify molecular systems in genomes.
+Peer Community Journal, Volume 3 (2023), article no. e28. doi : 10.24072/pcjournal.250.
+https://peercommunityjournal.org/articles/10.24072/pcjournal.250/
+
+and don't forget to cite the used models:
+msf_data cite <model>
+
+INFO     : msf: L 532 : command used: /home/bneron/Projects/GEM/MacSyFinder/MacSyFinder/py313_msf/bin/macsyfinder -vvv --replicon-topology circular --db-type ordered_replicon --models functional MOB_light --models-dir tests/data/models/ --sequence-db tests/data/base/test_16.faa -w 15 --relative-path -o functional_test_ordered_circular_small
+INFO     : msf: L 552 : 
+models used: functional-0.0b2
+INFO     : msf: L 553 : 
+######################### Searching systems ##########################
+INFO     : definition_parser: L 82 : Parsing Models: MOB_light
+INFO     : search_systems: L 101 : macsyfinder's results will be stored in working_dirfunctional_test_ordered_circular_small
+INFO     : search_systems: L 102 : Analysis launched on tests/data/base/test_16.faa for model(s):
+INFO     : search_systems: L 105 : 	- functional/MOB_light
+DEBUG    : search_genes: L 82 : worker_nb = 15	cpu per worker = 3
+DEBUG    : search_genes: L 149 : start searching genes
+INFO     : search_genes: L 105 : search gene T4SS_MOBQ
+INFO     : search_genes: L 105 : search gene T4SS_t4cp1
+INFO     : search_genes: L 105 : search gene T4SS_MOBB
+DEBUG    : profile: L 196 : T4SS_MOBQ Hmmer command line : "/home/bneron/Sys/bin/hmmsearch" --cpu 3 -o "functional_test_ordered_circular_small/hmmer_results/T4SS_MOBQ.search_hmm.out" --cut_ga "tests/data/models/functional/profiles/T4SS_MOBQ.hmm" "tests/data/base/test_16.faa" 
+INFO     : search_genes: L 105 : search gene T4SS_virb4
+DEBUG    : profile: L 196 : T4SS_t4cp1 Hmmer command line : "/home/bneron/Sys/bin/hmmsearch" --cpu 3 -o "functional_test_ordered_circular_small/hmmer_results/T4SS_t4cp1.search_hmm.out" --cut_ga "tests/data/models/functional/profiles/T4SS_t4cp1.hmm" "tests/data/base/test_16.faa" 
+DEBUG    : profile: L 196 : T4SS_MOBB Hmmer command line : "/home/bneron/Sys/bin/hmmsearch" --cpu 3 -o "functional_test_ordered_circular_small/hmmer_results/T4SS_MOBB.search_hmm.out" --cut_ga "tests/data/models/functional/profiles/T4SS_MOBB.hmm" "tests/data/base/test_16.faa" 
+DEBUG    : profile: L 196 : T4SS_virb4 Hmmer command line : "/home/bneron/Sys/bin/hmmsearch" --cpu 3 -o "functional_test_ordered_circular_small/hmmer_results/T4SS_virb4.search_hmm.out" --cut_ga "tests/data/models/functional/profiles/T4SS_virb4.hmm" "tests/data/base/test_16.faa" 
+DEBUG    : search_genes: L 173 : end searching genes
+INFO     : search_systems: L 173 : 
+############ Hits analysis for replicon test_16 ############
+INFO     : search_systems: L 178 : Check model functional/MOB_light
+DEBUG    : search_systems: L 181 : ########################## hits related to MOB_light ###########################
+DEBUG    : search_systems: L 184 : 
+id	rep_name	pos	seq_len	gene_name	i_eval	score	profile_cov	seq_cov	beg_match	end_match
+gene_4	test_16	4	748	T4SS_MOBQ	8.300e-83	266.200	1.000	0.270	30	231
+gene_7	test_16	7	719	T4SS_MOBQ	7.700e-83	266.300	1.000	0.281	30	231
+
+DEBUG    : search_systems: L 185 : ################################################################################
+INFO     : search_systems: L 186 : Building clusters
+WARNING  : cluster: L 326 : Squash cluster of 2 T4SS_MOBQ loners (4 -> 7)
+DEBUG    : search_systems: L 189 : ################################### CLUSTERS ###################################
+DEBUG    : search_systems: L 190 : 
+
+DEBUG    : search_systems: L 191 : ===================== LONERS =====================
+DEBUG    : search_systems: L 192 : 
+Cluster:
+- model = MOB_light
+- replicon = test_16
+- hits = (gene_7, T4SS_MOBQ, 7)
+DEBUG    : search_systems: L 195 : ################################################################################
+INFO     : search_systems: L 196 : Searching systems
+DEBUG    : system: L 829 : ##################################################
+DEBUG    : system: L 830 : mandatory_genes: ['T4SS_MOBB']
+DEBUG    : system: L 831 : accessory_genes: []
+DEBUG    : system: L 832 : neutral_genes: []
+DEBUG    : system: L 833 : forbidden_genes: []
+DEBUG    : system: L 858 : is a system
+DEBUG    : system: L 861 : ##################################################
+DEBUG    : search_systems: L 203 : The clusters ght_1 is a potential system occurrence of functional/MOB_light
+DEBUG    : search_systems: L 215 : ################################# MultiSystems #################################
+DEBUG    : search_systems: L 216 : 
+
+DEBUG    : system: L 274 : =================== score computation for system test_16_MOB_light_1 ===================
+DEBUG    : system: L 293 : regular clusters scores sum([]) = 0
+DEBUG    : system: L 295 : compute penalty redundancy
+DEBUG    : system: L 299 : nb of clusters which fulfill function of T4SS_MOBB = 0
+DEBUG    : system: L 295 : compute penalty redundancy
+DEBUG    : system: L 299 : nb of clusters which fulfill function of T4SS_virb4 = 0
+DEBUG    : system: L 295 : compute penalty redundancy
+DEBUG    : system: L 299 : nb of clusters which fulfill function of T4SS_t4cp1 = 0
+DEBUG    : system: L 310 : compute score of loner or multi systems
+DEBUG    : system: L 315 : T4SS_MOBB is not already in regular clusters set()
+DEBUG    : cluster: L 615 : ===================== compute score for cluster =====================
+DEBUG    : cluster: L 617 : -------------- test model hit T4SS_MOBQ --------------
+DEBUG    : cluster: L 630 : gene_7 is mandatory hit score = 1.0
+DEBUG    : cluster: L 636 : gene_7 is exchangeable hit score = 0.8
+DEBUG    : cluster: L 642 : gene_7 is out of cluster (Loner) score = 0.5599999999999999
+DEBUG    : cluster: L 656 : gene_7 T4SS_MOBQ is not already in cluster
+DEBUG    : cluster: L 661 : cluster score = sum([0.5599999999999999]) = 0.5599999999999999
+DEBUG    : cluster: L 662 : ===============================================================
+DEBUG    : system: L 319 : score for T4SS_MOBB = 0.5599999999999999
+DEBUG    : system: L 328 : score of system test_16_MOB_light_1 = 0.56
+INFO     : msf: L 570 : 
+###################### Computing best solutions ######################
+INFO     : msf: L 578 : Computing best solutions for test_16 (nb of candidate systems 1)
+INFO     : msf: L 600 : It took 0.00sec to find best solution (0.56) for replicon test_16
+INFO     : msf: L 611 : 
+## Writing down results in 'functional_test_ordered_circular_small' ##
+INFO     : msf: L 710 : END
