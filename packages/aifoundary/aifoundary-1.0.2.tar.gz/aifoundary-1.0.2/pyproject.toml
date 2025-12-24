@@ -1,0 +1,28 @@
+[build-system]
+requires = [
+    "hatchling",
+]
+build-backend = "hatchling.build"
+
+[project]
+name = "aifoundary"
+version = "1.0.2"
+description = "Enterprise AI Compliance Toolkit with PII Detection and Secure RAG"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    { name = "Chandan Galani", email = "galanichandan@gmail.com" },
+]
+
+[project.scripts]
+aifoundary = "aifoundary.cli:main"
+
+[project.optional-dependencies]
+policy = [
+    "pyyaml",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "aifoundary",
+]
