@@ -1,0 +1,173 @@
+[build-system]
+requires = [
+    "hatchling"
+]
+build-backend = "hatchling.build"
+
+[project]
+name = "django-buttons"
+description = "An application providing some template-tags to add buttons on pages"
+requires-python = ">=3.9"
+authors = [
+    { name = "FrançoiS GUÉRIN", email = "fguerin@ville-tourcoing.fr" },
+]
+dependencies = [
+    "django-appconf",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: Django :: 3.2",
+    "Framework :: Django :: 4.0",
+    "Framework :: Django :: 4.1",
+    "Framework :: Django :: 4.2",
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Natural Language :: English",
+    "Natural Language :: French",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet",
+    "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+]
+keywords = [
+    "Django",
+    "Bootstrap",
+    "FontAwesome",
+]
+version = "1.0.4"
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.license]
+text = "MIT"
+
+[project.urls]
+Homepage = "https://gitlab.ville.tg/fguerin/django-buttons"
+Source = "https://gitlab.ville.tg/fguerin/django-buttons"
+Documentation = "http://fguerin.docs.tourcoing.fr/django-buttons"
+
+[project.optional-dependencies]
+fa5 = [
+    "django-fontawesome-5",
+]
+fa6 = [
+    "django-fontawesome-6",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "buttons",
+]
+
+[tool.flake8]
+max-line-length = 120
+ignore = [
+    "F405",
+    "W503",
+    "RST299",
+    "RST303",
+    "RST304",
+    "RST306",
+    "A003",
+]
+exclude = [
+    ".git/",
+    ".gitlab/",
+    ".venv/",
+    ".uv_cache/",
+    "requirements/",
+    "docs/",
+    "dist/",
+    "__pycache__",
+    "**/migrations/*",
+    "**/tests/*",
+    "**/assets/*",
+    "tmp/",
+]
+max-cognitive-complexity = 15
+count = true
+
+[tool.djlint]
+indent = 2
+profile = "django"
+max_line_length = 120
+ignore = "H031,H006,H017"
+exclude = "src/assets"
+
+[tool.djlint.js]
+indent_size = 2
+
+[tool.djlint.css]
+indent_size = 2
+
+[tool.ruff]
+line-length = 120
+output-format = "grouped"
+preview = true
+show-fixes = true
+exclude = [
+    "**/migrations/",
+]
+target-version = "py311"
+
+[tool.ruff.lint]
+fixable = [
+    "ALL",
+]
+select = [
+    "E",
+    "F",
+    "W",
+    "B",
+    "SIM",
+    "I",
+    "UP",
+    "N",
+    "D",
+    "A",
+    "DJ",
+    "LOG",
+    "T20",
+    "S",
+    "G",
+    "ISC",
+    "T20",
+]
+ignore = [
+    "D212",
+    "D203",
+    "ISC001",
+    "I001",
+]
+preview = true
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 120
+max-line-length = 120
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+preview = true
+docstring-code-format = true
+
+[tool.uv]
+allow-insecure-host = [
+    "gitlab.ville.tg",
+]
+index-strategy = "unsafe-best-match"
+
+[tool.uv.pip]
+extra-index-url = [
+    "https://gitlab.ville.tg/api/v4/projects/fguerin%2Fpackages/packages/pypi/simple",
+    "https://pypi.org/simple",
+]

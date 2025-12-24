@@ -1,0 +1,53 @@
+---
+# Pre-commit settings
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: 'v3.4.0'
+    hooks:
+      - id: trailing-whitespace
+        exclude: bower
+      - id: end-of-file-fixer
+        exclude: \.css(\.map)?$
+      - id: check-json
+        files: \.(json)$
+      - id: check-yaml
+      - id: fix-encoding-pragma
+        args: [ --remove ]
+        exclude: bower
+      - id: mixed-line-ending
+        args: [ --fix=lf ]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.3.3
+    hooks:
+      - id: ruff
+        args: [ --fix ]
+      - id: ruff-format
+
+  #  - repo: https://github.com/abravalheri/validate-pyproject
+  #    rev: "v0.18"
+  #    hooks:
+  #      - id: validate-pyproject
+  #        # Optional extra validations from SchemaStore:
+  #        additional_dependencies: [ "validate-pyproject-schema-store[all]" ]
+
+  - repo: https://github.com/john-hen/Flake8-pyproject
+    rev: 1.2.3
+    hooks:
+      - id: Flake8-pyproject
+        additional_dependencies:
+          - flake8-django
+          - flake8-bugbear
+          - flake8-builtins
+          - flake8-comprehensions
+          - flake8-cognitive-complexity
+          - flake8-alfred
+          - flake8-logging
+          - flake8-logging-format
+          - flake8-printf-formatting
+          - flake8-pep3101
+          - flake8-docstrings
+          - flake8-rst-docstrings
+          - flake8-string-format
+          - flake8-print
