@@ -1,0 +1,74 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CLI: Clean Test Project Directory",
+            "type": "shell",
+            "command": "rm -rf ${workspaceFolder}/../test-projects/${config:openbase.testProjectName} && mkdir -p ${workspaceFolder}/../test-projects/${config:openbase.testProjectName}",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new",
+                "close": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "CLI: React Dev",
+            "type": "npm",
+            "script": "dev",
+            "options": {
+                "cwd": "${workspaceFolder}/react/"
+            },
+            "dependsOn": "React UI: Dev",
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^$",
+                    "file": 1,
+                    "location": 2,
+                    "message": 3
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "^.*VITE.*$",
+                    "endsPattern": "^\\s*➜\\s+Local:\\s+http://.*$"
+                }
+            },
+            "isBackground": true,
+            "presentation": {
+                "focus": false,
+                "panel": "dedicated",
+                "showReuseMessage": true,
+                "clear": false
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "CLI: React Build",
+            "type": "shell",
+            "command": "cd ${workspaceFolder}/openbase/static && find . -mindepth 1 ! -name '.gitkeep' -exec rm -rf {} + 2>/dev/null || true && cd ${workspaceFolder}/react && npm run build",
+            "dependsOn": "React UI: Build",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "showReuseMessage": true,
+                "clear": false
+            }
+        }
+        // {
+        //     "label": "React: Generate Types",
+        //     "type": "npm",
+        //     "script": "generate-types",
+        //     "problemMatcher": [],
+        //     "presentation": {
+        //         "focus": false,
+        //         "panel": "dedicated",
+        //         "showReuseMessage": true,
+        //         "clear": false
+        //     }
+        // }
+    ]
+}
