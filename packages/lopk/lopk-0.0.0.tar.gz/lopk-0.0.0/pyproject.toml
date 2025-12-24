@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lopk"
+version = "0.0.0"
+description = "Lightweight Operational Progress Kit (LOPK) - Advanced progress bar and terminal operation toolkit"
+authors = [
+    { name = "I-love-china", email = "ilovechina@example.com" }
+]
+license = "GPL-3.0-only"
+readme = "README.md"
+requires-python = ">=3.6"
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Terminals",
+    "Topic :: Utilities"
+]
+
+keywords = ["progressbar", "terminal", "spinner", "timer", "utility"]
+
+# Runtime dependencies
+dependencies = [
+    "colorama>=0.4.4"
+]
+
+# Optional dependencies (for GUI features)
+[project.optional-dependencies]
+gui = [
+    "tkinter"
+]
+
+full = [
+    "colorama>=0.4.4",
+    "tkinter"
+]
+
+[project.urls]
+homepage = "https://github.com/l-love-china/lopk"
+documentation = "https://github.com/l-love-china/lopk/wiki"
+repository = "https://github.com/l-love-china/lopk"
+issues = "https://github.com/l-love-china/lopk/issues"
+
+[tool.setuptools]
+packages = ["main"]
+
+# Command-line entry points
+[project.scripts]
+lopk-demo = "main.lopk:demo"
+lopk-demo-tk = "main.lopk:demo_tk"
