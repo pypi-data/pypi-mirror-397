@@ -1,0 +1,75 @@
+/*
+    See the JupyterLab Developer Guide for useful CSS Patterns:
+
+    https://jupyterlab.readthedocs.io/en/stable/developer/css.html
+*/
+
+/* 
+ * Hide duplicate LSEG Jupyter Settings title and description in settings panel
+ * Fix for IDE-2344: https://jira.refinitiv.com/browse/IDE-2344
+ * JupyterLab displays both header/description AND legend/p elements, causing duplication
+ */
+fieldset[id='jp-SettingsEditor-lseg-analytics-jupyterlab:plugin']
+  > legend[id='jp-SettingsEditor-lseg-analytics-jupyterlab:plugin__title'] {
+  display: none !important;
+}
+
+fieldset[id='jp-SettingsEditor-lseg-analytics-jupyterlab:plugin']
+  > p[id='jp-SettingsEditor-lseg-analytics-jupyterlab:plugin__description'] {
+  display: none !important;
+}
+
+/* 
+ * AI Assistant Status Bar Styles
+ * Styles for the LSEG AI Assistant status indicator in the JupyterLab status bar
+ */
+.lseg-ai-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  cursor: pointer;
+  font-size: var(--jp-ui-font-size1);
+  line-height: var(--jp-private-statusbar-height);
+  transition: background-color 0.2s ease;
+}
+
+.lseg-ai-status:hover {
+  background-color: var(--jp-layout-color2);
+}
+
+.lseg-ai-status-running {
+  color: var(--jp-info-color1);
+  font-weight: 500;
+}
+
+.lseg-ai-status-running::before {
+  content: '●';
+  margin-right: 4px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.lseg-ai-status-error {
+  color: var(--jp-error-color1);
+  font-weight: 500;
+}
+
+.lseg-ai-status-completed {
+  color: var(--jp-success-color1);
+  font-weight: 500;
+}
+
+.lseg-ai-status-error::before {
+  content: '⚠';
+  margin-right: 4px;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
