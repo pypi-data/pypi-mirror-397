@@ -1,0 +1,12 @@
+#pragma once
+#include <adf.h>
+#include <aie_api/aie.hpp>
+#include <cstdint>
+
+#define BATCH_SIZE {{ batch_size }}
+#define N_ITER {{ iterations }}
+
+{% for L in layers %}
+{% set tpl = 'variants/' ~ L.kernel.param_template ~ '/parameters.h.jinja' %}
+{% include tpl %}
+{% endfor %}

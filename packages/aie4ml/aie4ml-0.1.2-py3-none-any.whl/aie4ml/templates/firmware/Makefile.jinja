@@ -1,0 +1,109 @@
+SHELL := /bin/bash
+
+# ---------- User toggles ----------
+AIE_SIM_ONLY ?= false
+SIM_FIFO     ?= false
+
+# ---------- Project ----------
+APP_NAME      := app
+LIBADF        := libadf.a
+LIBADF_X86    := libadf_x86.a
+AIE_WORKDIR     := ./Work
+X86_WORKDIR     := ./Work_x86
+STAMP_MARKER  := stamp_{{ stamp | default('00000000') }}.marker
+
+# ---------- Platform ----------
+VITIS_HOME     := $(strip $(shell dirname "$$(dirname "$$(which vitis 2>/dev/null)")" 2>/dev/null))
+
+ifeq ($(strip $(VITIS_HOME)),)
+  $(error Unable to auto-detect Vitis installation. Ensure 'vitis' is on PATH or set VITIS_HOME manually.)
+endif
+
+PLATFORM_USE  ?= {{ platform }}
+PLATFORM      ?= $(VITIS_HOME)/base_platforms/$(PLATFORM_USE)/$(PLATFORM_USE).xpfm
+
+# ---------- Sources and includes (generated layout) ----------
+SRC_DIR       := src
+KER_DIR       := $(SRC_DIR)/kernels
+WTS_DIR       := $(SRC_DIR)/weights
+CFG_DIR       := $(SRC_DIR)
+
+KERNEL_SOURCES := $(shell find $(KER_DIR) -type f \( -name '*.cpp' -o -name '*.cc' -o -name '*.cxx' \))
+KERNEL_INC_DIRS := $(shell find $(KER_DIR) -type d)
+MY_SOURCES    := $(APP_NAME).cpp $(KERNEL_SOURCES)
+
+AIE_FLAGS_BASE := $(DSPLIB_OPTS) \
+  $(addprefix --include=,$(KERNEL_INC_DIRS)) --include=$(WTS_DIR) --include=$(CFG_DIR) \
+  --platform=$(PLATFORM) $(APP_NAME).cpp
+
+AIE_FLAGS_HW   := $(AIE_FLAGS_BASE) \
+  --aie.workdir=$(AIE_WORKDIR) --aie.output-archive=$(LIBADF)
+
+AIE_FLAGS_X86  := $(AIE_FLAGS_BASE) \
+  --aie.workdir=$(X86_WORKDIR) --aie.output-archive=$(LIBADF_X86)
+
+
+# FIFO depth eval / sim-only cpp defines
+ifeq ($(SIM_FIFO), true)
+  AIE_FLAGS_HW  := $(AIE_FLAGS_HW)  --aie.evaluate-fifo-depth --aie.Xrouter=disablePathBalancing
+  AIE_FLAGS_X86 := $(AIE_FLAGS_X86) --aie.evaluate-fifo-depth --aie.Xrouter=disablePathBalancing
+endif
+ifeq ($(AIE_SIM_ONLY), true)
+  AIE_FLAGS_HW  := $(AIE_FLAGS_HW)  --aie.Xpreproc="-DAIE_SIM_ONLY"
+  AIE_FLAGS_X86 := $(AIE_FLAGS_X86) --aie.Xpreproc="-DAIE_SIM_ONLY"
+endif
+
+.PHONY: help clean compile all x86all x86com x86sim sim profile trace analyze
+
+help::
+	@echo "Makefile Usage:"
+	@echo "  make all          - AIE hw compile (libadf.a)"
+	@echo "  make compile      - same as 'all'"
+	@echo "  make x86all       - x86 build then sim"
+	@echo "  make x86com       - AIE x86 compile"
+	@echo "  make x86sim       - Run x86 simulator"
+	@echo "  make aiesim       - Run AIE simulator"
+	@echo "  make profile      - AIE sim with profiling"
+	@echo "  make trace        - AIE sim with trace"
+	@echo "  make analyze      - Open Vitis Analyzer"
+	@echo "  make clean        - Remove build artifacts"
+
+all: compile
+compile: $(STAMP_MARKER) $(LIBADF)
+
+$(STAMP_MARKER):
+	@echo "{{ stamp | default('00000000') }}" > $@
+
+$(LIBADF): $(MY_SOURCES) aie.cfg $(STAMP_MARKER)
+	v++ --compile --config aie.cfg --mode aie --target=hw $(AIE_FLAGS_HW) |& tee log
+
+x86all: clean x86com x86sim
+
+x86com: $(MY_SOURCES) aie.cfg $(STAMP_MARKER)
+	v++ --compile --config aie.cfg --mode aie --target=x86sim $(AIE_FLAGS_X86) |& tee log
+
+aiesim:
+	aiesimulator --pkg-dir=$(AIE_WORKDIR) |& tee -a log
+
+x86sim:
+	x86simulator --pkg-dir=$(X86_WORKDIR) |& tee -a log
+
+profile:
+	aiesimulator --online -wdb -text --profile |& tee -a log
+
+trace:
+	aiesimulator --online -wdb -text |& tee -a log
+
+analyze:
+	vitis_analyzer aiesimulator_output/default.aierun_summary
+
+clean:
+	rm -rf .Xil $(AIE_WORKDIR) $(X86_WORKDIR) libadf.a libadf_x86.a
+	rm -rf aiesimulator_output* aiesimulator*.log
+	rm -rf x86simulator_output* x86simulator*.log
+	rm -rf log log*
+	rm -f stamp_*.marker
+	rm -rf *.xpe *.elf *.db *.soln Map_* xnw* *.lp *.log .xil .Xil *.lp *.db *.log *.exe *.vcd *.json
+	rm -rf vitis_analyzer* pl_sample_counts* pl_sample_count_*
+	rm -rf temp ISS_RPC_SERVER_PORT .crashReporter .AIE_SIM_CMD_LINE_OPTIONS
+	rm -rf system*.* trdata.aiesim function_wdb_dir .wsdata vfs_work _ide .ipynb_checkpoints

@@ -1,0 +1,66 @@
+#pragma once
+
+#include <adf.h>
+using namespace adf;
+
+{% macro render_tiling(desc) -%}
+adf::tiling({
+  .buffer_dimension = { {{ desc.buffer_dimension|join(', ') }} },
+  .tiling_dimension = { {{ desc.tiling_dimension|join(', ') }} },
+  .offset           = { {{ desc.offset|join(', ') }} }
+  {% if desc.tile_traversal %}
+    , .tile_traversal = {
+      {% for trav in desc.tile_traversal -%}
+      { .dimension={{ trav.dimension }}, .stride={{ trav.stride }}, .wrap={{ trav.wrap }} }{{ "," if not loop.last }}
+      {% endfor %}
+    }
+  {% endif %}
+  {% if desc.boundary_dimension %}
+    , .boundary_dimension = { {{ desc.boundary_dimension|join(', ') }} }
+  {% endif %}
+})
+{%- endmacro %}
+
+template<
+{% for i in range(1, layers|length + 1) %}
+  typename Cfg{{i}}{{ "," if not loop.last }}
+{% endfor %}
+>
+struct graph_plan {
+  template<typename GraphT>
+  static void configure(GraphT& self) {
+{% for buf in graph_plan.buffers %}
+    self.{{ buf.name }} = adf::shared_buffer<{{ buf.ctype }}>::create(
+      { {{ buf.dimension[0] }}, {{ buf.dimension[1] }} },
+      {{ buf.writers|length if buf.writers|length > 0 else 1 }},
+      {{ buf.readers|length if buf.readers|length > 0 else 1 }}
+    );
+    num_buffers(self.{{ buf.name }}) = {{ buf.num_buffers }};
+
+    {% for writer in buf.writers %}
+    connect<>(self.{{ writer.source }}, self.{{ writer.target }});
+    write_access(self.{{ writer.target }}) = {{ render_tiling(writer.descriptor) }};
+    {% endfor %}
+    {% for reader in buf.readers %}
+    read_access(self.{{ reader.source }}) = {{ render_tiling(reader.descriptor) }};
+    connect<>(self.{{ reader.source }}, self.{{ reader.target }});
+    {% endfor %}
+{% endfor %}
+
+{% for dim in graph_plan.port_dimensions %}
+    dimensions(self.{{ dim.endpoint }}) = { {{ dim.elements }} };
+{% endfor %}
+
+{% for acc in graph_plan.kernel_read_accesses %}
+    read_access(self.{{ acc.endpoint }}) = {{ render_tiling(acc.descriptor) }};
+{% endfor %}
+
+{% for acc in graph_plan.kernel_write_accesses %}
+    write_access(self.{{ acc.endpoint }}) = {{ render_tiling(acc.descriptor) }};
+{% endfor %}
+
+{% for edge in graph_plan.direct_edges %}
+    connect<>(self.{{ edge.source }}, self.{{ edge.target }});
+{% endfor %}
+  }
+};

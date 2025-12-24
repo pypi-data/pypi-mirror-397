@@ -1,0 +1,125 @@
+#include "parameters.h"
+#include "top_graph.h"
+
+using namespace adf;
+
+extern "C" {
+{% for L in layers %}
+  {% for spec in L.artifacts %}
+  #include "weights/{{ spec.filename }}"
+  {% endfor %}
+{% endfor %}
+}
+
+template<typename... Ts> struct type_list {};
+
+class dut_graph : public graph {
+public:
+  input_plio plio_data[L1Cfg::CAS_LENGTH];
+
+{% for L in layers %}
+  {% set Lidx = loop.index %}
+  {% for spec in L.artifacts %}
+    {% if spec.kind == "2d" %}
+  input_port {{ spec.port }}{{ Lidx }}[{{ L.struct_name }}::CAS_NUM * {{ L.struct_name }}::CAS_LENGTH];
+    {% elif spec.kind == "1d" %}
+  input_port {{ spec.port }}{{ Lidx }}[{{ L.struct_name }}::CAS_NUM];
+    {% endif %}
+  {% endfor %}
+{% endfor %}
+
+  output_plio plio_ofm[L{{ layers|length }}Cfg::CAS_NUM];
+
+  top_graph<
+  {%- for i in range(1, layers|length + 1) -%}
+    L{{ i }}Cfg{{ ", " if not loop.last else "" }}
+  {%- endfor -%}
+  > dut;
+
+  static_assert(
+    (L1Cfg::IN_FEAT * sizeof(typename L1Cfg::data_t)) % 4 == 0,
+    "PLIO input word size must be multiple of 32 bits"
+  );
+
+  dut_graph() {
+    for (int col = 0; col < L1Cfg::CAS_LENGTH; ++col) {
+      plio_data[col] = input_plio::create(
+        "PLIO_ifm_" + std::to_string(col),
+        plio_{{ plio_bitwidth }}_bits,
+        "data/ifm_c" + std::to_string(col) + ".txt"
+      );
+      connect<>(plio_data[col].out[0], dut.ifm[col]);
+    }
+
+{% for L in layers %}
+    {% set Lidx = loop.index %}
+    for (int chain = 0; chain < {{ L.struct_name }}::CAS_NUM; ++chain) {
+      for (int col = 0; col < {{ L.struct_name }}::CAS_LENGTH; ++col) {
+        int idx = chain * {{ L.struct_name }}::CAS_LENGTH + col;
+        {% for spec in L.artifacts %}
+        {% if spec.kind == "2d" %}
+        connect<>( {{ spec.port }}{{ Lidx }}[idx], dut.{{ spec.port }}{{ Lidx }}[idx]);
+        {% endif %}
+        {% endfor %}
+      }
+
+      {% for spec in L.artifacts %}
+      {% if spec.kind == "1d" %}
+      connect<>( {{ spec.port }}{{ Lidx }}[chain], dut.{{ spec.port }}{{ Lidx }}[chain]);
+      {% endif %}
+      {% endfor %}
+    }
+{% endfor %}
+
+    for (int ch = 0; ch < L{{ layers|length }}Cfg::CAS_NUM; ++ch) {
+      plio_ofm[ch] = output_plio::create(
+        "PLIO_ofm_" + std::to_string(ch),
+        plio_{{ plio_bitwidth }}_bits,
+        "data/y_p" + std::to_string(ch) + ".txt"
+      );
+      connect<>(dut.ofm[ch], plio_ofm[ch].in[0]);
+    }
+  }
+};
+
+dut_graph dut;
+
+#if defined(__AIESIM__) || defined(__X86SIM__)
+int main() {
+  dut.init();
+
+{% for L in layers %}
+  {% set Lidx = loop.index %}
+  {% for spec in L.artifacts %}
+
+  {% if spec.kind == "2d" %}
+  for (int ch = 0; ch < {{ L.struct_name }}::CAS_NUM; ++ch) {
+    for (int col = 0; col < {{ L.struct_name }}::CAS_LENGTH; ++col) {
+      int idx = ch * {{ L.struct_name }}::CAS_LENGTH + col;
+      dut.update(
+        dut.{{ spec.port }}{{ Lidx }}[idx],
+        {{ spec.name }}_{{ L.inst_name }}[ch][col],
+        {{ L.struct_name }}::IN_FEAT_SLICE * {{ L.struct_name }}::OUT_FEAT_SLICE
+      );
+    }
+  }
+  {% endif %}
+
+	  {% if spec.kind == "1d" %}
+	  for (int ch = 0; ch < {{ L.struct_name }}::CAS_NUM; ++ch) {
+	    dut.update(
+	      dut.{{ spec.port }}{{ Lidx }}[ch],
+	      {{ spec.name }}_{{ L.inst_name }}[ch],
+	      {{ L.struct_name }}::OUT_FEAT_SLICE
+	    );
+	  }
+	  {% endif %}
+
+  {% endfor %}
+{% endfor %}
+
+  dut.run(N_ITER);
+  dut.end();
+  return 0;
+}
+#endif

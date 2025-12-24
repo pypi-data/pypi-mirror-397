@@ -1,0 +1,106 @@
+#pragma once
+
+#include <adf.h>
+#include "graph_plan.h"
+
+{% set ns = namespace(headers=[]) %}
+{% for L in layers %}
+{% if L.kernel.graph_header not in ns.headers %}
+{% set ns.headers = ns.headers + [L.kernel.graph_header] %}
+#include "{{ L.kernel.graph_header }}"
+{% endif %}
+{% endfor %}
+
+using namespace adf;
+
+template<
+{% for i in range(1, layers|length + 1) %}
+  typename Cfg{{i}}{{ "," if not loop.last }}
+{% endfor %}
+>
+class top_graph : public graph {
+public:
+
+  adf::input_port  ifm [Cfg1::CAS_LENGTH];
+  adf::output_port ofm [Cfg{{ layers|length }}::CAS_NUM];
+
+{% for p in graph_plan.extra_input_ports %}
+  adf::input_port {{ p.name }} [{{ p.count }}];
+{% endfor %}
+{% for p in graph_plan.extra_output_ports %}
+  adf::output_port {{ p.name }} [{{ p.count }}];
+{% endfor %}
+
+{% for L in layers %}
+  {% set Cfg = "Cfg" ~ loop.index %}
+  {% set Lidx = loop.index %}
+  {% for spec in L.artifacts %}
+    {% if spec.kind == "2d" %}
+  adf::input_port {{ spec.port }}{{ Lidx }}
+    [{{ Cfg }}::CAS_NUM * {{ Cfg }}::CAS_LENGTH];
+    {% elif spec.kind == "1d" %}
+  adf::input_port {{ spec.port }}{{ Lidx }}
+    [{{ Cfg }}::CAS_NUM];
+    {% endif %}
+  {% endfor %}
+{% endfor %}
+
+private:
+{% for L in layers %}
+  {{ L.kernel.graph_name }}<Cfg{{ loop.index }}>
+    {{ L.kernel_name }};
+{% endfor %}
+
+{% for buf in graph_plan.buffers %}
+  adf::shared_buffer<{{ buf.ctype }}> {{ buf.name }};
+{% endfor %}
+
+  friend struct graph_plan<
+{% for i in range(1, layers|length + 1) %}
+    Cfg{{i}}{{ "," if not loop.last }}
+{% endfor %}
+  >;
+
+public:
+  top_graph() {
+    graph_plan<
+{% for i in range(1, layers|length + 1) %}
+      Cfg{{i}}{{ "," if not loop.last }}
+{% endfor %}
+    >::configure(*this);
+
+{% for L in layers %}
+    {% set Cfg = "Cfg" ~ loop.index %}
+    {% set Lidx = loop.index %}
+    for (int ch = 0; ch < {{ Cfg }}::CAS_NUM; ++ch) {
+      for (int col = 0; col < {{ Cfg }}::CAS_LENGTH; ++col) {
+        int idx = ch * {{ Cfg }}::CAS_LENGTH + col;
+        {% for spec in L.artifacts %}
+        {% if spec.kind == "2d" %}
+        connect<>(
+          {{ spec.port }}{{ Lidx }}[idx],
+          {{ L.kernel_name }}.{{ spec.port }}[idx]
+        );
+        {% endif %}
+        {% endfor %}
+      }
+
+      {% for spec in L.artifacts %}
+      {% if spec.kind == "1d" %}
+      connect<>(
+        {{ spec.port }}{{ Lidx }}[ch],
+        {{ L.kernel_name }}.{{ spec.port }}[ch]
+      );
+      {% endif %}
+      {% endfor %}
+    }
+{% endfor %}
+
+{% for L in layers %}
+    {{ L.kernel_name }}.place_graph(
+      Cfg{{ loop.index }}::col_placement,
+      Cfg{{ loop.index }}::row_placement
+    );
+{% endfor %}
+  }
+};
