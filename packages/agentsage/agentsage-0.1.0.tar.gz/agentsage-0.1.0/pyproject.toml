@@ -1,0 +1,134 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "agentsage"
+version = "0.1.0"
+description = "SAGE: Synchronized Agents for Generalized Expertise - A multi-agent framework where AI agents research, debate, and synthesize answers together"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "SAGE Contributors"}
+]
+maintainers = [
+    {name = "SAGE Contributors"}
+]
+keywords = [
+    "multi-agent",
+    "llm",
+    "ai-agents",
+    "collaboration",
+    "openai",
+    "anthropic",
+    "langgraph",
+    "langchain",
+    "gpt-4",
+    "claude",
+    "gemini",
+    "reasoning",
+    "debate",
+    "research",
+    "synthesis",
+    "agentic-ai"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = [
+    "langgraph>=0.2.0",
+    "langchain>=0.3.0",
+    "langchain-core>=0.3.0",
+    "langchain-openai>=0.2.0",
+    "langchain-community>=0.3.0",
+    "langchain-experimental>=0.3.0",
+    "duckduckgo-search>=6.0.0",
+    "python-dotenv>=1.0.0",
+    "pydantic>=2.0.0",
+    "rich>=13.0.0",
+]
+
+[project.optional-dependencies]
+anthropic = ["langchain-anthropic>=0.2.0"]
+google = ["langchain-google-genai>=2.0.0"]
+ollama = ["langchain-ollama>=0.2.0"]
+aws = ["langchain-aws>=0.2.0"]
+all = [
+    "langchain-anthropic>=0.2.0",
+    "langchain-google-genai>=2.0.0",
+    "langchain-ollama>=0.2.0",
+    "langchain-aws>=0.2.0",
+]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.0.0",
+    "black>=24.0.0",
+    "ruff>=0.3.0",
+    "mypy>=1.8.0",
+    "pre-commit>=3.6.0",
+]
+
+[project.scripts]
+sage = "sage.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/najmulhasan-code/sage"
+Documentation = "https://github.com/najmulhasan-code/sage#readme"
+Repository = "https://github.com/najmulhasan-code/sage.git"
+Issues = "https://github.com/najmulhasan-code/sage/issues"
+Changelog = "https://github.com/najmulhasan-code/sage/releases"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+sage = ["py.typed"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312", "py313"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+strict_optional = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["src/sage"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
