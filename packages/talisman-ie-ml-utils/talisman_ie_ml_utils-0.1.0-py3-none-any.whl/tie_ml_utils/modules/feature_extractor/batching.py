@@ -1,0 +1,382 @@
+# moved from tie_ml.modules.feature_extractor.batching
+
+import dataclasses
+from dataclasses import dataclass
+from functools import partial
+from itertools import chain, starmap
+from typing import Any, Callable, Generic, Iterable, Optional, Sequence, TypeVar
+
+import numpy as np
+import torch
+from torch import BoolTensor, LongTensor, Tensor
+from torch.nn.utils.rnn import pad_sequence
+from typing_extensions import Self
+
+from tie_datamodel.datamodel.node.text import TIETextNode
+from tie_ml_utils.helper import TensorStorage, fill_roll_np
+from .tokenization import (
+    SentenceTokenization, TokenizedNodeChunk, TokenizedNodeChunkWithSentenceInfo
+)
+
+_Tokenization = TypeVar('_Tokenization', bound=SentenceTokenization)
+
+
+@dataclass(slots=True)
+class DocumentExample(Generic[_Tokenization]):
+    doc_id: int
+    doc_total_chunks: int
+    chunk_id: int
+    tokenization: _Tokenization
+
+    def __len__(self):
+        return len(self.tokenization)
+
+    @classmethod
+    def from_nodes(
+            cls,
+            nodes: Iterable[Sequence[TIETextNode]],
+            chunker: Callable[[Sequence[TIETextNode]], Iterable[TokenizedNodeChunk]]
+    ) -> Iterable[Self]:
+        """Converts nodes into examples. Note that each node can be split into several text chunks and,
+        subsequently, into several examples.
+        """
+        yield from chain.from_iterable(starmap(
+            partial(cls._process_doc_contents, chunker=chunker),
+            enumerate(nodes)
+        ))
+
+    @classmethod
+    def _process_doc_contents(
+            cls,
+            doc_id: int,
+            nodes: Sequence[TIETextNode],
+            chunker: Callable[[Sequence[TIETextNode]], Iterable[TokenizedNodeChunk]]
+    ) -> tuple[Self, ...]:
+        sentence_lengths = [[len(sentence) for sentence in node.sentences] for node in nodes]
+        chunks = tuple(chunker(nodes))
+
+        def example_builder(example_id: int, example: TokenizedNodeChunk) -> DocumentExample:
+            return cls(
+                doc_id=doc_id,
+                doc_total_chunks=len(chunks),
+                chunk_id=example_id,
+                tokenization=TokenizedNodeChunkWithSentenceInfo(
+                    **dataclasses.asdict(example),
+                    sentence_lengths=[
+                        sentence_lengths[node_id][sentence_id]
+                        for node_id, sentence_id in zip(example.node_ids, example.sentence_ids)
+                    ]
+                )
+            )
+
+        return tuple(starmap(example_builder, enumerate(chunks)))
+
+
+_Any = TypeVar('_Any')
+
+
+def sort_intervals(iterable: Iterable[_Any], *, interval_length: int, key: Callable[[_Any], Any]) -> Iterable[_Any]:
+    intervals = group_to_batches(iterable, batch_size=interval_length)
+    for interval in intervals:
+        yield from sorted(interval, key=key)
+
+
+def group_to_batches(iterable: Iterable[_Any], *, batch_size: int, length_sort_batches: int = 0) -> Iterable[list[_Any]]:
+    batch = []
+    if length_sort_batches > 0:
+        iterable = sort_intervals(iterable, interval_length=batch_size * length_sort_batches, key=len)
+    for example in iterable:
+        if len(batch) == batch_size:
+            yield batch
+            batch = []
+
+        batch.append(example)
+
+    if len(batch):
+        yield batch
+
+
+@dataclass(slots=True)
+class BatchedExamples(TensorStorage):
+    """
+    Dataclass for communicating between modules.
+    Information about main sentences and context is populated by feature extractors.
+    Label scores are added by sequence taggers.
+
+    BatchedExample can be converted to label sequence by decoders.
+
+    B - batch size
+    T - sequence length in tokens (without context)
+    CT - sequence length in tokens (with context)
+    SCT - sequence length in sub tokens (with context)
+    F - size of representation (number of features)
+    N - number of possible labels
+    """
+
+    doc_ids: list[int]
+    """Document ids that examples sentences originated from."""
+
+    doc_total_chunks: list[int]
+    """Total number of chunks for each document."""
+
+    chunk_ids: list[int]
+    """Chunk id of each example."""
+
+    sentence_ids: list[list[int]]
+    """Ids of sentences inside nodes."""
+
+    sentence_lengths: list[list[int]]
+    """Lengths of examples sentences."""
+
+    sentence_starts: list[list[int]]
+    """Sentences start positions in examples. Is, practically, [0, cumsum(sentence_lengths)[:-1]]"""
+
+    node_ids: list[list[int]]
+    """Node ids that examples sentences originated from."""
+
+    shift: list[int]
+    """Starting position in original segmentation of the first sentence."""
+
+    # Sub token level
+
+    sub_token_ids: Optional[LongTensor] = None
+    """Segmentation of examples used by feature extractor. Shape: (B, SCT)."""
+
+    sub_token_representations: Optional[Tensor] = None
+    """Sub token level representation of sentences generated by feature extractor. Shape: (B, SCT, F)."""
+
+    sub_token_padding_mask: Optional[BoolTensor] = None
+    """Mask that indicates padding for sub tokens. Shape: (B, ST)"""
+
+    main_sub_tokens_mask: Optional[BoolTensor] = None
+    """Mask that separates context from main sentences in sub tokens. Shape: (B, SCT)."""
+
+    tokens_start_mask: Optional[BoolTensor] = None
+    """Mask that indicates the start of each token from original document segmentation (without context). Shape: (B, SCT)."""
+
+    # Token level
+
+    token_representations: Optional[Tensor] = None
+    """Token level representation of sentences generated by feature extractor. Shape: (B, CT, F)."""
+
+    token_padding_mask: Optional[BoolTensor] = None
+    """Mask that indicates padding for tokens. Shape: (B, CT)"""
+
+    main_tokens_mask: Optional[BoolTensor] = None
+    """Mask that separates context from main sentences in tokens. Shape: (B, CT)."""
+
+    # Label level
+
+    main_tokens_representations: Optional[Tensor] = None
+    """Token level representations without context tokens. Shape: (B, T, F)."""
+
+    label_scores: Optional[Tensor] = None
+    """Label scores for each token generated by the sequence tagger. Shape: (B, T, N)."""
+
+    label_padding_mask: Optional[BoolTensor] = None
+    """Mask that indicates label paddings. Shape: (B, T)."""
+
+    def replace(
+            self,
+            *,
+            drop_others: bool = False,
+            drop_fields: Iterable[str] = tuple(),
+            keep_fields: Iterable[str] = tuple(),
+            **changes
+    ) -> Self:
+
+        new_examples = dataclasses.replace(self, **changes)
+
+        to_drop = set()
+        if drop_others:
+            field_names = {field.name for field in dataclasses.fields(new_examples)}
+            to_drop = field_names.difference(chain(changes.keys(), keep_fields))
+        to_drop.update(drop_fields)
+        return new_examples.drop(*to_drop)
+
+    def drop(self, *attributes) -> Self:
+        if not len(attributes):
+            return self
+        changes = dict.fromkeys(attributes, None)
+        return dataclasses.replace(self, **changes)
+
+    @classmethod
+    def from_examples(cls, examples: Iterable[DocumentExample[TokenizedNodeChunkWithSentenceInfo]], *, pad_sub_token_id: int) -> Self:
+        doc_ids: list[int] = []
+        doc_total_chunks: list[int] = []
+        chunk_ids: list[int] = []
+        sentence_ids: list[list[int]] = []
+        sentence_lengths: list[list[int]] = []
+        sentence_starts: list[list[int]] = []
+        node_ids: list[list[int]] = []
+        shift: list[int] = []
+        sub_token_ids: list[LongTensor] = []
+        sub_token_padding_mask: list[BoolTensor] = []
+        main_sub_tokens_mask: list[BoolTensor] = []
+        tokens_start_mask: list[BoolTensor] = []
+
+        def long_convert(container: Sequence) -> LongTensor:
+            if torch.is_tensor(container):
+                container: Tensor
+                return container.long()
+            return torch.tensor(container, dtype=torch.long).long()
+
+        def bool_convert(container: Sequence) -> BoolTensor:
+            if torch.is_tensor(container):
+                container: Tensor
+                return container.bool()
+            return torch.tensor(container, dtype=torch.bool).bool()
+
+        # extracting data from examples and converting into tensors
+
+        for example in examples:
+            doc_ids.append(example.doc_id)
+            doc_total_chunks.append(example.doc_total_chunks)
+            chunk_ids.append(example.chunk_id)
+            sentence_ids.append(list(example.tokenization.sentence_ids))
+            sentence_lengths.append(example.tokenization.sentence_lengths)
+            sentence_starts.append(list(fill_roll_np(np.cumsum(np.array(example.tokenization.sentence_lengths)), shift=1, fill=0)))
+            node_ids.append(list(example.tokenization.node_ids))
+            shift.append(example.tokenization.shift)
+
+            sub_token_ids_tensor = long_convert(example.tokenization.sub_token_ids)
+            sub_token_padding_mask_tensor = torch.ones_like(sub_token_ids_tensor, dtype=torch.bool).bool()
+            main_sub_tokens_mask_tensor = bool_convert(example.tokenization.main_sub_tokens_mask)
+            tokens_start_mask_tensor = bool_convert(example.tokenization.tokens_start_mask)
+
+            sub_token_ids.append(sub_token_ids_tensor)
+            sub_token_padding_mask.append(sub_token_padding_mask_tensor)
+            main_sub_tokens_mask.append(main_sub_tokens_mask_tensor)
+            tokens_start_mask.append(tokens_start_mask_tensor)
+
+        # combining collected tensors into one
+
+        pad_collator = partial(pad_sequence, batch_first=True)
+
+        sub_token_ids: LongTensor = pad_collator(sub_token_ids, padding_value=pad_sub_token_id).long()
+        sub_token_padding_mask: BoolTensor = pad_collator(sub_token_padding_mask, padding_value=False).bool()
+        main_sub_tokens_mask: BoolTensor = pad_collator(main_sub_tokens_mask, padding_value=False).bool()
+        tokens_start_mask: BoolTensor = pad_collator(tokens_start_mask, padding_value=False).bool()
+
+        result = cls(
+            doc_ids=doc_ids,
+            doc_total_chunks=doc_total_chunks,
+            chunk_ids=chunk_ids,
+            sentence_ids=sentence_ids,
+            sentence_lengths=sentence_lengths,
+            sentence_starts=sentence_starts,
+            node_ids=node_ids,
+            shift=shift,
+            sub_token_ids=sub_token_ids,
+            sub_token_padding_mask=sub_token_padding_mask,
+            main_sub_tokens_mask=main_sub_tokens_mask,
+            tokens_start_mask=tokens_start_mask
+        )
+
+        # all sub token masks are present, so we can fill in token masks
+        return add_token_masks(result)
+
+    @classmethod
+    def from_nodes(
+            cls,
+            nodes: Iterable[Sequence[TIETextNode]],
+            chunker: Callable[[Sequence[TIETextNode]], Iterable[TokenizedNodeChunk]],
+            *,
+            batch_size: int,
+            pad_sub_token_id: int,
+            group_by_length: bool = False
+    ) -> Iterable[Self]:
+
+        examples_collator = partial(BatchedExamples.from_examples, pad_sub_token_id=pad_sub_token_id)
+        examples = DocumentExample.from_nodes(nodes, chunker)
+        yield from map(examples_collator, group_to_batches(examples, batch_size=batch_size, length_sort_batches=int(group_by_length) * 10))
+
+    def get_length_in_tokens(self):
+        """
+        NB: only functions when chunker overlap is 1
+        """
+        token_counts = self.main_tokens_mask.sum(dim=-1)
+        if len(token_counts) > 1:
+            return sum(token_counts)
+        else:
+            return token_counts.item()
+
+    def get_full_batch_no_overlap(self):
+        """
+        NB: this only works if chunker overlap is set to 1. Otherwise this will fail.
+        """
+        return self.token_representations[self.main_tokens_mask]
+
+
+def add_token_masks(batch: BatchedExamples) -> BatchedExamples:
+    """Add token masks based on sub token masks"""
+
+    token_padding_mask = []
+    main_tokens_mask = []
+
+    masks_iterator = zip(
+        batch.tokens_start_mask,
+        batch.main_sub_tokens_mask,
+        batch.sub_token_padding_mask
+    )
+
+    for tokens_start_mask, main_sub_tokens_mask, sub_token_padding_mask in masks_iterator:
+        sequence_length = tokens_start_mask[sub_token_padding_mask].sum()
+        token_padding_mask.append(torch.ones(sequence_length, dtype=torch.bool))
+
+        main_tokens_mask.append(main_sub_tokens_mask[sub_token_padding_mask & tokens_start_mask])  # without padding and for tokens
+
+    # pad sequences to equal length
+    pad_collator = partial(pad_sequence, batch_first=True)
+
+    token_padding_mask = pad_collator(token_padding_mask, padding_value=False).bool()
+    main_tokens_mask = pad_collator(main_tokens_mask, padding_value=False).bool()
+
+    return batch.replace(token_padding_mask=token_padding_mask, main_tokens_mask=main_tokens_mask)
+
+
+def repad(representations: Tensor, mask: BoolTensor) -> tuple[Tensor, BoolTensor]:
+    """Apply mask and repad tensor.
+
+    :param: tensor - tensor with shape (B, S, F)
+    :param: mask - tensor with the shape (B, S)
+    :return: new tensor and padding mask
+
+    B - batch size
+    S - sequence length
+    F - number of features
+    """
+
+    device = representations.device
+    _, _, num_features = representations.shape
+
+    all_tensor_rows: list[Tensor] = []
+    paddings: list[BoolTensor] = []
+    for tensor_row, mask_row in zip(representations, mask):
+        masked_row = tensor_row[mask_row].reshape(-1, num_features)
+        padding: BoolTensor = torch.ones(len(masked_row), dtype=torch.bool, device=device).bool()
+
+        all_tensor_rows.append(masked_row)
+        paddings.append(padding)
+
+    # pad sequences to equal length
+    pad_collator = partial(pad_sequence, batch_first=True)
+
+    return pad_collator(all_tensor_rows), pad_collator(paddings, padding_value=False)
+
+
+def get_representations_for_main_tokens(
+        examples: BatchedExamples,
+        *,
+        drop_others: bool = True,
+        keep_fields: Iterable[str] = tuple(),
+        drop_fields: Iterable[str] = tuple()
+) -> BatchedExamples:
+    main_tokens_representation, label_padding_mask = repad(examples.token_representations, examples.main_tokens_mask)
+    return examples.replace(
+        main_tokens_representations=main_tokens_representation,
+        label_padding_mask=label_padding_mask,
+        drop_others=drop_others,
+        keep_fields=keep_fields,
+        drop_fields=drop_fields
+    )
