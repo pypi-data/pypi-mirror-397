@@ -1,0 +1,95 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "langium_runner"
+version = "1.0.1"
+description = "A runner for evaluating Langium responses."
+authors = [
+    {name = "TypeFox", email = "dennis.huebner@gmail.com"}
+]
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+# Runtime dependencies (minimal)
+dependencies = [
+    "betterproto>=2.0.0b3",  # Required for generated protobuf classes
+]
+
+# Optional dependency groups
+[project.optional-dependencies]
+# Build-only dependencies (protobuf generation)
+build = [
+    "betterproto[compiler]>=2.0.0b3",
+    "grpcio-tools>=1.60.0",
+]
+
+# Package distribution dependencies
+dist = [
+    "build>=1.0.0",
+    "twine>=4.0.0",
+    "wheel>=0.40.0",
+]
+
+# Test dependencies
+test = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+]
+
+# Code quality tools
+lint = [
+    "black>=23.1.0",
+    "isort>=5.11.5",
+    "mypy>=1.0.0",
+]
+
+# Development: everything you need for development
+dev = [
+    "betterproto[compiler]>=2.0.0b3",
+    "grpcio-tools>=1.60.0",
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.1.0",
+    "isort>=5.11.5",
+    "mypy>=1.0.0",
+    "build>=1.0.0",
+    "twine>=4.0.0",
+    "wheel>=0.40.0",
+]
+
+[project.scripts]
+langium-evaluate = "langium_runner.evaluator_runner:run_langium_evaluator_cli"
+
+[project.urls]
+Homepage = "https://github.com/TypeFox/langium-ai"
+Repository = "https://github.com/TypeFox/langium-ai"
+
+[tool.setuptools.packages.find]
+exclude = ["tests*"]
+
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+
+[tool.isort]
+profile = "black"
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+exclude = "langium_runner/generated/"
