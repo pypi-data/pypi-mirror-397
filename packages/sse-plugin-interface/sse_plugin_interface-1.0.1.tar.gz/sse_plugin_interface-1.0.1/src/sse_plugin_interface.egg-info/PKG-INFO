@@ -1,0 +1,93 @@
+Metadata-Version: 2.4
+Name: sse-plugin-interface
+Version: 1.0.1
+Summary: A pure Python library for reading and writing Skyrim Special Edition Plugin files (.esp, .esm, .esl).
+Author-email: Cutleast <cutleast@gmail.com>
+License: MIT License
+        
+        Copyright (c) 2025 Cutleast
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+Project-URL: Homepage, https://github.com/cutleast/sse-plugin-interface
+Project-URL: Issues, https://github.com/cutleast/sse-plugin-interface/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.12
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: license-file
+
+# SSE Plugin Interface
+
+A pure Python library for reading and writing Skyrim Special Edition Plugin files (.esp, .esm, .esl).
+
+See here for more information about the Plugin file format: https://en.uesp.net/wiki/Skyrim_Mod:Mod_File_Format
+
+**Please note** that this library was originally intended for extraction of strings that are visible in-game.
+Other features may not be fully implemented or tested and are used at your own risk!
+
+## Installation
+
+Run `pip install sse-plugin-interface` to install the library in the current active environment.
+
+## Usage
+
+### Load a plugin
+
+**From file:**
+
+```python
+>>> plugin = SSEPlugin.from_file(Path("my_plugin.esp"))
+```
+
+**Directly from a stream of bytes:**
+
+```python
+>>> plugin = SSEPlugin.from_file(open("my_plugin.esp"), "my_plugin.esp")
+```
+
+### Extract strings from the plugin
+
+```python
+>>> strings: list[PluginString] = SSEPlugin.from_file(Path("my_plugin.esp")).extract_strings()
+```
+
+See here for information about the PluginString type: [plugin_string.py](./src/sse_plugin_interface/plugin_string.py)
+
+### Replace strings in a plugin
+
+```python
+>>> plugin = SSEPlugin.from_file(Path("my_plugin.esp"))
+>>> plugin.replace_strings([PluginString(...), ...])
+```
+
+### Dump or save the plugin to a file
+
+**Dump the plugin data to a byte array:**
+
+```python
+>>> plugin.dump()
+b"This is the dumped content of the plugin"
+```
+
+**Save the plugin data to a file:**
+
+```python
+>>> plugin.save(Path("output.esp"))
+```
