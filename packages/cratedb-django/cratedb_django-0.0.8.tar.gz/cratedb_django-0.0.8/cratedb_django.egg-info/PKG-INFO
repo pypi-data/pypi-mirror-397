@@ -1,0 +1,107 @@
+Metadata-Version: 2.4
+Name: cratedb-django
+Version: 0.0.8
+Summary: CrateDB connector for Django 
+Author-email: Ivan <surister98@gmail.com>
+License: Copyright 2025 github.com/surister
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+        
+Project-URL: Home Page, https://github.com/surister/cratedb-django
+Project-URL: Documentation, https://github.com/surister/cratedb-django
+Project-URL: Repository, https://github.com/surister/cratedb-django.git
+Project-URL: GitHub, https://github.com/surister/cratedb-django
+Project-URL: Changelog, https://github.com/surister/cratedb-django/releases
+Classifier: Development Status :: 3 - Alpha
+Classifier: Framework :: Django
+Classifier: Topic :: Database
+Classifier: Topic :: Database :: Front-Ends
+Classifier: Natural Language :: English
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3 :: Only
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE.md
+Requires-Dist: crate==2.0.0
+Requires-Dist: django>=5.2
+Dynamic: license-file
+
+# CrateDB django connector.
+
+![PyPI - Version](https://img.shields.io/pypi/v/cratedb-django)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/cratedb-django)
+![PyPI - License](https://img.shields.io/pypi/l/cratedb-django)
+![PyPI - Status](https://img.shields.io/pypi/status/cratedb-django)
+[![🛠🐍 Unit tests](https://github.com/surister/cratedb-django/actions/workflows/tests.yml/badge.svg)](https://github.com/surister/cratedb-django/actions/workflows/tests.yml)
+
+Connector to use CrateDB as a database in Django ORM.
+
+# Documentation
+
+## How to install
+
+uv
+
+```shell
+uv add cratedb-django
+```
+
+pipx
+
+```shell
+pipx install cratedb-django
+```
+
+## Install
+
+Once the library is installed, use it in your `settings.py`, e.g.
+
+```python
+DATABASES = {
+    "default": {
+        "ENGINE": "cratedb_django",
+        "SERVERS": ["localhost:4200"],
+    }
+}
+```
+
+After that, for a model to be used in CrateDB, you need to use `CrateModel` as a
+base class.
+
+```python
+from django.db import models
+from cratedb_django.models import CrateModel
+
+
+class Metrics(CrateModel):
+    id = models.TextField(primary_key=True, db_default=UUID())
+    value = models.IntegerField()
+```
+
+Django migrations can be run in CrateDB, default django migrations are tested.
+In spite of that, we recommend that you run anything transactional in a
+transactional database, like PostgresSQL and use CrateDB as your analytical database.
+
+## Details
+
+* `unique=True`. CrateDB only supports unique constraints on primary keys, any
+  model field with unique=true will emit a warning to stdout.
+
+### Environment variables
+
+| name                                 | value            | description                                                             |
+|--------------------------------------|------------------|-------------------------------------------------------------------------|
+| `SUPPRESS_UNIQUE_CONSTRAINT_WARNING` | [`true`/`false`] | Suppresses warning when a model is created with unique=True constraint. |
+
+# License
+
+This project is open-source under a MIT license.
+
