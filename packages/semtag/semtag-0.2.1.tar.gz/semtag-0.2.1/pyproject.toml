@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "semtag"
+dynamic = ["version"]
+description = "A tool for managing semantic version tags in git repositories"
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+authors = [
+    {name = "Mateusz Mikrut", email = "mateusz.mikrut@gmail.com"}
+]
+keywords = ["git", "tags", "semantic-versioning", "semver", "version-control"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "gitpython>=3.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/mateuszmikrut/semtag"
+"Bug Reports" = "https://github.com/mateuszmikrut/semtag/issues"
+Source = "https://github.com/mateuszmikrut/semtag"
+
+[project.scripts]
+semtag = "semtag:main"
+
+[tool.setuptools]
+py-modules = ["semtag", "SemanticVersion"]
+
+[tool.setuptools_scm]
+version_scheme = "post-release"
