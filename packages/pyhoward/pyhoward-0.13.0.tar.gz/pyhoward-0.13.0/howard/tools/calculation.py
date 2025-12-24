@@ -1,0 +1,69 @@
+import argparse
+import logging as log
+
+from howard.functions.commons import load_args, load_config_args
+from howard.objects.variants import Variants
+
+
+def calculation(args: argparse) -> None:
+    """
+    This function performs calculations on VCF data based on user input and exports the results.
+
+    :param args: The `args` parameter is a command line argument parser object that contains the
+    arguments passed to the script when it was executed
+    :type args: argparse
+    """
+
+    log.info("Start")
+
+    # Load config args
+    arguments_dict, _, config, param = load_config_args(args)
+
+    # Create variants object
+    vcfdata_obj = Variants(
+        input=args.input, output=args.output, config=config, param=param
+    )
+
+    # Get Config and Params
+    config = vcfdata_obj.get_config()
+    param = vcfdata_obj.get_param()
+
+    # Load args into param
+    param = load_args(
+        param=param,
+        args=args,
+        arguments_dict=arguments_dict,
+        command="calculation",
+        strict=False,
+    )
+
+    # Re-Load Config and Params
+    vcfdata_obj.set_param(param)
+    vcfdata_obj.set_config(config)
+
+    # Load data
+    if vcfdata_obj.get_input():
+        vcfdata_obj.load_data()
+
+    # Operations config file
+    operations_config_file = param.get("calculation", {}).get("calculation_config")
+
+    # Show calculation
+    if param.get("calculation", {}).get("show_calculations", False):
+        for help_line in vcfdata_obj.get_operations_help(
+            operations_config_file=operations_config_file
+        ):
+            log.info(help_line)
+        exit()
+
+    # Calculation
+    vcfdata_obj.calculation(operations_config_file=operations_config_file)
+
+    # Export
+    vcfdata_obj.export_output()
+
+    # Log
+    log.info("End")
+
+    # Return Variants object
+    return vcfdata_obj
