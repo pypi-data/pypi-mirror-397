@@ -1,0 +1,36 @@
+#pragma once
+
+#ifdef __X86SIM__
+  #define AIE_BLOCK_QUAL static thread_local const
+  #define AIE_PTR_TBL_QUAL static thread_local
+#else
+  #define AIE_BLOCK_QUAL alignas(aie::vector_decl_align) const
+  #define AIE_PTR_TBL_QUAL
+#endif
+
+{% for chain in data %}
+{% set ch = loop.index0 %}
+{% for block in chain %}
+{% set col = loop.index0 %}
+
+AIE_BLOCK_QUAL {{ dtype }} {{ artifact_name }}_{{ inst_name }}_{{ ch }}_{{ col }}[{{ block|length }}] = {
+  {%- for v in block -%}
+    {{ v|int }}{{ ", " if not loop.last else "" }}
+  {%- endfor -%}
+};
+
+{% endfor %}
+{% endfor %}
+
+AIE_PTR_TBL_QUAL {{ dtype }} const* {{ artifact_name }}_{{ inst_name }}[{{ data|length }}][{{ data[0]|length }}] = {
+{% for ch in range(data|length) %}
+  {
+  {% for col in range(data[0]|length) %}
+    {{ artifact_name }}_{{ inst_name }}_{{ ch }}_{{ col }}{{ ", " if not loop.last else "" }}
+  {% endfor %}
+  }{{ "," if not loop.last else "" }}
+{% endfor %}
+};
+
+#undef AIE_BLOCK_QUAL
+#undef AIE_PTR_TBL_QUAL
