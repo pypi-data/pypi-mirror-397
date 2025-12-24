@@ -1,0 +1,134 @@
+Metadata-Version: 2.4
+Name: nanocli
+Version: 0.1.0
+Summary: Recursive hierarchical CLI framework with typed configs and YAML synthesis
+Project-URL: Homepage, https://github.com/example/nanocli
+Project-URL: Repository, https://github.com/example/nanocli
+Author-email: Author <author@example.com>
+License-Expression: MIT
+License-File: LICENSE
+Keywords: cli,config,typer,yaml
+Classifier: Development Status :: 3 - Alpha
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Typing :: Typed
+Requires-Python: >=3.10
+Requires-Dist: omegaconf>=2.3.0
+Requires-Dist: rich>=13.0.0
+Provides-Extra: dev
+Requires-Dist: mkdocs-material>=9.5.0; extra == 'dev'
+Requires-Dist: mkdocstrings[python]>=0.24.0; extra == 'dev'
+Requires-Dist: mypy>=1.8.0; extra == 'dev'
+Requires-Dist: pre-commit>=3.6.0; extra == 'dev'
+Requires-Dist: pytest-cov>=4.1.0; extra == 'dev'
+Requires-Dist: pytest-xdist>=3.5.0; extra == 'dev'
+Requires-Dist: pytest>=9.0.0; extra == 'dev'
+Requires-Dist: ruff>=0.14.8; extra == 'dev'
+Description-Content-Type: text/markdown
+
+# NanoCLI
+
+A cli framework with the simplicity of argparse, the colors of rich, the config handling of Hydra, and without the complexity.
+
+![NanoCLI Demo](assets/demo.gif)
+
+## Core Model
+
+```text
+CLI = YAML Tree
+├── commands (leaf nodes)
+└── groups (subtrees)
+```
+
+## Quick Start
+
+```python
+from dataclasses import dataclass
+from nanocli import group
+
+@dataclass
+class TrainConfig:
+    epochs: int = 100
+    lr: float = 0.001
+
+app = group()
+
+@app.command()
+def train(cfg: TrainConfig):
+    print(f"Training for {cfg.epochs} epochs")
+
+if __name__ == "__main__":
+    app()
+```
+
+## Usage
+
+```bash
+# Run command
+python app.py train
+python app.py train epochs=200
+
+# Hydra-style overrides at root level
+python app.py train.epochs=200 -p
+
+# Print config: -p (local), -g (global from root)
+python app.py train -p
+python app.py data download -g
+
+# Load YAML config
+python app.py -c config.yml train
+
+# Help
+python app.py -h
+python app.py train -h
+```
+
+## Nested Groups
+
+```python
+app = group()
+
+@app.command()
+def train(cfg: TrainConfig):
+    ...
+
+data = app.group("data", help="Data commands")
+
+@data.command()
+def download(cfg: DownloadConfig):
+    ...
+```
+
+```bash
+python app.py data download
+python app.py data download dataset=coco -p
+python app.py data download dataset=coco -g  # prints full tree
+```
+
+## Flags
+
+| Flag      | Meaning                         |
+|-----------|---------------------------------|
+| `-p`      | Print config from current node  |
+| `-g`      | Print config from root (global) |
+| `-h`      | Show help                       |
+| `-c PATH` | Load base config from YAML      |
+
+## Development
+
+```bash
+make dev          # Install with dev deps
+make test         # Run tests
+make pre-commit   # Run all checks
+make lint-fix     # Fix lint issues
+make type-check   # Type check
+```
+
+## License
+
+MIT
