@@ -1,0 +1,487 @@
+# ==========================================================================================
+# 57. ALL ENCODING TECHNIQUES (EXAM-COMPLETE)
+# ==========================================================================================
+
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder
+from sklearn.feature_extraction import FeatureHasher
+
+# -- A. BASIC ENCODINGS --
+
+# 1) One-Hot Encoding
+# Purpose: Create separate binary columns for each category.
+ohe = OneHotEncoder(sparse=False)
+arr = np.array([['a'], ['b'], ['c'], ['a']])
+ohe_arr = ohe.fit_transform(arr)
+#
+# Intuition: (xi = category) ⇒ 1 in known column, else 0.
+# Leakage: Use only on train data, else categories in test unseen or leakage.
+# Risk: If many categories, causes dimensionality explosion ("curse of dimensionality").
+# Exam trap: Apply before splitting = leakage.
+
+# 2) Ordinal Encoding
+# Purpose: Map categories to integers (1, 2, ...), implies order!
+oe = OrdinalEncoder()
+oe_arr = oe.fit_transform(arr)
+#
+# Bias: Imposes order even if not present—wrong for nominal!
+# Exam trap: Distance between ints not meaningful.
+
+# 3) Binary Encoding
+# Purpose: Encode categories as binary digits to reduce dims.
+try:
+    from category_encoders import BinaryEncoder
+    be = BinaryEncoder()
+    be_arr = be.fit_transform(pd.DataFrame(arr))
+except ImportError:
+    pass
+# Uses fewer columns than OHE for many categories.
+# Exam: Only use for high-cardinality. Still ordinal bias if used wrongly.
+# Risk: Collisions between categories.
+
+# -- B. STATISTICAL / TARGET-BASED ENCODINGS --
+
+# 1) Target Mean Encoding
+# Map each category to average target within that category.
+# (Not in sklearn stdlib; implement manually.)
+df = pd.DataFrame({'cat':['a','b','a','c','b','c'],'target':[1,0,1,1,0,1]})
+means = df.groupby('cat')['target'].mean()
+df['cat_mean'] = df['cat'].map(means)
+#
+# Leakage: NEVER compute means using test/val data (overfits; needs CV or leave-one-out).
+# Bias-variance: High variance if few samples per cat.
+
+# 2) Leave-One-Out Encoding
+# For each row, compute mean target for category excluding that row.
+def loo_mean(df, col, target):
+    return [df[df[col]==cat].drop(i)[target].mean() if (df[df[col]==cat].shape[0] > 1) else np.nan for i, cat in enumerate(df[col])]
+df['cat_loo'] = loo_mean(df, 'cat', 'target')
+
+# 3) Smoothed Target/JAMES-STEIN Encoding
+# Weighted average of overall mean and category mean, heavier toward global if few samples.
+overall = df['target'].mean()
+df['cat_smoothed'] = df.groupby('cat')['target'].transform(lambda x: (x.mean() * len(x) + overall) / (len(x) + 1))
+
+# 4) Weight of Evidence (WoE)
+# For binary y, WoE(cat) = log[P(y=1|cat)/P(y=0|cat)]
+def woe(df, col, target):
+    cats = df[col].unique()
+    res = {}
+    for c in cats:
+        p1 = np.mean(df[df[col]==c][target])
+        p0 = 1-p1
+        res[c] = np.log((p1+1e-5)/(p0+1e-5))
+    return df[col].map(res)
+df['cat_woe'] = woe(df, 'cat', 'target')
+# Leakage: All these must be fit-fold only!
+
+# -- C. FREQUENCY-BASED ENCODINGS --
+
+# 1) Count/Frequency Encoding
+counts = df['cat'].map(df['cat'].value_counts())
+freqs = counts/len(df)
+df['count_enc'] = counts
+df['freq_enc'] = freqs
+# Risk: If category freq correlates with target, useful; else, can encode dataset artifacts.
+# Rank encoding: Assigns increasing integers by frequency, can be misleading.
+
+# -- D. HASHING ENCODING --
+
+# Feature Hashing ("hash trick", not invertible/interpret)
+fh = FeatureHasher(n_features=4, input_type='string')
+hashed = fh.transform(df['cat'].astype(str)).toarray()
+# Risk: Collisions; cannot recover original categories; very efficient for large cardinality.
+
+# -- E. EMBEDDING-BASED ENCODING (Conceptual) --
+# Deep neural nets can learn dense embedding vectors for categories ("entity embeddings", e.g. in tabular deep learning).
+# Powerful for complex, high-card but hard to interpret, not typically allowed in exams without explainability.
+
+# ==========================================================================================
+# 58. ALL VALIDATION TECHNIQUES (VERY IMPORTANT)
+# ==========================================================================================
+
+from sklearn.model_selection import (train_test_split, KFold, StratifiedKFold, 
+                                     GroupKFold, TimeSeriesSplit, LeaveOneOut, RepeatedKFold)
+
+# -- A. DATA SPLITTING STRATEGIES --
+
+# Hold-out: train_test_split(X, y, test_size=0.2)
+# Stratified: preserve class ratios for classification (stratify=y)
+# Grouped: Each group appears in only one split (GroupKFold)
+# Time-based: Sort by time, last (future) goes to test.
+# Risk: Random split invalid for time series/grouped data (violates independence).
+
+# -- B. CROSS-VALIDATION METHODS --
+
+X = np.random.randn(100, 5)
+y = np.random.randint(0, 2, size=100)
+
+kf = KFold(n_splits=5)
+skf = StratifiedKFold(n_splits=5)
+gkf = GroupKFold(n_splits=5)
+loo = LeaveOneOut()
+rkf = RepeatedKFold(n_splits=5, n_repeats=2)
+tscv = TimeSeriesSplit(n_splits=5)
+# Nested CV: Outer for test, inner for tuning
+# Bias: LOO/Leave-P-Out have low bias, high variance; k-fold trades off; repeated = lower variance.
+
+# -- C. BOOTSTRAP VALIDATION --
+
+# .632 bootstrap: For n samples, sample n with replacement; avg over many resamples.
+# Out-of-bag: Samples not selected in bootstrap, used to estimate error (e.g. in Random Forests).
+# Theory: Sampling with replacement gives asymptotic distributions; reflects sample variability.
+
+# -- D. VALIDATION EXAM TRAPS --
+
+# - Never use CV after feature selection (must select inside each fold)
+# - Never tune hyperparameters on test set
+# - Incorrect CV scores: Must aggregate per-fold, not per-sample, and not compare point estimates across data splits.
+
+# ==========================================================================================
+# 46. UNIVARIATE DATA DISTRIBUTION ANALYSIS
+# ==========================================================================================
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
+
+df = pd.DataFrame({
+    'A': np.random.normal(10, 2, 100),
+    'B': np.random.exponential(2, 100),
+    'C': np.random.randint(0, 5, 100)
+})
+
+# -- A. Summary Statistics --
+summary = df['A'].describe()
+# mean, std, min, max, 25/50/75% quantiles via df.describe()
+mode = df['A'].mode()[0]
+iqr = summary['75%'] - summary['25%']
+range_ = summary['max'] - summary['min']
+percentiles = np.percentile(df['A'], [10, 25, 50, 75, 90])
+
+# Robust vs non-robust:
+# - Mean/variance sensitive to outliers/skew
+# - Median/IQR robust to outliers (use if data is skewed/heavy-tailed).
+# Mean is meaningless for ordinal or highly skewed data.
+
+# -- B. Distribution Shape Stats --
+skew = stats.skew(df['A'])
+kurt = stats.kurtosis(df['A'])
+# Positive skew: right tail; negative: left tail.
+# Positive kurtosis: heavy tails, more outliers.
+
+# -- C. Distribution Visualization (Univariate) --
+
+plt.hist(df['A'], bins=15)
+plt.title('Histogram')
+plt.show()
+sns.kdeplot(df['A'])
+plt.title('KDE')
+plt.show()
+sns.boxplot(y=df['A'])
+plt.title('Boxplot')
+plt.show()
+sns.violinplot(y=df['A'])
+plt.title('Violin Plot')
+plt.show()
+# ECDF (Empirical CDF)
+plt.plot(np.sort(df['A']), np.linspace(0, 1, len(df['A']), endpoint=False))
+plt.title('ECDF')
+plt.xlabel('Value')
+plt.ylabel('Cumulative Probability')
+plt.show()
+
+# What each plot reveals:
+# Histogram: general shape, but dependent on bins (bad bins = misleading).
+# KDE: smoothing reveals underlying density; bandwidth can over/under-smooth; bad for multimodal.
+# Boxplot: quartiles, outliers, compact. Violin: shape + quartiles.
+# ECDF: No binning, **always** shows all quantiles—most robust for comparing sample distributions.
+
+# ==========================================================================================
+# 47. MULTIVARIATE DISTRIBUTION ANALYSIS
+# ==========================================================================================
+
+# -- A. Joint Distributions --
+plt.scatter(df['A'], df['B'])
+plt.title('Scatter: Linear or nonlinear dependence')
+plt.show()
+plt.hexbin(df['A'], df['B'], gridsize=20)
+plt.title('Hexbin plot: Density in joint space')
+plt.show()
+sns.kdeplot(x=df['A'], y=df['B'], fill=True)
+plt.title('2D KDE: Joint distribution')
+plt.show()
+# Overplotting: In large n, points overlap and mask structure—use hexbin or density plots.
+
+# -- B. Dependence Measures --
+pearson = stats.pearsonr(df['A'], df['B'])[0]
+spearman = stats.spearmanr(df['A'], df['B'])[0]
+kendall = stats.kendalltau(df['A'], df['B'])[0]
+# Pearson: Linear relationship; Spearman/Kendall: monotonic (rank).
+# Distance correlation (conceptual): General dependence, detects any.
+# Correlation ≠ independence (nonlinear associations may have zero correlation).
+
+# -- C. Correlation Visualization --
+sns.heatmap(df.corr(), annot=True)
+plt.title('Correlation Heatmap')
+plt.show()
+sns.clustermap(df.corr())
+plt.title('Clustered Correlation Heatmap')
+plt.show()
+# Multicollinearity: High correlations among features = unstable models.
+# Spurious correlation: Correlation due to noise, confounder, or time.
+
+# ==========================================================================================
+# 48. DATA NORMALITY & DISTRIBUTIONAL ASSUMPTIONS
+# ==========================================================================================
+
+from sklearn.preprocessing import PowerTransformer
+
+# -- A. Normality Diagnostics --
+sns.histplot(df['A'], kde=True)
+plt.title('Histogram + KDE')
+plt.show()
+from statsmodels.graphics.gofplots import qqplot
+qqplot(df['A'], line='s')
+plt.title('Q-Q plot')
+plt.show()
+print('Shapiro–Wilk:', stats.shapiro(df['A']))
+print('Anderson–Darling:', stats.anderson(df['A'], dist='norm'))
+print('KS (to normal):', stats.kstest(df['A'], 'norm', args=(df['A'].mean(), df['A'].std())))
+
+# For large n, even trivial departures from normality will be significant; visual check is often more relevant.
+
+# -- B. Transformations --
+log_A = np.log1p(df['A'] - np.min(df['A']) + 1)  # ensure positive
+sqrt_A = np.sqrt(df['A'] - np.min(df['A']))
+boxcox_A, _ = stats.boxcox(df['A'] - np.min(df['A']) + 1)
+pt = PowerTransformer(method='yeo-johnson')
+yj_A = pt.fit_transform(df['A'].values.reshape(-1,1))
+plt.hist(log_A)
+plt.title('Log Transform')
+plt.show()
+# Log/sqrt/Box–Cox/Yeo–Johnson reduce skew, stabilize variance.
+# Pitfall: Always only fit transform on **train** to avoid leakage.
+
+# ==========================================================================================
+# 49. SCALING & NORMALIZATION (CRITICAL PREPROCESSING)
+# ==========================================================================================
+
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler, MaxAbsScaler
+
+scaler = StandardScaler()
+minmax = MinMaxScaler()
+robust = RobustScaler()
+maxabs = MaxAbsScaler()
+before_scaling = df['A'].copy()
+std_scaled = scaler.fit_transform(df[['A']])
+minmax_scaled = minmax.fit_transform(df[['A']])
+robust_scaled = robust.fit_transform(df[['A']])
+maxabs_scaled = maxabs.fit_transform(df[['A']])
+
+fig, axs = plt.subplots(2,2)
+axs[0,0].hist(std_scaled); axs[0,0].set_title('Standard')
+axs[0,1].hist(minmax_scaled); axs[0,1].set_title('MinMax')
+axs[1,0].hist(robust_scaled); axs[1,0].set_title('Robust')
+axs[1,1].hist(maxabs_scaled); axs[1,1].set_title('MaxAbs')
+plt.tight_layout()
+plt.show()
+# Impact: StandardScaler for distance-based models; MinMax for nnets; Robust for outliers.
+# Harmful: Scaling discrete/categorical/ordinal can give meaningless results.
+
+# ==========================================================================================
+# 50. CATEGORICAL DATA PROCESSING
+# ==========================================================================================
+
+cat_data = pd.DataFrame({'cat': ['red', 'blue', 'green', 'blue', 'red']})
+encoder = OneHotEncoder(sparse=False)
+oh = encoder.fit_transform(cat_data)
+oe = OrdinalEncoder()
+ord_ = oe.fit_transform(cat_data)
+# Target/Frequency encoding: Map categories to mean/relative freq (not in sklearn stdlib).
+
+# Dummy variable trap: Linear models need n-1 dummies (one dropped for identifiability).
+# Curse of dimensionality: One-hot explodes d for high-cardinality.
+
+# Bar plot
+sns.countplot(x='cat', data=cat_data)
+plt.title('Category counts')
+plt.show()
+# Target mean plot
+target = np.array([0,1,1,0,1])
+cat_data['target'] = target
+sns.barplot(x='cat', y='target', data=cat_data, ci=None)
+plt.title('Target mean by category')
+plt.show()
+# Rare categories may distort mean (especially w/ few obs).
+# Simpson's paradox: Group means can reverse overall effect.
+
+# ==========================================================================================
+# 51. FEATURE ENGINEERING & DISTRIBUTIONAL EFFECTS
+# ==========================================================================================
+
+from sklearn.preprocessing import PolynomialFeatures, KBinsDiscretizer
+
+pf = PolynomialFeatures(degree=2)
+poly = pf.fit_transform(df[['A','B']])
+# Interaction terms can increase variance (overfit).
+kbd = KBinsDiscretizer(n_bins=4, encode='ordinal')
+binned = kbd.fit_transform(df[['A']])
+# Effects: Binning reduces granularity, can help or hurt.
+
+# ==========================================================================================
+# 52. TRAIN/TEST DISTRIBUTION COMPARISON (VERY IMPORTANT)
+# ==========================================================================================
+
+X_train, X_test = train_test_split(df, test_size=0.3, random_state=0)
+sns.kdeplot(X_train['A'], label='Train')
+sns.kdeplot(X_test['A'], label='Test')
+plt.legend()
+plt.title('KDEs for A: Train vs Test')
+plt.show()
+sns.boxplot(data=[X_train['A'], X_test['A']])
+plt.title('Boxplot Train/Test')
+plt.show()
+# ECDF overlays:
+plt.plot(np.sort(X_train['A']), np.linspace(0,1,len(X_train)), label='Train')
+plt.plot(np.sort(X_test['A']), np.linspace(0,1,len(X_test)), label='Test')
+plt.legend()
+plt.title('ECDFs Train/Test')
+plt.show()
+# KS test:
+ks_stat, ks_p = stats.ks_2samp(X_train['A'], X_test['A'])
+# Wasserstein: stats.wasserstein_distance (distance between CDFs, not a test)
+# Shift/imbalance = danger: Model may not generalize.
+
+# ==========================================================================================
+# 53. DATA QUALITY & SANITY CHECKS
+# ==========================================================================================
+
+# Duplicates
+has_dups = df.duplicated().any()
+# Constant features
+const_cols = [col for col in df.columns if df[col].nunique() == 1]
+# Near-zero variance
+nzv = [col for col in df.columns if df[col].var() < 1e-8]
+# Impossible values
+neg_ages = (df['A'] < 0).sum()
+# Inconsistent categories: manual review/Counter on strings
+
+# Principle: Garbage-in–garbage-out (no model can rescue broken data).
+
+# ==========================================================================================
+# 54. MISSING DATA VISUALIZATION (OFTEN FORGOTTEN)
+# ==========================================================================================
+
+df_nan = df.copy()
+df_nan.loc[::15, 'A'] = np.nan
+sns.heatmap(df_nan.isnull(), cbar=False)
+plt.title('Missingness Structure')
+plt.show()
+# Patterns:
+ms = df_nan.isnull().mean(axis=0)
+plt.bar(ms.index, ms)
+plt.title('Missing Rates by Feature')
+plt.show()
+# MCAR: Missing not related to anything; MAR: related to other observed; MNAR: related to itself/unobserved.
+
+# ==========================================================================================
+# 55. PIPELINES & PREPROCESSING FORMALISM
+# ==========================================================================================
+
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.ensemble import RandomForestClassifier
+
+# Why inside pipeline? All transformations must be learned on training only, applied to test unseen.
+num_feats = ['A','B']
+cat_feats = ['C']
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', StandardScaler(), num_feats),
+        ('cat', OneHotEncoder(), cat_feats)
+    ])
+pipe = Pipeline([
+    ('prep', preprocessor),
+    ('clf', RandomForestClassifier())
+])
+y_true = np.random.randint(0, 2, len(X_train))
+pipe.fit(X_train, y_true)
+# Leakage: If transform is learned on whole data (not inside pipeline/CV), test info leaks to model.
+
+# ==========================================================================================
+# 66. DATA VALIDITY, SANITY & CONSISTENCY TESTS
+# ==========================================================================================
+
+from sklearn.feature_selection import VarianceThreshold
+
+# -- A. Basic Sanity Checks --
+df_valid = pd.DataFrame({'id':[1,2,3,3], 'A':[1,2,np.nan,4], 'B':[5,6,7,8]})
+shape_ok = df_valid.shape
+types_ok = df_valid.dtypes
+index_aligned = df_valid.index.is_unique
+dup_rows = df_valid.duplicated().sum()
+dup_ids = df_valid['id'].duplicated().sum()
+missing_counts = df_valid.isnull().sum()
+
+# Why models silently fail: Misaligned columns/indices, duplicates, etc. can propagate without error, corrupting splits/results.
+# Duplicates bias: Inflates confidence, misleads model (overrepresents duplicate).
+
+# -- B. Value Validity Tests --
+age_valid = (df_valid['A'] >= 0).all()
+# Logical constraint example:
+df_valid['start'] = [1, 2, 3, 4]
+df_valid['end'] = [2, 3, 2, 5]
+logic_valid = (df_valid['end'] >= df_valid['start']).all()
+# Cardinality: df_valid['A'].nunique()
+# Hard constraints: physical law/logic (e.g., age ≥ 0); soft: plausible values.
+
+# -- C. Zero / Near-Zero Variance Tests --
+vt = VarianceThreshold(threshold=1e-6)
+consts = [col for col in df_valid.columns if df_valid[col].nunique()==1]
+nzv_cols = [col for col in df_valid.columns if df_valid[col].value_counts(normalize=True).iloc[0] > 0.99]
+# Constant/near-constant break scaling, regularization, can cause singular matrices.
+
+# ==========================================================================================
+# 67. MISSING DATA — ADVANCED FORMALISMS & TESTS
+# ==========================================================================================
+
+# -- A. Missingness Structure Tests --
+# MCAR: Missing probability independent (usually assumed, rarely true).
+# Little's MCAR test: formal null; if reject, can't treat missing as MCAR (concept — not in scipy).
+
+# -- B. Missingness Indicator Features --
+df_valid['A_missing'] = df_valid['A'].isnull().astype(int)
+# When missingness itself predicts y, flag may outperform imputation!
+
+# -- C. Visualization of Missingness --
+sns.heatmap(df_valid.isnull(), cmap='gray')
+plt.title('Heatmap of Missingness')
+plt.show()
+# Missingness correlation:
+sns.heatmap(df_valid.isnull().corr(), annot=True)
+plt.title('Correlation of Missingness Patterns')
+plt.show()
+# Structural = by design (e.g., survey skip), random = accidental.
+
+# ==========================================================================================
+# 70. TARGET VARIABLE PREPROCESSING (CRITICAL & OFTEN MISSED)
+# ==========================================================================================
+
+from sklearn.preprocessing import LabelEncoder
+
+# -- A. Regression Targets --
+y_reg = np.random.rand(100)*10
+y_log = np.log1p(y_reg)
+from scipy.stats import boxcox
+y_bc, bc_lambda = boxcox(y_reg+1e-6)
+# Helps stabilize heteroscedasticity and skew. 
+# Inverse: np.expm1(pred) for log, stats.inv_boxcox(pred, bc_lambda) for boxcox.
+
+# -- B. Classification Targets --
+y_class = np.random.choice(['a','b','c'], 100)
+le = LabelEncoder().fit_transform(y_class)
+from sklearn.preprocessing import MultiLabelBinarizer
+mlb = MultiLabelBinarizer().fit_transform([list('ab'), list('bc'), list('ac')]*33 + [list('ab')])
+# Multi-class (one label); multi-label (many per sample) needs appropriate metrics (ROC misuse: needs one-vs-rest or macro-averaging).
