@@ -1,0 +1,1089 @@
+Metadata-Version: 2.4
+Name: pygleam
+Version: 1.1.2
+Summary: A lightweight Python package for enhanced print statements with automatic JSON/DataFrame formatting and beautiful colors
+License-File: LICENSE
+Keywords: print,json,colors,formatting,terminal,debugging
+Author: Navaneeth Penumarthi
+Author-email: navaneeth.penumarthi@gmail.com
+Requires-Python: >=3.8.1,<4.0.0
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: System :: Logging
+Classifier: Topic :: Terminals
+Classifier: Topic :: Utilities
+Project-URL: Bug Reports, https://github.com/yourusername/pygleam/issues
+Project-URL: Documentation, https://github.com/yourusername/pygleam
+Project-URL: Homepage, https://github.com/yourusername/pygleam
+Project-URL: Repository, https://github.com/yourusername/pygleam
+Project-URL: Source, https://github.com/yourusername/pygleam
+Description-Content-Type: text/markdown
+
+# Gleam
+
+A lightweight, zero-dependency Python package for beautiful terminal output. Gleam automatically enhances your print statements with colors, smart formatting for JSON/DataFrames, and environment-based configuration—all without changing your code.
+
+## Features
+
+- **Automatic Beautification** - Colors and formatting applied automatically to all print statements
+- **Smart Object Detection** - Automatically detects and formats JSON, arrays, DataFrames, functions, and objects
+- **JSON String Parsing** - Automatically detects and parses JSON strings for beautiful formatting
+- **Rich Color Scheme** - Integers (blue), strings (green), booleans (bold green), null (gray), keys (cyan)
+- **Environment Modes** - Dev/prod modes with optional force printing
+- **File Logging** - Optional logging to files with timestamps and caller information
+- **Write to Log** - Save objects to files with automatic type detection (JSON, CSV, TXT)
+- **Error Preservation** - Errors, warnings, and tracebacks remain untouched
+- **Utility Functions** - Timestamps, separators, labels, tables, diffs, and status messages
+- **Zero Dependencies** - Lightweight and fast with no external dependencies
+
+## Installation
+
+### From PyPI
+```bash
+pip install pygleam
+```
+
+## Quick Start
+
+### Method 1: Direct Import (Recommended)
+```python
+from gleam import print
+import gleam
+
+# Setup with environment (default: 'dev')
+gleam.setup()  # Dev mode - all prints visible
+# gleam.setup('prod')  # Production mode - prints hidden by default
+
+# All your prints are now automatically enhanced!
+print("Hello, Beautiful World!")
+```
+
+### Method 2: Traditional Import
+```python
+import gleam
+
+gleam.setup()  # Monkey-patches built-in print function
+
+print("Regular text gets colors")
+```
+
+## Complete API Reference
+
+### Core Functions
+
+#### `gleam.setup(env='dev')`
+Initialize Gleam by monkey-patching the built-in print function.
+
+**Parameters:**
+- `env` (str): Environment mode - `'dev'` or `'prod'`. Default: `'dev'`
+
+**Example:**
+```python
+import gleam
+
+gleam.setup('dev')   # Development mode - all prints visible
+gleam.setup('prod')  # Production mode - prints hidden unless force_print=True
+```
+
+---
+
+#### `gleam.print(*args, **kwargs)` or `from gleam import print`
+Enhanced print function with automatic beautification.
+
+**Parameters:**
+- `*args`: Any objects to print
+- `force_print` (bool): Force printing in production mode. Default: `False`
+- `**kwargs`: All standard print() keyword arguments (sep, end, file, flush)
+
+**Example:**
+```python
+from gleam import print
+import gleam
+
+gleam.setup()
+
+print("Simple text")
+print("Multiple", "arguments", "work")
+print("Hidden in prod")
+print("Visible in prod", force_print=True)
+```
+
+---
+
+#### `gleam.print_json(obj, **kwargs)`
+Print JSON objects with clean, colored formatting.
+
+**Parameters:**
+- `obj`: Dictionary, list, or JSON string to format
+- `force_print` (bool): Force printing in production mode
+- `**kwargs`: Standard print() keyword arguments
+
+**Example:**
+```python
+import gleam
+
+gleam.setup()
+
+data = {"name": "John", "age": 30, "active": True}
+gleam.print_json(data)
+```
+
+---
+
+#### `gleam.json_viewer(obj, **kwargs)`
+Interactive JSON viewer with collapsible sections (requires terminal support).
+
+**Parameters:**
+- `obj`: Dictionary, list, or JSON string to view
+- `**kwargs`: Standard print() keyword arguments
+
+**Controls:**
+- `↑/↓`: Navigate up/down
+- `Enter/Space`: Toggle collapse/expand sections
+- `q`: Quit viewer
+
+**Example:**
+```python
+import gleam
+
+gleam.setup()
+
+data = {
+    "users": [
+        {"name": "John", "age": 30},
+        {"name": "Jane", "age": 25}
+    ]
+}
+
+gleam.json_viewer(data)  # Opens interactive mode
+```
+
+---
+
+#### `gleam.configure(**kwargs)`
+Update Gleam configuration settings.
+
+**Parameters:**
+- `use_colors` (bool): Enable/disable color output
+- `text_color` (str): ANSI color code for regular text
+- `environment` (str): Set environment mode ('dev' or 'prod')
+
+**Example:**
+```python
+import gleam
+
+gleam.setup()
+
+gleam.configure(
+    use_colors=True,
+    text_color='\033[95m'  # Bright magenta
+)
+
+print("This text will be bright magenta")
+```
+
+---
+
+#### `gleam.print_with_timestamp(*args, **kwargs)`
+Print with automatic timestamp prefix.
+
+**Example:**
+```python
+import gleam
+
+gleam.setup()
+gleam.print_with_timestamp("Application started")
+# Output: [2024-01-01 12:30:45] Application started
+```
+
+---
+
+#### `gleam.print_separator(char='=', length=80, color=Colors.BRIGHT_BLACK)`
+Print a separator line for visual grouping.
+
+**Parameters:**
+- `char` (str): Character to use for separator. Default: `'='`
+- `length` (int): Length of separator line. Default: `80`
+- `color` (str): ANSI color code. Default: `Colors.BRIGHT_BLACK`
+
+**Example:**
+```python
+import gleam
+
+gleam.setup()
+gleam.print_separator()
+print("Section content")
+gleam.print_separator('-', 60)
+```
+
+---
+
+#### `gleam.print_labeled(label, *args, **kwargs)`
+Print with a colored label prefix.
+
+**Parameters:**
+- `label` (str): Label text to display in brackets
+- `*args`: Content to print after the label
+- `**kwargs`: Standard print() keyword arguments
+
+**Example:**
+```python
+import gleam
+
+gleam.setup()
+gleam.print_labeled("INFO", "Server started on port 8000")
+gleam.print_labeled("DEBUG", "Connection established")
+# Output: [INFO] Server started on port 8000
+```
+
+---
+
+#### `gleam.print_table(data, headers=None, **kwargs)`
+Print a list of dictionaries as a formatted table.
+
+**Parameters:**
+- `data` (List[Dict]): List of dictionaries to display as table
+- `headers` (List[str], optional): Column headers (auto-detected from first dict if not provided)
+- `**kwargs`: Standard print() keyword arguments
+
+**Example:**
+```python
+import gleam
+
+gleam.setup()
+
+users = [
+    {"name": "John", "age": 30, "city": "NYC"},
+    {"name": "Jane", "age": 25, "city": "LA"},
+    {"name": "Bob", "age": 35, "city": "SF"}
+]
+
+gleam.print_table(users)
+# Output:
+# name | age | city
+# -----+-----+-----
+# John | 30  | NYC
+# Jane | 25  | LA
+# Bob  | 35  | SF
+```
+
+---
+
+#### `gleam.format_table(data, headers=None)`
+Format a list of dictionaries as a table string (without printing).
+
+**Parameters:**
+- `data` (List[Dict]): List of dictionaries to format
+- `headers` (List[str], optional): Column headers
+
+**Returns:** Formatted table string
+
+---
+
+#### `gleam.print_diff(label, before, after)`
+Print a before/after comparison with color coding.
+
+**Parameters:**
+- `label` (str): Label for the comparison
+- `before` (Any): Before value (shown in red)
+- `after` (Any): After value (shown in green)
+
+**Example:**
+```python
+import gleam
+
+gleam.setup()
+gleam.print_diff("Configuration", "debug=False", "debug=True")
+# Output:
+# [Configuration]
+#   Before: debug=False  (in red)
+#   After:  debug=True   (in green)
+```
+
+---
+
+#### `gleam.print_success(message, **kwargs)`
+Print a success message with checkmark icon in green.
+
+**Example:**
+```python
+import gleam
+
+gleam.setup()
+gleam.print_success("Database connection established")
+# Output: ✓ Database connection established (in green)
+```
+
+---
+
+#### `gleam.print_error(message, **kwargs)`
+Print an error message with X icon in red.
+
+**Example:**
+```python
+import gleam
+
+gleam.setup()
+gleam.print_error("Failed to connect to database")
+# Output: ✗ Failed to connect to database (in red)
+```
+
+---
+
+#### `gleam.print_warning(message, **kwargs)`
+Print a warning message with warning icon in yellow.
+
+**Example:**
+```python
+import gleam
+
+gleam.setup()
+gleam.print_warning("Deprecated API usage detected")
+# Output: ⚠ Deprecated API usage detected (in yellow)
+```
+
+---
+
+#### `gleam.print_info(message, **kwargs)`
+Print an info message with info icon in blue.
+
+**Example:**
+```python
+import gleam
+
+gleam.setup()
+gleam.print_info("Loading configuration from file")
+# Output: ℹ Loading configuration from file (in blue)
+```
+
+---
+
+#### `gleam.write_to_log(obj, filename=None)`
+Write an object to a file in the `logs` folder with automatic type detection.
+
+**Parameters:**
+- `obj` (Any): The object to write to file
+- `filename` (str, optional): Filename without extension. If not provided, a timestamp-based name is generated (e.g., `log_20251219_180125`)
+
+**Returns:** `str` - Absolute path to the created file
+
+**Automatic File Type Detection:**
+- **Dictionaries/Lists** → `.json` file with pretty formatting
+- **DataFrames** (pandas/polars) → `.csv` file
+- **JSON strings** → `.json` file
+- **Everything else** → `.txt` file with string representation
+
+**Example:**
+```python
+import gleam
+
+gleam.setup()
+
+# Write a dictionary (creates .json file)
+data = {"name": "John", "age": 30, "status": "active"}
+gleam.write_to_log(data)
+# Output: ✓ Logged to: /path/to/current/directory/logs/log_20251219_180125.json
+
+# Write with custom filename
+gleam.write_to_log(data, "user_data")
+# Output: ✓ Logged to: /path/to/current/directory/logs/user_data.json
+
+# Write a DataFrame (creates .csv file)
+import pandas as pd
+df = pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
+gleam.write_to_log(df, "my_dataframe")
+# Output: ✓ Logged to: /path/to/current/directory/logs/my_dataframe.csv
+
+# Write plain text (creates .txt file)
+gleam.write_to_log("Error occurred at line 42", "error_log")
+# Output: ✓ Logged to: /path/to/current/directory/logs/error_log.txt
+```
+
+**Note:** The `logs` folder is created in the current working directory where your script is running.
+
+---
+
+### Configuration Class
+
+#### `gleam.src.config.get_config()`
+Get the singleton configuration instance.
+
+**Returns:** `Config` object
+
+**Example:**
+```python
+import gleam
+from gleam.src.config import get_config
+
+gleam.setup()
+config = get_config()
+```
+
+---
+
+#### `config.enable_file_logging(file_path, log_only=False)`
+Enable logging print statements to a file.
+
+**Parameters:**
+- `file_path` (str): Path to the log file (directory created automatically)
+- `log_only` (bool): If `True`, only log to file (no terminal output). Default: `False`
+
+**Example:**
+```python
+import gleam
+from gleam.src.config import get_config
+
+gleam.setup()
+config = get_config()
+
+# Log to both terminal and file
+config.enable_file_logging('debug.log')
+print("This goes to both terminal and file")
+
+# Log ONLY to file (silent terminal)
+config.enable_file_logging('debug.log', log_only=True)
+print("This only goes to file")
+```
+
+**Log Format:**
+```
+[2024-01-01 12:30:45] script.py:10 - Your message here
+```
+
+---
+
+#### `config.disable_file_logging()`
+Disable file logging.
+
+**Example:**
+```python
+from gleam.src.config import get_config
+
+config = get_config()
+config.disable_file_logging()
+```
+
+---
+
+#### `config.update(**kwargs)`
+Update configuration options.
+
+**Parameters:**
+- `environment` (str): 'dev' or 'prod'
+- `use_colors` (bool): Enable/disable colors
+- `text_color` (str): ANSI color code
+- `log_to_file` (bool): Enable/disable file logging
+- `log_file_path` (str): Path to log file
+- `log_only_mode` (bool): Log only to file
+- `json_indent` (int): JSON indentation spaces
+- `json_max_depth` (int): Maximum JSON nesting depth
+
+**Example:**
+```python
+from gleam.src.config import get_config
+
+config = get_config()
+config.update(
+    environment='prod',
+    use_colors=True,
+    json_indent=4
+)
+```
+
+---
+
+## Automatic Formatting Examples
+
+### JSON Objects & Dictionaries
+```python
+from gleam import print
+import gleam
+
+gleam.setup()
+
+data = {
+    "name": "John Doe",      # Keys: cyan, strings: green
+    "age": 30,               # Integers: blue
+    "active": True,          # Booleans: bold green
+    "balance": None,         # Null: gray
+    "tags": ["python", "dev"] # Arrays: proper formatting
+}
+
+print(data)  # Automatically detects and formats as colored JSON
+```
+
+**Output:**
+```json
+{
+  "name": "John Doe",
+  "age": 30,
+  "active": true,
+  "balance": null,
+  "tags": [
+    "python",
+    "dev"
+  ]
+}
+```
+
+---
+
+### Arrays & Lists
+```python
+from gleam import print
+import gleam
+
+gleam.setup()
+
+items = ["apple", "banana", 42, True, None]
+print(items)
+```
+
+**Output:**
+```json
+[
+  "apple",
+  "banana",
+  42,
+  true,
+  null
+]
+```
+
+---
+
+### DataFrames (Pandas/Polars)
+```python
+import pandas as pd
+from gleam import print
+import gleam
+
+gleam.setup()
+
+df = pd.DataFrame({
+    "name": ["John", "Jane", "Bob"],
+    "age": [30, 25, 35],
+    "city": ["NYC", "LA", "SF"]
+})
+
+print(df)  # Automatically formats with colors
+```
+
+**Output:** Colored DataFrame with cyan headers and yellow indices.
+
+---
+
+### Functions and Objects
+```python
+from gleam import print
+import gleam
+
+gleam.setup()
+
+def my_function():
+    pass
+
+class MyClass:
+    pass
+
+obj = MyClass()
+
+print(my_function)  # <function: my_function> (bold magenta)
+print(obj)          # <MyClass object> (bold magenta)
+```
+
+---
+
+### Regular Text
+```python
+from gleam import print
+import gleam
+
+gleam.setup()
+
+print("This is beautiful colored text")  # Bright cyan by default
+print("Multiple", "arguments", "supported")
+```
+
+---
+
+### JSON Strings (Auto-Parsed)
+```python
+from gleam import print
+import gleam
+
+gleam.setup()
+
+# JSON strings are automatically detected, parsed, and formatted
+json_string = '{"name": "John", "age": 30, "active": true}'
+print(json_string)  # Automatically formats as colored JSON
+
+# Works with arrays too
+array_string = '["apple", "banana", 42, true, null]'
+print(array_string)
+```
+
+**Output:**
+```json
+{
+  "name": "John",
+  "age": 30,
+  "active": true
+}
+```
+
+---
+
+## Configuration
+
+### Environment Setup
+
+```python
+import gleam
+
+# Development mode (default) - all prints visible
+gleam.setup()
+# or explicitly:
+gleam.setup('dev')
+
+# Production mode - prints hidden unless force_print=True
+gleam.setup('prod')
+
+print("Hidden in prod")
+print("Visible in prod", force_print=True)
+```
+
+**Environment Variable:**
+```bash
+export GLEAM_ENV=prod  # Set environment via env variable
+```
+
+---
+
+### Color Customization
+
+```python
+import gleam
+
+gleam.setup()
+
+# Customize colors for regular text
+gleam.configure(
+    use_colors=True,
+    text_color='\033[95m'  # Bright magenta
+)
+
+print("This text will be bright magenta")
+
+# Disable colors entirely
+gleam.configure(use_colors=False)
+print("No colors applied")
+```
+
+---
+
+### File Logging
+
+```python
+import gleam
+from gleam.src.config import get_config
+
+gleam.setup()
+config = get_config()
+
+# Log to file alongside terminal output
+config.enable_file_logging('debug.log')
+print("This goes to both terminal and file")
+
+# Log ONLY to file (silent terminal)
+config.enable_file_logging('debug.log', log_only=True)
+print("This only goes to file")
+
+# Disable file logging
+config.disable_file_logging()
+```
+
+**Log entries include:**
+- Timestamp
+- Filename and line number
+- Message content
+
+**Example log entry:**
+```
+[2024-01-01 12:30:45] main.py:42 - Application started
+```
+
+---
+
+## Utility Functions Examples
+
+### Timestamps
+```python
+import gleam
+
+gleam.setup()
+gleam.print_with_timestamp("Server started")
+gleam.print_with_timestamp("Processing request")
+```
+
+---
+
+### Visual Separators
+```python
+import gleam
+
+gleam.setup()
+
+print("Section 1")
+gleam.print_separator()
+
+print("Section 2")
+gleam.print_separator('-', 60)
+
+print("Section 3")
+gleam.print_separator('*', 40)
+```
+
+---
+
+### Labeled Output
+```python
+import gleam
+
+gleam.setup()
+
+gleam.print_labeled("INFO", "Application initialized")
+gleam.print_labeled("DEBUG", "Loading configuration")
+gleam.print_labeled("WARN", "Cache miss")
+```
+
+---
+
+### Tables
+```python
+import gleam
+
+gleam.setup()
+
+data = [
+    {"id": 1, "name": "Alice", "score": 95},
+    {"id": 2, "name": "Bob", "score": 87},
+    {"id": 3, "name": "Charlie", "score": 92}
+]
+
+gleam.print_table(data)
+
+# Custom headers
+gleam.print_table(data, headers=["id", "name"])
+```
+
+---
+
+### Before/After Comparisons
+```python
+import gleam
+
+gleam.setup()
+
+gleam.print_diff("Port", 8000, 8080)
+gleam.print_diff("Debug Mode", False, True)
+gleam.print_diff("API Version", "v1", "v2")
+```
+
+---
+
+### Status Messages
+```python
+import gleam
+
+gleam.setup()
+
+gleam.print_info("Starting deployment...")
+gleam.print_success("Deployment completed successfully")
+gleam.print_warning("Some tests were skipped")
+gleam.print_error("Failed to connect to remote server")
+```
+
+---
+
+## Color Scheme
+
+| Element | Color | ANSI Code |
+|---------|-------|-----------|
+| **Regular Text** | Bright Cyan | `\033[96m` |
+| **Integers/Floats** | Blue | `\033[34m` |
+| **Strings** | Green | `\033[32m` |
+| **Booleans** | Bold Green | `\033[1;32m` |
+| **Null/None** | Gray | `\033[90m` |
+| **JSON Keys** | Cyan | `\033[36m` |
+| **Brackets** | White | `\033[37m` |
+| **Functions/Objects** | Bold Magenta | `\033[1;35m` |
+
+---
+
+## Configuration Options
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `environment` | `str` | `'dev'` | Environment mode (`'dev'` or `'prod'`) |
+| `use_colors` | `bool` | `True` | Enable/disable color output |
+| `text_color` | `str` | `'\033[96m'` | ANSI color code for regular text |
+| `log_to_file` | `bool` | `False` | Enable file logging |
+| `log_file_path` | `str` | `None` | Path to log file |
+| `log_only_mode` | `bool` | `False` | Log only to file, not terminal |
+| `json_indent` | `int` | `2` | JSON indentation spaces |
+| `json_max_depth` | `int` | `10` | Maximum JSON nesting depth for viewer |
+
+---
+
+## Complete Usage Example
+
+```python
+from gleam import print
+import gleam
+from gleam.src.config import get_config
+
+# 1. Setup environment
+gleam.setup('dev')  # or gleam.setup('prod')
+
+# 2. Enable file logging
+config = get_config()
+config.enable_file_logging('app.log')
+
+# 3. Regular prints get colors
+print("Starting application...")
+
+# 4. JSON/dict objects get formatted automatically
+config_data = {
+    "database": {
+        "host": "localhost",
+        "port": 5432,
+        "ssl": True
+    },
+    "features": ["auth", "logging"],
+    "debug": False
+}
+print(config_data)
+
+# 5. Arrays get formatted automatically
+items = ["apple", "banana", 42, True, None]
+print(items)
+
+# 6. DataFrames (if using pandas)
+import pandas as pd
+df = pd.DataFrame({
+    "name": ["John", "Jane"],
+    "age": [30, 25]
+})
+print(df)  # Shows colored table
+
+# 7. Functions and objects
+def my_func():
+    pass
+
+print(my_func)  # <function: my_func>
+
+# 8. Force print in production
+gleam.setup('prod')
+print("Hidden")
+print("Visible", force_print=True)
+
+# 9. Interactive JSON viewer
+large_data = {
+    "users": [
+        {"id": 1, "name": "John", "profile": {"age": 30}},
+        {"id": 2, "name": "Jane", "profile": {"age": 25}}
+    ]
+}
+gleam.json_viewer(large_data)  # Interactive navigation
+
+# 10. Customize colors
+gleam.configure(text_color='\033[95m')
+print("Custom colored text")
+
+# 11. Silent file logging
+config.enable_file_logging('silent.log', log_only=True)
+print("Only in file, not terminal")
+
+print("Application ready!")
+```
+
+---
+
+## Error Handling
+
+Gleam preserves error messages, warnings, and tracebacks without modification:
+
+```python
+import gleam
+
+gleam.setup()
+
+# These remain uncolored and unmodified:
+try:
+    1/0
+except Exception as e:
+    print(f"Error: {e}")          # Normal error output
+    print("Warning: Check input")  # Normal warning output
+    print("Traceback info...")     # Normal traceback
+```
+
+**Error Detection:** Gleam automatically detects error-related keywords and skips beautification:
+- `error:`
+- `exception:`
+- `traceback`
+- `warning:`
+- `file "`
+- Python exception types (SyntaxError, TypeError, etc.)
+
+---
+
+## Advanced Features
+
+### Smart User Code Detection
+
+Gleam only beautifies prints from **user code**, not system/library code. It automatically skips:
+- Built-in modules
+- Site-packages
+- Internal Gleam package files
+- Importlib and bootstrap modules
+
+This ensures library debug output remains unchanged.
+
+---
+
+### Terminal Detection
+
+Gleam automatically detects if output is going to a terminal:
+- **TTY (terminal)**: Full colors and formatting applied
+- **Non-TTY (pipes, files)**: Plain text output without ANSI codes
+
+---
+
+### DataFrame Support
+
+Gleam automatically detects and formats:
+- **Pandas DataFrames**
+- **Polars DataFrames**
+
+No additional configuration needed!
+
+---
+
+## Import Patterns
+
+### Pattern 1: Replace built-in print
+```python
+from gleam import print
+import gleam
+
+gleam.setup()
+print("Enhanced!")
+```
+
+### Pattern 2: Use gleam namespace
+```python
+import gleam
+
+gleam.setup()
+print("Enhanced!")  # Built-in print is monkey-patched
+```
+
+### Pattern 3: Explicit function calls
+```python
+import gleam
+
+gleam.setup()
+gleam.print("Using gleam.print directly")
+gleam.print_json({"key": "value"})
+gleam.json_viewer({"data": [1, 2, 3]})
+```
+
+---
+
+## Environment Variables
+
+- `GLEAM_ENV`: Set to `'prod'` or `'dev'` (default: `'dev'`)
+
+```bash
+export GLEAM_ENV=prod
+python your_script.py
+```
+
+---
+
+## Package Structure
+
+```
+gleam/
+├── __init__.py           # Main exports: setup(), print, print_json, json_viewer, configure
+├── _version.py           # Version information
+├── example.py            # Usage examples
+└── src/
+    ├── __init__.py
+    ├── beautify.py       # Core beautification logic
+    ├── config.py         # Configuration management
+    └── json_viewer.py    # JSON formatting and interactive viewer
+```
+
+---
+
+## Tips & Best Practices
+
+1. **Call `setup()` early**: Initialize Gleam at the start of your script
+2. **Use `force_print` sparingly**: Only for critical production logs
+3. **File logging for debugging**: Enable file logging during development
+4. **Silent logging for production**: Use `log_only=True` in production
+5. **Interactive viewer for complex data**: Use `json_viewer()` for nested structures
+6. **Disable in CI/CD**: Set `GLEAM_ENV=prod` or disable colors for CI pipelines
+
+---
+
+## Performance
+
+- **Zero dependencies**: No external packages required
+- **Minimal overhead**: Only processes user code prints
+- **Smart detection**: Automatic format detection without manual configuration
+- **Lazy formatting**: Only formats when needed
+
+---
+
+## License
+
+MIT License
+
+---
+
+## Contributing
+
+Contributions welcome! This is an ultra-lightweight alternative to rich.
+
+---
+
+## Gleam vs Rich
+
+| Feature | Gleam | Rich |
+|---------|-------|------|
+| Dependencies | 0 | Multiple |
+| Setup | One line | More configuration |
+| Auto-detection | ✅ | ❌ |
+| File logging | ✅ | Limited |
+| Environment modes | ✅ | ❌ |
+| Weight | Ultra-light | Heavier |
+
+---
+
+**Made with care for beautiful terminal output**
+
