@@ -1,0 +1,439 @@
+# ==========================================================================================
+# 17. ASSOCIATION RULE MINING
+# ==========================================================================================
+
+import numpy as np
+import pandas as pd
+
+# Market basket analysis: Find frequent itemsets and rules (support, confidence, lift)
+
+# --- Definitions ---
+# Support: P(A,B); freq of (A,B) in dataset
+# Confidence: P(B|A); "if A, how often also B"
+# Lift: P(B|A) / P(B); "A raises chance of B"
+# Conviction: (1-P(B))/(1-P(B|A)); measures association in directionality
+
+# Apriori: Levelwise candidate generation and pruning (based on support)
+# FP-Growth (concept): Tree-based, avoids candidate explosion
+
+# Code sketch for support/confidence/lift:
+market = pd.DataFrame([
+    ['milk', 'bread'],
+    ['milk'],
+    ['bread', 'butter'],
+    ['milk', 'bread', 'butter'],
+], columns=['item1','item2','item3'])
+# Simple:
+from mlxtend.frequent_patterns import apriori, association_rules
+df_bin = market.notnull().astype(int)
+freq = apriori(df_bin, min_support=0.5, use_colnames=True)
+rules = association_rules(freq, metric="lift", min_threshold=1.0)
+# INTERPRET: Rule with lift>1 indicates positive association, but not causality!
+
+# Pitfall: Multiple testing, spurious rules from large item sets (Bonferroni/FDR relevant)
+# Why lift>1 is NOT causality: Could be confounding via third item/feature.
+
+# ==========================================================================================
+# 18. TIME SERIES & TEMPORAL KDD
+# ==========================================================================================
+
+from statsmodels.tsa.stattools import adfuller, kpss, acf, pacf
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from statsmodels.tsa.ar_model import AutoReg
+from statsmodels.tsa.arima.model import ARIMA
+from sklearn.model_selection import TimeSeriesSplit
+
+# --- Stationarity ---
+# Concept: Distribution does not change over time (mean, variance constant)
+# Trend: Long-term increase/decrease
+# Seasonality: Periodic pattern
+# Rolling statistics: Plot rolling mean/std
+
+# Autocorrelation (ACF), Partial autocorrelation (PACF)
+x = np.cumsum(np.random.randn(1000))
+plt.plot(pd.Series(x).rolling(50).mean())
+plt.title('Rolling Mean')
+plt.show()
+acf_vals = acf(x, nlags=20)
+pacf_vals = pacf(x, nlags=20)
+plt.stem(acf_vals)
+plt.title('ACF')
+plt.show()
+plt.stem(pacf_vals)
+plt.title('PACF')
+plt.show()
+
+# Augmented Dickey-Fuller Test
+adf_stat, pval, _, _, crit_vals, _ = adfuller(x)
+# Null: Time series is nonstationary (unit root present). p < 0.05 => reject (stationary).
+# KPSS Test (reverse null): statsmodels.tsa.stattools.kpss
+
+# --- Models (conceptual + code) ---
+# AR: Autoregressive Y_t = a + bY_{t-1} + error
+ar_model = AutoReg(x, lags=1).fit()
+arima = ARIMA(x, order=(1,0,0)).fit()
+# MA: Moving Average model: Y_t depends on current and past noise.
+# ARIMA: Combines AR, differencing (I), MA; SARIMA adds seasonal terms
+
+# --- Temporal Cross-Validation ---
+tscv = TimeSeriesSplit(n_splits=5)
+# Standard random splits invalid: future data leaking into training set!
+# Proper split respects temporal order.
+
+# ==========================================================================================
+# 19. CONCEPT DRIFT & DATA EVOLUTION
+# ==========================================================================================
+
+from scipy import stats
+
+# Data drift: Distribution of predictors changes (P(X)), but labels mapping may stay
+# Concept drift: Distribution of mapping P(y|X) changes (target concept moves)
+
+# Covariate shift: P(X) changes, P(y|X) unchanged. Label shift: P(y) changes.
+# Detection: Compare feature distribution across time slices
+
+# KS-test for drift:
+X = np.random.randn(100, 5)
+split = len(X)//2
+stat, p = stats.ks_2samp(X[:split, 0], X[split:, 0])
+# p<0.05: Feature drift
+
+# PSI: Population Stability Index (sum over bins of (pi - qi) * log(pi/qi))
+def psi(a, b, bins=10):
+    a_bins = np.histogram(a, bins=bins)[0] / len(a)
+    b_bins = np.histogram(b, bins=bins)[0] / len(b)
+    psi_val = np.sum((a_bins - b_bins) * np.log((a_bins + 1e-8) / (b_bins + 1e-8)))
+    return psi_val
+# .1-0.25: moderate shift. >.25: large shift
+
+# Visual drift: Use histograms, KDEs over time slices.
+
+# Impact: Deployed model performance degrades.
+# Exam: Retraining is necessary; monitor performance vs time.
+
+# ==========================================================================================
+# 20. INFORMATION THEORY
+# ==========================================================================================
+
+from sklearn.metrics import mutual_info_score
+from scipy.special import rel_entr
+
+# Entropy: H(X) = -sum p(x) log p(x)
+y = np.random.randint(0, 2, size=100)
+px = np.bincount(y) / len(y)
+entropy_x = -np.sum(px * np.log2(px + 1e-8))
+
+# Conditional entropy: Not in stdlib; H(X|Y) = H(X,Y) - H(Y)
+
+# Mutual Information: MI(X,Y) = sum p(x,y) log(p(x,y)/p(x)p(y))
+# Use for feature selection.
+mi_val = mutual_info_score(y, np.random.randint(0, 2, size=len(y)))
+
+# Information gain: reduction in entropy (used in decision trees for splitting)
+
+# KL divergence: KL(p||q) = sum p(x) log(p(x)/q(x)); non-symmetric
+p = np.array([0.4, 0.6])
+q = np.array([0.5, 0.5])
+kl = np.sum(rel_entr(p, q))
+
+# Exam: Decision trees select splits maximizing information gain (MI/IG).
+# KL is not symmetric: KL(p||q) != KL(q||p).
+
+# ==========================================================================================
+# 21. MATHEMATICAL FORMALISM & ASSUMPTIONS
+# ==========================================================================================
+
+# IID assumption: All examples independent and from same distribution
+# Violation (counterexample): time series, grouped samples
+
+# Exchangeability: Joint distribution unchanged under permutations
+# Stronger than IID, but not always required (e.g., Bayesian stats)
+
+# Independence vs uncorrelated: Uncorrelated means zero covariance; independence is much stronger.
+# Example: x ~ N(0,1), y = x^2; Cov(x,y) = 0 but clearly not independent
+
+# Identifiability: Uniqueness of parameter estimates given data distribution.
+# Ill-posed: No unique solution (e.g., k>n in regression, or clustering label matching)
+
+# Counterexample: Clustering labels can always be permuted (label switching).
+
+# ==========================================================================================
+# 22. ETHICS, FAIRNESS & RESPONSIBLE KDD
+# ==========================================================================================
+
+# Bias sources: Sampling bias (sample ≠ population), measurement bias (instruments/labels), algorithmic bias (model amplifies inequalities)
+
+# Demographic parity: P(pred=1 | group=0) = P(pred=1 | group=1)
+# Equalized odds: P(pred=1 | Y=1, group=0) = P(pred=1 | Y=1, group=1) (conceptual)
+
+# Removing sensitive features does not ensure fairness (proxies remain)
+
+# Fairness/accuracy tradeoff: Mitigating bias can reduce accuracy
+
+# ==========================================================================================
+# 23. COMPUTATIONAL CONSIDERATIONS
+# ==========================================================================================
+
+# Time complexity (Big-O):
+# - K-Means: O(nkd), n=samples, k=clusters, d=dimensions, per iteration
+# - Agglomerative: O(n^3)
+# - DBSCAN: O(n log n) to O(n^2)
+# - PCA: O(nd^2 + d^3) for SVD
+# Memory complexity: Linear in n for most models; quadratic for distance matrices, SVD
+
+# Scalability: Some models (hierarchical, kernel methods, t-SNE) infeasible for large n or d.
+
+# Approximate methods: MiniBatchKMeans, random projections
+
+# Exam: If n or d exceeds memory, use incremental/approximate algorithms.
+
+# ==========================================================================================
+# 25. PROBABILITY THEORY FOUNDATIONS
+# ==========================================================================================
+
+# -- Joint Probability P(X, Y) --
+# Definition: Probability that events X and Y both occur.
+# Example:
+# P(X=1, Y=1): Probability that X=1 AND Y=1.
+p_joint = 0.12   # Eg: P(X=rain, Y=traffic) = 0.12
+
+# -- Marginalization --
+# Summing (discrete) or integrating (continuous) joint probabilities over one variable.
+# Example: P(X) = sum_y P(X, Y=y)
+# For table:
+#   Y=0    Y=1   marg_X
+# X=0 .10   .20   .30
+# X=1 .18   .12   .30
+
+# -- Conditional Probability --
+# P(A|B) = P(A, B) / P(B)
+# Eg: P(Rain | Traffic) = P(Rain AND Traffic) / P(Traffic)
+
+# -- Bayes Theorem --
+# P(A|B) = P(B|A) * P(A) / P(B)
+# Eg: The probability of being sick given a positive test
+p_a_given_b = 0.8 * 0.01 / 0.06  # Hypothetical values
+
+# -- Likelihood vs Posterior --
+# Likelihood: L(theta|data) = P(data|theta) -- not a probability distribution in theta, just a function of theta.
+# Posterior: P(theta|data) -- a probability distribution (via Bayes theorem)
+#      Posterior ∝ Likelihood × Prior
+
+# -- MLE vs MAP Estimation --
+# MLE: Choose parameter maximizing likelihood (ignores prior).
+# MAP: Choose parameter maximizing posterior (includes prior).
+# Example: Estimate mean of Normal with/without prior.
+data = np.array([1.2, 0.9, 1.4])
+# MLE: mean(data)
+# MAP: mean "shrunk" toward prior mean with prior precision.
+# In practice, MLE = frequentist (no prior), MAP = Bayesian point estimate.
+
+# -- Independence vs Conditional Independence --
+# X independent of Y: P(X|Y) = P(X)
+# X independent of Y given Z: P(X|Y,Z) = P(X|Z)
+# Example: Height (X) and shoe size (Y) may be conditionally independent given gender (Z).
+
+# -- Why Naive Bayes 'works despite being wrong' --
+# Assumes conditional independence of features (rare in real data).
+# Despite misspecification, often works because:
+# - Wrong model of P(X|Y), but argmax_y P(Y|X) is still correct if ranking is preserved.
+# - Aggregates weak evidence across features robustly.
+
+# -- Why likelihood is not a probability --
+# - For fixed data, likelihood is a function of parameters (not a probability distribution, does not integrate/sum to 1 over theta)
+
+# ==========================================================================================
+# 26. SAMPLING, EXPERIMENTAL DESIGN & POWER
+# ==========================================================================================
+
+# -- Random Sampling vs Biased Sampling --
+# Random: Each population unit equally likely chosen.
+# Biased: Systematic exclusion/inclusion (e.g., only hospital patients in health study).
+# Consequence: Biased samples invalidate inference to target population.
+
+# -- Stratified Sampling --
+# Sample separately within specified strata (e.g., by age group), ensures representation.
+# Example:
+df = pd.DataFrame({'age_grp': ['young','old','young','old'], 'value':[1.1,0.9,1.2,1.5]})
+df.groupby('age_grp').apply(lambda x: x.sample(1, random_state=0))
+
+# -- Sampling Variance --
+# Variability of sample statistics across repeated samples.
+
+# -- Law of Large Numbers --
+# Sample mean converges to population mean as n→∞.
+# Implication: Estimation improves with more data.
+
+# -- Effect Size --
+# Quantifies magnitude of difference (e.g., Cohen's d).
+def cohens_d(x, y):
+    nx = len(x)
+    ny = len(y)
+    pooled_std = np.sqrt(((nx - 1) * np.var(x, ddof=1) + (ny - 1) * np.var(y, ddof=1)) / (nx + ny - 2))
+    d = (np.mean(x) - np.mean(y)) / pooled_std
+    return d
+
+# -- Statistical Power (Concept) --
+# Probability to detect effect if real effect exists (1 - Type II error).
+# Depends on effect size, n, alpha, variance.
+
+# -- A/B Testing Workflow --
+# 1. Randomly split into control/treatment
+# 2. Choose outcome metric
+# 3. Compute test statistic (e.g., t-test)
+# 4. Interpret p-value
+# 5. Avoid peeking multiple times (inflates Type I error)
+
+# -- Large samples make trivial effects significant --
+# As n increases, standard error shrinks, so even minuscule differences get p<0.05.
+# Always report *effect size* with significance.
+
+# -- Observational ≠ Experimental --
+# Observational: No random assignment -- confounding possible.
+# Experimental: Randomized intervention; can attribute causality if design is sound.
+
+# ==========================================================================================
+# 27. MULTIPLE HYPOTHESIS TESTING
+# ==========================================================================================
+
+from scipy import stats
+
+# -- Bonferroni Correction --
+# alpha' = alpha / n_tests
+# Test each hypothesis at alpha' to keep global Type I error ≤ alpha.
+pvals = [0.01, 0.04, 0.02]
+rej, p_bonf, _, _ = stats.multitest.multipletests(pvals, method='bonferroni')  # see statsmodels.stats.multitest
+# Pitfall: Very stringent, reduces power.
+
+# -- Holm–Bonferroni --
+# Sequentially reject lowest p first; less conservative.
+rej, p_holm, _, _ = stats.multitest.multipletests(pvals, method='holm')
+
+# -- Benjamini–Hochberg FDR --
+# Controls expected proportion of false discoveries (not family-wise Type I error).
+rej, p_bh, _, _ = stats.multitest.multipletests(pvals, method='fdr_bh')
+# Preferred in large-scale tests (e.g., genomics).
+# Data mining is vulnerable: many tests, so many false positives unless corrected.
+
+# -- Why p-values inflate --
+# By chance, ~alpha (e.g., 5%) of nulls will be "significant"; this is multiplicity problem.
+
+# ==========================================================================================
+# 28. DISTANCE METRICS & DATA GEOMETRY
+# ==========================================================================================
+
+from scipy.spatial.distance import mahalanobis
+
+# Euclidean distance: d(x, y) = sqrt(sum((xi - yi)^2))
+# Scaling sensitive; default for clustering/KNN.
+x = np.array([1,2])
+y = np.array([3,4])
+eucl = np.linalg.norm(x-y)
+
+# Manhattan (L1): d(x, y) = sum(|xi-yi|); less sensitive to outliers.
+manh = np.sum(np.abs(x-y))
+
+# Mahalanobis distance: Scales for covariance matrix; d(x, y) = sqrt((x-y)' S^{-1} (x-y))
+V = np.cov(np.stack([x,y]))
+mah = mahalanobis(x, y, np.linalg.inv(V))
+
+# Cosine similarity: sim(x, y) = x.y / (|x||y|)
+cos_sim = np.dot(x, y) / (np.linalg.norm(x) * np.linalg.norm(y))
+
+# When distance loses meaning:
+# - High d: all distances converge (curse of dimensionality)
+# - Correlated or heterogeneously scaled dimensions distort metrics
+
+# Scaling: Standardize before distance-based ML
+
+# ==========================================================================================
+# 29. KERNEL METHODS & SVM FORMALISM
+# ==========================================================================================
+
+# -- Kernel trick --
+# Replace dot products with kernel functions (K(x, x')) to operate in implicit high-dimensional space.
+# Allows linear methods to find nonlinear boundaries.
+
+# -- Linear vs RBF kernel --
+# Linear: K(x, y) = x'y
+# RBF: K(x, y) = exp(-γ||x-y||^2), measures similarity in Gaussian sense
+# Larger γ => narrower kernel (overfitting risk)
+
+# -- Role of C (SVM soft margin parameter) --
+# High C = low bias, high variance (less regularization)
+# Low C = high bias, low variance (more regularization)
+
+# -- Margin maximization --
+# SVM finds boundary with maximum margin between classes.
+
+# -- Why kernels implicitly increase dimensionality --
+# Inner products apply in feature spaces possibly infinite-dimensional but do not require explicit computation.
+
+# -- Overfitting with SVM --
+# Too large γ: memorizes data; too high C: ignores misclassifications, both risk overfitting.
+
+# ==========================================================================================
+# 30. OPTIMIZATION & REGULARIZATION THEORY
+# ==========================================================================================
+
+# -- Convex Optimization --
+# Cost function has single global minimum.
+# Linear/lasso/ridge regression: convex; deep networks: non-convex
+
+# -- Gradient Descent vs Closed-form --
+# Closed-form: Analytical solution (e.g., OLS: w = (X'X)^{-1}X'y)
+# Gradient descent: Iterative; needed for large-scale, L1 regularization, or non-convex
+
+# -- L1 vs L2 regularization --
+# L1 (lasso): Penalizes sum(abs(w)); produces zeros (sparsity, feature selection)
+# L2 (ridge): Penalizes sum(w^2); shrinks but never zeros
+
+# -- Bias–variance via regularization --
+# More regularization increases bias, lowers variance.
+# Lasso: Set coefficients to zero (sparse, selected set).
+# Ridge: Shrinks coefficients toward zero (none exactly zero).
+
+# -- Why Lasso performs feature selection --
+# L1 penalty's "corners" make solution stick at zero
+
+# -- Why Ridge never zeros --
+# L2 penalty "smooth"; always produces small but nonzero weights unless feature is perfectly collinear with others.
+
+# ==========================================================================================
+# 31. PROBABILISTIC GRAPHICAL MODELS (CONCEPTUAL)
+# ==========================================================================================
+
+# -- Bayesian Networks --
+# DAG representing variables (nodes) and conditional dependencies (edges)
+# Each variable is conditionally independent of its non-descendants given its parents
+
+# -- Conditional independence --
+# Structure encodes which variables are independent given others
+
+# -- d-separation --
+# Graphical test: a path is "blocked" given a set of nodes, so variables are conditionally independent.
+
+# -- Relation to causality --
+# Edges suggest (but do not prove) direct influence; conditional independence matches absence of edge.
+
+# -- Why graphs encode assumptions, not truth --
+# Structure is modeler's hypothesis; may not hold in reality (hidden variables, direction error, omitted confounding)
+
+# ==========================================================================================
+# 32. GENERALIZATION & DISTRIBUTION SHIFT
+# ==========================================================================================
+
+# -- In-sample vs Out-of-sample --
+# In-sample: Data seen during training.
+# Out-of-sample: New, unseen (generalization)
+
+# -- Dataset shift taxonomy --
+# Covariate shift: Input distribution P(X) changes
+# Label shift: Output P(y) changes
+# Concept drift: Mapping P(y|X) changes
+
+# -- Failure modes --
+# Overfit on past data, poor future performance if underlying distribution shifts.
+
+# -- Robust evaluation strategies --
+# Use time splits, permutation tests, external validation, repeated cross-validation
