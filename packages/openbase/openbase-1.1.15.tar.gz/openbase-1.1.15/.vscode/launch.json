@@ -1,0 +1,31 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "CLI: Uvicorn",
+            "consoleName": "CLI: Uvicorn",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": "openbase.config.asgi:application --host 0.0.0.0 --port 8001 --reload",
+            "django": true,
+            "justMyCode": false,
+            "preLaunchTask": "CLI: React Dev",
+            "env": {
+                "DEBUG": "1",
+                "OPENBASE_PROJECT_DIR": "${workspaceFolder}/../test-projects/${config:openbase.testProjectName}"
+            }
+        },
+        {
+            "name": "CLI: Init",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "openbase",
+            "args": "init",
+            "cwd": "${workspaceFolder}/../test-projects/${config:openbase.testProjectName}",
+            "python": "${workspaceFolder}/../web/venv/bin/python",
+            "justMyCode": false,
+            "preLaunchTask": "CLI: Clean Test Project Directory"
+        }
+    ]
+}

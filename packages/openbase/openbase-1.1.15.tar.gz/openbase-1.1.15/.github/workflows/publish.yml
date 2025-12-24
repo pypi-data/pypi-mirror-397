@@ -1,0 +1,49 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - "v*" # Only runs on version tags like v1.0.0
+
+jobs:
+  publish-pypi:
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.13"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "22"
+
+      - name: Build React app
+        run: |
+          # Install dependencies and build
+          cd ./react
+          npm install
+          npm run build
+          cd ..
+
+      - name: Install build tools
+        run: pip install build twine hatch
+
+      - name: Build PyPI package
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          SETUPTOOLS_SCM_PRETEND_VERSION=$VERSION hatch build
+
+      - name: Publish to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: twine upload dist/*
