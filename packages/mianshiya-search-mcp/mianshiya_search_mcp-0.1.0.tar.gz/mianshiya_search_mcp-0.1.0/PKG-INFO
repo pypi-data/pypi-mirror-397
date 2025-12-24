@@ -1,0 +1,64 @@
+Metadata-Version: 2.4
+Name: mianshiya-search-mcp
+Version: 0.1.0
+Summary: 面试鸭题目搜索 MCP 服务器
+Project-URL: Homepage, https://github.com/co-pine/mianshiya-search-mcp
+Project-URL: Repository, https://github.com/co-pine/mianshiya-search-mcp
+Author: pine
+License-Expression: MIT
+Keywords: interview,mcp,mianshiya,面试题,面试鸭
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Requires-Python: >=3.10
+Requires-Dist: httpx>=0.27.0
+Requires-Dist: mcp>=1.0.0
+Description-Content-Type: text/markdown
+
+# 面试鸭题目搜索 MCP 服务器
+
+基于 MCP 协议的面试鸭题目搜索服务器，使用 Python 实现。
+
+## 工具
+
+### question_search
+
+根据搜索词搜索面试鸭面试题目。
+
+- **输入**: `search_text` - 搜索关键词
+- **输出**: 面试鸭搜索结果的题目链接列表（最多5条）
+
+## 安装
+
+```bash
+uv sync
+```
+
+## 在 Cursor 中使用
+
+在 Cursor 的 MCP 配置文件中添加：
+
+```json
+{
+  "mcpServers": {
+    "mianshiya-search": {
+      "command": "uv",
+      "args": [
+        "--directory",
+        "/path/to/mianshiya-search-mcp",
+        "run",
+        "mianshiya-search-mcp"
+      ]
+    }
+  }
+}
+```
+
+请将 `/path/to/mianshiya-search-mcp` 替换为实际的项目路径。
+
