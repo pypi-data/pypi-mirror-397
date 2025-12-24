@@ -1,0 +1,177 @@
+#!/bin/bash
+
+# check the options
+if [ $# -eq 1 ]; then
+  HELP=$1
+  help="${HELP,,}"
+fi
+
+if [ "$1" == "" ] || [ "$help" == "-h" ] || [ "$help" == "--help" ]; then
+#if [ "$1" == "" ] || [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+cat <<EOF
+
+///////////////////////////////////////////////////////////////////////////////////
+//                                                                               //
+//   Workflow for running Gromacs MD jobs for complex multicomponent systems     //
+//   by Dr Andrey Brukhno (c) 2020-2025, Daresbury Laboratory, SCD, STFC, UKRI   //
+//                                                                               //
+///////////////////////////////////////////////////////////////////////////////////
+
+- Cluster analysis for solute species based on .gro and .xtc files
+
+=============
+ Main usage:
+=============
+
+> ${0##*/} -h
+> ${0##*/} --help
+> ${0##*/} <task_name> [<species_name>]
+
+Prerequisites: <task_name>_noSOL.mdp and <task_name>_noSOL.top for the system without water
+
+Example: ${0##*/} SDS80-NAT80-wTIP3-eq6 SDS
+
+EOF
+   exit 0
+fi
+
+TNAME="$1"
+
+## required: *mdp no water, *top no water
+
+if [ ! -f ${TNAME}_noSOL.mdp ]; then
+
+  if [ -f ${TNAME}.mdp ]; then
+    cp -v ${TNAME}.mdp ${TNAME}_noSOL.mdp
+  else
+    echo
+    echo "Input file '${TNAME}.mdp' (-> ${TNAME}_noSOL.mdp') not found - FULL STOP!"
+    echo
+    exit $status
+  fi
+
+  status=$?
+  if [ $status -ne 0 ]; then
+
+    echo
+    echo "Error upon doing 'cp -v ${TNAME}.mdp ${TNAME}_noSOL.mdp' - FULL STOP!"
+    echo
+    exit $status
+  fi
+
+fi
+
+if [ ! -f ${TNAME}_noSOL.top ]; then
+
+  # by default, take the 3 leading charaters of the TNAME as the name of molecules for cluster analysis
+  CMOL=$(echo "$TNAME" | sed 's/.//4g')
+
+  if [ $# -gt 1 ]; then
+    # alternatively, the second parameter of the script is the name of molecules for cluster analysis
+    CMOL="$2"
+  fi
+
+  if [ -f ${TNAME}.top ]; then
+
+    echo
+    echo "Converting '${TNAME}.top$' -> '${TNAME}_noSOL.top' for species '${CMOL}'"
+    echo
+
+    # comment out all the lines in the original .top file that correspond to molecules not needed for analysis
+
+    #sed '/^TIP\|^SOL\|^SPC\|TIP3.itp\|spc.itp\|spce.itp\|SOL.itp/s/^/;/' ${TNAME}.top > ${TNAME}_noSOL.top
+
+    # make sure only the absolutely unnecessary (and uncommented as yet) lines are commented out
+
+    sed '/^'"${CMOL}"'\|'"${CMOL}.itp"'\|'"forcefield.itp"'\|'"\[ "'\|^$\|^'";"'/!s/^/'";"'/g' ${TNAME}.top > ${TNAME}_noSOL.top
+
+  else
+    echo
+    echo "Input file '${TNAME}.top' (-> ${TNAME}_noSOL.top') not found - FULL STOP!"
+    echo
+    exit $status
+  fi
+
+fi
+
+## create .gro file containing only the molecules for cluster analysis
+
+if [ ! -f ${TNAME}-CC_noSOL.gro ]; then
+
+  # presuming that the molecules for cluster analysis correspond to the second entry (species) in the original .ndx and .tpr files
+
+  gmx trjconv -f ${TNAME}.gro -s ${TNAME}.tpr -pbc cluster -center -o ${TNAME}-CC_noSOL.gro  <<+
+2 2 2
++
+
+  status=$?
+  if [ $status -ne 0 ]; then
+
+    echo
+    echo "Error upon doing 'gmx trjconv -f ${TNAME}.gro -s ${TNAME}.tpr -pbc cluster -center -o ${TNAME}-CC_noSOL.gro [2 2 2]'"
+    echo
+    exit $status
+  fi
+
+fi
+
+## create .xtc file containing only the molecules for cluster analysis
+
+if [ ! -f ${TNAME}-CC_noSOL.xtc ]; then
+
+  # presuming that the molecules for cluster analysis correspond to the second entry (species) in the original .ndx and .tpr files
+
+  gmx trjconv -f ${TNAME}.xtc -s ${TNAME}.tpr -pbc cluster -center -o ${TNAME}-CC_noSOL.xtc <<+
+2 2 2
++
+
+  status=$?
+  if [ $status -ne 0 ]; then
+
+    echo
+    echo "Error upon doing 'gmx trjconv -f ${TNAME}.xtc -s ${TNAME}.tpr -pbc cluster -center -o ${TNAME}-CC_noSOL.xtc [2 2 2]'"
+    echo
+    exit $status
+  fi
+
+fi
+
+## gro + xtc no water are clustered & centered: good to view in VMD
+
+## create tpr no water
+
+if [ ! -f ${TNAME}-noSOL.tpr ]; then
+
+  gmx grompp -f ${TNAME}_noSOL.mdp -c ${TNAME}-CC_noSOL.gro -p ${TNAME}_noSOL.top -o ${TNAME}_noSOL.tpr -maxwarn 4
+
+  status=$?
+  if [ $status -ne 0 ]; then
+
+    echo
+    echo "Error ($status) upon doing 'gmx grompp -f ${TNAME}_noSOL.mdp -c ${TNAME}-CC_noSOL.gro -p ${TNAME}_noSOL.top -o ${TNAME}_noSOL.tpr -maxwarn 4'"
+    echo
+    exit $status
+  fi
+
+fi
+
+## run cluster size analysis on the re-centered trajectory where only relevant molecules are present
+
+gmx clustsize -s ${TNAME}_noSOL.tpr -f ${TNAME}-CC_noSOL.xtc  -mol -nc ${TNAME}.nclust.xvg -mc ${TNAME}.maxclust.xvg -hc ${TNAME}.histo-clust.xvg -cut 0.5
+
+status=$?
+if [ $status -ne 0 ]; then
+
+  echo
+  echo "Error upon doing 'gmx clustsize -s ${TNAME}_noSOL.tpr -f ${TNAME}-CC_noSOL.xtc  -mol -nc ${TNAME}.nclust.xvg -mc ${TNAME}.maxclust.xvg -hc ${TNAME}.histo-clust.xvg -cut 0.5'"
+  echo
+  exit $status
+fi
+
+#rm maxclust.ndx temp.xvg avclust.xvg csize.xpm csizew.xpm histo-clust.xvg
+#del#
+
+echo
+echo "gmx-clusters.bsh - DONE"
+echo
+

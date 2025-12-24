@@ -1,0 +1,136 @@
+Metadata-Version: 2.4
+Name: Shapespyer
+Version: 0.2.4
+Summary: Python toolkit for generation and equilibration of complex soft matter systems
+Project-URL: Homepage, https://gitlab.com/simnavi/shapespyer
+Project-URL: Repository, https://gitlab.com/simnavi/shapespyer.git
+Author-email: Andrey Brukhno <andrey.brukhno@stfc.ac.uk>, Michael Seatom <michael.seaton@stfc.ac.uk>, Valeria Losasso <valeria.losasso@stfc.ac.uk>, Mariam Demir <mariam.demir@stfc.ac.uk>, Saul Beck <saul.beck@stfc.ac.uk>, Ales Kutsepau <ales.kutsepau@ess.eu>
+License-File: LICENSE
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Science/Research
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Topic :: Scientific/Engineering
+Requires-Python: >=3.10
+Requires-Dist: docopt>=0.6.2
+Requires-Dist: matplotlib>=3.8
+Requires-Dist: numpy>=2.0.2
+Requires-Dist: pandas>=2.3.0
+Requires-Dist: platformdirs>=4.3.8
+Requires-Dist: pooch>=1.8.2
+Requires-Dist: psutil>=7.0.0
+Requires-Dist: pyyaml>=6.0.2
+Requires-Dist: scipy>=1.15.3
+Requires-Dist: tqdm>=4.67.1
+Requires-Dist: typeguard>=4.4.4
+Provides-Extra: extras
+Requires-Dist: ipywidgets>=8.1.7; extra == 'extras'
+Requires-Dist: jupyter>=1.1.1; extra == 'extras'
+Requires-Dist: mdtraj; extra == 'extras'
+Requires-Dist: nglview>3.1.4; extra == 'extras'
+Description-Content-Type: text/markdown
+
+This package includes Python tools and Bash shell scripts for preparation,
+running and analyses of soft matter simulations.
+
+### [**Shapespyer documentation with examples and tutorials**](https://simnavi.gitlab.io/shapespyer.io/)
+
+Key functionality:
+==================
+* Main toolkit: Python package for generation of ordered molecular aggregates 
+  and pre-assembled composite structures to seed molecular dynamics (MD) simulations
+  aimed at studying equilibration (relaxation) processes in soft matter and
+  biomolecular systems.
+
+* Bash scripts for automated workflows for preparation and running simulations 
+  using *Gromacs, NAMD, DL_POLY or DL_MESO MD* engines (MC via DL_MONTE to be added).
+
+* Scripts (Python and Bash) for semi-automated analyses of cluster formation 
+  and evolution, including cluster number and size distributions, but also 
+  radii of gyration and principal moments of inertia.
+
+* Parsing SMILES strings (from 'smiles.sml') and generating 3D chemical structures
+
+From the outset, the Shapespyer project has been kindly supported by 
+[the Ada Lovelace Centre](https://adalovelacecentre.ac.uk/) 
+for expertise in scientific software, research software engineering and data management.
+
+![ALC-UKRI-SCD-ISIS-Diamond-logos](./docs/images/ALC-SCD-STFC-UKRI-ISIS-Diamond_790x110.png)
+
+Partners
+========
+International:
+--------------
+**Hanna Barriga**, KTH, Sweden (*nanoscale structure and dynamics in biological processes*)
+
+**Margaret Holme**, Chalmers, Sweden (*self assembled lipid structures for biomedical applications*)
+
+**Karen Edler**, Lund University, Sweden (*functional hierarchically structured materials*)
+
+**SasView & SASSIE teams** (*SAS calculations based on MD trajectories*)
+
+National (UK):
+--------------
+**Jian Lu**, Biological Physics, Manchester University (*bio- and soft matter physics, self-assembly, interfaces*)
+
+**Lorna Dougan**, School of Physics and Astronomy, University of Leeds (*hierarchical biomechanics, extreme biophysics*)
+
+**Valeria Losasso**, Computational Biology group, SCD, DL, STFC (*lipid bilayers, multi-lamellae*)
+
+**Tom Headen**, ISIS, RAL (*coarse-grained SAS calculations based on molecular dynamics simulations*)
+
+**SAS and Reflectometry beamlines**, ISIS, RAL (*SAS and Reflectometry experiments*)
+
+Project description
+===================
+Started in April 2020, the Shapespyer project is a thriving collaboration between SCD, ISIS 
+and Diamond, funded by and developed under the umbrella of the Ada Lovelace Centre (ALC), 
+aiming to support and facilitate interdisciplinary research by bridging between theoretical 
+analysis, computer simulation and experimental studies. 
+
+The primary goal of the project is to equip Small Angle Scattering (SAS) experimentalists 
+at ISIS and Diamond facilities in RAL with a set of simulation and analytical protocols 
+allowing for the verification of hypotheses and theoretical models of complex molecular 
+nanoaggregates via direct correlation of SAS experiments to detailed computer simulations.
+
+In turn, it is anticipated that this would facilitate the automation of common, routine, 
+tasks associated with the creation, simulation and analysis of complex multicomponent 
+aggregates, which would both simplify and standardise the use of simulations in analyses 
+of SAS experiments. With this in mind, the Shapespyer software package has been 
+developed as an experimentalist-oriented Python framework providing a straightforward 
+workflow to facilitate the analysis of self-assembled nanostructures, ubiquitous in 
+soft condensed matter, and specifically those with biomolecular applications.
+
+Background
+==========
+In the domain of functional soft matter and biomolecular simulation, the task of preparing 
+complex molecular structures of interest is both challenging and tedious. The naive approach 
+using an initial configuration with randomised positions of solute molecules is most often 
+fruitless due to the complexity of the (unknown) pathways that lead to self-assembly of any 
+particular shape of a molecular aggregate. Unfortunately, pre-equilibration into and further 
+relaxation of a specific molecular complex can easily require simulation times way beyond what 
+is reachable in a practical simulation scenario. Therefore, it is vital to have efficient tools 
+facilitating the generation and initial equilibration of pre-assembled molecular complexes with 
+predetermined composition and structure. 
+
+Concept
+=======
+Taking a number of sample (template) molecules as inputs, automatically generate a predefined 
+larger, possibly multicomponent, structure that could be used as input for molecular dynamics (MD) 
+or Monte Carlo (MC) simulations carried out on virtually any computing platform. The results from 
+these calculations include equilibrated structures and trajectories that can be analysed and 
+compared with results from small angle scattering (SAS) experiments.​
+
+Illustrations
+=============
+
+![Shapespyer - Supported structures](./docs/images/SMILES_examples0.png)
+
+![Shapespyer - Supported structures](./docs/images/SHAPES_examples0.png)
+
+Diagrams
+========
+
+![Shapespyer - Workflow diagram](./docs/images/Shapespyer_Workflow_diagram-2025.jpg)
+
+![Shapespyer - SAS calculations](./docs/images/SAS-calcs_diagram-2024_1120x660.jpg)

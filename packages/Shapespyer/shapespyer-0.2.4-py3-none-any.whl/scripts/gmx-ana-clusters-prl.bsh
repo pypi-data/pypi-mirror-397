@@ -1,0 +1,335 @@
+#!/bin/bash
+
+# check the options
+if [ $# -eq 1 ]; then
+  HELP=$1
+  help="${HELP,,}"
+fi
+
+if [ "$1" == "" ] || [ "$help" == "-h" ] || [ "$help" == "--help" ]; then
+#if [ "$1" == "" ] || [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+cat <<EOF
+
+///////////////////////////////////////////////////////////////////////////////////
+//                                                                               //
+//   Workflow for running Gromacs MD jobs for complex multicomponent systems     //
+//   by Dr Andrey Brukhno (c) 2020-2025, Daresbury Laboratory, SCD, STFC, UKRI   //
+//                                                                               //
+///////////////////////////////////////////////////////////////////////////////////
+
+- Post-simulation cluster analysis for solute species based on .gro and .xtc files
+- The analysis is carried out piece-wise on the trajectory split into portions
+
+============
+ Main usage
+============
+
+> ${0##*/} -h
+> ${0##*/} --help
+> ${0##*/} [-nohup] [-rcut <r_cut>] [-par/-prl <n_threads>] <task_name> [<species>]
+
+-----------------
+ optional switch
+-----------------
+ -nohup     - execute in the background, i.e. release the command-line upon launching
+ -rcut      - specify max distance (nm) between molecules to be included in a cluster
+ -par/-prl  - execute in parallel mode on <n_threads> CPU cores/threads
+              the analysis is done piece-wise over <n_threads> trajectory portions
+              NOTE: if the flag and number are omitted, it will execute in serial mode
+
+---------------------
+ mandatory parameter
+---------------------
+ task_name  - the base file name excluding file extension(s)
+
+--------------------
+ optional parameter
+--------------------
+ species    - name of the solute species (cluster) in the <task_name>.ndx file
+
+===============
+ Prerequisites 
+===============
+ The following files must be found in the current directory:
+
+ <task_name>.mdp / <task_name>_noSOL.mdp (system without solvent)
+ <task_name>.top / <task_name>_noSOL.top (system without solvent)
+ <task_name>.tpr
+ <task_name>.gro
+
+---------
+Examples:
+---------
+1. Running in parallel on 16 threads
+ ${0##*/} -rcut 0.3 -par 16 SDS80-NAT80-wTIP3-eq6 SDS
+
+2. Running in serial mode where the three first letters of <task_name> are taken as <species>
+ ${0##*/} -rcut 0.5 SDS80-NAT80-wTIP3-eq6
+
+EOF
+   exit 0
+fi
+
+# Re-spawn as a background process, if we haven't already.
+if [ "$1" == "-nohup" ]; then
+    nohup "$0" "${@:2}" &
+    exit $?
+fi
+
+echo
+echo "////////////////////////////////////////////////////////////////////////////////"
+echo "//                                                                            //"
+echo "//   Workflow for Gromacs MD simulations for complex multicomponent systems   //"
+echo "//   Post-simulation cluster analysis in serial or parallel mode              //"
+echo "//   by Dr Andrey Brukhno - 2020-2023, Daresbury Laboratory, SCD, STFC, UKRI  //"
+echo "//                                                                            //"
+echo "////////////////////////////////////////////////////////////////////////////////"
+echo
+echo
+
+RCUT="0.5"
+
+if [[ "$1" == "-rcut" || "$1" == "-cut" ]]; then
+  shift
+  RCUT="$1"
+  shift
+fi
+
+# first, check for parallel trajectory task-farming parameters
+
+PMODE="sql"
+let "NPROC = 1"
+let "NFRMS = 0"
+
+if [[ "$1" == "-prl" || "$1" == "-par" ]]; then
+
+    PMODE="prl"
+    shift
+    let "NPROC = $1"
+    shift
+
+    if [[ $NPROC -lt 1 || $NPROC -gt $(nproc) ]]; then
+      echo
+      echo "Required # of threads = $NPROC is smaller than the max available = $(nproc) - FULL STOP!"
+      echo
+      exit 1
+
+      #echo
+      #echo "Required # of threads = $NPROC is unsafe, so assuming the max available = $(nproc) ..."
+      #echo
+      #let "NPROC = $(nproc)"
+    fi
+
+elif [[ "$1" == "-sql" || "$1" == "-seq" || "$1" == "-ser" ]]; then
+  shift
+fi
+
+echo
+echo "Preparing for cluster (size & distribution) analysis in '$PMODE' mode with $NPROC threads ..."
+
+#if [[ $NFRMS -lt 1 ]]; then
+#  echo
+#  echo "Required # of frames = $NFRMS is too small, so assuming autodetection (at the expense of 'gmx check') ..."
+#  echo
+##  let "NFRMS = 1000"
+#fi
+
+TNAME="$1"
+
+## required: *mdp no water, *top no water
+
+if [ ! -f ${TNAME}_noSOL.mdp ]; then
+
+  if [ -f ${TNAME}.mdp ]; then
+    cp -v ${TNAME}.mdp ${TNAME}_noSOL.mdp
+  else
+    echo
+    echo "Input file '${TNAME}.mdp' (-> ${TNAME}_noSOL.mdp') not found - FULL STOP!"
+    echo
+    exit $status
+  fi
+
+  status=$?
+  if [ $status -ne 0 ]; then
+
+    echo
+    echo "Error upon doing 'cp -v ${TNAME}.mdp ${TNAME}_noSOL.mdp' - FULL STOP!"
+    echo
+    exit $status
+  fi
+
+fi
+
+if [ ! -f ${TNAME}_noSOL.top ]; then
+
+  # by default, take the 3 leading charaters of the TNAME as the name of molecules for cluster analysis
+  CMOL=$(echo "$TNAME" | sed 's/.//4g')
+
+  if [ $# -gt 1 ]; then
+    # alternatively, the second parameter of the script is the name of molecules for cluster analysis
+    CMOL="$2"
+  fi
+
+  if [ -f ${TNAME}.top ]; then
+
+    echo
+    echo "Converting '${TNAME}.top$' -> '${TNAME}_noSOL.top' for species '${CMOL}'"
+    echo
+
+    # comment out all the lines in the original .top file that correspond to molecules not needed for analysis
+
+    #sed '/^TIP\|^SOL\|^SPC\|TIP3.itp\|spc.itp\|spce.itp\|SOL.itp/s/^/;/' ${TNAME}.top > ${TNAME}_noSOL.top
+
+    # make sure only the absolutely unnecessary (and uncommented as yet) lines are commented out
+
+    sed '/^'"${CMOL}"'\|'"${CMOL}.itp"'\|'"forcefield.itp"'\|'"\[ "'\|^$\|^'";"'/!s/^/'";"'/g' ${TNAME}.top > ${TNAME}_noSOL.top
+
+  else
+    echo
+    echo "Input file '${TNAME}.top' (-> ${TNAME}_noSOL.top') not found - FULL STOP!"
+    echo
+    exit $status
+  fi
+
+fi
+
+## create .gro file containing only the molecules for cluster analysis
+
+if [ ! -f "${TNAME}-CC_noSOL.gro" ]; then
+
+  # presuming that the molecules for cluster analysis correspond to the second entry (species) in the original .ndx and .tpr files
+
+  gmx trjconv -f ${TNAME}.gro -s ${TNAME}.tpr -pbc cluster -center -o ${TNAME}-CC_noSOL.gro <<+
+${CMOL} ${CMOL} ${CMOL}
++
+
+  status=$?
+  if [ $status -ne 0 ]; then
+
+    echo
+    echo "Error upon doing 'gmx trjconv -f ${TNAME}.gro -s ${TNAME}.tpr -pbc cluster -center -o ${TNAME}-CC_noSOL.gro [${CMOL} ${CMOL} ${CMOL}]'"
+    echo
+    exit $status
+  fi
+
+fi
+
+## create tpr no water
+
+if [ ! -f "${TNAME}_noSOL.tpr" ]; then
+
+  gmx grompp -f ${TNAME}_noSOL.mdp -c ${TNAME}-CC_noSOL.gro -p ${TNAME}_noSOL.top -o ${TNAME}_noSOL.tpr -maxwarn 4
+
+  status=$?
+  if [ $status -ne 0 ]; then
+
+    echo
+    echo "Error ($status) upon doing 'gmx grompp -f ${TNAME}_noSOL.mdp -c ${TNAME}-CC_noSOL.gro -p ${TNAME}_noSOL.top -o ${TNAME}_noSOL.tpr -maxwarn 4'"
+    echo
+    exit $status
+  fi
+
+fi
+
+## create .xtc file containing only the molecules for cluster analysis
+
+if [[ $NPROC -lt 2 ]]; then
+
+  if [ ! -f ${TNAME}-CC_noSOL.xtc ]; then
+
+    # presuming that the molecules for cluster analysis correspond to the second entry (species) in the original .ndx and .tpr files
+
+    gmx trjconv -f ${TNAME}.xtc -s ${TNAME}.tpr -pbc cluster -center -o ${TNAME}-CC_noSOL.xtc > ${TNAME}-CC_noSOL.trjconv.log 2>&1 <<+
+${CMOL} ${CMOL} ${CMOL}
++
+
+    status=$?
+    if [ $status -ne 0 ]; then
+      echo
+      echo "Error upon doing 'gmx trjconv -f ${TNAME}.xtc -s ${TNAME}.tpr -pbc cluster -center -o ${TNAME}-CC_noSOL.xtc [${CMOL} ${CMOL} ${CMOL}]'"
+      echo
+      exit $status
+    fi
+
+  fi
+
+  echo
+  echo "Launching 'nohup gmx clustsize -s ${TNAME}_noSOL.tpr -f ${TNAME}-CC_noSOL.xtc  -mol -nc ${TNAME}.nclust.xvg -mc ${TNAME}.maxclust.xvg -hc ${TNAME}.histo-clust.xvg -cut $RCUT'"
+
+  # run cluster size analysis on the re-centered trajectory where only relevant molecules are present
+
+  nohup gmx clustsize -s ${TNAME}_noSOL.tpr -f ${TNAME}-CC_noSOL.xtc -mol -nc ${TNAME}.nclust.xvg -mc ${TNAME}.maxclust.xvg -hc ${TNAME}.histo-clust.xvg -ac ${TNAME}.avclust.xvg -temp ${TNAME}.tempclust.xvg -mcn ${TNAME}.maxclust.ndx -o ${TNAME}.csize.xpm -ow ${TNAME}.csizew.xpm -cut ${RCUT} > ${TNAME}-CC_noSOL.clustsize.log 2>&1
+
+#  nohup gmx clustsize -s ${TNAME}_noSOL.tpr -f ${TNAME}-CC_noSOL.xtc  -mol -nc ${TNAME}.nclust.xvg -mc ${TNAME}.maxclust.xvg -hc ${TNAME}.histo-clust.xvg -cut $RCUT > ${TNAME}-CC_noSOL.clustsize.log 2>&1 &
+
+  status=$?
+  if [ $status -ne 0 ]; then
+    echo
+    echo "Error upon doing 'gmx clustsize -s ${TNAME}_noSOL.tpr -f ${TNAME}-CC_noSOL.xtc  -mol -nc ${TNAME}.nclust.xvg -mc ${TNAME}.maxclust.xvg -hc ${TNAME}.histo-clust.xvg -cut $RCUT'"
+    echo
+    exit $status
+  fi
+
+else
+
+  FRAME=""
+  BTIME="0.0"
+  DTIME="0.0"
+  FTIME="0.0"
+  STIME="0.0"
+  ETIME="0.0"
+
+  if [[ $NFRMS -lt 1 ]]; then
+
+    if [ ! -f ${TNAME}.chk ]; then
+      echo
+      echo "Doing 'gmx check -f ${TNAME}.xtc > ${TNAME}.chk' ... "
+      gmx check -f ${TNAME}.xtc > ${TNAME}.chk 2>&1
+
+      status=$?
+      if [ $status -ne 0 ]; then
+        echo
+        echo "Error upon doing 'gmx check -f ${TNAME}.xtc > ${TNAME}.chk' - FULL STOP!"
+        echo
+        exit $status
+      fi
+    fi
+
+    FRAME=( $(grep 'Reading frame       0 time' ${TNAME}.chk) )
+    BTIME="${FRAME[4]}"
+    FRAME=( $(grep 'Step   ' ${TNAME}.chk) )
+    DTIME="${FRAME[2]}"
+    NFRMS="${FRAME[1]}"
+    FTIME="$(echo ${BTIME}+${NFRMS}*${DTIME} | bc)"
+
+    MFRMS="$(echo ${NFRMS}/${NPROC} | bc)"
+    STIME="$(echo ${MFRMS%.*}*${DTIME} | bc)"
+    ETIME="$STIME"
+  fi
+
+  BTIME="$(echo $BTIME + $DTIME | bc)"
+
+  for i in $(seq 1 $NPROC); do
+
+    if [ $i -eq $NPROC ]; then
+      ETIME=$FTIME
+    fi
+
+    echo
+    echo "Launching 'nohup gmx-ana-clusters-for $TNAME $i $BTIME $ETIME $RCUT'"
+
+    nohup gmx-ana-clusters-for $CMOL $TNAME $i $BTIME $ETIME $RCUT > nohup_cana_$i.out &
+
+    BTIME="$(echo $BTIME + $STIME | bc)"
+    ETIME="$(echo $ETIME + $STIME | bc)"
+
+  done
+
+fi
+
+#rm maxclust.ndx temp.xvg avclust.xvg csize.xpm csizew.xpm histo-clust.xvg
+
+echo
+echo "gmx-clusters.bsh - DONE (perhaps, need to wait until background tasks finish!)"
+echo
+

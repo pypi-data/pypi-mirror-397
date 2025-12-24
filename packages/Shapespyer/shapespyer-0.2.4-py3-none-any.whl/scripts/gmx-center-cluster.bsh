@@ -1,0 +1,262 @@
+#!/bin/bash
+
+# check the options
+if [ $# -eq 1 ]; then
+  HELP=$1
+  help="${HELP,,}"
+fi
+
+if [ "$1" == "" ] || [ "$help" == "-h" ] || [ "$help" == "--help" ]; then
+#if [ "$1" == "" ] || [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+cat <<EOF
+
+///////////////////////////////////////////////////////////////////////////////////
+//                                                                               //
+//   Workflow for running Gromacs MD jobs for complex multicomponent systems     //
+//   by Dr Andrey Brukhno (c) 2020-2025, Daresbury Laboratory, SCD, STFC, UKRI   //
+//                                                                               //
+///////////////////////////////////////////////////////////////////////////////////
+
+- Placing a cluster of solutes at the origin, based on .gro or .xtc files
+
+============
+ Main usage
+============
+
+> ${0##*/} -h
+> ${0##*/} --help
+> ${0##*/} [-nohup] <task_name> [<cluster> <extension>]
+
+----------------
+ optional flags
+----------------
+ -nohup  - execute in the background, i.e. release the command-line upon launching
+
+---------------------
+ mandatory parameter
+---------------------
+ task_name  - the base file name excluding file extension(s)
+
+---------------------
+ optional parameters
+---------------------
+ cluster    - solute name(s) or group forming a cluster (comma-delimited) as per .ndx file
+ extension  - input file extension: 'gro', 'xtc', or 'trr' {default: 'xtc'}
+
+===============
+ prerequisites 
+===============
+ The following files must be found in the current directory:
+
+ <task_name>.tpr
+ <task_name>.ndx (where <cluster> must be found)
+ <task_name>.<extension>
+
+----------
+ Examples
+----------
+   ${0##*/} SDS62-NAT62-wTIP3-eq1 2 gro
+   ${0##*/} SDS62-NAT62-wTIP3-eq1 SDS xtc
+
+EOF
+   exit 0
+fi
+
+# Re-spawn as a background process, if we haven't already.
+if [ "$1" == "-nohup" ]; then
+    nohup "$0" "${@:2}" &
+    exit $?
+fi
+
+echo
+echo "////////////////////////////////////////////////////////////////////////////////"
+echo "//                                                                            //"
+echo "//   Workflow for Gromacs MD simulations for complex multicomponent systems   //"
+echo "//   Post-simulation analysis: placing a cluster of solute(s) at the origin  //"
+echo "//   by Dr Andrey Brukhno - 2020-2023, Daresbury Laboratory, SCD, STFC, UKRI  //"
+echo "//                                                                            //"
+echo "////////////////////////////////////////////////////////////////////////////////"
+echo
+echo
+
+CLUST="2"
+EXT="gro"
+
+# check the options
+if [ $# -lt 1 ]; then
+
+  echo
+  echo "Try '${0##*/} --help'"
+  echo "No options were given - FULL STOP!"
+  echo
+  exit 1
+
+elif [ $# -gt 1 ]; then
+  #CLUST="$2"
+  CLUST="$(echo $2 | sed 's/^\[//;s/\]$//')"
+
+  if [ $# -gt 2 ]; then
+    EXT="$3"
+  fi
+fi
+
+TNAME="$1"
+
+let "status = 0"
+
+if [ ! -f ${TNAME}.tpr ]; then
+
+  echo
+  echo "Topology file '${TNAME}.tpr' not found - FULL STOP!"
+  echo
+
+  exit 1
+
+fi
+
+if [ ! -f ${TNAME}.ndx ]; then
+
+  echo
+  echo "Index file '${TNAME}.ndx' not found - creating it based on '${TNAME}.gro'"
+  echo
+  echo q | gmx make_ndx -f ${TNAME}.gro -o ${TNAME}.ndx
+
+  status=$?
+
+fi
+
+IFS=',' read -r -a SOLUT <<< "$CLUST"
+
+if [ ${#SOLUT[@]} -gt 1 ]; then
+
+  CLUST="${SOLUT[0]}"
+  for i in $(seq 1 $(expr ${#SOLUT[@]} - 1)); do CLUST="${CLUST}_${SOLUT[${i}]}"; done
+
+  #status=$?
+
+fi
+
+if [ "${CLUST}" == "2" ] ; then
+
+  echo
+  echo "Solute (clustering) species not specified - searching for index group 2 in '${TNAME}.ndx' file ..."
+
+  grep "\[" "${TNAME}.ndx" > gnames.txt
+
+  if [ $( cat gnames.txt | wc -l) -lt 2 ]; then
+
+    echo
+    echo "Too few (less than 3) index groups in '${TNAME}.ndx' file - FULL STOP!"
+    echo
+    exit 2
+
+  fi
+
+  CLUST="$(head -n 3 gnames.txt | tail -n 1 | awk -F ' ' '{print $2}')"
+
+  echo "Solute (clustering) species not specified - found index group 2 -> '${CLUST}' in '${TNAME}.ndx' file ..."
+
+  rm -f gnames.txt
+
+elif [ -z $(grep -c "\[ ${CLUST} \]" "${TNAME}.ndx") ]; then
+
+  echo
+  echo "Could not find group '${CLUST}' in '${TNAME}.ndx' file - will try to create it ..."
+
+  SPEC=${SOLUT[0]}
+
+  grep "\[" "${TNAME}.ndx" > gnames.txt
+
+  num=$(grep "\[ ${SPEC} \]" -n -m1 gnames.txt | awk -F ':' '{print $1}')
+
+  NSPEC=$(($num - 1))
+  echo "NSPEC = '$NSPEC' / $num for $SPEC in ${SOLUT[@]} of ${#SOLUT[@]}"
+
+  SPECS=${SOLUT[0]}
+  for i in $(seq 0 $(expr ${#SOLUT[@]} - 1)); do
+
+    SPEC=${SOLUT[${i}]}
+
+    num=$(grep "\[ ${SPEC} \]" -n -m1 gnames.txt | awk -F ':' '{print $1}')
+
+    if [ $i -gt 0 ]; then
+      SPECS="${SPECS} | ${SPEC}"
+      NSPEC="${NSPEC} | $((${num} - 1))"
+      #echo "Index groups to join in .ndx file: $SPECS => $NSPEC"
+    fi
+
+    if [ -z $(grep -c "${SPEC}" "${TNAME}.top") ]; then
+
+      echo
+      echo "Could not find species '${SPEC}' in '${TNAME}.top' file - FULL STOP!"
+      echo
+      exit 3
+
+    else
+      echo "Found species '${SPEC}' in '${TNAME}.top' file ..."
+    fi
+
+  done
+
+# create a joint group for clustering species
+
+  echo "Index groups to join in '${TNAME}.ndx' file: $SPECS => $NSPEC ..."
+  echo
+#  echo "Doing: gmx make_ndx -f ${TNAME}.gro -n ${TNAME}.ndx -o ${TNAME}.ndx <<+ ${NSPEC} q +"
+#  echo
+
+#  gmx make_ndx -f ${TNAME}.gro -n "${TNAME}.ndx" -o "${TNAME}-${CLUST}.ndx" <<+
+  gmx make_ndx -f ${TNAME}.gro -n "${TNAME}.ndx" -o "${TNAME}.ndx" <<+
+${NSPEC}
+q
++
+
+  status=$?
+
+  rm -f gnames.txt
+
+else
+
+  echo "Found group '${CLUST}' in '${TNAME}.ndx' file ..."
+
+fi
+
+if [ ! -f ${TNAME}-CC-PBC.${EXT} ]; then
+
+  if [ ! -f ${TNAME}-CC.${EXT} ]; then
+
+# re-center the box contents at the cluster COM (species $2 in the index) and make molecules whole again
+# prior doing this, one has to make sure the cluster is correctly defined in the index file
+
+    echo
+    echo "Re-centering the simulation box contents at the cluster COM (species ${CLUST} in the index file)"
+    echo "NOTE: prior doing this, one has to make sure the cluster is correctly defined in the index file"
+
+    echo
+    echo "Converting '${TNAME}.${EXT}' -> '${TNAME}-CC.${EXT}' [cluster centered configuration]"
+
+    echo ${CLUST} ${CLUST} 0 | gmx trjconv -f ${TNAME}.${EXT} -o ${TNAME}-CC.${EXT} -s ${TNAME}.tpr -n ${TNAME}.ndx -pbc cluster -center
+
+    status=$?
+
+  fi
+
+# put all molecules COM:s back into the primary box 
+
+  echo
+  echo "Converting '${TNAME}-CC.${EXT}' -> '${TNAME}-CC-PBC.${EXT}' [cluster centered configuration(s) with COM:s PBC]"
+
+  echo 0 | gmx trjconv -f ${TNAME}-CC.${EXT} -o ${TNAME}-CC-PBC.${EXT} -s ${TNAME}.tpr -n ${TNAME}.ndx -pbc mol
+
+  status=$?
+
+else
+
+  echo
+  echo "Found '${TNAME}-CC-PBC.${EXT}' [cluster centered configuration with COM:s PBC] - rename it and rerun the script"
+  echo
+
+fi
+
+exit $status
+

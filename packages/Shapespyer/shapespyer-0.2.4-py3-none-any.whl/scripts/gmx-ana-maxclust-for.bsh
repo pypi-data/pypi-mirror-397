@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# number of atoms per molecule (62 for CTA[B] by CHARMM FF)
+let "NATMS = 62"
+
+# check the options
+if [ $# -lt 3 ]; then
+
+  echo
+  echo "Provide the simulation task name and start & end # of trajectory pieces"
+  echo "No options were given - FULL STOP!"
+  echo
+  exit 1
+
+fi
+
+if [ $# -eq 4 ]; then
+  let "NATMS = $4"
+fi
+
+TNAME="$1"
+
+if [ -f ${TNAME}_maxclustsize.dat ]; then
+  mv -v ${TNAME}_maxclustsize.dat ${TNAME}_maxclustsize.dat0
+fi
+
+for i in $(seq $2 $3); do 
+
+  if [ -f ./${TNAME}.maxclust_$i.ndx ]; then
+
+    let "nmols = $(cat ./${TNAME}.maxclust_${i}.ndx | wc -l) - 1"
+    nmols="$( echo $nmols / ${NATMS} | bc)" 
+
+    let "j = ${i} - 1"
+    let "mmols = 0"
+    if [ $i -gt 1 ]; then
+      let "mmols = ( $(diff ./${TNAME}.maxclust_${i}.ndx ./${TNAME}.maxclust_${j}.ndx | wc -l) - 2 ) / ${NATMS} "
+      if [ $mmols -gt 0 ]; then
+        mmols="$( echo $mmols - $nmols | bc)" 
+      fi
+    fi
+
+    echo "$nmols   $mmols" >> ./${TNAME}_maxclustsize.dat 
+
+  else
+
+    echo
+    echo "Index file '${TNAME}.maxclust_$i.ndx' not found - FULL STOP!"
+    echo
+    exit 2
+
+  fi
+
+done

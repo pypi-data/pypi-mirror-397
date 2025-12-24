@@ -1,0 +1,309 @@
+#!/bin/bash
+#
+# Author: Dr Andrey V Brukhno (c) 2020-2023 (Daresbury Laboratory, SCD, STFC, UKRI)
+# Batch script for Gromacs staged equilibration workflow
+
+# check the options
+if [ $# -eq 1 ]; then
+  HELP=$1
+  help="${HELP,,}"
+fi
+
+if [ "$1" == "" ] || [ "$help" == "-h" ] || [ "$help" == "--help" ]; then
+#if [ "$1" == "" ] || [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+cat <<EOF
+
+///////////////////////////////////////////////////////////////////////////////////
+//                                                                               //
+//   Workflow for running Gromacs MD jobs for complex multicomponent systems     //
+//   by Dr Andrey Brukhno (c) 2020-2025, Daresbury Laboratory, SCD, STFC, UKRI   //
+//                                                                               //
+///////////////////////////////////////////////////////////////////////////////////
+
+- The script runs Gromacs with input based on initial .gro, .top and .mdp files -
+
+============
+ Main usage 
+============
+
+> ${0##*/} -h
+> ${0##*/} --help
+> ${0##*/} [-nohup] <task_name> <stage#1> [<stage#2> <np_tot> <stage_name>]
+
+-----------------
+ optional switch
+-----------------
+ -nohup  - execute in the background, i.e. release the command-line upon launching
+
+----------------------
+ mandatory parameters
+----------------------
+ task_name  - the base file name excluding file extension(s)
+ stage#1/#2 - the stage index or two indeces (initial and final; at least one required)
+
+---------------------
+ optional parameters (after exactly 3 mandatory arguments)
+---------------------
+ np_tot     - the total number of threads (combining OpenMPI and OpenMP if possible) [48]
+ stage_name - generic stage suffix to add to the task_name ['eq']
+
+===============
+ prerequisites 
+===============
+ The following files must be found in the current directory:
+
+ <task_name>.top
+ <task_name>.gro [<task_name>-posres.gro as reference for position restraints]
+ <task_name>-<stage#1>.gro or <task_name>-<stage#1>-ini.gro
+ <task_name>-<stage#1>.mdp [... <task_name>-<stage#2>.mdp]
+
+NOTE: For applying position restraints to more than one (first) solute species in the system,
+input file 'solutes-posres.txt' must be found in the working directory, containing only 
+one line with a correctly formatted list of species, e.g. "SDS|CTA". If this file not found,
+positions restraints (if any specified in .itp and .mdp files) will only be applied to the 
+first species found in .gro (and .top) files.
+
+EOF
+   exit 0
+fi
+
+# Re-spawn as a background process, if we haven't already.
+if [ "$1" == "-nohup" ]; then
+    nohup "$0" "${@:2}" &
+    exit $?
+fi
+
+echo
+echo "////////////////////////////////////////////////////////////////////////////////"
+echo "//                                                                            //"
+echo "//   Workflow for Gromacs MD simulations for complex multicomponent systems   //"
+echo "//   Running Gromacs with input based on initial .gro, .top and .mdp files    //"
+echo "//   by Dr Andrey Brukhno - 2020-2023, Daresbury Laboratory, SCD, STFC, UKRI  //"
+echo "//                                                                            //"
+echo "////////////////////////////////////////////////////////////////////////////////"
+echo
+echo
+
+# Task name => file name(s) w.o. extensions
+TNAME="$1"
+
+# Stage suffix
+STAGE="eq"
+
+# File name(s) corresponding to the stage (w.o. extensions) - see below
+#SNAME="${TNAME}-${STAGE}"
+
+# Total number of threads (processes) to use
+NPTOT=8
+
+# Number of OpenMP threads to use
+#let NTOMP=8
+
+# Number of OpenMPI threads to use
+#let NTMPI=8
+
+# Number of equilibration runs (after the energy minimisation if option 'min' is given)
+let "iter    = 0"
+let "itermax = 0"
+let "status  = 0"
+
+if [ $# -gt 2 ]; then
+  iter=$2
+  itermax=$3
+elif [ $# -gt 1 ]; then
+  iter=$2
+  itermax=$2
+fi
+
+if [ $# -gt 3 ]; then
+  NPTOT=$4
+fi
+
+if [ $# -gt 4 ]; then
+  STAGE="$5"
+fi
+
+# File name(s) corresponding to the stage (w.o. extensions)
+SNAME="${TNAME}-${STAGE}${iter}"
+
+NTOPT="-nt $NPTOT"
+if [ $NPTOT == "0" ]; then
+  NTOPT=""
+fi
+
+if [ $iter -eq 0 ] ; then
+  if [ -f ${TNAME}.gro ] ; then
+    if [ ! -f ${TNAME}.ndx ] ; then
+      echo "q" | gmx make_ndx -f ${TNAME}.gro -o ${TNAME}.ndx
+    fi
+  else
+    echo
+    echo "The initial configuration file '${TNAME}.gro' is missing - FULL STOP!"
+    echo
+    exit 1
+  fi
+  if [ ! -f ${TNAME}.top ] ; then
+    echo
+    echo "The initial topology file '${TNAME}.top' is missing - FULL STOP!"
+    echo
+    exit 2
+  fi
+fi
+
+while [ ${iter} -le ${itermax} ]; do
+
+    let "piter = ${iter} - 1"
+
+    SNAME="${TNAME}-${STAGE}${iter}"
+
+    if [ ! -f ${SNAME}.top ] ; then 
+        cp -v ${TNAME}.top ${SNAME}.top
+    fi
+
+    if [ ! -f ${SNAME}.gro ] ; then
+
+        if [ -f ${SNAME}-ini.gro ] ; then
+            cp -v ${SNAME}-ini.gro ${SNAME}.gro
+        elif [ $iter -eq 0 ] && [ -f ${TNAME}.gro ] ; then
+            echo
+            echo "The input file '${SNAME}-ini.gro' not found @ stage $iter - using the initial configuration '${TNAME}.gro' ..."
+            echo
+            cp -v ${TNAME}.gro ${SNAME}-ini.gro
+            cp -v ${SNAME}-ini.gro ${SNAME}.gro
+        elif [ -f ${STAGE}${piter}/${TNAME}-${STAGE}${piter}.gro ] ; then
+            echo
+            echo "The input file '${SNAME}-ini.gro' not found @ stage $iter - using the final configuration from ./${STAGE}${piter}/ ..."
+            echo
+            cp -v ${STAGE}${piter}/${TNAME}-${STAGE}${piter}.gro ${SNAME}-ini.gro
+            cp -v ${SNAME}-ini.gro ${SNAME}.gro
+        elif [ ! -f ${STAGE}${piter}/${TNAME}-${STAGE}${piter}.gro ] ; then
+            echo
+            echo "No suitable configuration found (check for ${TNAME}.gro or ./${STAGE}${piter}/${TNAME}-${STAGE}${piter}.gro ) - FULL STOP!"
+            echo
+            exit 1
+        fi # if [ -f ${SNAME}-ini.gro ] ... DONE
+
+    fi # if [ ! -f ${SNAME}.gro ] ... DONE
+
+    if [ ! -f ${SNAME}.tpr ]; then
+        #if grep -c "^define" ${SNAME}.mdp ; then # to count inclusions of the string "define" in the beginning of any line
+        #if [ echo "$(grep '^define' ${SNAME}.mdp | grep -c DPOSRES)" ] ; then # to count inclusions of the string "define" in the beginning of any line
+        if grep "^define" ${SNAME}.mdp | grep -c DPOSRES ; then # to count inclusions of the string "define" in the beginning of any line
+            #sed  -i -E 's/(([^[:space:]]+[[:space:]]+){3})[^[:space:]]+/\13.000/' SLT#-ION#-w#-prest.gro
+            #sed  -i -E 's/(([[:blank:]]+[0-9.]+){3}$)/   3\.000   3\.000   3\.000/1' SLT#-ION#-w#-prest.gro
+            #sed  -i -E 's/(^[[:blank:]]+[0-9]+SLT[[:blank:]]+(\w+[[:blank:]]+){2})(([[:blank:]]+[^[:space:]]+){3})/\1 3\.000   3\.000   3\.000/' SLT#-ION#-w#-prest.gro
+            #sed  -i -E 's/(\w+[[:blank:]]+C##[[:blank:]]+\w+[[:blank:]]+)(([[:blank:]]+[^[:space:]]+){3})/\1 3\.000   3\.000   3\.000/' SLT#-ION#-w#-prest.gro
+            #echo
+            echo "Found a macro for restraints ..."
+            if [ ! -f ${SNAME}-posres.gro ] ; then
+                echo
+                echo "The input file '${SNAME}-posres.gro' not found @ stage $iter - will try to create ..."
+                if grep "^;posres ini" ${SNAME}.mdp ; then
+                    if [ -f ${STAGE}${piter}/${TNAME}-${STAGE}${piter}.gro ]; then
+                        cp ${STAGE}${piter}/${TNAME}-${STAGE}${piter}.gro ${SNAME}-posres.gro
+                        echo
+                        echo "Using ${STAGE}${piter}/${TNAME}-${STAGE}${piter}.gro for position restraints ..."
+                    else
+                        echo
+                        echo "Could not find '${STAGE}${piter}/${TNAME}-${STAGE}${piter}.gro' for position restraints - FULL STOP!"
+                        exit
+                    fi
+                else
+                    let "status = 1"
+                    MNAMES=""
+                    if [ -f ./solutes-posres.txt ]; then
+                        MNAMES=$(sed '1q;d' ./solutes-posres.txt | grep -E "^[[:blank:]]*(\w+\|)+")
+                    fi
+                    if [ "$MNAMES" == "" ]; then
+                        MNAMES="$(sed '3q;d' ${TNAME}.gro | sed -E 's/^[[:blank:]]+[0-9]+//1' | sed 's/ .*//' )"
+                        echo
+                        echo "Input file ./solutes-posres.txt not found - using position restraints for only for species '$MNAMES' ..."
+                    fi
+                    if [ "${MNAMES}" == "" ]; then
+                        echo
+                        echo "Restraints are invoked in ${SNAME}.mdp but no species specified: '${MNAMES}' - FULL STOP!"
+                        exit 1
+                    else
+                        echo
+                        echo "Doing: gmx-posres-gro ${SNAME}.gro '${MNAMES}'"
+
+                        gmx-posres-gro ${SNAME}.gro "${MNAMES}"
+
+                        let "status = $?"
+                    fi
+                    if [ $status -ne 0 ]; then
+                        echo
+                        echo "The input file '${SNAME}-posres.gro' still not found - will try to substitute ..."
+                        if [ -f ${TNAME}-posres.gro ] ; then
+                            echo "The input file '${TNAME}-posres.gro' found so doing:"
+                            echo "cp ${TNAME}-posres.gro  ${SNAME}-posres.gro"
+                            cp ${TNAME}-posres.gro  ${SNAME}-posres.gro
+                        else
+                            echo "The input file '${TNAME}-posres.gro' not found so doing:"
+                            echo "cp ${SNAME}.gro  ${SNAME}-posres.gro"
+                            cp ${SNAME}.gro  ${SNAME}-posres.gro
+                        fi
+                        let "status = 0"
+                        echo
+                    fi
+                fi
+            fi
+            echo "Found a macro for restraints so doing:"
+            echo "gmx grompp -f ${SNAME}.mdp -o ${SNAME}.tpr -c ${SNAME}.gro -r ${SNAME}-posres.gro -p ${SNAME}.top > ${SNAME}-grompp.log -maxwarn 4"
+            echo
+            gmx grompp -f ${SNAME}.mdp -o ${SNAME}.tpr -c ${SNAME}.gro -r ${SNAME}-posres.gro -p ${SNAME}.top > ${SNAME}-grompp.log -maxwarn 4
+        else
+            echo "No macro for restraints found so doing:"
+            echo "gmx grompp -f ${SNAME}.mdp -o ${SNAME}.tpr -c ${SNAME}.gro -r ${SNAME}.gro -p ${SNAME}.top > ${SNAME}-grompp.log -maxwarn 4"
+            echo    
+            gmx grompp -f ${SNAME}.mdp -o ${SNAME}.tpr -c ${SNAME}.gro -r ${SNAME}.gro  -p ${SNAME}.top > ${SNAME}-grompp.log -maxwarn 4
+        fi
+    fi
+
+    if [ -f ${SNAME}.tpr ]; then
+        if [ -f ${SNAME}.cpt ]; then
+# restart from the latest checkpoint
+
+            gmx mdrun -v -deffnm ${SNAME} -cpi ${SNAME}.cpt $NTOPT
+
+            let "status = $?"
+# check for immediate failure - must be more precise!
+# restart from the next to the last checkpoint
+#            if [ $status -ne 0 ] && [ -f ${SNAME}_prev.cpt ]; then
+#                gmx mdrun -v -deffnm ${SNAME} -cpi ${SNAME}_prev.cpt $NTOPT
+#            fi
+
+        else
+
+            gmx mdrun -v -deffnm ${SNAME} $NTOPT
+            let "status = $?"
+
+        fi
+
+        if [ $status -eq 0 ]; then
+            rmh
+            mkdir "${STAGE}${iter}"
+            mv -v ${SNAME}-* "${STAGE}${iter}"/
+            mv -v ${SNAME}_* "${STAGE}${iter}"/
+            mv -v ${SNAME}.* "${STAGE}${iter}"/
+            echo
+            echo "The job finished normally - the results were moved to '${STAGE}${iter}'."
+            echo
+        else
+            echo
+            echo "The job did not complete!"
+            echo
+        fi
+    else
+        echo
+        echo "The input file '${SNAME}.tpr' not found (or 'gmx grompp' failed) - FULL STOP!"
+        echo
+        exit 2
+    fi
+
+    let iter++
+
+done
+
+exit $status
+

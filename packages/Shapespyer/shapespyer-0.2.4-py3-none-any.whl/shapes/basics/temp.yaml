@@ -1,0 +1,64 @@
+---
+# INPUT path/file
+# AB: default: the full file name is expected
+# AB: consider adding similar logic for dealing with base and extension as for OUTPUT
+input :
+    path : "./inp"
+    file : "config_inp.gro" # or "smiles.sml"
+#    base : null  # def: "config_inp"
+#    ext  : null  # def: ".gro"
+#    box  : null  # def: "config.box"
+
+# OUTPUT path/file
+# AB: if the full file name is given, use it as is, i.e. don't add any suffices
+# AB: if the file name base and extension are given separately, add specs-inspired suffices
+# AB: default - the file name base and extension are dealt with separately
+output :
+    path : "."
+#    file : "config_out_yaml.gro"  # def: null / "config_out.gro"
+    base : "config_out_yaml"      # "config_out" + suffices_based_on_input!  # null
+    ext  : ".gro"
+
+# MOLECULE(s) to pick up from the input and use for creating the shape
+molecule :
+    names : "SDS" # []  - input molecules specified by their types (residue names)
+    mring : 15    # 1   - number of molecules in the largest (equatorial) ring
+#    npick  : 1    # 1   - number of molecules to pick up from input config
+#    indices: [1]  # [1] - input molecules specified by their indices
+#    molid  : -1   # -1  - index of the first (or single) molecule to pick up
+#    mint   : []   # []  - indices of interior atoms (for each molecule)
+#    mext   : []   # []  - indices of exterior atoms (for each molecule)
+#    fracs  : []   # []  - % fractions of molecules in the output assembly
+
+# SHAPE specs
+shape :
+    type  : "ball"  # {'ring', 'rod', 'ball', 'ves', 'balp', 'vesp', 'lat', 'lat2', 'lat3', 'waves'}
+#    radius: 0.25    #  0.5*DMIN
+#    turns : 1
+#    nstep : 0
+
+# PITCH ANGLES for molecules or other subunits within the shape
+#angles:
+#    alpha : 0.0
+#    theta : 0.0
+
+# OTHER / AUXILARY parameters
+other :
+    minDist : 0.4 # 0.5 nm
+    slvBuff : 1.0 # 2.0 nm
+#    nlatt : 1
+#    nlatx : 1
+#    nlaty : 1
+#    nlatz : 1
+
+# FLAGS
+flags :
+    rev   : True # False
+    fxz   : True # False
+#    pin   : False
+#
+# the rest is only for reference (used internally in InputParser)
+#    box   : False
+#    wav   : False
+#    smiles: False
+#    random: False

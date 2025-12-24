@@ -1,0 +1,451 @@
+#!/bin/bash
+
+################################################
+#                                              #
+#  Setup workflow for creating Gromacs inputs  #
+#  based on initial configuration file (.gro)  #
+#  for a one-component primary solute system:  #
+#  solute+[couterions]+[salt]+solvent species  #
+#                                              #
+#  Author: Andrey Brukhno, DL/STFC, July 2020  #
+#                                              #
+################################################
+
+# check the options
+if [ $# -eq 1 ]; then
+  HELP=$1
+  help="${HELP,,}"
+fi
+
+if [ "$1" == "" ] || [ "$help" == "-h" ] || [ "$help" == "--help" ]; then
+#if [ "$1" == "" ] || [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+cat <<EOF
+
+///////////////////////////////////////////////////////////////////////////////////
+//                                                                               //
+//   Workflow for running Gromacs MD jobs for complex multicomponent systems     //
+//   by Dr Andrey Brukhno (c) 2020-2025, Daresbury Laboratory, SCD, STFC, UKRI   //
+//                                                                               //
+///////////////////////////////////////////////////////////////////////////////////
+
+- The script generates Gromacs inputs based on initial configuration file -
+
+=============
+ Main usage: 
+=============
+
+> ${0##*/} -h
+> ${0##*/} --help
+> ${0##*/} <config_name> <solute_name> <solute_atoms> [c-ion_name] [salt_pairs [salt_ion1 salt_ion2]]
+
+-----------------------
+ mandatory parameters:
+-----------------------
+ config_name  - the initial configuration file name (must be found in the current directory)
+ solute_name  - the primary solute molecule name    (must be found in the topology database)
+ solute_atoms - the number of atoms per solute molecule
+
+----------------------
+ optional parameters:
+----------------------
+ c-ion_name   - the primary solute counterion name  (must be found in the topology database)
+ salt_pairs   - the number of salt pairs to add = the number of solute molecules if -1 given
+ salt_ion1    - the positive salt ion name (must be found in the topology database; def: NAT)
+ salt_ion2    - the negative salt ion name (must be found in the topology database; def: CLA)
+
+EOF
+   exit 0
+fi
+
+echo
+echo "////////////////////////////////////////////////////////////////////////////////"
+echo "//                                                                            //"
+echo "//   Workflow for creating Gromacs inputs for a one-component solute system   //"
+echo "//   by Dr Andrey Brukhno - 2020-2023, Daresbury Laboratory, SCD, STFC, UKRI  //"
+echo "//                                                                            //"
+echo "////////////////////////////////////////////////////////////////////////////////"
+echo
+echo
+
+if [ $# -lt 3 ]; then
+  #echo
+  #echo "Provide at least 3 parameters: config file name, solute name, c-ion name (plus, possibly, salt pair names and number)."
+  echo "Provide at least 3 parameters: config file name, solute name, solute atom number (plus, possibly, c-ion name, salt pair number and names)."
+  echo
+  exit
+fi
+
+# where to look for the extra topology (force-field) files
+TOPDIR="./toppar"
+
+# regexp for non-negative integers
+NUMRX='^[0-9]+$'
+
+# regexp for integers with sign
+INTRX='^[+-]?[0-9]+$'
+
+# regexp for floats with sign
+FLTRX='^[+-]?[0-9]+([.][0-9]+)?$'
+
+# number of the primary solute molecules, atoms per molecule, and total number of atoms in the solute species
+let "NMOLS = 0"
+let "MATMS = 0"
+let "NATMS = 0"
+
+# number of the primary solute counter-ions
+let "NIONS = 0"
+
+# file name for for the initial configuration (perhaps, generated with gen-shape.py3)
+CONFI="$1"
+
+# molecule name for the primary solute (surfactants: SDS / CTAB etc)
+MNAME="$2"
+MATMS="$3"
+
+# take the first word in the seocnd line of $CONFI (must be the atom number in a .gro file)
+NATMS="$(sed -n '2{p;q}' $CONFI)"
+#NATMS="$(head -2 $CONFI | tail -1 | cut -d' ' -f1)" - slower ???
+
+let "NFATM = $(sed -e '1,2d' ${CONFI} | grep -c ${MNAME})"
+
+if [ $NATMS -ne $NFATM ]; then
+  #echo
+  echo "The number of atoms in species '$MNAME' ${NFATM} =/= ${NATMS} specified in the configuration file."
+  echo
+  exit
+fi
+
+if ! [[ $MATMS =~ $NUMRX ]]; then
+  #echo
+  echo "The 3-rd parameter must be the solute atom number (a positive integer number)."
+  echo
+  exit
+else
+  let "NMOLS = $NATMS / $MATMS"
+  if [ $NMOLS -lt 1 ]; then
+    #echo
+    echo "The requested solute molecule number < 1 - FULL STOP!"
+    echo
+    exit
+  fi
+fi
+
+# ion name for the primary solute counter-ions (NAT for SDS; BRA for CTAB)
+INAME="NONE"
+if [ $# -gt 3 ]; then
+  INAME="$4"
+  NIONS=$NMOLS
+fi
+
+# number of the salt pairs
+let "NSALT = 0"
+
+# names for the salt ions to add (default: NAT / CLA for NaCl)
+PNAME="NAT"
+NNAME="CLA"
+if [ $# -gt 4 ]; then
+  #if ! [[ $5 =~ $NUMRX ]] || [[ $4 -lt 0 ]] 2>/dev/null; then
+  if ! [[ $5 =~ $INTRX ]]; then
+    echo $5
+    echo "The 4-th parameter must be the salt pair number (give integer number or skip)."
+    echo "Then you can also provide 2 names for salt ions (default: NAT / CLA for NaCl)."
+    echo
+    exit
+  elif [ $5 -lt 0 ]; then
+    let "NSALT = NMOLS"
+  else
+    NSALT=$5
+  fi
+
+  if [ $# -eq 6 ]; then
+    #echo
+    echo "Provide 2 names for salt ions (default: NAT / CLA for NaCl, if the pair number =/= 0)."
+    echo
+    exit
+  elif [ $# -eq 7 ]; then
+    PNAME="$6"
+    NNAME="$7"
+  else
+    PNAME="NAT"
+    NNAME="CLA"
+  fi
+fi
+
+let "NWARN = 0"
+
+#echo
+echo "Creating topology template based on the parameters given ..."
+echo
+
+cat > template.top <<EOF
+;
+; Combined CHARMM FF topology file for GROMACS MD engine
+;
+; Generated by ${0##*/} script
+; which is part of the general simulation workflow SimNavi
+; Author: Andrey Brukhno, DL/STFC, July 2020
+;
+; Including the following force-field bits from the database:
+#include "${TOPDIR}/forcefield.itp"
+#include "${TOPDIR}/${MNAME}.itp"
+EOF
+
+if [ ! -d ${TOPDIR} ]; then
+  #echo
+  echo "WARNING: '${TOPDIR}' subdirectory not found here - to be resolved later on (not by this script)."
+  echo
+  let NWARN++
+fi
+
+if [ ! -f ${TOPDIR}/${MNAME}.itp ]; then
+  #echo
+  echo "WARNING: force-field file '${MNAME}.itp' included but not found! - Check '${TOPDIR}' subdirectory."
+  echo
+  let NWARN++
+fi
+
+SYSTEM="${MNAME} solution"
+
+TNAME="${MNAME}${NMOLS}"
+CNAME="$TNAME"
+if [ $NIONS -gt 0 ]; then
+  TNAME="${TNAME}-${INAME}${NIONS}"
+  SYSTEM="${SYSTEM} with ${INAME} counterions"
+
+  cat >> template.top <<EOF
+#include "${TOPDIR}/${INAME}.itp"
+EOF
+
+  if [ ! -f ${TOPDIR}/${INAME}.itp ]; then
+    #echo
+    echo "WARNING: force-field file '${INAME}.itp' included but not found! - Check '${TOPDIR}' subdirectory."
+    echo
+    let NWARN++
+  fi
+fi
+
+if [ $NSALT -gt 0 ]; then
+  TNAME="${TNAME}-${PNAME}${NSALT}-${NNAME}${NSALT}"
+  SYSTEM="${SYSTEM} and ${PNAME}-${NNAME} salt"
+
+  cat >> template.top <<EOF
+#include "${TOPDIR}/${PNAME}.itp"
+#include "${TOPDIR}/${NNAME}.itp"
+EOF
+
+  if [ ! -f ${TOPDIR}/${PNAME}.itp ]; then
+    #echo
+    echo "WARNING: force-field file '${PNAME}.itp' included but not found! - Check '${TOPDIR}' subdirectory."
+    echo
+    let NWARN++
+  fi
+
+  if [ ! -f ${TOPDIR}/${NNAME}.itp ]; then
+    #echo
+    echo "WARNING: force-field file '${NNAME}.itp' included but not found! - Check '${TOPDIR}' subdirectory."
+    echo
+    let NWARN++
+  fi
+fi
+
+#WNAME="SPCE"
+#echo
+#echo "Initially the solute will be solvated with '${WNAME}' water model."
+#echo "So the initial task-name '${TNAME}-w${WNAME}' will be used (more actions to follow)."
+#echo
+#cat >> template.top <<EOF
+##include "spce.itp"
+#EOF
+
+WNAME="TIP3"
+
+if [ ! -f ${TOPDIR}/${WNAME}.itp ]; then
+  #echo
+  echo "WARNING: force-field file '${WNAME}.itp' included but not found! - Check '${TOPDIR}' subdirectory."
+  echo
+  let NWARN++
+fi
+
+#echo
+echo "The solute will be solvated with '${WNAME}' water model - standard in CHARMM FF."
+echo "The task-name '${TNAME}-w${WNAME}' will be used - more actions to follow."
+echo
+
+cat >> template.top <<EOF
+#include "${TOPDIR}/${WNAME}.itp"
+
+; System title
+[ system ]
+${SYSTEM}
+
+; System composition:
+; species   #
+[ molecules ]
+${MNAME}   ${NMOLS}
+EOF
+
+if [ $NIONS -gt 0 ]; then
+  cat >> template.top <<EOF
+${INAME}   ${NIONS}
+EOF
+fi
+
+if [ $NSALT -gt 0 ]; then
+  cat >> template.top <<EOF
+${PNAME}   ${NSALT}
+${NNAME}   ${NSALT}
+EOF
+fi
+
+#printf '|%-4s|\n' a ab abc abcd abcde
+
+if [ $NWARN -gt 0 ]; then
+  echo
+  echo "Template topology file has been generated, but with WARNINGS # ${NWARN}!"
+  echo
+  exit
+else
+  echo
+  echo "Template topology file has been generated!"
+  echo
+fi
+
+cp -v $CONFI $CNAME.gro
+
+echo
+echo "Now working on configuration file ${CNAME}.gro ..."
+#echo
+
+if [ $NIONS -gt 0 ]; then
+  if [ -f $TOPDIR/single-ion${INAME}.gro ]; then
+    if [ $NSALT -gt 0 ]; then
+      echo
+      echo "Adding ${NIONS} counterions '${INAME}' to configuration ..."
+      echo
+      gmx-add-ions-solv $CNAME $NIONS ${TOPDIR}/single-ion${INAME}.gro
+
+      mv -v ${CNAME}-ions${NIONS}.gro ${CNAME}-${INAME}${NIONS}.gro
+      CNAME="$CNAME-${INAME}${NIONS}"
+    else
+      echo
+      echo "Adding ${NIONS} counterions '${INAME}' and solvent '${WNAME}' to configuration ..."
+      echo
+      gmx-add-ions-solv $CNAME $NIONS ${TOPDIR}/single-ion${INAME}.gro SOLV
+
+      mv -v ${CNAME}-ions${NIONS}.gro ${CNAME}-${INAME}${NIONS}.gro
+      mv -v ${CNAME}-ions${NIONS}-wspce.gro ${CNAME}-${INAME}${NIONS}-wspce.gro
+      mv -v ${CNAME}-ions${NIONS}-w${WNAME}.gro ${CNAME}-${INAME}${NIONS}-w${WNAME}.gro
+      CNAME="$CNAME-${INAME}${NIONS}-w${WNAME}"
+    fi
+
+    let "NFATM = $(sed -e '1,2d' ${CNAME}.gro | grep -c ${INAME})"
+    if [ $NFATM -lt $NIONS ]; then
+      #echo
+      echo "The number of added ions '$INAME' ${NFATM} =/= ${NIONS} requested - FULL STOP!"
+      echo
+      exit
+    fi
+  else
+    echo
+    echo "Template file '$TOPDIR/single-ion${INAME}.gro' not found - FULL STOP!"
+    echo
+    exit
+  fi
+fi
+
+if [ $NSALT -gt 0 ]; then
+  if [ -f $TOPDIR/single-ion${PNAME}.gro ] && [ -f $TOPDIR/single-ion${NNAME}.gro ]; then
+    echo
+    echo "Adding ${NSALT} positive ions '${PNAME}' to configuration ..."
+    echo
+    gmx-add-ions-solv ${CNAME} $NSALT ${TOPDIR}/single-ion${PNAME}.gro
+    mv -v ${CNAME}-ions${NSALT}.gro ${CNAME}-${PNAME}${NSALT}.gro
+    CNAME="$CNAME-${PNAME}${NSALT}"
+
+    let "NFATM = $(sed -e '1,2d' ${CNAME}.gro | grep -c ${PNAME})"
+    if [ $NFATM -lt $NSALT ]; then
+      #echo
+      echo "The number of added ions '$PNAME' ${NFATM} =/= ${NSALT} requested - FULL STOP!"
+      echo
+      exit
+    fi
+
+    echo
+    echo "Adding ${NSALT} negative ions '${NNAME}' and solvent '${WNAME}' to configuration ..."
+    echo
+    gmx-add-ions-solv ${CNAME} $NSALT ${TOPDIR}/single-ion${NNAME}.gro SOLV
+    mv -v ${CNAME}-ions${NSALT}.gro ${CNAME}-${NNAME}${NSALT}.gro
+    mv -v ${CNAME}-ions${NSALT}-wspce.gro ${CNAME}-${NNAME}${NSALT}-wspce.gro
+    mv -v ${CNAME}-ions${NSALT}-w${WNAME}.gro ${CNAME}-${NNAME}${NSALT}-w${WNAME}.gro
+    CNAME="$CNAME-${NNAME}${NSALT}-w${WNAME}"
+
+    let "NFATM = $(sed -e '1,2d' ${CNAME}.gro | grep -c ${NNAME})"
+    if [ $NFATM -lt $NSALT ]; then
+      #echo
+      echo "The number of added ions '$NNAME' ${NFATM} =/= ${NSALT} requested - FULL STOP!"
+      echo
+      exit
+    fi
+  else
+    echo
+    echo "One of the template (configuration) files for the requested salt not found - FULL STOP!"
+    echo
+    exit
+  fi
+else
+  # add solvent only!
+  gmx-add-ions-solv $CNAME 0 ${TOPDIR}/single-ions.gro SOLV
+  CNAME="$CNAME-w${WNAME}"
+
+fi
+
+NATMS="$(sed -n '2{p;q}' ${CNAME}.gro)"
+echo
+echo "Number of atoms in file '${CNAME}.gro ' = $NATMS"
+echo "Number of atoms in solute = $MATMS * $NMOLS"
+echo "Number of ions added = $NIONS + 2 * $NSALT"
+
+let "NWATM = $NATMS - $MATMS * $NMOLS - $NIONS - $NSALT - $NSALT"
+let "NFATM = $(sed -e '1,2d' ${CNAME}.gro | grep -c TIP3)"
+if [ $NFATM -ne $NWATM ]; then
+  #echo
+  echo "The number of found atoms '$WNAME' ${NFATM} =/= ${NWATM} calculated - FULL STOP!"
+  echo
+  exit
+fi
+
+if [ $NWATM -gt 0 ]; then
+
+  let "NWMOL = $NWATM / 3"
+  cat >> template.top <<EOF
+${WNAME}   ${NWMOL}
+EOF
+
+  TNAME="${TNAME}-w${WNAME}"
+
+  if [ "$TNAME" != "$CNAME" ]; then
+    echo "The task-name and config-name mismatch: '$TNAME' =/= ${CNAME} - check the contents!"
+    echo
+    #exit
+  fi
+
+else
+  echo "The number of solvent atoms '$WNAME' ${NWATM} = 0 - no solvent was added!"
+  echo
+  #exit
+fi
+
+echo
+
+mv -v template.top ${TNAME}.top
+
+echo
+
+rm -fv \#* *-bak*
+
+echo
+echo "${0##*/} : ALL DONE!"
+echo
+
+exit
+

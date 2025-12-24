@@ -1,0 +1,316 @@
+#!/bin/bash
+
+# radius of gyration (Rg) analysis using Gromacs tools
+
+# check the options
+if [ $# -eq 1 ]; then
+  HELP=$1
+  help="${HELP,,}"
+fi
+
+if [ "$1" == "" ] || [ "$help" == "-h" ] || [ "$help" == "--help" ]; then
+#if [ "$1" == "" ] || [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+cat <<EOF
+
+///////////////////////////////////////////////////////////////////////////////////
+//                                                                               //
+//   Workflow for running Gromacs MD jobs for complex multicomponent systems     //
+//   by Dr Andrey Brukhno (c) 2020-2025, Daresbury Laboratory, SCD, STFC, UKRI   //
+//                                                                               //
+///////////////////////////////////////////////////////////////////////////////////
+
+- Radius of gyration and its components for solute species based on .gro or .xtc files
+
+============
+ Main usage
+============
+
+> ${0##*/} -h
+> ${0##*/} --help
+> ${0##*/} [-nohup] [-pca] [-acf] [-dat] <task_name> [<cluster> <extension>]
+
+----------------
+ optional flags
+----------------
+ -nohup  - execute in the background, i.e. release the command-line upon launching
+
+ -pca    - use principal axes for Rg components (by default no rotation is done)
+
+ -acf    - calculate auto-correlation functions for Rg and its components
+           the flag only makes sense with trajectory files, e.g. .xtc or .trr
+           NOTE: the flag also invokes the '-pca' flag (as per 'gmx gyrate')
+
+ -dat    - use pure text format .dat for the data instead of default .xvg format
+
+---------------------
+ mandatory parameter
+---------------------
+ task_name  - the base file name excluding file extension(s)
+
+---------------------
+ optional parameters
+---------------------
+ cluster    - solute name(s) or group forming a cluster (comma-delimited) as per .ndx file
+ extension  - input file extension: 'gro', 'xtc', or 'trr' {default: 'xtc'}
+
+===============
+ prerequisites 
+===============
+ The following files must be found in the current directory:
+
+ <task_name>.tpr
+ <task_name>.ndx (where <cluster> must be found)
+ <task_name>.<extension>
+
+----------
+ Examples
+----------
+1. Calculating Rg and its components in the input file frame:
+   ${0##*/} SDS62-NAT62-wTIP3-eq1 2 gro
+
+2. Calculating Rg, its principal components and ACF's evolution over a trajectory:
+   ${0##*/} -acf SDS62-NAT62-wTIP3-eq4 SDS xtc
+
+EOF
+   exit 0
+fi
+
+# Re-spawn as a background process, if we haven't already.
+if [ "$1" == "-nohup" ]; then
+    nohup "$0" "${@:2}" &
+    exit $?
+fi
+
+echo
+echo "////////////////////////////////////////////////////////////////////////////////"
+echo "//                                                                            //"
+echo "//   Workflow for Gromacs MD simulations for complex multicomponent systems   //"
+echo "//   Post-simulation analysis: radius of gyration for a cluster of solute(s)  //"
+echo "//   by Dr Andrey Brukhno - 2020-2023, Daresbury Laboratory, SCD, STFC, UKRI  //"
+echo "//                                                                            //"
+echo "////////////////////////////////////////////////////////////////////////////////"
+echo
+echo
+
+PCA=""
+ACF=""
+
+if [ "$1" == "-pca" ]; then
+  PCA="-p"
+  shift
+  if [ "$1" == "-acf" ]; then
+    ACF="-acf"
+    shift
+  fi
+elif [ "$1" == "-acf" ]; then
+  ACF="-acf"
+  shift
+  if [ "$1" == "-pca" ]; then
+    PCA="-p"
+    shift
+  fi
+fi
+
+DAT=""
+if [ "$1" == "-dat" ]; then
+  DAT="-xvg none"
+  shift
+fi
+
+CLUST="2"
+EXT="xtc"
+
+# check the options
+if [ $# -lt 1 ]; then
+
+  echo
+  echo "Try '${0##*/} --help'"
+  echo "No options were given - FULL STOP!"
+  echo
+  exit 1
+
+elif [ $# -gt 1 ]; then
+  #CLUST="$2"
+  CLUST="$(echo $2 | sed 's/^\[//;s/\]$//')"
+
+  if [ $# -gt 2 ]; then
+    EXT="$3"
+  fi
+fi
+
+TNAME="$1"
+
+#echo
+#echo "Doing: ${0##*/} $PCA $ACF $DAT $TNAME $CLUST $EXT"
+#echo
+
+if [ ! -f ${TNAME}.ndx ]; then
+
+  echo
+  echo "Index file '${TNAME}.ndx' not found - creating it based on '${TNAME}.gro'"
+  echo
+  echo q | gmx make_ndx -f ${TNAME}.gro -o ${TNAME}.ndx
+
+fi
+
+IFS=',' read -r -a SOLUT <<< "$(echo $CLUST | sed 's/^\[//;s/\]$//')" # "$CLUST"
+
+if [ ${#SOLUT[@]} -gt 1 ]; then
+
+  CLUST="${SOLUT[0]}"
+  for i in $(seq 1 $(expr ${#SOLUT[@]} - 1)); do CLUST="${CLUST}_${SOLUT[${i}]}"; done
+
+fi
+
+if [ "${CLUST}" == "2" ] ; then
+
+  echo
+  echo "Solute (clustering) species not specified - searching for index group 2 in '${TNAME}.ndx' file ..."
+
+  grep "\[" "${TNAME}.ndx" > gnames.txt
+
+  if [ $( cat gnames.txt | wc -l) -lt 2 ]; then
+
+    echo
+    echo "Too few (less than 3) index groups in '${TNAME}.ndx' file - FULL STOP!"
+    echo
+    exit 2
+
+  fi
+
+  CLUST="$(head -n 3 gnames.txt | tail -n 1 | awk -F ' ' '{print $2}')"
+
+  echo "Solute (clustering) species not specified - found index group 2 -> '${CLUST}' in '${TNAME}.ndx' file ..."
+
+  rm -f gnames.txt
+
+elif [ $(grep -c "\[ ${CLUST} \]" "${TNAME}.ndx") -eq 0 ]; then
+
+  echo
+  echo "Could not find group '${CLUST}' in '${TNAME}.ndx' file - will try to create it ..."
+
+  SPEC=${SOLUT[0]}
+
+  grep "\[" "${TNAME}.ndx" > gnames.txt
+
+  num=$(grep "\[ ${SPEC} \]" -n -m1 gnames.txt | awk -F ':' '{print $1}')
+
+  NSPEC=$(($num - 1))
+  echo "NSPEC = '$NSPEC' / $num for $SPEC in ${SOLUT[@]} of ${#SOLUT[@]}"
+
+  SPECS=${SOLUT[0]}
+  for i in $(seq 0 $(expr ${#SOLUT[@]} - 1)); do
+
+    SPEC=${SOLUT[${i}]}
+
+    num=$(grep "\[ ${SPEC} \]" -n -m1 gnames.txt | awk -F ':' '{print $1}')
+
+    if [ $i -gt 0 ]; then
+      SPECS="${SPECS} | ${SPEC}"
+      NSPEC="${NSPEC} | $((${num} - 1))"
+      #echo "Index groups to join in .ndx file: $SPECS => $NSPEC"
+    fi
+
+    if [ -z $(grep -c "${SPEC}" "${TNAME}.top") ]; then
+
+      echo
+      echo "Could not find species '${SPEC}' in '${TNAME}.top' file - FULL STOP!"
+      echo
+      exit 3
+
+    else
+      echo "Found species '${SPEC}' in '${TNAME}.top' file ..."
+    fi
+
+  done
+
+# create a joint group for clustering species
+
+  echo "Index groups to join in '${TNAME}.ndx' file: $SPECS => $NSPEC ..."
+  echo
+#  echo "Doing: gmx make_ndx -f ${TNAME}.gro -n ${TNAME}.ndx -o ${TNAME}.ndx <<+ ${NSPEC} q +"
+#  echo
+
+#  gmx make_ndx -f ${TNAME}.gro -n "${TNAME}.ndx" -o "${TNAME}-${CLUST}.ndx" <<+
+  gmx make_ndx -f ${TNAME}.gro -n "${TNAME}.ndx" -o "${TNAME}.ndx" <<+
+${NSPEC}
+q
++
+
+  rm -f gnames.txt
+
+else
+
+  echo "Found group '${CLUST}' in '${TNAME}.ndx' file ..."
+
+fi
+
+if [ ! -f ${TNAME}-CC-PBC.${EXT} ]; then
+
+  if [ ! -f ${TNAME}-CC.${EXT} ]; then
+
+# re-center the box contents at the cluster COM (species $2 in the index) and make molecules whole again
+# prior doing this, one has to make sure the cluster is correctly defined in the index file
+
+    echo
+    echo "Re-centering the simulation box contents at the cluster COM (species ${CLUST} in the index file)"
+    echo "NOTE: prior doing this, one has to make sure the cluster is correctly defined in the index file"
+
+    echo
+    echo "Converting '${TNAME}.${EXT}' -> '${TNAME}-CC.${EXT}' [cluster centered configuration(s)]"
+
+    echo ${CLUST} ${CLUST} 0 | gmx trjconv -f ${TNAME}.${EXT} -o ${TNAME}-CC.${EXT} -s ${TNAME}.tpr -n ${TNAME}.ndx -pbc cluster -center
+
+  fi
+
+# put all molecules COM:s back into the primary box 
+
+  echo
+  echo "Converting '${TNAME}-CC.${EXT}' -> '${TNAME}-CC-PBC.${EXT}' [cluster centered configuration(s) with COM:s PBC]"
+
+  echo 0 | gmx trjconv -f ${TNAME}-CC.${EXT} -o ${TNAME}-CC-PBC.${EXT} -s ${TNAME}.tpr -n ${TNAME}.ndx -pbc mol
+
+fi
+
+if [ -f ${TNAME}-CC-PBC.${EXT} ]; then
+
+  if [ -f ${TNAME}-CC.${EXT} ]; then
+
+# remove the intermediate configuration(s) (cluster-centered where COM:s migth be out of the primary box)
+
+    echo
+    echo "Removing '${TNAME}-CC.${EXT}' [intermediate cluster centered configuration(s)]"
+
+    rm -f ${TNAME}-CC.${EXT}
+
+  fi
+
+  ONAME="${TNAME}-CC-PBC-${EXT}_GyrRXYZ"
+  if [ "$PCA" == "-p" -o "$ACF" == "-acf" ]; then
+    ONAME="${ONAME}-PCA"
+  fi
+
+  if [ "$ACF" == "-acf" ]; then
+    ACF="${ACF} ${ONAME}-ACF.xvg"
+  fi
+
+# calculate Rg, its principal components and ACFs
+
+  echo "Calculating Rg, its components and ACF for cluster/species ${CLUST} in the index file"
+
+  echo ${CLUST} | gmx gyrate ${PCA} ${DAT} -f ${TNAME}-CC-PBC.${EXT} -s ${TNAME}.tpr -n ${TNAME}.ndx -o ${ONAME}.xvg ${ACF}
+
+#  echo ${CLUST} | gmx gyrate -f ${TNAME}-CC-PBC.${EXT} -s ${TNAME}.tpr -n ${TNAME}.ndx -o ${TNAME}-GyrRXYZ.xvg -acf ${TNAME}-GyrRXYZ-ACF.xvg
+
+  if [ -n "${DAT}" ]; then
+    for f in ${ONAME}*.xvg ; do mv -v ${f} ${f%.xvg}.dat ; done
+  fi
+
+fi
+
+echo 
+echo "All done"
+echo
+
+exit 0
+

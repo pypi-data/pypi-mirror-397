@@ -1,0 +1,556 @@
+#!/bin/bash
+#
+# Author: Dr Andrey V Brukhno (c) 2020-2023 (Daresbury Laboratory, SCD, STFC, UKRI)
+# Batch script for Gromacs staged equilibration workflow
+
+# extracting and counting solvent molecules inside spherical cavities
+
+# check the options
+if [ $# -eq 1 ]; then
+  HELP=$1
+  help="${HELP,,}"
+fi
+
+if [ "$1" == "" ] || [ "$help" == "-h" ] || [ "$help" == "--help" ]; then
+#if [ "$1" == "" ] || [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+cat <<EOF
+
+///////////////////////////////////////////////////////////////////////////////////
+//                                                                               //
+//   Workflow for running Gromacs MD jobs for complex multicomponent systems     //
+//   by Dr Andrey Brukhno (c) 2020-2025, Daresbury Laboratory, SCD, STFC, UKRI   //
+//                                                                               //
+///////////////////////////////////////////////////////////////////////////////////
+
+- Extracting solvent within a sphere at the origin, with input from .gro file
+- Prior the solvation analysis the input is processed to center the solute cluster 
+
+============
+ Main usage
+============
+
+> ${0##*/} -h
+> ${0##*/} --help
+> ${0##*/} <task_name> [<solvent> <natoms> <range>]
+> ${0##*/} <task_name> [<solvent> <natoms> <range> [<cluster> [<atoms>]]]
+
+---------------------
+ mandatory parameter
+---------------------
+ task_name  - the base file name excluding file extension(s)
+
+---------------------
+ optional parameters
+---------------------
+ solvent    - solvent name {SOL}
+
+ natoms     - number of atoms per solvent molecule {3};
+
+ range      - a set of radii specifying the spherical layer(s) 
+              and possibly the width of the solvation shell
+              in the following format: 'Rext[,Rint[,dR/Rshl]]'
+              {defaults: Rext = 1.0, Rint = 0.0}
+
+ cluster    - solute name(s) for species forming a cluster (comma-delimited)
+
+ atoms      - atom name(s), one per solute species (comma-delimited)
+
+------
+NOTE1: If only the solvent name is provided, the default solute species 
+       to be treated as a cluster will be the first one found, which 
+       corresponds to entry #2 in the <task_name>.ndx file.
+
+NOTE2: If more than one solute name provided, the joint group for the respective 
+       solutes must be found in the <task_name>.ndx file and be named as follows: 
+       '<solute1>_<solute2>' (i.e. the solute names must be joined by underscore).
+       In this case all the specified solute species will be considered to form 
+       a cluster which will be centered at the origin.
+
+NOTE3: If the atom name(s) NOT given, i.e. solvent and solute names are specified, 
+       solvent molecules are extracted from within the specified spherical 
+       layer [Rint, Rext] with the solute cluster's COM placed at the origin;
+       In this case 'range' should include either ONLY ONE value (Rext) 
+       or ALL THREE values, where the last one must be either a (whole) number
+       of subdivisions (Nsub) to be considered between Rint and Rext,
+       or the radius increment (dR < 1 nm) for stepwise iteration.
+
+NOTE4: With the atom name(s) given, i.e. the 6-th (last) argument is present,
+       solvent molecules are exrtacted from within the solvation shells (Rshell)
+       around the atoms with the given name(s) found on the corresponding solute(s).
+------
+
+===============
+ Prerequisites 
+===============
+ The following files must be found in the current directory:
+
+ <task_name>.mdp / <task_name>_noSOL.mdp (system without solvent)
+ <task_name>.top / <task_name>_noSOL.top (system without solvent)
+ <task_name>.tpr
+ <task_name>.gro
+ <task_name>.ndx
+
+----------
+ Examples
+----------
+1. Single round of extraction of water molecules bound by sphere of radius 3.0 nm:
+   ${0##*/} SDS62-NAT62-wTIP3-eq1 TIP3 3 3.0
+
+2. Stepwise extraction of water molecules in spheres of radii in [1.0,3.0] with dR=0.5:
+   ${0##*/} SDS62-NAT62-wTIP3-eq1 TIP3 3 3,1,0.5
+
+3. Single round of extraction of water in solvation shells within 0.5 nm by C17 atoms 
+   on SDS species within spherical layer between Rint=1.0 and Rext=3.0 nm:
+   ${0##*/} SDS62-NAT62-wTIP3-eq1 TIP3 3 3,1,0.5 SDS C17
+
+EOF
+   exit 0
+fi
+
+SOLVT="SOL"
+CLUST="2"
+ATOMS=""
+RANGE="1.0"
+REXT="1.0"
+RINT="0.0"
+RSHL="0.5"
+DRAD="0.0"
+let NATMS=3
+let NSUB=1
+
+echo
+echo "////////////////////////////////////////////////////////////////////////////////"
+echo "//                                                                            //"
+echo "//   Workflow for Gromacs MD simulations for complex multicomponent systems   //"
+echo "//   Post-simulation analysis: solvation layer(s) for a cluster of solute(s)  //"
+echo "//   by Dr Andrey Brukhno - 2020-2023, Daresbury Laboratory, SCD, STFC, UKRI  //"
+echo "//                                                                            //"
+echo "////////////////////////////////////////////////////////////////////////////////"
+echo
+echo
+
+# check the options
+if [ $# -lt 1 ]; then
+
+  echo
+  echo "Try '${0##*/} --help'"
+  echo "No options were given - FULL STOP!"
+  echo
+  exit 1
+
+fi
+
+TNAME="$1"
+shift
+
+if [ $# -gt 0 ]; then
+  SOLVT="$1"
+  shift
+
+  if [ $# -gt 0 ]; then
+    NATMS="$1"
+    shift
+  fi
+
+  if [ $# -gt 0 ]; then
+    #RANGE="$1"
+    RANGE="$(echo $1 | sed 's/^\[//;s/\]$//')"
+    shift
+  fi
+
+  if [ $# -gt 0 ]; then
+    #CLUST="$1"
+    CLUST="$(echo $1 | sed 's/^\[//;s/\]$//')"
+    shift
+
+    if [ $# -gt 0 ]; then
+      #ATOMS="$1"
+      ATOMS="$(echo $1 | sed 's/^\[//;s/\]$//')"
+      shift
+    fi
+  fi
+fi
+
+#echo
+#echo "Doing: ${0##*/} $TNAME $SOLVT $NATMS $RANGE $CLUST $ATOMS"
+#echo
+
+CLUST0="$CLUST"
+IFS=',' read -r -a SOLUT <<< "$CLUST"
+IFS=',' read -r -a NAMES <<< "$ATOMS"
+IFS=',' read -r -a RADII <<< "$RANGE"
+
+#readarray -td, NAMES <<<"${ATOMS},"; unset 'NAMES[-1]'; declare -p NAMES;
+#readarray -td, RADII <<<"${RANGE},"; unset 'RADII[-1]'; declare -p RADII;
+
+if [ ${#NAMES[@]} -gt 0 ]; then
+
+  if [ ${#RADII[@]} -lt 3 ]; then
+
+    echo
+    echo "Too few (less than 3) values given in <range> argument: ${RANGE} - FULL STOP!"
+    echo
+    exit 3
+
+  elif [ ${#RADII[@]} -gt 3 ]; then
+
+    echo
+    echo "Too many (more than 3) values given in <range> argument: ${RANGE} - FULL STOP!"
+    echo
+    exit 3
+
+  fi
+
+  if [ ${#SOLUT[@]} -ne ${#NAMES[@]} ]; then
+
+    echo
+    echo "Number of atom names not equal to number of solute names: ${#NAMES[@]} =/= ${#SOLT[@]} - FULL STOP!"
+    echo
+    exit 3
+
+  fi
+
+  REXT=${RADII[0]}
+  RINT=${RADII[1]}
+  RSHL=${RADII[2]}
+
+  CLUST="${SOLUT[0]}"
+  for i in $(seq 1 $(expr ${#SOLUT[@]} - 1)); do CLUST="${CLUST}_${SOLUT[${i}]}"; done
+
+  echo
+  echo "Solvation shell of '${SOLVT}' within ${RADII[-1]} nm from atoms '${NAMES}' on solute(s) '${SOLUT}'"
+  echo "Single search round inside a spherical layer between ${RADII[1]} and ${RADII[0]} nm"
+  echo "Solute cluster name to search for in '${TNAME}.ndx' file: '$CLUST'"
+
+else 
+
+  CLUST="${SOLUT[0]}"
+  for i in $( seq 1 $(expr ${#SOLUT[@]} - 1)); do CLUST="${CLUST}_${SOLUT[${i}]}"; done
+
+  if [ ${#RADII[@]} -eq 3 ]; then
+
+    REXT=${RADII[0]}
+    RINT=${RADII[1]}
+    NSUB=${RADII[-1]}
+
+    if (( $(echo "${NSUB} >= 1" | bc -l) )); then
+      DRAD=$(echo "scale=3; ( ${RADII[0]} - ${RADII[1]} ) / $NSUB" | bc)
+    else
+      NSUB=$(echo "scale=0; ( ${RADII[0]} - ${RADII[1]} ) / ${NSUB}" | bc)
+      DRAD=$(echo "scale=3; ( ${RADII[0]} - ${RADII[1]} ) / ${NSUB}" | bc)
+      NSUB=$(expr ${NSUB} + 1)
+    fi
+
+    echo
+    echo "Solvation shell of '${SOLVT}' within a sphere centered on COM of group '${CLUST}' as per '${TNAME}.ndx' file"
+    echo "Stepwise search in range [${RADII[1]}, ${RADII[0]}; ${NSUB}] with step dR = ${DRAD}"
+
+  elif [ ${#RADII[@]} -lt 3 ]; then
+
+    REXT=${RADII[0]}
+    if [ ${#RADII[@]} -eq 2 ]; then
+      RINT=${RADII[1]}
+    fi
+
+    echo
+    echo "Solvation shell of '${SOLVT}' within a sphere centered on COM of group '${CLUST}' as per '${TNAME}.ndx' file"
+    echo "Single search round inside a spherical layer between ${RINT} and ${REXT} nm"
+
+  else
+
+    echo
+    echo "Incorrect format for R-range: '${RANGE}' (must be 3 comma-delimited figures at most) - FULL STOP!"
+    echo
+    exit 6
+
+  fi
+
+fi
+
+if [ ! -f ${TNAME}.gro ]; then
+
+  echo
+  echo "Input file '${TNAME}.gro' (configuration) not found - FULL STOP!"
+  echo
+  exit 1
+
+elif [ ! -f ${TNAME}.tpr ]; then
+
+  echo
+  echo "Input file '${TNAME}.tpr' (simulation setup) not found - FULL STOP!"
+  echo
+  exit 2
+
+fi
+
+if [ ! -f ${TNAME}.box ]; then
+
+  echo
+  echo "Box file '${TNAME}.box' not found - creating it for '${TNAME}.gro'"
+
+  tail -1 ${TNAME}.gro > ${TNAME}.box
+
+fi
+
+if [ ! -f ${TNAME}.ndx ]; then
+
+  echo
+  echo "Index file '${TNAME}.ndx' not found - creating it based on '${TNAME}.gro'"
+  echo
+  echo q | gmx make_ndx -f ${TNAME}.gro -o ${TNAME}.ndx
+
+fi
+
+if [ "${CLUST}" == "2" ] ; then
+
+  echo
+  echo "Solute (clustering) species not specified - searching for index group 2 in '${TNAME}.ndx' file ..."
+
+  grep "\[" "${TNAME}.ndx" > gnames.txt
+
+  if [ $( cat gnames.txt | wc -l) -lt 2 ]; then
+
+    echo
+    echo "Too few (less than 3) index groups in '${TNAME}.ndx' file - FULL STOP!"
+    echo
+    exit 4
+
+  fi
+
+  CLUST="$(head -n 3 gnames.txt | tail -n 1 | awk -F ' ' '{print $2}')"
+
+  echo "Solute (clustering) species not specified - found index group 2 -> '${CLUST}' in '${TNAME}.ndx' file ..."
+
+  rm -f gnames.txt
+
+elif [ -z $(grep -c "\[ ${CLUST} \]" "${TNAME}.ndx") ]; then
+
+  echo
+  echo "Could not find group '${CLUST}' in '${TNAME}.ndx' file - will try to create it ..."
+
+  SPEC=${SOLUT[0]}
+
+  grep "\[" "${TNAME}.ndx" > gnames.txt
+
+  num=$(grep "\[ ${SPEC} \]" -n -m1 gnames.txt | awk -F ':' '{print $1}')
+
+  NSPEC=$(($num - 1))
+  echo "NSPEC = '$NSPEC' / $num for $SPEC in "'${SOLUT[@]}'" of ${#SOLUT[@]}"
+
+  SPECS=${SOLUT[0]}
+  for i in $(seq 0 $(expr ${#SOLUT[@]} - 1)); do
+
+    SPEC=${SOLUT[${i}]}
+
+    num=$(grep "\[ ${SPEC} \]" -n -m1 gnames.txt | awk -F ':' '{print $1}')
+
+    if [ $i -gt 0 ]; then
+      SPECS="${SPECS} | ${SPEC}"
+      NSPEC="${NSPEC} | $((${num} - 1))"
+      #echo "Index groups to join in .ndx file: $SPECS => $NSPEC"
+    fi
+
+    if [ -z $(grep -c "${SPEC}" "${TNAME}.top") ]; then
+
+      echo
+      echo "Could not find species '${SPEC}' in '${TNAME}.top' file - FULL STOP!"
+      echo
+      exit 5
+
+    else
+      echo "Found species '${SPEC}' in '${TNAME}.top' file ..."
+    fi
+
+  done
+
+# create a joint group for clustering species
+
+  echo "Index groups to join in '${TNAME}.ndx' file: $SPECS => $NSPEC ..."
+  echo
+#  echo "Doing: gmx make_ndx -f ${TNAME}.gro -n ${TNAME}.ndx -o ${TNAME}.ndx <<+ ${NSPEC} q +"
+#  echo
+
+#  gmx make_ndx -f ${TNAME}.gro -n "${TNAME}.ndx" -o "${TNAME}-${CLUST}.ndx" <<+
+  gmx make_ndx -f ${TNAME}.gro -n "${TNAME}.ndx" -o "${TNAME}.ndx" <<+
+${NSPEC}
+q
++
+
+  rm -f gnames.txt
+
+else
+
+  echo "Found group '${CLUST}' in '${TNAME}.ndx' file ..."
+
+fi
+
+#exit
+
+if [ ! -f ${TNAME}-CC-PBC.gro ]; then
+
+  if [ ! -f ${TNAME}-CC.gro ]; then
+
+    echo
+    echo "Converting '${TNAME}.gro' -> '${TNAME}-CC.gro' (cluster centered configuration)"
+    echo
+
+    echo ${CLUST} ${CLUST} 0 | gmx trjconv -f ${TNAME}.gro -o ${TNAME}-CC.gro -s ${TNAME}.tpr -n ${TNAME}.ndx -pbc cluster -center
+
+  fi
+
+  echo
+  echo "Converting '${TNAME}-CC.gro' -> '${TNAME}-CC-PBC.gro' (cluster centered configuration with COM:s PBC)"
+  echo
+
+  echo 0 | gmx trjconv -f ${TNAME}-CC.gro -o ${TNAME}-CC-PBC.gro -s ${TNAME}.tpr -n ${TNAME}.ndx -pbc mol
+
+fi
+
+if [ -f ${TNAME}-CC-PBC.gro ]; then
+
+  if [ -f ${TNAME}-CC.gro ]; then
+
+    echo
+    echo "Removing '${TNAME}-CC.gro' (intermediate cluster centered configuration)"
+
+    rm -f ${TNAME}-CC.gro
+
+  fi
+
+  echo
+  echo "Cluster-centered configuration found in ${TNAME}-CC.gro"
+
+  if [ ${#NAMES[@]} -gt 0 ]; then
+
+    echo
+    echo "Doing: ana-solvent -i ${TNAME}-CC-PBC.gro -o ${TNAME}-CC-PBC -x .gro -s $SOLVT -c $CLUST0 -a $ATOMS -r ${RANGE} -b ${TNAME}.box -n ${NATMS}"
+
+    ana-solvent -i "${TNAME}-CC-PBC.gro" -o "${TNAME}-CC-PBC" -x ".gro" -s "$SOLVT" -c "$CLUST0" -a "$ATOMS" -r ${RANGE} -b "${TNAME}.box" -n ${NATMS}
+
+    for f in ${TNAME}*Rsh*.gro; do
+
+      echo "# Number of atoms in species '${SOLVT}' within ${RSHL} nm from atoms ${ATOMS} on species ${CLUST0} for R = [${RINT}, ${REXT}]" > "${f%.gro}_Natms.dat"
+      sed -n 2p $f >> "${f%.gro}_Natms.dat"
+
+      echo "# Number of solvent molecules '${SOLVT}' within ${RSHL} nm from atoms ${ATOMS} on species ${CLUST0} for R = [${RINT}, ${REXT}]" > "${f%.gro}_Nmols.dat"
+      awk 'NR!=1 {print $1/'"$NATMS"';}' "${f%.gro}_Natms.dat" >> "${f%.gro}_Nmols.dat"
+
+    done
+
+    RNAME='Rc'
+    if (( $(echo "$RINT > 0.0" | bc -l) )); then
+      RNAME="${RNAME}_${RINT}-${REXT}nm"
+    else
+      RNAME="${RNAME}_${REXT}nm"
+    fi
+
+    #touch "${TNAME}-CC-PBC_${SOLVT}_${RNAME}_Natms.dat"
+    echo "# Number of atoms in species '${SOLVT}' for R = [${RINT}, ${REXT}]" > "${TNAME}-CC-PBC_${SOLVT}_${RNAME}_Natms.dat"
+
+    sed -n 2p ${TNAME}-CC-PBC_${SOLVT}_${RNAME}.gro >> "${TNAME}-CC-PBC_${SOLVT}_${RNAME}_Natms.dat"
+
+    #touch "${TNAME}-CC-PBC_${SOLVT}_${RNAME}_Nmols.dat"
+    echo "# Number of solvent molecules '${SOLVT}' for R = [${RINT}, ${REXT}]" > "${TNAME}-CC-PBC_${SOLVT}_${RNAME}_Nmols.dat"
+    awk 'NR!=1 {print $1/'"$NATMS"';}' "${TNAME}-CC-PBC_${SOLVT}_${RNAME}_Natms.dat" >> "${TNAME}-CC-PBC_${SOLVT}_${RNAME}_Nmols.dat"
+
+  elif (( $(echo "${NSUB} > 1" | bc -l) )); then
+
+    echo "# Radius of spherical cavity / nm" > Rcavity.dat
+
+    if [ ${NSUB} -eq 1 ]; then
+      RCUR=$REXT
+      DRAD="0.0"
+    else
+      RCUR=$(echo "scale=3; ${RINT} - ${DRAD}" | bc)
+    fi
+
+    echo
+    echo "Extracting solvent molecules '${SOLVT}' with $NATMS atoms in R-range: [${RINT}, ${REXT}] with step dR = ${DRAD}"
+
+    #touch "${TNAME}-CC-PBC_${SOLVT}_Natms.dat"
+    echo "# Number of atoms in species '${SOLVT}' inside cavity" > "${TNAME}-CC-PBC_${SOLVT}_Natms.dat"
+
+    for i in $(seq 1 ${NSUB}); do
+
+      RCUR=$(echo "scale=3; ${RCUR} + ${DRAD}" | bc)
+      echo
+      echo "Doing: ana-solvent -i ${TNAME}-CC-PBC.gro -o ${TNAME}-CC-PBC -x .gro -s $SOLVT -r ${RCUR} -b ${TNAME}.box -n ${NATMS}"
+
+      ana-solvent -i "${TNAME}-CC-PBC.gro" -o "${TNAME}-CC-PBC" -x ".gro" -s "$SOLVT" -r ${RCUR} -b "${TNAME}.box" -n ${NATMS}
+
+      echo "${RCUR}" >> Rcavity.dat
+
+    done
+
+    #echo
+    #echo "Collecting the atom number for species '${SOLVT}' -> '${TNAME}-CC-PBC_${SOLVT}_Natms.dat'"
+    #echo
+
+    #touch "${TNAME}-CC-PBC_${SOLVT}_Natms.dat"
+    echo "# Number of atoms in species '${SOLVT}' inside cavity" > "${TNAME}-CC-PBC_${SOLVT}_Natms.dat"
+
+    shopt -s extglob
+    for f in $(ls -rt ${TNAME}-CC-PBC_${SOLVT}_Rc_!(*-*)nm.gro); do
+      sed -n 2p $f >> "${TNAME}-CC-PBC_${SOLVT}_Natms.dat"
+    done
+
+    #touch "${TNAME}-CC-PBC_${SOLVT}_Nmols.dat"
+    echo "# Number of solvent molecules '${SOLVT}' in cavity" > "${TNAME}-CC-PBC_${SOLVT}_Nmols.dat"
+    awk 'NR!=1 {print $1/'"$NATMS"';}' "${TNAME}-CC-PBC_${SOLVT}_Natms.dat" >> "${TNAME}-CC-PBC_${SOLVT}_Nmols.dat"
+
+    paste Rcavity.dat "${TNAME}-CC-PBC_${SOLVT}_Nmols.dat" > "${TNAME}-CC-PBC_${SOLVT}_Rc-Nmols.dat"
+
+    paste Rcavity.dat "${TNAME}-CC-PBC_${SOLVT}_Natms.dat" > "${TNAME}-CC-PBC_${SOLVT}_Rc-Natms.dat"
+
+    rm Rcavity.dat "${TNAME}-CC-PBC_${SOLVT}_Natms.dat" "${TNAME}-CC-PBC_${SOLVT}_Nmols.dat"
+
+  elif [ ${#RADII[@]} -eq 2 ]; then
+
+    echo
+    echo "Doing: ana-solvent -i ${TNAME}-CC-PBC.gro -o ${TNAME}-CC-PBC -x .gro -s $SOLVT -r ${RANGE} -b ${TNAME}.box -n ${NATMS}"
+
+    ana-solvent -i "${TNAME}-CC-PBC.gro" -o "${TNAME}-CC-PBC" -x ".gro" -s "$SOLVT" -r ${RANGE} -b "${TNAME}.box" -n ${NATMS}
+
+    RNAME='Rc'
+    if (( $(echo "$RINT > 0.0" | bc -l) )); then
+      RNAME="${RNAME}_${RINT}-${REXT}nm"
+    else
+      RNAME="${RNAME}_${REXT}nm"
+    fi
+
+    #touch "${TNAME}-CC-PBC_${SOLVT}_${RNAME}_Natms.dat"
+    echo "# Number of atoms in species '${SOLVT}' for R = [${RINT}, ${REXT}]" > "${TNAME}-CC-PBC_${SOLVT}_${RNAME}_Natms.dat"
+
+    sed -n 2p ${TNAME}-CC-PBC_${SOLVT}_${RNAME}.gro >> "${TNAME}-CC-PBC_${SOLVT}_${RNAME}_Natms.dat"
+
+    #touch "${TNAME}-CC-PBC_${SOLVT}_${RNAME}_Nmols.dat"
+    echo "# Number of solvent molecules '${SOLVT}' for R = [${RINT}, ${REXT}]" > "${TNAME}-CC-PBC_${SOLVT}_${RNAME}_Nmols.dat"
+    awk 'NR!=1 {print $1/'"$NATMS"';}' "${TNAME}-CC-PBC_${SOLVT}_${RNAME}_Natms.dat" >> "${TNAME}-CC-PBC_${SOLVT}_${RNAME}_Nmols.dat"
+    #awk 'NR!=1 {print $1/3;}' "${TNAME}-CC-PBC_${SOLVT}_${RNAME}_Natms.dat" >> "${TNAME}-CC-PBC_${SOLVT}_${RNAME}_Nmols.dat"
+
+  else
+
+    echo
+    echo "Inconsistent input: ${TNAME} ${SOLVT} ${NATMS} ${RANGE} ${CLUST0} ${ATOMS} - FULL STOP!"
+    echo
+    exit 7
+
+  fi
+
+  echo 
+  echo "All done"
+  echo
+
+  #exit $?
+
+else
+
+  echo
+  echo "Cluster-centered configuration with COM:s PBC '${TNAME}-CC-PBC.gro' not found - FULL STOP!"
+  echo
+  exit 4
+
+fi
+
+exit $?
+

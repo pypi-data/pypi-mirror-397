@@ -1,0 +1,173 @@
+#!/bin/bash
+
+CLUST="0"
+NPART="1"
+EXT="xtc"
+
+# number of atoms per molecule (42 for SDS in CHARMM FF)
+NATMS="42"
+# number of atoms per molecule (62 for CTA[B] in CHARMM FF)
+# NATMS="62"
+
+# check the options
+if [ $# -eq 1 ]; then
+  HELP=$1
+  help="${HELP,,}"
+fi
+
+if [ "$1" == "" ] || [ "$help" == "-h" ] || [ "$help" == "--help" ]; then
+
+cat <<EOF
+
+///////////////////////////////////////////////////////////////////////////////////
+//                                                                               //
+//   Workflow for running Gromacs MD jobs for complex multicomponent systems     //
+//   by Dr Andrey Brukhno (c) 2020-2025, Daresbury Laboratory, SCD, STFC, UKRI   //
+//                                                                               //
+///////////////////////////////////////////////////////////////////////////////////
+
+This is a helper script to calculate radius of gyration (Rg) and its components
+for the largest cluster of solute molecules in a Gromacs MD simulation trajectory 
+that has been split into pieces for parallel piecewise analysis.
+
+The script assumes that the trajectory pieces and index files have been prepared.
+
+------
+Usage:
+------
+> ${0##*/} -h
+> ${0##*/} --help
+> ${0##*/} <task_name> [<number_of_trajectory_pieces> <trajectory_files_extension>]
+
+NOTE: The script uses 'bc' for arithmetic operations.
+
+EOF
+   exit 0
+
+elif [ $# -gt 3 ]; then
+
+  NPART="$2"
+  EXT="$3"
+  NATMS="$4"
+
+elif [ $# -gt 2 ]; then
+
+  NPART="$2"
+  EXT="$3"
+
+elif [ $# -gt 1 ]; then
+
+  NPART="$2"
+
+fi
+
+TNAME="$1"
+
+if [ -f ${TNAME}_maxclustsize.dat ]; then
+  mv -v ${TNAME}_maxclustsize.dat ${TNAME}_maxclustsize.dat0
+fi
+
+for i in $(seq 1 ${NPART}); do 
+
+  mkdir "ana-gyr-clust_$i"
+  cd "ana-gyr-clust_$i"
+
+  if [ -f ../${TNAME}_noSOL.tpr ]; then
+    ln -s ../${TNAME}_noSOL.tpr ${TNAME}-CC_noSOL.tpr
+  else
+    echo
+    echo "Topology file '${TNAME}_noSOL.tpr' not found - FULL STOP!"
+    echo
+    cd ../
+    exit 1
+  fi
+
+  if [ -f ../${TNAME}-CC_noSOL.gro ]; then
+    ln -s ../${TNAME}-CC_noSOL.gro ${TNAME}-CC_noSOL.gro
+  else
+    echo
+    echo "Configuration file '${TNAME}-CC_noSOL.gro' not found - FULL STOP!"
+    echo
+    cd ../
+    exit 2
+  fi
+
+  if [ -f ../${TNAME}.maxclust_$i.ndx ]; then
+
+    #if [ -f ${TNAME}-CC_noSOL.maxclust_$i.ndx ]; then
+    #  rm ${TNAME}-CC_noSOL.maxclust_$i.ndx
+    #fi
+
+    ln -s ../${TNAME}.maxclust_$i.ndx ${TNAME}-CC_noSOL.maxclust_$i.ndx
+
+    let "nmols = $(cat ./${TNAME}-CC_noSOL.maxclust_${i}.ndx | wc -l) - 1"
+    nmols="$( echo $nmols / ${NATMS} | bc)" 
+
+    let "j = ${i} - 1"
+    let "mmols = 0"
+    if [ $i -gt 1 ]; then
+      let "mmols = ( $(diff ../${TNAME}.maxclust_${i}.ndx ../${TNAME}.maxclust_${j}.ndx | wc -l) - 2 ) / ${NATMS} "
+      if [ $mmols -gt 0 ]; then
+        mmols="$( echo $mmols - $nmols | bc)" 
+      fi
+    fi
+
+    echo "$nmols   $mmols" >> ../${TNAME}_maxclustsize.dat 
+
+#  elif [ -f ../"#maxclust.ndx.$i#" ]; then
+#
+#    mv -v ../"#maxclust.ndx.$i#" ../${TNAME}-CC_noSOL.maxclust_$i.ndx
+#    ln -s ../${TNAME}-CC_noSOL.maxclust_$i.ndx ${TNAME}-CC_noSOL.maxclust_$i.ndx
+#
+#  elif [[ $i -eq $NPART && -f ../maxclust.ndx ]]; then
+#
+#    mv -v ../maxclust.ndx ../${TNAME}-CC_noSOL.maxclust_$i.ndx
+#    ln -s ../${TNAME}-CC_noSOL.maxclust_$i.ndx ${TNAME}-CC_noSOL.maxclust_$i.ndx
+#
+  else
+    echo
+    echo "Index file '${TNAME}.maxclust_$i.ndx' not found - FULL STOP!"
+    echo
+    cd ../
+    exit 3
+  fi
+
+  if [ -f ../${TNAME}-CC_noSOL-$i.${EXT} ]; then
+    ln -s ../${TNAME}-CC_noSOL-$i.${EXT} ${TNAME}-CC_noSOL-$i.${EXT}
+  else
+    echo
+    echo "Trajectory file '${TNAME}-CC_noSOL-$i.${EXT}' not found - FULL STOP!"
+    echo
+    cd ../
+    exit 4
+  fi
+
+  echo
+  echo "Creating maxcluster configuration file '${TNAME}-CC_noSOL.maxclust_$i.gro' ..."
+  echo
+
+  echo 0 0 0 | gmx trjconv -f "${TNAME}-CC_noSOL.gro" -o "${TNAME}-CC_noSOL.maxclust_$i.gro" -s "${TNAME}-CC_noSOL.tpr" -n "${TNAME}-CC_noSOL.maxclust_$i.ndx" -pbc cluster -center
+
+  echo
+  echo "Creating maxcluster trajectory file '${TNAME}-CC_noSOL.maxclust_$i.${EXT}' ..."
+  echo
+
+  echo 0 0 0 | gmx trjconv -f "${TNAME}-CC_noSOL-$i.${EXT}" -o "${TNAME}-CC_noSOL.maxclust_$i.${EXT}" -s "${TNAME}-CC_noSOL.tpr" -n "${TNAME}-CC_noSOL.maxclust_$i.ndx" -pbc cluster -center
+
+  echo
+  echo "Doing gyration PCA analysis for trajectory '${TNAME}-CC_noSOL-$i.${EXT}' ..."
+  echo
+
+  echo 0 | gmx gyrate -f "${TNAME}-CC_noSOL-$i.${EXT}" -s "${TNAME}-CC_noSOL.tpr" -n "${TNAME}-CC_noSOL.maxclust_$i.ndx" -o "${TNAME}-CC_noSOL-GyrRXYZ.xvg" -acf "${TNAME}-CC_noSOL-GyrRXYZ-ACF.xvg"
+
+  rmh
+
+  echo
+  echo " DONE in 'ana-gyr-clust_$i'"
+  echo
+
+  cd ../
+
+done
+
+exit 0

@@ -1,0 +1,113 @@
+#!/bin/bash
+
+# check the options
+if [ $# -eq 1 ]; then
+  HELP=$1
+  help="${HELP,,}"
+fi
+
+if [ "$1" == "" ] || [ "$help" == "-h" ] || [ "$help" == "--help" ]; then
+cat <<EOF
+
+///////////////////////////////////////////////////////////////////////////////////
+//                                                                               //
+//   Workflow for running Gromacs MD jobs for complex multicomponent systems     //
+//   by Dr Andrey Brukhno (c) 2020-2025, Daresbury Laboratory, SCD, STFC, UKRI   //
+//                                                                               //
+///////////////////////////////////////////////////////////////////////////////////
+
+- Parallel cluster analysis for solute species based on .gro and .xtc files
+- Helper script used by gmx-ana-clusters-prl (not supposed to be run separately)
+
+------
+Usage:
+------
+> ${0##*/} -h
+> ${0##*/} --help
+> ${0##*/} <solutes_in_cluster> <task_name> <trajectory_pattern> [<start_time> <end_time> [<cutoff>]]
+
+EOF
+   exit 0
+fi
+
+CMOL="$1"
+TNAME="$2"
+TPART="$3"
+BTIME="$4"
+ETIME="$5"
+
+RCUT="0.5"
+if [ $# -gt 5 ]; then
+  RCUT="$6"
+fi
+
+if [[ ! -f ${TNAME}_noSOL.tpr ]]; then
+  echo
+  echo "Error: input file '${TNAME}_noSOL.tpr' not found (while doing subset $TPART) - FULL STOP!"
+  echo
+  exit 1
+fi
+
+#PNAME="${TNAME}-CC_noSOL.xtc"
+
+## first, check if the total trajectory has not been yet converted (so it makes sense to do parts of it)
+if [ -f ${TNAME}-CC_noSOL.xtc ]; then
+
+    ## run cluster size analysis on the re-centered trajectory where only relevant molecules are present
+
+    gmx clustsize -s ${TNAME}_noSOL.tpr -f ${TNAME}-CC_noSOL.xtc -mol -nc ${TNAME}.nclust_${TPART}.xvg -mc ${TNAME}.maxclust_${TPART}.xvg -hc ${TNAME}.histo-clust_${TPART}.xvg -ac ${TNAME}.avclust_${TPART}.xvg -temp ${TNAME}.tempclust_${TPART}.xvg -mcn ${TNAME}.maxclust_${TPART}.ndx -o ${TNAME}.csize_${TPART}.xpm -ow ${TNAME}.csizew_${TPART}.xpm -cut ${RCUT} -b $BTIME -e $ETIME > ${TNAME}-CC_noSOL.clustsize_${TPART}.log 2>&1
+
+    status=$?
+    if [ $status -ne 0 ]; then
+      echo
+      echo "Error upon doing 'gmx clustsize -s ${TNAME}_noSOL.tpr -f ${TNAME}-CC_noSOL.xtc  -mol -nc ${TNAME}.nclust_${TPART}.xvg -mc ${TNAME}.maxclust_${TPART}.xvg -hc ${TNAME}.histo-clust_${TPART}.xvg -cut ${RCUT} -b $BTIME -e $ETIME'"
+      echo
+      exit $status
+    fi
+
+else
+
+    ## yes, it makes sense to convert / analyse the original (total) trajectory in parts
+    if [ ! -f ${TNAME}-CC_noSOL-$TPART.xtc ]; then
+
+      ## presuming that the molecules for cluster analysis correspond to the second entry (species) in the original .ndx and .tpr files
+
+      if [[ ! -f ${TNAME}.xtc || ! -f ${TNAME}.tpr ]]; then
+        echo
+        echo "Error: input file(s) '${TNAME}.xtc' / '${TNAME}.tpr' not found (while doing subset $TPART) - FULL STOP!"
+        echo
+        exit 2
+      fi
+
+      gmx trjconv -f ${TNAME}.xtc -s ${TNAME}.tpr -pbc cluster -center -o ${TNAME}-CC_noSOL-$TPART.xtc -b $BTIME -e $ETIME > ${TNAME}-CC_noSOL.trjconv_${TPART}.log 2>&1 <<+
+${CMOL} ${CMOL} ${CMOL}
++
+
+      status=$?
+      if [ $status -ne 0 ]; then
+        echo
+        echo "Error upon doing 'gmx trjconv -f ${TNAME}.xtc -s ${TNAME}.tpr -pbc cluster -center -o ${TNAME}-CC_noSOL-$TPART.xtc -b $BTIME -e $ETIME [2 2 2]'"
+        echo
+        exit $status
+      fi
+
+    fi
+
+    #PNAME="${TNAME}-CC_noSOL-$TPART.xtc"
+
+    ## run cluster size analysis on the re-centered trajectory where only relevant molecules are present
+
+    gmx clustsize -s ${TNAME}_noSOL.tpr -f ${TNAME}-CC_noSOL-${TPART}.xtc -mol -nc ${TNAME}.nclust_${TPART}.xvg -mc ${TNAME}.maxclust_${TPART}.xvg -hc ${TNAME}.histo-clust_${TPART}.xvg -ac ${TNAME}.avclust_${TPART}.xvg -temp ${TNAME}.tempclust_${TPART}.xvg -mcn ${TNAME}.maxclust_${TPART}.ndx -o ${TNAME}.csize_${TPART}.xpm -ow ${TNAME}.csizew_${TPART}.xpm -cut ${RCUT} -b $BTIME -e $ETIME > ${TNAME}-CC_noSOL.clustsize_${TPART}.log 2>&1
+
+#    gmx clustsize -s ${TNAME}_noSOL.tpr -f ${TNAME}-CC_noSOL-${TPART}.xtc  -mol -nc ${TNAME}.nclust_${TPART}.xvg -mc ${TNAME}.maxclust_${TPART}.xvg -hc ${TNAME}.histo-clust_${TPART}.xvg -cut ${RCUT} > ${TNAME}-CC_noSOL.clustsize_${TPART}.log 2>&1
+
+    status=$?
+    if [ $status -ne 0 ]; then
+      echo
+      echo "Error upon doing 'gmx clustsize -s ${TNAME}_noSOL.tpr -f ${TNAME}-CC_noSOL-$TPART.xtc  -mol -nc ${TNAME}.nclust_${TPART}.xvg -mc ${TNAME}.maxclust_${TPART}.xvg -hc ${TNAME}.histo-clust_${TPART}.xvg -cut ${RCUT}'"
+      echo
+      exit $status
+    fi
+
+fi
+

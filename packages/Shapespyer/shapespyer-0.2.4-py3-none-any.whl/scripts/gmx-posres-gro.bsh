@@ -1,0 +1,97 @@
+#!/bin/bash
+
+# check the options
+if [ $# -eq 1 ]; then
+  HELP=$1
+  help="${HELP,,}"
+fi
+
+if [ "$1" == "" ] || [ "$help" == "-h" ] || [ "$help" == "--help" ]; then
+cat <<EOF
+
+///////////////////////////////////////////////////////////////////////////////////
+//                                                                               //
+//   Workflow for running Gromacs MD jobs for complex multicomponent systems     //
+//   by Dr Andrey Brukhno (c) 2020-2025, Daresbury Laboratory, SCD, STFC, UKRI   //
+//                                                                               //
+///////////////////////////////////////////////////////////////////////////////////
+
+- Helper script used by gmx-equil to setup a POSRES input file (not supposed to be run separately)
+
+------
+Usage:
+------
+> ${0##*/} -h
+> ${0##*/} --help
+> ${0##*/} <config_gro_file> [ <solute_name(s)> <atom_name(s)> <posres_coordinates> ]
+
+EOF
+   exit 0
+fi
+
+FNAME="$1"
+BNAME="${FNAME%.*}"
+
+MNAMES="\w+"
+ANAMES="\w+"
+COORDS=""
+
+if [ $# -gt 1 ]; then
+  MNAMES="$2"
+  if [ $(grep -c "|" <<< $MNAMES) -gt 0 ] && [ $(grep -c "(" <<< $MNAMES) -lt 1 ]; then
+      MNAMES="($2)"
+  fi
+fi
+
+if [ $# -gt 2 ]; then
+  ANAMES="$3"
+  if [ $(grep -c "|" <<< $ANAMES) -gt 0 ] && [ $(grep -c "(" <<< $ANAMES) -lt 1 ]; then
+      ANAMES="($3)"
+  fi
+fi
+
+if [ $# -gt 3 ]; then
+  COORDS="$4"
+fi
+
+if [ -z ${COORDS} ]; then
+  read -ra BOXDIMS <<< "$(tail -n 1 $FNAME)"
+  #COORDS=" "
+  #for dim in ${BOXDIMS[@]}; do
+  #  COORDS="${COORDS}$(echo "scale=3 ; $dim / 2.0" | bc)   "
+  #done
+  #COORDS=$(awk '{ printf ( "%8.3f%8.3f%8.3f", $1, $2, $3 ); }' <<< ${COORDS})
+
+  COORDS=$(awk '{ printf ( "%8.3f%8.3f%8.3f", $1/2 , $2/2, $3/2 ); }' <<< ${BOXDIMS[@]}})
+  echo "BOXDIMS = (${BOXDIMS[@]}) * 0.5 -> COORDS = '${COORDS}'"
+fi
+
+#echo
+#echo "POSRES coords: '${COORDS::-3}'"
+#echo
+
+if [ -z "${COORDS}" ]; then
+
+  echo
+  echo "$sname: POSRES coordinates are not set properly: '${COORDS}'"
+  echo
+
+  exit 1
+else
+
+  echo
+  echo "> sed -E 's/(^[[:blank:]]+[0-9]+'"${MNAMES}"'[[:blank:]]+'"${ANAMES}"'([[:blank:]]+\w+)*)(([[:blank:]]+[-0-9.]+){3}$)/\1'"${COORDS}"'/' ${FNAME} > ${BNAME}-posres.gro"
+  echo
+
+  sed -E 's/(^[[:blank:]]+[0-9]+'"${MNAMES}"'[[:blank:]]+'"${ANAMES}"'([[:blank:]]+\w+)*)(([[:blank:]]+[-0-9.]+){3})/\1'"${COORDS}"'/' ${FNAME} > ${BNAME}-posres.gro
+
+  #sed -E 's/(^[[:blank:]]+[0-9]+'"${MNAMES}"'[[:blank:]]+(\w+[[:blank:]]+)+)(([[:blank:]]+[0-9.]+){3})/\1'"$COORDS"'/' 
+
+  #sed -E 's/(^[[:blank:]]+[0-9]+SDS[[:blank:]]+(\w+[[:blank:]]+){2})(([[:blank:]]+[0-9.]+){3})/\1 3\.360   3\.360   3\.360/' ${FNAME} > ${BNAME}-posres.gro
+
+  #sed -E 's/(^[[:blank:]]+[0-9]+'"${MNAME}"'[[:blank:]]+(\w+[[:blank:]]+){2})(([[:blank:]]+[0-9.]+){3})/\1'"${COORDS::-3}"'/' ${FNAME} > ${BNAME}-posres.gro
+
+fi
+
+exit 0
+

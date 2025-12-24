@@ -1,0 +1,179 @@
+#!/bin/bash
+
+# radius of gyration (Rg) analysis using Gromacs tools
+# loop over dirs matching pattern $1 for task $2 residue # $3 and files with extension $4
+
+# check the options
+if [ $# -eq 1 ]; then
+  HELP=$1
+  help="${HELP,,}"
+fi
+
+if [ "$1" == "" ] || [ "$help" == "-h" ] || [ "$help" == "--help" ]; then
+#if [ "$1" == "" ] || [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+cat <<EOF
+
+///////////////////////////////////////////////////////////////////////////////////
+//                                                                               //
+//   Workflow for running Gromacs MD jobs for complex multicomponent systems     //
+//   by Dr Andrey Brukhno (c) 2020-2025, Daresbury Laboratory, SCD, STFC, UKRI   //
+//                                                                               //
+///////////////////////////////////////////////////////////////////////////////////
+
+- Radius of gyration and its components for solute species based on .gro or .xtc files
+- Going through directories matching a given pattern
+
+============
+ Main usage
+============
+
+> ${0##*/} -h
+> ${0##*/} --help
+> ${0##*/} [-nohup] [-pca] [-acf] <dir_pattern> <task_name> [<cluster> <extension>]
+
+----------------
+ optional flags
+----------------
+ -nohup  - execute in the background, i.e. release the command-line upon launching
+
+ -pca    - use principal axes for Rg components (by default no rotation is done)
+
+ -acf    - calculate auto-correlation functions for Rg and its components
+           the flag only makes sense with trajectory files, e.g. .xtc or .trr
+           NOTE: the flag also invokes the '-pca' flag (as per 'gmx gyrate')
+
+ -dat    - use pure text format .dat for the data instead of default .xvg format
+
+----------------------
+ mandatory parameters
+----------------------
+ dir_pattern  - pattern to match for the directories to go through
+ task_name    - the base file name excluding file extension(s)
+
+---------------------
+ optional parameters
+---------------------
+ cluster    - solute name(s) or group forming a cluster (comma-delimited) as per .ndx file
+ extension  - input file extension: 'gro', 'xtc', or 'trr' {default: 'xtc'}
+
+===============
+ prerequisites 
+===============
+ The following files must be found in each of the matching directories (<dir>):
+
+ <task_name>-<dir>.tpr
+ <task_name>-<dir>.ndx (where <cluster> must be found)
+ <task_name>-<dir>.<extension>
+
+----------
+ Examples
+----------
+1. Calculating Rg and its components in the input file frame:
+   ${0##*/} 'eq?' SDS62-NAT62-wTIP3 2 gro
+
+2. Calculating Rg, its principal components and ACF's evolution over a trajectory:
+   ${0##*/} -acf 'eq*' SDS62-NAT62-wTIP3 SDS xtc
+
+EOF
+   exit 0
+fi
+
+echo
+echo "////////////////////////////////////////////////////////////////////////////////"
+echo "//                                                                            //"
+echo "//   Workflow for Gromacs MD simulations for complex multicomponent systems   //"
+echo "//   Post-simulation analysis: radius of gyration for a cluster of solute(s)  //"
+echo "//   by Dr Andrey Brukhno - 2020-2023, Daresbury Laboratory, SCD, STFC, UKRI  //"
+echo "//                                                                            //"
+echo "////////////////////////////////////////////////////////////////////////////////"
+echo
+echo
+
+# Re-spawn as a background process, if we haven't already.
+if [ "$1" == "-nohup" ]; then
+    nohup "$0" "${@:2}" &
+    exit $?
+fi
+
+PCA=""
+ACF=""
+
+if [ "$1" == "-pca" ]; then
+  PCA="-pca"
+  shift
+  if [ "$1" == "-acf" ]; then
+    ACF="-acf"
+    shift
+  fi
+elif [ "$1" == "-acf" ]; then
+  ACF="-acf"
+  shift
+  if [ "$1" == "-pca" ]; then
+    PCA="-pca"
+    shift
+  fi
+fi
+
+DAT=""
+if [ "$1" == "-dat" ]; then
+#  DAT="-xvg none"
+  DAT="-dat"
+  shift
+fi
+
+DIRS="./"
+CLUST="2"
+EXT="xtc"
+
+TNAME="unknown"
+
+# check the options
+if [ $# -lt 2 ]; then
+
+  echo
+  echo "Try '${0##*/} --help'"
+  echo "Too few options were given - FULL STOP!"
+  echo
+  exit 1
+
+elif [ $# -gt 2 ]; then
+  CLUST="$3"
+
+  if [ $# -gt 3 ]; then
+    EXT="$4"
+  fi
+fi
+
+DIRS="$1"
+TNAME="$2"
+
+for dir in ${DIRS}; do
+
+  if [ -d $dir ]; then
+
+    echo 
+    echo "Entering '$dir' for Rg analysis"
+
+    cd $dir
+
+    echo "Doing: 'gmx-ana-gyration ${PCA} ${ACF} ${DAT} ${TNAME}-${dir} ${CLUST} ${EXT}'"
+
+    gmx-ana-gyration ${PCA} ${ACF} ${DAT} ${TNAME}-${dir} ${CLUST} ${EXT}
+
+    echo "Leaving '$dir' after Rg analysis"
+    cd ..
+
+  else
+
+    echo 
+    echo "Directory '$dir' not found - skipping ..."
+
+  fi
+
+done
+
+echo 
+echo "All done"
+echo
+
+exit $?

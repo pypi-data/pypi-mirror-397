@@ -1,0 +1,169 @@
+#!/bin/bash
+
+################################################
+#                                              #
+#  Setup workflow for creating Gromacs inputs  #
+#  based on initial configuration file (.gro)  #
+#  for a one-component primary solute system:  #
+#  solute+[couterions]+[salt]+solvent species  #
+#                                              #
+#  Author: Andrey Brukhno, DL/STFC (c) 2020-23 #
+#                                              #
+################################################
+
+if [ "$1" == "" ] || [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+cat <<EOF
+
+////////////////////////////////////////////////////////////////////////////////
+//                                                                            //
+//   Workflow for creating Gromacs inputs for complex multicomponent systems  //
+//   Adding ionic species and, optionally, solvent to initial configuration   //
+//   by Dr Andrey Brukhno - 2020-2023, Daresbury Laboratory, SCD, STFC, UKRI  //
+//                                                                            //
+////////////////////////////////////////////////////////////////////////////////
+
+- The script generates Gromacs input based on an initial configuration file -
+
+============
+ Main usage 
+============
+
+> ${0##*/} -h
+> ${0##*/} --help
+> ${0##*/} <config_name> <ion_number> <ion_config> [solv[ate]]
+
+----------------------
+ mandatory parameters
+----------------------
+ config_name  - the initial configuration file name (excluding the extension '.gro')
+ ion_number   - the numer of ions to add
+ ion_config   - the template configuration file name for a single ion (.gro file to be used)
+
+--------------------
+ optional parameter
+--------------------
+ solv[ate]    - directive to add solvent to the final configuration after all the ions added
+
+EOF
+   exit 0
+fi
+
+echo
+echo "////////////////////////////////////////////////////////////////////////////////"
+echo "//                                                                            //"
+echo "//   Workflow for creating Gromacs inputs for a one-component solute system   //"
+echo "//   Adding ionic species and, optionally, solvent to initial configuration   //"
+echo "//   by Dr Andrey Brukhno - 2020-2023, Daresbury Laboratory, SCD, STFC, UKRI  //"
+echo "//                                                                            //"
+echo "////////////////////////////////////////////////////////////////////////////////"
+echo
+echo
+
+SOLV=""
+FIONS='single-ion.gro'
+
+let NIONS=0
+
+# check the options
+if [ $# -lt 1 ]; then
+
+  echo
+  echo "Provide the configuration name at least (plus ion-molecule file [single-ion.gro] and # ions [0])"
+  echo "No options were given - FULL STOP!"
+  echo
+  exit 1
+
+elif [ $# -gt 3 ]; then
+  let NIONS=$2
+  FIONS=$3
+  SOLV=$4
+elif [ $# -gt 2 ]; then
+  let NIONS=$2
+  FIONS=$3
+elif [ $# -gt 1 ]; then
+  let NIONS=$2
+fi
+
+TNAME="$1"
+
+if [ "${NIONS}" -gt 0 ] && [ -f "${FIONS}" ] ; then
+
+  echo
+  echo "Adding ${NIONS} ions from template '${FIONS}' : '${TNAME}.gro' -> '${TNAME}-ions${NIONS}.gro'"
+
+  gmx insert-molecules -f ${TNAME}.gro -ci ${FIONS} -o ${TNAME}-ions${NIONS}.gro -nmol ${NIONS} -try 10
+
+  # check if atom 'N' is present in species 'NAT' and, hence, needs to be replaced with 'NAT' for sodium
+  if [ -n "$(grep 'NAT      N' ${TNAME}-ions${NIONS}.gro)" ]; then
+
+    sed -i"-bakN" 's/NAT      N/NAT    NAT/g' ${TNAME}-ions${NIONS}.gro
+
+  fi
+
+  # check if atom 'C' is present in species 'CLA' and, hence, needs to be replaced with 'CLA' for chloride
+  if [ -n "$(grep 'CLA      C' ${TNAME}-ions${NIONS}.gro)" ]; then
+
+    sed -i"-bakC" 's/CLA      C/CLA    CLA/g' ${TNAME}-ions${NIONS}.gro
+
+  fi
+
+  # check if atom 'B' is present in species 'BRA' and, hence, needs to be replaced with 'BRA' for bromide
+  if [ -n "$(grep 'BRA      B' ${TNAME}-ions${NIONS}.gro)" ]; then
+
+    sed -i"-bakB" 's/BRA      B/BRA    BRA/g' ${TNAME}-ions${NIONS}.gro
+
+  fi
+
+  if [[ ${SOLV} == "solv" || ${SOLV} == "Solv" || ${SOLV} == "SOLV" || ${SOLV} == "solvate" || ${SOLV} == "Solvate" || ${SOLV} == "SOLVATE" ]]; then
+
+    echo
+    echo "Adding solvent from template 'spc216.gro' : '${TNAME}.gro' -> '${TNAME}-ions${NIONS}-wspce.gro'"
+
+    #gmx solvate -cp ${TNAME}-ions${NIONS}.gro -cs spc216.gro -o ${TNAME}-ions${NIONS}-wspce.gro -scale 2.0
+    gmx solvate -cp ${TNAME}-ions${NIONS}.gro -cs spc216.gro -o ${TNAME}-ions${NIONS}-wspce.gro
+
+    mv -v ${TNAME}-ions${NIONS}-wspce.gro ${TNAME}-ions${NIONS}-wTIP3.gro
+
+    # it's faster to combine multiple sed commands in one
+    sed -i"-bak" -e 's/SOL /TIP3/g' -e 's/ OW/OH2/g' -e 's/HW/ H/g' ${TNAME}-ions${NIONS}-wTIP3.gro
+
+    mv -v  ${TNAME}-ions${NIONS}-wTIP3.gro-bak ${TNAME}-ions${NIONS}-wspce.gro
+
+    #sed -i"-bak0" 's/SOL /TIP3/g' ${TNAME}-ions${NIONS}-wTIP3.gro
+    #sed -i"-bak1" 's/ OW/OH2/g'   ${TNAME}-ions${NIONS}-wTIP3.gro
+    #sed -i"-bak2" 's/HW/ H/g'     ${TNAME}-ions${NIONS}-wTIP3.gro
+
+  fi
+
+elif [[ ${SOLV} == "solv" || ${SOLV} == "Solv" || ${SOLV} == "SOLV" || ${SOLV} == "solvate" || ${SOLV} == "Solvate" || ${SOLV} == "SOLVATE" ]]; then
+
+    echo
+    echo "Adding solvent from template 'spc216.gro' : '${TNAME}.gro' -> '${TNAME}-wspce.gro'"
+
+    #gmx solvate -cp ${TNAME}.gro -cs spc216.gro -o ${TNAME}-wspce.gro -scale 2.0
+    gmx solvate -cp ${TNAME}.gro -cs spc216.gro -o ${TNAME}-wspce.gro
+
+    mv -v ${TNAME}-wspce.gro ${TNAME}-wTIP3.gro
+
+    # it's faster to combine multiple sed commands in one
+    sed -i"-bak" -e 's/SOL /TIP3/g' -e 's/ OW/OH2/g' -e 's/HW/ H/g' ${TNAME}-wTIP3.gro
+
+    mv -v  ${TNAME}-wTIP3.gro-bak ${TNAME}-wspce.gro
+
+    #sed -i"-bak0" 's/SOL /TIP3/g' ${TNAME}-ions${NIONS}-wTIP3.gro
+    #sed -i"-bak1" 's/ OW/OH2/g'   ${TNAME}-ions${NIONS}-wTIP3.gro
+    #sed -i"-bak2" 's/HW/ H/g'     ${TNAME}-ions${NIONS}-wTIP3.gro
+
+else
+
+  echo
+  echo "Either template '${FIONS}' not found or requested number of ions = ${NIONS} == 0 ??? - FULL STOP!"
+  echo
+  exit 1
+
+fi
+
+echo
+
+exit 0
+
