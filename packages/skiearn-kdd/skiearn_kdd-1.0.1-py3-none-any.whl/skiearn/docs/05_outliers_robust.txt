@@ -1,0 +1,64 @@
+# ==========================================================================================
+# 6. OUTLIERS & ROBUST STATISTICS
+# ==========================================================================================
+
+import numpy as np
+from scipy import stats
+from sklearn.preprocessing import RobustScaler
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.ensemble import IsolationForest
+
+# ------------------------------------------------------------------------------------------
+# Z-score Outlier Detection (Assumes normality)
+# ------------------------------------------------------------------------------------------
+data = np.random.randn(100)
+z_scores = np.abs(stats.zscore(data))
+outliers_z = np.where(z_scores > 3)[0]
+# Points where z > 3 are considered outliers (empirical rule).
+
+# ------------------------------------------------------------------------------------------
+# IQR (Interquartile Range)
+# ------------------------------------------------------------------------------------------
+q1 = np.percentile(data, 25)
+q3 = np.percentile(data, 75)
+iqr = q3 - q1
+lower = q1 - 1.5 * iqr
+upper = q3 + 1.5 * iqr
+outliers_iqr = np.where((data < lower) | (data > upper))[0]
+# IQR: robust to non-Gaussian data.
+
+# ------------------------------------------------------------------------------------------
+# MAD (Median Absolute Deviation)
+# ------------------------------------------------------------------------------------------
+mad = stats.median_abs_deviation(data)
+mad_z = np.abs(data - np.median(data)) / mad
+outliers_mad = np.where(mad_z > 3)[0]
+# For non-Gaussian outlier detection.
+
+# ------------------------------------------------------------------------------------------
+# Local Outlier Factor (LOF)
+# ------------------------------------------------------------------------------------------
+X = np.random.randn(100, 5)
+lof = LocalOutlierFactor(n_neighbors=20)
+labels_lof = lof.fit_predict(X)
+# -1 is outlier; 1 is inlier.
+# Sensitive to scale, local structure.
+
+# ------------------------------------------------------------------------------------------
+# Isolation Forest
+# ------------------------------------------------------------------------------------------
+iso = IsolationForest(contamination=0.1).fit(X)
+outlier_pred = iso.predict(X)
+# -1 is outlier.
+
+# ------------------------------------------------------------------------------------------
+# Robust Scaling
+# ------------------------------------------------------------------------------------------
+scaler = RobustScaler().fit(X)
+X_rs = scaler.transform(X)
+# Scales using IQR, robust to outliers.
+
+# ------------------------------------------------------------------------------------------
+# Influence on Estimators
+# ------------------------------------------------------------------------------------------
+# Mean, OLS very sensitive to outliers; median, robust regression not.
