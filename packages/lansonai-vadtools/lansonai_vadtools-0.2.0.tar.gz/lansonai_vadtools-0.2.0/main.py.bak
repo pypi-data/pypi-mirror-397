@@ -1,0 +1,395 @@
+import os
+import uuid
+import re
+from typing import Optional, List, Dict, Any
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form, BackgroundTasks
+from fastapi.responses import JSONResponse
+from pathlib import Path
+import asyncio
+from datetime import datetime
+from contextlib import asynccontextmanager
+from pydantic import BaseModel, Field
+import torch
+from torch.hub import load
+import librosa
+import sys
+from pathlib import Path
+from config.settings import (
+    TEMP_DIR,
+    OUTPUT_DIR,
+    SAMPLE_RATE,
+    MIN_SEGMENT_DURATION,
+    SILENCE_THRESHOLD,
+    SILENCE_DURATION,
+)
+from core.audio_processor import process_audio_file
+from core.vad_detector import detect_vad_segments, export_segments
+from core.utils import log_message, cleanup_temp_files, get_current_time, save_timestamps, generate_request_id
+
+from utils.vad_data_processor import process_single_timestamps_file
+
+
+class VADSegment(BaseModel):
+    """语音段数据模型"""
+    start_time: float
+    end_time: float
+    duration: float
+
+
+class AudioSegment(BaseModel):
+    """音频段文件信息模型"""
+    start_time: float
+    end_time: float
+    duration: float
+    source_url: str
+    rms: float = Field(0.0, description="RMS amplitude")
+    peak_amplitude: float = Field(0.0, description="Peak amplitude")
+    speech_confidence: float = Field(0.8, description="Speech confidence score")
+
+
+class Metadata(BaseModel):
+    source_file: str
+    run_id: str
+    processing_date: str
+    parameters: Dict[str, Any]
+
+
+class Performance(BaseModel):
+    total_processing_time: float
+    audio_loading_time: float
+    stage1_vad_timestamps_time: float
+    stage2_feature_extraction_time: float
+    speed_ratio: float
+
+
+class Summary(BaseModel):
+    total_speech_duration: float
+
+
+class VADResponse(BaseModel):
+    """VAD分析响应模型，与保存的JSON结构一致"""
+    request_id: str
+    total_segments: int
+    total_duration: float
+    overall_speech_ratio: Optional[float] = Field(None, description="Overall speech ratio")
+    timestamps_path: str
+    metadata: Metadata
+    performance: Performance
+    summary: Summary
+    segments: List[VADSegment]
+    audio_segments: List[AudioSegment]
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 启动事件
+    current_time = get_current_time()
+    log_message(f"[{current_time}] INFO - VAD服务启动中...")
+    
+    # 验证并创建目录
+    try:
+        from config.settings import validate_and_create_dirs
+        validate_and_create_dirs()
+        log_message(f"[{current_time}] INFO - 目录验证完成，临时目录: {TEMP_DIR}, 输出目录: {OUTPUT_DIR}")
+    except Exception as e:
+        log_message(f"[{current_time}] ERROR - 目录验证失败: {str(e)}", "ERROR")
+        log_message(f"[{current_time}] ERROR - VAD服务启动失败，请检查目录权限", "ERROR")
+        raise RuntimeError(f"目录验证失败: {str(e)}")
+    
+    # 加载 Silero VAD 模型
+    try:
+        current_time = get_current_time()
+        log_message(f"[{current_time}] INFO - 开始加载 Silero VAD 模型...", "INFO")
+        (model, utils) = torch.hub.load(repo_or_dir='snakers4/silero-vad', model='silero_vad', force_reload=False, onnx=False, verbose=False)
+        get_speech_timestamps = utils[0]
+        app.state.vad_model = model
+        app.state.get_speech_timestamps = get_speech_timestamps
+        current_time = get_current_time()
+        log_message(f"[{current_time}] INFO - Silero VAD 模型加载成功", "INFO")
+    except Exception as e:
+        current_time = get_current_time()
+        log_message(f"[{current_time}] ERROR - Silero VAD 模型加载失败: {str(e)}", "ERROR")
+        raise RuntimeError(f"模型加载失败: {str(e)}")
+    
+    log_message(f"[{current_time}] INFO - VAD服务启动成功")
+    
+    yield  # 应用程序运行期间
+    
+    # 关闭事件
+    current_time = get_current_time()
+    log_message(f"[{current_time}] INFO - VAD服务关闭")
+
+
+app = FastAPI(title="VAD Subtitle Storage Service", version="1.0.0", lifespan=lifespan)
+
+
+@app.get("/api/health")
+async def health_check():
+    """健康检查端点"""
+    current_time = get_current_time()
+    from core.utils import validate_directories
+    report = validate_directories()
+    temp_ok = report['temp_dir']['exists'] and all(report['temp_dir'][p] for p in ['readable', 'writable', 'executable'])
+    output_ok = report['output_dir']['exists'] and all(report['output_dir'][p] for p in ['readable', 'writable', 'executable'])
+    model_loaded = hasattr(app.state, 'vad_model') and app.state.vad_model is not None
+    status = "healthy" if temp_ok and output_ok and model_loaded else "unhealthy"
+    log_message(f"[{current_time}] INFO - 健康检查: status={status}, temp_ok={temp_ok}, output_ok={output_ok}, model_loaded={model_loaded}")
+    return {
+        "status": status,
+        "timestamp": current_time,
+        "temp_dir": {
+            "path": str(report['temp_dir']['path']),
+            "exists": temp_ok
+        },
+        "output_dir": {
+            "path": str(report['output_dir']['path']),
+            "exists": output_ok
+        },
+        "model_loaded": model_loaded
+    }
+
+
+@app.get("/api/info")
+async def info_endpoint():
+    """服务信息端点"""
+    current_time = get_current_time()
+    log_message(f"[{current_time}] INFO - 服务信息查询")
+    model_loaded = hasattr(app.state, 'vad_model') and app.state.vad_model is not None
+    return {
+        "service": "VAD Service",
+        "version": "1.0.0",
+        "model": "Silero VAD" if model_loaded else "Not loaded",
+        "supported_formats": ["wav", "mp3", "m4a", "flac", "ogg"],
+        "features": [
+            "Voice activity detection",
+            "Audio segment export",
+            "Timestamp generation",
+            "Format conversion"
+        ],
+        "timestamp": current_time
+    }
+
+
+def update_db_in_background(timestamps_path: str, task_id: str):
+    """
+    在后台线程中运行同步的数据库更新操作，避免阻塞FastAPI事件循环
+    """
+    try:
+        log_message(f"[{get_current_time()}] INFO - Starting background DB update for task: {task_id}")
+        success = process_single_timestamps_file(timestamps_path, task_id)
+        if success:
+            log_message(f"[{get_current_time()}] INFO - Background DB update successful for task: {task_id}")
+        else:
+            log_message(f"[{get_current_time()}] WARNING - Background DB update failed for task: {task_id}", "WARNING")
+    except Exception as e:
+        log_message(f"[{get_current_time()}] ERROR - Exception in background DB update for task {task_id}: {e}", "ERROR")
+
+
+@app.post("/api/vad/analyze", response_model=VADResponse)
+async def analyze_vad(
+    background_tasks: BackgroundTasks,
+    audio_file: UploadFile=File(...),
+    threshold: float=Form(0.3, ge=0.0, le=1.0),  # Silero 阈值 0.0-1.0
+    min_segment_duration: float=Form(0.3, ge=0.1),  # 最小段时长
+    max_merge_gap: float=Form(0.0, ge=0.0),  # 最大合并间隔
+    export_audio_segments: bool=Form(True),  # 是否导出音频段
+    output_format: str=Form("wav"),  # 输出格式
+    request_id: Optional[str]=Form(None)  # 可选的请求ID
+):
+    """
+    分析音频文件，检测语音活动段 (VAD)
+    支持多种音频格式，返回下划线命名的时间戳和可选的音频段文件
+    """
+    current_time = get_current_time()
+    
+    # 构建临时文件路径
+    original_filename = audio_file.filename or "unknown_audio"
+    safe_filename = "".join(c for c in original_filename if c.isalnum() or c in ('.', '-', '_')).rstrip()
+    
+    # 验证 request_id 是否为有效的MD5格式（32位十六进制）
+    # 如果不是，则重新生成
+    if not request_id or not re.match(r'^[a-f0-9]{32}$', request_id.lower()):
+        # 如果提供了无效的 request_id，记录警告
+        if request_id:
+            log_message(f"[{current_time}] WARNING - 提供的 request_id '{request_id}' 不是有效的MD5格式，将重新生成", "WARNING")
+        # 保存到临时位置来生成 request_id
+        temp_path_for_id = TEMP_DIR / safe_filename
+        try:
+            contents = await audio_file.read()
+            with open(temp_path_for_id, 'wb') as f:
+                f.write(contents)
+            # 生成基于文件内容的 request_id
+            request_id = generate_request_id(str(temp_path_for_id))
+            # 删除临时文件
+            temp_path_for_id.unlink(missing_ok=True)
+            # 重置文件指针
+            await audio_file.seek(0)
+        except Exception as e:
+            error_msg = f"生成request_id失败: {str(e)}"
+            log_message(f"[{current_time}] ERROR - {error_msg}", "ERROR")
+            raise HTTPException(status_code=500, detail=error_msg)
+    
+    # 现在构建包含 request_id 的临时文件路径
+    temp_file_path = TEMP_DIR / f"{request_id}_{safe_filename}"
+    
+    try:
+        # 验证输出格式
+        if output_format not in ["wav", "flac"]:
+            error_msg = f"不支持的输出格式: {output_format}"
+            log_message(f"[{current_time}] ERROR - {error_msg} (request_id: {request_id})", "ERROR")
+            raise HTTPException(status_code=400, detail=error_msg)
+        
+        # 验证并创建输出目录
+        request_output_dir = OUTPUT_DIR / request_id
+        
+        try:
+            os.makedirs(request_output_dir, exist_ok=True)
+            if not os.access(request_output_dir, os.R_OK | os.W_OK | os.X_OK):
+                raise PermissionError(f"输出目录 {request_output_dir} 权限不足")
+        except Exception as e:
+            error_msg = f"创建输出目录失败: {str(e)}"
+            log_message(f"[{current_time}] ERROR - {error_msg} (request_id: {request_id})", "ERROR")
+            raise HTTPException(status_code=500, detail=error_msg)
+        
+        # 开始总体处理时间统计
+        import time
+        overall_start_time = time.time()
+        
+        # 处理上传的音频文件
+        try:
+            saved_file_path = await process_audio_file(audio_file, temp_file_path)
+        except Exception as e:
+            error_msg = f"处理音频文件失败: {str(e)}"
+            log_message(f"[{current_time}] ERROR - {error_msg} (request_id: {request_id})", "ERROR")
+            raise HTTPException(status_code=400, detail=error_msg)
+        
+        # 加载音频数据用于 VAD 和导出
+        try:
+            audio_loading_start = time.time()
+            y, sr = librosa.load(saved_file_path, sr=SAMPLE_RATE)
+            audio_duration = len(y) / sr
+            audio_loading_time = time.time() - audio_loading_start
+            
+            current_time = get_current_time()
+            log_message(f"[{current_time}] INFO - 音频加载完成，采样率: {sr}, 长度: {len(y)}, 时长: {audio_duration:.2f}s, 加载时间: {audio_loading_time:.2f}s (request_id: {request_id})", "INFO")
+        except Exception as e:
+            error_msg = f"加载音频数据失败: {str(e)}"
+            log_message(f"[{current_time}] ERROR - {error_msg} (request_id: {request_id})", "ERROR")
+            raise HTTPException(status_code=400, detail=error_msg)
+        
+        # 验证模型是否加载
+        if not hasattr(app.state, 'vad_model') or app.state.vad_model is None:
+            error_msg = "VAD 模型未加载"
+            log_message(f"[{current_time}] ERROR - {error_msg} (request_id: {request_id})", "ERROR")
+            raise HTTPException(status_code=500, detail=error_msg)
+        
+        # 检测语音活动段 (现在返回segments和performance_stats)
+        try:
+            segments, performance_stats = detect_vad_segments(
+                y=y,
+                sr=sr,
+                threshold=threshold,  # Silero 直接使用 0-1 阈值
+                min_segment_duration=min_segment_duration,
+                max_merge_gap=max_merge_gap,
+                vad_model=app.state.vad_model,
+                get_speech_timestamps=app.state.get_speech_timestamps,
+                request_id=request_id,
+                total_duration=audio_duration
+            )
+        except Exception as e:
+            error_msg = f"VAD检测失败: {str(e)}"
+            log_message(f"[{current_time}] ERROR - {error_msg} (request_id: {request_id})", "ERROR")
+            raise HTTPException(status_code=500, detail=error_msg)
+        
+        # 可选：导出音频段
+        audio_segments = []
+        if export_audio_segments and segments:
+            try:
+                audio_segments = export_segments(
+                    segments=segments,
+                    y=y,
+                    sr=sr,
+                    output_dir=request_output_dir,
+                    format=output_format,
+                    request_id=request_id
+                )
+            except Exception as e:
+                error_msg = f"导出音频段失败: {str(e)}"
+                log_message(f"[{current_time}] ERROR - {error_msg} (request_id: {request_id})", "ERROR")
+                # 不抛出异常，继续返回时间戳结果
+        
+        # 计算总体语音比例
+        overall_speech_ratio = segments[0].get("overall_speech_ratio", 0.0) if segments else 0.0
+        
+        # 计算总处理时间和速度比
+        total_processing_time = time.time() - overall_start_time
+        speed_ratio = audio_duration / total_processing_time if total_processing_time > 0 else 0
+        
+        # 准备完整的性能数据
+        complete_performance_data = {
+            "total_processing_time": total_processing_time,
+            "audio_loading_time": audio_loading_time,
+            "stage1_vad_timestamps_time": performance_stats.get("stage1_vad_timestamps_time", 0.0),
+            "stage2_feature_extraction_time": performance_stats.get("stage2_feature_extraction_time", 0.0),
+            "speed_ratio": speed_ratio
+        }
+        
+        # 准备VAD参数
+        vad_parameters = {
+            "threshold": threshold,
+            "min_segment_duration": min_segment_duration,
+            "max_merge_gap": max_merge_gap
+        }
+        
+        # 保存完整的VAD分析结果并获取返回数据
+        timestamps_path = request_output_dir / "timestamps.json"
+        try:
+            # 获取原始文件的完整绝对路径
+            original_file_path = str(saved_file_path.resolve())
+            
+            response = save_timestamps(
+                segments=segments,
+                timestamps_path=timestamps_path,
+                request_id=request_id,
+                audio_segments=audio_segments,
+                overall_speech_ratio=overall_speech_ratio,
+                source_file=original_file_path,
+                vad_parameters=vad_parameters,
+                performance_data=complete_performance_data,
+                total_audio_duration=audio_duration
+            )
+        except Exception as e:
+            error_msg = f"保存VAD分析结果失败: {str(e)}"
+            log_message(f"[{current_time}] ERROR - {error_msg} (request_id: {request_id})", "ERROR")
+            raise HTTPException(status_code=500, detail=error_msg)
+        
+        # 清理临时文件
+        try:
+            if saved_file_path.exists():
+                saved_file_path.unlink(missing_ok=True)
+        except Exception as e:
+            log_message(f"[{current_time}] WARNING - 清理临时文件失败: {str(e)} (request_id: {request_id})", "WARNING")
+        
+        current_time = get_current_time()
+        log_message(f"[{current_time}] INFO - VAD分析完成，返回 {len(segments)} 个语音段，语音比例: {overall_speech_ratio * 100:.1f}% (request_id: {request_id})", "INFO")
+        
+        # 在后台更新数据库，不阻塞响应
+        background_tasks.add_task(update_db_in_background, str(timestamps_path), request_id)
+        
+        return JSONResponse(content=response)
+        
+    except HTTPException:
+        # 重新抛出 HTTP 异常
+        raise
+    except Exception as e:
+        current_time = get_current_time()
+        error_msg = f"VAD分析过程中发生未预期错误: {str(e)}"
+        log_message(f"[{current_time}] ERROR - {error_msg} (request_id: {request_id})", "ERROR")
+        import traceback
+        log_message(f"[{current_time}] ERROR - 错误堆栈: {traceback.format_exc()} (request_id: {request_id})", "ERROR")
+        raise HTTPException(status_code=500, detail=error_msg)
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8083)
