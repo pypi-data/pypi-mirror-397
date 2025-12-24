@@ -1,0 +1,51 @@
+Metadata-Version: 2.4
+Name: bris-anemoi-plugins
+Version: 0.1.2
+Summary: Plugins needed for running the Bris model with Forecast-in-a-Box and anemoi-inference
+License-Expression: Apache-2.0
+Project-URL: Homepage, https://github.com/metno/bris-fiab
+Project-URL: Issues, https://github.com/metno/bris-fiab/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: anemoi-inference>=0.8.1
+Requires-Dist: metpy>=1.7.1
+Requires-Dist: pint
+Requires-Dist: earthkit-data
+Dynamic: license-file
+
+# Bris Anemoi plugins
+
+Currently one plugin is available:
+
+## Apply adiabatic correction
+
+This plugin corrects the input data parameters to the Bris model. The corrections are done based on topography metadata added to the checkpoint.
+
+### Configure anemoi-inference to use plugin
+
+Example:
+
+```text
+input:
+  cutout:
+    lam_0:
+      mars:
+        log: false
+        grid: "0.025/0.025"
+        area: "-8/30/-22/43"
+        pre_processors:
+          - apply_adiabatic_corrections
+    global:
+      mars:
+        log: false
+      mask: 'global/cutout_mask'
+```
+
+### Test
+
+```shell
+uv run anemoi-inference run <config with adiabatic plugin.conf>
+```
