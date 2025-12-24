@@ -1,0 +1,94 @@
+[project]
+name = "holmes-hydro"
+version = "3.2.5"
+description = "HOLMES (HydrOLogical Modeling Educationnal Software) is a software developped to teach operational hydrology. It is developed at the university Laval, Québec, Canada."
+readme = "README.md"
+authors = [
+  {name = "Antoine Lefebvre-Brossard", email = "antoinelb@protonmail.com"}
+]
+license = {text = "MIT"}
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Education",
+  "Programming Language :: Python :: 3.13",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering :: Hydrology",
+]
+requires-python = ">=3.13"
+dependencies = [
+    "jaxtyping>=0.3.3",
+    "kaleido>=1.2.0",
+    "numba>=0.62.1",
+    "numpy>=2.3.3",
+    "pandas>=2.3.3",
+    "plotly>=6.3.0",
+    "polars>=1.33.1",
+    "python-dotenv>=1.1.1",
+    "scipy>=1.16.2",
+    "starlette>=0.48.0",
+    "tqdm>=4.67.1",
+    "uvicorn>=0.36.0",
+    "websockets>=15.0.1",
+]
+
+[dependency-groups]
+dev = [
+    "black>=25.9.0",
+    "httpx>=0.28.1",
+    "isort>=6.0.1",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "pytest-cov>=7.0.0",
+    "pytest-mock>=3.15.1",
+    "ruff>=0.13.1",
+    "ty>=0.0.1a21",
+]
+
+[project.urls]
+Homepage = "https://gitlab.com/antoinelb/holmes"
+Repository = "https://gitlab.com/antoinelb/holmes"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/holmes"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/", "tests/", "docs/", "pyproject.toml", "README.md"]
+
+[project.scripts]
+holmes = "holmes.app:run_server"
+
+[tool.black]
+line_length = 79
+target-version = ['py313']
+
+[tool.isort]
+profile = "black"
+src_paths = ["src/holmes", "tests"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Slow running tests",
+    "requires_data: Tests that require data files",
+]
+
+[tool.coverage.run]
+source = ["src/holmes"]
+omit = [
+    "*/__pycache__/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+]
+precision = 2
+show_missing = true
