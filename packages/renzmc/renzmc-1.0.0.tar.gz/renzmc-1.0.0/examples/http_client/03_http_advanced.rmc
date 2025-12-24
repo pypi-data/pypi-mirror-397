@@ -1,0 +1,17 @@
+// HTTP Advanced Features - Working Version  
+dari renzmc.library.http impor ambil
+
+tampilkan "=== HTTP ADVANCED FEATURES ==="
+
+// Custom headers example
+tampilkan "[1] Request dengan custom headers..."
+headers itu {"User-Agent": "RenzMcLang/1.0", "Accept": "application/json"}
+response itu ambil("https://jsonplaceholder.typicode.com/posts/1", headers=headers)
+data itu response.json()
+
+tampilkan f"Status: {response.status_code()}"
+tampilkan f"Title: {data['title']}"
+tampilkan f"Headers sent: User-Agent = RenzMcLang/1.0"
+
+tampilkan ""
+tampilkan "✓ HTTP advanced features working!"

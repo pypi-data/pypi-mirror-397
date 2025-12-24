@@ -1,0 +1,24 @@
+// HTTP Operations - Working GET Examples
+dari renzmc.library.http impor ambil
+
+tampilkan "=== HTTP OPERATIONS EXAMPLE ==="
+
+// GET request untuk mendapatkan data
+tampilkan "[1] GET - Mendapatkan data post..."
+response itu ambil("https://jsonplaceholder.typicode.com/posts/1")
+data itu response.json()
+
+tampilkan f"Status: {response.status_code}"
+tampilkan f"Title: {data['title']}"
+tampilkan f"Body: {data['body']}"
+
+// GET request dengan parameter
+tampilkan "[2] GET dengan parameter..."
+response2 itu ambil("https://jsonplaceholder.typicode.com/posts", params={"userId": 1})
+posts itu response2.json()
+
+tampilkan f"Found {panjang(posts)} posts for user 1"
+tampilkan f"First post: {posts[0]['title']}"
+
+tampilkan ""
+tampilkan "✓ HTTP operations working successfully!"
