@@ -1,0 +1,111 @@
+[tool.poetry]
+name = "fpfind"
+version = "v3.3.4"
+description = "Add-on implementation of frequency compensation for qcrypto."
+authors = ["Xu Zifang <francium0415@gmail.com>", "Justin Peh <pehyuxiang@gmail.com>"]
+maintainers = ["S-Fifteen Instruments <info@s-fifteen.com>"]
+license = "GPLv2"
+readme = "README.md"
+keywords = [
+  "qkd", "qcrypto", "clock-synchronization", "frequency-correction",
+]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: GNU General Public License v2 (GPLv2)",
+  "Natural Language :: English",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Physics",
+]
+
+[tool.poetry.dependencies]
+python = ">=3.8"
+numpy = ">=1.24.4"  # last version supported for Python 3.8
+matplotlib = ">=3.6.3"
+scipy = [
+    {version = ">=1.10.0,<1.11", python = ">=3.8,<3.9"},
+    {version = ">=1.10.0", python = ">=3.9"}
+]
+tqdm = ">=4.65.0"
+configargparse = ">=1.7"
+numba = ">=0.57.0"
+typing_extensions = ">=4.13.2"  # last version supported for Python 3.8
+
+[tool.poetry.scripts]
+# Poetry 1.2.0a1 required for script file reference
+freqcd = {reference = "src/fpfind/freqcd", type = "file"}
+freqservo = "fpfind.freqservo:main"
+fpfind = "fpfind.fpfind:main"
+fpplot = "fpfind.apps.fpplot:main"
+parse-timestamps = "fpfind.lib.parse_timestamps:main"
+generate-freqcd-testcase = "fpfind.apps.generate_freqcd_testcase:main"
+show-timestamps = {reference = "src/fpfind/apps/show-timestamps", type = "file"}
+show-timestamps-hex = {reference = "src/fpfind/apps/show-timestamps-hex", type = "file"}
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=8.3.5"  # last version supported for Python 3.8
+
+[tool.poetry-dynamic-versioning]
+enable = false
+format-jinja = "v{{ base }}"
+
+[build-system]
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
+
+[tool.pytest.ini_options]
+addopts = """\
+    --ignore=tests/freqcd \
+    --ignore=tests/parse_epochs \
+    --ignore=tests/fpfind/test_fpfind_epoch.py \
+    --ignore=tests/fpfind/test_fpfind_timestamp.py \
+    """
+markers = [
+    "internal: for tests requiring access to internal test data",
+    "slow: for tests with long runtime",
+    "float80: for platforms with extended precision support (80-bit floats)",
+    "float64: for platforms without extended precision support",
+]
+
+[tool.ruff.lint]
+# Choose from list of rules: <https://docs.astral.sh/ruff/rules/>
+select = [
+    "E", "W",  # PEP8 code styles
+    "I",       # isort
+    "F",       # pyflakes
+    "PL",      # pylint
+    "Q",       # flake8-quotes
+    "C90",     # code complexity
+]
+ignore = [
+    "PLR2004",  # magic constants
+    "PLW2901",  # override for-loop assignments
+    "PLR0913",  # large number of arguments
+    "C901",     # complex methods
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore line length for CLI files
+"src/fpfind/fpfind.py" = [
+    "E501",     # line length
+    "PLR0912",  # too many branches
+    "PLR0915",  # too many statements
+    "PLW0603",  # global variables - needs eventual refactoring
+]
+"src/fpfind/freqservo.py" = [
+    "E501",     # line length
+    "PLR0912",  # too many branches
+    "PLR0915",  # too many statements
+]
+
+[tool.pyright]
+include = ["src"]
+exclude = [
+    "src/fpfind/apps",
+]
+typeCheckingMode = "standard"
+
+[tool.coverage.run]
+patch = ["subprocess"]
