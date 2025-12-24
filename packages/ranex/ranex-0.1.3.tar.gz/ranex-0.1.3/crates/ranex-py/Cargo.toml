@@ -1,0 +1,47 @@
+[package]
+name = "ranex-py"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Python bindings for Ranex - exposes Atlas codebase indexing to Python"
+readme = "README.md"
+
+[lib]
+name = "ranex_rust"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# Internal crates
+ranex-core.workspace = true
+ranex-atlas = { path = "../ranex-atlas", default-features = false }
+ranex-firewall = { path = "../ranex-firewall", default-features = false }
+
+# PyO3 for Python bindings
+pyo3 = { workspace = true }
+
+# Serialization
+serde.workspace = true
+serde_json.workspace = true
+
+# Error handling
+thiserror.workspace = true
+
+# Logging
+tracing.workspace = true
+
+# Integrity verification
+blake3.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+pretty_assertions.workspace = true
+
+[features]
+default = []
+# Enable this for abi3 builds (stable ABI across Python versions)
+abi3 = ["pyo3/abi3-py38"]
+
+[lints]
+workspace = true
+

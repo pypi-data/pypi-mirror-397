@@ -1,0 +1,178 @@
+[workspace]
+resolver = "2"
+members = ["crates/ranex-py"]
+
+# Shared package metadata - inherited by all crates
+[workspace.package]
+version = "0.1.3"
+edition = "2024"
+rust-version = "1.92.0"
+license = "MIT"
+repository = "https://github.com/anthonykewl20/ranex-framework"
+homepage = "https://ranex.dev"
+documentation = "https://ranex.dev/docs"
+authors = ["Ranex Contributors"]
+categories = ["development-tools", "command-line-utilities"]
+keywords = ["codebase", "indexing", "ai", "search"]
+
+# ============================================================================
+# SHARED DEPENDENCIES - Latest Verified Versions
+# Rust: 1.91.1 (stable), PyO3: 0.27.2
+# Source: docs.rs, verified December 8, 2024
+# See DOCS/DEPENDENCIES.md for full tracking
+# ============================================================================
+[workspace.dependencies]
+# === Error Handling ===
+anyhow = "1.0.100"                          # Flexible error handling
+thiserror = "2.0.17"                        # Derive-based error types
+
+# === Serialization ===
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.145"
+serde_yaml = "0.9.34"
+toml = "0.9.8"
+schemars = "1.1.0"                          # JSON Schema generation
+
+# === Database ===
+rusqlite = { version = "0.37.0", features = ["bundled", "modern_sqlite"] }
+
+# === File System ===
+ignore = "0.4.25"                           # .gitignore-style filtering
+walkdir = "2.5.0"                           # Directory traversal
+
+# === Logging & Tracing ===
+tracing = "0.1.43"
+tracing-subscriber = { version = "0.3.22", features = ["env-filter", "json"] }
+tracing-error = "0.2.1"                         # SpanTrace capture for errors
+tracing-appender = "0.2.4"                      # File rotation for logs
+
+# === Async Runtime ===
+tokio = { version = "1.48.0", features = ["full"] }
+
+# === CLI (ranex-cli specific) ===
+clap = { version = "4.5.53", features = ["derive", "cargo", "wrap_help", "env"] }
+clap_complete = "4.5.44"                    # Shell completions
+indicatif = "0.18.3"                       # Progress bars (0.18 has breaking changes)
+console = "0.16.1"                         # Terminal colors/styling
+dialoguer = "0.12.0"                        # Interactive prompts (0.12 has breaking changes)
+comfy-table = "7.2.1"                       # ASCII tables
+owo-colors = "4.1.0"                        # Terminal colors alternative
+humantime = "2.1.0"                         # Human-readable durations
+which = "8.0.0"                             # Find executables in PATH
+dirs = "6.0.0"                              # Cross-platform directories
+
+# === PyO3 (only for ranex-py and ranex-atlas parser) ===
+pyo3 = { version = "0.27.2" }
+
+# === HTTP / Web (MCP server dependencies) ===
+axum = { version = "0.8.7", features = ["http1", "http2", "json"] }
+tower = { version = "0.5.2", features = ["timeout", "limit", "full"] }
+tower-http = { version = "0.6.7", features = ["cors", "trace", "compression-gzip"] }
+reqwest = { version = "0.12.24", default-features = false, features = ["json", "rustls-tls"] }
+reqwest-middleware = "0.4.0"
+reqwest-retry = "0.7.1"
+tower-circuitbreaker = "0.4.0"
+oauth2 = { version = "5.0.0", default-features = false, features = ["reqwest", "rustls-tls"] }
+
+# === Context7 Integration ===
+moka = { version = "0.12.11", features = ["future"] }
+
+# === Graph Analysis (Atlas Roadmap) ===
+petgraph = "0.8.3"                          # Dependency/call graph data structures
+
+# === Rust Parsing (Dev Atlas) ===
+# https://docs.rs/tree-sitter/0.25.9
+tree-sitter = "0.26.3"                        # Incremental parsing library
+# https://docs.rs/tree-sitter-rust/0.24.0
+tree-sitter-rust = "0.24"                   # Rust grammar for tree-sitter
+
+# === Workspace Metadata (Architecture Check) ===
+# https://docs.rs/cargo_metadata/0.23.1
+cargo_metadata = "0.23"                     # Structured access to cargo metadata
+
+# === Semantic Search (Atlas Roadmap - Optional) ===
+# fastembed = { version = "5.4", optional = true }  # Uncomment when implementing semantic search
+
+# === MCP Protocol (Atlas Roadmap) ===
+rmcp = { version = "0.11.0", features = ["server", "transport-io", "macros"] }
+rmcp-macros = "0.11.0"
+
+# === Utilities ===
+uuid = { version = "1.19.0", features = ["v4", "serde"] }
+chrono = { version = "0.4.42", features = ["serde"] }
+url = { version = "2.5.7", features = ["serde"] }
+regex = "1.12.2"
+
+# === Hashing & Cryptography ===
+sha2 = "0.10.9"
+blake3 = "1.8.2"                            # Fast cryptographic hash
+ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }  # Ed25519 signatures
+rand_core = { version = "0.6.4", features = ["getrandom"] }                         # Random number generation
+hex = "0.4.3"                               # Hex encoding/decoding
+
+# === Testing ===
+tempfile = "3.23.0"                         # Temp directories
+pretty_assertions = "1.4.1"
+assert_cmd = "2.0.16"                       # CLI integration testing
+predicates = "3.1.3"                        # Assertion helpers
+assert_fs = "1.1.2"                         # Temp filesystem for tests
+proptest = "1.4"                            # Property-based testing (Section 7 rust-testing.md)
+proptest-derive = "0.7.0"                     # Derive Arbitrary for custom types
+
+# === Internal Crates ===
+ranex-core = { path = "crates/ranex-core" }
+ranex-atlas = { path = "crates/ranex-atlas" }
+ranex-atlas-dev = { path = "crates/ranex-atlas-dev" }  # Internal only
+ranex-arch-check = { path = "crates/ranex-arch-check" }  # CI tool only
+ranex-firewall = { path = "crates/ranex-firewall" }
+ranex-mcp-core = { path = "crates/ranex-mcp-core" }
+ranex-cli = { path = "crates/ranex-cli" }
+
+# ============================================================================
+# BUILD PROFILES
+# ============================================================================
+[profile.release]
+opt-level = 3                               # Maximum optimization
+lto = "fat"                                 # Link-time optimization (20-30% smaller binary)
+codegen-units = 1                           # Better optimization, slower compile
+strip = true                                # Remove debug symbols
+panic = "abort"                             # Smaller binary, no unwinding
+
+[profile.release-with-debug]
+inherits = "release"
+strip = false
+debug = true
+
+[profile.dev]
+opt-level = 0
+debug = true
+
+# ============================================================================
+# WORKSPACE LINTS - Applied to all crates
+# Based on DOCS/rust-testing.md Section 18: Clippy Configuration
+# Source: https://doc.rust-lang.org/clippy/
+# ============================================================================
+[workspace.lints.clippy]
+# === Bug Prevention (deny-by-default categories) ===
+correctness = { level = "deny", priority = -1 }     # Code that is outright wrong
+suspicious = { level = "deny", priority = -1 }      # Code that is most likely wrong
+style = { level = "warn", priority = -1 }           # Idiomatic code suggestions
+complexity = { level = "warn", priority = -1 }      # Overly complex code patterns
+perf = { level = "warn", priority = -1 }            # Performance improvements
+
+# === Panic Prevention (restriction lints - opt-in) ===
+# These prevent runtime panics in production code (priority = 1 to override groups)
+unwrap_used = { level = "deny", priority = 1 }      # No .unwrap() calls
+expect_used = { level = "deny", priority = 1 }      # No .expect() calls
+panic = { level = "deny", priority = 1 }            # No panic!() macro
+indexing_slicing = { level = "warn", priority = 1 } # Warn on [] indexing (use .get())
+
+# === Additional Safety ===
+todo = "warn"                           # Warn on todo!() in production
+unimplemented = "warn"                  # Warn on unimplemented!()
+
+[workspace.lints.rust]
+unsafe_code = "forbid"                  # No unsafe blocks allowed
+missing_docs = "allow"                  # TODO: Enable once docs are complete
+dead_code = "warn"                      # Warn on unused code
+

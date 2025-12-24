@@ -1,0 +1,45 @@
+[package]
+name = "ranex-firewall"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Dependency firewall and import validation for Ranex"
+readme = "README.md"
+
+[dependencies]
+# Internal
+ranex-core.workspace = true
+ranex-atlas = { path = "../ranex-atlas", default-features = false }
+
+# Python AST parsing
+pyo3.workspace = true
+
+# Serialization
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml.workspace = true
+
+# Error handling
+thiserror.workspace = true
+
+# Logging
+tracing.workspace = true
+
+# Concurrency
+parking_lot = "0.12"
+
+[dev-dependencies]
+tempfile.workspace = true
+pretty_assertions.workspace = true
+criterion = "0.8.1"
+
+# TODO: Add benchmarks (see RUST-TESTING.md Section 10 for benchmark patterns)
+
+[features]
+default = ["python-auto-initialize"]
+python-auto-initialize = ["pyo3/auto-initialize", "ranex-atlas/python-auto-initialize"]
+
+[lints]
+workspace = true

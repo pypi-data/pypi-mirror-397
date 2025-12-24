@@ -1,0 +1,22 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[tool.maturin]
+bindings = "pyo3"
+python-source = "python"
+module-name = "ranex.ranex_rust"
+manifest-path = "crates/ranex-py/Cargo.toml"
+
+[project]
+name = "ranex"
+dynamic = ["version"]
+description = "Python bindings for Ranex - exposes Atlas codebase indexing to Python"
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
+
+[project.scripts]
+ranex = "ranex.__main__:main"

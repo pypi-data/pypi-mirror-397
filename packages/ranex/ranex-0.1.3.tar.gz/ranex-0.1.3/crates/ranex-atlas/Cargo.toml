@@ -1,0 +1,63 @@
+[package]
+name = "ranex-atlas"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Atlas codebase indexing system for Ranex"
+readme = "README.md"
+
+[dependencies]
+# Internal crates
+ranex-core.workspace = true
+
+# Database
+rusqlite.workspace = true
+
+# File system traversal
+ignore.workspace = true
+walkdir.workspace = true
+
+# Serialization
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml.workspace = true
+
+# Error handling
+thiserror.workspace = true
+
+# Logging
+tracing.workspace = true
+
+# Python AST parsing (via PyO3)
+pyo3.workspace = true
+
+# Hashing for incremental updates
+sha2.workspace = true
+
+# Regex for fallback parsing
+regex.workspace = true
+
+# Glob pattern matching
+glob = "0.3"
+
+# Rust AST parsing (OPTIONAL - for Dev Atlas only, NOT shipped to end users)
+# https://docs.rs/tree-sitter/0.25
+tree-sitter = { workspace = true, optional = true }
+# https://docs.rs/tree-sitter-rust/0.24
+tree-sitter-rust = { workspace = true, optional = true }
+
+[features]
+default = ["python-auto-initialize"]
+# Enable Rust parsing - ONLY for internal Dev Atlas, NOT for end-user ranex-py
+rust-parsing = ["tree-sitter", "tree-sitter-rust"]
+python-auto-initialize = ["pyo3/auto-initialize"]
+
+[dev-dependencies]
+tempfile.workspace = true
+pretty_assertions.workspace = true
+rstest = "0.26.1"
+
+[lints]
+workspace = true
+
