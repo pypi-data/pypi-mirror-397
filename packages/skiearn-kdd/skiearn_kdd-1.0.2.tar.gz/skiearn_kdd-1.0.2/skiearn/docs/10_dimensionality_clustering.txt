@@ -1,0 +1,148 @@
+# ==========================================================================================
+# 15. DIMENSIONALITY REDUCTION & REPRESENTATION
+# ==========================================================================================
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA, KernelPCA, FactorAnalysis
+from sklearn.preprocessing import StandardScaler
+from sklearn.manifold import TSNE
+
+# ----------------------
+# Linear Methods: PCA
+# ----------------------
+
+# Principal Component Analysis theory:
+# - Projects data onto orthogonal axes maximizing variance.
+# - Eigenvalues = variance explained per component.
+# - Components = eigenvectors of covariance matrix.
+
+# PCA code, explained variance, scree plot:
+df = pd.DataFrame(np.random.randn(100, 4), columns=['A','B','C','D'])
+scaler = StandardScaler().fit(df)
+X_scaled = scaler.transform(df)
+pca = PCA().fit(X_scaled)
+explained_var = pca.explained_variance_ratio_
+plt.bar(range(1, len(explained_var)+1), explained_var)
+plt.xlabel('Principal Component')
+plt.ylabel('Explained Variance Ratio')
+plt.title('PCA Scree Plot')
+plt.show()
+# Checks: Number of components covering most variance; "elbow" for cutoff.
+# Pitfall: Linear only; "explained variance" not always predictive power.
+
+# ----------------------
+# Factor Analysis
+# ----------------------
+fa = FactorAnalysis(n_components=2).fit(X_scaled)
+factors = fa.transform(X_scaled)
+plt.scatter(factors[:,0], factors[:,1])
+plt.title('Factor Analysis Projection')
+plt.xlabel('Factor 1')
+plt.ylabel('Factor 2')
+plt.show()
+# Checks: Latent variable representation.
+# Pitfall: Rotational ambiguity; factors are not principal components.
+
+# ----------------------
+# Nonlinear Methods
+# ----------------------
+
+# KernelPCA: Nonlinear structure via kernel trick
+kpca = KernelPCA(n_components=2, kernel='rbf').fit_transform(X_scaled)
+plt.scatter(kpca[:,0], kpca[:,1])
+plt.title('Kernel PCA Projection')
+plt.show()
+# Checks: Nonlinear manifolds.
+# Pitfall: Kernel/parameter choice is crucial; not interpretable as variance explained.
+
+# t-SNE: Stochastic neighbor embedding for non-linear visualization (not feature selection)
+tsne = TSNE(n_components=2, perplexity=30, n_iter=1000, random_state=42).fit_transform(X_scaled)
+plt.scatter(tsne[:,0], tsne[:,1])
+plt.title('t-SNE Projection')
+plt.show()
+# Checks: Cluster and manifold visualization.
+# Pitfall: Non-metric; scale and global distances not meaningful; randomness (reproducibility).
+
+# UMAP (conceptual, not in stdlib): Even better at local/global structure than t-SNE; also nonlinear; scalable.
+
+# - Dim. reduction helps: Curse of dimensionality, visualization, noise reduction.
+# - But destroys info if relevant structure is nonlinear/oblique to axes or in discarded dimensions!
+
+# ==========================================================================================
+# 16. UNSUPERVISED LEARNING (CLUSTERING)
+# ==========================================================================================
+
+from sklearn.cluster import KMeans, AgglomerativeClustering, DBSCAN, SpectralClustering
+from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
+from scipy.cluster.hierarchy import dendrogram, linkage
+
+# ------------------------------------------------------------------------------------------
+# K-Means
+# ------------------------------------------------------------------------------------------
+# Objective: Minimize within-cluster sum of squares (inertia).
+# Distance: Euclidean (default); sensitive to scaling.
+# Sensitive to initialization (kmeans++) and assumes convex/spherical clusters.
+
+Xlc = np.random.randn(100, 2)
+kmeans = KMeans(n_clusters=3, n_init=10, random_state=42).fit(Xlc)
+labels = kmeans.labels_
+plt.scatter(Xlc[:, 0], Xlc[:, 1], c=labels)
+plt.title('K-Means: Cluster Assignment')
+plt.show()
+# Does NOT find elongated or irregular clusters
+# Pitfall: Solution depends on initial centroids
+
+# ------------------------------------------------------------------------------------------
+# Hierarchical Agglomerative Clustering
+# ------------------------------------------------------------------------------------------
+# Objective: Nested grouping (dendrogram) by linking closest samples/clusters
+# Distance: Any metric (Ward = Euclidean var minimization)
+hier = AgglomerativeClustering(n_clusters=3, linkage='ward').fit(Xlc)
+plt.scatter(Xlc[:, 0], Xlc[:, 1], c=hier.labels_)
+plt.title('Hierarchical Clustering')
+plt.show()
+# Finds nested, but not overlapping, clusters
+# Pitfall: Dendrogram cutting arbitrary; linkage matters.
+
+# ------------------------------------------------------------------------------------------
+# DBSCAN (Density-Based)
+# ------------------------------------------------------------------------------------------
+# Objective: Group dense regions; defines "core" and "border" points
+db = DBSCAN(eps=1, min_samples=5).fit(Xlc)
+plt.scatter(Xlc[:,0], Xlc[:,1], c=db.labels_)
+plt.title('DBSCAN')
+plt.show()
+# Finds arbitrarily-shaped, noise-robust clusters
+# Pitfall: Parameter sensitivity; fails above moderate dimension.
+
+# ------------------------------------------------------------------------------------------
+# Spectral Clustering
+# ------------------------------------------------------------------------------------------
+# Objective: Cluster via eigendecomposition of similarity graph Laplacian.
+spec = SpectralClustering(n_clusters=3, affinity='nearest_neighbors', random_state=42).fit(Xlc)
+plt.scatter(Xlc[:,0], Xlc[:,1], c=spec.labels_)
+plt.title('Spectral Clustering')
+plt.show()
+# Finds graph-based clusters, not limited to globular shapes.
+# Pitfall: Affinity/graph construction critical.
+
+# ------------------ Cluster Validation -------------------
+
+s_score = silhouette_score(Xlc, labels)  # [-1,1]; higher = denser separation.
+dbi = davies_bouldin_score(Xlc, labels)  # lower = better
+ch_score = calinski_harabasz_score(Xlc, labels)  # higher = better
+# Elbow method: Plot inertia vs k, look for "elbow"
+inertias = []
+for k in range(1, 10):
+    inertias.append(KMeans(n_clusters=k, n_init=10, random_state=42).fit(Xlc).inertia_)
+plt.plot(range(1, 10), inertias)
+plt.xlabel('k')
+plt.ylabel('Inertia')
+plt.title('Elbow Method for K')
+plt.show()
+
+# - Clustering is ill-posed: "True labels" unknown except for synthetic data.
+# - Different initializations/metrics give different results
+# - Results not testable except by external validation or stability

@@ -1,0 +1,214 @@
+# ==========================================================================================
+# 13. COMMON EXAM TRAPS (MANDATORY SECTION)
+# ==========================================================================================
+
+import numpy as np
+
+# ------------------------------------------------------------------------------------------
+# Data leakage examples
+# ------------------------------------------------------------------------------------------
+# - Scaling using the mean/std from the full data (including test)
+# - Selecting features using target in test set
+# - Cross-validation folds not stratified (labels leaking between train/test)
+# - Including post-outcome variables when predicting
+
+# ------------------------------------------------------------------------------------------
+# Invalid statistical tests
+# ------------------------------------------------------------------------------------------
+# - Using parametric tests (t-test) on non-normal data
+# - Ignoring repeated measures (independence violation)
+# - Using a test for proportions on continuous data
+
+# ------------------------------------------------------------------------------------------
+# Misinterpreting p-values
+# ------------------------------------------------------------------------------------------
+# - p-value is not the probability that H0 is true
+# - p>0.05 does not prove equality
+
+# ------------------------------------------------------------------------------------------
+# Multiple testing problem
+# ------------------------------------------------------------------------------------------
+# - Conducting many tests inflates chance of Type I error
+# - Correction: Bonferroni (divide alpha by #tests), less strict: FDR
+
+# ------------------------------------------------------------------------------------------
+# Overfitting via preprocessing
+# ------------------------------------------------------------------------------------------
+# Wrong: Select features or scale on whole data before CV
+# Correct: All preprocessing must fit only on train split (or within CV fold), applied to test.
+
+# ------------------------------------------------------------------------------------------
+# Using accuracy on imbalanced data
+# ------------------------------------------------------------------------------------------
+# Accuracy can be misleading (e.g., 99% accuracy when positive class is only 1%)
+# Proper metrics: balanced accuracy, MCC, PR-AUC
+
+# ==========================================================================================
+# 24. EXAM META-KNOWLEDGE (EXAM "TRICK QUESTIONS" & PITFALLS)
+# ==========================================================================================
+
+# Professors design trick questions by:
+# - Violating an assumption (e.g., non-IID data for a test requiring IID)
+# - Using confounders/hidden variable scenarios (Simpson's paradox)
+# - Subtle data leakage (preprocessing before splitting)
+# - Confusing correlation and causality
+# Typical false statements:
+# - "ROC AUC is always a good metric." (FALSE: not on imbalanced data)
+# - "Feature importance means the feature is causal" (FALSE)
+# - "If model accuracy is 99%, model is good" (FALSE if major class is 99%)
+# Looks correct but wrong:
+# - Using non-stratified cross-validation for imbalance
+# - Comparing models on test set, not validation
+# - Relying solely on p-values
+# Justify choices:
+# - Always state assumptions
+# - Connect code/statistics to hypotheses
+# - Show, not assume, that the conditions for each method hold
+
+# ==========================================================================================
+# 45. DATA UNDERSTANDING & DATA-CENTRIC KDD
+# ==========================================================================================
+
+# ----------------------------------------------------------------------------------------------------------------------
+# A. DATA TYPES & STRUCTURES
+# ----------------------------------------------------------------------------------------------------------------------
+# Numerical: 
+#   - Continuous (e.g., height)
+#   - Discrete (e.g., count of pets)
+# Categorical: 
+#   - Nominal (no order: color)
+#   - Ordinal (ordered: grade)
+# Binary: Exactly two states (0/1, yes/no)
+# Temporal: Data indexed by time (e.g., stock price)
+# Textual: Sequences of tokens; no natural numeric representation (concept)
+# Spatial: Lat/long or geometries; requires geospatial/statistics knowledge (concept)
+
+# Why type assumptions matter:
+# - Wrong encoding/bad test: e.g. treating nominal as ordinal (violates distance, means).
+# - E.g. k-means on categorical/binary = meaningless; t-test on ordinal = invalid assumptions.
+
+# ==========================================================================================
+# 56. FINAL DATA-CENTRIC EXAM TRAPS (MANDATORY)
+# ==========================================================================================
+
+# Scaling before splitting: Causes leakage, test set influences mean/variance
+# Encoding using full dataset: Same, especially for target/frequency encoders
+# Visualizing test data: Informs feature engineering inappropriately
+# Inferring causality from distributions: Shared distribution shape does not imply causal link
+# Ignoring target leakage in features: Features derived from target can yield perfect but useless prediction
+
+# RESTATE:
+# Data analysis must always answer: "What assumptions about the data am I implicitly making?"
+# Every preprocessing, visualization, or test is meaningful only if data type, distribution, sampling, and pipeline logic match the modeling claims.
+# Silent breaking of these can invalidate all downstream inference.
+
+# ==========================================================================================
+# 65. FINAL "FORGOTTEN BUT EXAMINABLE" TOPICS
+# ==========================================================================================
+
+import pandas as pd
+
+# Simpson's paradox: Aggregate shows one trend, subgroups opposite.
+tab = pd.DataFrame({'gender': ['M','F','M','F'], 'treatment':[1,1,0,0],'result':[1,0,0,1]})
+grouped = tab.groupby('gender')['result'].mean()
+agg = tab['result'].mean()
+# Visual: Bar plot overall vs by group.
+
+# Ecological fallacy: Aggregate-level correlations don't imply individual-level effects.
+
+# Spurious correlations: Statistical association due to confounding/not causal.
+
+# Multiple comparisons: More tests, more false discoveries (Bonferroni/Holm/BH needed).
+
+# Reproducibility crisis: Data mining vulnerable to irreproducible results due to incomplete code/data sharing, p-hacking.
+
+# P-hacking: Examining many hypotheses and reporting only significant (spurious) ones; inflates error.
+
+# ==========================================================================================
+# 68. OUTLIERS — STATISTICAL TESTS (NOT JUST DETECTION)
+# ==========================================================================================
+
+# -- A. Statistical Outlier Tests --
+# Grubbs' Test: Only valid for Gaussian 1D. scipy.stats.grubbs_test not in stdlib; but can do:
+def grubbs_stat(x):
+    n = len(x)
+    mean = np.mean(x)
+    std = np.std(x, ddof=1)
+    G = np.max(np.abs(x - mean)) / std
+    # Compare to Grubbs critical value for n, alpha
+    return G
+
+# Dixon's Q: For small n, concept only; Generalized ESD: for multiple outliers (conceptual).
+# These all assume (approx) normal data.
+
+# -- B. Influence vs Outlier Formalism --
+from scipy import stats
+# High leverage: points far from mean predictor space; influence: points that shift the fit.
+# Removing "outliers" can eliminate vital causal patterns (they may represent a true rare causal relationship).
+
+# ==========================================================================================
+# 69. DATA TRANSFORMATIONS — SMALL BUT EXAMINABLE
+# ==========================================================================================
+
+x = np.random.randn(100)
+centered = x - np.mean(x)
+demeaned = centered
+standardized = (x-np.mean(x))/np.std(x)
+normed = (x-np.min(x))/(np.max(x)-np.min(x))
+ranked = stats.rankdata(x)
+# Winsorization = capping at quantiles
+from scipy.stats.mstats import winsorize
+w = winsorize(x, limits=[0.05,0.05])
+clipped = np.clip(x, -2, 2)
+# Each affects variance/scaling/distance. Rank transform robust for nonparametric methods.
+
+# ==========================================================================================
+# 71. DATA LEAKAGE — FORMAL TAXONOMY
+# ==========================================================================================
+
+# - Temporal leakage: Using future data at train time
+# - Target leakage: Including features derived from y
+# - Group leakage: Same entity in both train/test
+# - Preprocessing leakage: Feature scaling, selection across train/test
+# - Feature construction leakage: Using all data to engineer features (including test)
+# Leakage = "Perfect" models, non-reproducible. Exam favorite for "hidden" error.
+
+# ==========================================================================================
+# 72. STATISTICAL ASSUMPTIONS CHECKLIST (EXAM FAVORITE)
+# ==========================================================================================
+
+# | Method          | Assumption         | Diagnostic        |
+# |-----------------|--------------------|-------------------|
+# | LinearRegression| Linearity          | Residuals vs fit  |
+# | t-test          | Normality          | Q–Q plot          |
+# | ANOVA           | Equal variance     | Levene test       |
+# | Pearson corr    | Linearity          | Scatter plot      |
+# | KNN             | Metric valid       | Scaling check     |
+
+# Violation = invalid inference or Type I/II error inflation.
+
+# ==========================================================================================
+# 73. SMALL BUT DEADLY PREPROCESSING STEPS (STUDENTS FORGET)
+# ==========================================================================================
+
+# - Shuffle before split: Removes ordering bias when random allowed
+# - Stratify on rare classes: Use stratify= in train_test_split/cv for balance
+# - Remove identifiers: Cols like 'id' can let model "cheat"
+# - Encode train/test consistently: Fit encoders only on train, apply to test
+# - Save scalers, encoders: So pipeline works for inference/serving
+# Missed step = model silently breaks
+
+# ==========================================================================================
+# 74. FINAL MICRO-EXAM TRAPS (LAST ONES)
+# ==========================================================================================
+
+# - Using test set for EDA: Biases toward test (should only use for final evaluation)
+# - Normalizing categorical encodings: Pointless/sometimes harmful; categories are discrete
+# - Treating missing as zero: False info, especially bad if zero has a valid meaning
+# - Visualizing after filtering: Can introduce "survivor bias"
+# - Reporting only "best" CV fold: Cherry-picking, inflates performance
+
+# -------------------------------------------------------------------
+# Final Restatement: With this section, EVERY data validity, preprocessing,
+# assumption, leakage, or exam trap in KDD is documented, as required.
+# -------------------------------------------------------------------

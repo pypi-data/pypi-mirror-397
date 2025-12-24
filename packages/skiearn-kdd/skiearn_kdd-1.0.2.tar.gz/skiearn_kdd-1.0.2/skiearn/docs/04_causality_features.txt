@@ -1,0 +1,163 @@
+# ==========================================================================================
+# 4. CAUSALITY & FORMALISM
+# ==========================================================================================
+
+import numpy as np
+import pandas as pd
+import statsmodels.api as sm
+from scipy import stats
+import statsmodels.tsa.stattools as tsa
+
+# ------------------------------------------------------------------------------------------
+# Correlation ≠ Causation
+# ------------------------------------------------------------------------------------------
+# Correlation quantifies statistical association, not causal effect.
+# Confounders can make unrelated variables appear related.
+
+# ------------------------------------------------------------------------------------------
+# Confounders — Variable influencing both treatment and outcome.
+# ------------------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------------------
+# Simpson's Paradox
+# ------------------------------------------------------------------------------------------
+# Aggregated data shows one trend; stratified by variable shows reverse.
+# Exam: stratification may reveal hidden confounding.
+
+# ------------------------------------------------------------------------------------------
+# Causal Graphs (DAGs — Conceptual Only)
+# ------------------------------------------------------------------------------------------
+# Directed acyclic graphs model causal assumptions.
+# Key: Causal effect estimation depends on blocking backdoor paths via adjustment.
+
+# ------------------------------------------------------------------------------------------
+# Backdoor Criterion (Theory)
+# ------------------------------------------------------------------------------------------
+# A set S satisfies backdoor criterion for X→Y if S blocks all backdoor (non-causal) paths and contains no descendant of X.
+# Adjustment guarantees unbiased estimation of causal effect.
+
+# ------------------------------------------------------------------------------------------
+# Conditional Independence Tests
+# ------------------------------------------------------------------------------------------
+
+# Partial Correlation: correlation between X and Y after removing effect of Z.
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+
+def partial_corr(x, y, z):
+    """Partial correlation between x and y, controlling for z."""
+    df = pd.DataFrame({'x': x, 'y': y, 'z': z})
+    res_x = sm.OLS(df['x'], sm.add_constant(df[['z']])).fit().resid
+    res_y = sm.OLS(df['y'], sm.add_constant(df[['z']])).fit().resid
+    corr = np.corrcoef(res_x, res_y)[0,1]
+    # INTERPRET: corr ≈ 0: x,y independent given z.
+    return corr
+
+# Conditional mutual information (same as mutual information, but conditioned on Z) — not in standard lib.
+# See sklearn.feature_selection.mutual_info_classif for MI, but conditional MI not in sklearn.
+
+# Granger Causality Test (time series)
+# Null: Series X does NOT Granger-cause Y
+X = np.random.randn(100)
+Y = np.random.randn(100)
+data = np.column_stack([Y, X])
+result = tsa.grangercausalitytests(data, maxlag=2, verbose=False)
+# Key output: p-values for each lag
+# p < 0.05: Reject null, X Granger-causes Y.
+
+# ------------------------------------------------------------------------------------------
+# Instrumental Variables (IV) (2-stage least squares, for endogeneity correction)
+# ------------------------------------------------------------------------------------------
+# statsmodels example:
+# Endogenous regressor: X, Instrument: Z, Outcome: Y
+# 1: regress X on Z; 2: regress Y on predicted X.
+# Example — only in statsmodels >= 0.14 (use smf.IV2SLS or sm.IV2SLS)
+# smf.IV2SLS.from_formula('Y ~ 1 + [X ~ Z]', data=df).fit()
+# INTERPRET: IV corrects for unobserved confounder.
+
+# ------------------------------------------------------------------------------------------
+# Propensity Score Matching (Concept + code sketch)
+# ------------------------------------------------------------------------------------------
+# Typically: Logistic regression predicts propensities, pairs with closest scores.
+# Steps:
+# 1. Estimate propensity score
+from sklearn.linear_model import LogisticRegression
+X = np.random.randn(100, 5)
+y = np.random.randint(0, 2, size=100)
+ps_model = LogisticRegression().fit(X, y)
+pscore = ps_model.predict_proba(X)[:,1]
+# 2. Matching usually done via nearest neighbor on pscore vector.
+# INTERPRET: Balances covariates between treated/control.
+
+# ==========================================================================================
+# 5. FEATURE SELECTION & DEPENDENCE
+# ==========================================================================================
+
+from sklearn.feature_selection import f_classif, chi2, mutual_info_classif, RFE, SelectKBest
+from sklearn.linear_model import LinearRegression, Lasso
+from sklearn.ensemble import RandomForestClassifier
+
+# ------------------------------------------------------------------------------------------
+# Pearson Correlation (Linear)
+# ------------------------------------------------------------------------------------------
+data = np.random.randn(100)
+corr, p = stats.pearsonr(data, np.random.randn(100))
+# stats.pearsonr: Linear correlation coef. Null: Correlation=0.
+# p < 0.05 means significant association.
+
+# ------------------------------------------------------------------------------------------
+# Spearman Correlation (Rank-based)
+# ------------------------------------------------------------------------------------------
+corr, p = stats.spearmanr(data, np.random.randn(100))
+# stats.spearmanr: Rank correlation. Use for monotonic but not linear associations.
+
+# ------------------------------------------------------------------------------------------
+# Mutual Information (General dependence)
+# ------------------------------------------------------------------------------------------
+mi = mutual_info_classif(X, y)
+# sklearn.feature_selection.mutual_info_classif: Measures mutual dependence between features and labels.
+# Higher = more informative.
+
+# ------------------------------------------------------------------------------------------
+# ANOVA F-test (continuous X, categorical y)
+# ------------------------------------------------------------------------------------------
+f_stat, p = f_classif(X, y)
+# sklearn.feature_selection.f_classif: Null = no variance in X explained by y.
+
+# ------------------------------------------------------------------------------------------
+# Chi-square Feature Selection (categorical)
+# ------------------------------------------------------------------------------------------
+chi2_stat, p = chi2(abs(X), y)
+# Input must be non-negative. Measures dependence between feature and class.
+
+# ------------------------------------------------------------------------------------------
+# VIF (Variance Inflation Factor — multicollinearity)
+# ------------------------------------------------------------------------------------------
+# statsmodels example:
+X_pd = pd.DataFrame(X, columns=[f"x{i}" for i in range(X.shape[1])])
+vif_data = pd.DataFrame()
+vif_data["feature"] = X_pd.columns
+vif_data["VIF"] = [variance_inflation_factor(X_pd.values, i) for i in range(X_pd.shape[1])]
+# VIF > 5 or 10 indicates problematic multicollinearity.
+
+# ------------------------------------------------------------------------------------------
+# RFE (Recursive Feature Elimination)
+# ------------------------------------------------------------------------------------------
+selector = RFE(LinearRegression(), n_features_to_select=2)
+selector = selector.fit(X, y)
+rfe_support = selector.support_
+rfe_ranking = selector.ranking_
+# support_: True for selected features; ranking_: 1 for selected, higher for dropped.
+
+# ------------------------------------------------------------------------------------------
+# Lasso (L1-based selection)
+# ------------------------------------------------------------------------------------------
+lasso = Lasso(alpha=0.1).fit(X, y)
+lasso_coeffs = lasso.coef_
+# Nonzero coefficients indicate selected features.
+
+# ------------------------------------------------------------------------------------------
+# Tree-based Importance
+# ------------------------------------------------------------------------------------------
+rf = RandomForestClassifier().fit(X, y)
+importances = rf.feature_importances_
+# Gives relative importance of each feature for prediction.
