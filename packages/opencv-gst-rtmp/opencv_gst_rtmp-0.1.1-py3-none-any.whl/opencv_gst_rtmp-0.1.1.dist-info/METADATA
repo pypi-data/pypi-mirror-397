@@ -1,0 +1,81 @@
+Metadata-Version: 2.4
+Name: opencv_gst_rtmp
+Version: 0.1.1
+Summary: Push opencv frame to rtmp server using gstreamer
+Home-page: https://github.com/nguyencobap/opencv_gst_rtmp
+Author: Nguyen Hai Nguyen
+Author-email: nguyenhainguyen97@gmail.com
+License: MIT License
+Keywords: gstreamer,gst,opencv,rtmp
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Multimedia :: Video
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python :: 3.8
+Requires-Python: >=3.5
+Description-Content-Type: text/markdown
+License-File: LICENSE.txt
+Requires-Dist: opencv-python>=4.6.0.66
+Requires-Dist: pycairo>=1.20.1
+Requires-Dist: PyGObject>=3.42.2
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: license
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+## What is this?
+
+Push opencv frame to rtmp server using gstreamer.
+
+## Usecases?
+
+Modified opencv frame and push to rtmp server.
+
+## Fundamental?
+
+Read opencv frame from appsrc and convert to flv and push to rtmp server using rtmpsink.
+
+## Test with example:
+### Setup environment:
+Create virtual environment (Optional):
+
+`python3 -m venv .venv`
+
+Run setup_env.sh
+
+`source setup_env.sh`
+
+Run install
+
+`python3 -m pip install .`
+
+### Run
+
+`python3 examples/main_frame.py` or  `python3 examples/main_stream.py`
+
+Play using ffplay or vlc:
+
+`ffplay rtmp://localhost:1935/live`
+
+### Build
+
+Install wheel:
+
+`python3 -m pip install wheel`
+
+Build:
+
+`python3 setup.py bdist_wheel`
+
+Install:
+
+`python3 -m pip install build/opencv_gst_rtmp-0.1.1-py3-none-any.whl`
