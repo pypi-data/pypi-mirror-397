@@ -1,0 +1,94 @@
+[build-system]
+requires = ["setuptools>=45", "wheel", "Cython>=0.29"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stacksense-cli"
+version = "0.1.3"
+description = "AI-powered code intelligence for developers"
+readme = "README.md"
+license = "LicenseRef-Proprietary"
+authors = [
+    {name = "PilgrimStack", email = "dev@stacksense.dev"}
+]
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Code Generators",
+]
+keywords = ["ai", "code-analysis", "developer-tools", "cli", "llm"]
+
+dependencies = [
+    # AI Providers
+    "openai",
+    "httpx",
+    # Terminal UI
+    "rich",
+    "prompt_toolkit",
+    "colorama",
+    # Web Search & Content
+    "ddgs",
+    "newspaper3k",
+    "requests",
+    "readability-lxml",
+    "lxml[html_clean]",
+    # Code Analysis (tree-sitter is optional)
+    "networkx",
+    "graphviz",
+    "scikit-learn",
+    "numpy",
+    # Backend
+    "fastapi",
+    "uvicorn",
+    "aiohttp",
+    "aiofiles",
+    # Utilities
+    "python-dotenv",
+    "packaging",
+    "markdown",
+    "pydantic",
+    "cryptography",
+    "click",
+]
+
+[project.optional-dependencies]
+# Enhanced code parsing (requires Python <3.13)
+parsing = [
+    "tree-sitter>=0.21.3",
+    "tree-sitter-languages>=1.10.2",
+]
+# Full install with all features
+full = [
+    "tree-sitter>=0.21.3",
+    "tree-sitter-languages>=1.10.2",
+]
+dev = [
+    "pytest>=7.0.0",
+    "Cython>=0.29",
+    "build",
+]
+
+[project.scripts]
+stacksense = "stacksense.cli.cli:main"
+
+[project.urls]
+Homepage = "https://stacksense-docs.vercel.app"
+Documentation = "https://stacksense-docs.vercel.app"
+Repository = "https://github.com/AmariahAK/Stacksense"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
