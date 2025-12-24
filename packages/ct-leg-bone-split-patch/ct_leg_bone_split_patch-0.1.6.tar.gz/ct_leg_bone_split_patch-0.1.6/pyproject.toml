@@ -1,0 +1,31 @@
+[project]
+name = "ct-leg-bone-split-patch"
+version = "0.1.6"
+description = "Given a 128×128 grayscale image representing a CT/MRI cross-sectional slice, identify bone tissue from it and generate a binary mask."
+authors = [
+    {name = "GGN_2015",email = "neko@jlulug.org"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    'torch',
+    'torchvision',
+    'opencv-python',
+    'pillow',
+    'numpy',
+    'remote-auto-fetch'
+]
+
+[tool.poetry.dependencies]
+torch = { source = "pytorch-cpu" }
+torchvision = { source = "pytorch-cpu" }
+
+[[tool.poetry.source]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

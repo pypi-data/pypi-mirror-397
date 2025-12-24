@@ -1,0 +1,56 @@
+Metadata-Version: 2.3
+Name: ct-leg-bone-split-patch
+Version: 0.1.6
+Summary: Given a 128×128 grayscale image representing a CT/MRI cross-sectional slice, identify bone tissue from it and generate a binary mask.
+License: MIT
+Author: GGN_2015
+Author-email: neko@jlulug.org
+Requires-Python: >=3.10
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Requires-Dist: numpy
+Requires-Dist: opencv-python
+Requires-Dist: pillow
+Requires-Dist: remote-auto-fetch
+Requires-Dist: torch
+Requires-Dist: torchvision
+Description-Content-Type: text/markdown
+
+# ct_leg_bone_split_patch
+Given a 128×128 grayscale image representing a CT/MRI cross-sectional slice, identify bone tissue from it and generate a binary mask.
+
+## Installation
+```bash
+pip install ct_leg_bone_split_patch
+```
+
+## Usage
+
+processing CT image.
+
+```python
+from PIL import Image
+from ct_leg_bone_split_patch import map_image
+
+img_in  = Image.open("path/to/file")
+img_out = map_image(img_in)
+
+img_out.save("path/to_file")
+```
+
+processing MRI image.
+
+```python
+from PIL import Image
+from ct_leg_bone_split_patch import map_image
+
+img_in  = Image.open("path/to/file")
+img_out = map_image(img_in, mri=True)
+
+img_out.save("path/to_file")
+```
+
