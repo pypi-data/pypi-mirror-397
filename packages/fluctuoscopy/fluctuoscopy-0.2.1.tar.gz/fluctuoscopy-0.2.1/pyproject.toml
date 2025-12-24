@@ -1,0 +1,65 @@
+[build-system]
+requires = ["maturin>=1.8,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "fluctuoscopy"
+description = "A Python wrapper with extras for the FSCOPE program, written by Andreas Glatz"
+license = {text = "MIT AND BSD-2-CLAUSE"}
+readme = "README.md"
+requires-python = ">=3.9"
+version = "0.2.1"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+    "numpy",
+]
+authors = [
+    {name = "Graham Kimbell"},
+    {name = "Ulderico Filippozzi"},
+    {name = "Andreas Glatz"},
+]
+
+[project.optional-dependencies]
+dev = [
+    "maturin",
+    "pytest",
+]
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+module-name = "fluc_rs"
+include = ["fluctuoscopy/bin/*", "tests/*"]
+python-packages = ["fluctuoscopy"]
+editable = true
+
+[tool.pytest.ini_options]
+markers = [
+    "legacy: marks tests of the legacy executable (deselect with '-m \"not legacy\"')",
+]
+
+[tool.ruff]
+line-length = 120
+lint.select = ["ALL"]
+lint.ignore = [
+    "N806",
+    "T201",
+    "FA102",
+    "PD901",
+    "FBT001",
+    "FBT002",
+    "PLR2004",
+    "TD002",
+    "TD003",
+    "D203",
+    "D213",
+    "COM812",
+    "N803",
+]
+fix = true
+
+[tool.mypy]
+disable_error_code = ["import-untyped"]
