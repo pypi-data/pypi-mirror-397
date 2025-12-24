@@ -1,0 +1,201 @@
+Metadata-Version: 2.4
+Name: vorp
+Version: 0.1.7
+Summary: A terminal-based AI companion.
+Author-email: Siddharth Bayapureddy <siddharthbayapureddy@gmail.com>
+License: MIT
+Project-URL: Homepage, https://github.com/SiddharthBayapureddy/vorp
+Project-URL: Repository, https://github.com/SiddharthBayapureddy/vorp.git
+Project-URL: Issues, https://github.com/SiddharthBayapureddy/vorp/issues
+Project-URL: Source Code, https://github.com/SiddharthBayapureddy/vorp
+Keywords: ai,llm,cli,terminal,assistant,rag,chatbot,developer-tools
+Classifier: Development Status :: 3 - Alpha
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Communications :: Chat
+Classifier: Topic :: Terminals
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: aiohappyeyeballs==2.6.1
+Requires-Dist: aiohttp==3.13.2
+Requires-Dist: aiosignal==1.4.0
+Requires-Dist: annotated-types==0.7.0
+Requires-Dist: anyio==4.12.0
+Requires-Dist: attrs==25.4.0
+Requires-Dist: certifi==2025.11.12
+Requires-Dist: charset-normalizer==3.4.4
+Requires-Dist: click==8.3.1
+Requires-Dist: colorama==0.4.6
+Requires-Dist: distro==1.9.0
+Requires-Dist: fastuuid==0.14.0
+Requires-Dist: filelock==3.20.0
+Requires-Dist: frozenlist==1.8.0
+Requires-Dist: fsspec==2025.12.0
+Requires-Dist: grpcio==1.67.1
+Requires-Dist: h11==0.16.0
+Requires-Dist: hf-xet==1.2.0
+Requires-Dist: httpcore==1.0.9
+Requires-Dist: httpx==0.28.1
+Requires-Dist: huggingface_hub==1.2.2
+Requires-Dist: idna==3.11
+Requires-Dist: importlib_metadata==8.7.0
+Requires-Dist: Jinja2==3.1.6
+Requires-Dist: jiter==0.12.0
+Requires-Dist: jsonschema==4.25.1
+Requires-Dist: jsonschema-specifications==2025.9.1
+Requires-Dist: litellm==1.80.9
+Requires-Dist: markdown-it-py==4.0.0
+Requires-Dist: MarkupSafe==3.0.3
+Requires-Dist: mdurl==0.1.2
+Requires-Dist: multidict==6.7.0
+Requires-Dist: openai==2.9.0
+Requires-Dist: packaging==25.0
+Requires-Dist: propcache==0.4.1
+Requires-Dist: pydantic==2.12.5
+Requires-Dist: pydantic_core==2.41.5
+Requires-Dist: Pygments==2.19.2
+Requires-Dist: python-dotenv==1.2.1
+Requires-Dist: PyYAML==6.0.3
+Requires-Dist: referencing==0.37.0
+Requires-Dist: regex==2025.11.3
+Requires-Dist: requests==2.32.5
+Requires-Dist: rich==14.2.0
+Requires-Dist: rpds-py==0.30.0
+Requires-Dist: shellingham==1.5.4
+Requires-Dist: sniffio==1.3.1
+Requires-Dist: tiktoken==0.12.0
+Requires-Dist: tokenizers==0.22.1
+Requires-Dist: tqdm==4.67.1
+Requires-Dist: typer==0.20.0
+Requires-Dist: typing-inspection==0.4.2
+Requires-Dist: typing_extensions==4.15.0
+Requires-Dist: urllib3==2.3.0
+Requires-Dist: yarl==1.22.0
+Requires-Dist: zipp==3.23.0
+Requires-Dist: chromadb==1.3.7
+Requires-Dist: sentence-transformers==3.3.1
+
+# 🧠 Vorp
+
+## 🎬 Demo
+
+![vorp demo](assets/demo.gif)
+
+**Vorp** is a terminal-based AI pair programmer and companion. It seamlessly indexes your codebase, allowing you to ask context-aware questions, retrieve relevant code snippets, and even modify files or execute commands without leaving your command line environment.
+
+> **Note:** This project is under active development.
+
+## 🚀 Key Features
+
+*   **Flexible Deployment:** Run `vorp` in two modes:
+    *   **Local Mode:** Use your own API keys for direct access to LLM providers (Groq, Google Gemini).
+    *   **Cloud Mode:** Route requests through a secure proxy backend (either hosted by you or a public instance) for a frictionless experience without personal API keys.
+*   **RAG (Chat with Codebase):** Index any project folder to enable context-aware queries using local embeddings.
+*   **Autonomous Tools:** The agent can read, write, and manage files, list directories, and execute shell commands.
+*   **Session Persistence:** Chat history is saved locally, allowing you to resume sessions later.
+*   **Context Management:** Manually inject specific files into the context window for targeted assistance.
+*   **Safety First:** Critical operations like file deletion or shell execution require explicit user confirmation.
+*   **Cross-Platform:** Designed to work consistently on Windows (PowerShell/CMD), macOS, and Linux.
+
+## 🛠️ Installation
+
+### Via PyPI (Recommended)
+You can install Vorp directly from PyPI:
+```bash
+pip install vorp
+```
+
+### From Source
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/SiddharthBayapureddy/vorp.git
+    cd vorp
+    ```
+
+2.  **Create a virtual environment:**
+    *   **Windows:** `python -m venv venv` and `.\venv\Scripts\activate`
+    *   **macOS/Linux:** `python3 -m venv venv` and `source venv/bin/activate`
+
+3.  **Install in editable mode:**
+    ```bash
+    pip install -e .
+    ```
+
+4.  **Configure API Keys (Local Mode):**
+    Create a `.env` file in the root directory:
+    ```env
+    GROQ_API_KEY=your_groq_api_key_here
+    GEMINI_API_KEY=your_gemini_api_key_here
+    ```
+
+## 💻 Usage
+
+Start the application:
+```bash
+vorp
+```
+
+### Interactive Commands
+
+| Command | Description |
+| :--- | :--- |
+| `/index <path>` | Scans and indexes the specified directory for RAG. |
+| `/rag` | Toggles RAG mode on or off. |
+| `/add <file>` | Loads the content of a specific file into the active chat context. |
+| `/context` | Displays currently loaded files and the active RAG project. |
+| `/key` | Interactive setup for your API keys. |
+| `/clear` | Clears the terminal screen. |
+| `/exit-v` | Exits the application and **saves** the current chat history. |
+| `/exit` | Exits the application and **deletes** the current chat history. |
+
+### CLI Arguments
+
+| Flag | Description |
+| :--- | :--- |
+| `--model <id>` | Starts the session with a specific model ID. |
+| `--list` | Lists all supported models and their IDs. |
+
+## 🏗️ Architecture & Capabilities
+
+### Core System
+Vorp is built using **Typer** for the CLI structure and **Rich** for beautiful terminal rendering (Markdown, Spinners, Tables). It uses **LiteLLM** to provide a unified interface to multiple LLM providers.
+
+### Autonomous Capabilities (Tools)
+In **Local Mode**, Vorp provides the LLM with a set of tools to interact with your system:
+*   **`read_file`**: Allows the AI to examine your code.
+*   **`write_file`**: Enables the AI to create or update files (overwrites entire content).
+*   **`delete_file`**: Permanently removes files (requires confirmation).
+*   **`list_files`**: Lets the AI explore your directory structure.
+*   **`run_shell_command`**: Allows the AI to run tests, install packages, or use git (requires confirmation).
+
+### RAG (Retrieval-Augmented Generation)
+The RAG system ensures the AI has a deep understanding of your specific codebase:
+1.  **Ingestion:** Files are split using a **Sliding Window** (1000 chars, 200 overlap).
+2.  **Embeddings:** Uses `all-MiniLM-L6-v2` locally via **Sentence-Transformers**.
+3.  **Storage:** Vectors are stored in **ChromaDB** at `~/.vorp_rag_db`.
+4.  **Retrieval:** Uses Cosine Similarity filtered by `project_id` to fetch the top 5 most relevant code snippets.
+
+### Cloud Proxy Mode
+For a zero-config experience, Vorp can route requests through a **FastAPI-based proxy**. This proxy securely handles API keys and streams responses back to the CLI using Server-Sent Events (SSE).
+
+## ⚙️ Configuration
+
+Advanced configuration is managed via `src/vorp/constants.json`. You can customize:
+*   **Models:** Add or remove supported model IDs.
+*   **Ignore Patterns:** Define which files/folders RAG should skip.
+*   **System Prompt:** Modify the core instructions given to the AI.
+
+## 🔮 Roadmap
+*   **Multi-file Editing:** Improving the logic for refactoring across multiple files.
+*   **Better Diff Support:** Visualizing changes before they are applied.
+*   **Plugin System:** Allow users to define custom tools.
+
+## 🤝 Contributing
+Contributions are welcome! Please open an issue or submit a pull request.
