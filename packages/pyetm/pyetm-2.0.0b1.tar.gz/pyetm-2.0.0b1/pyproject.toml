@@ -1,0 +1,72 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+
+[project]
+name = "pyetm"
+version = "2.0.0b1"
+description = "Python-ETM Connector"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+  { name = "Nora Schinkel", email = "nora.schinkel@quintel.com" },
+  { name = "Louis Parkes-Talbo", email = "louis.parkestalbot@quintel.com" }
+]
+keywords = ["energy", "transition", "modeling", "api", "ETM"]
+requires-python = ">=3.12,<4.0"
+
+dependencies = [
+  # Pydantic ecosystem - pinned to v2 for API stability
+  "pydantic>=2.8.0,<3.0.0",
+  "pydantic-settings>=2.7.0,<3.0.0",
+
+  # Data handling - pandas 2.x has breaking changes from 1.x
+  "pandas>=2.0.0,<3.0.0",
+  "openpyxl>=3.0.0",
+  "xlsxwriter>=3.0.0",
+
+  # HTTP clients
+  "requests>=2.31.0,<3.0.0",
+  "aiohttp>=3.12.15,<4.0.0",
+
+  # Configuration and utilities
+  "python-dotenv>=1.0.0",
+  "pyyaml>=6.0.0",
+]
+
+[project.scripts]
+pyetm = "pyetm.__main__:main"
+
+[project.urls]
+"Repository"    = "https://github.com/quintel/pyetm"
+"Documentation" = "https://docs.energytransitionmodel.com/main/pyetm/introduction"
+"Issue tracker" = "https://github.com/quintel/pyetm/issues"
+
+[tool.poetry]
+packages = [{ include = "pyetm", from = "src" }]
+include = ["LICENSE"]
+
+
+[tool.poetry.group.dev.dependencies]
+# Testing
+pytest = ">=8.0.0"
+pytest-cov = ">=4.0.0"
+requests-mock = ">=1.12.0"
+
+# Code quality
+pylint = ">=3.0.0"
+pydeps = ">=3.0.0"
+
+# Jupyter/Notebooks
+ipykernel = ">=6.29.0"
+notebook = ">=7.0.0"
+
+
+
+[tool.pytest.ini_options]
+addopts = "--cov=pyetm --cov-report=term-missing"
+testpaths = ["tests"]
+
+[tool.pylint.main]
+fail-under = 8.0
