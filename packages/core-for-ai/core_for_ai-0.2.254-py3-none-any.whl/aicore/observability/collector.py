@@ -1,0 +1,1579 @@
+from aicore.const import DEFAULT_OBSERVABILITY_DIR, DEFAULT_ENCODING
+from aicore.logger import _logger
+
+from pydantic import BaseModel, ConfigDict, RootModel, Field, field_validator, computed_field, model_validator, model_serializer, field_serializer
+from typing import Dict, Any, Optional, List, Set, Union, Literal
+from datetime import datetime, timedelta
+from typing_extensions import Self
+from pathlib import Path
+import aiofiles
+import asyncio
+import orjson
+import json
+import ulid
+import os
+
+class LlmOperationRecord(BaseModel):
+    """Data model for storing information about a single LLM operation."""
+    session_id: Optional[str] = ""
+    workspace: Optional[str] = ""
+    agent_id: Optional[str] = ""
+    action_id: Optional[str] = ""
+    operation_id: str = Field(default_factory=ulid.ulid)
+    timestamp: Optional[str] = ""
+    operation_type: Literal["completion", "acompletion", "acompletion.tool_call"]
+    provider: str
+    input_tokens: Optional[int] = 0
+    output_tokens: Optional[int] = 0
+    cached_tokens: Optional[int] = 0
+    cost: Optional[float] = 0
+    latency_ms: float
+    error_message: Optional[str] = ""
+    extras: Union[Dict[str, Any], str] = ""
+    completion_args: Union[Dict[str, Any], str]
+    response: Optional[Union[str, Dict, List]] = ""
+
+    model_config = ConfigDict(
+        arbitrary_types_allowed = True
+    )
+
+    @field_validator(*["session_id", "workspace", "agent_id", "action_id", "timestamp", "error_message", "response"])
+    @classmethod
+    def ensure_non_nulls(cls, value: Optional[str] = None) -> str:
+        if value is None:
+            return ""
+        return value
+
+    @field_validator("response")
+    @classmethod
+    def json_dumps_response(cls, response: Union[None, str, Dict[str, str]]) -> Optional[str]:
+        if isinstance(response, (str, type(None))):
+            return response
+        elif isinstance(response, (dict, list)):
+            return json.dumps(response, indent=4)
+        else:
+            raise TypeError("response param must be [str] or [json serializable obj]")
+
+    @staticmethod
+    def _hide_image_content(content: Any) -> Any:
+        """Hide image content in message entries across different providers.
+
+        Handles image types from different providers:
+        - Base provider: type="image_url" with nested image_url object
+        - OpenAI responses API: type="input_image" with image_url field
+        - Anthropic: type="image" with nested source object
+
+        Args:
+            content: A single content entry that may be a dict or string
+
+        Returns:
+            The content with image data hidden or the original content if not an image
+        """
+        if not isinstance(content, dict):
+            return content
+
+        content_type = content.get("type")
+
+        # Check for image types from different providers
+        is_image = content_type in ("image_url", "input_image", "image")
+
+        if is_image:
+            # Create a safe copy with only type and information fields
+            hidden_content = {"type": content_type}
+            hidden_content["information"] = "image b64 content"
+            return hidden_content
+
+        return content
+
+    @classmethod
+    def _mask_images_in_messages(cls, messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Mask image content in all messages' content fields.
+
+        Processes messages and checks each message's content field (which can be a list or string).
+        If content is a list, iterates through entries and hides any that are image entries.
+
+        Args:
+            messages: List of message dictionaries
+
+        Returns:
+            Messages with image content hidden
+        """
+        if not isinstance(messages, list):
+            return messages
+
+        masked_messages = []
+        for message in messages:
+            if not isinstance(message, dict):
+                masked_messages.append(message)
+                continue
+
+            message_copy = message.copy()
+            content = message_copy.get("content")
+
+            # Handle content as a list (multimodal messages)
+            if isinstance(content, list):
+                masked_content = [
+                    cls._hide_image_content(entry) for entry in content
+                ]
+                message_copy["content"] = masked_content
+
+            masked_messages.append(message_copy)
+
+        return masked_messages
+
+    @field_validator(*["completion_args", "extras"])
+    @classmethod
+    def json_loads_response(cls, args: Union[str, Dict[str, Any]]) -> Dict[str, Any]:
+        if isinstance(args, str):
+            args = json.loads(args)
+
+        if isinstance(args, dict):
+            # Process messages from both "messages" (standard) and "input" (OpenAI responses API)
+            messages = args.get("messages") or args.get("input")
+            if messages:
+                masked_messages = cls._mask_images_in_messages(messages)
+                # Update the appropriate field
+                if "messages" in args:
+                    args["messages"] = masked_messages
+                elif "input" in args:
+                    args["input"] = masked_messages
+
+        return args
+
+    @model_validator(mode="after")
+    def init_workspace_and_timestamp(self) -> Self:
+        if not self.timestamp:
+            self.timestamp = datetime.now().isoformat()
+        self.workspace = self.workspace or os.environ.get("WORKSPACE", "")
+        return self
+
+    @field_serializer(*["completion_args", "extras"], when_used='json')
+    def json_dump_completion_args(self, completion_args: Dict[str, Any]) -> str:
+        return json.dumps(completion_args, indent=4)
+
+    @property
+    def messages(self) -> List[Dict[str, str]]:
+        return self.completion_args.get("messages", []) or self.completion_args.get("input", [])
+
+    @computed_field
+    def model(self) -> str:
+        return self.completion_args.get("model", "")
+
+    @computed_field
+    def temperature(self) -> float:
+        return self.completion_args.get("temperature", 0.0)
+
+    @computed_field
+    def max_tokens(self) -> int:
+        return self.completion_args.get("max_tokens", 0) or self.completion_args.get("max_completion_tokens", 0)
+
+    @computed_field
+    def system_prompt(self) -> Optional[str]:
+        # anthropic system messages
+        if self.completion_args.get("system"):
+            if isinstance(self.completion_args.get("system"), list):
+                return "\n".join(
+                    msg.get("text") if isinstance(msg, dict) else msg
+                    for msg in self.completion_args.get("system")
+                )
+            return self.completion_args.get("system")
+
+        all_system_msgs = []
+        for msg in self.messages:
+            if msg.get("role") == "system":
+                if content := msg.get("content"):
+                    if isinstance(content, str):
+                        all_system_msgs.append(content)
+                    elif isinstance(content, list):
+                        for content_message in content:
+                            if isinstance(content_message, str):
+                                all_system_msgs.append(content_message)
+                            elif isinstance(content_message, dict):
+                                if context_message_text := content_message.get("text"):
+                                    all_system_msgs.append(context_message_text)
+
+        return "\n".join(all_system_msgs) if all_system_msgs else ""
+
+    @computed_field
+    def assistant_message(self) -> Optional[str]:
+        for msg in self.messages[::-1]:
+            if msg.get("role") == "assistant":
+                content = msg.get("content", "")
+                if isinstance(content, str):
+                    return content
+                elif isinstance(content, list):
+                    text_parts = []
+                    for entry in content:
+                        if isinstance(entry, str):
+                            text_parts.append(entry)
+                        elif isinstance(entry, dict):
+                            if text := entry.get("text"):
+                                text_parts.append(text)
+                    return "\n".join(text_parts)
+                return content
+        return ""
+
+    @computed_field
+    def user_prompt(self) -> Optional[str]:
+        for msg in self.messages[::-1]:
+            if msg.get("role") == "user":
+                content = msg.get("content", "")
+                if isinstance(content, str):
+                    return content
+                elif isinstance(content, list):
+                    text_parts = []
+                    for entry in content:
+                        if isinstance(entry, str):
+                            text_parts.append(entry)
+                        elif isinstance(entry, dict):
+                            if text := entry.get("text"):
+                                text_parts.append(text)
+                    return "\n".join(text_parts)
+                return content
+        return ""
+
+    @computed_field
+    def history_messages(self) -> Optional[str]:
+        return json.dumps([
+            msg for msg in self.messages
+            if msg.get("content")
+        ], indent=4)
+
+    @computed_field
+    def total_tokens(self) -> int:
+        return self.input_tokens + self.output_tokens
+
+    @computed_field
+    def success(self) -> bool:
+        return bool(self.response)
+
+    @model_serializer
+    def serialize_model(self) -> Dict[str, Any]:
+        """Ensure a cohesive field order during serialization."""
+        return {
+            "session_id": self.session_id,
+            "workspace": self.workspace,
+            "agent_id": self.agent_id,
+            "action_id": self.action_id,
+            "timestamp": self.timestamp,
+            "operation_id": self.operation_id,
+            "operation_type": self.operation_type,
+            "provider": self.provider,
+            "model": self.model,
+            "system_prompt": self.system_prompt,
+            "user_prompt": self.user_prompt,
+            "response": self.response,
+            "success": self.success,
+            "assistant_message": self.assistant_message,
+            "history_messages": self.history_messages,
+            "temperature": self.temperature,
+            "max_tokens": self.max_tokens,
+            "input_tokens": self.input_tokens,
+            "output_tokens": self.output_tokens,
+            "cached_tokens": self.cached_tokens,
+            "total_tokens": self.total_tokens,
+            "cost": self.cost,
+            "latency_ms": self.latency_ms,
+            "error_message": self.error_message,
+            "completion_args": json.dumps(self.completion_args, indent=4),
+            "extras": json.dumps(self.extras)
+        }
+    
+
+class LlmOperationCollector(RootModel):
+    root: List[LlmOperationRecord] = []
+    _storage_path: Optional[Union[str, Path]] = None
+    _table_initialized: Optional[bool] = False
+    _last_inserted_record: Optional[str] = None
+    _engine: Optional[Any] = None
+    _async_engine: Optional[Any] = None
+    _session_factory: Optional[Any] = None
+    _async_session_factory: Optional[Any] = None
+    _is_sessions_initialized :set = set()
+    _background_tasks: Set[asyncio.Task] = set()
+    _json_storage_enabled: bool = True
+
+    # Chunked storage configuration
+    _chunk_size_limit: int = int(os.environ.get("OBSERVABILITY_CHUNK_SIZE", "50"))
+    _session_latest_chunk: Dict[str, int] = {}
+    _session_chunk_locks: Dict[str, asyncio.Lock] = {}
+
+    # Connection pool configuration
+    _pool_size: int = int(os.environ.get("DB_POOL_SIZE", "10"))
+    _max_overflow: int = int(os.environ.get("DB_MAX_OVERFLOW", "20"))
+    _pool_timeout: int = int(os.environ.get("DB_POOL_TIMEOUT", "30"))
+    _pool_recycle: int = int(os.environ.get("DB_POOL_RECYCLE", "3600"))
+    _pool_pre_ping: bool = os.environ.get("DB_POOL_PRE_PING", "true").lower() == "true"
+
+    # Write buffer configuration for JSON operations
+    _write_buffer_size: int = int(os.environ.get("OBSERVABILITY_WRITE_BUFFER_SIZE", "5"))
+    _write_buffers: Dict[str, List[Dict[str, Any]]] = {}
+    _write_buffer_locks: Dict[str, asyncio.Lock] = {}
+
+    @model_validator(mode="after")
+    def init_dbsession(self) -> Self:
+        # Check if JSON storage should be disabled (in case collector wasn't created via fom_observable_storage_path)
+        disable_json = os.environ.get("OBSERVABILITY_DISABLE_JSON", "false").lower() in ("true", "1", "yes")
+        self._json_storage_enabled = not disable_json
+
+        try:
+            from sqlalchemy import create_engine
+            from sqlalchemy.orm import sessionmaker
+            from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+            from aicore.observability.models import Base
+            from dotenv import load_dotenv
+            load_dotenv()
+
+            conn_str = os.environ.get("CONNECTION_STRING")
+            async_conn_str = os.environ.get("ASYNC_CONNECTION_STRING")
+            
+            try:
+                if conn_str:
+                    # SQL Server specific: Ensure MARS_Connection=yes is in the connection string
+                    # for handling multiple active result sets
+                    engine_kwargs = {
+                        "pool_size": self._pool_size,
+                        "max_overflow": self._max_overflow,
+                        "pool_timeout": self._pool_timeout,
+                        "pool_recycle": self._pool_recycle,
+                        "pool_pre_ping": self._pool_pre_ping,
+                    }
+
+                    # Add SQL Server specific settings if using pyodbc
+                    if "mssql" in conn_str.lower() or "pyodbc" in conn_str.lower():
+                        engine_kwargs["connect_args"] = {
+                            "MARS_Connection": "yes",
+                            "timeout": 30
+                        }
+
+                    self._engine = create_engine(conn_str, **engine_kwargs)
+                    self._session_factory = sessionmaker(bind=self._engine, autocommit=False, autoflush=False)
+                    Base.metadata.create_all(self._engine)
+                    self._table_initialized = True
+
+                # Async Engine
+                if async_conn_str:
+                    # SQL Server async specific settings
+                    async_engine_kwargs = {
+                        "pool_size": self._pool_size,
+                        "max_overflow": self._max_overflow,
+                        "pool_timeout": self._pool_timeout,
+                        "pool_recycle": self._pool_recycle,
+                        "pool_pre_ping": self._pool_pre_ping,
+                    }
+
+                    # Add SQL Server specific settings if using aioodbc
+                    if "mssql" in async_conn_str.lower() or "aioodbc" in async_conn_str.lower():
+                        async_engine_kwargs["connect_args"] = {
+                            "MARS_Connection": "yes",
+                            "timeout": 30
+                        }
+
+                    self._async_engine = create_async_engine(async_conn_str, **async_engine_kwargs)
+                    self._async_session_factory = async_sessionmaker(
+                        bind=self._async_engine,
+                        expire_on_commit=False,
+                        autocommit=False,
+                        autoflush=False
+                    )
+                
+            except Exception as e:
+                _logger.logger.warning(f"Database connection failed: {str(e)}")
+
+        except ModuleNotFoundError:
+           _logger.logger.warning("pip install core-for-ai[sql] for sql integration and setup ASYNC_CONNECTION_STRING env var")
+        
+        return self
+    
+    async def create_tables(self):
+        if not self._async_engine:
+            return
+
+        try:
+            from aicore.observability.models import Base
+
+        except ModuleNotFoundError:
+             _logger.logger.warning("pip install core-for-ai[sql] for sql integration and setup ASYNC_CONNECTION_STRING env var")
+             return 
+
+        async with self._async_engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+            self._table_initialized = True
+
+    @property
+    def storage_path(self) -> Optional[Union[str, Path]]:
+        return self._storage_path
+
+    @storage_path.setter
+    def storage_path(self, value: Union[str, Path]):
+        self._storage_path = value
+
+    def _sanitize_session_id(self, session_id: Optional[str]) -> str:
+        """Sanitize session_id for safe filesystem usage."""
+        if not session_id:
+            return "default"
+        # Replace filesystem-unsafe characters
+        safe_id = session_id.replace("/", "_").replace("\\", "_").replace(":", "_")
+        return safe_id or "default"
+
+    def _get_session_dir(self, session_id: Optional[str]) -> Path:
+        """Get the directory path for a given session."""
+        safe_session_id = self._sanitize_session_id(session_id)
+        return Path(self.storage_path) / safe_session_id
+
+    def _get_latest_chunk_number(self, session_id: Optional[str]) -> int:
+        """Get the latest chunk number for a session (synchronous)."""
+        safe_session_id = self._sanitize_session_id(session_id)
+
+        # Check cache first
+        if safe_session_id in self._session_latest_chunk:
+            return self._session_latest_chunk[safe_session_id]
+
+        # List files and find max number
+        session_dir = self._get_session_dir(session_id)
+        if not session_dir.exists():
+            self._session_latest_chunk[safe_session_id] = 0
+            return 0
+
+        chunk_files = list(session_dir.glob("*.json"))
+        if not chunk_files:
+            self._session_latest_chunk[safe_session_id] = 0
+            return 0
+
+        max_chunk = max(int(f.stem) for f in chunk_files)
+        self._session_latest_chunk[safe_session_id] = max_chunk
+        return max_chunk
+
+    async def _a_get_latest_chunk_number(self, session_id: Optional[str]) -> int:
+        """Get the latest chunk number for a session (asynchronous)."""
+        safe_session_id = self._sanitize_session_id(session_id)
+
+        # Check cache first
+        if safe_session_id in self._session_latest_chunk:
+            return self._session_latest_chunk[safe_session_id]
+
+        # List files and find max number
+        session_dir = self._get_session_dir(session_id)
+        if not session_dir.exists():
+            self._session_latest_chunk[safe_session_id] = 0
+            return 0
+
+        chunk_files = list(session_dir.glob("*.json"))
+        if not chunk_files:
+            self._session_latest_chunk[safe_session_id] = 0
+            return 0
+
+        max_chunk = max(int(f.stem) for f in chunk_files)
+        self._session_latest_chunk[safe_session_id] = max_chunk
+        return max_chunk
+
+    def _get_chunk_path(self, session_id: Optional[str], chunk_number: int) -> Path:
+        """Get the file path for a specific chunk."""
+        session_dir = self._get_session_dir(session_id)
+        return session_dir / f"{chunk_number}.json"
+
+    def _load_chunk(self, chunk_path: Path) -> List[Dict[str, Any]]:
+        """Load a chunk file and return records as list of dicts."""
+        if not chunk_path.exists() or chunk_path.stat().st_size == 0:
+            return []
+
+        try:
+            with open(chunk_path, 'rb') as f:
+                return orjson.loads(f.read())
+        except (orjson.JSONDecodeError, FileNotFoundError):
+            _logger.logger.warning(f"Corrupted or missing chunk file: {chunk_path}")
+            return []
+
+    async def _a_load_chunk(self, chunk_path: Path) -> List[Dict[str, Any]]:
+        """Load a chunk file asynchronously and return records as list of dicts."""
+        if not chunk_path.exists() or chunk_path.stat().st_size == 0:
+            return []
+
+        try:
+            async with aiofiles.open(chunk_path, 'rb') as f:
+                content = await f.read()
+                return orjson.loads(content)
+        except (orjson.JSONDecodeError, FileNotFoundError):
+            _logger.logger.warning(f"Corrupted or missing chunk file: {chunk_path}")
+            return []
+
+    def _store_to_file(self, new_record: LlmOperationRecord) -> None:
+        """Store a new record using chunked, session-based storage.
+        Records are organized in directories by session_id with chunked JSON files.
+        """
+        # Get session directory and ensure it exists
+        session_dir = self._get_session_dir(new_record.session_id)
+        session_dir.mkdir(parents=True, exist_ok=True)
+
+        # Get the latest chunk number
+        chunk_number = self._get_latest_chunk_number(new_record.session_id)
+        chunk_path = self._get_chunk_path(new_record.session_id, chunk_number)
+
+        # Load current chunk
+        current_chunk = self._load_chunk(chunk_path)
+
+        # Check if chunk is full
+        if len(current_chunk) >= self._chunk_size_limit:
+            # Create new chunk
+            chunk_number += 1
+            safe_session_id = self._sanitize_session_id(new_record.session_id)
+            self._session_latest_chunk[safe_session_id] = chunk_number
+            chunk_path = self._get_chunk_path(new_record.session_id, chunk_number)
+            current_chunk = []
+
+        # Append new record
+        current_chunk.append(new_record.model_dump())
+
+        # Write chunk atomically using temp file
+        temp_path = chunk_path.with_suffix('.tmp')
+        try:
+            with open(temp_path, 'wb') as f:
+                f.write(orjson.dumps(current_chunk, option=orjson.OPT_INDENT_2))
+            # Atomic rename
+            temp_path.replace(chunk_path)
+        except Exception as e:
+            _logger.logger.error(f"Error writing chunk file {chunk_path}: {str(e)}")
+            if temp_path.exists():
+                temp_path.unlink()
+
+            # Fallback: try to save just the new record to a separate fallback file
+            try:
+                fallback_dir = self._get_session_dir(new_record.session_id) / "fallback"
+                fallback_dir.mkdir(parents=True, exist_ok=True)
+
+                # Create fallback file with timestamp to avoid conflicts
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+                fallback_path = fallback_dir / f"record_{timestamp}.json"
+
+                with open(fallback_path, 'wb') as f:
+                    f.write(orjson.dumps(new_record.model_dump(), option=orjson.OPT_INDENT_2))
+
+                _logger.logger.warning(
+                    f"Saved record to fallback file {fallback_path} due to chunk write failure. "
+                    f"Original error: {str(e)}"
+                )
+            except Exception as fallback_error:
+                _logger.logger.error(
+                    f"CRITICAL: Failed to save record even to fallback storage. "
+                    f"Data may be lost. Original error: {str(e)}, Fallback error: {str(fallback_error)}"
+                )
+
+    async def _a_store_to_file(self, new_record: LlmOperationRecord) -> None:
+        """Async version of chunked, session-based storage.
+        Records are organized in directories by session_id with chunked JSON files.
+        """
+        # Get session directory and ensure it exists
+        session_dir = self._get_session_dir(new_record.session_id)
+        session_dir.mkdir(parents=True, exist_ok=True)
+
+        # Get or create lock for this session
+        safe_session_id = self._sanitize_session_id(new_record.session_id)
+        if safe_session_id not in self._session_chunk_locks:
+            self._session_chunk_locks[safe_session_id] = asyncio.Lock()
+
+        # Use lock to prevent concurrent writes to the same session
+        async with self._session_chunk_locks[safe_session_id]:
+            # Get the latest chunk number
+            chunk_number = await self._a_get_latest_chunk_number(new_record.session_id)
+            chunk_path = self._get_chunk_path(new_record.session_id, chunk_number)
+
+            # Load current chunk
+            current_chunk = await self._a_load_chunk(chunk_path)
+
+            # Check if chunk is full
+            if len(current_chunk) >= self._chunk_size_limit:
+                # Create new chunk
+                chunk_number += 1
+                self._session_latest_chunk[safe_session_id] = chunk_number
+                chunk_path = self._get_chunk_path(new_record.session_id, chunk_number)
+                current_chunk = []
+
+            # Append new record
+            current_chunk.append(new_record.model_dump())
+
+            # Write chunk atomically using temp file
+            temp_path = chunk_path.with_suffix('.tmp')
+            try:
+                async with aiofiles.open(temp_path, 'wb') as f:
+                    await f.write(orjson.dumps(current_chunk, option=orjson.OPT_INDENT_2))
+                # Atomic rename (sync operation, but fast)
+                temp_path.replace(chunk_path)
+            except Exception as e:
+                _logger.logger.error(f"Error writing chunk file {chunk_path}: {str(e)}")
+                if temp_path.exists():
+                    temp_path.unlink()
+
+                # Fallback: try to save just the new record to a separate fallback file
+                try:
+                    fallback_dir = self._get_session_dir(new_record.session_id) / "fallback"
+                    fallback_dir.mkdir(parents=True, exist_ok=True)
+
+                    # Create fallback file with timestamp to avoid conflicts
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+                    fallback_path = fallback_dir / f"record_{timestamp}.json"
+
+                    async with aiofiles.open(fallback_path, 'wb') as f:
+                        await f.write(orjson.dumps(new_record.model_dump(), option=orjson.OPT_INDENT_2))
+
+                    _logger.logger.warning(
+                        f"Saved record to fallback file {fallback_path} due to chunk write failure. "
+                        f"Original error: {str(e)}"
+                    )
+                except Exception as fallback_error:
+                    _logger.logger.error(
+                        f"CRITICAL: Failed to save record even to fallback storage. "
+                        f"Data may be lost. Original error: {str(e)}, Fallback error: {str(fallback_error)}"
+                    )
+
+    def read_all_records(self) -> "LlmOperationCollector":
+        """Read all records from the file.
+        The file is always maintained in valid JSON format.
+        """
+        if not os.path.exists(self.storage_path) or os.path.getsize(self.storage_path) == 0:
+            return LlmOperationCollector.model_construct(root=[])
+        
+        # File is always in valid JSON format, so we can read directly
+        with open(self.storage_path, 'r', encoding=DEFAULT_ENCODING) as f:
+            try:
+                data = json.loads(f.read())
+                records = LlmOperationCollector.model_construct(
+                    root=[LlmOperationRecord(**kwargs) for kwargs in data]
+                )
+                return records
+            except json.JSONDecodeError:
+                # Handle potential corrupted file
+                return LlmOperationCollector.model_construct(root=[])
+
+    @staticmethod
+    def _clean_completion_args(args: Dict[str, Any]) -> Dict[str, Any]:
+        """Clean request arguments to remove sensitive information."""
+        cleaned = args.copy()
+        # Remove potentially sensitive information like API keys
+        cleaned.pop("api_key", None)
+        return cleaned
+
+    @classmethod
+    def fom_observable_storage_path(cls, storage_path: Optional[str] = None) -> "LlmOperationCollector":
+        """
+        Create a collector instance with specified storage path.
+
+        Args:
+            storage_path: Root directory for chunked observability data.
+                         If not provided, uses OBSERVABILITY_DATA_ROOT env var or DEFAULT_OBSERVABILITY_DIR.
+
+        Returns:
+            LlmOperationCollector instance configured with the storage path.
+
+        Environment Variables:
+            OBSERVABILITY_DISABLE_JSON: Set to "true" to disable JSON file storage while keeping SQL inserts active.
+        """
+        obj = cls()
+
+        # Check if JSON storage should be disabled
+        disable_json = os.environ.get("OBSERVABILITY_DISABLE_JSON", "false").lower() in ("true", "1", "yes")
+        obj._json_storage_enabled = not disable_json
+
+        # Only set storage path if JSON storage is enabled
+        if obj._json_storage_enabled:
+            env_path = os.environ.get("OBSERVABILITY_DATA_ROOT") or os.environ.get("OBSERVABILITY_DATA_DEFAULT_FILE")
+
+            if storage_path:
+                obj.storage_path = storage_path
+            elif env_path:
+                obj.storage_path = env_path
+            else:
+                # Default to the directory (not including the filename)
+                # This supports the new chunked storage structure
+                obj.storage_path = Path(DEFAULT_OBSERVABILITY_DIR)
+        else:
+            # JSON storage disabled - set storage_path to None
+            obj.storage_path = None
+
+        return obj
+
+    @classmethod
+    def _get_polars_schema(cls) -> Dict[str, Any]:
+        """
+        Generate the correct Polars schema based on LlmOperationRecord model definition.
+        This ensures consistent type inference regardless of which records are loaded first.
+
+        Returns:
+            Dictionary mapping field names to Polars data types
+        """
+        try:
+            import polars as pl
+        except ModuleNotFoundError:
+            return {}
+
+        # Define schema matching LlmOperationRecord's serialized output
+        # Based on the serialize_model method (lines 236-266)
+        return {
+            "session_id": pl.Utf8,
+            "workspace": pl.Utf8,
+            "agent_id": pl.Utf8,
+            "action_id": pl.Utf8,
+            "timestamp": pl.Utf8,
+            "operation_id": pl.Utf8,
+            "operation_type": pl.Utf8,
+            "provider": pl.Utf8,
+            "model": pl.Utf8,
+            "system_prompt": pl.Utf8,
+            "user_prompt": pl.Utf8,
+            "response": pl.Utf8,
+            "success": pl.Boolean,
+            "assistant_message": pl.Utf8,
+            "history_messages": pl.Utf8,
+            "temperature": pl.Float64,
+            "max_tokens": pl.Int64,
+            "input_tokens": pl.Int64,
+            "output_tokens": pl.Int64,
+            "cached_tokens": pl.Int64,
+            "total_tokens": pl.Int64,
+            "cost": pl.Float64,
+            "latency_ms": pl.Float64,
+            "error_message": pl.Utf8,
+            "completion_args": pl.Utf8,
+            "extras": pl.Utf8
+        }
+
+    @classmethod
+    def polars_from_file(cls, storage_path: Optional[str] = None, session_id: Optional[str] = None, purge_corrupted: bool = False) -> "pl.DataFrame":  # noqa: F821
+        """
+        Load all records from chunked JSON files and return as a Polars DataFrame.
+
+        Args:
+            storage_path: Root observability directory (default: from env or DEFAULT_OBSERVABILITY_DIR)
+            session_id: Optional session_id to filter records (default: load all sessions)
+            purge_corrupted: If True, delete corrupted JSON files that fail to load (default: False)
+
+        Returns:
+            Polars DataFrame containing all records from the specified session(s)
+        """
+        try:
+            import polars as pl
+        except ModuleNotFoundError:
+            _logger.logger.warning("pip install -r requirements-dashboard.txt")
+            return None
+
+        obj = cls.fom_observable_storage_path(storage_path)
+        root_dir = Path(obj.storage_path)
+
+        if not root_dir.exists():
+            _logger.logger.warning(f"Storage path does not exist: {root_dir}")
+            return pl.DataFrame()
+
+        # Get the schema definition to enforce consistent types
+        schema = cls._get_polars_schema()
+
+        # Determine which session directories to process
+        if session_id:
+            # Load specific session only
+            safe_session_id = obj._sanitize_session_id(session_id)
+            session_dirs = [root_dir / safe_session_id]
+        else:
+            # Load all sessions
+            session_dirs = [d for d in root_dir.iterdir() if d.is_dir()]
+
+        # Initialize empty DataFrame with correct schema
+        df = pl.DataFrame(schema=schema)
+
+        for session_dir in session_dirs:
+            if not session_dir.exists():
+                continue
+
+            # Get all chunk files sorted by number
+            chunk_files = sorted(session_dir.rglob("*.json"), key=lambda p: str(p.stem))
+
+            for chunk_file in chunk_files:
+                try:
+                    with open(chunk_file, 'rb') as f:
+                        chunk_data = orjson.loads(f.read())
+                        if isinstance(chunk_data, list):
+                            try:
+                                # Convert chunk to DataFrame with explicit schema to prevent type inference issues
+                                chunk_df = pl.from_dicts(chunk_data, schema=schema)
+                                df = df.vstack(chunk_df)
+                            except Exception:
+                                _logger.logger.warning(f"Unexpected data format in {chunk_file}")
+                                if purge_corrupted:
+                                    try:
+                                        chunk_file.unlink()
+                                        _logger.logger.info(f"Deleted corrupted file with unexpected format: {chunk_file}")
+                                    except Exception as del_e:
+                                        _logger.logger.error(f"Failed to delete corrupted file {chunk_file}: {del_e}")
+                except (orjson.JSONDecodeError, FileNotFoundError) as e:
+                    _logger.logger.warning(f"Error loading chunk file {chunk_file}: {e}")
+                    if purge_corrupted:
+                        try:
+                            chunk_file.unlink()
+                            _logger.logger.info(f"Deleted corrupted file: {chunk_file}")
+                        except Exception as del_e:
+                            _logger.logger.error(f"Failed to delete corrupted file {chunk_file}: {del_e}")
+        
+        return df
+    
+    def _handle_record(
+        self,
+        completion_args: Dict[str, Any],
+        operation_type: Literal["completion", "acompletion"],
+        provider: str,
+        response: Optional[Union[str, Dict[str, str]]] = None,
+        session_id: Optional[str] = None,
+        workspace: Optional[str] = None,
+        agent_id: Optional[str] = None,
+        action_id: Optional[str] = None,
+        input_tokens: Optional[int] = 0,
+        output_tokens: Optional[int] = 0,
+        cached_tokens: Optional[int] = 0,
+        cost: Optional[float] = 0,
+        latency_ms: Optional[float] = None,
+        error_message: Optional[str] = None,
+        extras: Optional[Dict[str, Any]] = None
+    ) -> LlmOperationRecord:
+        # Clean request args
+        cleaned_args = self._clean_completion_args(completion_args)
+
+        if not isinstance(response, (str, dict, list)) and response is not None:
+            return None
+        
+        # Build a record
+        record = LlmOperationRecord(
+            session_id=session_id,
+            agent_id=agent_id,
+            action_id=action_id,
+            workspace=workspace,
+            provider=provider,
+            operation_type=operation_type,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens if not cached_tokens else output_tokens + cached_tokens,
+            cached_tokens=cached_tokens,
+            cost=cost,
+            latency_ms=latency_ms or 0,
+            error_message=error_message,
+            completion_args=cleaned_args,
+            response=response,
+            extras=extras or {}
+        )
+        # Only write to JSON file if JSON storage is enabled and storage_path is set
+        if self._json_storage_enabled and self.storage_path:
+            self._store_to_file(record)
+
+        self.root.append(record)
+
+        return record
+
+    async def _a_handle_record(
+        self,
+        completion_args: Dict[str, Any],
+        operation_type: Literal["completion", "acompletion"],
+        provider: str,
+        response: Optional[Union[str, Dict[str, str]]] = None,
+        session_id: Optional[str] = None,
+        workspace: Optional[str] = None,
+        agent_id: Optional[str] = None,
+        action_id: Optional[str] = None,
+        input_tokens: Optional[int] = 0,
+        output_tokens: Optional[int] = 0,
+        cached_tokens: Optional[int] = 0,
+        cost: Optional[float] = 0,
+        latency_ms: Optional[float] = None,
+        error_message: Optional[str] = None,
+        extras: Optional[Dict[str, Any]] = None
+    ) -> LlmOperationRecord:
+        # Clean request args
+        cleaned_args = self._clean_completion_args(completion_args)
+
+        if not isinstance(response, (str, dict, list)) and response is not None:
+            return None
+
+        # Build a record
+        record = LlmOperationRecord(
+            session_id=session_id,
+            agent_id=agent_id,
+            action_id=action_id,
+            workspace=workspace,
+            provider=provider,
+            operation_type=operation_type,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens if not cached_tokens else output_tokens + cached_tokens,
+            cached_tokens=cached_tokens,
+            cost=cost,
+            latency_ms=latency_ms or 0,
+            error_message=error_message,
+            completion_args=cleaned_args,
+            response=response,
+            extras=extras or {}
+        )
+        # Only write to JSON file if JSON storage is enabled and storage_path is set
+        if self._json_storage_enabled and self.storage_path:
+            await self._a_store_to_file(record)
+
+        self.root.append(record)
+        return record
+
+    def record_completion(
+        self,
+        completion_args: Dict[str, Any],
+        operation_type: Literal["completion", "acompletion"],
+        provider: str,
+        response: Optional[Union[str, Dict[str, str]]] = None,
+        session_id: Optional[str] = None,
+        workspace: Optional[str] = None,
+        agent_id: Optional[str] = None,
+        action_id: Optional[str] = None,
+        input_tokens: Optional[int] = 0,
+        output_tokens: Optional[int] = 0,
+        cached_tokens: Optional[int] = 0,
+        cost: Optional[float] = 0,
+        latency_ms: Optional[float] = None,
+        error_message: Optional[str] = None,
+        extras: Optional[str] = None
+    ) -> LlmOperationRecord:
+        # Create record
+        record = self._handle_record(
+            completion_args, operation_type, provider, response, 
+            session_id, workspace, agent_id, action_id, 
+            input_tokens, output_tokens, cached_tokens, cost, latency_ms, error_message, extras
+        )
+        
+        if self._engine and self._session_factory and record:
+            try:
+                self._insert_record_to_db(record)
+            except Exception as e:
+                _logger.logger.error(f"Error inserting record to DB: {str(e)}")
+        
+        return record
+    
+    async def arecord_completion_into_db(self, record :LlmOperationRecord):
+        if not self._table_initialized:
+                await self.create_tables()
+        try:
+            await self._a_insert_record_to_db(record)
+        except Exception as e:
+            _logger.logger.error(f"Error inserting record to DB: {str(e)}")
+    
+    async def arecord_completion(
+        self,
+        completion_args: Dict[str, Any],
+        operation_type: Literal["completion", "acompletion"],
+        provider: str,
+        response: Optional[Union[str, Dict[str, str]]] = None,
+        session_id: Optional[str] = None,
+        workspace: Optional[str] = None,
+        agent_id: Optional[str] = None,
+        action_id: Optional[str] = None,
+        input_tokens: Optional[int] = 0,
+        output_tokens: Optional[int] = 0,
+        cached_tokens: Optional[int] = 0,
+        cost: Optional[float] = 0,
+        latency_ms: Optional[float] = None,
+        error_message: Optional[str] = None,
+        extras: Optional[str] = None
+    ) -> LlmOperationRecord:
+        # Create record asynchronously
+        record = await self._a_handle_record(
+            completion_args, operation_type, provider, response,
+            session_id, workspace, agent_id, action_id,
+            input_tokens, output_tokens, cached_tokens, cost, latency_ms, error_message, extras
+        )
+        
+        if self._async_engine and self._async_session_factory and record:
+            # Fire and forget - create task without awaiting
+            task = asyncio.create_task(self.arecord_completion_into_db(record))
+            self._background_tasks.add(task)
+            task.add_done_callback(self._background_tasks.discard)
+
+        return record
+    
+    def _insert_record_to_db(self, record: LlmOperationRecord) -> None:
+        """Insert a single LLM operation record into the database using SQLAlchemy."""
+        try:
+            from aicore.observability.models import Session, Message, Metric
+        except ModuleNotFoundError:
+             _logger.logger.warning("pip install core-for-ai[sql] for sql integration and setup ASYNC_CONNECTION_STRING env var")
+        
+        if not self._session_factory:
+            if self._async_session_factory:
+                _logger.logger.warning("You have configured an async connection to a db but are trying to establish a sync one. Pass CONNECTION_STRING env var.")
+            return
+            
+        serialized = record.serialize_model()
+        
+        # Use context manager for session handling
+        with self._session_factory() as session:
+            try:
+                # Check if session exists, create if it doesn't
+                db_session_query = session.query(Session).filter_by(session_id=serialized['session_id'])
+                db_session = list(db_session_query.all())  # Force fetch all results
+                
+                if not db_session:
+                    db_session = Session(
+                        session_id=serialized['session_id'],
+                        workspace=serialized['workspace'],
+                        agent_id=serialized['agent_id']
+                    )
+                    session.add(db_session)
+                    session.flush()  # Flush changes to DB but don't commit yet
+                else:
+                    db_session = db_session[0]  # Get first result
+                
+                # Create message record
+                message = Message(
+                    operation_id=serialized['operation_id'],
+                    session_id=serialized['session_id'],
+                    action_id=serialized['action_id'],
+                    timestamp=serialized['timestamp'],
+                    system_prompt=serialized['system_prompt'],
+                    user_prompt=serialized['user_prompt'],
+                    response=serialized['response'],
+                    assistant_message=serialized['assistant_message'],
+                    history_messages=serialized['history_messages'],
+                    completion_args=serialized['completion_args'],
+                    error_message=serialized['error_message']
+                )
+                session.add(message)
+                
+                # Create metrics record
+                metric = Metric(
+                    operation_id=serialized['operation_id'],
+                    operation_type=serialized['operation_type'],
+                    provider=serialized['provider'],
+                    model=serialized['model'],
+                    success=serialized['success'],
+                    temperature=serialized['temperature'],
+                    max_tokens=serialized['max_tokens'],
+                    input_tokens=serialized['input_tokens'],
+                    output_tokens=serialized['output_tokens'],
+                    cached_tokens=serialized['cached_tokens'],
+                    total_tokens=serialized['total_tokens'],
+                    cost=serialized['cost'],
+                    latency_ms=serialized['latency_ms'],
+                    extras=serialized['extras']
+                )
+                session.add(metric)
+                
+                # Commit all changes
+                session.commit()
+                self._last_inserted_record = serialized['operation_id']
+            except Exception as e:
+                session.rollback()
+                raise e
+
+    async def _a_insert_record_to_db(self, record: LlmOperationRecord) -> None:
+        """Insert a single LLM operation record into the database asynchronously using a single transaction."""
+        if not self._async_session_factory:
+            if self._session_factory:
+                _logger.logger.warning("You have configured a sync connection to a db but are trying to establish an async one. Pass ASYNC_CONNECTION_STRING env var.")
+            return
+
+        serialized = record.serialize_model()
+
+        try:
+            from sqlalchemy.future import select
+            from aicore.observability.models import Session, Message, Metric
+
+            # Single transaction for all database operations
+            async with self._async_session_factory() as db_session:
+                try:
+                    # Check if session exists, create if it doesn't
+                    if serialized['session_id'] not in self._is_sessions_initialized:
+                        # Check if any row exists - use scalar to get a single value
+                        result = await db_session.scalar(
+                            select(Session.session_id).where(Session.session_id == serialized['session_id'])
+                        )
+
+                        if not result:
+                            new_session = Session(
+                                session_id=serialized['session_id'],
+                                workspace=serialized['workspace'],
+                                agent_id=serialized['agent_id']
+                            )
+                            db_session.add(new_session)
+                            # Flush to ensure session exists before adding messages
+                            await db_session.flush()
+
+                        # Mark as initialized after checking/creating
+                        self._is_sessions_initialized.add(serialized['session_id'])
+
+                    # Create message record
+                    message = Message(
+                        operation_id=serialized['operation_id'],
+                        session_id=serialized['session_id'],
+                        action_id=serialized['action_id'],
+                        timestamp=serialized['timestamp'],
+                        system_prompt=serialized['system_prompt'],
+                        user_prompt=serialized['user_prompt'],
+                        response=serialized['response'],
+                        assistant_message=serialized['assistant_message'],
+                        history_messages=serialized['history_messages'],
+                        completion_args=serialized['completion_args'],
+                        error_message=serialized['error_message']
+                    )
+                    db_session.add(message)
+
+                    # Create metrics record
+                    metric = Metric(
+                        operation_id=serialized['operation_id'],
+                        operation_type=serialized['operation_type'],
+                        provider=serialized['provider'],
+                        model=serialized['model'],
+                        success=serialized['success'],
+                        temperature=serialized['temperature'],
+                        max_tokens=serialized['max_tokens'],
+                        input_tokens=serialized['input_tokens'],
+                        output_tokens=serialized['output_tokens'],
+                        cached_tokens=serialized['cached_tokens'],
+                        total_tokens=serialized['total_tokens'],
+                        cost=serialized['cost'],
+                        latency_ms=serialized['latency_ms'],
+                        extras=serialized['extras']
+                    )
+                    db_session.add(metric)
+
+                    # Commit all changes in a single transaction
+                    await db_session.commit()
+
+                    # Set the last inserted record after successful commit
+                    self._last_inserted_record = serialized['operation_id']
+
+                except Exception as e:
+                    await db_session.rollback()
+                    raise e
+
+        except Exception as e:
+            _logger.logger.error(f"Error inserting record to DB: {str(e)}")
+            raise
+
+    async def a_bulk_insert_to_db(self, records: List[LlmOperationRecord]) -> int:
+        """
+        Bulk insert multiple LLM operation records into the database asynchronously.
+
+        Args:
+            records: List of LlmOperationRecord objects to insert
+
+        Returns:
+            Number of records successfully inserted
+        """
+        if not self._async_session_factory:
+            if self._session_factory:
+                _logger.logger.warning("You have configured a sync connection to a db but are trying to establish an async one. Pass ASYNC_CONNECTION_STRING env var.")
+            return 0
+
+        if not records:
+            return 0
+
+        try:
+            from sqlalchemy.future import select
+            from aicore.observability.models import Session, Message, Metric
+
+            # Single transaction for all inserts
+            async with self._async_session_factory() as session:
+                try:
+                    # Group records by session_id for efficient session checks
+                    session_ids = set(record.session_id for record in records)
+
+                    # Check and create missing sessions
+                    for session_id in session_ids:
+                        if session_id not in self._is_sessions_initialized:
+                            existing = await session.scalar(
+                                select(1).where(Session.session_id == session_id)
+                            )
+                            if not existing:
+                                db_session = Session(
+                                    session_id=session_id,
+                                    workspace=records[0].workspace,  # Use first record's workspace
+                                    agent_id=records[0].agent_id
+                                )
+                                session.add(db_session)
+                                await session.flush()
+                            self._is_sessions_initialized.add(session_id)
+
+                    # Bulk insert all messages and metrics
+                    for record in records:
+                        serialized = record.serialize_model()
+
+                        message = Message(
+                            operation_id=serialized['operation_id'],
+                            session_id=serialized['session_id'],
+                            action_id=serialized['action_id'],
+                            timestamp=serialized['timestamp'],
+                            system_prompt=serialized['system_prompt'],
+                            user_prompt=serialized['user_prompt'],
+                            response=serialized['response'],
+                            assistant_message=serialized['assistant_message'],
+                            history_messages=serialized['history_messages'],
+                            completion_args=serialized['completion_args'],
+                            error_message=serialized['error_message']
+                        )
+                        session.add(message)
+
+                        metric = Metric(
+                            operation_id=serialized['operation_id'],
+                            operation_type=serialized['operation_type'],
+                            provider=serialized['provider'],
+                            model=serialized['model'],
+                            success=serialized['success'],
+                            temperature=serialized['temperature'],
+                            max_tokens=serialized['max_tokens'],
+                            input_tokens=serialized['input_tokens'],
+                            output_tokens=serialized['output_tokens'],
+                            cached_tokens=serialized['cached_tokens'],
+                            total_tokens=serialized['total_tokens'],
+                            cost=serialized['cost'],
+                            latency_ms=serialized['latency_ms'],
+                            extras=serialized['extras']
+                        )
+                        session.add(metric)
+
+                    # Commit all inserts in one transaction
+                    await session.commit()
+
+                    return len(records)
+
+                except Exception as e:
+                    await session.rollback()
+                    _logger.logger.error(f"Error bulk inserting records to DB: {str(e)}")
+                    raise e
+
+        except Exception as e:
+            _logger.logger.error(f"Error bulk inserting records to DB: {str(e)}")
+            raise
+
+    @classmethod
+    async def aget_available_sessions(cls,
+        workspace: Optional[str] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None
+    ) -> list[str]:
+        """
+        Efficiently fetch only the list of available session_ids from the database.
+        This is optimized for lazy loading - it only queries session metadata without joining messages/metrics.
+
+        Args:
+            workspace: Optional workspace filter
+            start_date: Optional start date filter (ISO format)
+            end_date: Optional end date filter (ISO format)
+
+        Returns:
+            List of session_id strings
+        """
+        try:
+            from sqlalchemy import select, distinct
+            from aicore.observability.models import Session
+        except ModuleNotFoundError:
+            _logger.logger.warning("pip install core-for-ai[all] for database integration")
+            return []
+
+        instance = cls()
+
+        if not instance._async_session_factory and not instance._async_engine:
+            # Try sync version if async not available
+            if instance._session_factory and instance._engine:
+                try:
+                    with instance._session_factory() as session:
+                        query = session.query(Session.session_id).distinct()
+
+                        if workspace:
+                            query = query.filter(Session.workspace == workspace)
+
+                        results = query.all()
+                        return sorted([r[0] for r in results])
+                except Exception as e:
+                    _logger.logger.warning(f"Error fetching session list from DB: {e}")
+                    return []
+            return []
+
+        async with instance._async_session_factory() as session:
+            try:
+                query = select(distinct(Session.session_id))
+
+                if workspace:
+                    query = query.where(Session.workspace == workspace)
+
+                result = await session.execute(query)
+                session_ids = [row[0] for row in result.fetchall()]
+                await session.commit()
+
+                return sorted(session_ids)
+            except Exception as e:
+                _logger.logger.warning(f"Error fetching session list from DB: {e}")
+                await session.rollback()
+                return []
+
+    @classmethod
+    async def apolars_from_db(cls,
+        agent_id: Optional[str] = None,
+        action_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        workspace: Optional[str] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None
+    ) -> "pl.DataFrame":  # noqa: F821
+        """
+        Async version: Query the database and return results as a Polars DataFrame.
+        Use this method when you're already in an async context.
+
+        Defaults (only when session_id is NOT provided):
+            - start_date: Midnight of the previous day
+            - end_date: Now (current time)
+
+        When session_id IS provided:
+            - No date filtering (returns all data for that session)
+        """
+        # Only apply default date filters when querying broadly (no session_id specified)
+        # When session_id is provided, user wants ALL data for that session
+        if start_date is None and session_id is None:
+            yesterday = datetime.now() - timedelta(days=1)
+            start_date = yesterday.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+
+        if end_date is None and session_id is None:
+            end_date = datetime.now().isoformat()
+
+        instance = cls()
+
+        if instance._async_session_factory and instance._async_engine:
+            return await instance._apolars_from_db(
+                agent_id, action_id, session_id, workspace, start_date, end_date
+            )
+        elif instance._session_factory and instance._engine:
+            # Fall back to sync version in a thread
+            return instance._polars_from_db(
+                agent_id, action_id, session_id, workspace, start_date, end_date
+            )
+        else:
+            try:
+                import polars as pl
+                return pl.DataFrame()
+            except ModuleNotFoundError:
+                _logger.logger.warning("pip install core-for-ai[all] for Polars and sql integration")
+                return None
+
+    @classmethod
+    def polars_from_db(cls,
+        agent_id: Optional[str] = None,
+        action_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        workspace: Optional[str] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None
+    ) -> "pl.DataFrame":  # noqa: F821
+        """
+        Query the database and return results as a Polars DataFrame.
+        Works with any database supported by SQLAlchemy.
+
+        For async contexts, use apolars_from_db() instead to avoid event loop issues.
+
+        Defaults (only when session_id is NOT provided):
+            - start_date: Midnight of the previous day
+            - end_date: Now (current time)
+
+        When session_id IS provided:
+            - No date filtering (returns all data for that session)
+        """
+        # Only apply default date filters when querying broadly (no session_id specified)
+        # When session_id is provided, user wants ALL data for that session
+        if start_date is None and session_id is None:
+            yesterday = datetime.now() - timedelta(days=1)
+            start_date = yesterday.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+
+        if end_date is None and session_id is None:
+            end_date = datetime.now().isoformat()
+
+        instance = cls()
+
+        if instance._session_factory and instance._engine:
+            return instance._polars_from_db(
+                agent_id, action_id, session_id, workspace, start_date, end_date
+            )
+        elif instance._async_session_factory and instance._async_engine:
+            coro = instance._apolars_from_db(agent_id, action_id, session_id, workspace, start_date, end_date)
+
+            try:
+                loop = asyncio.get_running_loop()
+                # Already inside a running loop — use nest_asyncio if available or raise error
+                try:
+                    import nest_asyncio
+                    nest_asyncio.apply()
+                    return asyncio.run(coro)
+                except ImportError:
+                    _logger.logger.error(
+                        "Cannot run async query inside an existing event loop. "
+                        "Either use 'await polars_from_db()' directly in an async context, "
+                        "or install nest_asyncio: pip install nest_asyncio"
+                    )
+                    try:
+                        import polars as pl
+                        return pl.DataFrame()
+                    except ModuleNotFoundError:
+                        return None
+            except RuntimeError:
+                # No running loop: safe to use asyncio.run
+                return asyncio.run(coro)
+        else:
+            try:
+                import polars as pl
+                return pl.DataFrame()
+            except ModuleNotFoundError:
+                _logger.logger.warning("pip install core-for-ai[all] for Polars and sql integration")
+                return None
+
+    def _polars_from_db(self,
+                    agent_id: Optional[str] = None,
+                    action_id: Optional[str] = None,
+                    session_id: Optional[str] = None,
+                    workspace: Optional[str] = None,
+                    start_date: Optional[str] = None,
+                    end_date: Optional[str] = None) -> "pl.DataFrame":  # noqa: F821
+        """
+        Query the database (using SQLAlchemy) and return results as a Polars DataFrame.
+        Works with any database supported by SQLAlchemy.
+        """
+        try:
+            import polars as pl
+            from sqlalchemy import desc
+            from aicore.observability.models import Session, Message, Metric
+        except ModuleNotFoundError:
+            _logger.logger.warning("pip install core-for-ai[all] for Polars and sql integration")
+            return None
+        
+        with self._session_factory() as session:
+            try:
+                # Build query with filters
+                query = session.query(
+                    Session.session_id, Session.workspace, Session.agent_id,
+                    Message.action_id, Message.operation_id, Message.timestamp,
+                    Message.system_prompt, Message.user_prompt, Message.response,
+                    Message.assistant_message, Message.history_messages,
+                    Message.completion_args, Message.error_message,
+                    Metric.operation_type, Metric.provider, Metric.model,
+                    Metric.success, Metric.temperature, Metric.max_tokens,
+                    Metric.input_tokens, Metric.output_tokens, Metric.cached_tokens, Metric.total_tokens,
+                    Metric.cost, Metric.latency_ms, Metric.extras
+                ).join(
+                    Message, Session.session_id == Message.session_id
+                ).join(
+                    Metric, Message.operation_id == Metric.operation_id
+                )
+
+                # Apply date filters only if provided
+                if start_date is not None:
+                    query = query.filter(Message.timestamp >= start_date)
+                if end_date is not None:
+                    query = query.filter(Message.timestamp <= end_date)
+
+                # Apply other filters
+                if agent_id:
+                    query = query.filter(Session.agent_id == agent_id)
+                if action_id:
+                    query = query.filter(Message.action_id == action_id)
+                if session_id:
+                    query = query.filter(Session.session_id == session_id)
+                if workspace:
+                    query = query.filter(Session.workspace == workspace)
+                    
+                # Order by operation_id descending
+                query = query.order_by(desc(Message.operation_id))
+                
+                # Force immediate consumption of all results to prevent "Connection is busy" errors
+                results = list(query.all())
+                
+                if not results:
+                    return pl.DataFrame()
+                
+                # Convert to dictionary
+                records = []
+                for row in results:
+                    record = {}
+                    for idx, column in enumerate(query.column_descriptions):
+                        record[column['name']] = row[idx]
+                    records.append(record)
+                    
+                # Ensure session is clean before returning
+                session.commit()
+                
+                # Convert to Polars DataFrame
+                return pl.from_dicts(records)
+                
+            except Exception as e:
+                _logger.logger.warning(f"collector.py:640 Error executing database query: {str(e)}")
+                session.rollback()  # Explicitly rollback on error
+                return pl.DataFrame()
+   
+    async def _apolars_from_db(self,
+        agent_id: Optional[str] = None,
+        action_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        workspace: Optional[str] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None
+    ) -> "pl.DataFrame":  # noqa: F821
+        """
+        Query the database asynchronously (using SQLAlchemy) and return results as a Polars DataFrame.
+        """
+        try:
+            import polars as pl
+            from sqlalchemy import desc, select
+            from aicore.observability.models import Session, Message, Metric
+        except ModuleNotFoundError:
+            _logger.logger.warning("pip install core-for-ai[all] for Polars and sql integration")
+            return None
+        
+        async with self._async_session_factory() as session:
+            try:
+                query = (
+                    select(
+                        Session.session_id, Session.workspace, Session.agent_id,
+                        Message.action_id, Message.operation_id, Message.timestamp,
+                        Message.system_prompt, Message.user_prompt, Message.response,
+                        Message.assistant_message, Message.history_messages,
+                        Message.completion_args, Message.error_message,
+                        Metric.operation_type, Metric.provider, Metric.model,
+                        Metric.success, Metric.temperature, Metric.max_tokens,
+                        Metric.input_tokens, Metric.output_tokens, Metric.cached_tokens, Metric.total_tokens,
+                        Metric.cost, Metric.latency_ms, Metric.extras
+                    )
+                    .join(Message, Session.session_id == Message.session_id)
+                    .join(Metric, Message.operation_id == Metric.operation_id)
+                )
+
+                # Apply date filters only if provided
+                if start_date is not None:
+                    query = query.filter(Message.timestamp >= start_date)
+                if end_date is not None:
+                    query = query.filter(Message.timestamp <= end_date)
+
+                # Apply other filters
+                if agent_id:
+                    query = query.where(Session.agent_id == agent_id)
+                if action_id:
+                    query = query.where(Message.action_id == action_id)
+                if session_id:
+                    query = query.where(Session.session_id == session_id)
+                if workspace:
+                    query = query.where(Session.workspace == workspace)
+                
+                query = query.order_by(desc(Message.operation_id))
+
+                # Execute query and immediately consume all results
+                result = await session.execute(query)
+                rows = result.fetchall()  # eager fetch
+
+                # Explicitly commit to ensure connection is cleared
+                await session.commit()
+
+                if not rows:
+                    return pl.DataFrame()
+
+                # Convert to dictionary using _mapping which works with SQLAlchemy Row objects
+                records = [dict(row._mapping) for row in rows]
+                return pl.from_dicts(records)
+            except Exception as e:
+                _logger.logger.error(f"Error executing database query: {str(e)}")
+                await session.rollback()  # Explicitly rollback on error
+                return pl.DataFrame()
+
+if __name__ == "__main__":
+    LlmOperationCollector()
+    df = LlmOperationCollector.polars_from_db()
+    print(df.columns)
+    print(df)
