@@ -1,0 +1,60 @@
+Metadata-Version: 2.4
+Name: nats-core
+Version: 0.1.0
+Summary: NATS core implementation in Python
+Author-email: Casper Beyer <casper@synadia.com>
+License-Expression: MIT
+Project-URL: Documentation, https://github.com/nats-io/nats.py
+Project-URL: Issues, https://github.com/nats-io/nats.py/issues
+Project-URL: Source, https://github.com/nats-io/nats.py
+Keywords: nats,messaging,client
+Classifier: Development Status :: 4 - Beta
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Classifier: Programming Language :: Python :: Implementation :: PyPy
+Requires-Python: >=3.13
+Description-Content-Type: text/markdown
+Provides-Extra: nkeys
+Requires-Dist: nkeys>=0.1.0; extra == "nkeys"
+
+# NATS Client
+
+A Python client for the NATS messaging system.
+
+## Features
+
+- Support for publish/subscribe
+- Support for request/reply
+- Support for queue groups
+- Support for multi-value message headers
+
+## Installation
+
+```bash
+pip install nats-core
+```
+
+## Usage
+
+```python
+import asyncio
+from nats.client import connect
+
+async def main():
+    client = await connect("nats://localhost:4222")
+
+    # Subscribe
+    async with await client.subscribe("foo") as subscription:
+        # Publish
+        await client.publish("foo", "Hello World!")
+
+        # Receive message
+        message = await subscription.next()
+        print(f"Received: {message.data}")
+
+    await client.close()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
