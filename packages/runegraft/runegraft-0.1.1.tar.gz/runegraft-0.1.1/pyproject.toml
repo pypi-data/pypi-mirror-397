@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "runegraft"
+version = "0.1.1"
+description = "Route-style decorator CLI with an interactive shell (REPL), completion, and history."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "codesft"}]
+dependencies = [
+  "prompt_toolkit>=3.0",
+  "rich>=13.0",
+]
+
+[project.urls]
+Homepage = "https://runegraft.codesft.dev"
+Repository = "https://github.com/CodeSoftGit/runegraft"
+
+[project.scripts]
+runegraft = "runegraft.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/runegraft"]
