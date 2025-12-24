@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "python-uml-generator"
+version = "0.1.0"
+authors = [
+  { name="Milind Nair", email="nairmilind3@gmail.com" },
+]
+description = "A LangChain-based AI agent that converts natural language to UML diagrams (PlantUML)"
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "requests",
+    "python-dotenv",
+    "plantuml",
+    "langchain",
+    "langchain-openai",
+    "langchain-google-genai",
+    "six",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/milind-nair/uml-generator"
+
+[project.scripts]
+uml-generator = "uml_generator.cli:main"
+
+[tool.setuptools.packages]
+find = { where=["src"] }
