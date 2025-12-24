@@ -1,0 +1,127 @@
+Metadata-Version: 2.4
+Name: hot-tool
+Version: 0.0.3
+Summary: Build and package Python tools into standalone executables for LLM integration.
+License: MIT
+License-File: LICENSE
+Author: Allen Chou
+Author-email: f1470891079@gmail.com
+Requires-Python: >=3.11,<4
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Provides-Extra: all
+Project-URL: Homepage, https://github.com/allen2c/hot-tool
+Project-URL: PyPI, https://pypi.org/project/hot-tool/
+Project-URL: Repository, https://github.com/allen2c/hot-tool
+Description-Content-Type: text/markdown
+
+# Hot-Tool
+
+[![PyPI version](https://img.shields.io/pypi/v/hot-tool.svg)](https://pypi.org/project/hot-tool/)
+[![Python Version](https://img.shields.io/pypi/pyversions/hot-tool.svg)](https://pypi.org/project/hot-tool/)
+[![License](https://img.shields.io/pypi/l/hot-tool.svg)](https://opensource.org/licenses/MIT)
+
+Build and package Python tools into standalone executables for LLM integration.
+
+## Features
+
+- **Define Tools Simply** - Inherit from `HotTool` class and implement the `run()` method
+- **Build Standalone Executables** - Compile Python tools into single binary files using `hot-tool build`
+- **Run Without Dependencies** - Execute tools without Python installation or source code access
+
+## Installation
+
+```bash
+pip install hot-tool
+```
+
+## Quick Start
+
+### Define Hot Tool
+
+```python
+# get_my_ip.py
+from typing import Optional
+
+import requests
+
+from hot_tool import HotTool
+
+
+class GetMyIpTool(HotTool):
+    def run(
+        self, arguments: Optional[str] = None, context: Optional[str] = None
+    ) -> str:
+        response = requests.get("https://ifconfig.me")
+        try:
+            response.raise_for_status()
+            return response.text.strip()
+        except Exception as e:
+            print(f"Error: {type(e).__name__}: {e}")
+            return "Can not get my IP, please try again later."
+```
+
+### Run Programmatically
+
+```python
+# main.py
+from get_my_ip import GetMyIpTool
+from hot_tool.run import run_tool
+
+print(run_tool(GetMyIpTool))
+# 198.51.100.156
+```
+
+### Build Standalone Executable and Run as Executable
+
+```shell
+hot-tool build get_my_ip.py -o get_my_ip
+# Starting Nuitka compilation...
+# ...
+# Nuitka-Plugins:upx: Compressing 'get_my_ip'.
+# Nuitka: Successfully created 'get_my_ip'.
+# Compilation completed successfully.
+# Standalone script saved to '/Users/me/path/to/get_my_ip'
+```
+
+```shell
+./get_my_ip
+# 198.51.100.156
+```
+
+## Advanced Usage
+
+### Tool Inheritance for Reusability
+
+You can create reusable base tool classes and import them into your scripts:
+
+```python
+# base_tool.py
+from hot_tool import HotTool
+
+class BaseAPITool(HotTool):
+    def run(self, arguments=None, context=None):
+        # Shared logic here
+        return self.call_api()
+```
+
+```python
+# my_tool.py - Your main script
+from base_tool import BaseAPITool
+
+class MyCustomTool(BaseAPITool):  # Inherit from your base class
+    def run(self, arguments=None, context=None):
+        # Custom implementation
+        return "Custom result"
+```
+
+**Important**: Each script can only define **one concrete tool class** that implements `run()`. Imported base classes don't count toward this limit.
+
+## License
+
+MIT License
+
