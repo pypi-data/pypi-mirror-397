@@ -1,0 +1,106 @@
+Metadata-Version: 2.4
+Name: lopk
+Version: 0.0.0
+Summary: Lightweight Operational Progress Kit (LOPK) - Advanced progress bar and terminal operation toolkit
+Author-email: I-love-china <ilovechina@example.com>
+License-Expression: GPL-3.0-only
+Project-URL: homepage, https://github.com/l-love-china/lopk
+Project-URL: documentation, https://github.com/l-love-china/lopk/wiki
+Project-URL: repository, https://github.com/l-love-china/lopk
+Project-URL: issues, https://github.com/l-love-china/lopk/issues
+Keywords: progressbar,terminal,spinner,timer,utility
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: OS Independent
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Libraries
+Classifier: Topic :: Terminals
+Classifier: Topic :: Utilities
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: colorama>=0.4.4
+Provides-Extra: gui
+Requires-Dist: tkinter; extra == "gui"
+Provides-Extra: full
+Requires-Dist: colorama>=0.4.4; extra == "full"
+Requires-Dist: tkinter; extra == "full"
+Dynamic: license-file
+
+# LOPK (Lightweight Operational Progress Kit)
+
+A lightweight and versatile Python library for creating beautiful terminal progress indicators, spinners, countdown timers, and terminal utilities.
+
+## Features
+
+- **ProgressBar**: Customizable progress bars with color support, ETA, and time tracking
+- **Spinner**: Animated loading indicators with context manager support
+- **CountdownTimer**: Simple countdown timer functionality
+- **MultiProgressBar**: Manage multiple progress bars simultaneously
+- **Terminal Utilities**: Clear terminal screen, colored text output, and more
+
+## Installation
+
+```bash
+pip install lopk
+```
+
+### Optional GUI Support
+
+```bash
+pip install lopk[gui]
+```
+
+## Usage Examples
+
+### Basic Progress Bar
+
+```python
+from main.lopk import ProgressBar
+
+pb = ProgressBar(total=100, title="Downloading", color="green")
+for i in range(101):
+    pb.update(i)
+    time.sleep(0.1)
+pb.finish()
+```
+
+### Spinner
+
+```python
+from main.lopk import Spinner
+
+with Spinner("Loading...", spinner_type="dots"):
+    # Your long-running task here
+    time.sleep(3)
+```
+
+### Countdown Timer
+
+```python
+from main.lopk import CountdownTimer
+
+timer = CountdownTimer(10, "Time left")
+timer.start()
+```
+
+## Demo
+
+Run the interactive demo:
+
+```bash
+lopk-demo
+```
+
+Run the GUI demo:
+
+```bash
+lopk-demo-tk
+```
+
+## License
+
+GNU General Public License v3.0
+
+## GitHub Repository
+
+https://github.com/l-love-china/lopk
