@@ -1,0 +1,49 @@
+[project]
+name = "netdisk-mcp-server"
+version = "0.1.0"
+description = "百度网盘 MCP Server - 通过 Model Context Protocol 提供百度网盘文件上传功能"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
+keywords = ["mcp", "baidu", "netdisk", "pan", "百度网盘", "model-context-protocol"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Internet :: File Transfer Protocol (FTP)",
+]
+dependencies = [
+    "aiohttp>=3.11.16",
+    "mcp[cli]>=1.6.0",
+    "python-dateutil>=2.9.0.post0",
+    "urllib3>=1.25.3",
+    "requests>=2.31.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/netdisk-mcp-server-stdio"
+Repository = "https://github.com/yourusername/netdisk-mcp-server-stdio"
+Issues = "https://github.com/yourusername/netdisk-mcp-server-stdio/issues"
+
+[project.scripts]
+netdisk-mcp-server = "netdisk:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["openapi_client"]
+
+[tool.hatch.build]
+include = [
+    "netdisk.py",
+    "openapi_client/**/*.py",
+    "README.md",
+]
