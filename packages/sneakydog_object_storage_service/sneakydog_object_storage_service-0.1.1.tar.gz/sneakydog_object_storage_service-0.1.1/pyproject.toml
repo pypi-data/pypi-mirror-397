@@ -1,0 +1,24 @@
+[project]
+name = "sneakydog_object_storage_service"
+version = "v0.1.1"
+description = "Sneakydog object storage service"
+readme = "README.md"
+authors = [{ name = "董 福州 (DONG FUZHOU)", email = "sneakydog@yeah.net" }]
+requires-python = ">=3.10"
+dependencies = [
+    "aioboto3>=15.5.0",
+    "aiofiles>=25.1.0",
+    "minio>=7.2.20",
+    "mypy-boto3-s3>=1.42.10",
+]
+
+[project.scripts]
+main = "sneakydog_object_storage_service:main"
+
+[project.entry-points."storage"]
+local = "sneakydog_object_storage_service.local:AsyncLocalStorageService"
+s3 = "sneakydog_object_storage_service.s3:AsyncS3StorageService"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
