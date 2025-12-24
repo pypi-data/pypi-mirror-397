@@ -1,0 +1,227 @@
+Metadata-Version: 2.4
+Name: sygra
+Version: 2.0.0
+Summary: Graph-oriented Synthetic data generation Pipeline library
+Project-URL: Homepage, https://github.com/ServiceNow/SyGra
+Project-URL: Documentation, https://servicenow.github.io/SyGra
+Project-URL: Releases, https://github.com/ServiceNow/SyGra/releases
+Project-URL: Issues, https://github.com/ServiceNow/SyGra/issues
+Project-URL: Discussions, https://github.com/ServiceNow/SyGra/discussions
+Author-email: "Bidyapati Pradhan, Surajit Dasgupta, Amit Kumar Saha, Sriram Puttagunta, Omkar Anustoop, Vipul Mittal, Gopal Sarda" <sygra_team@servicenow.com>
+Maintainer-email: SyGra Team <sygra_team@servicenow.com>
+License: Apache-2.0
+License-File: LICENSE
+Keywords: data generation,data quality,dpo,fine-tuning,graph,llm,metadata tagging,nlp,sft,synthetic data
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Software Development :: Libraries
+Requires-Python: !=3.9.7,<3.12,>=3.9
+Requires-Dist: aiohttp<4.0,>=3.12
+Requires-Dist: boto3<2.0.0,>=1.40.71
+Requires-Dist: datasets<=4.0.0
+Requires-Dist: fasttext-wheel<0.10.0,>=0.9.2
+Requires-Dist: fasttext<1.0,>=0.9
+Requires-Dist: google-auth<3.0.0,>=2.43.0
+Requires-Dist: google-cloud-aiplatform<2.0.0,>=1.128.0
+Requires-Dist: grandalf<1.0,>=0.8
+Requires-Dist: httpx-sse<0.5,>=0.4
+Requires-Dist: httpx<0.29,>=0.28
+Requires-Dist: huggingface-hub<1.0,>=0.34
+Requires-Dist: jinja2<4.0,>=3.1
+Requires-Dist: langchain-community<1.0,>=0.3
+Requires-Dist: langchain-core<1.0,>=0.3
+Requires-Dist: langchain-mistralai<1.0,>=0.2
+Requires-Dist: langchain-openai<1.0,>=0.3
+Requires-Dist: langgraph<1.0,>=0.6
+Requires-Dist: lexicalrichness<1.0,>=0.5
+Requires-Dist: litellm<2.0.0,>=1.79.3
+Requires-Dist: mistralai<2.0,>=1.9
+Requires-Dist: mlxtend<1.0,>=0.23
+Requires-Dist: ollama<1.0,>=0.5
+Requires-Dist: openai<2.0,>=1.107
+Requires-Dist: pandarallel<2.0,>=1.6
+Requires-Dist: pathvalidate<4.0,>=3.3
+Requires-Dist: protobuf<7.0,>=6.32
+Requires-Dist: pysnc<1.2.0,>=1.1.0
+Requires-Dist: pyyaml<7.0,>=6.0
+Requires-Dist: sentence-transformers<6.0,>=5.1
+Requires-Dist: sentencepiece<1.0,>=0.2
+Requires-Dist: soundfile<1.0,>=0.13
+Requires-Dist: torch<3.0,>=2.8
+Requires-Dist: transformers<4.57,>=4.56
+Requires-Dist: types-pyyaml<7.0,>=6.0
+Requires-Dist: ujson<6.0,>=5.11
+Provides-Extra: dev
+Requires-Dist: black<26.0,>=25.1; extra == 'dev'
+Requires-Dist: build<2.0,>=1.3; extra == 'dev'
+Requires-Dist: isort<7.0,>=6.0; extra == 'dev'
+Requires-Dist: mkdocs-include-markdown-plugin<8.0,>=7.1; extra == 'dev'
+Requires-Dist: mkdocs-material<10.0,>=9.6; extra == 'dev'
+Requires-Dist: mkdocs<2.0,>=1.6; extra == 'dev'
+Requires-Dist: mypy<2.0,>=1.17; extra == 'dev'
+Requires-Dist: pytest-asyncio<2.0,>=1.1; extra == 'dev'
+Requires-Dist: pytest<9.0,>=8.4; extra == 'dev'
+Requires-Dist: ruff<1.0,>=0.13; extra == 'dev'
+Requires-Dist: twine<7.0,>=6.2; extra == 'dev'
+Requires-Dist: types-requests<3.0,>=2.31; extra == 'dev'
+Provides-Extra: ui
+Requires-Dist: plotly>=6.5.0; extra == 'ui'
+Requires-Dist: streamlit-agraph<1.0,>=0.0; extra == 'ui'
+Requires-Dist: streamlit-autorefresh<2.0,>=1.0; extra == 'ui'
+Requires-Dist: streamlit-flow-component<2.0,>=1.6; extra == 'ui'
+Requires-Dist: streamlit<2.0,>=1.49; (python_version != '3.9.7') and extra == 'ui'
+Requires-Dist: watchdog<7.0,>=6.0; extra == 'ui'
+Description-Content-Type: text/markdown
+
+<div align="center">
+  <img width=30% src="https://raw.githubusercontent.com/ServiceNow/SyGra/refs/heads/main/docs/resources/images/sygra_logo.png">
+
+  <h1>SyGra: Graph-oriented Synthetic data generation Pipeline</h1>
+
+<a href="https://pypi.org/project/sygra/">
+    <img src="https://img.shields.io/pypi/v/sygra.svg?logo=pypi&color=orange"/></a>
+<a href="https://github.com/ServiceNow/SyGra/actions/workflows/ci.yml">
+    <img alt="CI" src="https://github.com/ServiceNow/SyGra/actions/workflows/ci.yml/badge.svg"/></a>
+<a href="https://github.com/ServiceNow/SyGra/releases">
+    <img alt="Releases" src="https://img.shields.io/github/v/release/ServiceNow/SyGra?logo=bookstack&logoColor=white"/></a>
+<a href="https://servicenow.github.io/SyGra">
+    <img alt="Documentation" src="https://img.shields.io/badge/MkDocs-Documentation-green.svg"/></a>
+<a href="http://arxiv.org/abs/2508.15432">
+    <img src="https://img.shields.io/badge/arXiv-2508.15432-B31B1B.svg" alt="arXiv"></a>
+<a href="LICENSE">
+    <img alt="Licence" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg"/></a>
+
+<br>
+<br>
+<br>
+</div>
+
+
+Framework to easily generate complex synthetic data pipelines by visualizing and configuring the pipeline as a
+computational graph. [LangGraph](https://python.langchain.com/docs/langgraph/) is used as the underlying graph
+configuration/execution library. Refer
+to [LangGraph examples](https://github.com/langchain-ai/langgraph/tree/main/examples) to get a sense of the different
+kinds of computational graph which can be configured.
+<br>
+<br>
+
+## Introduction
+
+SyGra Framework is created to generate synthetic data. As it is a complex process to define the flow, this design simplifies the synthetic data generation process. SyGra platform will support the following:
+- Defining the seed data configuration
+- Define a task, which involves graph node configuration, flow between nodes and conditions between the node
+- Define the output location to dump the generated data
+
+Seed data can be pulled from various data source, few examples are Huggingface, File system, ServiceNow Instance. Once the seed data is loaded, SyGra platform allows datagen users to write any data processing using the data transformation module. When the data is ready, users can define the data flow with various types of nodes. A node can also be a subgraph defined in another yaml file.
+
+Each node can be defined with preprocessing, post processing, and LLM prompt with model parameters. Prompts can use seed data as python template keys.  
+Edges define the flow between nodes, which can be conditional or non-conditional, with support for parallel and one-to-many flows.
+
+At the end, generated data is collected in the graph state for a specific record, processed further to generate the final dictionary to be written to the configured data sink.
+
+![SygraFramework](https://raw.githubusercontent.com/ServiceNow/SyGra/refs/heads/main/docs/resources/images/sygra_architecture.png)
+
+---
+
+# Installation
+
+Pick how you want to use **SyGra**:
+
+<div align="center">
+
+<a href="https://servicenow.github.io/SyGra/installation/">
+  <img src="https://img.shields.io/badge/Use%20as-Framework-4F46E5?style=for-the-badge" alt="Install as Framework">
+</a>
+&nbsp;&nbsp;
+<a href="https://servicenow.github.io/SyGra/library/sygra_library/">
+  <img src="https://img.shields.io/badge/Use%20as-Library-10B981?style=for-the-badge" alt="Install as Library">
+</a>
+
+</div>
+
+### Which one should I choose?
+- **Framework** → Run end-to-end pipelines from YAML graphs + CLI tooling and project scaffolding.
+  (Start here: **[`Installation`](https://servicenow.github.io/SyGra/installation/)**)
+
+- **Library** → Import SyGra in your own Python app/notebook; call APIs directly.
+  (Start here: **[`SyGra Library`](https://servicenow.github.io/SyGra/library/sygra_library/)**)
+
+![Note](https://img.shields.io/badge/Note-important-yellow)  
+> Before running the commands below, make sure to add your model configuration in `config/models.yaml` and set environment variables for credentials and chat templates as described in the [Model Configuration](https://servicenow.github.io/SyGra/getting_started/model_configuration/) docs.
+
+<details>
+  <summary><strong>TL;DR – Framework Setup</strong></summary>
+
+See full steps in <a href="https://servicenow.github.io/SyGra/installation/">Installation</a>.
+
+```bash
+git clone git@github.com:ServiceNow/SyGra.git
+
+cd SyGra
+uv run python main.py --task examples.glaive_code_assistant --num_records=1
+```
+</details>
+
+<details>
+  <summary><strong>TL;DR – Library Setup</strong></summary>
+
+See full steps in <a href="https://servicenow.github.io/SyGra/library/sygra_library/">Sygra Library</a>.
+
+```bash
+pip install sygra  
+```
+
+```python
+import sygra
+
+workflow = sygra.Workflow("tasks/examples/glaive_code_assistant")
+workflow.run(num_records=1)
+```
+</details>
+
+### Quick Start
+> To get started with SyGra, please refer to some **[Example Tasks](https://github.com/ServiceNow/SyGra/tree/main/tasks/examples)** or **[SyGra Documentation](https://servicenow.github.io/SyGra/)**
+
+---
+
+## Task Components
+
+SyGra supports extendability and ease of implementation—most tasks are defined as graph configuration YAML files. Each task consists of two major components: a graph configuration and Python code to define conditions and processors.
+YAML contains various parts:
+
+- **Data configuration** : Configure file or huggingface or ServiceNow instance as source and sink for the task. 
+- **Data transformation** : Configuration to transform the data into the format it can be used in the graph.
+- **Node configuration** : Configure nodes and corresponding properties, preprocessor and post processor.
+- **Edge configuration** : Connect the nodes configured above with or without conditions.
+- **Output configuration** : Configuration for data tranformation before writing the data into sink.
+
+The data configuration supports source and sink configuration, which can be a single configuration or a list. When it is a list of dataset configuration, it allows merging the dataset as column based and row based. Access the dataset keys or columns with alias prefix in the prompt, and finally write into various output dataset in a single flow.
+
+A node is defined by the node module, supporting types like LLM call, multiple LLM call, lambda node, and sampler node.  
+
+LLM-based nodes require a model configured in `models.yaml` and runtime parameters. Sampler nodes pick random samples from static YAML lists. For custom node types, you can implement new nodes in the platform.
+
+As of now, LLM inference is supported for TGI, vLLM, OpenAI, Azure, Azure OpenAI, Ollama and Triton compatible servers. Model deployment is external and configured in `models.yaml`.
+
+<!-- ![SygraComponents](https://raw.githubusercontent.com/ServiceNow/SyGra/refs/heads/main/docs/resources/images/sygra_usecase2framework.png) -->
+
+
+## Contact
+
+To contact us, please send us an [email](mailto:sygra_team@servicenow.com)!
+
+## License
+
+The package is licensed by ServiceNow, Inc. under the Apache 2.0 license. See [LICENSE](LICENSE) for more details.
+
+## Questions?
+
+Ask SyGra's [DeepWiki](https://deepwiki.com/ServiceNow/SyGra) </br>
+Open an [issue](https://github.com/ServiceNow/SyGra/issues) or start a [discussion](https://github.com/ServiceNow/SyGra/discussions)! Contributions are welcome.

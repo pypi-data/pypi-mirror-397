@@ -1,0 +1,109 @@
+name: Run CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened, ready_for_review ]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+
+  build:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    env:
+      UV_PROJECT_ENVIRONMENT: .venv
+
+    steps:
+      # ---- Disk Cleanup (Safe) ----
+      - name: Free disk space
+        run: |
+          df -h
+          sudo rm -rf /usr/local/lib/android || true
+          sudo rm -rf /usr/share/dotnet || true
+          sudo rm -rf /opt/ghc || true
+          sudo rm -rf /usr/local/.ghcup || true
+          sudo apt-get clean
+          df -h
+
+      # ---- Checkout ----
+      - uses: actions/checkout@v4
+
+      # ---- Python setup ----
+      # Pin to an explicit patch version so cached venv is always valid
+      - uses: actions/setup-python@v5
+        id: setup-python
+        with:
+          python-version: "3.9.25"
+
+      # ---- Install uv ----
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      # ---- Cache uv global + python installs ----
+      - name: Cache uv global cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/uv
+            ~/.local/share/uv
+          key: uv-cache-${{ runner.os }}-py${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/uv.lock', '**/pyproject.toml') }}
+          restore-keys: |
+            uv-cache-${{ runner.os }}-py${{ steps.setup-python.outputs.python-version }}-
+
+      # ---- Cache project venv ----
+      - name: Cache project .venv
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: uv-venv-${{ runner.os }}-py${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/uv.lock', '**/pyproject.toml') }}
+          restore-keys: |
+            uv-venv-${{ runner.os }}-py${{ steps.setup-python.outputs.python-version }}-
+
+      # ---- Environment Setup ----
+      # Important:
+      # make setup-dev MUST *not* delete .venv — otherwise the cache is pointless.
+      - name: Setup dev environment
+        run: make setup-dev
+
+      # ---- FORMAT ----
+      - name: Run formatter
+        run: make check-format
+
+      # ---- LINT ----
+      - name: Run linter
+        run: make check-lint
+
+      # ---- TEST ----
+      - name: Run tests
+        run: make test
+
+      # ---- DOCS ----
+      - name: Build docs
+        run: make docs
+
+      # ---- Upload docs artifact ----
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  # ---- Deploy Docs ----
+  deploy_docs:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

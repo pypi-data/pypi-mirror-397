@@ -1,0 +1,63 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - "v*"  # Triggers when a new GitHub Tag is published eg: v1.2.3
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: make setup-dev
+
+      - name: Install versioning deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install tomlkit
+
+      - name: Set version from GitHub tag
+        run: |
+          # Extract tag like "v1.2.3" → "1.2.3"
+          export VERSION="${GITHUB_REF#refs/tags/v}"
+          echo "Setting [project].version to $VERSION"
+          python - << 'PY'
+          from pathlib import Path
+          from tomlkit import parse, dumps
+          import os
+          version = os.environ["VERSION"]
+          p = Path('pyproject.toml')
+          doc = parse(p.read_text(encoding='utf-8'))
+          # Update PEP 621 version
+          if 'project' in doc:
+            doc['project']['version'] = version
+          p.write_text(dumps(doc), encoding='utf-8')
+          PY
+
+      - name: Build package
+        run: make build
+
+      - name: Publish to PyPI
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          python -m pip install --upgrade pip
+          pip install twine
+          python -m twine upload --repository pypi dist/* --verbose
