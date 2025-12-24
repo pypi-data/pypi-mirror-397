@@ -1,0 +1,251 @@
+# Honest Chain
+
+**Tamper-evident audit trails for AI systems. MIT licensed.**
+
+AI systems make decisions that affect people's lives. Honest Chain creates cryptographic proof of what AI decided, why, and when - so anyone can verify.
+
+```bash
+pip install honest-chain
+```
+
+## Why This Matters
+
+When an AI denies your loan, recommends a medical treatment, or makes any high-stakes decision - can you verify what happened? Can auditors?
+
+**Without Honest Chain:**
+- AI decisions live in mutable logs
+- No cryptographic proof
+- "Trust us" is the only answer
+
+**With Honest Chain:**
+- Every decision is cryptographically chained
+- SHA3-256 hashing (quantum-resistant)
+- Ed25519 signatures (third-party verifiable)
+- Optional Bitcoin anchoring (immutable)
+
+## Quick Start
+
+```python
+from honest_chain import HonestChain, RiskLevel
+
+# Create an audit trail
+chain = HonestChain(agent_id="loan-ai")
+
+# Log a decision
+chain.decide(
+    action="Approved loan application #12345",
+    reasoning="Credit score 780, income verified, DTI 28%",
+    alternatives=["Reject", "Request more documents"],
+    confidence=0.94,
+    risk_level=RiskLevel.HIGH
+)
+
+# Verify the chain hasn't been tampered with
+assert chain.verify()
+
+# Export for auditors
+chain.export_audit("audit.json")
+```
+
+## Third-Party Verification
+
+Auditors can verify signatures without needing your private keys:
+
+```python
+from honest_chain.identity import AgentIdentity, verify_signature_standalone
+
+# Create an Ed25519 identity (one-time setup)
+identity = AgentIdentity.create("my-agent", use_ed25519=True)
+print(f"Public key: {identity.keys.public_key.hex()}")
+
+# Sign some data
+signature = identity.sign(b"AI decided to approve loan")
+
+# Anyone can verify with just the signature (contains public key)
+is_valid = signature.verify_standalone(b"AI decided to approve loan")
+# => True
+```
+
+## Bitcoin Anchoring
+
+For maximum immutability, anchor your chains to Bitcoin:
+
+```python
+def anchor_to_bitcoin(hash: str) -> str:
+    # Use OpenTimestamps or direct Bitcoin tx
+    return f"btc:{txid}:{block_height}"
+
+chain = HonestChain(
+    agent_id="critical-ai",
+    external_anchor=anchor_to_bitcoin
+)
+
+# HIGH and CRITICAL decisions are auto-anchored
+chain.decide(
+    action="Denied insurance claim",
+    risk_level=RiskLevel.CRITICAL  # Triggers anchoring
+)
+```
+
+## What It Guarantees
+
+| Guarantee | How |
+|-----------|-----|
+| **Tamper evidence** | SHA3-256 hash chain - any modification is detectable |
+| **Append-only** | Each record links to previous hash |
+| **Non-repudiation** | Ed25519 signatures prove origin |
+| **Third-party verification** | Auditors verify without secrets |
+| **Time ordering** | Timestamps in signed data prevent replay |
+
+## What It Doesn't Guarantee
+
+| Limitation | Why | Mitigation |
+|------------|-----|------------|
+| AI told the truth | Protocol logs claims, not reality | External validation |
+| All decisions logged | AI could skip logging | Completeness audits |
+| Chain not deleted | Local storage is mutable | Bitcoin anchoring |
+
+**Honest Chain proves what was logged. It doesn't prove the AI was honest when logging.**
+
+## Installation Options
+
+```bash
+# Basic (HMAC signatures)
+pip install honest-chain
+
+# With Ed25519 (recommended - third-party verifiable)
+pip install honest-chain[ed25519]
+
+# Full (Ed25519 + Bitcoin support)
+pip install honest-chain[full]
+```
+
+## Use Cases
+
+- **Banking**: Audit trail for AI loan decisions (EU AI Act compliance)
+- **Healthcare**: Document AI diagnostic recommendations
+- **Insurance**: Prove what factors affected claim decisions
+- **Legal**: Create verifiable record of AI-assisted analysis
+- **Any regulated AI**: Build auditor-friendly systems
+
+## EU AI Act Ready
+
+The EU AI Act requires high-risk AI systems to be auditable. Honest Chain provides:
+
+- Cryptographic audit trails
+- Third-party verifiable signatures
+- Immutable anchoring options
+- Export for compliance reporting
+
+## Technical Details
+
+### Cryptography
+
+| Component | Algorithm | Properties |
+|-----------|-----------|------------|
+| Hashing | SHA3-256 | Quantum-resistant |
+| Signatures (default) | HMAC-SHA3-256 | Fast, self-verify only |
+| Signatures (ed25519) | Ed25519 | Third-party verifiable |
+| Anchoring | Bitcoin/OTS | Immutable timestamp |
+
+### Hash Chain
+
+Every decision record includes:
+- `decision_id`, `timestamp`, `actor_id`, `actor_type`, `actor_model`
+- `action`, `reasoning`, `alternatives`, `confidence`, `risk_level`
+- `previous_hash` (links to prior record)
+
+All 11 fields are covered by the hash - any tampering is detectable.
+
+### Anchoring Levels
+
+| Level | Trust | Example |
+|-------|-------|---------|
+| L0: Local | Self only | `~/.honest_chain/` |
+| L1: Timestamped | Third-party | OpenTimestamps |
+| L2: Blockchain | Decentralized | Bitcoin |
+| L3: Physical | Permanent | Internet Archive |
+
+## API Reference
+
+### HonestChain
+
+```python
+HonestChain(
+    agent_id: str,              # Unique identifier
+    agent_model: str = "unknown",
+    storage_path: Path = None,  # Default: ~/.honest_chain/{agent_id}/
+    external_anchor: Callable = None,
+    enable_signatures: bool = True
+)
+
+# Methods
+.decide(action, reasoning, alternatives=[], confidence=0.8, risk_level=LOW)
+.verify(verify_signatures=True) -> bool
+.export_audit(path) -> None
+.get_chain() -> List[DecisionRecord]
+```
+
+### AgentIdentity
+
+```python
+from honest_chain.identity import AgentIdentity
+
+# Create identity
+identity = AgentIdentity.create("agent-id", use_ed25519=True)
+
+# Load existing
+identity = AgentIdentity.load("agent-id")
+
+# Sign and verify
+signature = identity.sign(data: bytes)
+is_valid = identity.verify(data, signature)
+
+# Third-party verification (no identity needed)
+is_valid = signature.verify_standalone(data)
+```
+
+### RiskLevel
+
+```python
+from honest_chain import RiskLevel
+
+RiskLevel.LOW       # Routine decisions
+RiskLevel.MEDIUM    # Notable decisions
+RiskLevel.HIGH      # Auto-anchored if callback set
+RiskLevel.CRITICAL  # Always anchor
+```
+
+## Philosophy
+
+Honest Chain implements a simple axiom:
+
+```
+Honesty = (inner state) == (outer expression)
+```
+
+An AI system is honest if what it logs matches what it computed. This is a **definition**, not a claim - an AI that violates it is simply not honest by definition.
+
+The protocol can't force honesty, but it can prove tampering. Combined with external validation, it creates accountability.
+
+## Contributing
+
+We welcome contributions! Areas of interest:
+
+- Additional language SDKs (JavaScript, Go, Rust)
+- More anchoring backends
+- Formal verification
+- Performance optimization
+
+## License
+
+MIT License. Copyright (c) 2025 Stellanium Ltd.
+
+Use it, fork it, build on it. We believe open protocols become standards.
+
+---
+
+**Links:**
+- [PyPI](https://pypi.org/project/honest-chain/)
+- [GitHub](https://github.com/Stellanium/honest-chain)
+- [Stellanium](https://stellanium.io)
