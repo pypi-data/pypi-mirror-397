@@ -1,0 +1,84 @@
+# ==========================================================================================
+# 10. IMBALANCED DATA
+# ==========================================================================================
+
+import numpy as np
+from sklearn.linear_model import LogisticRegression
+from imblearn.over_sampling import SMOTE, RandomOverSampler
+from imblearn.under_sampling import RandomUnderSampler
+
+X = np.random.randn(100, 5)
+y = np.random.randint(0, 2, size=100)
+
+# ------------------------------------------------------------------------------------------
+# Prior probability shift
+# ------------------------------------------------------------------------------------------
+# Imbalance = class distribution in train ≠ target application
+
+# ------------------------------------------------------------------------------------------
+# class_weight (in estimators)
+# ------------------------------------------------------------------------------------------
+logreg_bal = LogisticRegression(class_weight='balanced').fit(X, y)
+# Penalizes errors on minority class higher in loss function.
+
+# ------------------------------------------------------------------------------------------
+# Oversampling (Random)
+# ------------------------------------------------------------------------------------------
+ros = RandomOverSampler().fit_resample(X, y)
+# Duplicates minority cases to balance classes.
+
+# ------------------------------------------------------------------------------------------
+# Undersampling (Random)
+# ------------------------------------------------------------------------------------------
+rus = RandomUnderSampler().fit_resample(X, y)
+# Drops majority class samples.
+
+# ------------------------------------------------------------------------------------------
+# SMOTE (Synthetic Minority Oversampling Technique)
+# ------------------------------------------------------------------------------------------
+sm = SMOTE().fit_resample(X, y)
+# Synthesizes new samples for minority class via interpolation between neighbors.
+
+# ------------------------------------------------------------------------------------------
+# Metric Choice Under Imbalance
+# ------------------------------------------------------------------------------------------
+# Prefer F1, balanced accuracy, PR-AUC, MCC over accuracy.
+
+# ==========================================================================================
+# 11. MISSING DATA THEORY
+# ==========================================================================================
+
+from sklearn.impute import SimpleImputer, KNNImputer
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
+
+# ------------------------------------------------------------------------------------------
+# MCAR (Missing Completely at Random): No pattern; safe to ignore/missingness unrelated.
+# MAR (Missing At Random): Missingness explained by observed data.
+# MNAR (Missing Not At Random): Missingness depends on unobserved values.
+# TEST: Little's MCAR test (not in standard lib; conceptual)
+
+# ------------------------------------------------------------------------------------------
+# Mean / median imputation
+# ------------------------------------------------------------------------------------------
+imp_mean = SimpleImputer(strategy='mean').fit_transform(X)
+imp_median = SimpleImputer(strategy='median').fit_transform(X)
+# Quick, but reduces variance (underestimates spread) and distorts relationships.
+
+# ------------------------------------------------------------------------------------------
+# KNN Imputation
+# ------------------------------------------------------------------------------------------
+knn_imp = KNNImputer(n_neighbors=5).fit_transform(X)
+# Imputes missing as average of neighbors.
+# Sensitive to scaling and outliers.
+
+# ------------------------------------------------------------------------------------------
+# MICE (Multivariate Imputation by Chained Equations)
+# ------------------------------------------------------------------------------------------
+mice_imp = IterativeImputer().fit_transform(X)
+# Multivariate regression used to impute each variable in turn.
+
+# ------------------------------------------------------------------------------------------
+# Bias introduction
+# ------------------------------------------------------------------------------------------
+# Imputation can distort means, variances, associations (especially if data is MNAR).

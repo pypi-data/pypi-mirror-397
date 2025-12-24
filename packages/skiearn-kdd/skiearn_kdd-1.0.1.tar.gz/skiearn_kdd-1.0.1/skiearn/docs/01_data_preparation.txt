@@ -1,0 +1,65 @@
+# ==========================================================================================
+# 1. DATA PREPARATION & FORMALISM
+# ==========================================================================================
+
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+
+# ------------------------------------------------------------------------------------------
+# Types of Variables
+# ------------------------------------------------------------------------------------------
+# Nominal: Categorical, no inherent order (e.g., color: red, blue, green)
+# Ordinal: Categorical, ordered (e.g., T-shirt size: S < M < L)
+# Interval: Continuous, order, equal spacing, but no true zero (e.g., temperature in °C)
+# Ratio: Continuous, order, equal spacing, true zero (e.g., weight, height)
+
+# Variable type determines allowed statistical tests and encoding methods (e.g., one-hot for nominal).
+
+# ------------------------------------------------------------------------------------------
+# IID Assumption
+# ------------------------------------------------------------------------------------------
+# INDEPENDENT AND IDENTICALLY DISTRIBUTED: Most models and statistical tests assume each sample
+# is drawn independently from the same underlying distribution.
+# Violation leads to overconfident or invalid inference.
+
+# ------------------------------------------------------------------------------------------
+# Train / Validation / Test Split
+# ------------------------------------------------------------------------------------------
+
+# Common splits: train (60–80%), validation (10–20%), test (10–20%)
+X = np.random.randn(100, 5)
+y = np.random.randint(0, 2, size=100)
+X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.4, random_state=42)
+X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
+# train_test_split randomly splits data; random_state ensures reproducibility.
+
+# INTERPRETATION:
+# Train: Fit model.
+# Validation: Tune hyperparameters; NEVER used for model fitting.
+# Test: Final unbiased performance estimate.
+
+# TYPICAL EXAM TRAP: Tuning model on test set leads to overly optimistic estimates (data leakage).
+
+# ------------------------------------------------------------------------------------------
+# Data Leakage
+# ------------------------------------------------------------------------------------------
+# DEFINITION: Using information in training that would not be available at prediction time
+# (e.g., using test data for feature selection or scaling).
+# CONSEQUENCE: Inflated and unrealistic performance.
+
+# ------------------------------------------------------------------------------------------
+# Curse of Dimensionality
+# ------------------------------------------------------------------------------------------
+# As dimensionality increases:
+# - Sparsity increases
+# - Distance metrics lose meaning
+# - Overfitting likelihood increases
+# Requires feature selection, regularization, or dimensionality reduction.
+
+# ------------------------------------------------------------------------------------------
+# Bias–Variance Tradeoff
+# ------------------------------------------------------------------------------------------
+# Bias: Error from wrong assumptions (underfitting).
+# Variance: Error from sensitivity to small fluctuations (overfitting).
+# Goal: Balance bias and variance; minimize total error (irreducible noise remains).
