@@ -1,0 +1,50 @@
+import logging
+
+from behave import when, then
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import async_sessionmaker
+
+from cattle_grid.database.activity_pub_actor import Actor
+from cattle_grid.activity_pub.actor.requester import is_valid_requester
+
+from cattle_grid.app.lifespan import alchemy_database
+
+logger = logging.getLogger(__name__)
+
+
+@when('"{alice}" creates an object addressed to "{recipient}"')  # type: ignore
+def object_addressed_to(context, alice, recipient):
+    alice_actor = context.actors[alice]
+
+    if recipient == "public":
+        context.object = (
+            alice_actor.object_factory.note(content="moo").as_public().build()
+        )
+    elif recipient == "followers":
+        context.object = (
+            alice_actor.object_factory.note(content="moo").as_followers().build()
+        )
+    else:
+        context.object = alice_actor.object_factory.note(
+            content="moo", to={context.actors[recipient].id}
+        ).build()
+
+
+@then('"{bob}" is "{state}" to view this object')  # type: ignore
+async def check_allowed(context, bob, state):
+    bob_id = context.actors[bob].id
+
+    async with alchemy_database() as engine:
+        async with async_sessionmaker(engine)() as session:
+            alice = await session.scalar(
+                select(Actor).where(
+                    Actor.actor_id == context.object.get("attributedTo")
+                )
+            )
+            assert alice
+            is_valid = await is_valid_requester(session, bob_id, alice, context.object)
+
+    if is_valid:
+        assert state == "authorized"
+    else:
+        assert state == "unauthorized"
