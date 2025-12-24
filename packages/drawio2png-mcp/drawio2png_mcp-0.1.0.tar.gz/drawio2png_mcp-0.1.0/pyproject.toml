@@ -1,0 +1,41 @@
+[project]
+name = "drawio2png-mcp"
+version = "0.1.0"
+description = "MCP Server for converting Draw.io diagrams to PNG"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "pine" }
+]
+keywords = ["mcp", "drawio", "diagram", "png", "converter"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "mcp[cli]>=1.0.0",
+]
+
+[project.scripts]
+drawio2png-mcp = "drawio2png_mcp:main"
+
+[project.urls]
+Homepage = "https://github.com/co-pine/drawio2png-mcp"
+Repository = "https://github.com/co-pine/drawio2png-mcp"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["drawio2png_mcp"]
+
+[[tool.uv.index]]
+url = "https://mirrors.aliyun.com/pypi/simple/"
+default = true
