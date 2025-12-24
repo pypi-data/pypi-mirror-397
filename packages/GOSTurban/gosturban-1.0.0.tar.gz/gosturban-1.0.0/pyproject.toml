@@ -1,0 +1,47 @@
+[build-system]
+requires = [
+	"setuptools>=61",
+	"setuptools-scm[toml]>=8",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "GOSTurban"
+description = "Multiple functions, tools, and tutorials for calculating urbanization based on gridded population data"
+readme = { file = "README.md", content-type = "text/markdown" }
+license = { file = "LICENSE" }
+keywords = ["gosturban", "urban", "raster"]
+dynamic = ["version", "dependencies", "optional-dependencies"]
+requires-python = ">=3.8"
+authors = [{ name = "World Bank", email = "github@worldbank.org" }]
+
+maintainers = [
+	{ name = "Benjamin P. Stewart", email = "bstewart@worldbankgroup.org" },
+	{ name = "Andres Chamorro", email = "achamorroelizond@worldbank.org" },
+]
+
+classifiers = [
+	"Programming Language :: Python :: 3.8",
+	"Programming Language :: Python :: 3.9",
+	"Programming Language :: Python :: 3.10",
+	"Programming Language :: Python :: 3.11",
+	"Programming Language :: Python :: 3 :: Only",
+	"License :: OSI Approved :: MIT License",
+	"Development Status :: 3 - Alpha",
+	"Intended Audience :: Developers",
+	"Operating System :: OS Independent",
+	"Topic :: Scientific/Engineering",
+]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.dynamic.optional-dependencies]
+dev = { file = ["requirements-dev.txt"] }
+
+[tool.setuptools_scm]
+
+[project.urls]
+"Homepage" = "https://github.com/worldbank/GOSTurban"
+"Bug Reports" = "https://github.com/worldbank/GOSTurban/issues"
+"Source" = "https://github.com/worldbank/GOSTurban"
