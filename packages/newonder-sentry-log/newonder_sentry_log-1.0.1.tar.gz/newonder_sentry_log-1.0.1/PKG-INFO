@@ -1,0 +1,134 @@
+Metadata-Version: 2.1
+Name: newonder_sentry_log
+Version: 1.0.1
+Summary: A logging package that integrates with Sentry for Newonder projects
+Author: wangsw
+Author-email: wangshiwei@xinhuadu.com.cn
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.7
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+
+# Newonder Sentry Log
+
+A logging package that integrates with Sentry for Newonder projects.
+
+## Installation
+
+```bash
+pip install newonder-sentry-log
+```
+
+## Usage
+
+### Basic Usage
+
+```python
+from newonder_sentry_log import NewonderLog
+
+# Initialize the logger
+logger = NewonderLog(
+    project_name="YourProjectName",
+    project_version="1.0.1",
+    author="your_name",
+    sentry_url="your_sentry_dsn_url",  # Sentry URL now required for Sentry integration
+    email_domain="your-domain.com",  # Optional: custom email domain
+    file_name="app_log",
+    err_name="app_error"
+)
+
+# Use the logger
+logger.info("This is an info message")
+logger.warning("This is a warning message")
+logger.error("This is an error message")
+logger.exception("This is an exception message")
+```
+
+### Advanced Usage with Custom Parameters
+
+```python
+from newonder_sentry_log import NewonderLog
+import logging
+
+# Initialize the logger with custom settings
+logger = NewonderLog(
+    project_name="AdvancedProject",
+    project_version="2.0.0",
+    author="advanced_user",
+    set_level="work",  # or "debug" for development
+    sentry_url="your_custom_sentry_dsn_url",
+    email_domain="your-company.com",  # Custom email domain
+    file_name="custom_app_log",
+    err_name="custom_app_error",
+    log_level=logging.DEBUG,
+    error_log_level=logging.ERROR
+)
+
+# Use with extra parameters
+logger.info("Processing data", farm="FarmA", turbine="Turbine1", func_name="data_processor")
+
+# Add custom extra data
+extra_data = {
+    "custom_field": "custom_value",
+    "processing_time": 125
+}
+logger.info("Data processed", farm="FarmB", turbine="Turbine2", extra=extra_data)
+```
+
+## Customization Options
+
+You can customize various aspects of the logger:
+
+| Parameter | Description | Default Value |
+|-----------|-------------|---------------|
+| `project_name` | Name of your project | Required |
+| `project_version` | Version of your project | Required |
+| `author` | Author of the project | Required |
+| `set_level` | Log level ('work' for production, other values for development) | 'work' |
+| `sentry_url` | Custom Sentry DSN URL (required for Sentry integration) | None |
+| `email_domain` | Email domain for user identification | 'xinhuadu.com.cn' |
+| `file_name` | Name of the info log file | None |
+| `err_name` | Name of the error log file | None |
+| `log_level` | Minimum level for info logs | logging.INFO |
+| `error_log_level` | Minimum level for error logs | logging.ERROR |
+
+## Publishing the Package
+
+To publish this package to PyPI:
+
+1. Install build tools:
+   ```bash
+   pip install setuptools wheel twine
+   ```
+
+2. Build the package:
+   ```bash
+   python setup.py sdist bdist_wheel
+   ```
+
+3. Upload to PyPI:
+   ```bash
+   twine upload dist/*
+   ```
+
+## Development
+
+To install the package in development mode:
+
+```bash
+pip install -e .
+```
+
+## Requirements
+
+- Python >= 3.7
+- sentry-sdk >= 1.0.0
+
+See [requirements.txt](requirements.txt) for details.
