@@ -1,0 +1,196 @@
+Metadata-Version: 2.4
+Name: safari-cloud-tabs
+Version: 0.1.0
+Summary: A command-line tool for managing Safari iCloud tabs
+Author-email: Osvaldo Santana Neto <safari-cloud-tabs@osantana.me>
+License: ANTI-CAPITALIST SOFTWARE LICENSE (v 1.4)
+        
+        Copyright © 2025 Osvaldo Santana Neto <safari-cloud-tabs@osantana.me>
+        
+        This is anti-capitalist software, released for free use by individuals and
+        organizations that do not operate by capitalist principles.
+        
+        Permission is hereby granted, free of charge, to any person or organization (the
+        "User") obtaining a copy of this software and associated documentation files
+        (the "Software"), to use, copy, modify, merge, distribute, and/or sell copies of
+        the Software, subject to the following conditions:
+        
+        1. The above copyright notice and this permission notice shall be included in
+        all copies or modified versions of the Software.
+        
+        2. The User is one of the following:
+           a. An individual person, laboring for themselves
+           b. A non-profit organization
+           c. An educational institution
+           d. An organization that seeks shared profit for all of its members, and allows
+           non-members to set the cost of their labor
+        
+        3. If the User is an organization with owners, then all owners are workers and
+        all workers are owners with equal equity and/or equal vote.
+        
+        4. If the User is an organization, then the User is not law enforcement or
+        military, or working for or under either.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT EXPRESS OR IMPLIED WARRANTY OF ANY
+        KIND, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+        FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS BE
+        LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+        CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+        SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+        
+Project-URL: Homepage, https://github.com/osantana/safari-cloud-tabs
+Project-URL: Repository, https://github.com/osantana/safari-cloud-tabs
+Keywords: safari,icloud,tabs,browser,macos
+Classifier: Development Status :: 4 - Beta
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: End Users/Desktop
+Classifier: License :: Other/Proprietary License
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Topic :: Utilities
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: license-file
+
+# Safari Cloud Tabs
+
+Safari Cloud Tabs is a command-line tool to manage and open Safari iCloud tabs
+from other devices. It allows you to list, filter, and open tabs synchronized
+via iCloud on macOS.
+
+## Installation
+
+### Requirements
+
+- macOS
+- Python 3.9 or newer
+- Safari with iCloud Tabs enabled
+
+### Install from PyPI
+
+```bash
+pip install safari-cloud-tabs
+```
+
+### Install from GitHub
+
+```bash
+pip install git+https://github.com/osantana/safari-cloud-tabs.git
+```
+
+## Usage
+
+### Basic commands
+
+List all devices with iCloud tabs:
+
+```bash
+safari-cloud-tabs --list-devices
+```
+
+Open all tabs from all devices in the default browser:
+
+```bash
+safari-cloud-tabs
+```
+
+Show all tabs without opening them (dry run):
+
+```bash
+safari-cloud-tabs --dry-run
+```
+
+### Filtering
+
+Filter tabs by device name:
+
+```bash
+safari-cloud-tabs --device "iPhone"
+```
+
+Filter tabs by URL content:
+
+```bash
+safari-cloud-tabs --contains "github.com"
+```
+
+Limit the number of tabs to open:
+
+```bash
+safari-cloud-tabs --limit 5
+```
+
+### Browser selection
+
+Open tabs in a specific browser (safari, chrome, or firefox):
+
+```bash
+safari-cloud-tabs --browser chrome
+```
+
+### Other options
+
+Open in the current tab instead of a new tab:
+
+```bash
+safari-cloud-tabs --no-new-tab
+```
+
+Set a delay between opening tabs:
+
+```bash
+safari-cloud-tabs --delay 0.5
+```
+
+## Development
+
+To contribute to the development of Safari Cloud Tabs:
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/osantana/safari-cloud-tabs.git
+   cd safari-cloud-tabs
+   ```
+
+2. Install the package in editable mode:
+   ```bash
+   pip install -e .
+   ```
+
+3. Make your changes and verify them.
+
+4. Submit a Pull Request.
+
+### Publishing to PyPI
+
+To publish a new version to PyPI:
+
+1. Build the package:
+   ```bash
+   uv build
+   ```
+
+2. Publish the package:
+   ```bash
+   uv publish
+   ```
+
+Note: `uv` does not automatically read your `~/.pypirc` file. You can provide
+the API token using the `UV_PUBLISH_TOKEN` environment variable or the `--token`
+argument:
+
+```bash
+# Using an environment variable
+export UV_PUBLISH_TOKEN=your-pypi-api-token
+uv publish
+
+# Or passing the token directly
+uv publish --token YOUR_PYPI_API_TOKEN
+```
