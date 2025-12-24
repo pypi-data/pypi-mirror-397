@@ -1,0 +1,140 @@
+Metadata-Version: 2.4
+Name: FoxDotMultiBank
+Version: 0.1.0
+Summary: Add and use multiple sample banks
+License-Expression: CC-BY-SA-4.0
+License-File: LICENSE
+Author: taconi
+Author-email: igor.taconi@protonmail.com
+Requires-Python: ~=3.11
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Description-Content-Type: text/markdown
+
+# FoxDotMultiBank - Add and use multiple sample banks
+
+## Instalation
+
+``` shell
+pip install FoxDotMultiBank
+# or
+pip install git+https://codeberg.org/FoxDotExtensions/FoxDotMultiBank
+```
+
+## Usage
+
+Import lib
+
+``` python
+from FoxDotMultiBank import *
+```
+
+This will overwrite the `Samples` object and the `Player.new_message_header` method so that players can use the keyword `bank=0` (or `spack=0` or `sdb=0`).
+
+Use `print(Samples.banks)` to see all available banks.
+
+
+``` python
+d1 >> play('x-o-', bank=1)
+```
+
+### Add your own bank:
+
+The folder's structure should look like the default bank:
+
+```shell
+├── _
+│   ├── 1/
+│   ├── ampersand/
+│   │   ├── '&_0.wav'
+│   │   └── '&_1.wav'
+│   ├── asterix/
+│   ...
+├── a/
+│   ├── lower/
+│   │   ├── 'gb_hihat 0.wav'
+│   │   └── 'gb_hihat 1.wav'
+│   └── upper/
+│       ├── 0_dist_kick.wav
+│       └── 1_dist_kick.wav
+├── b/
+│   ├── lower/
+│   └── upper/
+	...
+```
+
+```python
+Samples.addBank(absolute_path)
+d1 >> play('x-o-', bank=2)
+```
+
+If there is a folder `_loop_/` it will be added with `Samples.addPath('/bank/_loop _')`, so on `loop()` you can access the loop without the argument `bank=1`.
+
+## Public banks
+
+### [Dirt-Samples](https://github.com/tidalcycles/Dirt-Samples)
+
+Set of samples used in SuperDirt and the TidalCycles tutorials.
+
+Can be used with `loop()`/ `stretch()` / `gsynth()`
+ 
+Run on SuperCollider: 
+
+``` supercollider
+Quarks.install("Dirt-Samples");
+```
+
+Or on your terminal:
+
+``` shell
+git clone https://github.com/tidalcycles/Dirt-Samples /path/to/Dirt-Samples
+```
+
+Then add the loops to the sample manager:
+
+``` python
+Samples.addPath('/path/to/Dirt-Samples')
+```
+
+Use `print(Samples.loops)` to see all available loops.
+
+``` python
+l1 >> loop('kurt', dur=PDur(3,8))
+```
+
+Using the keyword `pshift` you can change the note you are playing.
+This change is made as in the chromatic scale.
+
+``` python
+g1 >> gsynth('gtr', pshift=[0,2,4,5,7,9,11,12])
+```
+
+### [FoxDot PitchGlitch SampleDB](https://gitlab.com/iShapeNoise/foxdot_sampledb_pitchglitch)
+
+Bank of samples and loops to use in FoxDot.
+  
+Run on your terminal:
+
+```shell
+git clone https://gitlab.com/iShapeNoise/foxdot_sampledb_pitchglitch /path/to/foxdot_sampledb_pitchglitch
+```
+
+Then add the bank:
+
+```shell
+Samples.addBank('/path/to/foxdot_sampledb_pitchglitch/1')
+```
+
+Then set the bank dynamically:
+
+``` python
+d0 >> play('W', bank=1)
+d1 >> play('x-o-', bank=P[:2].stutter(16), sample=P[:4].stutter(4))
+```
+
