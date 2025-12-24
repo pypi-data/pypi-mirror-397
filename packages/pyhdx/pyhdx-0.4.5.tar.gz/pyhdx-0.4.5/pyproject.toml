@@ -1,0 +1,94 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+
+[project]
+name = "pyhdx"
+description = "Derive ΔG for single residues from HDX-MS data"
+authors = [{ name = "Jochem Smit", email = "jhsmit@gmail.com" }]
+license = "MIT"
+readme = "README.md"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.11",
+]
+
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "torch",
+    "hdxrate",
+    "numpy==1.25.2",
+    "ultraplot",
+    "matplotlib",
+    "colorcet",
+    "pandas",
+    "scikit-image",
+    "scipy",
+    "symfit",
+    "tqdm",
+    "typer",
+    "dask",
+    "distributed",
+    "packaging",
+    "param<2",
+    "pyyaml",
+    "omegaconf",
+    "hdxms-datasets>=0.3.3",
+    "narwhals",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+web = [
+    "panel==0.14.4",
+    "bokeh==2.4.3",
+    "holoviews==1.17.1",
+    "colorcet",
+    "hvplot==0.8.4",
+    "param<2",
+]
+pdf = ["pylatex", "ultraplot"]
+docs = [
+    "mkdocs",
+    "mkdocstrings[python]",
+    "mkdocs-material",
+    "pygments",
+    "mkdocs-gen-files",
+    "mkdocs-literate-nav",
+    "mkdocs-jupyter",
+]
+dev = ["black[jupyter]"]
+test = ["pytest>=7.2.0"]
+
+[project.scripts]
+pyhdx = 'pyhdx.cli:app'
+
+[project.urls]
+Source = "https://github.com/Jhsmit/PyHDX/"
+Documentation = "https://pyhdx.readthedocs.io/en/stable/"
+
+[tool.hatch.build]
+exclude = ["_versioneer.py"]
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "pyhdx/_version.py"
+
+[tool.flake8]
+max-line-length = 100
+ignore = "D203"
+exclude = [".git", "__pycache__", "build", "dist", "docs"]
+max-complexity = 10
+
+[tool.black]
+line-length = 100
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = ["docs/examples/04_plot_output.ipynb"]

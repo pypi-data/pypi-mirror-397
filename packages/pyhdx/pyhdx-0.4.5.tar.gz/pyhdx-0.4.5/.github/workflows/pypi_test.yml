@@ -1,0 +1,47 @@
+name: PyPi distribute test push
+on: [push]
+
+jobs:
+  build-n-publish:
+    name: Build and publish Python 🐍 distributions 📦 to PyPI and TestPyPI
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Configure Git
+      run: |
+        git config --global user.email "github-actions@github.com"
+        git config --global user.name "GitHub Actions"
+
+    - name: Create test version tag
+      run: |
+        # Get number of commits in current branch
+        COMMIT_COUNT=$(git rev-list --count HEAD)
+        # Get short SHA
+        SHA=$(git rev-parse --short HEAD)
+        # Create a PEP 440 compliant version number
+        VERSION="0.2.1.dev${COMMIT_COUNT}"
+        # Create and push tag
+        git tag -a "v${VERSION}" -m "Test release ${VERSION}"
+        echo "Created tag v${VERSION}"
+
+    - name: Install Hatch
+      run: pip install hatch
+
+    - name: Build
+      run: hatch build
+
+    - name: Publish distribution 📦 to Test PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+        repository-url: https://test.pypi.org/legacy/
