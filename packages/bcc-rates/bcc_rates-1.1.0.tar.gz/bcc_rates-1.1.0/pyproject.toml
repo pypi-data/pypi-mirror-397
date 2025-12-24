@@ -1,0 +1,27 @@
+[project]
+name = "bcc-rates"
+version = "1.1.0"
+description = "Currency exchange rates and converter using live data from Banque Centrale du Congo (BCC)"
+readme = "README.md"
+authors = [
+    { name = "Edimedia Mutoke", email = "eddycondor07@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "aiohttp>=3.13.1",
+    "beautifulsoup4>=4.14.2",
+    "dinero>=0.4.0",
+    "requests>=2.32.5",
+]
+
+[project.scripts]
+bcc_exchange = "bcc_rates.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.8.13,<0.9.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "black>=25.9.0",
+]
