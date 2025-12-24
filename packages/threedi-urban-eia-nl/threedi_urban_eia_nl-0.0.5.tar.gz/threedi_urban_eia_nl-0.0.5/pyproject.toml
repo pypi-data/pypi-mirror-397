@@ -1,0 +1,46 @@
+[project]
+name = "threedi-urban-eia-nl"
+dynamic = ["version"]
+description = "3Di batch calculations"
+readme = "README.rst"
+license = {text = "MIT"}
+authors = [
+    { name = "Daan van Ingen", email = "daan.vaningen@nelen-schuurmans.nl" },
+]
+keywords = []
+classifiers = [
+    "Framework :: Django",
+    "Programming Language :: Python",
+    "License :: OSI Approved :: MIT License",
+]
+dependencies = [
+    "click",
+    "netCDF4",
+    "pandas",
+    "threedi-api-client>=4.0.0",
+    "threedigrid>=1.0.16",
+    "numpy<2",
+    "SQLAlchemy",
+]
+
+[project.scripts]
+process-rain-series-results = "threedi_urban_eia_nl.process_results:process_results"
+run-rain-series-simulations = "threedi_urban_eia_nl.rain_series_simulations:create_rain_series_simulations"
+
+[project.urls]
+Repository = "https://github.com/nens/threedi-urban-eia-nl"
+Changelog = "https://github.com/nens/threedi-urban-eia-nl/blob/master/CHANGES.rst"
+
+[tool.setuptools]
+packages = ["threedi_urban_eia_nl"]
+
+[tool.setuptools.dynamic]
+version = {attr = "threedi_urban_eia_nl.__version__"}
+
+[tool.zest-releaser]
+release = false
+python-file-with-version = "threedi_urban_eia_nl/__init__.py"
+
+[tool.isort]
+profile = "black"
+force_alphabetical_sort_within_sections = true
