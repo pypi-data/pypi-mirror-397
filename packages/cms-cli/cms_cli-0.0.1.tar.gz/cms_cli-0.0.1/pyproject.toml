@@ -1,0 +1,68 @@
+[project]
+name = "cms-cli"
+version = "0.0.1"
+description = "A cli for downloading and converting Copernicus Marine Service datasets to GeoTIFFs"
+requires-python = ">=3.12"
+authors = [{ name = "Moritz Steinsiek", email = "steinsiek@eomap.de" }]
+readme = "README.md"
+license = { text = "CC-BY-NC-4.0" }
+keywords = [
+    "copernicus",
+    "marine",
+    "geotiff",
+    "oceanography",
+    "satellite-data",
+    "earth-observation",
+    "cli",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: Other/Proprietary License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: GIS",
+    "Topic :: Scientific/Engineering :: Oceanography",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "copernicusmarine>=2.0.0",
+    "python-dotenv>=1.0.1",
+    "rasterio>=1.4.3",
+    "geopandas>=1.0.1",
+    "scipy>=1.16.3",
+    "pandas-stubs~=2.3.3",
+]
+
+[project.urls]
+Homepage = "https://www.eomap.com"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "ruff>=0.14.8",
+    "pytest-mock>=3.14.0",
+    "pandas-stubs>=2.3.3.251201",
+    "scipy-stubs>=1.16.3.3",
+]
+tryout = [
+    "contextily>=1.7.0",
+    "matplotlib>=3.10.8",
+    "ipykernel>=7.1.0",
+]
+
+[project.scripts]
+cms-cli = "cms.main:main"
+
+[tool.uv]
+package = true
+
+[tool.uv.build-backend]
+module-name = "cms"
+
+[tool.pytest.ini_options]
+testpaths = ["tests/unit", "tests/integration", "tests/e2e"]
