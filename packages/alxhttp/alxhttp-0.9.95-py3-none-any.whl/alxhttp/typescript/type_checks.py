@@ -1,0 +1,134 @@
+import types
+import typing
+from collections.abc import Generator
+
+from alxhttp.typescript.types import SAFE_PRIMITIVE_TYPES, SAFE_PRIMITIVE_TYPES_OR_NONE
+
+TypeType = type | types.UnionType | typing.Annotated[typing.Any, typing.Any]
+
+
+def extract_type_param(t: TypeType) -> type:
+  targs = typing.get_args(t)
+  if not targs:
+    raise ValueError
+  return targs[0]
+
+
+def extract_class(t: TypeType) -> str:
+  return str(t).split("'")[1].split('.')[-1]
+
+
+def is_generic_type(t: TypeType) -> bool:
+  return len(typing.get_args(t)) > 0
+
+
+def is_model_type(t: TypeType) -> bool:
+  return type(t).__name__ == 'ModelMetaclass'
+
+
+def is_union(t: TypeType) -> bool:
+  return typing.get_origin(t) in {typing.Union, types.UnionType}  # pyright: ignore[reportDeprecated]
+
+
+def is_alias(t: TypeType) -> typing.TypeGuard[typing.TypeAliasType]:
+  return isinstance(t, typing.TypeAliasType)
+
+
+def is_class_var(t: TypeType) -> bool:
+  return typing.get_origin(t) == typing.ClassVar
+
+
+def is_class_var_or_annotated_class_var(t: TypeType) -> bool:
+  return is_class_var(t) or (is_annotated(t) and is_class_var(typing.get_args(t)[0]))
+
+
+def is_optional(t: TypeType) -> bool:
+  return is_union(t) and typing.get_args(t)[1] == types.NoneType and len(typing.get_args(t)) == 2
+
+
+def is_annotated(t: TypeType) -> bool:
+  return typing.get_origin(t) in {typing.Annotated}
+
+
+def is_type_or_alias(t: TypeType, ta: TypeType):
+  return t is ta or (is_alias(t) and t.__value__ == ta)
+
+
+def is_type_or_annotated_type(t: TypeType, ta: TypeType):
+  return t == ta or (is_annotated(t) and typing.get_args(t)[0] == ta) or (is_alias(t) and t.__value__ == ta)
+
+
+def is_literal(t: TypeType) -> bool:
+  return typing.get_origin(t) in {typing.Literal}
+
+
+def get_literal(t: TypeType) -> str | int:
+  assert is_literal(t)
+  return typing.get_args(t)[0]
+
+
+def get_literals(t: TypeType) -> list[str | int]:
+  assert is_literal(t)
+  return list(typing.get_args(t))
+
+
+def is_list(t: TypeType) -> typing.TypeGuard[list[typing.Any]]:
+  return t is list or typing.get_origin(t) in {list, typing.List}  # pyright: ignore[reportDeprecated]
+
+
+def is_tuple(t: TypeType) -> typing.TypeGuard[tuple[typing.Any, ...]]:
+  return typing.get_origin(t) is tuple
+
+
+def is_dict(t: TypeType) -> typing.TypeGuard[dict[typing.Any, typing.Any]]:
+  return t is dict or typing.get_origin(t) in {dict, typing.Dict}  # pyright: ignore[reportDeprecated]
+
+
+def is_union_with_none(t: TypeType) -> bool:
+  # This is a more general version of is_optional
+  return typing.get_origin(t) in {typing.Union, types.UnionType} and any([x == types.NoneType for x in typing.get_args(t)])  # pyright: ignore[reportDeprecated]
+
+
+def resolve_alias_recursive(t: TypeType) -> TypeType:
+  if is_alias(t):
+    return resolve_alias_recursive(t.__value__)
+  return t
+
+
+def get_union_args_recursive(t: TypeType) -> Generator[TypeType, None, None]:
+  visited: set[TypeType] = set()
+
+  def _helper(union_type: TypeType) -> Generator[TypeType, None, None]:
+    for union_arg in typing.get_args(union_type):
+      resolved_union_arg = resolve_alias_recursive(union_arg)
+      if not is_union(resolved_union_arg):
+        yield resolved_union_arg
+      elif resolved_union_arg not in visited:
+        visited.add(resolved_union_arg)
+        yield from _helper(resolved_union_arg)
+
+  yield from _helper(t)
+
+
+def is_union_of_models_recursive(t: TypeType) -> bool:
+  if not is_union(t):
+    return False
+  return all([is_model_type(x) for x in get_union_args_recursive(t)])
+
+
+def is_safe_primitive_type_or_union(t: TypeType) -> bool:
+  if is_union_of_safe_primitive_types(t):
+    return True
+  return t in SAFE_PRIMITIVE_TYPES
+
+
+def is_union_of_safe_primitive_types(t: TypeType) -> bool:
+  if is_union(t):
+    return all([x in SAFE_PRIMITIVE_TYPES or is_literal(x) for x in typing.get_args(t)])
+  return False
+
+
+def is_union_of_safe_primitive_types_or_none(t: TypeType) -> bool:
+  if is_union(t):
+    return all([x in SAFE_PRIMITIVE_TYPES_OR_NONE or is_literal(x) for x in typing.get_args(t)])
+  return False
