@@ -1,0 +1,252 @@
+Metadata-Version: 2.4
+Name: ranex
+Version: 0.1.3
+Classifier: Programming Language :: Rust
+Classifier: Programming Language :: Python :: Implementation :: CPython
+Summary: Python bindings for Ranex - exposes Atlas codebase indexing to Python
+Description-Content-Type: text/markdown; charset=UTF-8; variant=GFM
+
+# ranex-py
+
+Python bindings for the Ranex Atlas codebase indexing system.
+
+## Overview
+
+This crate exposes the Rust-powered Atlas scanner, parser, and storage to Python via PyO3, enabling Python users to index and search their codebases efficiently.
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│               Python Code                            │
+│   from ranex_rust import Atlas                      │
+│   atlas = Atlas(".")                                │
+│   atlas.scan()                                      │
+│   results = atlas.search("payment")                 │
+└───────────────────────┬─────────────────────────────┘
+                        │ FFI Boundary (PyO3)
+                        ▼
+┌─────────────────────────────────────────────────────┐
+│            ranex-py (ranex_rust.so)                 │
+│   • PyAtlas: Main Python class                     │
+│   • Type conversions: Rust → Python dicts          │
+│   • Error handling: Rust errors → Python exceptions│
+└───────────────────────┬─────────────────────────────┘
+                        │ Calls
+                        ▼
+┌─────────────────────────────────────────────────────┐
+│       ranex-atlas + ranex-core (Rust)              │
+│   • Scanner, Parser, Storage                       │
+└─────────────────────────────────────────────────────┘
+```
+
+## Python API
+
+### Atlas Class
+
+```python
+from ranex_rust import Atlas
+
+# Initialize for a project
+atlas = Atlas("/path/to/project")
+
+# Scan and index the codebase
+result = atlas.scan()
+print(f"Found {result['artifacts_found']} artifacts in {result['duration_ms']}ms")
+
+# Search for symbols
+results = atlas.search("payment", limit=10)
+for artifact in results:
+    print(f"  {artifact['symbol_name']} ({artifact['kind']}) - {artifact['file_path']}")
+
+# Search by feature
+payment_artifacts = atlas.search_by_feature("payment")
+
+# Get artifact count
+count = atlas.count()
+
+# Health check
+health = atlas.health()
+print(f"Status: {health['status']}, Artifacts: {health['artifact_count']}")
+```
+
+### ArtifactKind Constants
+
+```python
+from ranex_rust import ArtifactKind
+
+# Available kinds:
+ArtifactKind.FUNCTION       # "function"
+ArtifactKind.ASYNC_FUNCTION # "async_function"
+ArtifactKind.CLASS          # "class"
+ArtifactKind.METHOD         # "method"
+ArtifactKind.ENDPOINT       # "endpoint" (FastAPI routes)
+ArtifactKind.CONTRACT       # "contract" (@Contract decorated)
+ArtifactKind.MODEL          # "model" (Pydantic models)
+ArtifactKind.CONSTANT       # "constant"
+```
+
+### Utility Functions
+
+```python
+from ranex_rust import version, init_logging
+
+# Get version
+print(version())  # "0.1.0"
+
+# Initialize logging
+init_logging("debug")  # "trace", "debug", "info", "warn", "error"
+```
+
+## Return Types
+
+### `atlas.scan()` → dict
+
+```python
+{
+    "artifacts_found": 1234,
+    "files_scanned": 156,
+    "files_parsed": 154,
+    "files_failed": 2,
+    "duration_ms": 3200,
+    "stats": {
+        "files_scanned": 156,
+        "files_parsed": 154,
+        "files_failed": 2,
+        "files_skipped": 0,
+        "files_cached": 0,
+        "artifacts_found": 1234,
+        "artifacts_by_kind": {
+            "function": 800,
+            "class": 200,
+            "endpoint": 150,
+            ...
+        }
+    },
+    "failed_files": [
+        {"path": "bad_syntax.py", "error": "SyntaxError: ..."}
+    ]
+}
+```
+
+### `atlas.search()` → list[dict]
+
+```python
+[
+    {
+        "symbol_name": "process_payment",
+        "qualified_name": "app.services.payment.process_payment",
+        "kind": "function",
+        "file_path": "app/services/payment.py",
+        "module_path": "app.services.payment",
+        "line_start": 45,
+        "line_end": 78,
+        "signature": "process_payment(request: PaymentRequest) -> PaymentResponse",
+        "docstring": "Process a payment with fraud checks.",
+        "feature": "payment",
+        "tags": ["business_logic"],
+        "hash": "abc123..."
+    },
+    ...
+]
+```
+
+### `atlas.health()` → dict
+
+```python
+{
+    "artifact_count": 1234,
+    "last_scan": 1704067200,  # Unix timestamp, or None
+    "db_path": "/project/.ranex/atlas.sqlite",
+    "status": "healthy"  # or "needs_scan"
+}
+```
+
+## Error Handling
+
+The module raises appropriate Python exceptions:
+
+```python
+from ranex_rust import Atlas
+
+try:
+    atlas = Atlas("/nonexistent/path")
+except FileNotFoundError as e:
+    print(f"Project not found: {e}")
+
+try:
+    atlas.scan()
+except RuntimeError as e:
+    print(f"Scan failed: {e}")
+except IOError as e:
+    print(f"I/O error: {e}")
+```
+
+## Building
+
+### Development Build
+
+```bash
+cd ranex-rs
+maturin develop -m crates/ranex-py/Cargo.toml
+```
+
+### Release Build
+
+```bash
+maturin build --release -m crates/ranex-py/Cargo.toml
+```
+
+### Wheel Distribution
+
+```bash
+maturin build --release --strip -m crates/ranex-py/Cargo.toml
+# Output: target/wheels/ranex_rust-*.whl
+```
+
+## Testing
+
+```bash
+# Run Rust tests
+cargo test -p ranex-py
+
+# Run with Python (after maturin develop)
+python -c "from ranex_rust import Atlas; print(Atlas)"
+```
+
+## Module Structure
+
+```
+ranex-py/
+├── src/
+│   ├── lib.rs      # PyModule definition, PyAtlas class
+│   ├── error.rs    # PyAtlasError, error conversions
+│   └── types.rs    # Rust → Python type conversions
+├── tests/
+│   ├── common/
+│   │   └── mod.rs  # Shared test utilities
+│   ├── atlas_tests.rs
+│   ├── error_tests.rs
+│   └── types_tests.rs
+├── Cargo.toml
+└── README.md
+```
+
+## Features
+
+- **`abi3`**: Build with Python stable ABI (works across Python 3.8+)
+
+```bash
+cargo build -p ranex-py --features abi3
+```
+
+## Performance
+
+- **GIL Release**: Long operations (scan, search) do not release the GIL
+- **Zero-Copy**: Where possible, strings are borrowed rather than copied
+- **Batch Conversions**: Lists of artifacts are converted efficiently
+
+## License
+
+MIT
+
