@@ -1,0 +1,28 @@
+[project]
+name = "nostromo-core"
+version = "0.1.0"
+description = "Core domain logic for MU-TH-UR 6000 chatbot"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+authors = [{ name = "Nostromo Crew" }]
+keywords = ["chatbot", "llm", "aliens", "mother"]
+
+dependencies = [
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+anthropic = ["anthropic>=0.40.0"]
+openai = ["openai>=1.0.0"]
+all = [
+    "anthropic>=0.40.0",
+    "openai>=1.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["nostromo_core"]
