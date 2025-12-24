@@ -1,0 +1,81 @@
+[build-system]
+requires = ["setuptools>=80", "wheel", "setuptools-scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "seeragents"
+dynamic = ["version"]
+description = "Seer - Multi-Agent System for Evaluating AI Agents"
+readme = "README.md"
+authors = [
+  { name = "Lokesh Danu", email = "lokesh@getseer.dev" },
+  { name = "Akshay Sharma", email = "akshay@getseer.dev" }
+]
+requires-python = ">=3.12"
+dependencies = [
+  "langchain>=1.1.2",
+  "langchain-openai>=1.0.2",
+  "langgraph-api==0.5.33",
+  "langgraph>=1.0.3",
+  "langgraph-cli[inmem]>=0.4.7",
+  "langgraph-checkpoint>=3.0.1,<4.0.0",
+  "langgraph-checkpoint-postgres>=3.0.1,<4.0.0",
+  "pydantic>=2.12.4",
+  "pydantic-settings>=2.0.0",
+  "httpx>=0.28.1",
+  "requests>=2.32.3",
+  "python-dotenv>=1.0.0",
+  "pyyaml>=6.0.3",
+  "e2b==2.4.0",
+  "e2b-code-interpreter==2.2.0",
+  "tavily-python>=0.7.12",
+  "pinecone>=5.0.0",
+  "pandas>=2.3.3",
+  "openevals>=0.1.2",
+  "tenacity>=9.1.2",
+  "langchain-neo4j>=0.6.0",
+  "langchain-mcp-adapters==0.1.12",
+  "langfuse>=3.10.5",
+  "aiosqlite>=0.20.0",
+  "composio==0.9.4",
+  "composio-langchain==0.9.4",
+  "coolname==2.2.0",
+  "seer-tool-hub==0.0.3",
+  # CLI dependencies
+  "click>=8.1.0",
+  "rich>=13.0.0",
+  "asyncpg>=0.31.0",
+]
+
+[tool.setuptools]
+packages = [
+  "cli",
+  "shared",
+  "agents",
+  "sandbox",
+  "agents.eval_agent",
+  "agents.codex",
+]
+[tool.setuptools_scm]
+fallback_version = "0.0.0"
+#just for versioning
+
+[tool.setuptools.package-data]
+"*" = ["**/*.json", "**/*.txt"]
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.1.0",
+]
+
+
+[project.scripts]
+seer = "run:cli"
+seer-eval = "cli.main:main"
+
+
+[project.urls]
+Homepage = "https://www.getseer.dev"
+Documentation = "https://github.com/seer-engg/seer#readme"
+Repository = "https://github.com/seer-engg/seer"
+Issues = "https://github.com/seer-engg/seer/issues"
