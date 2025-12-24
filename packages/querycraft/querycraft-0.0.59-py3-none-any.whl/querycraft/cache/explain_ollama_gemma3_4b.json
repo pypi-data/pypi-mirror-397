@@ -1,0 +1,14 @@
+{
+  "select * from notes;": [
+    "\u001b[32m Cette requête sélectionne toutes les colonnes (`*`) de toutes les lignes de la table `notes`.\n \u001b[0m\n---\n\u001b[34mSource : Ollama (https://ollama.com/) avec gemma3:4b \u001b[0m\u001b[34m le 2025-12-18 à 20:14:20.010200. \u001b[0m\n\u001b[34mAttention, Ollama/gemma3:4b ne garantit pas la validité de l'aide. Veuillez vérifier la réponse et vous rapprocher de vos enseignants si nécessaire.\u001b[0m\n",
+    "2025-12-18"
+  ],
+  "SELECT count(noteex), titre FROM matieres left join notes using (codemat) inner join etudiants using (noetu) group by codemat, titre having count(*) >1 ;": [
+    "\u001b[32m Cette requête compte le nombre d'étudiants inscrits dans chaque matière et affiche le titre de la matière.\n\nElle utilise une jointure `left join` entre les tables `matieres`, `notes` et `etudiants` sur les colonnes `codemat` et `noetu`.  L'opérateur `left join` assure que toutes les matières sont incluses dans le résultat, même celles qui n'ont pas d'étudiants inscrits.  L'opérateur `inner join` est ensuite utilisé pour filtrer les résultats et ne conserver que les lignes où il y a une correspondance dans les trois tables.  Enfin, la clause `group by codemat, titre` regroupe les résultats par code matière et titre, et la clause `having count(*) > 1` filtre les groupes qui ont moins d'un étudiant.\n \u001b[0m\n---\n\u001b[34mSource : Ollama (https://ollama.com/) avec gemma3:4b \u001b[0m\u001b[34m le 2025-12-19 à 14:19:30.920821. \u001b[0m\n\u001b[34mAttention, Ollama/gemma3:4b ne garantit pas la validité de l'aide. Veuillez vérifier la réponse et vous rapprocher de vos enseignants si nécessaire.\u001b[0m\n",
+    "2025-12-19"
+  ],
+  "SELECT codemat, titre, count(*) FROM matieres m left join notes n using (codemat) inner join etudiants using (noetu) group by codemat, titre having count(*) >1 ;": [
+    "\u001b[32m Cette requête sélectionne le code matière (`codemat`), le titre de la matière (`titre`) et compte le nombre d'étudiants pour chaque matière. Elle joint les tables `matieres`, `notes` et `etudiants` pour regrouper les informations.  Le `LEFT JOIN` assure que toutes les matières sont incluses dans le résultat, même celles qui n'ont pas de notes associées. L'`INNER JOIN` filtre les matières qui n'ont pas de notes associées. La clause `GROUP BY` regroupe les résultats par `codemat` et `titre`. La clause `HAVING` filtre les groupes de matières qui ont un nombre d'étudiants supérieur à 1.\n \u001b[0m\n---\n\u001b[34mSource : Ollama (https://ollama.com/) avec gemma3:4b \u001b[0m\u001b[34m le 2025-12-19 à 15:22:43.847501. \u001b[0m\n\u001b[34mAttention, Ollama/gemma3:4b ne garantit pas la validité de l'aide. Veuillez vérifier la réponse et vous rapprocher de vos enseignants si nécessaire.\u001b[0m\n",
+    "2025-12-19"
+  ]
+}
