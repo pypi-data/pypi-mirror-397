@@ -1,0 +1,153 @@
+# mapchartpy
+A super simple library to manage and create Mapchart save files.
+
+
+## Getting started
+
+1. Please make sure your code editor has support for intellisense in Python. This library has typing for basically everything, so it'll make your life a lot easier.
+
+<details>
+    <summary>Opening a map</summary>
+
+    ```python
+    import mapchartpy as mc
+    from pathlib import Path
+
+    map = mc.Map(save_file=Path("map.txt"))
+    ```
+</details>
+
+<details>
+    <summary>Creating a new map</summary>
+
+
+    ```python
+    import mapchartpy as mc
+
+    map = mc.Map()
+    ```
+</details>
+
+
+<details>
+    <summary>Highlighting a country</summary>
+
+
+    ```python
+    import mapchartpy as mc
+
+    map = mc.Map()
+    map.fill_country("Finland", "#002F6C")
+    ```
+
+    You can find a list of countries available by running
+
+    ```python
+    import mapchartpy as mc
+
+    countries = mc.Map.get_countries_and_territories()
+    print(countries)
+
+    # >> ['Austria', 'Belgium', 'Bulgaria', 'Croatia', 'Cyprus', 'Czechia', 'Denmark'...
+    ```
+</details>
+
+
+<details>
+    <summary>Highlighting US states</summary>
+
+
+    ```python
+    import mapchartpy as mc
+
+    map = mc.Map()
+    map.fill_country("USA_Kentucky", "#A3080B")
+    ```
+
+    States are generally formatted as "US_(State)"
+
+    You can find a list of states available by running
+
+    ```python
+    import mapchartpy as mc
+
+    territories = mc.Map.get_countries_and_territories()
+
+    for territory in territories:
+        if territory.startswith("US"):
+            print(territory)
+
+    ```
+</details>
+
+<details>
+    <summary>Creating a map of a specific region</summary>
+
+
+    For example, here's europe:
+
+    ```python
+    import mapchartpy as mc
+
+    map = mc.Map()
+    map.set_map_type("europe")
+    ```
+</details>
+
+<details>
+    <summary>Saving the map file</summary>
+
+
+    ```python
+    import mapchartpy as mc
+    import json
+
+    map = mc.Map()
+    map.fill_country("Finland", "#002F6C")
+    
+    with open("output.txt", "w") as f:
+        json.dump(map.get_file(), f)
+    ```
+</details>
+
+## Features
+1. Super simple editing
+It's literally three lines of code
+```python
+import mapchartpy as mc
+
+map = mc.Map()
+map.fill_country("Finland", "#002F6C")
+```
+
+2. Ability to load existing maps
+```python
+import mapchartpy as mc
+from pathlib import Path
+
+map = mc.Map(save_file=Path("map.txt"))
+```
+
+3. Full type hinting
+The library supports full* type hinting of the Mapchart save file, in addition to some other nice-to-haves.
+
+![Image of autocomplete working in countries](/screenshots/country_types.png)
+![Image of autocomplete working on the raw data file](/screenshots/data_typing.png)
+![Image of autocomplete working on a function](/screenshots/create_group_typing.png)
+
+*: Type hinting may not be available for special properties. If you encounter a situation where you don't have full type hinting, please make an issue on [our GitHub](https://github.com/ctih1/mapchart-py)
+
+4. Exporting to Mapchart's file format
+```python
+import mapchartpy as mc
+import json
+
+map = mc.Map()
+map.fill_country("Finland", "#002F6C")
+
+with open("output.txt", "w") as f:
+    json.dump(map.get_file(), f)
+```
+
+5. Dead simple installation
+It's literally just `pip install mapchartpy`
